@@ -285,7 +285,7 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="message/x-skype-conversation">     
+    <mime-type type="aplication/x-skype-conversation">     
         <sub-class-of type="text/html"/>
     </mime-type>
     
@@ -944,7 +944,7 @@
         <sub-class-of type="message/x-whatsapp-message"/>
     </mime-type>
     
-    <mime-type type="message/x-whatsapp-call">
+    <mime-type type="call/x-whatsapp-call">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type> 
     

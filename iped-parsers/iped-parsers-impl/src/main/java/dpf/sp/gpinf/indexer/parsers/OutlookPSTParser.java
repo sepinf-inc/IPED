@@ -88,6 +88,7 @@ public class OutlookPSTParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(OutlookPSTParser.class);
     private static final long serialVersionUID = 5552796814190294332L;
     public static final String OUTLOOK_MSG_MIME = "message/outlook-pst"; //$NON-NLS-1$
+    public static final String OUTLOOK_CONTACT_MIME = "application/outlook-contact"; //$NON-NLS-1$
 
     public static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("vnd.ms-outlook-pst")); //$NON-NLS-1$
 
@@ -298,7 +299,7 @@ public class OutlookPSTParser extends AbstractParser {
                     suffix = contact.getSMTPAddress();
                 if (suffix != null && !suffix.isEmpty())
                     objName += "-" + suffix; //$NON-NLS-1$
-                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
+                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_CONTACT_MIME); //$NON-NLS-1$
                 metadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
                 fillMetadata(metadata, ExtraProperties.USER_ACCOUNT, contact.getAccount());
                 fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(), contact.getMiddleName(), contact.getSurname(), contact.getNickname());

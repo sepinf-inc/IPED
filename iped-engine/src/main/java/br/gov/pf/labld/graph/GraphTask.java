@@ -33,9 +33,13 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import br.gov.pf.iped.regex.TelefoneRegexValidatorService;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
+import dpf.mg.udi.gpinf.vcardparser.VCardParser;
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
+import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
+import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import ezvcard.property.Address;
@@ -61,11 +65,11 @@ public class GraphTask extends AbstractTask {
   
   //TODO externalize to config file
   private static String[] contactMimes = {
-          "text/x-vcard", 
-          "application/windows-adress-book", 
-          "application/outlook-contact", 
-          "contact/x-skype-contact", 
-          "contact/x-whatsapp-contact", 
+          VCardParser.VCARD_MIME.toString(), 
+          OutlookPSTParser.OUTLOOK_CONTACT_MIME,
+          SkypeParser.CONTACT_MIME_TYPE, 
+          WhatsAppParser.WHATSAPP_CONTACT.toString(), 
+          "application/windows-adress-book",
           "application/x-ufed-contact"};
 
   private GraphConfiguration configuration;
@@ -177,7 +181,16 @@ public class GraphTask extends AbstractTask {
       return include;
     }
     
+    //TODO externalize to config file
     private static String getRelationType(String mediaType) {
+        if(WhatsAppParser.WHATSAPP_MESSAGE.toString().equals(mediaType) || 
+                WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(mediaType) ||
+                SkypeParser.MESSAGE_MIME_TYPE.toString().equals(mediaType) ||
+                SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType) ||
+                SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType) ||
+                "application/x-ufed-instantmessage".equals(mediaType)) {
+            return "message";
+        }
         if(mediaType.startsWith("message") || mediaType.equals("application/vnd.ms-outlook")) {
             return "email";
         }
@@ -185,14 +198,21 @@ public class GraphTask extends AbstractTask {
             if(contactMime.equals(mediaType))
                 return "contact";
         }
-        if(mediaType.equals("contact/x-skype-account") || mediaType.equals("application/x-ufed-user")) {
+        if(SkypeParser.ACCOUNT_MIME_TYPE.toString().equals(mediaType) || 
+                mediaType.equals("application/x-ufed-user") ||
+                mediaType.equals("application/x-ufed-useraccount")) {
             return "useraccount";
+        }
+        
+        if(WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType) ||
+                mediaType.equals("application/x-ufed-call")) {
+            return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);
         if(ufedIdx > -1) {
             return mediaType.substring(ufedIdx + UfedXmlReader.UFED_MIME_PREFIX.length());
         }
-        return "communication";
+        return "generic";
     }
     
     private class NodeValues{
@@ -218,6 +238,7 @@ public class GraphTask extends AbstractTask {
     }
     
     //PhoneNumberUtil is thread safe???
+    //TODO externalize region to config file
     private SortedSet<String> getPhones(String value){
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         Set<PhoneNumber> phoneNumbers = new HashSet<>();
@@ -293,6 +314,7 @@ public class GraphTask extends AbstractTask {
         String service = meta.get(ExtraProperties.UFED_META_PREFIX + "SourceApplication");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
+        if(service == null) service = meta.get(ExtraProperties.USER_ACCOUNT_TYPE);
         if(service == null) return null;
         int idx = value.lastIndexOf('(');
         if(idx != -1 && value.endsWith(")")) {

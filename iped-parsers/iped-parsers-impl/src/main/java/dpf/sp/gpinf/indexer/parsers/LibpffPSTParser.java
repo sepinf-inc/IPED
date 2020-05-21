@@ -376,7 +376,7 @@ public class LibpffPSTParser extends AbstractParser {
             if (item.exists()) {
                 metadata.set(TikaCoreProperties.TITLE, types[i]);
                 if (item.getName().equals("Contact.txt")) //$NON-NLS-1$
-                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
+                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_CONTACT_MIME); //$NON-NLS-1$
 
                 List<String> lines = readAllLines(item);
                 for (String line : lines) {

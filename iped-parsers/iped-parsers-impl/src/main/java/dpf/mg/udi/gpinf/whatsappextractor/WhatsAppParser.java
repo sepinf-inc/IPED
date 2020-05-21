@@ -89,7 +89,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     
     public static final MediaType WHATSAPP_ATTACHMENT = MediaType.parse("message/x-whatsapp-attachment"); //$NON-NLS-1$
     
-    public static final MediaType WHATSAPP_CALL = MediaType.parse("message/x-whatsapp-call"); //$NON-NLS-1$
+    public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
     
     //ugly workaround to show message type before caption (values are shown in sort order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$

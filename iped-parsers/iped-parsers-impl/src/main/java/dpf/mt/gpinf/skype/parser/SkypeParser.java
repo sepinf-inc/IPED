@@ -70,12 +70,12 @@ public class SkypeParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-    private static final String CONTACT_MIME_TYPE = "contact/x-skype-contact"; //$NON-NLS-1$
-    private static final String ACCOUNT_MIME_TYPE = "contact/x-skype-account"; //$NON-NLS-1$
-    private static final String MESSAGE_MIME_TYPE = "message/x-skype-message"; //$NON-NLS-1$
+    public static final String CONTACT_MIME_TYPE = "contact/x-skype-contact"; //$NON-NLS-1$
+    public static final String ACCOUNT_MIME_TYPE = "contact/x-skype-account"; //$NON-NLS-1$
+    public static final String MESSAGE_MIME_TYPE = "message/x-skype-message"; //$NON-NLS-1$
     public static final String ATTACHMENT_MIME_TYPE = "message/x-skype-attachment"; //$NON-NLS-1$
     public static final String FILETRANSFER_MIME_TYPE = "message/x-skype-filetransfer"; //$NON-NLS-1$
-    public static final String CONVERSATION_MIME_TYPE = "message/x-skype-conversation"; //$NON-NLS-1$
+    public static final String CONVERSATION_MIME_TYPE = "aplication/x-skype-conversation"; //$NON-NLS-1$
 
     private boolean extractMessages = true;
     
