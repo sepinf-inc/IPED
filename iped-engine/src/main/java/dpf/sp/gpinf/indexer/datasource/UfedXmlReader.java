@@ -286,7 +286,7 @@ public class UfedXmlReader extends DataSourceReader {
         HashSet<String> elements = new HashSet<>();
         HashSet<String> types = new HashSet<>();
 
-        HashMap<String, IItem> ids = new HashMap<>();
+        HashSet<String> ownerParties = new HashSet<>();
         
         String msisdn = null;
 
@@ -684,12 +684,13 @@ public class UfedXmlReader extends DataSourceReader {
                             else
                                 parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
                         }
-
-                        String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner"); //$NON-NLS-1$
-                        if (value != null && Boolean.valueOf(isOwner) && parentItem.getMediaType().toString().contains("chat")) //$NON-NLS-1$
-                            parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
-
-                        if (Boolean.valueOf(isOwner) && "From".equals(role)) //$NON-NLS-1$
+                        boolean isOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
+                        if (value != null && isOwner) { //$NON-NLS-1$
+                            ownerParties.add(value);
+                            if(parentItem.getMediaType().toString().contains("chat"))
+                                parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                        }
+                        if (isOwner && "From".equals(role)) //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -749,15 +750,28 @@ public class UfedXmlReader extends DataSourceReader {
         }
         
         private void fillMissingInfo(Item item) {
+            String from = item.getMetadata().get(Message.MESSAGE_FROM);
+            String to = item.getMetadata().get(Message.MESSAGE_TO);
+            boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
+            if(to == null) {
+                if(item.getMediaType() != null && item.getMediaType().toString().endsWith("instantmessage")) {
+                    IItem parentChat = itemSeq.get(itemSeq.size() - 1);
+                    String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                    for(String party : parties) {
+                        if((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
+                            item.getMetadata().add(Message.MESSAGE_TO, party);
+                    }
+                }
+            }
             String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
-            String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
+            String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");            
             if(item.getMetadata().get(Message.MESSAGE_TO) == null && 
                     ("Incoming".equals(direction) || "Missed".equals(direction) || 
-                     "Read".equals(status) || "Unread".equals(status))) {
+                     (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
                 item.getMetadata().set(Message.MESSAGE_TO, msisdn);
                 item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
-            } else if(item.getMetadata().get(Message.MESSAGE_FROM) == null && 
-                    ("Outgoing".equals(direction) || 
+            } else if(from == null && 
+                    ("Outgoing".equals(direction) || fromOwner ||
                      "Sent".equals(status) || "Unsent".equals(status))) {
                 item.getMetadata().set(Message.MESSAGE_FROM, msisdn);
                 item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
