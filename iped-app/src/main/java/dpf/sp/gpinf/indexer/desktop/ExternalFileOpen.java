@@ -23,6 +23,7 @@ public class ExternalFileOpen {
                 String itemReferenceQuery = item.getMetadata().get(ExtraProperties.REFERENCED_FILE_QUERY);
                 if(itemReferenceQuery != null) {
                     item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
+                    if(item == null) return;
                 }
                 try {
                     File file = item.getTempFile();

@@ -4,10 +4,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Set;
 
+import javax.swing.JLabel;
+
 import org.apache.tika.Tika;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
+import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import iped3.IItem;
@@ -15,6 +18,10 @@ import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
 
 public class ReferencedFileViewer extends Viewer{
+    
+    private String labelPrefix;
+    
+    private JLabel typeNotSupported;
     
     private ViewersRepository multiViewer;
     private AttachmentSearcher attachSearcher;
@@ -25,6 +32,9 @@ public class ReferencedFileViewer extends Viewer{
         super();
         this.multiViewer = multiViewer;
         this.attachSearcher = attachSearcher;
+        this.labelPrefix = Messages.getString("ReferenceViewer.NotSupported");
+        this.typeNotSupported = new JLabel();
+        this.getPanel().add(typeNotSupported);
     }
 
     @Override
@@ -54,6 +64,7 @@ public class ReferencedFileViewer extends Viewer{
         
         if(content == null) {
             if(lastItem != null) lastItem.dispose();
+            typeNotSupported.setVisible(false);
             return;
         }
         
@@ -61,13 +72,25 @@ public class ReferencedFileViewer extends Viewer{
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.REFERENCED_FILE_QUERY);
             lastItem = attachSearcher.getItem(query);
-            if(lastItem.getViewFile() != null) {
+            if(lastItem == null) {
+                typeNotSupported.setVisible(false);
+            }else if(lastItem.getViewFile() != null) {
                 FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
-                multiViewer.loadFile(viewContent, detectType(lastItem.getViewFile()), highlightTerms);
+                String mediaType = detectType(lastItem.getViewFile());
+                load(viewContent, mediaType, highlightTerms);
             }else
-                multiViewer.loadFile(lastItem, lastItem.getMediaType().toString(), highlightTerms);
+                load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
         }
         
+    }
+    
+    private void load(IStreamSource content, String mediaType, Set<String> highlightTerms) {
+        if(multiViewer.isSupportedType(mediaType)) {
+            multiViewer.loadFile(content, mediaType, highlightTerms);
+        }else {
+            typeNotSupported.setText(labelPrefix + mediaType);
+            typeNotSupported.setVisible(true);
+        }
     }
     
     private String detectType(File file) {
