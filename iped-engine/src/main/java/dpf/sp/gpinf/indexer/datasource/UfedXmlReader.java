@@ -12,11 +12,13 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.TimeZone;
 
 import javax.xml.parsers.SAXParser;
@@ -75,6 +77,7 @@ public class UfedXmlReader extends DataSourceReader {
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
+    HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -287,6 +290,8 @@ public class UfedXmlReader extends DataSourceReader {
         HashSet<String> types = new HashSet<>();
 
         HashMap<String, IItem> ids = new HashMap<>();
+        
+        HashMap<Integer, List<Item>> attachsPerId = new HashMap<>();
         
         String msisdn = null;
 
@@ -558,7 +563,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setCategory(chars.toString());
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    setContent(item, chars.toString());
+                    setContent(item, normalizePaths(chars.toString()));
 
                 } else if (!ignoreNameAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif")) //$NON-NLS-1$
                     if (item != null && !chars.toString().trim().isEmpty())
@@ -629,10 +634,20 @@ public class UfedXmlReader extends DataSourceReader {
                     createEmailPreview(item);
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
-                    handleAttachment(item);
+                    String ufedId = handleAttachment(item);
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
-                    if (parentItem.getMediaType().toString().contains("email")) //$NON-NLS-1$
+                    if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
+                    else if(/*ufedId != null && */parentItem.getMediaType().toString().contains("instantmessage")){
+                        parentItem.getMetadata().add(ExtraProperties.REFERENCED_FILE_QUERY, UFED_ID.replace(":", "\\:") + ":\"" + ufedId + "\"");
+                        parentItem.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                        List<Item> attachs = attachsPerId.get(parentItem.getId());
+                        if(attachs == null) {
+                            attachs = new ArrayList<>();
+                            attachsPerId.put(parentItem.getId(), attachs);
+                        }
+                        attachs.add(item);
+                    }
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
@@ -732,20 +747,38 @@ public class UfedXmlReader extends DataSourceReader {
                                 parentItem.getMetadata().add(meta, val);
                         }
                     }
-                } else
-                    try {
-                        caseData.incDiscoveredVolume(item.getLength());
-                        fillMissingInfo(item);
-                        caseData.addItem(item);
-
-                    } catch (InterruptedException e) {
-                        throw new SAXException(e);
+                } else {
+                    //process attachments later
+                    if(attachsPerId.get(item.getParentId()) == null) {
+                        List<Item> attachs = attachsPerId.get(item.getId());
+                        if(attachs != null) {
+                            if(attachs.size() >= 2) {
+                                for(Item attach : attachs)
+                                    processItem(attach);
+                            }
+                            item.getMetadata().add(ExtraProperties.MESSAGE_BODY, "ATTACHMENTS: " + attachs.size());
+                            attachsPerId.remove(item.getId());
+                        }
+                        processItem(item);
                     }
+                }
+                    
             }
 
             chars = new StringBuilder();
             nameAttr = null;
 
+        }
+        
+        private void processItem(Item item) throws SAXException {
+            try {
+                caseData.incDiscoveredVolume(item.getLength());
+                fillMissingInfo(item);
+                caseData.addItem(item);
+
+            } catch (InterruptedException e) {
+                throw new SAXException(e);
+            }
         }
         
         private void fillMissingInfo(Item item) {
@@ -770,7 +803,10 @@ public class UfedXmlReader extends DataSourceReader {
             item.setInputStreamFactory(null);
             if (path == null)
                 return;
-            path = normalizePaths(path);
+            String ufedId = item.getMetadata().get(UFED_ID);
+            if(ufedId != null) {
+                ufdrPathToUfedId.put(path, ufedId);
+            }
             if (ufdrFile == null) {
                 File file = new File(root, path);
                 String relativePath = Util.getRelativePath(output, file);
@@ -806,11 +842,16 @@ public class UfedXmlReader extends DataSourceReader {
             item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
 
-        private void handleAttachment(Item item) {
+        private String handleAttachment(Item item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if (name != null)
                 updateName(item, name);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
+            String ufedId = null;
+            if(extracted_path != null) {
+                extracted_path = normalizePaths(extracted_path);
+                ufedId = ufdrPathToUfedId.get(extracted_path);
+            }
             setContent(item, extracted_path);
             if (item.getFile() == null)
                 try {
@@ -820,6 +861,7 @@ public class UfedXmlReader extends DataSourceReader {
                 } catch (NumberFormatException e) {
                     // ignore
                 }
+            return ufedId;
         }
 
         private String normalizePaths(String path) {

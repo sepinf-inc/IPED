@@ -951,6 +951,10 @@
     <mime-type type="message/x-skype-attachment">
         <sub-class-of type="message/x-skype-message"/>
     </mime-type>
+    
+    <mime-type type="message/x-ufed-attachment">
+        <sub-class-of type="application/x-ufed-instantmessage"/>
+    </mime-type>
    
 </mime-info>
 
