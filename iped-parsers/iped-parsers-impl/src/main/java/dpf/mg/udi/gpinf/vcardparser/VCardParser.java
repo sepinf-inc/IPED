@@ -38,6 +38,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
+import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
@@ -66,10 +67,6 @@ public class VCardParser extends AbstractParser {
     
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;
-    /**
-     * HTML schema singleton used to amortise the heavy instantiation time.
-     */
-    private static final Schema HTML_SCHEMA = new HTMLSchema();
     
     static {
         TEMPLATE_CFG.setClassForTemplateLoading(VCardParser.class, "");
@@ -107,29 +104,7 @@ public class VCardParser extends AbstractParser {
             }
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
             
-            // this part of the code was adapted from org.apache.tika.parser.html.HtmlParser
-            // Get the HTML mapper from the parse context
-            // Parse the HTML document
-            org.ccil.cowan.tagsoup.Parser parser =
-                    new org.ccil.cowan.tagsoup.Parser();
-
-            // Use schema from context or default
-            Schema schema = context.get(Schema.class, HTML_SCHEMA);
-            // TIKA-528: Reuse share schema to avoid heavy instantiation
-            parser.setProperty(
-                    org.ccil.cowan.tagsoup.Parser.schemaProperty, schema);
-            // TIKA-599: Shared schema is thread-safe only if bogons are ignored
-            parser.setFeature(
-                    org.ccil.cowan.tagsoup.Parser.ignoreBogonsFeature, true);
-            // Ignore extra Whitespaces
-            parser.setFeature(
-                    org.ccil.cowan.tagsoup.Parser.ignorableWhitespaceFeature, true);
-
-            parser.setContentHandler(new XHTMLDowngradeHandler(xhtml));
-            
-            InputSource source = new InputSource(is);
-            source.setEncoding(StandardCharsets.UTF_8.toString());
-            parser.parse(source);
+            new IndentityHtmlParser().parse(is, context, xhtml);
             
         } finally {
             xhtml.endDocument();
@@ -530,75 +505,5 @@ public class VCardParser extends AbstractParser {
             + ".tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}\n" //$NON-NLS-1$
             + ".cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}\n" //$NON-NLS-1$
             + "</style>\n"; //$NON-NLS-1$
-    
-    /**
-     * Content handler decorator that downgrades XHTML elements to
-     * old-style HTML elements before passing them on to the decorated
-     * content handler. This downgrading consists of dropping all namespaces
-     * (and namespaced attributes) and uppercasing all element names.
-     * Used by the {@link HtmlParser} to make all incoming HTML look the same.
-     * 
-     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler with some adjusts:
-     *  - drop HTML elements
-     *  - drop BODY elements
-     *  - drop HEAD elements
-     */ 
-    private static class XHTMLDowngradeHandler extends ContentHandlerDecorator {
-        private static Set<String> IGNORE_ELEMENTS = new HashSet<>();
-        
-        static {
-            IGNORE_ELEMENTS.add("HTML");
-            IGNORE_ELEMENTS.add("HEAD");
-            IGNORE_ELEMENTS.add("BODY");
-        }
-
-        public XHTMLDowngradeHandler(ContentHandler handler) {
-            super(handler);
-        }
-
-        @Override
-        public void startElement(
-                String uri, String localName, String name, Attributes atts)
-                throws SAXException {
-            String upper = localName.toUpperCase(Locale.ENGLISH);
-            if (IGNORE_ELEMENTS.contains(upper)) {
-                return;
-            }
-
-            AttributesImpl attributes = new AttributesImpl();
-            for (int i = 0; i < atts.getLength(); i++) {
-                String auri = atts.getURI(i);
-                String local = atts.getLocalName(i);
-                String qname = atts.getQName(i);
-                if (XMLConstants.NULL_NS_URI.equals(auri)
-                        && !local.equals(XMLConstants.XMLNS_ATTRIBUTE)
-                        && !qname.startsWith(XMLConstants.XMLNS_ATTRIBUTE + ":")) {
-                    attributes.addAttribute(
-                            auri, local, qname, atts.getType(i), atts.getValue(i));
-                }
-            }
-
-            super.startElement(XMLConstants.NULL_NS_URI, upper, upper, attributes);
-        }
-
-        @Override
-        public void endElement(String uri, String localName, String name)
-                throws SAXException {
-            String upper = localName.toUpperCase(Locale.ENGLISH);
-            if (IGNORE_ELEMENTS.contains(upper)) {
-                return;
-            }
-            super.endElement(XMLConstants.NULL_NS_URI, upper, upper);
-        }
-
-        @Override
-        public void startPrefixMapping(String prefix, String uri) {
-        }
-
-        @Override
-        public void endPrefixMapping(String prefix) {
-        }
-
-    }
 
 }

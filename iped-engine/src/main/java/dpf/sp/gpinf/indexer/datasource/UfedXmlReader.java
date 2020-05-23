@@ -22,6 +22,7 @@ import java.util.TimeZone;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
@@ -635,6 +636,8 @@ public class UfedXmlReader extends DataSourceReader {
                     if (parentItem.getMediaType().toString().contains("email")) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
+                    item.setHash(DigestUtils.md5Hex(item.getPath()));
+                    updateName(item, UFEDChatParser.getChatName(item));
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
@@ -655,6 +658,7 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+                    item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);

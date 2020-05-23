@@ -19,9 +19,7 @@ import iped3.util.ExtraProperties;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class ReportGenerator {
-
-    private static final int MAX_CHAT_SIZE = 5000000;
-
+    
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
@@ -35,8 +33,12 @@ public class ReportGenerator {
     public int getNextMsgNum() {
         return currentMsg;
     }
+    
+    public byte[] generateFullChatHtml(IItemBase c, List<Message> msgs) throws UnsupportedEncodingException {
+        return this.generateNextChatHtml(c, msgs, Integer.MAX_VALUE);
+    }
 
-    public byte[] generateNextChatHtml(IItemBase c, List<Message> msgs) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(IItemBase c, List<Message> msgs, int maxChatSize) throws UnsupportedEncodingException {
         if (lastChat != c) {
             lastChat = c;
             currentMsg = 0;
@@ -67,7 +69,7 @@ public class ReportGenerator {
             boolean isGroup = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 2; //$NON-NLS-1$
             printMessage(out, m, isGroup, c.isDeleted());
 
-            if (currentMsg++ != msgs.size() - 1 && bout.size() >= MAX_CHAT_SIZE) {
+            if (currentMsg++ != msgs.size() - 1 && bout.size() >= maxChatSize) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
@@ -81,7 +83,7 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group, boolean chatDeleted) {
-        out.println("<div class=\"linha\">"); //$NON-NLS-1$
+        out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name;
         if (message.isFromMe()) {
             out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$

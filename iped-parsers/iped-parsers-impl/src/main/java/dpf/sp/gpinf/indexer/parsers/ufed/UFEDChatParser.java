@@ -3,9 +3,6 @@ package dpf.sp.gpinf.indexer.parsers.ufed;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -14,18 +11,17 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -41,7 +37,6 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
-    public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview"); //$NON-NLS-1$
 
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
@@ -61,11 +56,11 @@ public class UFEDChatParser extends AbstractParser {
     public void parse(InputStream inputStream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             IItemBase chat = context.get(IItemBase.class);
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                    new ParsingEmbeddedDocumentExtractor(context));
 
             if (chat == null || searcher == null)
                 return;
@@ -78,6 +73,7 @@ public class UFEDChatParser extends AbstractParser {
             for (IItemBase msg : msgs) {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
                 Message m = new Message();
+                m.setId(msg.getId());
                 m.setData(msg.getMetadata().get(ExtraProperties.MESSAGE_BODY));
                 m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
                 String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
@@ -121,47 +117,32 @@ public class UFEDChatParser extends AbstractParser {
             }
 
             Collections.sort(messages, new MessageComparator());
+            
+            Metadata chatMetadata = new Metadata();
+            storeLinkedHashes(messages, chatMetadata);
 
-            if (extractor.shouldParseEmbedded(metadata)) {
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
-                byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
-                int frag = 0;
-                int firstMsg = 0;
-                while (bytes != null) {
-                    Metadata chatMetadata = new Metadata();
-                    int nextMsg = reportGenerator.getNextMsgNum();
-                    storeLinkedHashes(messages.subList(firstMsg, nextMsg), chatMetadata);
+            String chatName = getChatName(chat);
+            chatMetadata.set(TikaCoreProperties.TITLE, chatName);
 
-                    firstMsg = nextMsg;
-                    byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
-
-                    for (String meta : chat.getMetadata().names()) {
-                        if (meta.contains(ExtraProperties.UFED_META_PREFIX))
-                            for (String val : chat.getMetadata().getValues(meta))
-                                chatMetadata.add(meta, val);
-                    }
-
-                    String chatName = getChatName(chat);
-                    if (frag > 0 || nextBytes != null)
-                        chatName += "_" + frag++; //$NON-NLS-1$
-                    chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                    chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, UFED_CHAT_PREVIEW_MIME.toString());
-
-                    ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                    extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                    bytes = nextBytes;
-                }
+            ReportGenerator reportGenerator = new ReportGenerator(searcher);
+            byte[] bytes = reportGenerator.generateFullChatHtml(chat, messages);
+            if(bytes != null) {
+                ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+                new IndentityHtmlParser().parse(chatStream, context, xhtml);
             }
+            
 
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
 
+        }finally {
+            xhtml.endDocument();
         }
 
     }
     
-    private String getChatName(IItemBase item) {
+    public static String getChatName(IItemBase item) {
         String name = "Chat"; //$NON-NLS-1$
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
         if (source != null)
