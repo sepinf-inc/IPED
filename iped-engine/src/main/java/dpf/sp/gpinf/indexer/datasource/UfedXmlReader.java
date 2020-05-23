@@ -39,7 +39,6 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -279,6 +278,7 @@ public class UfedXmlReader extends DataSourceReader {
         String df2Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS"; //$NON-NLS-1$
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
         DateFormat df2 = new SimpleDateFormat(df2Pattern);
+        DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
@@ -341,6 +341,7 @@ public class UfedXmlReader extends DataSourceReader {
             // TODO remover timezone da exibição? obter da linha de comando?
             df2.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
             df1.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            out.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
         }
 
         @Override
@@ -594,14 +595,14 @@ public class UfedXmlReader extends DataSourceReader {
                         DateFormat df = df1;
                         if (df2Pattern.length() - 2 == value.length())
                             df = df2;
-                        if (type.equals("TimeStamp")) //$NON-NLS-1$
+                        if (type.equals("TimeStamp") && !value.isEmpty()) //$NON-NLS-1$
                             try {
-                                item.getMetadata().add(meta, df.format(df.parse(value)));
+                                item.getMetadata().add(meta, out.format(df.parse(value)));
                             } catch (ParseException e) {
-                                e.printStackTrace();
+                                throw new SAXException(e);
                             }
-                        else
-                            if(item != null) item.getMetadata().add(meta, value);
+                        else if(item != null && !value.isEmpty())
+                            item.getMetadata().add(meta, value);
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -637,7 +638,6 @@ public class UfedXmlReader extends DataSourceReader {
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
-                    item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
