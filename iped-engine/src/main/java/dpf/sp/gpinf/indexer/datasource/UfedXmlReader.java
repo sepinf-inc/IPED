@@ -75,6 +75,7 @@ public class UfedXmlReader extends DataSourceReader {
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
+    boolean ignoreWAChats = false;
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
@@ -192,6 +193,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            ignoreWAChats = true;
 
         } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
@@ -290,6 +292,8 @@ public class UfedXmlReader extends DataSourceReader {
         HashSet<String> ownerParties = new HashSet<>();
         
         String msisdn = null;
+        boolean ignoreItems = false;
+        boolean inChat = false;
 
         private class XmlNode {
             String element;
@@ -453,6 +457,7 @@ public class UfedXmlReader extends DataSourceReader {
                     Item item = new Item();
 
                     String type = atts.getValue("type"); //$NON-NLS-1$
+                    if(type.equals("Chat")) inChat = true;
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
                     String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
@@ -602,8 +607,12 @@ public class UfedXmlReader extends DataSourceReader {
                             } catch (ParseException e) {
                                 throw new SAXException(e);
                             }
-                        else if(item != null && !value.isEmpty())
+                        else if(item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
+                            if(inChat && ignoreWAChats && parentNameAttr.equals("Source") && value.equals("WhatsApp")) {
+                                ignoreItems = true;
+                            }
+                        }
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -739,9 +748,15 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 } else
                     try {
-                        caseData.incDiscoveredVolume(item.getLength());
-                        fillMissingInfo(item);
-                        caseData.addItem(item);
+                        if(!ignoreItems) {
+                            caseData.incDiscoveredVolume(item.getLength());
+                            fillMissingInfo(item);
+                            caseData.addItem(item);
+                        }
+                        if(item.getMediaType() != null && item.getMediaType().getSubtype().endsWith("chat")) {
+                            inChat = false;
+                            ignoreItems = false;
+                        }
 
                     } catch (InterruptedException e) {
                         throw new SAXException(e);
