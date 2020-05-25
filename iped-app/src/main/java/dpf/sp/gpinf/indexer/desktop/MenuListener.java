@@ -378,7 +378,7 @@ public class MenuListener implements ActionListener {
         else if(e.getSource() == menu.navigateToParentChat) {
             int selIdx = App.get().resultsTable.getSelectedRow();
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
-            int parentId = App.get().appCase.getAtomicSource(itemId.getSourceId()).getParentId(itemId.getId());
+            int parentId = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getParentId(itemId.getId());
             if(parentId != -1) {
                 String position = App.get().appCase.getItemByItemId(itemId).getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 position = String.valueOf(Double.valueOf(position).intValue());
