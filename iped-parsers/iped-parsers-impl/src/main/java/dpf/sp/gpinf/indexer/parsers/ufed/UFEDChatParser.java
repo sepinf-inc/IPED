@@ -27,6 +27,7 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class UFEDChatParser extends AbstractParser {
 
@@ -68,11 +69,11 @@ public class UFEDChatParser extends AbstractParser {
                 return;
 
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
-            List<IItemBase> msgs = searcher.search(query);
+            List<IItemBase> items = searcher.search(query);
 
             List<Message> messages = new ArrayList<>();
 
-            for (IItemBase msg : msgs) {
+            for (IItemBase msg : items) {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
                 Message m = new Message();
                 m.setId(msg.getId());
@@ -94,10 +95,11 @@ public class UFEDChatParser extends AbstractParser {
                     m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
                 }
 
-                if (msg.hasChildren()) {
-                    query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
+                if (msg.getMediaType().equals(MediaTypes.UFED_MESSAGE_ATTACH_MIME)) {
+                    query = msg.getMetadata().get(ExtraProperties.REFERENCED_FILE_QUERY);
                     List<IItemBase> attachs = searcher.search(query);
                     if (attachs.size() != 0) {
+                        //TODO get extra attachments, must also update query above
                         IItemBase attach = attachs.get(0);
                         m.setMediaHash(attach.getHash(), false);
                         m.setMediaName(attach.getName());
