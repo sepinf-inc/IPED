@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import ezvcard.property.Address;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class GraphTask extends AbstractTask {
 
@@ -188,6 +189,7 @@ public class GraphTask extends AbstractTask {
                 SkypeParser.MESSAGE_MIME_TYPE.toString().equals(mediaType) ||
                 SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType) ||
                 SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType) ||
+                MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType) ||
                 "application/x-ufed-instantmessage".equals(mediaType)) {
             return "message";
         }

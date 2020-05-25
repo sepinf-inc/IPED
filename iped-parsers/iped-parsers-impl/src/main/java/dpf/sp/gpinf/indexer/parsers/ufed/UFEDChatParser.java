@@ -40,6 +40,8 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
+    
+    public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME);
 
@@ -74,7 +76,10 @@ public class UFEDChatParser extends AbstractParser {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
                 Message m = new Message();
                 m.setId(msg.getId());
-                m.setData(msg.getMetadata().get(ExtraProperties.MESSAGE_BODY));
+                for(String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
+                    if(!body.startsWith(ATTACHED_MEDIA_MSG))
+                        m.setData(body);
+                }
                 m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
                 String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
                 if (str != null) {

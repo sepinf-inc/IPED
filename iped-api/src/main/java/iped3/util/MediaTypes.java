@@ -8,6 +8,7 @@ public class MediaTypes {
     
     public static final MediaType METADATA_ENTRY = MediaType.application("x-metadata-entry"); //$NON-NLS-1$
     public static final MediaType UFED_EMAIL_MIME = MediaType.parse("message/x-ufed-email"); //$NON-NLS-1$
+    public static final MediaType UFED_MESSAGE_ATTACH_MIME = MediaType.parse("message/x-ufed-attachment"); //$NON-NLS-1$
     
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
     

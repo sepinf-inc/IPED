@@ -16,6 +16,7 @@ import dpf.sp.gpinf.indexer.util.FileContentSource;
 import iped3.IItem;
 import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class ReferencedFileViewer extends Viewer{
     
@@ -45,7 +46,8 @@ public class ReferencedFileViewer extends Viewer{
     @Override
     public boolean isSupportedType(String contentType) {
         return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType) ||
-                SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType);
+                SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType) ||
+                MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }
 
     @Override
