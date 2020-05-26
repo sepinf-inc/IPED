@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -208,30 +210,32 @@ public abstract class AbstractTranscriptTask extends AbstractTask{
     }
     
     protected File getWavFile(IItem evidence) throws IOException, InterruptedException {
-        if(ffmpegTested && !ffmpegDetected) {
-            return null;
-        }
         File input = evidence.getTempFile();
         File tmpFile = File.createTempFile("iped", ".wav");
-        tmpFile.delete();
+        Files.delete(tmpFile.toPath());
         ProcessBuilder pb = new ProcessBuilder();
         String[] cmd = convertCmd.split(" ");
         if(SystemUtils.IS_OS_WINDOWS) {
             cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + VideoThumbTask.mplayerWin);
         }
         for(int i = 0; i < cmd.length; i++) {
+            if(SystemUtils.IS_OS_WINDOWS) {
+                cmd[i] = cmd[i].replace("$OUTPUT", "\\\"$OUTPUT\\\"");
+            }
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
             cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getAbsolutePath());
         }
         pb.command(cmd);
         pb.redirectErrorStream(true);
         Process p = pb.start();
-        IOUtil.loadInputStream(p.getInputStream());
+        byte[] out = IOUtil.loadInputStream(p.getInputStream());
         int exit = p.waitFor();
         if(exit != 0) {
             tmpFile.delete();
-            LOGGER.warn("Error converting to wav {}", evidence.getPath());
+            LOGGER.warn("Error converting to wav {} {}", evidence.getPath(), new String(out, StandardCharsets.UTF_8));
             return null;
+        }else {
+            LOGGER.debug(new String(out, StandardCharsets.UTF_8));
         }
         return tmpFile;
     }
@@ -258,20 +262,14 @@ public abstract class AbstractTranscriptTask extends AbstractTask{
             return;
         }
         
-        File tempWav = null, file;
-        if(evidence.getMediaType().equals(wav)) {
-            file = evidence.getTempFile();
-        }else {
-            tempWav = getWavFile(evidence);
-            if(tempWav == null) {
-                return;
-            }
-            file = tempWav;
+        File tempWav = getWavFile(evidence);
+        if(tempWav == null) {
+            return;
         }
         
         try {
             this.evidence = evidence;
-            TextAndScore result = transcribeWav(file);
+            TextAndScore result = transcribeWav(tempWav);
             if(result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
