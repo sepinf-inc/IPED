@@ -82,8 +82,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask{
         int tries = 0;
         AtomicBoolean ok = new AtomicBoolean();
         TextAndScore textAndScore = null;
-        while(!ok.get() && tries < 2) {
-            tries++;
+        while(!ok.get() && ++tries <= 3) {
             ok.set(true);
             AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig.fromLanguages(languages);
             AudioConfig audioInput = AudioConfig.fromWavFileInput(tmpFile.getAbsolutePath());
