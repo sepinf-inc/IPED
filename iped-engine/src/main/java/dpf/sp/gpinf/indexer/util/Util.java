@@ -193,6 +193,15 @@ public class Util {
         }
         return result.toString();
     }
+    
+    public static String getNameWithTrueExt(IItem item) {
+        String ext = item.getTypeExt();
+        String name = item.getName();
+        if(ext == null) return name;
+        ext = "." + ext;
+        if(name.endsWith(ext)) return name;
+        else return name + ext;
+    }
 
     public static String concat(String filename, int num) {
         int extIndex = filename.lastIndexOf('.');
