@@ -188,7 +188,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultSelectedColor;
     private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
-    MenuClass menu;
     JPanel topPanel;
     JPanel multiFilterAlert;
     boolean disposicaoVertical = false;
@@ -265,6 +264,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public Manager getProcessingManager() {
         return processingManager;
+    }
+    
+    public MenuClass getContextMenu() {
+        return new MenuClass();
     }
 
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
@@ -497,9 +500,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         
-        if (AppGraphAnalytics.isAppDbPresent() || isMultiCase) {
-            appGraphAnalytics = new AppGraphAnalytics();
-        }
+        appGraphAnalytics = new AppGraphAnalytics();
 
         hitsTable = new HitsTable(appSearchParams.hitsModel);
         appSearchParams.hitsTable = hitsTable;

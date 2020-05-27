@@ -142,7 +142,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             ExternalFileOpen.open(docId);
 
         } else if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+            App.get().getContextMenu().show((Component) evt.getSource(), evt.getX(), evt.getY());
 
         } else {
             processSelectedFile();
@@ -167,7 +167,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void mousePressed(MouseEvent evt) {
         if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+            App.get().getContextMenu().show((Component) evt.getSource(), evt.getX(), evt.getY());
 
         }
     }

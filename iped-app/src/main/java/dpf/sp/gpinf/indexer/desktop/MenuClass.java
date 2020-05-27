@@ -213,12 +213,11 @@ public class MenuClass extends JPopupMenu {
         openViewfile.addActionListener(menuListener);
         this.add(openViewfile);
         
-        if (AppGraphAnalytics.isAppDbPresent()) {
-            this.addSeparator();
-            addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-            addToGraph.addActionListener(menuListener);
-            this.add(addToGraph);
-        }
+        this.addSeparator();
+        addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled());
+        addToGraph.addActionListener(menuListener);
+        this.add(addToGraph);
         
         this.addSeparator();
 

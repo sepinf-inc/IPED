@@ -39,7 +39,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
       app.setEnabled(false);
       List<IPEDSource> cases = App.get().appCase.getAtomicSources();
       if(cases.size() == 1) {
-          loaded = initGraphService(AppGraphAnalytics.getAppDBPath());
+          loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_PATH));
       }else {
           String caseNames = cases.stream().map(c -> c.getCaseDir().getName()).sorted().collect(Collectors.joining("-"));
           String hash = DigestUtils.md5Hex(caseNames);

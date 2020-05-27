@@ -158,7 +158,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     @Override
     public void done() {
         CategoryTreeModel.install();
-        App.get().menu = new MenuClass();
         App.get().filterManager.loadFilters();
         MarcadoresController.get().atualizarGUIandHistory();
 

@@ -58,25 +58,27 @@ public class MenuListener implements ActionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
-    JFileChooser fileChooser = new JFileChooser();
-    FileFilter defaultFilter = fileChooser.getFileFilter(), csvFilter = new Filtro();
-    MenuClass menu;
     static String CSV = ".csv"; //$NON-NLS-1$
+    static JFileChooser fileChooser;
+    
+    FileFilter defaultFilter, csvFilter = new Filtro();
+    MenuClass menu;
 
     public MenuListener(MenuClass menu) {
         this.menu = menu;
+    }
+    
+    private void setupFileChooser() {
+        if(fileChooser != null) return;
+        fileChooser = new JFileChooser();
+        defaultFilter = fileChooser.getFileFilter();
         File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
         fileChooser.setCurrentDirectory(moduleDir.getParentFile());
 
-        /*
-         * [Triage] Se existe o diretório padrão de dados exportados, como o
-         * /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório
-         */
         File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
-
     }
 
     private class Filtro extends FileFilter {
@@ -162,6 +164,7 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.exportarSelecionados) {
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -188,7 +191,7 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-
+            setupFileChooser();
             fileChooser.setFileFilter(csvFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -209,6 +212,7 @@ public class MenuListener implements ActionListener {
                 }
 
             }
+            setupFileChooser();
             fileChooser.setFileFilter(csvFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -228,6 +232,7 @@ public class MenuListener implements ActionListener {
                     }
                 }
             }
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -244,7 +249,7 @@ public class MenuListener implements ActionListener {
                     }
                 }
             }
-
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
@@ -254,6 +259,7 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.importarPalavras) {
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {

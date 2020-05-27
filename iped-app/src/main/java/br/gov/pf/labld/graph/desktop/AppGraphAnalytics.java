@@ -56,7 +56,6 @@ import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
@@ -149,14 +148,6 @@ public class AppGraphAnalytics extends JPanel {
 
   public void initGraphService() {
     new LoadGraphDatabaseWorker(this).execute();
-  }
-
-  public static File getAppDBPath() {
-    return new File(Configuration.getInstance().appRoot, GraphTask.DB_PATH);
-  }
-
-  public static boolean isAppDbPresent() {
-    return getAppDBPath().exists();
   }
 
   public void addEvidenceFilesToGraph(Collection<ItemId> items) {
