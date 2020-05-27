@@ -467,13 +467,16 @@ public class AppGraphAnalytics extends JPanel {
 
       try {
         if(!isEdge) {
-            graphService.getNeighboursWithLabels(labelsOrTypes, nodeId, this, maxNodes);
+            if(labelsOrTypes == null || labelsOrTypes.isEmpty())
+                graphService.getNeighbours(nodeId, this, maxNodes);
+            else
+                graphService.getNeighboursWithLabels(labelsOrTypes, nodeId, this, maxNodes);
         }else {
             graphService.getNeighboursWithRelationships(labelsOrTypes, nodeId, this, maxNodes);
         }
         
       } catch (Exception e) {
-        AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
+        LOGGER.error(e.getMessage(), e);
         throw new RuntimeException(e);
       }
       AppGraphAnalytics.this.graph.addElements(newNodes, newEdges);
