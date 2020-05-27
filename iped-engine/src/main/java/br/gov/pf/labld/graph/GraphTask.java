@@ -57,6 +57,9 @@ public class GraphTask extends AbstractTask {
 
   public static final String CONFIG_PATH = "GraphConfig.json";
   
+  public static final String RELATIONSHIP_ID = "relId";
+  public static final String RELATIONSHIP_SOURCE = "dataSource";
+  
   private Pattern ignoreEmailChars = Pattern.compile("[<>'\";]");
   
   //TODO externalize to config file
@@ -86,8 +89,7 @@ public class GraphTask extends AbstractTask {
       configuration = loadConfiguration(confDir);
 
       if (graphFileWriter == null) {
-          graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH), "iped",
-            configuration.getDefaultEntity());
+          graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH), configuration.getDefaultEntity());
       }
       
       CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -125,7 +127,7 @@ public class GraphTask extends AbstractTask {
       File graphDbOutput = new File(output, GraphTask.DB_PATH);
       File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
       GraphGenerator graphGenerator = new GraphGenerator();
-      graphGenerator.generate(graphDbGenerated, graphDbOutput);
+      graphGenerator.generate(graphDbOutput, graphDbGenerated);
   }
 
   @Override
@@ -361,7 +363,8 @@ public class GraphTask extends AbstractTask {
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
-        relProps.put("relId", evidence.getId());
+        relProps.put(RELATIONSHIP_ID, evidence.getId());
+        relProps.put(RELATIONSHIP_SOURCE, evidence.getDataSource().getUUID());
         
         List<String> recipients = new ArrayList<>();
         recipients.addAll(Arrays.asList(metadata.getValues(Message.MESSAGE_TO)));
@@ -524,7 +527,8 @@ public class GraphTask extends AbstractTask {
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
-        relProps.put("relId", item.getId());
+        relProps.put(RELATIONSHIP_ID, item.getId());
+        relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
         
         NodeValues nv2 = writePersonNode(item, null);
         
@@ -562,7 +566,8 @@ public class GraphTask extends AbstractTask {
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
-        relProps.put("relId", item.getId());
+        relProps.put(RELATIONSHIP_ID, item.getId());
+        relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
         
         graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nodeProps);
@@ -615,7 +620,8 @@ public class GraphTask extends AbstractTask {
       RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
       
       Map<String, Object> relProps = new HashMap<>();
-      relProps.put("relId", evidence.getId());
+      relProps.put(RELATIONSHIP_ID, evidence.getId());
+      relProps.put(RELATIONSHIP_SOURCE, evidence.getDataSource().getUUID());
       
       Set<String> controlSet = new HashSet<>();
       for (Object match : matches) {

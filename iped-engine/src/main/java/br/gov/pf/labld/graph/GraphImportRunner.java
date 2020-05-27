@@ -12,7 +12,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -29,20 +28,29 @@ public class GraphImportRunner {
 
   public static final String ARGS_FILE_NAME = "import-tool-args";
 
-  private File root;
+  private File[] inputs;
+  private ImportListener listener;
 
-  public GraphImportRunner(File root) {
+  public GraphImportRunner(ImportListener listener, File... inputFolders) {
     super();
-    this.root = root;
+    this.inputs = inputFolders;
+    this.listener = listener;
+  }
+  
+  public static interface ImportListener{
+      
+      public void output(String line);
   }
 
   private class InputReader implements Runnable {
 
     private InputStream in;
+    private ImportListener listener;
 
-    public InputReader(InputStream in) {
+    public InputReader(InputStream in, ImportListener listener) {
       super();
       this.in = in;
+      this.listener = listener;
     }
 
     @Override
@@ -51,6 +59,7 @@ public class GraphImportRunner {
       String line = null;
       try {
         while ((line = reader.readLine()) != null) {
+          if(listener != null) listener.output(line);
           LOGGER.info(line);
         }
       } catch (IOException e) {
@@ -79,11 +88,11 @@ public class GraphImportRunner {
     LOGGER.info("Running " + args.stream().collect(Collectors.joining(" ")));
 
     ProcessBuilder processBuilder = new ProcessBuilder(args);
+    processBuilder.redirectErrorStream(true);
     Process process = processBuilder.start();
     try {
-      executorService = Executors.newFixedThreadPool(2);
-      executorService.submit(new InputReader(process.getErrorStream()));
-      executorService.submit(new InputReader(process.getInputStream()));
+      executorService = Executors.newFixedThreadPool(1);
+      executorService.submit(new InputReader(process.getInputStream(), listener));
       int result = process.waitFor();
       if (result != 0) {
         throw new RuntimeException("Could not import graph database.");
@@ -99,7 +108,7 @@ public class GraphImportRunner {
   }
 
   public File writeArgsFile(File databaseDir, String dbName, boolean highIO) throws IOException {
-    File file = new File(root, ARGS_FILE_NAME + ".txt");
+    File file = File.createTempFile(ARGS_FILE_NAME, ".txt");
     try (BufferedWriter writer = new BufferedWriter(
         new OutputStreamWriter(new FileOutputStream(file), Charset.forName("utf-8")))) {
 
@@ -117,9 +126,11 @@ public class GraphImportRunner {
       writer.write("--ignore-empty-strings true\r\n");
       writer.write("--skip-duplicate-nodes true\r\n");
 
-      File[] argsFiles = root.listFiles(new ArgsFileFilter());
-      for (File argFile : argsFiles) {
-        writer.write(IOUtils.toString(argFile.toURI(), Charset.forName("utf-8")));
+      for(File input : inputs) {
+          File[] argsFiles = input.listFiles(new ArgsFileFilter());
+          for (File argFile : argsFiles) {
+            writer.write(IOUtils.toString(argFile.toURI(), Charset.forName("utf-8")));
+          }
       }
     }
     return file;
@@ -129,7 +140,7 @@ public class GraphImportRunner {
 
     @Override
     public boolean accept(File pathname) {
-      return pathname.getName().startsWith(ARGS_FILE_NAME);
+      return pathname.getName().startsWith(ARGS_FILE_NAME) && !pathname.getName().equals(ARGS_FILE_NAME + ".txt");
     }
 
   }

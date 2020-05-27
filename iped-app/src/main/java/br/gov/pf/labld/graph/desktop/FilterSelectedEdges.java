@@ -2,8 +2,11 @@ package br.gov.pf.labld.graph.desktop;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.kharon.Edge;
@@ -117,12 +120,20 @@ public class FilterSelectedEdges {
         }
     }
     
-    public Collection<Integer> getItemIdsOfSelectedEdges(){
-        ArrayList<Integer> ids = new ArrayList<>();
+    public Map<String, List<Integer>> getItemIdsOfSelectedEdges(){
+        HashMap<String, List<Integer>> map = new HashMap<>();
         for(Edge edge : selectedEdges) {
-            ids.add(Integer.parseInt(edge.getLabel()));
+            String[] values = edge.getLabel().split("_");
+            String uuid = values[0];
+            String id = values[1];
+            List<Integer> ids = map.get(uuid);
+            if(ids == null) {
+                ids = new ArrayList<>();
+                map.put(uuid, ids);
+            }
+            ids.add(Integer.parseInt(id));
         }
-        return ids;
+        return map;
     }
     
 

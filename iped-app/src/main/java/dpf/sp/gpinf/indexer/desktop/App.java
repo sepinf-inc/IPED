@@ -206,7 +206,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private int zoomLevel;
 
-    File casesPathFile;
+    public File casesPathFile;
     boolean isMultiCase;
     public JLabel status;
 
@@ -497,7 +497,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         
-        if (AppGraphAnalytics.isAppDbPresent()) {
+        if (AppGraphAnalytics.isAppDbPresent() || isMultiCase) {
             appGraphAnalytics = new AppGraphAnalytics();
         }
 

@@ -16,6 +16,7 @@ import org.neo4j.graphdb.Transaction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -28,13 +29,18 @@ public class GraphGenerator {
   private static final Pattern HASH_LIKE_CONTACT = Pattern
       .compile("[a-zA-Z0-9]{8}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{4}-[a-zA-Z0-9]{12}");
 
-  public void generate(File input, File output) throws IOException {
-    boolean imported = importDB(input, output);
-    moveGeneratedFiles(input, output);
+  public boolean generate(File output, File... input) throws IOException {
+      return this.generate(null, output, input);
+  }
+  
+  public boolean generate(ImportListener listener, File output, File... input) throws IOException {
+    boolean imported = importDB(listener, output, input);
+    //moveGeneratedFiles(input, output);
 
     if (imported) {
       runPostImportOps(output);
     }
+    return imported;
   }
 
   private void runPostImportOps(File output) throws IOException {
@@ -54,11 +60,11 @@ public class GraphGenerator {
     }
   }
 
-  private boolean importDB(File input, File output) {
+  private boolean importDB(ImportListener listener, File output, File... input) {
     try {
       LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
               .iterator().next();
-      GraphImportRunner runner = new GraphImportRunner(input);
+      GraphImportRunner runner = new GraphImportRunner(listener, input);
       runner.run(output, GraphTask.DB_NAME, localConfig.isOutputOnSSD());
       return true;
     } catch (Exception e) {
@@ -78,14 +84,14 @@ public class GraphGenerator {
 
   public void runPostGenerationStatements(GraphService graphService, GraphConfiguration config) {
     long start = System.currentTimeMillis();
-    System.out.println("Running post generation statements.");
+    LOGGER.info("Running post generation statements.");
     GraphDatabaseService graphDB = graphService.getGraphDb();
     Transaction tx = null;
     try {
       tx = graphDB.beginTx();
 
       for (String stmt : config.getPostGenerationStatements()) {
-        System.out.println("Running " + stmt);
+        LOGGER.info("Running {}", stmt);
         graphDB.execute(stmt);
       }
 
@@ -93,7 +99,7 @@ public class GraphGenerator {
     } finally {
       tx.close();
     }
-    System.out.println("Finished running post generation statements in " + (System.currentTimeMillis() - start) + "ms.");
+    LOGGER.info("Finished running post generation statements in " + (System.currentTimeMillis() - start) + "ms.");
   }
 
   public static void main(String[] args) throws Exception {
@@ -137,7 +143,7 @@ public class GraphGenerator {
 
       int count = 0;
 
-      System.out.println("Grouping " + label + " contacts.");
+      LOGGER.info("Grouping " + label + " contacts.");
       
       while (result.hasNext()) {
         Map<String, Object> cols = result.next();
@@ -183,12 +189,12 @@ public class GraphGenerator {
         count++;
 
         if (count % 1000 == 0) {
-          System.out.println("Grouped " + count + " " + label + " contacts.");
+            LOGGER.info("Grouped " + count + " " + label + " contacts.");
         }
       }
 
       tx.success();
-      System.out.println("Grouped " + count + " " + label + " contacts.");
+      LOGGER.info("Grouped " + count + " " + label + " contacts.");
     } finally {
       tx.close();
     }

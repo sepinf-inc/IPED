@@ -18,6 +18,7 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -48,6 +49,8 @@ public class GraphFileWriter implements Closeable, Flushable {
     private static final String NODE_CSV_PREFIX = "nodes";
     private static final String REL_CSV_PREFIX = "relationships";
     private static final String HEADER_CSV_STR = "_headers_";
+    private static final String SUFFIX = "iped";
+    private static final String ARG_FILE_NAME = GraphImportRunner.ARGS_FILE_NAME + "-" + SUFFIX + ".txt";
 
   private Map<String, CSVWriter> nodeWriters = new HashMap<>();
   private Map<String, CSVWriter> relationshipWriters = new HashMap<>();
@@ -56,16 +59,16 @@ public class GraphFileWriter implements Closeable, Flushable {
   private File replaceFile;
 
   private File root;
-  private String suffix;
 
-  public GraphFileWriter(File root, String suffix, String defaultEntity) {
+  public GraphFileWriter(File root, String defaultEntity) {
     super();
     this.root = root;
-    this.suffix = suffix;
     root.mkdirs();
     initReplaceWriter(root);
-    configureDefaultEntityFields(defaultEntity);
-    openExistingCSVs();
+    if(defaultEntity != null) {
+        configureDefaultEntityFields(defaultEntity);
+    }
+    openExistingCSVs(root);
   }
 
   private void initReplaceWriter(File root) {
@@ -100,7 +103,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   }
   
-  private void openExistingCSVs() {
+  private void openExistingCSVs(File root) {
       try {
           File[] files = root.listFiles();
           if(files != null) {
@@ -121,7 +124,7 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
 
   private CSVWriter openNodeWriter(Label... labels) throws IOException {
-    CSVWriter writer = new CSVWriter(root, NODE_CSV_PREFIX, labels, suffix);
+    CSVWriter writer = new CSVWriter(root, NODE_CSV_PREFIX, labels, SUFFIX);
 
     writer.fieldPositions.addAll(Arrays.asList("nodeId", "label"));
     writer.fieldTypes.put("nodeId", "ID");
@@ -131,13 +134,14 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
 
   private CSVWriter openRelationshipWriter(RelationshipType type) throws IOException {
-    CSVWriter writer = new CSVWriter(root, REL_CSV_PREFIX, type.name(), suffix);
+    CSVWriter writer = new CSVWriter(root, REL_CSV_PREFIX, type.name(), SUFFIX);
 
-    writer.fieldPositions.addAll(Arrays.asList("start", "end", "type", "relId"));
+    writer.fieldPositions.addAll(Arrays.asList("start", "end", "type", GraphTask.RELATIONSHIP_SOURCE, GraphTask.RELATIONSHIP_ID));
     writer.fieldTypes.put("start", "START_ID");
     writer.fieldTypes.put("end", "END_ID");
     writer.fieldTypes.put("type", "TYPE");
-    writer.fieldTypes.put("relId", "string");
+    writer.fieldTypes.put(GraphTask.RELATIONSHIP_SOURCE, "string");
+    writer.fieldTypes.put(GraphTask.RELATIONSHIP_ID, "string");
     return writer;
   }
 
@@ -161,7 +165,7 @@ public class GraphFileWriter implements Closeable, Flushable {
   }
 
   public void writeArgsFile() throws IOException {
-    File file = new File(root, GraphImportRunner.ARGS_FILE_NAME + "-" + suffix + ".txt");
+    File file = new File(root, ARG_FILE_NAME);
     file.delete();
     try (BufferedWriter writer = new BufferedWriter(
         new OutputStreamWriter(new FileOutputStream(file), Charset.forName("utf-8")))) {
@@ -289,6 +293,38 @@ public class GraphFileWriter implements Closeable, Flushable {
             }
         }
     }
+  }
+  
+  //TODO improve to merge duplicate nodes instead of just skip
+  public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
+      int num = -1;
+      HashSet<String> ids = new HashSet<>();
+      for(File parent : csvParents) {
+          num++;
+          for(File input : parent.listFiles()) {
+              File dest = new File(output, num + "/" + input.getName());
+              dest.getParentFile().mkdirs();
+              if(input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv")){
+                  try(BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                          BufferedReader reader = Files.newBufferedReader(input.toPath())){
+                      String line = null;
+                      while((line = reader.readLine()) != null) {
+                          String id = line.substring(0, line.indexOf(','));
+                          if(ids.add(id)) {
+                              writer.write(line);
+                              writer.write("\r\n");
+                          }
+                      }
+                  }
+              }else {
+                  Files.copy(input.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+              }
+          }
+          File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
+          String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
+          args = args.replace(parent.getAbsolutePath(), importArgs.getParentFile().getAbsolutePath());
+          Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+      }
   }
 
   public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,

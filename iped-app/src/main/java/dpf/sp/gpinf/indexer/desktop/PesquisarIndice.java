@@ -22,18 +22,21 @@ import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -136,14 +139,22 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             }
         }
         
-        Collection<Integer> ids = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
-        if(!ids.isEmpty()) {
+        Map<String, List<Integer>> uuidToId = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+        if(!uuidToId.isEmpty()) {
             BooleanQuery boolQuery = new BooleanQuery();
-            BooleanQuery idsQuery = new BooleanQuery();
-            for(Integer id : ids) {
-                idsQuery.add(NumericRangeQuery.newIntRange(BasicProps.ID, id, id, true, true), Occur.SHOULD);
+            BooleanQuery filterQuery = new BooleanQuery();
+            for(String uuid : uuidToId.keySet()) {
+                BooleanQuery uuidANDid = new BooleanQuery();
+                uuidANDid.add(new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid)), Occur.MUST);
+                BooleanQuery idsQuery = new BooleanQuery();
+                for(Integer id : uuidToId.get(uuid)) {
+                    idsQuery.add(NumericRangeQuery.newIntRange(BasicProps.ID, id, id, true, true), Occur.SHOULD);
+                }
+                uuidANDid.add(idsQuery, Occur.MUST);
+                filterQuery.add(uuidANDid, Occur.SHOULD);
             }
-            boolQuery.add(idsQuery, Occur.MUST);
+            
+            boolQuery.add(filterQuery, Occur.MUST);
             boolQuery.add(result, Occur.MUST);
             result = boolQuery;
             numFilters++;

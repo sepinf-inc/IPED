@@ -145,11 +145,9 @@ public class AppGraphAnalytics extends JPanel {
     this.toolBar = new GraphToolBar(this);
     this.graphPane.getHistory().addListener(toolBar);
     add(this.toolBar, BorderLayout.NORTH);
-
-    initGraphService();
   }
 
-  private void initGraphService() {
+  public void initGraphService() {
     new LoadGraphDatabaseWorker(this).execute();
   }
 
@@ -377,9 +375,11 @@ public class AppGraphAnalytics extends JPanel {
     }
   }
 
-  public void setDatabaseLoaded(boolean b) {
-    this.databaseLoaded = true;
-    new ShowMoreConnectedNode().execute();
+  public void setDatabaseLoaded(boolean loaded) {
+    this.databaseLoaded = loaded;
+    if(loaded){
+        new ShowMoreConnectedNode().execute();
+    }
   }
 
   public boolean isDatabaseLoaded() {
@@ -554,7 +554,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel((String)relationship.getProperty("relId"));
+        setEdgeLabel(edge, relationship);
         // AppGraphAnalytics.this.graph.addEdge(edge);
         newEdges.add(edge);
       }
@@ -598,7 +598,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel((String)relationship.getProperty("relId"));
+        setEdgeLabel(edge, relationship);
         this.newEdges.add(edge);
       }
       return true;
@@ -748,7 +748,7 @@ public class AppGraphAnalytics extends JPanel {
         String startNodeId = Long.toString(relationship.getStartNodeId());
         String endNodeId = Long.toString(relationship.getEndNodeId());
         Edge edge = new Edge(id, startNodeId, endNodeId);
-        edge.setLabel((String)relationship.getProperty("relId"));
+        setEdgeLabel(edge, relationship);
         AppGraphAnalytics.this.graph.addEdge(edge);
         newEdges.add(edge);
       }
@@ -836,7 +836,7 @@ public class AppGraphAnalytics extends JPanel {
           boolean inNewNodes = graphElements.containsNode(startNodeId) && graphElements.containsNode(endNodeId);
           if (inGraph || inNewNodes) {
             Edge edge = new Edge(edgeId, startNodeId, endNodeId);
-            edge.setLabel((String)relationship.getProperty("relId"));
+            setEdgeLabel(edge, relationship);
             graphElements.add(edge);
           }
         }
@@ -865,12 +865,18 @@ public class AppGraphAnalytics extends JPanel {
       String endNodeId = Long.toString(relationship.getEndNodeId());
       if (this.containsNode(startNodeId) && this.containsNode(endNodeId)) {
         Edge edge = new Edge(edgeId, startNodeId, endNodeId);
-        edge.setLabel((String)relationship.getProperty("relId"));
+        setEdgeLabel(edge, relationship);
         this.graph.addEdge(edge);
         return edge;
       }
     }
     return null;
+  }
+  
+  private void setEdgeLabel(Edge edge, Relationship relationship) {
+      String sourceUUID = (String)relationship.getProperty(GraphTask.RELATIONSHIP_SOURCE);
+      String relId = (String)relationship.getProperty(GraphTask.RELATIONSHIP_ID);
+      edge.setLabel(sourceUUID + "_" + relId);
   }
 
   public String getContextMenuNodeId() {

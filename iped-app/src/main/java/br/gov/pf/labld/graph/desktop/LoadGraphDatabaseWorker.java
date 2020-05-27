@@ -1,14 +1,34 @@
 package br.gov.pf.labld.graph.desktop;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.util.List;
+import java.util.stream.Collectors;
+
+import javax.swing.JOptionPane;
+import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
+import br.gov.pf.labld.graph.GraphFileWriter;
+import br.gov.pf.labld.graph.GraphGenerator;
+import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
+import br.gov.pf.labld.graph.GraphTask;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped3.desktop.CancelableWorker;
+import iped3.desktop.ProgressDialog;
 
 class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
-
+  
   private final AppGraphAnalytics app;
+  private volatile boolean loaded = false;
 
   LoadGraphDatabaseWorker(AppGraphAnalytics appGraphAnalytics) {
     app = appGraphAnalytics;
@@ -16,21 +36,93 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 
   @Override
   protected Void doInBackground() throws Exception {
-    initGraphService();
-    return null;
+      app.setEnabled(false);
+      List<IPEDSource> cases = App.get().appCase.getAtomicSources();
+      if(cases.size() == 1) {
+          loaded = initGraphService(AppGraphAnalytics.getAppDBPath());
+      }else {
+          String caseNames = cases.stream().map(c -> c.getCaseDir().getName()).sorted().collect(Collectors.joining("-"));
+          String hash = DigestUtils.md5Hex(caseNames);
+          File multiCaseGraphPath = new File(App.get().casesPathFile.getParentFile(), "iped-graph/multicase-" + hash + "/database");
+          createMultiCaseGraph(cases, multiCaseGraphPath);
+          if(multiCaseGraphPath.exists()) {
+              loaded = initGraphService(multiCaseGraphPath);
+          }
+      }
+      return null;
+  }
+  
+  private void createMultiCaseGraph(List<IPEDSource> cases, File graphDir) {
+      if(!graphDir.exists()) {
+          int option = JOptionPane.showConfirmDialog(App.get(), Messages.getString("GraphAnalysis.CreateMultiGraph"));
+          if(option != JOptionPane.YES_OPTION) return;
+          try {
+              if(graphDir.getParentFile().exists())
+                  IOUtil.deleteDirectory(graphDir.getParentFile(), false);
+              File tempDir = new File(graphDir.getAbsolutePath() + "_temp");
+              ImportWorker importer = new ImportWorker(cases, tempDir);
+              importer.execute();
+              if(importer.get()) {
+                  Files.move(tempDir.toPath(), graphDir.toPath());
+              }
+              SwingUtilities.invokeLater(new Runnable() {
+                  public void run() {
+                      JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
+                  }
+              });
+          }catch(Exception e) {
+              e.printStackTrace();
+              JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphError"), "Error", JOptionPane.ERROR_MESSAGE);
+          }
+      }
+  }
+  
+  private class ImportWorker extends CancelableWorker<Boolean, Void> implements ImportListener{
+      
+    List<IPEDSource> cases;
+    File graphOut;
+    ProgressDialog progress;
+
+    private ImportWorker(List<IPEDSource> cases, File graphOut) {
+        this.cases = cases;
+        this.graphOut = graphOut;
+        this.progress = new ProgressDialog(App.get(), this);
+        progress.setIndeterminate(true);
+        progress.setExtraWidth(100);
+    }
+
+    @Override
+    public void output(String line) {
+        if(!line.trim().isEmpty())
+            progress.setNote(line.trim());
+        else
+            progress.setNote("Importing...");
+    }
+
+    @Override
+    protected Boolean doInBackground() throws IOException {
+        try {
+            List<File> csvParents = cases.stream().map(c -> new File(c.getModuleDir(), GraphTask.GENERATED_PATH)).collect(Collectors.toList());
+            File preparedCSVs = new File(graphOut.getParentFile(), "generated");
+            GraphFileWriter.prepareMultiCaseCSVs(preparedCSVs, csvParents);
+            GraphGenerator graphGenerator = new GraphGenerator();
+            return graphGenerator.generate(this, graphOut, preparedCSVs.listFiles());
+        }finally {
+            progress.close();
+        }
+    }
   }
 
-  private void initGraphService() {
+  private boolean initGraphService(File dbFile) {
     app.setStatus(Messages.getString("GraphAnalysis.Preparing"));
     app.setProgress(50);
-
-    app.setEnabled(false);
 
     final ClassLoader classLoader = this.getClass().getClassLoader();
     Thread.currentThread().setContextClassLoader(classLoader);
     GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
     try {
-      graphService.start(AppGraphAnalytics.getAppDBPath());
+      graphService.start(dbFile);
+      return true;
     } catch (Throwable e) {
       AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
       throw new RuntimeException(e);
@@ -41,7 +133,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
   protected void done() {
     app.setStatus(Messages.getString("GraphAnalysis.Ready"));
     app.setProgress(100);
-    app.setEnabled(true);
-    app.setDatabaseLoaded(true);
+    app.setEnabled(loaded);
+    app.setDatabaseLoaded(loaded);
   }
 }
