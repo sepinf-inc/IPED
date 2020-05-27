@@ -121,12 +121,21 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     Thread.currentThread().setContextClassLoader(classLoader);
     GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
     try {
+      if(!dbFile.canWrite() || !IOUtil.canCreateFile(dbFile)) {
+          dbFile = copyToTempFolder(dbFile);
+      }
       graphService.start(dbFile);
       return true;
     } catch (Throwable e) {
       AppGraphAnalytics.LOGGER.error(e.getMessage(), e);
       throw new RuntimeException(e);
     }
+  }
+  
+  private File copyToTempFolder(File db) throws IOException {
+      File tmpDb = new File(System.getProperty("java.io.tmpdir"), "iped-graph" + db.lastModified());
+      IOUtil.copiaDiretorio(db, tmpDb, true);
+      return tmpDb;
   }
 
   @Override
