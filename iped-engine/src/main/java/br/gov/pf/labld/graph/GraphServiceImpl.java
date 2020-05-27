@@ -189,7 +189,8 @@ public class GraphServiceImpl implements GraphService {
       HashMap<String, Object> parameters = new HashMap<>(1);
       parameters.put("nodeId", nodeId);
       String query = "MATCH (n)-[r:$types]-(m) WHERE ID(n) = $nodeId RETURN m as node, r as edge";
-      query = query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
+      query = relationships.isEmpty() ? query.replace(":$types", "") :
+          query.replace("$types", relationships.stream().collect(Collectors.joining("|:")));
       Result result = graphDB.execute(query, parameters);
       if(maxNodes == -1) {
           emitAllNeighbours(result, listener);
