@@ -42,7 +42,7 @@ import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import ezvcard.property.Address;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
@@ -97,7 +97,11 @@ public class GraphTask extends AbstractTask {
           File graphDbOutput = new File(output, GraphTask.DB_PATH);
           if(graphDbOutput.exists()) {
               //TODO test if LOAD CSV Cypher command is faster than rebuilding all database from scratch with bulk import tool
-              IOUtil.deleteDirectory(graphDbOutput, false);
+              try {
+                  IOUtil.deleteDirectory(graphDbOutput, false);
+              }catch(IOException e) {
+                  throw new IPEDException("Error appending to graph database, currently it can't be in use!");
+              }
           }
       }
     }
