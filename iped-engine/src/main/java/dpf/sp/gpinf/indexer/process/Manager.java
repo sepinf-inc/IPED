@@ -62,6 +62,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -447,6 +448,8 @@ public class Manager {
                     
                     LOGGER.info("Commiting sqlite storages...");
                     ExportFileTask.commitStorage(output);
+                    
+                    ExportCSVTask.commit(output);
                     
                     writer.commit();
                     long end = System.currentTimeMillis() / 1000;
