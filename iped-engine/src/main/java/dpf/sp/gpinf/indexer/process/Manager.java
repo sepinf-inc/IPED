@@ -408,11 +408,12 @@ public class Manager {
             }
 
             if (!someWorkerAlive) {
+                IItemSearcher searcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
+                if(searcher != null) searcher.close();
+                
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
                     
-                    IItemSearcher searcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
-                    if(searcher != null) searcher.close();
                     caseData.putCaseObject(IItemSearcher.class.getName(), new ItemSearcher(output.getParentFile(), writer));
                     
                     someWorkerAlive = true;
