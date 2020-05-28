@@ -75,7 +75,8 @@ public class SkipCommitedTask extends AbstractTask{
         try(IndexReader reader = DirectoryReader.open(worker.writer, true)){
             AtomicReader aReader = SlowCompositeReaderWrapper.wrap(reader);
             SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.PERSISTENT_ID);
-            commitedPersistentIds = new HashValue[persistIds.getValueCount()];
+            int size = persistIds == null ? 0 : persistIds.getValueCount();
+            commitedPersistentIds = new HashValue[size];
             for(int ord = 0; ord < commitedPersistentIds.length; ord++) {
                 String persistentId = persistIds.lookupOrd(ord).utf8ToString();
                 commitedPersistentIds[ord] = new HashValue(persistentId);

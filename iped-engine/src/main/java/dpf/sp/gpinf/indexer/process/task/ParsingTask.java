@@ -111,6 +111,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
     public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
+    
+    private static final int MAX_SUBITEM_DEPTH = 100;
+    private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
     private static boolean expandContainers = false;
     private static boolean enableFileParsing = true;
@@ -462,6 +465,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (!extractEmbedded) {
                 return;
             }
+            
+            Integer depth = (Integer)evidence.getExtraAttribute(SUBITEM_DEPTH);
+            if(depth == null) depth = 0;
+            if(++depth > MAX_SUBITEM_DEPTH) {
+                throw new IOException("Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
             // root has children
             evidence.setHasChildren(true);
