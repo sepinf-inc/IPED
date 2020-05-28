@@ -34,7 +34,6 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.search.IItemSearcher;
 import iped3.sleuthkit.ISleuthKitItem;
 
 /**
@@ -112,13 +111,7 @@ public class IndexTask extends AbstractTask {
                         TikaInputStream tis = evidence.getTikaStream();
                         Metadata metadata = getMetadata(evidence);
                         final ParseContext context = getTikaContext(evidence);
-                        textReader = new ParsingReader(this.autoParser, tis, metadata, context) {
-                            @Override
-                            public void close() throws IOException {
-                                IOUtil.closeQuietly(context.get(IItemSearcher.class));
-                                super.close();
-                            }
-                        };
+                        textReader = new ParsingReader(this.autoParser, tis, metadata, context);
                         ((ParsingReader) textReader).startBackgroundParsing();
 
                     } catch (IOException e) {

@@ -27,6 +27,7 @@ public class ItemSearcher implements IItemSearcher {
     public ItemSearcher(File caseFolder, IndexWriter iw) {
         this.caseFolder = caseFolder;
         this.iw = iw;
+        this.iSource = new IPEDSource(caseFolder, iw);
     }
 
     @Override
@@ -34,9 +35,6 @@ public class ItemSearcher implements IItemSearcher {
 
         List<IItemBase> items = new ArrayList<IItemBase>();
         try {
-            if (iSource == null)
-                iSource = new IPEDSource(caseFolder, iw);
-
             IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
             searcher.setTreeQuery(true);
             searcher.setNoScoring(true);

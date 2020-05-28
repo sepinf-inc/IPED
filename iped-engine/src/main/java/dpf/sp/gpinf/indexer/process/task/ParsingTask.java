@@ -74,7 +74,6 @@ import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
@@ -190,7 +189,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if(ipedsource != null) {
             context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
         }else {
-            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+            context.set(IItemSearcher.class, (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories());
@@ -362,7 +361,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
             metadataToExtraAttribute(evidence);
-            IOUtil.closeQuietly(context.get(IItemSearcher.class));
         }
 
     }

@@ -27,7 +27,6 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
-import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
@@ -148,7 +147,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private void makeHtmlPreview(IItem evidence, File outFile, String mediaType) throws Throwable {
         BufferedOutputStream outStream = null;
-        try (ItemSearcher itemSearcher = new ItemSearcher(output.getParentFile(), worker.writer)) {
+        try {
             final Metadata metadata = new Metadata();
             ParsingTask.fillMetadata(evidence, metadata);
 
@@ -156,6 +155,7 @@ public class MakePreviewTask extends AbstractTask {
             final TikaInputStream tis = evidence.getTikaStream();
 
             final ParseContext context = new ParseContext();
+            IItemSearcher itemSearcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
             context.set(IItemSearcher.class, itemSearcher);
             context.set(IItemBase.class, evidence);
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
