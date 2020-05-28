@@ -116,6 +116,8 @@ public class KFFCarveTask extends BaseCarveTask {
     public void finish() throws Exception {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
+                md5_512 = null;
+                kffCarved.clear();
                 finished.set(true);
                 NumberFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
                 logger.info("Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$

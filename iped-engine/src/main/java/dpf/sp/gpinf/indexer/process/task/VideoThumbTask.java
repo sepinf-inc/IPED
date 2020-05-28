@@ -303,6 +303,7 @@ public class VideoThumbTask extends AbstractTask {
     public void finish() throws Exception {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
+                processedVideos.clear();
                 finished.set(true);
                 Log.info(taskName, "Total videos processed: " + totalProcessed); //$NON-NLS-1$
                 Log.info(taskName, "Total videos failed (MPlayer failed to create thumbs): " + totalFailed); //$NON-NLS-1$

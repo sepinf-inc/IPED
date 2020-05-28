@@ -190,8 +190,10 @@ public class SkipCommitedTask extends AbstractTask{
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-        
+        commitedPersistentIds = null;
+        parentsWithLostSubitems.clear();
+        persistentToIdMap.clear();
+        rootNameToEvidenceUUID.clear();
     }
 
     @Override

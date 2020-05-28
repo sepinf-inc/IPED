@@ -171,6 +171,14 @@ public class KFFTask extends AbstractTask {
             LOGGER.info("Items ignored by hash database lookup: {}", excluded); //$NON-NLS-1$
         }
         excluded = -1;
+        
+        if(db != null) {
+            db.close();
+            db = null;
+        }
+        md5Map = null;
+        sha1Map = null;
+        map = null;
     }
 
     public void importKFF(File kffDir) throws IOException {
