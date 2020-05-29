@@ -63,9 +63,6 @@ public class FolderTreeReader extends DataSourceReader {
 
         rootFile = file;
         evidenceName = getEvidenceName(file);
-        if (evidenceName == null) {
-            evidenceName = file.getName();
-        }
         dataSource = new DataSource(file);
         dataSource.setName(evidenceName);
 

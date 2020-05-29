@@ -187,8 +187,6 @@ public class UfedXmlReader extends DataSourceReader {
             return;
 
         String evidenceName = getEvidenceName(root);
-        if (evidenceName == null)
-            evidenceName = root.getName();
         IDataSource evidenceSource = new DataSource(root);
         evidenceSource.setName(evidenceName);
 

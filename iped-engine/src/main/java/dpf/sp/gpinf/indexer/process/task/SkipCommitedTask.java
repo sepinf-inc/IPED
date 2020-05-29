@@ -26,6 +26,7 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.util.BasicProps;
@@ -42,15 +43,19 @@ public class SkipCommitedTask extends AbstractTask{
     
     public static final String PARENTS_WITH_LOST_SUBITEMS = "PARENTS_WITH_LOST_SUBITEMS";
     
+    public static final String DATASOURCE_NAMES = "CMD_LINE_DATASOURCE_NAMES";
+    
     private static HashValue[] commitedPersistentIds;
     
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
     
     private static Map<HashValue, Long> persistentToIdMap = new HashMap<>();
     
-    private static HashMap<String, String> rootNameToEvidenceUUID = new HashMap<>();
+    private static HashMap<String, String> prevRootNameToEvidenceUUID = new HashMap<>();
     
     private CmdLineArgs args;
+    
+    private boolean firstInit = true;
     
     public static boolean isAlreadyCommited(IItem item) {
         if(commitedPersistentIds == null) {
@@ -63,17 +68,35 @@ public class SkipCommitedTask extends AbstractTask{
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
         
-        args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if(!args.isContinue()) {
+        if(!firstInit) {
             return;
         }
-        
-        if(commitedPersistentIds != null) {
-            return;
-        }
+        firstInit = false;
         
         try(IndexReader reader = DirectoryReader.open(worker.writer, true)){
             AtomicReader aReader = SlowCompositeReaderWrapper.wrap(reader);
+            
+            SortedDocValues evidenceUUIDs = aReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
+            for(int doc = 0; doc < aReader.maxDoc(); doc++) {
+                String uuid = evidenceUUIDs.get(doc).utf8ToString();
+                if(!prevRootNameToEvidenceUUID.containsValue(uuid)) {
+                    Document luceneDoc = aReader.document(doc);
+                    String path = luceneDoc.get(BasicProps.PATH);
+                    prevRootNameToEvidenceUUID.put(getRootName(path), uuid);
+                }
+            }
+            args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            
+            Set<String> evidenceNames = (Set<String>)caseData.getCaseObject(SkipCommitedTask.DATASOURCE_NAMES);
+            for(String name : evidenceNames) {
+                if(!args.isContinue() && prevRootNameToEvidenceUUID.containsKey(name))
+                    throw new IPEDException("Evidence name already exists in case: " + name);
+            }
+            
+            if(!args.isContinue()) {
+                return;
+            }
+            
             SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.PERSISTENT_ID);
             int size = persistIds == null ? 0 : persistIds.getValueCount();
             commitedPersistentIds = new HashValue[size];
@@ -86,7 +109,6 @@ public class SkipCommitedTask extends AbstractTask{
             SortedDocValues persistentParents = aReader.getSortedDocValues(IndexItem.PARENT_PERSISTENT_ID);
             SortedDocValues hasChildValues = aReader.getSortedDocValues(IndexItem.HASCHILD);
             SortedDocValues hasSplittedText = aReader.getSortedDocValues(IndexTask.TEXT_SPLITTED);
-            SortedDocValues evidenceUUIDs = aReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
             NumericDocValues prevParentIds = aReader.getNumericDocValues(IndexItem.PARENTID);
             NumericDocValues prevIds = aReader.getNumericDocValues(IndexItem.ID);
             for(int doc = 0; doc < aReader.maxDoc(); doc++) {
@@ -103,14 +125,6 @@ public class SkipCommitedTask extends AbstractTask{
                     HashValue persistentId = new HashValue(persistIds.get(doc).utf8ToString());
                     persistentToIdMap.put(persistentId, prevIds.get(doc));
                 }
-                
-                //TODO abort processing if user defines 2 evidences with same name
-                String uuid = evidenceUUIDs.get(doc).utf8ToString();
-                if(!rootNameToEvidenceUUID.containsValue(uuid)) {
-                    Document luceneDoc = aReader.document(doc);
-                    String path = luceneDoc.get(BasicProps.PATH);
-                    rootNameToEvidenceUUID.put(getRootPrefix(path), uuid);
-                }
             }
             
             collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_PERSISTENT_ID, ParsingTask.NUM_SUBITEMS);
@@ -124,7 +138,7 @@ public class SkipCommitedTask extends AbstractTask{
         
     }
     
-    private static String getRootPrefix(String path) {
+    private static String getRootName(String path) {
         int fromIndex = path.charAt(0) == '/' || path.charAt(0) == '\\' ? 1 : 0;
         int slashIdx = path.indexOf('/', fromIndex);
         int backSlashIndx = path.indexOf('\\', fromIndex);
@@ -139,7 +153,7 @@ public class SkipCommitedTask extends AbstractTask{
             expanderIdx = path.length();
         }
         int endIndex = Math.min(slashIdx, Math.min(backSlashIndx, expanderIdx));
-        return path.substring(0, endIndex);
+        return path.substring(fromIndex, endIndex);
     }
     
     private void collectParentsWithoutAllSubitems(AtomicReader aReader, SortedDocValues persistIds, NumericDocValues ids, String parentIdField, String subitemCountField) throws IOException {
@@ -193,7 +207,7 @@ public class SkipCommitedTask extends AbstractTask{
         commitedPersistentIds = null;
         parentsWithLostSubitems.clear();
         persistentToIdMap.clear();
-        rootNameToEvidenceUUID.clear();
+        prevRootNameToEvidenceUUID.clear();
     }
 
     @Override
@@ -247,8 +261,8 @@ public class SkipCommitedTask extends AbstractTask{
         }
         
         //change evidenceUUID to previous processing evidenceUUID
-        String rootPrefix = getRootPrefix(item.getPath());
-        String oldUUID = rootNameToEvidenceUUID.get(rootPrefix);
+        String rootPrefix = getRootName(item.getPath());
+        String oldUUID = prevRootNameToEvidenceUUID.get(rootPrefix);
         if(oldUUID != null) {
             item.getDataSource().setUUID(oldUUID);
         }
