@@ -66,7 +66,7 @@ public class Util {
         return persistentId;
     }
     
-    public static String getParentPersistentId(IItem item) {
+    public static String computeParentPersistentId(IItem item) {
         String id = (String)item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID);
         if(id == null && !item.isRoot()) {
             if(item.isSubItem() || item.isCarved())

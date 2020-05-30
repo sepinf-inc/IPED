@@ -6,7 +6,6 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -45,11 +44,13 @@ public class SkipCommitedTask extends AbstractTask{
     
     public static final String DATASOURCE_NAMES = "CMD_LINE_DATASOURCE_NAMES";
     
+    public static final String GLOBALID_ID_MAP = "GLOBALID_ID_MAP";
+    
     private static HashValue[] commitedPersistentIds;
     
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
     
-    private static Map<HashValue, Long> persistentToIdMap = new HashMap<>();
+    private static Map<HashValue, Integer> persistentToIdMap = new HashMap<>();
     
     private static HashMap<String, String> prevRootNameToEvidenceUUID = new HashMap<>();
     
@@ -108,6 +109,8 @@ public class SkipCommitedTask extends AbstractTask{
             
             SortedDocValues persistentParents = aReader.getSortedDocValues(IndexItem.PARENT_PERSISTENT_ID);
             SortedDocValues hasChildValues = aReader.getSortedDocValues(IndexItem.HASCHILD);
+            SortedDocValues isDirValues = aReader.getSortedDocValues(IndexItem.ISDIR);
+            SortedDocValues isRootValues = aReader.getSortedDocValues(IndexItem.ISROOT);
             SortedDocValues hasSplittedText = aReader.getSortedDocValues(IndexTask.TEXT_SPLITTED);
             NumericDocValues prevParentIds = aReader.getNumericDocValues(IndexItem.PARENTID);
             NumericDocValues prevIds = aReader.getNumericDocValues(IndexItem.ID);
@@ -116,16 +119,20 @@ public class SkipCommitedTask extends AbstractTask{
                 if(!hashVal.isEmpty()) {
                     HashValue persistParent = new HashValue(hashVal);
                     if(Arrays.binarySearch(commitedPersistentIds, persistParent) < 0) {
-                        persistentToIdMap.put(persistParent, prevParentIds.get(doc));
+                        persistentToIdMap.put(persistParent, (int)prevParentIds.get(doc));
                     }
                 }
                 boolean hasChild =  Boolean.valueOf(hasChildValues.get(doc).utf8ToString());
+                boolean isDir =  Boolean.valueOf(isDirValues.get(doc).utf8ToString());
+                boolean isRoot =  Boolean.valueOf(isRootValues.get(doc).utf8ToString());
                 boolean isTexSplitted = hasSplittedText != null ? Boolean.valueOf(hasSplittedText.get(doc).utf8ToString()) : false;
-                if(hasChild || isTexSplitted) {
+                if(hasChild || isDir || isRoot || isTexSplitted) {
                     HashValue persistentId = new HashValue(persistIds.get(doc).utf8ToString());
-                    persistentToIdMap.put(persistentId, prevIds.get(doc));
+                    persistentToIdMap.put(persistentId, (int)prevIds.get(doc));
                 }
             }
+            
+            caseData.putCaseObject(GLOBALID_ID_MAP, persistentToIdMap);
             
             collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_PERSISTENT_ID, ParsingTask.NUM_SUBITEMS);
             collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.PARENT_PERSISTENT_ID, BaseCarveTask.NUM_CARVED_AND_FRAGS);
@@ -215,7 +222,7 @@ public class SkipCommitedTask extends AbstractTask{
         
         //must be calculated first, in all cases, to allow recovering in the future
         HashValue persistentId = new HashValue(Util.getPersistentId(item));
-        String parentPersistentId = Util.getParentPersistentId(item);
+        Util.computeParentPersistentId(item);
         
         if(!args.isContinue()) {
             return;
@@ -231,34 +238,6 @@ public class SkipCommitedTask extends AbstractTask{
         
         //reset number of carved ignored subitems because parent will be processed again
         stats.resetCarvedIgnored(item);
-        
-        //changes id to previous processing id
-        Long previousId = persistentToIdMap.get(persistentId);
-        if(previousId != null) {
-            item.setId(previousId.intValue());
-        }else {
-            String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
-            previousId = persistentToIdMap.get(new HashValue(splittedTextId));
-            if(previousId != null) {
-                item.setId(previousId.intValue());
-            }
-        }
-        
-        //changes parentId to previous processing parentId
-        if(parentPersistentId != null) {
-            Long previousParentId = persistentToIdMap.get(new HashValue(parentPersistentId));
-            if(previousParentId != null) {
-                Integer parentId = item.getParentId();
-                item.setParentId(previousParentId.intValue());
-                List<Integer> parentIds = item.getParentIds();
-                for(int i = 0; i < parentIds.size(); i++) {
-                    if(parentIds.get(i).equals(parentId)) {
-                        parentIds.set(i, previousParentId.intValue());
-                        break;
-                    }
-                }
-            }
-        }
         
         //change evidenceUUID to previous processing evidenceUUID
         String rootPrefix = getRootName(item.getPath());
