@@ -152,8 +152,11 @@ public class WhatsAppParser extends SQLite3DBParser {
                     filePath = itemInfo.getPath();
                 }
                 WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, extFactory.getClass());
+                
+                String dbPath = ((ItemInfo)context.get(ItemInfo.class)).getPath();
+                WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
-                Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts);
+                Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
                 List<Chat> chatList = waExtractor.getChatList();
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
 
@@ -190,7 +193,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         bytes = nextBytes;
                         
                         if(extractMessages) {
-                            extractMessages(chatName, msgSubset, contacts, chatVirtualId++, handler, extractor);
+                            extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
                         }
                     }
                 }
@@ -206,7 +209,64 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
     
-    private void extractMessages(String chatName, List<Message> messages, WAContactsDirectory contacts, int parentVirtualId, ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
+        if(isAndroid) {
+            String query = BasicProps.NAME + ":\"com.whatsapp_preferences.xml\"";
+            List<IItemBase> result = searcher.search(query);
+            IItemBase item = getBestItem(result, dbPath);
+            if(item != null) {
+                try(InputStream is = item.getBufferedStream()){
+                    WAAccount account = WAAccount.getFromAndroidXml(is);
+                    if(account != null)
+                        return account;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+            
+        }else {
+            String query = BasicProps.NAME + ":\"group.net.whatsapp.WhatsApp.shared.plist\"";
+            List<IItemBase> result = searcher.search(query);
+            IItemBase item = getBestItem(result, dbPath);
+            if(item != null) {
+                try(InputStream is = item.getBufferedStream()){
+                    WAAccount account = WAAccount.getFromIOSPlist(is);
+                    if(account != null)
+                        return account;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } 
+        }
+        return new WAAccount("unknownAccount");
+    }
+    
+    private IItemBase getBestItem(List<IItemBase> result, String path) {
+        if(result.size() == 1) {
+            return result.get(0);
+        }else if(result.size() > 1) {
+            while((path = new File(path).getParent()) != null) {
+                for(IItemBase item : result) {
+                    if(item.getPath().startsWith(path)) {
+                        return item;
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    private String formatContact(WAContact contact) {
+        if(contact.getName() == null)
+            return contact.getId();
+        else if(contact.getName().trim().equals(contact.getId()))
+            return contact.getId();
+        else
+            return contact.getName().trim() + " (" + contact.getId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+    }
+    
+    private void extractMessages(String chatName, List<Message> messages, WAAccount account, WAContactsDirectory contacts, int parentVirtualId,
+            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
         for(dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
             Metadata meta = new Metadata();
@@ -219,19 +279,18 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             
             if(!m.isSystemMessage()) {
+                String local = formatContact(account);
                 String remote = m.getRemoteResource();
                 if (remote != null) {
                     WAContact contact = contacts.getContact(remote);
-                    remote = contact == null ? remote : contact.getName() + " (" + remote + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                    remote = contact == null ? remote : formatContact(contact);
                 }
                 if(m.isFromMe()) {
-                    //TODO change to owner phone
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, "phoneOwner");
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
                 }else {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
-                    //TODO change to owner phone
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, "phoneOwner");
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, local);
                 }
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
@@ -487,7 +546,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context;
         WhatsAppParser connFactory;
         
-        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory);
+        abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account);
 
         abstract WAContactsExtractor createContactsExtractor(File file);
         
@@ -511,8 +570,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
         
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory) {
-            return new ExtractorAndroid(file, directory) {
+        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
+            return new ExtractorAndroid(file, directory, account) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorAndroidFactory.this.getConnection();
@@ -536,8 +595,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
         @Override
-        public Extractor createMessageExtractor(File file, WAContactsDirectory directory) {
-            return new ExtractorIOS(file, directory) {
+        public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
+            return new ExtractorIOS(file, directory, account) {
                 @Override
                 protected Connection getConnection() throws SQLException {
                     return ExtractorIOSFactory.this.getConnection();
