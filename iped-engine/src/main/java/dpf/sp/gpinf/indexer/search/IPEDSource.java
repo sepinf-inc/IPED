@@ -43,6 +43,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
@@ -125,6 +126,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
     Set<String> extraAttributes = new HashSet<String>();
+    
+    Set<String> evidenceUUIDs = new HashSet<String>();
 
     boolean isFTKReport = false, isReport = false;
     
@@ -201,6 +204,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
             populateLuceneIdToIdMap();
             invertIdToLuceneIdArray();
+            populateEvidenceUUIDs();
             splitedIds = getSplitedIds();
             countTotalItems();
 
@@ -262,6 +266,17 @@ public class IPEDSource implements Closeable, IIPEDSource {
         docs = new int[lastId + 1];
         for (int i = ids.length - 1; i >= 0; i--)
             docs[ids[i]] = i;
+    }
+    
+    private void populateEvidenceUUIDs() throws IOException {
+        SortedDocValues sdv = atomicReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
+        for(int i = 0; i < sdv.getValueCount(); i++) {
+            evidenceUUIDs.add(sdv.lookupOrd(i).utf8ToString());
+        }
+    }
+    
+    public Set<String> getEvidenceUUIDs() {
+        return evidenceUUIDs;
     }
 
     private BitSet getSplitedIds() {

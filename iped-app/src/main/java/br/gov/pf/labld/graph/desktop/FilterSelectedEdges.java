@@ -1,18 +1,18 @@
 package br.gov.pf.labld.graph.desktop;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.kharon.Edge;
 import org.kharon.OverlappedEdges;
 
 import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import iped3.IItemId;
 
 public class FilterSelectedEdges {
     
@@ -120,20 +120,24 @@ public class FilterSelectedEdges {
         }
     }
     
-    public Map<String, List<Integer>> getItemIdsOfSelectedEdges(){
-        HashMap<String, List<Integer>> map = new HashMap<>();
+    public Set<IItemId> getItemIdsOfSelectedEdges(){
+        HashMap<String, Integer> map = new HashMap<>();
+        int i = 0;
+        for(IPEDSource source : App.get().appCase.getAtomicSources()) {
+            for(String uuid : source.getEvidenceUUIDs()) {
+                map.put(uuid, i);
+            }
+            i++;
+        }
+        Set<IItemId> result = new HashSet<>();
         for(Edge edge : selectedEdges) {
             String[] values = edge.getLabel().split("_");
             String uuid = values[0];
             String id = values[1];
-            List<Integer> ids = map.get(uuid);
-            if(ids == null) {
-                ids = new ArrayList<>();
-                map.put(uuid, ids);
-            }
-            ids.add(Integer.parseInt(id));
+            ItemId itemId = new ItemId(map.get(uuid), Integer.valueOf(id));
+            result.add(itemId);
         }
-        return map;
+        return result;
     }
     
 

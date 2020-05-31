@@ -23,36 +23,30 @@ import java.io.IOException;
 import java.lang.ref.SoftReference;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.JOptionPane;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
-import iped3.util.BasicProps;
 
 public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
 
@@ -138,27 +132,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 numFilters++;
             }
         }
-        
-        Map<String, List<Integer>> uuidToId = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
-        if(!uuidToId.isEmpty()) {
-            BooleanQuery boolQuery = new BooleanQuery();
-            BooleanQuery filterQuery = new BooleanQuery();
-            for(String uuid : uuidToId.keySet()) {
-                BooleanQuery uuidANDid = new BooleanQuery();
-                uuidANDid.add(new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid)), Occur.MUST);
-                BooleanQuery idsQuery = new BooleanQuery();
-                for(Integer id : uuidToId.get(uuid)) {
-                    idsQuery.add(NumericRangeQuery.newIntRange(BasicProps.ID, id, id, true, true), Occur.SHOULD);
-                }
-                uuidANDid.add(idsQuery, Occur.MUST);
-                filterQuery.add(uuidANDid, Occur.SHOULD);
-            }
-            
-            boolQuery.add(filterQuery, Occur.MUST);
-            boolQuery.add(result, Occur.MUST);
-            result = boolQuery;
-            numFilters++;
-        }
 
         return result;
     }
@@ -233,6 +206,23 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     int i = 0;
                     for (IItemId item : result.getIterator()) {
                         if (itemsWithValuesSelected.contains(item)) {
+                            filteredItems.add(item);
+                            scores.add(result.getScore(i));
+                        }
+                        i++;
+                    }
+                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+                
+                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+                if (selectedEdges != null && !selectedEdges.isEmpty()) {
+                    numFilters++;
+                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
+                    ArrayList<Float> scores = new ArrayList<Float>();
+                    int i = 0;
+                    for (IItemId item : result.getIterator()) {
+                        if (selectedEdges.contains(item)) {
                             filteredItems.add(item);
                             scores.add(result.getScore(i));
                         }

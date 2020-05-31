@@ -82,6 +82,8 @@ public interface IIPEDSource extends Closeable {
     int getTotalItens();
 
     IVersionsMap getViewToRawMap();
+    
+    Set<String> getEvidenceUUIDs();
 
     boolean isFTKReport();
 
