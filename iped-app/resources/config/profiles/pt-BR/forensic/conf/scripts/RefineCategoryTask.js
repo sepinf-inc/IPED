@@ -44,7 +44,12 @@ function process(e){
 		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
 		e.setCategory(cat);
 	}
-
+	
+	if(mime.equals("application/dita+xml") && e.getName().equals("com.whatsapp_preferences.xml")){
+		e.setMediaTypeStr("application/x-whatsapp-user-xml");
+		e.setCategory("Contatos");
+	}
+	
 	if(categorias.indexOf("Imagens") > -1){
 
 		if(isFromInternet(e))

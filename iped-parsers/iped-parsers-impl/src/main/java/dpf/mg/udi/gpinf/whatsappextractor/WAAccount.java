@@ -24,6 +24,10 @@ public class WAAccount extends WAContact{
         super(id);
     }
     
+    public String getTitle() {
+        return "WhatsApp Account: " + getName(); //$NON-NLS-1$
+    }
+    
     public static WAAccount getFromAndroidXml(InputStream is) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

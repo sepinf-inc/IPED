@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -190,7 +191,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
         }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getCategories());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -232,6 +233,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             categoriesToExpand.add(line.trim());
         }
         reader.close();
+    }
+    
+    private static boolean isToAlwaysExpand(IItem item) {
+        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType()) ||
+                WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {

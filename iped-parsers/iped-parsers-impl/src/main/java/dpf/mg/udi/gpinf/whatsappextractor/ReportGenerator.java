@@ -71,6 +71,33 @@ public class ReportGenerator {
 
         return bout.toByteArray();
     }
+    
+    public byte[] generateAccountHtml(WAAccount account) throws UnsupportedEncodingException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+
+        out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
+                + "<html>\n" //$NON-NLS-1$
+                + "<head>\n" //$NON-NLS-1$
+                + " <title>" + account.getId() + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + "</head>\n" //$NON-NLS-1$
+                + "<body>\n"); //$NON-NLS-1$
+
+        if (account.getAvatar() != null)
+            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(account.getAvatar()) //$NON-NLS-1$
+                    + "\" width=\"112\"/><br>"); //$NON-NLS-1$
+        out.println(Messages.getString("WhatsAppReport.AccountID") + format(account.getId())); //$NON-NLS-1$
+        out.println("<br>" + Messages.getString("WhatsAppReport.WAName") + format(account.getWaName())); //$NON-NLS-1$ //$NON-NLS-2$
+        out.println("<br>" + Messages.getString("WhatsAppReport.Status") + format(account.getStatus())); //$NON-NLS-1$ //$NON-NLS-2$
+
+        out.println("</body>\n</html>"); //$NON-NLS-1$
+
+        out.flush();
+        out.close();
+
+        return bout.toByteArray();
+    }
 
     private String format(String s) {
         if (s == null || s.trim().isEmpty())

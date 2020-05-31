@@ -73,6 +73,12 @@ public class WhatsAppParser extends SQLite3DBParser {
      */
     private static final long serialVersionUID = 1L;
 
+    public static final MediaType WA_USER_XML = MediaType.application("x-whatsapp-user-xml"); //$NON-NLS-1$
+    
+    public static final MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist"); //$NON-NLS-1$
+    
+    public static final MediaType WHATSAPP_ACCOUNT = MediaType.application("x-whatsapp-account"); //$NON-NLS-1$
+    
     public static final MediaType MSG_STORE = MediaType.application("x-whatsapp-db"); //$NON-NLS-1$
 
     public static final MediaType WA_DB = MediaType.application("x-whatsapp-wadb"); //$NON-NLS-1$
@@ -94,7 +100,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     //ugly workaround to show message type before caption (values are shown in sort order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2);
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2, WA_USER_XML, WA_USER_PLIST);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
@@ -123,7 +129,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (mimetype == null)
             mimetype = metadata.get(Metadata.CONTENT_TYPE);
 
-        if (mimetype.equals(MSG_STORE.toString())) {
+        if (mimetype.equals(WA_USER_XML.toString())) {
+            parseWhatsAppAccount(stream, context, handler, true);
+        }else if (mimetype.equals(WA_USER_PLIST.toString())) {
+            parseWhatsAppAccount(stream, context, handler, false);
+        }else if (mimetype.equals(MSG_STORE.toString())) {
             parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
         } else if (mimetype.equals(WA_DB.toString())) {
             parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
@@ -209,34 +219,48 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
     
+    private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid) throws SAXException, IOException {
+        WAAccount account = null;
+        if(isAndroid) account = WAAccount.getFromAndroidXml(is);
+        else account = WAAccount.getFromIOSPlist(is);
+        
+        Metadata meta = new Metadata();
+        meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ACCOUNT.toString());
+        meta.set(TikaCoreProperties.TITLE, account.getTitle());
+        meta.set(ExtraProperties.USER_NAME, account.getName());
+        meta.set(ExtraProperties.USER_PHONE, account.getId());
+        meta.set(ExtraProperties.USER_ACCOUNT, account.getId());
+        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+        meta.set(ExtraProperties.USER_NOTES, account.getStatus());
+        if(account.getAvatar() != null) {
+            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
+        }
+        
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        ReportGenerator reportGenerator = new ReportGenerator(searcher);
+
+        if (extractor.shouldParseEmbedded(meta)) {
+            ByteArrayInputStream bais = new ByteArrayInputStream(reportGenerator.generateAccountHtml(account));
+            extractor.parseEmbedded(bais, handler, meta, false);
+        }
+    }
+    
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
-        if(isAndroid) {
-            String query = BasicProps.NAME + ":\"com.whatsapp_preferences.xml\"";
-            List<IItemBase> result = searcher.search(query);
-            IItemBase item = getBestItem(result, dbPath);
-            if(item != null) {
-                try(InputStream is = item.getBufferedStream()){
-                    WAAccount account = WAAccount.getFromAndroidXml(is);
-                    if(account != null)
-                        return account;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+        String query = BasicProps.NAME + ":";
+        if(isAndroid) query += "\"com.whatsapp_preferences.xml\"";
+        else query += "\"group.net.whatsapp.WhatsApp.shared.plist\"";
+        List<IItemBase> result = searcher.search(query);
+        IItemBase item = getBestItem(result, dbPath);
+        if(item != null) {
+            try(InputStream is = item.getBufferedStream()){
+                WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
+                if(account != null)
+                    return account;
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-            
-        }else {
-            String query = BasicProps.NAME + ":\"group.net.whatsapp.WhatsApp.shared.plist\"";
-            List<IItemBase> result = searcher.search(query);
-            IItemBase item = getBestItem(result, dbPath);
-            if(item != null) {
-                try(InputStream is = item.getBufferedStream()){
-                    WAAccount account = WAAccount.getFromIOSPlist(is);
-                    if(account != null)
-                        return account;
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            } 
         }
         return new WAAccount("unknownAccount");
     }

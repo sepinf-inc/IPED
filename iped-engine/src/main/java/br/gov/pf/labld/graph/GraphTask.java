@@ -207,6 +207,7 @@ public class GraphTask extends AbstractTask {
                 return "contact";
         }
         if(SkypeParser.ACCOUNT_MIME_TYPE.toString().equals(mediaType) || 
+                WhatsAppParser.WHATSAPP_ACCOUNT.toString().equals(mediaType) ||
                 mediaType.equals("application/x-ufed-user") ||
                 mediaType.equals("application/x-ufed-useraccount")) {
             return "useraccount";

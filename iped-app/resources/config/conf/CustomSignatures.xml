@@ -255,6 +255,10 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-account">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
     <mime-type type="application/x-whatsapp-chat">
         <sub-class-of type="text/html"/>
     </mime-type>
@@ -951,6 +955,16 @@
     <mime-type type="call/x-whatsapp-call">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type> 
+    
+    <mime-type type="application/x-whatsapp-user-xml">
+        <sub-class-of type="application/dita+xml"/>
+        <glob pattern="com.whatsapp_preferences.xml"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-user-plist">
+        <sub-class-of type="application/x-plist"/>
+        <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
+    </mime-type>
     
     <mime-type type="message/x-skype-attachment">
         <sub-class-of type="message/x-skype-message"/>
