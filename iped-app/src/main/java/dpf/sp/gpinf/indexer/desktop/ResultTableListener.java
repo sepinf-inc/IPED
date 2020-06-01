@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.search.LuceneSearchResult;
@@ -153,7 +152,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        ViewerControl.getInstance().releaseLibreOfficeFocus();
     }
 
     @Override

@@ -202,13 +202,12 @@ public class AppMain {
                 String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
 
                 CustomLoader.run(customArgs, jars);
-                return;
 
             } else {
                 App.get().getSearchParams().codePath = libDir.getAbsolutePath();
                 App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-
-                InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
+    
+                InicializarBusca init = new InicializarBusca(processingManager);
                 init.execute();
             }
 

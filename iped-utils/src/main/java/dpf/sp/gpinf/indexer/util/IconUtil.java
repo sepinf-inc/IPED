@@ -10,14 +10,14 @@ import javax.swing.ImageIcon;
 
 public class IconUtil {
     private static final Map<String, ImageIcon> memoIcon = new HashMap<String, ImageIcon>();
-    private static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
+    //private static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
 
-    public static final ImageIcon getIcon(String name) {
-        return getIcon(name, 0);
+    public static final ImageIcon getIcon(String name, String resPath) {
+        return getIcon(name, resPath, 0);
     }
 
-    public static final ImageIcon getIcon(String name, int iconSize) {
-        String key = name + iconSize;
+    public static final ImageIcon getIcon(String name, String resPath, int iconSize) {
+        String key = resPath+"/"+name + "/"+ iconSize;
         synchronized (memoIcon) {
             if (memoIcon.containsKey(key)) {
                 return memoIcon.get(key);

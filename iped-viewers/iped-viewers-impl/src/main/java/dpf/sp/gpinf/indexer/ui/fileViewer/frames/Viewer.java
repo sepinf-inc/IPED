@@ -32,10 +32,14 @@ public abstract class Viewer {
     private static Logger LOGGER = LoggerFactory.getLogger(Viewer.class);
 
     private static final long serialVersionUID = 1L;
+    
+    protected static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
 
     private JPanel panel;
 
     protected int currentHit, totalHits;
+    
+    protected boolean isToolbarVisible;
 
     public Viewer() {
         panel = new JPanel();
@@ -100,6 +104,32 @@ public abstract class Viewer {
     abstract public void loadFile(IStreamSource content, Set<String> highlightTerms);
 
     abstract public void scrollToNextHit(boolean forward);
+    
+    /**
+     * May be overridden when hits navigation is not supported.
+     * @return -1: no support 
+     *          0: default, has support, external control when there are hits 
+     *          1: has support, always enable as hits control is internal in the viewer  
+     */    
+    public int getHitsSupported() {
+        return 0;
+    }
+
+    /**
+     * May be overridden when the viewer has a tool bar (that may be hidden).
+     * @return -1 (never), 0 (currently no tool bar), 1 (has tool bar)  
+     */
+    public int getToolbarSupported() {
+        return -1;
+    }
+    
+    public void setToolbarVisible(boolean isVisible) {
+        this.isToolbarVisible = isVisible;
+    }
+
+    public boolean isToolbarVisible() {
+        return isToolbarVisible;
+    }
 
     public void copyScreen() {
         copyScreen(panel);
