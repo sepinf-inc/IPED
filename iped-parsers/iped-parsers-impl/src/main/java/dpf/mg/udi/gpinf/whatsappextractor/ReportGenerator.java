@@ -18,6 +18,7 @@ import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  *
@@ -357,6 +358,18 @@ public class ReportGenerator {
                                     out.println("<source src=\"" + exportPath + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
                                     printSourceFileIfExists(result.get(0), out);
                                     out.println("</video>"); //$NON-NLS-1$
+                                }
+                                String transcription = result.get(0).getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
+                                if(transcription != null) {
+                                    out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
+                                    String confidence = result.get(0).getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
+                                    if(confidence != null) {
+                                        float score = Float.valueOf(confidence) * 100;
+                                        out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    }
+                                    out.println(": <i>"); //$NON-NLS-1$
+                                    out.println(transcription);
+                                    out.println("</i><br/>"); //$NON-NLS-1$
                                 }
                             }
                         } else {
