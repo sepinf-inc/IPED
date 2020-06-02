@@ -590,21 +590,15 @@ public class GraphTask extends AbstractTask {
         Set<String> relationsAdded = new HashSet<>();
         for (Entry<String, Object> entry : entries) {
           String key = entry.getKey();
-          List<GraphEntity> entities = configuration.getEntities(key);
-          if (entities != null) {
-            for (GraphEntity entity : entities) {
-                GraphEntityMetadata metadata = entity.getMetadata(key);
-                for (Entry<String, Object> entry2 : entries) {
-                    String key2 = entry2.getKey();
-                    List<GraphEntity> entities2 = configuration.getEntities(key2);
-                    if (entities2 != null) {
-                      for (GraphEntity entity2 : entities2) {
-                        GraphEntityMetadata metadata2 = entity2.getMetadata(key2);
-                        processMatches(entity, metadata, (List<Object>) entry.getValue(), entity2, metadata2, (List<Object>) entry2.getValue(), evidence, relationsAdded);
-                      }
-                    }
-                }
-            }
+          GraphEntity entity = configuration.getEntityWithMetadata(key);
+          if (entity == null) continue;
+          GraphEntityMetadata metadata = entity.getMetadata(key);
+          for (Entry<String, Object> entry2 : entries) {
+              String key2 = entry2.getKey();
+              GraphEntity entity2 = configuration.getEntityWithMetadata(key2);
+              if (entity2 == null) continue;
+              GraphEntityMetadata metadata2 = entity2.getMetadata(key2);
+              processMatches(entity, metadata, (List<Object>) entry.getValue(), entity2, metadata2, (List<Object>) entry2.getValue(), evidence, relationsAdded);
           }
         }
       }

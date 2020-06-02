@@ -62,7 +62,7 @@ public class GraphConfiguration {
   private Map<String, GraphEntity> entityIndex;
 
   @JsonIgnore
-  private Map<String, List<GraphEntity>> metadataIndex;
+  private Map<String, GraphEntity> metadataIndex;
 
   private void index() {
 
@@ -76,12 +76,10 @@ public class GraphConfiguration {
       }
 
       for (GraphEntityMetadata metadata : entity.metadata) {
-        List<GraphEntity> list = metadataIndex.get(metadata.name);
-        if (list == null) {
-          list = new ArrayList<>();
-          metadataIndex.put(metadata.name, list);
+        GraphEntity prev = metadataIndex.put(metadata.name, entity);
+        if (prev != null) {
+            throw new IllegalArgumentException("Duplicated metadata " + metadata.name + " at entities " + prev.label + " & " + entity.label);
         }
-        list.add(entity);
       }
       entity.index();
     }
@@ -163,7 +161,7 @@ public class GraphConfiguration {
     return entityIndex.get(label);
   }
 
-  public List<GraphEntity> getEntities(String metadataName) {
+  public GraphEntity getEntityWithMetadata(String metadataName) {
     return metadataIndex.get(metadataName);
   }
 
@@ -222,7 +220,11 @@ public class GraphConfiguration {
 
   public static class GraphEntityMetadata {
 
+    /**
+     * equal to regex name by default
+     */
     private String name;
+    
     private String property;
     private String relationship;
 
