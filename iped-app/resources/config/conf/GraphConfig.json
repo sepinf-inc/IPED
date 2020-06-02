@@ -1,48 +1,48 @@
 {  
-    "default-entity":"EVIDENCIA",
-    "default-person-entity":"PESSOA_FISICA",
-    "default-business-entity":"PESSOA_JURIDICA",
-    "default-relationship":"CONTEM",
+    "default-entity":"DOCUMENT",
+    "default-person-entity":"PERSON",
+    "default-business-entity":"ORGANIZATION",
+    "default-relationship":"NEAR_HIT",
     "include-categories":".*",
-    "exclude-categories":"Bases de dados|Outros Arquivos|Histórico de Internet|Pastas",
+    "exclude-categories":"Programs and Libraries|Other files|Unallocated|File Slacks|Virtual disks|Other disks",
     "entities":[
         {  
-            "label":"EVIDENCIA",
+            "label":"DOCUMENT",
             "metadata":[
             ]
         },
         {  
-            "label":"PESSOA_FISICA",
+            "label":"PERSON",
             "metadata":[  
                 {  
                     "name":"Regex:CPF",
                     "property":"cpf",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 },
                 {  
                     "name":"Regex:TITULO_ELEITOR",
                     "property":"titulo_eleitor",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 },
                 {  
                     "name":"Regex:PISPASEP",
                     "property":"pispasep",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 },
                 {  
                     "name":"Regex:CNH",
                     "property":"cnh",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
         {  
-            "label":"PESSOA_JURIDICA",
+            "label":"ORGANIZATION",
             "metadata":[  
                 {  
                     "name":"Regex:CNPJ",
                     "property":"cnpj",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
@@ -51,8 +51,8 @@
             "metadata":[  
                 {  
                     "name":"Regex:EMAIL",
-                    "property":"email",
-                    "relationship":"CONTEM"
+                    "property":"emailAddress",
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
@@ -62,7 +62,7 @@
                 {  
                     "name":"Regex:URL",
                     "property":"url",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
@@ -72,7 +72,7 @@
                 {  
                     "name":"Regex:IP",
                     "property":"ip",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
@@ -82,57 +82,52 @@
                 {  
                     "name":"Regex:MAC_ADDRESS",
                     "property":"mac_address",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
         {  
-            "label":"CONTA_BANCARIA",
+            "label":"BANK_ACCOUNT",
             "metadata":[  
                 {  
-                    "name":"Regex:CONTA_BANCARIA",
-                    "property":"conta_bancaria",
-                    "relationship":"CONTEM"
+                    "name":"Regex:BANK_ACCOUNT",
+                    "property":"bank_account",
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
         {  
-            "label":"SWIFT",
+            "label":"MONEY_TRANSFER",
             "metadata":[  
                 {  
                     "name":"Regex:SWIFT",
                     "property":"swift",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
         {  
-            "label":"TELEFONE",
+            "label":"PHONE",
             "metadata":[  
                 {  
-                    "name":"Regex:TELEFONE",
-                    "property":"telefone",
-                    "relationship":"CONTEM"
+                    "name":"Regex:PHONE",
+                    "property":"phoneNumber",
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
         {  
-            "label":"VEICULO",
+            "label":"CAR",
             "metadata":[  
+                {  
+                    "name":"Regex:CAR",
+                    "property":"car",
+                    "relationship":"NEAR_HIT"
+                },
                 {  
                     "name":"Regex:PLACA",
                     "property":"placa",
-                    "relationship":"CONTEM"
-                }
-            ]
-        },
-        {  
-            "label":"IPL",
-            "metadata":[  
-                {  
-                    "name":"Regex:IPL",
-                    "property":"ipl",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         },
@@ -142,17 +137,7 @@
                 {  
                     "name":"Regex:FACEBOOK",
                     "property":"fbid",
-                    "relationship":"CONTEM"
-                }
-            ]
-        },
-        {  
-            "label":"RIF",
-            "metadata":[  
-                {  
-                    "name":"Regex:RIF",
-                    "property":"rif",
-                    "relationship":"CONTEM"
+                    "relationship":"NEAR_HIT"
                 }
             ]
         }

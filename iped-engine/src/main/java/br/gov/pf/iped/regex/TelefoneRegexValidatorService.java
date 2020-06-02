@@ -16,7 +16,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexValidatorService;
 
 public class TelefoneRegexValidatorService extends BasicAbstractRegexValidatorService {
 
-  private static final String REGEX_NAME = "TELEFONE";
+  private static final String[] REGEX_NAME = {"PHONE", "TELEFONE"};
   private Pattern NOT_ALLOWED_CHARS = Pattern.compile("[^0-9\\-\\+]");
   private static final String REPLACEMENT = "";
 
@@ -25,6 +25,7 @@ public class TelefoneRegexValidatorService extends BasicAbstractRegexValidatorSe
     hit = extractNotAllowedChars(hit);
     PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
     try {
+      //TODO externalize phone region
       PhoneNumber phoneNumber = phoneUtil.parse(hit, "BR");
       return phoneUtil.isValidNumber(phoneNumber);
     } catch (NumberParseException e) {

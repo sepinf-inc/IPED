@@ -16,6 +16,10 @@ import org.kharon.Node;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.NotFoundException;
 
+import br.gov.pf.labld.graph.GraphConfiguration;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
+
 public class GraphModel {
 
   private double angleInRadians = Math.PI / 8d;
@@ -23,8 +27,16 @@ public class GraphModel {
   private double distanceStep = 0.2d;
   private double angleStep = Math.PI / 32d;
 
-  private List<String> knownTypes = Arrays.asList("DATASOURCE", "EVIDENCIA", "PESSOA_FISICA", "PESSOA_JURIDICA",
-      "PLACA", "EMAIL", "TELEFONE", "RIF", "IPL", "CONTACT_GROUP");
+  private List<String> knownTypes = Arrays.asList(
+          GraphConfiguration.DOCUMENT_LABEL,
+          GraphConfiguration.PERSON_LABEL,
+          GraphConfiguration.ORGANIZATION_LABEL,
+          GraphConfiguration.CAR_LABEL,
+          GraphConfiguration.EMAIL_LABEL,
+          GraphConfiguration.PHONE_LABEL,
+          GraphConfiguration.DATASOURCE_LABEL,
+          GraphConfiguration.CONTACT_GROUP_LABEL
+          );
 
   public Node convert(org.neo4j.graphdb.Node neo4jNode) {
     String nodeId = Long.toString(neo4jNode.getId());
@@ -33,14 +45,15 @@ public class GraphModel {
     String[] fieldNames = getDefaultFieldNames(neo4jNode);
     String type = getFullType(neo4jNode);
     node.setType(type);
-    node.setLabel(getLabel(neo4jNode, fieldNames));
+    String label = getLabel(neo4jNode, fieldNames);
+    node.setLabel(label);
 
     int dynSize = (int) (2 * Math.ceil(Math.log(neo4jNode.getDegree() + 1)));
     
-    if (type.contains("DATASOURCE")) {
+    if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
       node.setSize(30 + dynSize);
       node.setColor(Color.RED);
-    } else if (type.equals("CONTACT_GROUP")) {
+    } else if (type.equals(GraphConfiguration.CONTACT_GROUP_LABEL)) {
       node.setSize(25 + dynSize);
       node.setColor(new Color(8, 160, 56));
     } else {
@@ -81,26 +94,22 @@ public class GraphModel {
   public String[] getDefaultFieldNames(org.neo4j.graphdb.Node neo4jNode) {
     // TODO Move to configuration file
     String type = getType(neo4jNode);
-    if (type.contains("DATASOURCE")) {
-      return new String[] { "name", "nome", "cpf", "cnpj" };
-    } else if (type.contains("EVIDENCIA")) {
-      return new String[] { "name", "path", "hash" };
-    } else if (type.contains("PESSOA_FISICA")) {
-      return new String[] { "cpf", "titulo_eleitor", "cnh", "pispasep", "name", "telefone", "email"};
-    } else if (type.contains("PESSOA_JURIDICA")) {
+    if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
+      return new String[] { BasicProps.NAME, "cpf", "cnpj" };
+    } else if (type.contains(GraphConfiguration.DOCUMENT_LABEL)) {
+      return new String[] { BasicProps.NAME, BasicProps.PATH, BasicProps.HASH };
+    } else if (type.contains(GraphConfiguration.PERSON_LABEL)) {
+      return new String[] { ExtraProperties.USER_NAME, ExtraProperties.USER_EMAIL, ExtraProperties.USER_PHONE, ExtraProperties.USER_ACCOUNT, "cpf", "titulo_eleitor", "cnh", "pispasep"};
+    } else if (type.contains(GraphConfiguration.ORGANIZATION_LABEL)) {
       return new String[] { "cnpj" };
-    } else if (type.equals("PLACA")) {
-      return new String[] { "placa" };
-    } else if (type.equals("EMAIL")) {
-      return new String[] { "email" };
-    } else if (type.equals("TELEFONE")) {
-      return new String[] { "telefone" };
-    } else if (type.equals("RIF")) {
-      return new String[] { "rif" };
-    } else if (type.equals("IPL")) {
-      return new String[] { "ipl" };
-    } else if (type.equals("CONTACT_GROUP")) {
-      return new String[] { "name" };
+    } else if (type.equals(GraphConfiguration.CAR_LABEL)) {
+      return new String[] { "car", "car_license", "placa" };
+    } else if (type.equals(GraphConfiguration.EMAIL_LABEL)) {
+      return new String[] { ExtraProperties.USER_EMAIL };
+    } else if (type.equals(GraphConfiguration.PHONE_LABEL)) {
+      return new String[] { ExtraProperties.USER_PHONE };
+    } else if (type.equals(GraphConfiguration.CONTACT_GROUP_LABEL)) {
+      return new String[] { BasicProps.NAME };
     } else {
       Iterable<String> keys = neo4jNode.getPropertyKeys();
       List<String> props = new ArrayList<>();
@@ -116,13 +125,13 @@ public class GraphModel {
 
   public String getLabel(org.neo4j.graphdb.Node neo4jNode, String... labels) {
     for (String label : labels) {
-      try {
-        return neo4jNode.getProperty(label).toString();
-      } catch (NotFoundException e) {
-        // Nothing to do.
-      }
+        try {
+            return neo4jNode.getProperty(label).toString();
+        } catch (NotFoundException e) {
+            // Nothing to do.
+        }
     }
-    return neo4jNode.getPropertyKeys().iterator().next();
+    return neo4jNode.getAllProperties().values().iterator().next().toString();
   }
 
   public Point calculateRelativePosition(Node source, Node newNode, int nodeDegree) {

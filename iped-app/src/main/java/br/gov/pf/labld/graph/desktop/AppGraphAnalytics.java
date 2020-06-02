@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.gov.pf.labld.graph.EdgeQueryListener;
+import br.gov.pf.labld.graph.GraphConfiguration;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
@@ -112,20 +113,20 @@ public class AppGraphAnalytics extends JPanel {
     this.graphPane.setBackground(Color.WHITE);
 
     Renderers renderers = this.graphPane.getRenderers();
-    renderers.registerNodeRenderer("PESSOA_FISICA", new PersonNodeRenderer());
-    renderers.registerNodeRenderer("PESSOA_JURIDICA", new CompanyNodeRenderer());
-    renderers.registerNodeRenderer("TELEFONE", new PhoneNodeRenderer());
-    renderers.registerNodeRenderer("PLACA", new CarNodeRenderer());
-    renderers.registerNodeRenderer("EMAIL", new EmailNodeRenderer());
-    renderers.registerNodeRenderer("CONTA_BANCARIA", new MoneyBagNodeRenderer());
-    renderers.registerNodeRenderer("SWIFT", new MoneyTransferNodeRenderer());
-    renderers.registerNodeRenderer("EVIDENCIA", new DocumentNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.PERSON_LABEL, new PersonNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.ORGANIZATION_LABEL, new CompanyNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.PHONE_LABEL, new PhoneNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.CAR_LABEL, new CarNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.EMAIL_LABEL, new EmailNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.BANK_ACCOUNT_LABEL, new MoneyBagNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.MONEY_TRANSFER_LABEL, new MoneyTransferNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.DOCUMENT_LABEL, new DocumentNodeRenderer());
 
-    renderers.registerNodeRenderer("DATASOURCE,EVIDENCIA", new DocumentNodeRenderer());
-    renderers.registerNodeRenderer("DATASOURCE,PESSOA_FISICA", new PersonNodeRenderer());
-    renderers.registerNodeRenderer("DATASOURCE,PESSOA_JURIDICA", new CompanyNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.DATASOURCE_LABEL + "," +GraphConfiguration.DOCUMENT_LABEL , new DocumentNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.DATASOURCE_LABEL + "," + GraphConfiguration.PERSON_LABEL, new PersonNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.DATASOURCE_LABEL + "," + GraphConfiguration.ORGANIZATION_LABEL, new CompanyNodeRenderer());
 
-    renderers.registerNodeRenderer("CONTACT_GROUP", new PeopleNodeRenderer());
+    renderers.registerNodeRenderer(GraphConfiguration.CONTACT_GROUP_LABEL, new PeopleNodeRenderer());
 
     this.sidePanel = new GraphSidePanel(this.graphPane);
 

@@ -19,6 +19,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
 public class GraphConfiguration {
+    
+  public static final String PERSON_LABEL = "PERSON";
+  public static final String ORGANIZATION_LABEL = "ORGANIZATION";
+  public static final String PHONE_LABEL = "PHONE";
+  public static final String EMAIL_LABEL = "EMAIL";
+  public static final String CAR_LABEL = "CAR";
+  public static final String DOCUMENT_LABEL = "DOCUMENT";
+  public static final String BANK_ACCOUNT_LABEL = "BANK_ACCOUNT";
+  public static final String MONEY_TRANSFER_LABEL = "MONEY_TRANSFER";
+  public static final String DATASOURCE_LABEL = "DATASOURCE";
+  public static final String CONTACT_GROUP_LABEL = "CONTACT_GROUP";
 
   @JsonAlias("default-entity")
   private String defaultEntity;

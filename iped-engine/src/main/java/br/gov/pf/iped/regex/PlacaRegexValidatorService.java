@@ -11,7 +11,7 @@ public class PlacaRegexValidatorService extends BasicAbstractRegexValidatorServi
 
   protected static final Pattern NON_WORD = Pattern.compile("\\W");
 
-  private static final String REGEX_NAME = "PLACA";
+  private static final String[] REGEX_NAME = {"CAR", "PLACA"};
 
   @Override
   public boolean validate(String hit) {

@@ -278,9 +278,9 @@ public class GraphTask extends AbstractTask {
     private NodeValues getPhoneNodeValues(String value) {
         Set<String> phones = getPhones(value);
         if(!phones.isEmpty()) {
-            return new NodeValues(DynLabel.label("TELEFONE"), "telefone", phones.iterator().next());
+            return new NodeValues(DynLabel.label(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE, phones.iterator().next());
         }
-        System.out.println("invalid phone=" + value.trim());
+        //System.out.println("invalid phone=" + value.trim());
         return null;
     }
     
@@ -306,13 +306,13 @@ public class GraphTask extends AbstractTask {
     private NodeValues getEmailNodeValues(String value) {
         Set<String> emails = getEmails(value, false);
         if(!emails.isEmpty()) {
-            NodeValues nv = new NodeValues(DynLabel.label("EMAIL"), "email", emails.iterator().next().toLowerCase());
+            NodeValues nv = new NodeValues(DynLabel.label(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL, emails.iterator().next().toLowerCase());
             for(String email : emails) {
                 value = value.replace(email, "");
             }
             String name = ignoreEmailChars.matcher(value).replaceAll(" ").trim();
             if(!name.isEmpty()) {
-                nv.addProp("name", name);
+                nv.addProp(ExtraProperties.USER_NAME, name);
             }
             return nv;
         }
@@ -329,8 +329,8 @@ public class GraphTask extends AbstractTask {
         if(idx != -1 && value.endsWith(")")) {
             String account = value.substring(idx + 1, value.length() - 1);
             String name = value.substring(0, idx);
-            NodeValues nv = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service));
-            if(!name.isEmpty()) nv.addProp("name", name);
+            NodeValues nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service));
+            if(!name.isEmpty()) nv.addProp(ExtraProperties.USER_NAME, name);
             return nv;
         }
         return null;
@@ -440,21 +440,21 @@ public class GraphTask extends AbstractTask {
         
         NodeValues nv1;
         if(!msisdnPhones.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", msisdnPhones.first());
+            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE, msisdnPhones.first());
         }else if(!formattedPhones.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "telefone", formattedPhones.first());
+            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE, formattedPhones.first());
         }else if(!emails.isEmpty()) {
-            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), "email", emails.first());
+            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_EMAIL, emails.first());
         }else if(accounts.length != 0 && accountType.length != 0) {
             String account = getNonUUIDAccount(accounts);
-            nv1 = new NodeValues(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, accountType[0]));
+            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, accountType[0]));
         }else {
             nv1 = new NodeValues(DynLabel.label("GENERIC"), "entity", item.getName());
         }
         
-        nv1.addProp("telefone", formattedPhones);
-        nv1.addProp("email", emails);
-        nv1.addProp("name", name);
+        nv1.addProp(ExtraProperties.USER_PHONE, formattedPhones);
+        nv1.addProp(ExtraProperties.USER_EMAIL, emails);
+        nv1.addProp(ExtraProperties.USER_NAME, name);
         nv1.addProp(ExtraProperties.USER_ACCOUNT, accounts);
         nv1.addProp(ExtraProperties.USER_ACCOUNT_TYPE, accountType);
         nv1.addProp(ExtraProperties.USER_ORGANIZATION, org);
@@ -464,16 +464,16 @@ public class GraphTask extends AbstractTask {
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
         for(String email : emails) {
-            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), "email", email, uniqueId);
-            graphFileWriter.writeNodeReplace(DynLabel.label("EMAIL"), "email", email, uniqueId);
+            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_EMAIL, email, uniqueId);
+            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.EMAIL_LABEL), ExtraProperties.USER_EMAIL, email, uniqueId);
         }
         for(String phone : formattedPhones) {
-            graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), "telefone", phone, uniqueId);
-            graphFileWriter.writeNodeReplace(DynLabel.label("TELEFONE"), "telefone", phone, uniqueId);
+            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_PHONE, phone, uniqueId);
+            graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PHONE_LABEL), ExtraProperties.USER_PHONE, phone, uniqueId);
         }
         for(String account : accounts) {
             for(String service : accountType) {
-                graphFileWriter.writeNodeReplace(DynLabel.label("PESSOA_FISICA"), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service), uniqueId);
+                graphFileWriter.writeNodeReplace(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service), uniqueId);
             }
         }
         
@@ -561,10 +561,10 @@ public class GraphTask extends AbstractTask {
         if(bssid != null) {
             nv2 = new NodeValues(DynLabel.label("WIFI"), "mac_address", bssid.trim());
             if(ssid != null) {
-                nodeProps.put("SSId", ssid.trim());
+                nodeProps.put("SSID", ssid.trim());
             }
         }else if(ssid != null){
-            nv2 = new NodeValues(DynLabel.label("WIFI"), "SSId", ssid.trim());
+            nv2 = new NodeValues(DynLabel.label("WIFI"), "SSID", ssid.trim());
         }else {
             return;
         }
