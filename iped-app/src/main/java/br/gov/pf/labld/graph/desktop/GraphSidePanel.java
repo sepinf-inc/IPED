@@ -57,7 +57,8 @@ public class GraphSidePanel extends JPanel {
 
     propertiesTable = new JTable(nodePropertiesDataModel);
     propertiesTable.setCellSelectionEnabled(true);
-    propertiesTable.setPreferredSize(new Dimension(50, 150));
+    propertiesTable.setFillsViewportHeight(true);
+    propertiesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 
     propertiesScrollPane = new JScrollPane(propertiesTable);
 
