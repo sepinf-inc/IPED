@@ -31,7 +31,6 @@ import com.google.i18n.phonenumbers.PhoneNumberUtil.Leniency;
 import com.google.i18n.phonenumbers.PhoneNumberUtil.PhoneNumberFormat;
 import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
-import br.gov.pf.iped.regex.TelefoneRegexValidatorService;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
@@ -259,20 +258,22 @@ public class GraphTask extends AbstractTask {
         while(whatsappMacher.find()){
             String phone = whatsappMacher.group(1);
             try {
-                phoneNumbers.add(phoneUtil.parse(phone, "BR"));
+                phoneNumbers.add(phoneUtil.parse(phone, configuration.getPhoneRegion()));
             } catch (NumberParseException e) {
                 e.printStackTrace();
             }
         }
-        for(PhoneNumberMatch m : phoneUtil.findNumbers(value, "BR", Leniency.POSSIBLE, Integer.MAX_VALUE)) {
+        for(PhoneNumberMatch m : phoneUtil.findNumbers(value, configuration.getPhoneRegion(), Leniency.POSSIBLE, Integer.MAX_VALUE)) {
             phoneNumbers.add(m.number());
         }
         SortedSet<String> result = new TreeSet<>();
         for(PhoneNumber phoneNumber : phoneNumbers) {
             String phone = phoneUtil.format(phoneNumber, PhoneNumberFormat.INTERNATIONAL);
-            Matcher matcher = oldBRPhonePattern.matcher(phone);
-            if(matcher.matches()) {
-                phone = matcher.group(1) + "9" + matcher.group(2);
+            if(configuration.getPhoneRegion().equals("BR")) {
+                Matcher matcher = oldBRPhonePattern.matcher(phone);
+                if(matcher.matches()) {
+                    phone = matcher.group(1) + "9" + matcher.group(2);
+                }
             }
             result.add(phone);
         }
@@ -647,7 +648,7 @@ public class GraphTask extends AbstractTask {
               boolean nearHits = false;
               long[] offsets1 = hit.getOffsets();
               long[] offsets2 = hit2.getOffsets();
-              int maxDist = configuration.getMaxHitDistance();
+              int maxDist = configuration.getMaxProximityDistance();
               int i = 0, j = 0;
               while(i < offsets1.length && j < offsets2.length) {
                   if(Math.abs(offsets1[i] - offsets2[j]) <= maxDist) {

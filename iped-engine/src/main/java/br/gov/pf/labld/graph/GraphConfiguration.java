@@ -30,14 +30,20 @@ public class GraphConfiguration {
   public static final String DATASOURCE_LABEL = "DATASOURCE";
   public static final String CONTACT_GROUP_LABEL = "CONTACT_GROUP";
 
+  @JsonAlias("phone-region")
+  private String phoneRegion;
+  
   @JsonAlias("process-proximity-relationships")
-  private String processProximityRelationships;
+  private boolean processProximityRelationships;
 
   @JsonAlias("proximity-relationship-name")
   private String defaultRelationship;
   
+  @JsonAlias("_comment_")
+  private String comment;
+  
   @JsonAlias("max-proximity-distance")
-  private int maxHitDistance;
+  private int maxProximityDistance;
   
   @JsonAlias("default-entity")
   private String defaultEntity;
@@ -119,15 +125,23 @@ public class GraphConfiguration {
   }
   
   public boolean getProcessProximityRelationships() {
-    return Boolean.valueOf(processProximityRelationships);
+    return processProximityRelationships;
   }
 
   public String getDefaultRelationship() {
     return defaultRelationship;
   }
   
-  public int getMaxHitDistance() {
-    return maxHitDistance;
+  public int getMaxProximityDistance() {
+    return maxProximityDistance;
+  }
+  
+  public String getPhoneRegion() {
+      return phoneRegion;
+  }
+  
+  public String getComment() {
+      return comment;
   }
 
   public void setDefaultRelationship(String defaultRelationship) {
@@ -239,7 +253,6 @@ public class GraphConfiguration {
     private String name;
     
     private String property;
-    private String relationship;
 
     public String getName() {
       return name;
@@ -255,14 +268,6 @@ public class GraphConfiguration {
 
     public void setProperty(String property) {
       this.property = property;
-    }
-
-    public String getRelationship() {
-      return relationship;
-    }
-
-    public void setRelationship(String relationship) {
-      this.relationship = relationship;
     }
 
   }
