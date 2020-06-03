@@ -80,11 +80,14 @@ public class GraphToolBar extends JToolBar implements GraphHistoryListener {
         Messages.getString("GraphAnalysis.AdvancedSearch"), advancedSearchUrl);
     this.addBtn(advancedSearchBtn);
 
+    // Not working for now
+    /*
     URL searchLinksUrl = this.getClass().getResource("link-intact-2x.png");
     JButton searchLinksBtn = createButton(new OpenSearchLinksAction(app),
         Messages.getString("GraphAnalysis.SearchLinks"), searchLinksUrl);
     this.addBtn(searchLinksBtn);
-
+    */
+    
     this.addSeparator();
 
     for (GraphVizAlgorithm algo : GraphVizAlgorithm.values()) {
