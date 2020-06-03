@@ -312,6 +312,101 @@ public class ImageUtil {
     }
 
     /**
+     * Read image comment.
+     *
+     * @return Comment metadata, or null if no metadata is present. 
+     */
+    public static String readJpegMetaDataComment(InputStream is) throws IOException {
+        ImageReader reader = null;
+        ImageInputStream iis = null;
+        String ret = null;
+        try {
+            reader = ImageIO.getImageReadersBySuffix("jpeg").next();
+            iis = ImageIO.createImageInputStream(is);
+            reader.setInput(iis);
+            IIOMetadata meta = reader.getImageMetadata(0);
+            IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
+            ret = findAttribute(root, "comment");
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (iis != null) iis.close();
+            } catch (Exception e) {
+            }
+            try {
+                if (reader != null) reader.dispose();
+            } catch (Exception e) {
+            }
+        }
+        return ret;
+    }
+
+    public static BufferedImage getBestFramesFit(BufferedImage img, String comment, int targetWidth, int targetHeight) {
+        int nRows = 0;
+        int nCols = 0;
+        if (comment != null && comment.startsWith("Frames")) { //$NON-NLS-1$
+            int p1 = comment.indexOf('=');
+            int p2 = comment.indexOf('x');
+            if (p1 > 0 && p2 > 0) {
+                nRows = Integer.parseInt(comment.substring(p1 + 1, p2));
+                nCols = Integer.parseInt(comment.substring(p2 + 1));
+            }
+        }
+        if (nRows <= 0 || nCols <= 0) return img;
+
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+
+        final int border = 2;
+        int frameWidth = (imgWidth - 2 * border - border * nCols) / nCols;
+        int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
+
+        int totalFrames = nCols * nRows;
+        int bestRows = nCols;
+        int bestCols = nRows;
+        int minFrames = (int) Math.ceil(totalFrames * 0.8);
+        double maxUsage = 0;
+        for (int cols = 1; cols <= totalFrames; cols++) {
+            int rows = totalFrames / cols;
+            int nf = rows * cols;
+            if (nf < minFrames) continue;
+            int ww = (frameWidth + 1) * cols + border * 2;
+            int hh = (frameHeight + 1) * rows + border * 2;
+            double z = Math.min(targetWidth / (double) ww, targetHeight / (double) hh);
+            double currUsage = ww * z * hh * z * nf;
+            if (currUsage > maxUsage) {
+                maxUsage = currUsage;
+                bestRows = rows;
+                bestCols = cols;
+            }
+        }
+        if (bestRows == nRows && bestCols == nCols) return img;
+
+        double rate = totalFrames / (double) (bestRows * bestCols);
+        BufferedImage fit = new BufferedImage(bestCols * (frameWidth + 1) + border * 2, bestRows * (frameHeight + 1) + border * 2, BufferedImage.TYPE_INT_BGR);
+        Graphics2D g2 = (Graphics2D) fit.getGraphics();
+        g2.setColor(new Color(222, 222, 222));
+        g2.fillRect(0, 0, fit.getWidth(), fit.getHeight());
+        g2.setColor(new Color(22, 22, 22));
+        g2.drawRect(0, 0, fit.getWidth() - 1, fit.getHeight() - 1);
+
+        double pos = 0;
+        for (int row = 0; row < bestRows; row++) {
+            int y = row * (frameHeight + 1) + border;
+            for (int col = 0; col < bestCols; col++) {
+                int x = col * (frameWidth + 1) + border;
+                int idx = (int) Math.round(pos);
+                int sx = border + (border + frameWidth) * (idx % nCols);
+                int sy = border + (border + frameHeight) * (idx / nCols);
+                g2.drawImage(img, x, y, x + frameWidth, y + frameHeight, sx, sy, sx + frameWidth, sy + frameHeight, null);
+                pos += rate;
+            }
+        }
+        g2.dispose();
+        return fit;
+    }
+    
+    /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.
      */
