@@ -1,10 +1,13 @@
 {  
+    "process-proximity-relationships":"false",
+    "proximity-relationship-name":"near_hit",
+    "_comment_": "be careful with below value, proximity relationships are quadratic with number of regex hits, so it must be low",
+    "max-proximity-distance": 100,
     "default-entity":"DOCUMENT",
     "default-person-entity":"PERSON",
     "default-business-entity":"ORGANIZATION",
-    "default-relationship":"NEAR_HIT",
     "include-categories":".*",
-    "exclude-categories":"Programs and Libraries|Other files|Unallocated|File Slacks|Virtual disks|Other disks",
+    "exclude-categories":"Internet History|Programs and Libraries|Other files|Unallocated|File Slacks|Virtual disks|Other disks",
     "entities":[
         {  
             "label":"DOCUMENT",
@@ -17,22 +20,22 @@
                 {  
                     "name":"Regex:CPF",
                     "property":"cpf",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 },
                 {  
                     "name":"Regex:TITULO_ELEITOR",
                     "property":"titulo_eleitor",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 },
                 {  
                     "name":"Regex:PISPASEP",
                     "property":"pispasep",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 },
                 {  
                     "name":"Regex:CNH",
                     "property":"cnh",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -42,7 +45,7 @@
                 {  
                     "name":"Regex:CNPJ",
                     "property":"cnpj",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -52,7 +55,7 @@
                 {  
                     "name":"Regex:EMAIL",
                     "property":"emailAddress",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -62,7 +65,7 @@
                 {  
                     "name":"Regex:URL",
                     "property":"url",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -72,7 +75,7 @@
                 {  
                     "name":"Regex:IP",
                     "property":"ip",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -82,7 +85,7 @@
                 {  
                     "name":"Regex:MAC_ADDRESS",
                     "property":"mac_address",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -92,7 +95,7 @@
                 {  
                     "name":"Regex:BANK_ACCOUNT",
                     "property":"bank_account",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -102,7 +105,7 @@
                 {  
                     "name":"Regex:SWIFT",
                     "property":"swift",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -112,7 +115,7 @@
                 {  
                     "name":"Regex:PHONE",
                     "property":"phoneNumber",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -122,12 +125,12 @@
                 {  
                     "name":"Regex:CAR",
                     "property":"car",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 },
                 {  
                     "name":"Regex:PLACA",
                     "property":"placa",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         },
@@ -137,7 +140,7 @@
                 {  
                     "name":"Regex:FACEBOOK",
                     "property":"fbid",
-                    "relationship":"NEAR_HIT"
+                    "relationship":"near_hit"
                 }
             ]
         }

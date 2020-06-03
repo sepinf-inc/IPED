@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -404,8 +405,8 @@ public class IndexItem extends BasicProps {
         }
 
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
-            if (entry.getValue() instanceof List) {
-                for (Object val : (List) entry.getValue()) {
+            if (entry.getValue() instanceof Collection) {
+                for (Object val : (Collection<?>) entry.getValue()) {
                     if (!typesMap.containsKey(entry.getKey()))
                         typesMap.put(entry.getKey(), val.getClass());
                     addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);

@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -41,6 +42,7 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
@@ -169,7 +171,9 @@ public class GraphTask extends AbstractTask {
         processContacts(evidence);
         processWifi(evidence);
         processUserAccount(evidence);
-        //processExtraAttributes(evidence);
+        if(configuration.getProcessProximityRelationships()) {
+            processExtraAttributes(evidence);
+        }
     }
 
   }
@@ -598,14 +602,14 @@ public class GraphTask extends AbstractTask {
               GraphEntity entity2 = configuration.getEntityWithMetadata(key2);
               if (entity2 == null) continue;
               GraphEntityMetadata metadata2 = entity2.getMetadata(key2);
-              processMatches(entity, metadata, (List<Object>) entry.getValue(), entity2, metadata2, (List<Object>) entry2.getValue(), evidence, relationsAdded);
+              processMatches(entity, metadata, (Collection<Object>) entry.getValue(), entity2, metadata2, (Collection<Object>) entry2.getValue(), evidence, relationsAdded);
           }
         }
       }
     }
 
-  private void processMatches(GraphEntity entity, GraphEntityMetadata metadata, List<Object> matches, 
-          GraphEntity entity2, GraphEntityMetadata metadata2, List<Object> matches2, IItem evidence, Set<String> relationsAdded) throws IOException {
+  private void processMatches(GraphEntity entity, GraphEntityMetadata metadata, Collection<Object> matches, 
+          GraphEntity entity2, GraphEntityMetadata metadata2, Collection<Object> matches2, IItem evidence, Set<String> relationsAdded) throws IOException {
     String labelName = entity.getLabel();
     String propertyName = metadata.getProperty();
     Label label = DynLabel.label(labelName);
@@ -624,6 +628,8 @@ public class GraphTask extends AbstractTask {
       
       Set<String> controlSet = new HashSet<>();
       for (Object match : matches) {
+          RegexHits hit = (RegexHits) match;
+          
           for (Object match2 : matches2) {
               
               String propertyValue = match.toString();
@@ -633,6 +639,27 @@ public class GraphTask extends AbstractTask {
               String id2 = label2.name() + propertyValue2;
               
               if(id1.equals(id2)) {
+                  continue;
+              }
+              
+              RegexHits hit2 = (RegexHits) match2;
+              
+              boolean nearHits = false;
+              long[] offsets1 = hit.getOffsets();
+              long[] offsets2 = hit2.getOffsets();
+              int maxDist = configuration.getMaxHitDistance();
+              int i = 0, j = 0;
+              while(i < offsets1.length && j < offsets2.length) {
+                  if(Math.abs(offsets1[i] - offsets2[j]) <= maxDist) {
+                      nearHits = true;
+                      break;
+                  }
+                  if(offsets1[i] < offsets2[j])
+                      i++;
+                  else
+                      j++;
+              }
+              if(!nearHits) {
                   continue;
               }
               

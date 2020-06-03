@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,6 +30,15 @@ public class GraphConfiguration {
   public static final String DATASOURCE_LABEL = "DATASOURCE";
   public static final String CONTACT_GROUP_LABEL = "CONTACT_GROUP";
 
+  @JsonAlias("process-proximity-relationships")
+  private String processProximityRelationships;
+
+  @JsonAlias("proximity-relationship-name")
+  private String defaultRelationship;
+  
+  @JsonAlias("max-proximity-distance")
+  private int maxHitDistance;
+  
   @JsonAlias("default-entity")
   private String defaultEntity;
 
@@ -39,9 +47,6 @@ public class GraphConfiguration {
 
   @JsonAlias("default-business-entity")
   private String defaultBusinessEntity;
-
-  @JsonAlias("default-relationship")
-  private String defaultRelationship;
 
   @JsonAlias("include-categories")
   private String includeCategories;
@@ -112,9 +117,17 @@ public class GraphConfiguration {
   public void setDefaultBusinessEntity(String defaultBusinessEntity) {
     this.defaultBusinessEntity = defaultBusinessEntity;
   }
+  
+  public boolean getProcessProximityRelationships() {
+    return Boolean.valueOf(processProximityRelationships);
+  }
 
   public String getDefaultRelationship() {
     return defaultRelationship;
+  }
+  
+  public int getMaxHitDistance() {
+    return maxHitDistance;
   }
 
   public void setDefaultRelationship(String defaultRelationship) {
