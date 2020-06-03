@@ -187,8 +187,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 return;
             }
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
-            value = value.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
             StringSelection selection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(selection, selection);
@@ -349,7 +347,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return cell.replace("<html><nobr>", "").replace("</html>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
     }
 
