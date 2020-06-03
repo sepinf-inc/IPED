@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.imageio.ImageIO;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
@@ -57,6 +58,7 @@ import br.gov.pf.labld.graph.desktop.renderers.MoneyTransferNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
@@ -381,22 +383,32 @@ public class AppGraphAnalytics extends JPanel {
   private class ShowMoreConnectedNode extends SwingWorker<Void, Void>{
     
     private static final int MAX_NEIGHBOURS = 25;
+    private Long id;
 
     @Override
     protected Void doInBackground() {
         try {
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            Long id = graphService.getMoreConnectedNode();
+            id = graphService.getMoreConnectedNode();
             if(id != null) {
                 AddNodeWorker worker = new AddNodeWorker(AppGraphAnalytics.this, Collections.singleton(id));
                 worker.execute();
                 worker.get();
-                new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS).execute();
+                ExpandNodeWorker expandWorker = new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS);
+                expandWorker.execute();
+                expandWorker.get();
             }
         }catch(Exception e) {
             e.printStackTrace();
         }
         return null;
+    }
+    
+    @Override
+    protected void done() {
+        if(id != null) {
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.InitialGraphMsg"));
+        }
     }
       
   }
