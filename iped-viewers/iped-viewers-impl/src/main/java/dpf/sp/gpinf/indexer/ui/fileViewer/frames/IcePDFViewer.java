@@ -7,19 +7,26 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Set;
 
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
 
+import org.icepdf.core.pobjects.Catalog;
+import org.icepdf.core.pobjects.Document;
+import org.icepdf.core.pobjects.Page;
+import org.icepdf.core.pobjects.PageTree;
 import org.icepdf.core.search.DocumentSearchController;
 import org.icepdf.core.util.Library;
 import org.icepdf.ri.common.SwingController;
 import org.icepdf.ri.common.SwingViewBuilder;
 import org.icepdf.ri.common.views.DocumentViewController;
 import org.icepdf.ri.common.views.DocumentViewControllerImpl;
+import org.icepdf.ri.common.views.DocumentViewModelImpl;
 import org.icepdf.ri.util.PropertiesManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
 public class IcePDFViewer extends Viewer {
@@ -31,14 +38,17 @@ public class IcePDFViewer extends Viewer {
     private static final long serialVersionUID = -4538119351386926692L;
     private volatile SwingController pdfController;
     private volatile JPanel viewerPanel;
+    private volatile JLabel labelMsg;
 
     volatile int fitMode = DocumentViewController.PAGE_FIT_WINDOW_WIDTH;
     volatile int viewMode = DocumentViewControllerImpl.ONE_COLUMN_VIEW;
 
+    private final Object lock = new Object();
+    private volatile IStreamSource lastContent;
+    
     @Override
     public boolean isSupportedType(String contentType) {
         return contentType.equals("application/pdf"); //$NON-NLS-1$
-
     }
 
     @Override
@@ -48,6 +58,7 @@ public class IcePDFViewer extends Viewer {
 
     public IcePDFViewer() {
         super(new BorderLayout());
+        isToolbarVisible = true;
 
         // System.setProperty("org.icepdf.core.imageReference", "scaled"); //$NON-NLS-1$
         // //$NON-NLS-2$
@@ -64,7 +75,40 @@ public class IcePDFViewer extends Viewer {
 
         new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
 
-        pdfController = new SwingController();
+        pdfController = new SwingController() {
+            //Override openDocument, to avoid opening dialog messages
+            public void openDocument(String pathname) {
+                if (pathname != null && pathname.length() > 0) {
+                    try {
+                        closeDocument();
+                        setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
+                        document = new Document();
+                        setupSecurityHandler(document, documentViewController.getSecurityCallback());
+                        document.setFile(pathname);
+                        commonNewDocumentHandling(pathname);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+            
+            public void closeDocument() {
+                try {
+                    if (document != null) {
+                        super.closeDocument();
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+            public void setToolBarVisible(boolean isVisible) {
+                if (document != null) {
+                    try {
+                        super.setToolBarVisible(isVisible);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        };
         pdfController.setIsEmbeddedComponent(true);
         pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
 
@@ -88,11 +132,15 @@ public class IcePDFViewer extends Viewer {
                 new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
 
         final JPanel panel = this.getPanel();
+        labelMsg = new JLabel(Messages.getString("PDFViewer.OpenError"), JLabel.CENTER);
+        labelMsg.setVisible(false);
+        labelMsg.setPreferredSize(new Dimension(0, 50));
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
                 viewerPanel = factory.buildViewerPanel();
+                panel.add(labelMsg, BorderLayout.NORTH);
                 panel.add(viewerPanel, BorderLayout.CENTER);
                 panel.setMinimumSize(new Dimension());
             }
@@ -115,10 +163,13 @@ public class IcePDFViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
-
-        pdfController.closeDocument();
-
+        
+        lastContent = content;
+        
         if (content == null) {
+            pdfController.closeDocument();
+            labelMsg.setVisible(false);
+            viewerPanel.setVisible(false);
             return;
         }
 
@@ -131,32 +182,65 @@ public class IcePDFViewer extends Viewer {
         new Thread() {
             @Override
             public void run() {
+                synchronized (lock) {
+                    if (!content.equals(lastContent)) return;
+                    
+                    labelMsg.setVisible(false);
+                    viewerPanel.setVisible(false);
 
-                pdfController.openDocument(content.getFile().getAbsolutePath());
+                    try {
+                        pdfController.openDocument(content.getFile().getAbsolutePath());
+                        if (!content.equals(lastContent)) return;
 
-                if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
-                    pdfController.setPageFitMode(fitMode, true);
+                        if (!isDocumentValid()) {
+                            labelMsg.setVisible(true);
+                            getPanel().revalidate();
+                            return;
+                        }
+                        pdfController.setToolBarVisible(isToolbarVisible());
+    
+                        if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
+                            pdfController.setPageFitMode(fitMode, true);
+                        }
+    
+                        if (pdfController.isUtilityPaneVisible()) {
+                            pdfController.setUtilityPaneVisible(false);
+                        }
+    
+                        viewerPanel.setVisible(true);
+                        viewerPanel.revalidate();
+                        getPanel().revalidate();
+    
+                        highlightText(highlightTerms, content);
+                    } catch (Exception e) {
+                        if (content == null || !content.equals(lastContent)) return;
+                        labelMsg.setVisible(true);
+                        getPanel().revalidate();
+                    }
                 }
-
-                if (pdfController.isUtilityPaneVisible()) {
-                    pdfController.setUtilityPaneVisible(false);
-                }
-
-                // resize to force redraw
-                getPanel().setSize(getPanel().getWidth() + delta, getPanel().getHeight());
-                delta *= -1;
-
-                highlightText(highlightTerms);
-
             }
         }.start();
 
     }
 
-    private int delta = 1;
+    private boolean isDocumentValid() {
+        try {
+            Document document = pdfController.getDocument();
+            if (document == null) return false;
+            Catalog catalog = document.getCatalog();
+            if (catalog == null) return false;
+            PageTree tree = catalog.getPageTree();
+            if (tree == null) return false;
+            Page page = tree.getPage(0);
+            return page != null;
+        } catch (Exception e) {
+        }
+        return false;
+    }
+    
     private ArrayList<Integer> hitPages;
 
-    private void highlightText(Set<String> highlightTerms) {
+    private void highlightText(Set<String> highlightTerms, IStreamSource content) {
         try {
             DocumentSearchController search = pdfController.getDocumentSearchController();
             search.clearAllSearchHighlight();
@@ -176,6 +260,9 @@ public class IcePDFViewer extends Viewer {
             totalHits = 0;
             hitPages = new ArrayList<Integer>();
             for (int i = 0; i < pdfController.getDocument().getNumberOfPages(); i++) {
+                if(content != lastContent) {
+                    break;
+                }
                 int hits = search.searchHighlightPage(i);
                 if (hits > 0) {
                     totalHits++;
@@ -211,4 +298,14 @@ public class IcePDFViewer extends Viewer {
 
     }
 
+    @Override
+    public void setToolbarVisible(boolean isVisible) {
+        super.setToolbarVisible(isVisible);
+        pdfController.setToolBarVisible(isVisible);
+    }
+
+    @Override
+    public int getToolbarSupported() {
+        return 1;
+    }
 }

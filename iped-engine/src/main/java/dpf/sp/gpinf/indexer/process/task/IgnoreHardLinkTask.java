@@ -38,8 +38,8 @@ public class IgnoreHardLinkTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        fileSystemOrigMap = null;
+        fileSystemSlackMap = null;
     }
 
     @Override

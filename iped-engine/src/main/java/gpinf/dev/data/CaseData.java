@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
@@ -18,6 +19,9 @@ import java.util.zip.GZIPOutputStream;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
+import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
+import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.ICaseInfo;
 import iped3.IItem;
@@ -207,8 +211,8 @@ public class CaseData implements ICaseData {
      * @throws InterruptedException
      */
     public void addItem(IItem item) throws InterruptedException {
+        computeGlobalId(item);
         addItemToQueue(item, 0);
-
     }
 
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
@@ -218,6 +222,24 @@ public class CaseData implements ICaseData {
         }
 
         queue.put(item);
+    }
+    
+    private void computeGlobalId(IItem item) {
+        HashValue persistentId = new HashValue(Util.getPersistentId(item));
+        Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>)objectMap.get(SkipCommitedTask.GLOBALID_ID_MAP);
+      //changes id to previous processing id if using --continue
+        if(globalToIdMap != null) {
+            Integer previousId = globalToIdMap.get(persistentId);
+            if(previousId != null) {
+                item.setId(previousId.intValue());
+            }else {
+                String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
+                previousId = globalToIdMap.get(new HashValue(splittedTextId));
+                if(previousId != null) {
+                    item.setId(previousId.intValue());
+                }
+            }
+        }
     }
 
     public Integer changeToNextQueue() {

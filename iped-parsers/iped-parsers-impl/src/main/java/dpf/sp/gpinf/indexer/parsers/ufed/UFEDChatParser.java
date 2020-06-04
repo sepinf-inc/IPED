@@ -71,11 +71,11 @@ public class UFEDChatParser extends AbstractParser {
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
             List<IItemBase> items = searcher.search(query);
 
-            List<Message> messages = new ArrayList<>();
+            List<UfedMessage> messages = new ArrayList<>();
 
             for (IItemBase msg : items) {
                 String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
-                Message m = new Message();
+                UfedMessage m = new UfedMessage();
                 m.setId(msg.getId());
                 for(String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
                     if(!body.startsWith(ATTACHED_MEDIA_MSG))
@@ -106,6 +106,8 @@ public class UFEDChatParser extends AbstractParser {
                         m.setMediaUrl(attach.getMetadata().get(META_PREFIX + "URL")); //$NON-NLS-1$
                         m.setMediaCaption(attach.getMetadata().get(META_PREFIX + "Title")); //$NON-NLS-1$
                         m.setThumbData(attach.getThumb());
+                        m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
+                        m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
                         if (attach.isDeleted())
                             m.setDeleted(true);
                         if (attach.getLength() != null)
@@ -165,7 +167,7 @@ public class UFEDChatParser extends AbstractParser {
         return name;
     }
 
-    private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
+    private void storeLinkedHashes(List<UfedMessage> messages, Metadata metadata) {
         for (Message m : messages) {
             if (m.getMediaHash() != null) {
                 metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash());

@@ -618,6 +618,7 @@ public class ExportFileTask extends AbstractTask {
     
     @Override
     public void finish() throws Exception {
+        hashMap.clear();
         if(storageCon.get(output) != null) {
             int i = 0;
             for(Connection con : storageCon.get(output).values()) {

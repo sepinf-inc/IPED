@@ -97,6 +97,7 @@ import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
+import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.event.CDockableStateListener;
@@ -114,12 +115,12 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CompositeViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
+import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
 import iped3.desktop.CancelableWorker;
@@ -180,8 +181,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
     DefaultSingleCDockable compositeViewerDock;
 
-    IViewerControl viewerControl = ViewerControl.getInstance();
-    public CompositeViewer compositeViewer;
+    private List<DefaultSingleCDockable> viewerDocks;
+    private ViewerController viewerController;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -209,12 +210,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     boolean isMultiCase;
     public JLabel status;
 
-    // final String MSG_NO_PREVIEW =
-    // "NÃ£o foi possÃ­vel visualizar o texto. Clique duas vezes sobre o arquivo
-    // para acessar o original!";
-    // final String MSG_NO_HITS =
-    // "NÃ£o foi possÃ­vel destacar as ocorrÃªncias. Clique duas vezes sobre o
-    // arquivo para acessar o original!";
+    private static final String resPath = "/dpf/sp/gpinf/indexer/desktop/";
+
     final static String FILTRO_TODOS = Messages.getString("App.NoFilter"); //$NON-NLS-1$
     final static String FILTRO_SELECTED = Messages.getString("App.Checked"); //$NON-NLS-1$
     public final static String SEARCH_TOOL_TIP = Messages.getString("App.SearchBoxTip"); //$NON-NLS-1$
@@ -236,7 +233,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private App() {
         this.appSearchParams = new AppSearchParams();
         this.appSearchParams.mainFrame = (JFrame) this;
-        this.appSearchParams.viewerControl = ViewerControl.getInstance();
         this.appSearchParams.HIGHLIGHT_START_TAG = "<font color=\"black\" bgcolor=\"yellow\">"; //$NON-NLS-1$
         this.appSearchParams.HIGHLIGHT_END_TAG = "</font>"; //$NON-NLS-1$
         this.appSearchParams.TEXT_BREAK_SIZE = TEXT_BREAK_SIZE;
@@ -328,12 +324,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.appSearchParams.autoParser = autoParser;
     }
 
-    public TextViewer getTextViewer() {
-        return (TextViewer) this.appSearchParams.textViewer;
+    public ATextViewer getTextViewer() {
+        return viewerController.getTextViewer();
     }
 
-    public void setTextViewer(TextViewer textViewer) {
-        this.appSearchParams.textViewer = textViewer;
+    public ViewerController getViewerController() {
+        return viewerController;
     }
 
     private void destroy() {
@@ -342,8 +338,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             if (this.resultsTable != null) {
                 ColumnsManager.getInstance().dispose();
             }
-            if (compositeViewer != null) {
-                compositeViewer.dispose();
+            if (viewerController != null) {
+                viewerController.dispose();
             }
             appCase.close();
 
@@ -502,7 +498,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         appGraphAnalytics = new AppGraphAnalytics();
 
-        hitsTable = new HitsTable(appSearchParams.hitsModel);
+        viewerController = new ViewerController(appSearchParams);
+        hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
         appSearchParams.hitsTable = hitsTable;
         hitsScroll = new JScrollPane(hitsTable);
         hitsTable.setFillsViewportHeight(true);
@@ -551,9 +548,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         parentItemTable.setShowGrid(false);
 
-        compositeViewer = new CompositeViewer();
-        appSearchParams.compositeViewer = compositeViewer;
-
         categoryTree = new JTree(new Object[0]);
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
@@ -596,7 +590,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         dockingControl = new CControl(this);
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
-        
+
         // This forces Eclipse theme to use rectangular tabs instead of curved ones, to save horizontal space. 
         dockingControl.putProperty(EclipseTheme.TAB_PAINTER, new TabPainter() {
             public Border getFullBorder(BorderedComponent owner, DockController controller, Dockable dockable) {
@@ -739,15 +733,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         if (appGraphAnalytics != null) {
             graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
         }
         
         // Add buttons to control the thumbnails size / number of columns in the gallery
-        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus"));
+        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
-        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getIcon("plus"));
+        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -789,22 +783,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicateDock = createDockable("duplicatestab", Messages.getString("DuplicatesTableModel.Duplicates"), //$NON-NLS-1$ //$NON-NLS-2$
                 duplicatesScroll);
 
-        compositeViewerDock = createDockable("compositeviewer", Messages.getString("CompositeViewer.Title"), //$NON-NLS-1$ //$NON-NLS-2$
-                compositeViewer);
-        compositeViewerDock.setTitleShown(false);
-        compositeViewerDock.addCDockableStateListener(new CDockableStateListener() {
-            @Override
-            public void extendedModeChanged(CDockable arg0, ExtendedMode mode) {
-                if (mode == ExtendedMode.EXTERNALIZED || mode == ExtendedMode.NORMALIZED)
-                    viewerControl.restartLibreOfficeFrame();
-            }
-
-            @Override
-            public void visibilityChanged(CDockable arg0) {
-                // TODO Auto-generated method stub
-            }
-        });
-
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(metadataTabDock);
         if (evidenceTabDock != null) {
@@ -826,11 +804,85 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(subitemDock);
         dockingControl.addDockable(duplicateDock);
         dockingControl.addDockable(parentDock);
-        dockingControl.addDockable(compositeViewerDock);
+
+        List<Viewer> viewers = viewerController.getViewers();
+        viewerDocks = new ArrayList<DefaultSingleCDockable>();
+        for (Viewer viewer : viewers) {
+            DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(), viewer.getPanel());
+            viewerDocks.add(viewerDock);
+            dockingControl.addDockable(viewerDock);
+            viewerController.put(viewer, viewerDock);
+        }
 
         setDockablesColors();
     }
     
+    private void setupViewerDocks() {
+        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"), IconUtil.getIcon("pin", resPath)) {
+            protected void changed() {
+                viewerController.setFixed(isSelected());
+            }
+        };
+        List<Viewer> viewers = viewerController.getViewers();
+        for (int i = 0; i < viewers.size(); i++) {
+            Viewer viewer = viewers.get(i);
+            DefaultSingleCDockable viewerDock = viewerDocks.get(i);
+            viewerDock.addCDockableLocationListener(new CDockableLocationListener() {
+                public void changed(CDockableLocationEvent event) {
+                    if (viewerController != null && event.getNewShowing()) {
+                        boolean validated = false;
+                        if (event.isLocationChanged() && event.getOldLocation() != null) {
+                            CLocation oldLocation = event.getOldLocation().getParent();
+                            CLocation newLocation = event.getNewLocation();
+                            if (newLocation != null) {
+                                newLocation = newLocation.getParent();
+                            }
+                            if ((oldLocation == null && newLocation != null) || (oldLocation != null && !oldLocation.equals(newLocation))) {
+                                validated = viewerController.validateViewer(viewer);
+                            }
+                        }
+                        if (!validated && event.isShowingChanged()) {
+                            viewerController.updateViewer(viewer, false);
+                        } 
+                    }
+                }
+            });
+            
+            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getIcon("prev", resPath));
+            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getIcon("next", resPath));
+            prevHit.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    viewer.scrollToNextHit(false);
+                }
+            });
+            nextHit.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    viewer.scrollToNextHit(true);
+                }
+            });
+            viewerDock.addAction(prevHit);
+            viewerDock.addAction(nextHit);
+            viewerDock.addAction(chkFixed);
+            viewerDock.putAction("prevHit", prevHit);
+            viewerDock.putAction("nextHit", nextHit);
+
+            int toolbarSupport = viewer.getToolbarSupported();
+            if (toolbarSupport >= 0) {
+                CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"), IconUtil.getIcon("down", resPath)) {
+                    protected void changed() {
+                        viewer.setToolbarVisible(isSelected());
+                    }
+                };
+                chkToolbar.setSelectedIcon(IconUtil.getIcon("up", resPath));
+                chkToolbar.setSelected(true);
+                viewerDock.addAction(chkToolbar);
+                viewerDock.putAction("toolbar", chkToolbar);
+            }
+
+            viewerDock.addSeparator();
+        }
+    }
+
     private void updateGalleryColCount(int inc) {
         int cnt = App.get().galleryModel.colCount + inc;
         if (cnt > 0 && cnt <= 40) {
@@ -862,11 +914,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void removeAllDockables() {
-        
+
         List<DefaultSingleCDockable> docks = new ArrayList<>();
-        docks.addAll(Arrays.asList(compositeViewerDock, hitsDock, subitemDock,
-                duplicateDock, parentDock, tableTabDock, galleryTabDock, bookmarksTabDock, evidenceTabDock,
-                metadataTabDock, categoriesTabDock, graphDock));
+        docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, 
+                galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock));
+        docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
 
@@ -1041,8 +1093,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             duplicateDock.setLocation(nextLocation);
             duplicateDock.setVisible(true);
 
-            compositeViewerDock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
-            compositeViewerDock.setVisible(true);
+            for (int i = 0; i < viewerDocks.size(); i++) {
+                DefaultSingleCDockable dock = viewerDocks.get(i);
+                if (i == 0) {
+                    dock.setLocation(CLocation.base().normalSouth(0.5).east(0.6));
+                } else {
+                    dock.setLocation(nextLocation);
+                }
+                nextLocation = dock.getBaseLocation().aside();
+                dock.setVisible(true);
+            }
 
             categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
             categoriesTabDock.setVisible(true);
@@ -1060,6 +1120,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             metadataTabDock.setLocation(nextLocation);
             metadataTabDock.setVisible(true);
 
+            selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
             selectDockableTab(categoriesTabDock);
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
@@ -1121,15 +1182,25 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             metadataTabDock.setLocation(nextLocation);
             metadataTabDock.setVisible(true);
 
-            compositeViewerDock.setLocation(CLocation.base().normalEast(0.35));
-            compositeViewerDock.setVisible(true);
+            for (int i = 0; i < viewerDocks.size(); i++) {
+                DefaultSingleCDockable dock = viewerDocks.get(i);
+                if (i == 0) {
+                    dock.setLocation(CLocation.base().normalEast(0.35));
+                } else {
+                    dock.setLocation(nextLocation);
+                }
+                nextLocation = dock.getBaseLocation().aside();
+                dock.setVisible(true);
+            }
 
+            selectDockableTab(viewerDocks.get(viewerDocks.size() - 1));
             selectDockableTab(categoriesTabDock);
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
         }
-
-        viewerControl.restartLibreOfficeFrame();
+        
+        setupViewerDocks();
+        viewerController.validateViewers();
     }
 
     public void alterarDisposicao() {

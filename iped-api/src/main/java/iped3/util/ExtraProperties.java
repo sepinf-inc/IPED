@@ -104,6 +104,10 @@ public class ExtraProperties {
     
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
     
+    public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
+	
+    public static final String CONFIDENCE_ATTR = AUDIO_META_PREFIX + "transcriptConfidence";
+    
     public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,
             Message.MESSAGE_BCC, PST_ATTACH, PST_EMAIL_HAS_ATTACHS};

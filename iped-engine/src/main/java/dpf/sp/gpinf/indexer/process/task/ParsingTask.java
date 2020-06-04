@@ -75,7 +75,6 @@ import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
@@ -112,6 +111,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
     public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
+    
+    private static final int MAX_SUBITEM_DEPTH = 100;
+    private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
     private static boolean expandContainers = false;
     private static boolean enableFileParsing = true;
@@ -188,7 +190,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if(ipedsource != null) {
             context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
         }else {
-            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+            context.set(IItemSearcher.class, (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
@@ -365,7 +367,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
             metadataToExtraAttribute(evidence);
-            IOUtil.closeQuietly(context.get(IItemSearcher.class));
         }
 
     }
@@ -468,6 +469,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (!extractEmbedded) {
                 return;
             }
+            
+            Integer depth = (Integer)evidence.getExtraAttribute(SUBITEM_DEPTH);
+            if(depth == null) depth = 0;
+            if(++depth > MAX_SUBITEM_DEPTH) {
+                throw new IOException("Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
             // root has children
             evidence.setHasChildren(true);

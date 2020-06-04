@@ -286,7 +286,7 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().askAndSaveState();
 
         } else if (e.getSource() == menu.copiarPreview) {
-            Viewer viewer = App.get().getParams().compositeViewer.getCurrentViewer();
+            Viewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
             viewer.copyScreen();
 
         } else if (e.getSource() == menu.aumentarGaleria) {

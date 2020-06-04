@@ -13,11 +13,8 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
-
-import javax.xml.XMLConstants;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.tika.detect.AutoDetectReader;
@@ -26,16 +23,9 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
-import org.apache.tika.sax.ContentHandlerDecorator;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.ccil.cowan.tagsoup.HTMLSchema;
-import org.ccil.cowan.tagsoup.Schema;
-import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
-import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
-import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;

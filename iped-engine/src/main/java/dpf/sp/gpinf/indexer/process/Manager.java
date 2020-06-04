@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -79,6 +80,7 @@ import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
+import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
 
 /**
@@ -407,8 +409,14 @@ public class Manager {
             }
 
             if (!someWorkerAlive) {
+                IItemSearcher searcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
+                if(searcher != null) searcher.close();
+                
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
+                    
+                    caseData.putCaseObject(IItemSearcher.class.getName(), new ItemSearcher(output.getParentFile(), writer));
+                    
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();
@@ -450,6 +458,8 @@ public class Manager {
                     ExportFileTask.commitStorage(output);
                     
                     GraphTask.commit();
+                    
+                    ExportCSVTask.commit(output);
                     
                     writer.commit();
                     long end = System.currentTimeMillis() / 1000;
@@ -531,9 +541,9 @@ public class Manager {
         if (FTK3ReportReader.wasExecuted) {
             new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
         }
-        
+
     }
-    
+
     private void updateImagePaths() {
         if (args.isPortable()) { // $NON-NLS-1$
             IPEDSource ipedCase = new IPEDSource(output.getParentFile());

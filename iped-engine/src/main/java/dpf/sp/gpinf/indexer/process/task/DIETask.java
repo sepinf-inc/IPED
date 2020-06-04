@@ -192,6 +192,8 @@ public class DIETask extends AbstractTask {
     	synchronized (finished) {
     		graphicsMagicConverter.close();
             if (taskEnabled && !finished.get()) {
+                die = null;
+                predictor = null;
                 Log.info(taskName, "Total images processed: " + totalProcessed); //$NON-NLS-1$
                 Log.info(taskName, "Total images not processed: " + totalFailed); //$NON-NLS-1$
                 long total = totalProcessed.longValue() + totalFailed.longValue();

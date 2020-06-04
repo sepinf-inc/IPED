@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import iped3.search.LuceneSearchResult;
 
 import java.awt.Component;
@@ -65,7 +64,7 @@ public class AppListener implements ActionListener, MouseListener {
         App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
         App.get().status.setText(" "); //$NON-NLS-1$
 
-        App.get().compositeViewer.clear();
+        App.get().getViewerController().clear();
 
         App.get().subItemModel.results = new LuceneSearchResult(0);
         App.get().subItemModel.fireTableDataChanged();
@@ -158,8 +157,7 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().atualizar) {
-            InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), App.get().getProcessingManager(),
-                    true);
+            InicializarBusca init = new InicializarBusca(App.get().getProcessingManager(), true);
             init.execute();
         }
 
@@ -189,8 +187,6 @@ public class AppListener implements ActionListener, MouseListener {
 
     @Override
     public void mousePressed(MouseEvent evt) {
-
-        ViewerControl.getInstance().releaseLibreOfficeFocus();
 
         Object termo = App.get().termo.getSelectedItem();
         if (termo != null && termo.equals(App.SEARCH_TOOL_TIP)

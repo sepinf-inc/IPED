@@ -127,7 +127,7 @@ public abstract class DataSourceReader {
     public String getEvidenceName(File datasource) {
         CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
         if (cmdArgs.getDname() == null || cmdArgs.getDname().size() == 0) {
-            return null;
+            return datasource.getName();
         }
         return cmdArgs.getDataSourceName(datasource);
     }

@@ -203,7 +203,8 @@ public class RegexTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
+        regexFull = null;
+        regexList = null;
     }
 
     protected void process(IItem item) throws Exception {

@@ -92,8 +92,7 @@ public class DuplicateTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-
+        hashMap.clear();
     }
 
 }

@@ -98,7 +98,7 @@ public class TiffViewer extends ImageViewer {
         pageComponents.add(createToolBarButton(actionNextPage));
         pageComponents.add(createToolBarButton(actionLastPage));
 
-        JLabel separator = new JLabel(IconUtil.getIcon("separator", 24));
+        JLabel separator = new JLabel(IconUtil.getIcon("separator", resPath, 24));
         pageComponents.add(separator);
         toolBar.add(separator);
     }
@@ -115,7 +115,7 @@ public class TiffViewer extends ImageViewer {
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState();
         currentContent = content;
-        toolBar.setVisible(currentContent != null);
+        toolBar.setVisible(currentContent != null && isToolbarVisible());
         if (currentContent != null) {
             openContent(content);
         } else {
@@ -239,10 +239,6 @@ public class TiffViewer extends ImageViewer {
 
     @Override
     public void dispose() {
-    }
-
-    @Override
-    public void scrollToNextHit(boolean forward) {
     }
 
     public synchronized void actionPerformed(ActionEvent e) {

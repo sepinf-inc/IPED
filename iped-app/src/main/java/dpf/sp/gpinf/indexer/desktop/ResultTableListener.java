@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.search.LuceneSearchResult;
@@ -153,7 +152,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mouseClicked(MouseEvent e) {
-        ViewerControl.getInstance().releaseLibreOfficeFocus();
     }
 
     @Override
@@ -189,8 +187,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 return;
             }
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
-            value = value.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
             StringSelection selection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
             clipboard.setContents(selection, selection);
@@ -351,7 +347,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        return cell.replace("<html><nobr>", "").replace("</html>", "").replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
     }
 
