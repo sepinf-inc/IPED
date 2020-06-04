@@ -52,13 +52,15 @@ enableRegexSearch = true
 # Enables dettection of more than 70 idioms in document files.
 enableLanguageDetect = true
 
-# EXPERIMENTAL function to recognize mentioned entities: names of people, organizations or places.
-# Requested models must be downloaded and put in the folder "optional-libs"
-# Download requested models from: StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
-# Model for Portuguese language has not be trained, so results may be insatisfatory
-# This function uses a lot of CPU, wich can increase processing duration by 4 times.
-# Advanced settings can be modified in file "conf/NamedEntityRecognitionConfig.txt"
+# Feature to recognize named entities: people, organizations or places.
+# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in optional_jars folder.
+# This feature is CPU heavy, it can increase processing time by 4x.
+# Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
 enableNamedEntityRecogniton = false
+
+# Feature to create link graphs of communications (calls, messages, emails...)
+# Optionally it can create entities and links based on nearby regex hits (experimental). It could be enabled in conf/GraphConfig.json
+enableGraphGeneration = true
 
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
