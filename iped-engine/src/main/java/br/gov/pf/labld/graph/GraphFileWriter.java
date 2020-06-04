@@ -433,7 +433,7 @@ public class GraphFileWriter implements Closeable, Flushable {
       
       @Override
       public int compare(String o1, String o2) {
-          return o1.compareToIgnoreCase(o2);
+          return o1.trim().compareToIgnoreCase(o2.trim());
       }
   }
 
