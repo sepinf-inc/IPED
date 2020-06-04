@@ -270,6 +270,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     
     private void populateEvidenceUUIDs() throws IOException {
         SortedDocValues sdv = atomicReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
+        if(sdv == null) return;
         for(int i = 0; i < sdv.getValueCount(); i++) {
             evidenceUUIDs.add(sdv.lookupOrd(i).utf8ToString());
         }
