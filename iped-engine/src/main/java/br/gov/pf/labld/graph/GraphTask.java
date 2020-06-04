@@ -250,7 +250,6 @@ public class GraphTask extends AbstractTask {
     }
     
     //PhoneNumberUtil is thread safe???
-    //TODO externalize region to config file
     private SortedSet<String> getPhones(String value){
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         Set<PhoneNumber> phoneNumbers = new HashSet<>();
