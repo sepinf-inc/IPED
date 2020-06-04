@@ -771,9 +771,13 @@ public class UfedXmlReader extends DataSourceReader {
                             if(attachs != null && attachs.size() >= 2) {
                                 for(Item attach : attachs)
                                     processItem(attach);
+                            }else if(attachs != null) {
+                                caseData.incDiscoveredEvidences(-1);
                             }
                             attachsPerId.remove(item.getId());
                         }
+                    }else {
+                        caseData.incDiscoveredEvidences(-1);
                     }
                     if(item.getMediaType() != null && item.getMediaType().getSubtype().endsWith("chat")) {
                         inChat = false;
