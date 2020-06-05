@@ -270,7 +270,7 @@ public class DIETask extends AbstractTask {
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
-            if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
+            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { //$NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);

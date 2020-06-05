@@ -218,6 +218,10 @@ public class ImageThumbTask extends AbstractTask {
         }
 
     }
+    
+    public static boolean isJpeg(IItem item) {
+        return item.getMediaType().getSubtype().startsWith("jpeg");
+    }
 
     private void createImageThumb(IItem evidence, File thumbFile) {
 
@@ -228,7 +232,7 @@ public class ImageThumbTask extends AbstractTask {
             try (BufferedInputStream stream = evidence.getBufferedStream()) {
                 dimension = ImageUtil.getImageFileDimension(stream);
             }
-            if(extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
+            if(extractThumb && isJpeg(evidence)) { //$NON-NLS-1$
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
                 }
@@ -263,11 +267,13 @@ public class ImageThumbTask extends AbstractTask {
                 }
                 img = ImageUtil.getOpaqueImage(img);
 
-                // Ajusta rotacao da miniatura a partir do metadado orientacao
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    int orientation = ImageUtil.getOrientation(stream);
-                    if (orientation > 0) {
-                        img = ImageUtil.rotate(img, orientation);
+                if(isJpeg(evidence)) {
+                    // Ajusta rotacao da miniatura a partir do metadado orientacao
+                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                        int orientation = ImageUtil.getOrientation(stream);
+                        if (orientation > 0) {
+                            img = ImageUtil.rotate(img, orientation);
+                        }
                     }
                 }
 
