@@ -4,11 +4,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -74,55 +76,19 @@ public class UFEDChatParser extends AbstractParser {
             List<UfedMessage> messages = new ArrayList<>();
 
             for (IItemBase msg : items) {
-                String META_PREFIX = ExtraProperties.UFED_META_PREFIX;
-                UfedMessage m = new UfedMessage();
-                m.setId(msg.getId());
-                for(String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
-                    if(!body.startsWith(ATTACHED_MEDIA_MSG))
-                        m.setData(body);
-                }
-                m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
-                String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
-                if (str != null) {
-                    Date date = DateUtil.tryToParseDate(str);
-                    m.setTimeStamp(date);
-                }
-                if (!m.isFromMe()) {
-                    m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
-                    m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
-                } else {
-                    m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
-                    m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
-                }
-
-                if (msg.getMediaType().equals(MediaTypes.UFED_MESSAGE_ATTACH_MIME)) {
-                    query = msg.getMetadata().get(ExtraProperties.REFERENCED_FILE_QUERY);
+                
+                String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.REFERENCED_FILE_QUERY);
+                if(attachRefs.length == 0) {
+                    UfedMessage m = createMessage(msg);
+                    messages.add(m);
+                }else {
+                    query = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" "));
                     List<IItemBase> attachs = searcher.search(query);
-                    if (attachs.size() != 0) {
-                        //TODO get extra attachments, must also update query above
-                        IItemBase attach = attachs.get(0);
-                        m.setMediaHash(attach.getHash(), false);
-                        m.setMediaName(attach.getName());
-                        m.setMediaUrl(attach.getMetadata().get(META_PREFIX + "URL")); //$NON-NLS-1$
-                        m.setMediaCaption(attach.getMetadata().get(META_PREFIX + "Title")); //$NON-NLS-1$
-                        m.setThumbData(attach.getThumb());
-                        m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
-                        m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
-                        if (attach.isDeleted())
-                            m.setDeleted(true);
-                        if (attach.getLength() != null)
-                            m.setMediaSize(attach.getLength());
-                        if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
-                            m.setMediaMime(attach.getMediaType().toString());
-                        else
-                            m.setMediaMime(attach.getMetadata().get(META_PREFIX + "ContentType")); //$NON-NLS-1$
-                        if (attachs.size() > 1)
-                            System.out.println("multiple_attachs: " //$NON-NLS-1$
-                                    + msg.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "id")); //$NON-NLS-1$
+                    for(IItemBase attach : attachs) {
+                        UfedMessage m = createMessage(msg, attach);
+                        messages.add(m);
                     }
                 }
-
-                messages.add(m);
             }
 
             Collections.sort(messages, new MessageComparator());
@@ -149,6 +115,50 @@ public class UFEDChatParser extends AbstractParser {
             xhtml.endDocument();
         }
 
+    }
+    
+    private UfedMessage createMessage(IItemBase msg) {
+        return createMessage(msg, null);
+    }
+    
+    private UfedMessage createMessage(IItemBase msg, IItemBase attach) {
+        UfedMessage m = new UfedMessage();
+        m.setId(msg.getId());
+        for(String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
+            if(!body.startsWith(ATTACHED_MEDIA_MSG))
+                m.setData(body);
+        }
+        m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
+        String str = msg.getMetadata().get(ExtraProperties.MESSAGE_DATE);
+        if (str != null) {
+            Date date = DateUtil.tryToParseDate(str);
+            m.setTimeStamp(date);
+        }
+        if (!m.isFromMe()) {
+            m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
+            m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
+        } else {
+            m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
+            m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
+        }
+        if(attach != null) {
+            m.setMediaHash(attach.getHash(), false);
+            m.setMediaName(attach.getName());
+            m.setMediaUrl(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "URL")); //$NON-NLS-1$
+            m.setMediaCaption(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Title")); //$NON-NLS-1$
+            m.setThumbData(attach.getThumb());
+            m.setTranscription(attach.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR));
+            m.setTranscriptConfidence(attach.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR));
+            if (attach.isDeleted())
+                m.setDeleted(true);
+            if (attach.getLength() != null)
+                m.setMediaSize(attach.getLength());
+            if (attach.getMediaType() != null && !attach.getMediaType().equals(MediaType.OCTET_STREAM))
+                m.setMediaMime(attach.getMediaType().toString());
+            else
+                m.setMediaMime(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "ContentType")); //$NON-NLS-1$
+        }
+        return m;
     }
     
     public static String getChatName(IItemBase item) {
