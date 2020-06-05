@@ -128,10 +128,10 @@ public class ItemProducer extends Thread {
                 // caseData.addEvidenceFile(evidence);
 
             } else {
-                WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
-                        (int) (caseData.getDiscoveredVolume() / 1000000));
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
             }
+            WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
+                    (int) (caseData.getDiscoveredVolume() / 1000000));
 
         } catch (Throwable e) {
             if (manager.exception == null) {
