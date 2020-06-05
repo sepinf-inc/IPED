@@ -29,6 +29,8 @@ import javax.swing.KeyStroke;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import iped3.IItem;
+import iped3.util.MediaTypes;
 
 public class MenuClass extends JPopupMenu {
 
@@ -44,8 +46,11 @@ public class MenuClass extends JPopupMenu {
 
     MenuListener menuListener;
 
-    // JCheckBoxMenuItem changeViewerTab;
     public MenuClass() {
+        this(null);
+    }
+    
+    public MenuClass(IItem item) {
         super();
 
         menuListener = new MenuListener(this);
@@ -198,6 +203,7 @@ public class MenuClass extends JPopupMenu {
         
         navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
         navigateToParentChat.addActionListener(menuListener);
+        navigateToParentChat.setEnabled(item != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME));
         this.add(navigateToParentChat);
         
         this.addSeparator();
@@ -211,6 +217,7 @@ public class MenuClass extends JPopupMenu {
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
+        openViewfile.setEnabled(item != null && item.getViewFile() != null);
         this.add(openViewfile);
         
         this.addSeparator();

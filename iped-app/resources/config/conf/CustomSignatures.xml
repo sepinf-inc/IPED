@@ -282,7 +282,11 @@
     </mime-type>
     
     <mime-type type="message/x-skype-message">     
-        <sub-class-of type="application/x-metadata-entry"/>
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-skype-attachment">
+        <sub-class-of type="message/x-skype-message"/>
     </mime-type>
     
     <mime-type type="message/x-skype-filetransfer">     
@@ -944,8 +948,12 @@
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     
-    <mime-type type="message/x-whatsapp-message">
+    <mime-type type="message/x-chat-message">
         <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-message">
+        <sub-class-of type="message/x-chat-message"/>
     </mime-type>
     
     <mime-type type="message/x-whatsapp-attachment">
@@ -953,7 +961,7 @@
     </mime-type>
     
     <mime-type type="call/x-whatsapp-call">
-        <sub-class-of type="application/x-metadata-entry"/>
+        <sub-class-of type="message/x-chat-message"/>
     </mime-type> 
     
     <mime-type type="application/x-whatsapp-user-xml">
@@ -966,12 +974,12 @@
         <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
     </mime-type>
     
-    <mime-type type="message/x-skype-attachment">
-        <sub-class-of type="message/x-skype-message"/>
-    </mime-type>
-    
     <mime-type type="message/x-ufed-attachment">
         <sub-class-of type="application/x-ufed-instantmessage"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-instantmessage">
+        <sub-class-of type="message/x-chat-message"/>
     </mime-type>
    
 </mime-info>
