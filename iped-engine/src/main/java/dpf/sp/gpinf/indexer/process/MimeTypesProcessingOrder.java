@@ -43,7 +43,8 @@ public class MimeTypesProcessingOrder {
         //handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 1);
 
-        mediaTypes.put(SkypeParser.SKYPE_MIME, 1);
+        //must be after sqlite processing to find storage_db.db
+        mediaTypes.put(SkypeParser.SKYPE_MIME, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
