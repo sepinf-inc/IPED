@@ -35,6 +35,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
@@ -95,6 +96,7 @@ public class ViewerController {
         }
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
+        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
 
         new Thread() {
             public void run() {
