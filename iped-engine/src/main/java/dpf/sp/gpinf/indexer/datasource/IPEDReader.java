@@ -122,6 +122,9 @@ public class IPEDReader extends DataSourceReader {
         DIETask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
+        if(deviceName.endsWith(Marcadores.EXT)) {
+            deviceName = null;
+        }
 
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiMarcadores) {
