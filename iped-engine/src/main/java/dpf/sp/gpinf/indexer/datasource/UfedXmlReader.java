@@ -26,6 +26,7 @@ import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
 import org.xml.sax.Attributes;
@@ -648,7 +649,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if(prevUfedId != null && parentItem.getMediaType().toString().endsWith("instantmessage")){
-                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, UFED_ID.replace(":", "\\:") + ":\"" + prevUfedId + "\"");
+                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":\"" + prevUfedId + "\"");
                         List<Item> attachs = attachsPerId.get(item.getParentId());
                         if(attachs == null) {
                             attachs = new ArrayList<>();
@@ -767,13 +768,17 @@ public class UfedXmlReader extends DataSourceReader {
                                 item.getMetadata().add(ExtraProperties.MESSAGE_BODY, UFEDChatParser.ATTACHED_MEDIA_MSG + attachs.size());
                                 item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
                             }
-                            processItem(item);
                             if(attachs != null && attachs.size() >= 2) {
-                                for(Item attach : attachs)
+                                item.getMetadata().remove(ExtraProperties.LINKED_ITEMS);
+                                for(Item attach : attachs) {
                                     processItem(attach);
+                                    String ufedId = attach.getMetadata().get(UFED_ID);
+                                    item.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":\"" + ufedId + "\"");
+                                }
                             }else if(attachs != null) {
                                 caseData.incDiscoveredEvidences(-1);
                             }
+                            processItem(item);
                             attachsPerId.remove(item.getId());
                         }
                     }else {
