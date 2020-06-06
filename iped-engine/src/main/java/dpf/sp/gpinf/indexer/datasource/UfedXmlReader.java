@@ -648,7 +648,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if(prevUfedId != null && parentItem.getMediaType().toString().endsWith("instantmessage")){
-                        parentItem.getMetadata().add(ExtraProperties.REFERENCED_FILE_QUERY, UFED_ID.replace(":", "\\:") + ":\"" + prevUfedId + "\"");
+                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, UFED_ID.replace(":", "\\:") + ":\"" + prevUfedId + "\"");
                         List<Item> attachs = attachsPerId.get(item.getParentId());
                         if(attachs == null) {
                             attachs = new ArrayList<>();

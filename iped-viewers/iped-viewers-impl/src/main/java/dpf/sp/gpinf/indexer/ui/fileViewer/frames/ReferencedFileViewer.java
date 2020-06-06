@@ -72,7 +72,7 @@ public class ReferencedFileViewer extends Viewer{
         
         if(content instanceof IItem) {
             IItem item = (IItem) content;
-            String query = item.getMetadata().get(ExtraProperties.REFERENCED_FILE_QUERY);
+            String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
             lastItem = attachSearcher.getItem(query);
             if(lastItem == null) {
                 typeNotSupported.setVisible(false);

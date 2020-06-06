@@ -77,7 +77,7 @@ public class UFEDChatParser extends AbstractParser {
 
             for (IItemBase msg : items) {
                 
-                String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.REFERENCED_FILE_QUERY);
+                String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if(attachRefs.length == 0) {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);

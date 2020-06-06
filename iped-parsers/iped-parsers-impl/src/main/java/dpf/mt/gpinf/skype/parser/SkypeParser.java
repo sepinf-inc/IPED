@@ -199,7 +199,7 @@ public class SkypeParser extends AbstractParser {
                             if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
                                 IItemBase item = sm.getAnexoUri().getCacheFile();
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
-                                meta.set(ExtraProperties.REFERENCED_FILE_QUERY, referenceQuery); //$NON-NLS-1$
+                                meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); //$NON-NLS-1$
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
                             }    
 

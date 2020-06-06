@@ -98,8 +98,6 @@ public class ExtraProperties {
     
     public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
     
-    public static final String REFERENCED_FILE_QUERY = "referencedFile"; //$NON-NLS-1$
-    
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
     
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
