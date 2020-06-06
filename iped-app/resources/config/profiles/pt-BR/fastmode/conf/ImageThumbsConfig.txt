@@ -18,6 +18,10 @@ imgConvTimeout = 10
 # Tamanho das miniaturas das imagens geradas no processamento, caso habilitado.
 imgThumbSize = 160
 
+# Tamanho das miniaturas geradas para PDF. 
+# Comente para desabilitar geração de miniaturas para PDF. 
+pdfThumbSize = 320
+
 # Extrai thumbs embutidos em imagens JPG, muito mais rápido do que os gerar novamente.
 # Eventualmente esses thumbs podem ter qualidade ruim ou ser diferentes da imagem original.
 extractThumb = true

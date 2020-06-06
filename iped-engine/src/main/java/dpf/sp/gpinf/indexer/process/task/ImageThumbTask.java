@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -24,6 +26,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
+import org.apache.pdfbox.io.MemoryUsageSetting;
+import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.pdmodel.PDPage;
+import org.apache.pdfbox.pdmodel.common.PDRectangle;
+import org.apache.pdfbox.rendering.ImageType;
+import org.apache.pdfbox.rendering.PDFRenderer;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +57,7 @@ public class ImageThumbTask extends AbstractTask {
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
     private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
-    
+
     private static final String SELECT_THUMB = "SELECT thumb FROM t1 WHERE id=?;";
     
     private static final String INSERT_THUMB = "INSERT INTO t1(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;";
@@ -62,6 +70,8 @@ public class ImageThumbTask extends AbstractTask {
 
     public int thumbSize = 160;
 
+    private int pdfThumbSize = -1;
+
     public int galleryThreads = 1;
 
     public boolean logGalleryRendering = false;
@@ -73,6 +83,7 @@ public class ImageThumbTask extends AbstractTask {
     private GraphicsMagicConverter graphicsMagicConverter;
     
     private static final Map<String,long[]> performanceStatsPerType = new HashMap<String,long[]>(); 
+    private static final AtomicBoolean logInit = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
     private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
     private static final int numStats = 22;
@@ -116,6 +127,10 @@ public class ImageThumbTask extends AbstractTask {
             thumbSize = Integer.valueOf(value.trim());
         }
 
+        value = properties.getProperty("pdfThumbSize"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            pdfThumbSize = Integer.valueOf(value.trim());
+        }
         value = properties.getProperty("extractThumb"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             extractThumb = Boolean.valueOf(value.trim());
@@ -127,6 +142,14 @@ public class ImageThumbTask extends AbstractTask {
         }
         graphicsMagicConverter = new GraphicsMagicConverter(executor);
         
+        synchronized (logInit) {
+            if (taskEnabled && !logInit.get()) {
+                logInit.set(true);
+                logger.info("ThumbSize: " + thumbSize); //$NON-NLS-1$
+                logger.info("PDFThumbSize: " + pdfThumbSize); //$NON-NLS-1$
+                logger.info("ExtractThumb: " + extractThumb); //$NON-NLS-1$
+            }
+        }
     }
 
     @Override
@@ -162,8 +185,8 @@ public class ImageThumbTask extends AbstractTask {
                     }
                     StringBuilder sb = new StringBuilder();
                     sb.append(String.format("%" + maxType + "s", ""));
-                    sb.append(String.format(" %" + (w[0] + w[1] + w[2] + w[3] + 3) + "s", "ExtractThumb"));
-                    sb.append(String.format(" %" + (w[4] + w[5] + w[6] + w[7] + 3) + "s", "ReadSubsample"));
+                    sb.append(String.format(" %" + (w[0] + w[1] + w[2] + w[3] + 3) + "s", "ReuseThumb"));
+                    sb.append(String.format(" %" + (w[4] + w[5] + w[6] + w[7] + 3) + "s", "InternalRead"));
                     sb.append(String.format(" %" + (w[8] + w[9] + w[10] + w[11] + 3) + "s", "ExternalRead"));
                     sb.append(String.format(" %" + (w[12] + w[13] + 1) + "s", "Resize"));
                     sb.append(String.format(" %" + (w[14] + w[15] + 1) + "s", "Opaque"));
@@ -201,8 +224,8 @@ public class ImageThumbTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null || evidence.getThumb() != null) {
+        if (!taskEnabled || (!isImageType(evidence.getMediaType()) && (pdfThumbSize < 0 || !isPdf(evidence))) 
+                || !evidence.isToAddToCase() || evidence.getHash() == null || evidence.getThumb() != null) {
             return;
         }
         
@@ -290,6 +313,10 @@ public class ImageThumbTask extends AbstractTask {
     public static boolean isJpeg(IItem item) {
         return item.getMediaType().getSubtype().startsWith("jpeg");
     }
+    
+    public static boolean isPdf(IItem item) {
+        return item.getMediaType().toString().equals("application/pdf");
+    }
 
     private void createImageThumb(IItem evidence, File thumbFile) {
         long[] performanceStats = new long[numStats];
@@ -297,44 +324,53 @@ public class ImageThumbTask extends AbstractTask {
         try {
             BufferedImage img = null;
             Dimension dimension = null;
-            try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                dimension = ImageUtil.getImageFileDimension(stream);
-            }
-            if(extractThumb && isJpeg(evidence)) { //$NON-NLS-1$
+            if (isPdf(evidence)) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = ImageUtil.getThumb(stream);
-                }
-                performanceStats[img == null ? 2 : 0]++; 
-                performanceStats[img == null ? 3 : 1] += System.currentTimeMillis() - t;
-            }
-            if (img == null) {
-                long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    BooleanWrapper renderException = new BooleanWrapper();
-                    img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
-                            renderException);
-                    if (img != null && renderException.value)
-                        evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                    img = getPdfThumb(stream, thumbSize * 2);
                 }
                 performanceStats[img == null ? 6 : 4]++; 
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
-            }
-            if (img == null) {
-                long t = System.currentTimeMillis();
+            } else {
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, true);
-                    if (img != null)
-                        evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-                    dimension = null;
-                } catch (TimeoutException e) {
-                    stats.incTimeouts();
-                    evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-                    logger.warn("Timeout creating thumb: " //$NON-NLS-1$
-                            + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    dimension = ImageUtil.getImageFileDimension(stream);
                 }
-                performanceStats[img == null ? 10 : 8]++; 
-                performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
+                if(extractThumb && isJpeg(evidence)) { //$NON-NLS-1$
+                    long t = System.currentTimeMillis();
+                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                        img = ImageUtil.getThumb(stream);
+                    }
+                    performanceStats[img == null ? 2 : 0]++; 
+                    performanceStats[img == null ? 3 : 1] += System.currentTimeMillis() - t;
+                }
+                if (img == null) {
+                    long t = System.currentTimeMillis();
+                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                        BooleanWrapper renderException = new BooleanWrapper();
+                        img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
+                                renderException);
+                        if (img != null && renderException.value)
+                            evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                    performanceStats[img == null ? 6 : 4]++; 
+                    performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
+                }
+                if (img == null) {
+                    long t = System.currentTimeMillis();
+                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                        img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, true);
+                        if (img != null)
+                            evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
+                        dimension = null;
+                    } catch (TimeoutException e) {
+                        stats.incTimeouts();
+                        evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
+                        logger.warn("Timeout creating thumb: " //$NON-NLS-1$
+                                + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                    performanceStats[img == null ? 10 : 8]++; 
+                    performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
+                }
             }
             
             if (img != null) {
@@ -418,5 +454,32 @@ public class ImageThumbTask extends AbstractTask {
             }
         }
     }
-
+    
+    private BufferedImage getPdfThumb(BufferedInputStream is, int targetSize) throws Exception {
+        BufferedImage img = null;
+        PDDocument document = null;
+        try {
+            document = PDDocument.load(is, MemoryUsageSetting.setupMixed(10 << 20));
+            PDPage page = document.getPage(0);
+            PDFRenderer pdfRenderer = new PDFRenderer(document);
+            pdfRenderer.setSubsamplingAllowed(true);
+            PDRectangle rc = page.getCropBox();
+            double maxDimension = Math.max(rc.getWidth(), rc.getHeight());
+            double zoom = maxDimension <= 0 ? 0.5 : targetSize / maxDimension;
+            img = pdfRenderer.renderImage(0, (float) zoom, ImageType.RGB);
+            if (img != null) {
+                Graphics2D g = img.createGraphics();
+                g.setColor(Color.black);
+                g.drawRect(0, 0, img.getWidth() - 1, img.getHeight() - 1);
+                g.dispose();
+            }
+        } catch (Exception e) {
+        } finally {
+            try {
+                if (document != null) document.close();
+            } catch (Exception e) {
+            }
+        }
+        return img;
+    }
 }
