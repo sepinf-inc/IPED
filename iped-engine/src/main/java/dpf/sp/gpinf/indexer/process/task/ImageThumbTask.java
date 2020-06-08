@@ -169,6 +169,15 @@ public class ImageThumbTask extends AbstractTask {
                 if (!performanceStatsPerType.isEmpty()) {
                     List<String> types = new ArrayList<String>(performanceStatsPerType.keySet());
                     Collections.sort(types);
+                    long[] totals = new long[numStats];
+                    for (String type : types) {
+                        long[] s = performanceStatsPerType.get(type);
+                        for (int i = 0; i < s.length; i++) {
+                            totals[i] += s[i];
+                        }
+                    }
+                    types.add("TOTAL");
+                    performanceStatsPerType.put("TOTAL", totals);
                     int maxType = 9;
                     long[] maxCol = new long[numStats];
                     for (String type : types) {
