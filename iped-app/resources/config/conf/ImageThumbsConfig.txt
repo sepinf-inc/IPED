@@ -18,10 +18,6 @@ imgConvTimeout = 10
 # Pixel size of generated thumbnails.
 imgThumbSize = 160
 
-# Pixel size of generated thumbnails for PDFs. 
-# Comment out to disable thumbnails for PDFs. 
-pdfThumbSize = 320
-
 # Extract embedded thumbs from exif, faster than generating them again.
 # Eventually these thumbs may have lower quality or be different of the original image.
 extractThumb = true
