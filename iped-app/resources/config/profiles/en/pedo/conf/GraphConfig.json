@@ -1,5 +1,5 @@
 {  
-    "phone-region":"US",
+    "phone-region":"auto",
     "process-proximity-relationships": false,
     "proximity-relationship-name":"near_hit",
     "_comment_": "be careful with max-proximity-distance, proximity hit relationships are quadratic with number of regex hits, so it must be small",

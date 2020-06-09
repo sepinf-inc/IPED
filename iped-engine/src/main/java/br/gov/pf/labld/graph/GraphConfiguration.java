@@ -17,6 +17,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectReader;
 
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
+
 public class GraphConfiguration {
     
   public static final String PERSON_LABEL = "PERSON";
@@ -137,6 +139,14 @@ public class GraphConfiguration {
   }
   
   public String getPhoneRegion() {
+      if(phoneRegion.equals("auto")) {
+          String country = LocaleConfig.getHostCountry();
+          if(country.length() == 2)
+              return country;
+          else
+              throw new IllegalArgumentException("phone-region=\"auto\" did not work in " + GraphTask.CONFIG_PATH + 
+                      " config file. Please specify an explicity 2-letter region code.");
+      }
       return phoneRegion;
   }
   
