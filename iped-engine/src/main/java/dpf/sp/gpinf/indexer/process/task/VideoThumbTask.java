@@ -253,7 +253,7 @@ public class VideoThumbTask extends ThumbTask {
                         }
                     }
 
-                    // Layout
+                    // Gallery Thumbs Configuration
                     value = properties.getProperty("GalleryThumbs"); //$NON-NLS-1$
                     if (value != null) {
                         String[] vals = value.trim().split(","); //$NON-NLS-1$
