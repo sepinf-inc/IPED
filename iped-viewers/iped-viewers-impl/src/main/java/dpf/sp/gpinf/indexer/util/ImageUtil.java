@@ -376,7 +376,7 @@ public class ImageUtil {
             int minRows = Math.max(1, minFrames / cols);
             for (int rows = minRows; rows <= maxRows; rows++) {
                 int nf = rows * cols;
-                if (nf < minFrames || nf > maxFrames) continue;
+                if (nf < minFrames || nf > totalFrames) continue;
                 int ww = (frameWidth + 1) * cols + border * 2;
                 int hh = (frameHeight + 1) * rows + border * 2;
                 double z = Math.min(targetWidth / (double) ww, targetHeight / (double) hh);
