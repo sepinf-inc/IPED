@@ -131,8 +131,8 @@ public class ImageThumbTask extends AbstractTask {
         synchronized (logInit) {
             if (taskEnabled && !logInit.get()) {
                 logInit.set(true);
-                logger.info("ThumbSize: " + thumbSize); //$NON-NLS-1$
-                logger.info("ExtractThumb: " + extractThumb); //$NON-NLS-1$
+                logger.info("Thumb Size: " + thumbSize); //$NON-NLS-1$
+                logger.info("Extract Thumb: " + extractThumb); //$NON-NLS-1$
             }
         }
     }
