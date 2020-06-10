@@ -109,7 +109,7 @@ public class VideoProcessResult {
         
         setFPS(getFPS(info));
         setBitRate(getBitRate(info));
-        setVideoFormat(getStringInfo(info, "ID_VIDEO_FPS")); //$NON-NLS-1$
+        setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT")); //$NON-NLS-1$
         setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC")); //$NON-NLS-1$
 
         getClipInfos(info);
