@@ -7,7 +7,7 @@
 
 # Thumbs extraction configuration, format: <frame pixel width>,<columns>,<rows>. 
 # The higher the resolution or number of thumbs, the slower the extraction.
-Layout = 240,4,5
+Layout = 256,4,5
 
 # Timeouts (in seconds) used by the mplayer monitor.
 # Change with caution, because high values can slow down processing of corrupted videos.
