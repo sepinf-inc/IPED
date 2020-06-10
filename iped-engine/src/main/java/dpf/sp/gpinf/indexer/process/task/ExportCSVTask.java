@@ -213,6 +213,7 @@ public class ExportCSVTask extends AbstractTask {
             staticList = null;
             
             File tmp = new File(output.getAbsolutePath() + ".tmp");
+            tmp.delete();
             try(BufferedWriter writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.CREATE);
                     BufferedReader reader = Files.newBufferedReader(output.toPath())){
                 HashSet<HashValue> added = new HashSet<>();

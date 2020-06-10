@@ -121,6 +121,10 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     Thread.currentThread().setContextClassLoader(classLoader);
     GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
     try {
+      if(!dbFile.exists()) {
+          AppGraphAnalytics.LOGGER.error("Graph database not found: " + dbFile.getAbsolutePath());
+          return false;
+      }
       if(!dbFile.canWrite() || !IOUtil.canCreateFile(dbFile)) {
           dbFile = copyToTempFolder(dbFile);
       }
