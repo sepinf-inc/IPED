@@ -71,6 +71,8 @@ public class UfedXmlReader extends DataSourceReader {
 
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
+    
+    public static final String MSISDN_PROP = "MSISDN";
 
     File root, ufdrFile;
     ZipFile4j ufdr;
@@ -295,7 +297,7 @@ public class UfedXmlReader extends DataSourceReader {
         
         HashMap<Integer, List<Item>> attachsPerId = new HashMap<>();
         
-        String msisdn = null;
+        List<String> msisdns = new ArrayList<>();
         boolean ignoreItems = false;
         boolean inChat = false;
 
@@ -561,8 +563,8 @@ public class UfedXmlReader extends DataSourceReader {
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
 
             if("MSISDN".equals(nameAttr) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
-                msisdn = "+" + chars.toString().trim();
-                caseData.putCaseObject("MSISDN" + rootItem.getDataSource().getUUID(), msisdn);
+                msisdns.add("+" + chars.toString().trim());
+                caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
                 
             }else if (qName.equals("item")) { //$NON-NLS-1$
                 if ("Tags".equals(nameAttr) && "Configuration".equals(chars.toString())) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -824,15 +826,15 @@ public class UfedXmlReader extends DataSourceReader {
             }
             String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
             String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");            
-            if(item.getMetadata().get(Message.MESSAGE_TO) == null && 
+            if(item.getMetadata().get(Message.MESSAGE_TO) == null && !msisdns.isEmpty() &&
                     ("Incoming".equals(direction) || "Missed".equals(direction) || 
                      (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
-                item.getMetadata().set(Message.MESSAGE_TO, msisdn);
+                item.getMetadata().set(Message.MESSAGE_TO, msisdns.get(0));
                 item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
-            } else if(from == null && 
+            } else if(from == null && !msisdns.isEmpty() &&
                     ("Outgoing".equals(direction) || fromOwner ||
                      "Sent".equals(status) || "Unsent".equals(status))) {
-                item.getMetadata().set(Message.MESSAGE_FROM, msisdn);
+                item.getMetadata().set(Message.MESSAGE_FROM, msisdns.get(0));
                 item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
             }
         }

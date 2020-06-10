@@ -95,7 +95,7 @@ public class GraphModel {
     // TODO Move to configuration file
     String type = getType(neo4jNode);
     if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
-      return new String[] { BasicProps.NAME, "cpf", "cnpj" };
+      return new String[] { BasicProps.NAME, BasicProps.EVIDENCE_UUID, "cpf", "cnpj" };
     } else if (type.contains(GraphConfiguration.DOCUMENT_LABEL)) {
       return new String[] { BasicProps.NAME, BasicProps.PATH, BasicProps.HASH };
     } else if (type.contains(GraphConfiguration.PERSON_LABEL)) {

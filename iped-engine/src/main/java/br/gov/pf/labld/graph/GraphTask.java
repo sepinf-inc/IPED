@@ -2,6 +2,9 @@ package br.gov.pf.labld.graph;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -37,6 +40,7 @@ import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
@@ -45,6 +49,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
@@ -82,6 +87,8 @@ public class GraphTask extends AbstractTask {
   private boolean enabled = false;
 
   private static GraphFileWriter graphFileWriter;
+  
+  private static Map<String, NodeValues> datasourceOwnerMap = new HashMap<>();
 
   @Override
   public void init(Properties confParams, File confDir) throws Exception {
@@ -139,7 +146,19 @@ public class GraphTask extends AbstractTask {
   public void finish() throws Exception {
     if (graphFileWriter != null) {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
-        graphFileWriter.close();
+        graphFileWriter.close(caseData.isIpedReport());
+        if(caseData.isIpedReport()) {
+            File prevCSVRoot = new File(Configuration.getInstance().appRoot, GraphTask.GENERATED_PATH);
+            for(File file : prevCSVRoot.listFiles()) {
+                File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
+                if(file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX) ||
+                        file.getName().equals(GraphFileWriter.REPLACE_NAME)){
+                    IOUtil.copiaArquivo(file, target);
+                }
+            }
+            graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH), configuration.getDefaultEntity());
+            graphFileWriter.close();
+        }
         finishGraphGeneration();
         graphFileWriter = null;
     }
@@ -227,7 +246,7 @@ public class GraphTask extends AbstractTask {
         return "generic";
     }
     
-    private class NodeValues{
+    private static class NodeValues{
         Label label;
         String propertyName;
         Object propertyValue;
@@ -395,10 +414,10 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
+        List<String> msisdns = (List<String>)caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
         SortedSet<String> msisdnPhones = null;
-        if(msisdn != null) {
-            msisdnPhones = getPhones(msisdn);
+        if(msisdns != null && !msisdns.isEmpty()) {
+            msisdnPhones = getPhones(msisdns.toString());
         }
         writePersonNode(item, msisdnPhones);
         
@@ -459,11 +478,13 @@ public class GraphTask extends AbstractTask {
         nv1.addProp(ExtraProperties.USER_PHONE, formattedPhones);
         nv1.addProp(ExtraProperties.USER_EMAIL, emails);
         nv1.addProp(ExtraProperties.USER_NAME, name);
-        nv1.addProp(ExtraProperties.USER_ACCOUNT, accounts);
-        nv1.addProp(ExtraProperties.USER_ACCOUNT_TYPE, accountType);
         nv1.addProp(ExtraProperties.USER_ORGANIZATION, org);
         nv1.addProp(ExtraProperties.USER_ADDRESS, address);
         nv1.addProp(ExtraProperties.USER_NOTES, notes);
+        if(accounts.length != 0 && accountType.length != 0) {
+            String serviceAccount = getServiceAccount(getNonUUIDAccount(accounts), accountType[0]);
+            nv1.addProp(ExtraProperties.USER_ACCOUNT, serviceAccount);
+        }
         
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
         
@@ -518,6 +539,25 @@ public class GraphTask extends AbstractTask {
         return sb.toString().trim();
     }
     
+    private NodeValues getGenericOwnerNode(String evidenceUUID) throws IOException {
+        synchronized(this.getClass()) {
+            NodeValues nv1 = datasourceOwnerMap.get(evidenceUUID);
+            if(nv1 == null) {
+                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID, evidenceUUID);
+                graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+                datasourceOwnerMap.put(evidenceUUID, nv1);
+                
+                List<String> msisdns = (List<String>) caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + evidenceUUID);
+                if(msisdns != null && !msisdns.isEmpty()) {
+                    NodeValues nv2 = this.getPhoneNodeValues(msisdns.get(0));
+                    String id = graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+                    graphFileWriter.writeNodeReplace(nv1.label, nv1.propertyName, nv1.propertyValue, id);
+                }
+            }
+            return nv1;
+        }
+    }
+    
     private void processContacts(IItem item) throws IOException {
         
         String relationType = getRelationType(item.getMediaType().toString());
@@ -525,23 +565,14 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
-        if(msisdn == null) {
-            //TODO use some owner id
-            msisdn = "Evidence Owner";
-        }
-        NodeValues nv1 = getNodeValues(msisdn);
+        NodeValues nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
         
-        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        NodeValues nv2 = writePersonNode(item, null);
         
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
         relProps.put(RELATIONSHIP_ID, item.getId());
         relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
-        
-        NodeValues nv2 = writePersonNode(item, null);
-        
-        graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
         
         graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 
                 nv2.label, nv2.propertyName, nv2.propertyValue, relationshipType, relProps);
@@ -553,8 +584,8 @@ public class GraphTask extends AbstractTask {
         if(!relationType.equals("wirelessnetwork")) {
             return;
         }
-        String msisdn = (String)caseData.getCaseObject("MSISDN" + item.getDataSource().getUUID());
-        NodeValues nv1 = getNodeValues(msisdn);
+        
+        NodeValues nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
         
         NodeValues nv2;
         Map<String, Object> nodeProps = new HashMap<>();
@@ -578,7 +609,6 @@ public class GraphTask extends AbstractTask {
         relProps.put(RELATIONSHIP_ID, item.getId());
         relProps.put(RELATIONSHIP_SOURCE, item.getDataSource().getUUID());
         
-        graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue, nodeProps);
         
         graphFileWriter.writeRelationship(nv1.label, nv1.propertyName, nv1.propertyValue, 

@@ -46,11 +46,13 @@ import org.neo4j.graphdb.RelationshipType;
 
 public class GraphFileWriter implements Closeable, Flushable {
     
-    private static final String NODE_CSV_PREFIX = "nodes";
-    private static final String REL_CSV_PREFIX = "relationships";
-    private static final String HEADER_CSV_STR = "_headers_";
-    private static final String SUFFIX = "iped";
-    private static final String ARG_FILE_NAME = GraphImportRunner.ARGS_FILE_NAME + "-" + SUFFIX + ".txt";
+  public static final String NODE_CSV_PREFIX = "nodes";
+  public static final String REPLACE_NAME = "replace.csv";
+    
+  private static final String REL_CSV_PREFIX = "relationships";
+  private static final String HEADER_CSV_STR = "_headers_";
+  private static final String SUFFIX = "iped";
+  private static final String ARG_FILE_NAME = GraphImportRunner.ARGS_FILE_NAME + "-" + SUFFIX + ".txt";
 
   private Map<String, CSVWriter> nodeWriters = new HashMap<>();
   private Map<String, CSVWriter> relationshipWriters = new HashMap<>();
@@ -73,7 +75,7 @@ public class GraphFileWriter implements Closeable, Flushable {
 
   private void initReplaceWriter(File root) {
     try {
-      replaceFile = new File(root, "replace.csv");
+      replaceFile = new File(root, REPLACE_NAME);
       if(replaceFile.exists()) {
           replaces = loadReplaces();
       }
@@ -282,8 +284,8 @@ public class GraphFileWriter implements Closeable, Flushable {
       return key;
   }
 
-  public void writeNodeReplace(Label label, String propName, Object propId, String nodeId) throws IOException {
-    String uniqueId1 = uniqueId(label, propName, propId.toString());
+  public void writeNodeReplace(Label label, String propName, Object propValue, String nodeId) throws IOException {
+    String uniqueId1 = uniqueId(label, propName, propValue.toString());
     synchronized (replaces) {
         if(!uniqueId1.equals(nodeId)) {
             String key = getLastReplace(replaces, uniqueId1);
@@ -364,12 +366,17 @@ public class GraphFileWriter implements Closeable, Flushable {
       writer.normalize(replaces);
     }
   }
-
+  
   @Override
   public void close() throws IOException {
+      close(false);
+  }
+
+  public void close(boolean justFlush) throws IOException {
     flushReplaceWriter();
     close(nodeWriters.values());
     close(relationshipWriters.values());
+    if(justFlush) return;
     normalize();
     writeArgsFile();
   }
