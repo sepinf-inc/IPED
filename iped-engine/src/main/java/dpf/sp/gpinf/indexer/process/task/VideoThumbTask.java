@@ -364,8 +364,11 @@ public class VideoThumbTask extends ThumbTask {
                 }
                 VideoProcessResult r = processedVideos.get(evidence.getHash());
                 evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-                if (r.isSuccess())
+                if (r.isSuccess()) {
                     saveMetadata(r, evidence.getMetadata());
+                    File thumbFile = getThumbFile(evidence);
+                    hasThumb(evidence, thumbFile);
+                }
                 return;
             }
             
@@ -428,42 +431,42 @@ public class VideoThumbTask extends ThumbTask {
             if (r.isSuccess())
                 saveMetadata(r, evidence.getMetadata());
 
+            //If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery, with fewer frames
+            if (galleryThumbWidth > 0 && mainOutFile != null && mainOutFile.exists()) {
+                try {
+                    long t = System.currentTimeMillis();
+                    Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
+                    BufferedImage fullImg = (BufferedImage)read[0];
+                    String comment = (String)read[1];
+                    int galleryThumbHeight = galleryThumbWidth / 30 * 29;
+                    BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth, galleryThumbHeight, 
+                            galleryMinThumbs, galleryMaxThumbs);
+                    
+                    if (img != null && !img.equals(fullImg)) {
+                        if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {
+                            img = ImageUtil.resizeImage(img, galleryThumbWidth, galleryThumbHeight);
+                        }
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
+                        evidence.setThumb(baos.toByteArray());
+                        File thumbFile = getThumbFile(evidence);
+                        saveThumb(evidence, thumbFile);
+                        t = System.currentTimeMillis() - t;
+                        totalTimeGallery.incrementAndGet();
+                        totalGallery.incrementAndGet();
+                    }
+                } catch (Throwable e) {
+                    logger.warn("Error creating thumb: " + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    logger.debug(taskName, e);
+                }                
+            }
+            
             // Guarda resultado do processamento
             synchronized (processedVideos) {
                 processedVideos.put(evidence.getHash(), r);
                 processedVideos.notifyAll();
             }
 
-        }
-        
-        //If enabled (galleryThumbWidth>0) create a thumb to be shown in the gallery, with fewer frames
-        if (galleryThumbWidth > 0 && mainOutFile != null && mainOutFile.exists()) {
-            try {
-                long t = System.currentTimeMillis();
-                Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
-                BufferedImage fullImg = (BufferedImage)read[0];
-                String comment = (String)read[1];
-                int galleryThumbHeight = galleryThumbWidth / 30 * 29;
-                BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth, galleryThumbHeight, 
-                        galleryMinThumbs, galleryMaxThumbs);
-                
-                if (img != null && !img.equals(fullImg)) {
-                    if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {
-                        img = ImageUtil.resizeImage(img, galleryThumbWidth, galleryThumbHeight);
-                    }
-                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
-                    evidence.setThumb(baos.toByteArray());
-                    File thumbFile = getThumbFile(evidence);
-                    saveThumb(evidence, thumbFile);
-                    t = System.currentTimeMillis() - t;
-                    totalTimeGallery.incrementAndGet();
-                    totalGallery.incrementAndGet();
-                }
-            } catch (Throwable e) {
-                logger.warn("Error creating thumb: " + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                logger.debug(taskName, e);
-            }                
         }
     }
 
