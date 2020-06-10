@@ -264,7 +264,7 @@ public class VideoThumbsMaker {
                 }
                 cmds.addAll(vfOptions(frameStepStr, scale, rot));
             }
-            System.err.println(step+"\n"+result.getRotation()+"\n"+cmds+"\n");//TODO
+
             ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
             if (res.timeout) {
                 result.setTimeout(true);
