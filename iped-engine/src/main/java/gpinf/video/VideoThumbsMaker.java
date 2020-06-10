@@ -173,10 +173,8 @@ public class VideoThumbsMaker {
 
         Dimension targetDimension = getTargetDimension(maxSize, result.getDimension());
 
-        String scale = null;
-        if (result.getDimension().width > targetDimension.width || result.getDimension().height > targetDimension.height) {
-            scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
-        }
+        String scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
+        
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
         cmds.add("-speed"); //$NON-NLS-1$
@@ -223,27 +221,29 @@ public class VideoThumbsMaker {
         for (int step = initialStep; step <= 3; step++) {
             if (step == 1) {
                 int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
-                cmds.remove(pos + 1);
-                cmds.remove(pos);
-                pos = cmds.indexOf("-ss"); //$NON-NLS-1$
-                cmds.remove(pos + 1);
-                cmds.remove(pos);
-                float fps = result.getFPS();
-                if (fps > 240)
-                    fps = 1;
-                int frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
-                if (frameStep < 1) {
-                    frameStep = 1;
-                } else if (frameStep > 600) {
-                    frameStep = 600;
-                }
-                frameStepStr = "framestep=" + frameStep; //$NON-NLS-1$
-                pos = cmds.indexOf("-vf");
-                if (pos > 0) {
+                if (pos >= 0) {
                     cmds.remove(pos + 1);
                     cmds.remove(pos);
+                    pos = cmds.indexOf("-ss"); //$NON-NLS-1$
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
+                    float fps = result.getFPS();
+                    if (fps > 240)
+                        fps = 1;
+                    int frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+                    if (frameStep < 1) {
+                        frameStep = 1;
+                    } else if (frameStep > 600) {
+                        frameStep = 600;
+                    }
+                    frameStepStr = "framestep=" + frameStep; //$NON-NLS-1$
+                    pos = cmds.indexOf("-vf");
+                    if (pos > 0) {
+                        cmds.remove(pos + 1);
+                        cmds.remove(pos);
+                    }
+                    cmds.addAll(vfOptions(frameStepStr, scale, rot));
                 }
-                cmds.addAll(vfOptions(frameStepStr, scale, rot));
             } else if (step == 2) {
                 int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
                 if (pos < 0) {
