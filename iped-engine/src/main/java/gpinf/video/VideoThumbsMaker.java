@@ -183,8 +183,9 @@ public class VideoThumbsMaker {
         cmds.add("-nosound"); //$NON-NLS-1$
         cmds.add("-noconsolecontrols"); //$NON-NLS-1$
         cmds.add("-noautosub"); //$NON-NLS-1$
+        cmds.add("-noaspect"); //$NON-NLS-1$
         cmds.add("-sws"); //$NON-NLS-1$
-        cmds.add("0"); //$NON-NLS-1$
+        cmds.add("1"); //$NON-NLS-1$
         if (ignoreWaitKeyFrame != 1) {
             cmds.add("-lavdopts"); //$NON-NLS-1$
             cmds.add("wait_keyframe"); //$NON-NLS-1$
@@ -278,38 +279,6 @@ public class VideoThumbsMaker {
             });
             String ret = res.output;
             if (ret != null) {
-                if (scale == null) {
-                    int p1 = ret.indexOf(s1);
-                    if (p1 > 0) {
-                        int p2 = ret.indexOf(s2, p1);
-                        if (p2 > 0) {
-                            int p3 = ret.indexOf(" ", p2 + s2.length()); //$NON-NLS-1$
-                            if (p3 > 0) {
-                                String[] s = ret.substring(p1 + s1.length(), p3).split(s2);
-                                if (s.length == 2) {
-                                    s = s[1].split("x"); //$NON-NLS-1$
-                                    Dimension nd = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-                                    if (transposed) {
-                                        transpose(nd);
-                                    }
-                                    if (!nd.equals(result.getDimension())) {
-                                        result.setDimension(nd);
-                                        targetDimension = getTargetDimension(maxSize, nd);
-                                        scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
-                                        int pos = cmds.indexOf("-vf");
-                                        if (pos > 0) {
-                                            cmds.remove(pos + 1);
-                                            cmds.remove(pos);
-                                        }
-                                        cmds.addAll(vfOptions(frameStepStr, scale, rot));
-                                        step--;
-                                        continue;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 if (ignoreWaitKeyFrame == 0 && step == initialStep) {
                     String rlc = ret.toLowerCase();
                     if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
