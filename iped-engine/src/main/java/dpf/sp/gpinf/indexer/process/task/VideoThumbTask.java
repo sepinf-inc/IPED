@@ -491,6 +491,10 @@ public class VideoThumbTask extends ThumbTask {
             metadata.set(ExtraProperties.VIDEO_META_PREFIX + "width", Integer.toString(d.width)); //$NON-NLS-1$
             metadata.set(ExtraProperties.VIDEO_META_PREFIX + "height", Integer.toString(d.height)); //$NON-NLS-1$
         }
+        int rot = r.getRotation();
+        if (rot > 0) {
+            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "rotation", Integer.toString(rot)); //$NON-NLS-1$
+        }
         for (Entry<String, String> meta : r.getClipInfos().entrySet()) {
             metadata.set(ExtraProperties.VIDEO_META_PREFIX + meta.getKey(), meta.getValue());
         }

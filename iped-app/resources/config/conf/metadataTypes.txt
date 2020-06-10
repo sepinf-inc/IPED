@@ -3165,6 +3165,7 @@ video:protocolversion = java.lang.Double
 video:publisher = java.lang.String
 video:purl = java.lang.String
 video:range = java.lang.String
+video:rotation = java.lang.Integer
 video:sampletype = java.lang.String
 video:sdplang = java.lang.String
 video:season_number = java.lang.Integer
