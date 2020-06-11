@@ -387,7 +387,6 @@ public class MenuListener implements ActionListener {
             int parentId = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getParentId(itemId.getId());
             if(parentId != -1) {
                 String position = App.get().appCase.getItemByItemId(itemId).getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
-                position = String.valueOf(Double.valueOf(position).intValue());
                 //TODO change viewer api to pass this
                 HtmlViewer.setPositionToScroll(position);
                 itemId = new ItemId(itemId.getSourceId(), parentId);
