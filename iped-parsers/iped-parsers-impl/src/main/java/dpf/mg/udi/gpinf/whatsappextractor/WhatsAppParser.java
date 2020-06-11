@@ -72,6 +72,8 @@ public class WhatsAppParser extends SQLite3DBParser {
      * 
      */
     private static final long serialVersionUID = 1L;
+    
+    public static final String WHATSAPP = "WhatsApp";
 
     public static final MediaType WA_USER_XML = MediaType.application("x-whatsapp-user-xml"); //$NON-NLS-1$
     
@@ -230,7 +232,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         meta.set(ExtraProperties.USER_NAME, account.getName());
         meta.set(ExtraProperties.USER_PHONE, account.getId());
         meta.set(ExtraProperties.USER_ACCOUNT, account.getId());
-        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
         meta.set(ExtraProperties.USER_NOTES, account.getStatus());
         if(account.getAvatar() != null) {
             meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
@@ -298,7 +300,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Integer.toString(parentVirtualId));
             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getId()));
-            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             
@@ -487,8 +489,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                     path = itemInfo.getPath();
                 }
                 WAContactsDirectory contacts = getWAContactsDirectoryForPath(path, null, null);
-
                 contacts.putAll(waExtractor.getContactsDirectory());
+                
+                String dbPath = ((ItemInfo)context.get(ItemInfo.class)).getPath();
+                WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
                 for (WAContact c : waExtractor.getContactsDirectory().contacts()) {
@@ -498,7 +502,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getId());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId());
-                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "WhatsApp"); //$NON-NLS-1$
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
+                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
                     if(c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));

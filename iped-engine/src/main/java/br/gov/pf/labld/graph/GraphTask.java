@@ -543,7 +543,7 @@ public class GraphTask extends AbstractTask {
         synchronized(this.getClass()) {
             NodeValues nv1 = datasourceOwnerMap.get(evidenceUUID);
             if(nv1 == null) {
-                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID, evidenceUUID);
+                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID, "evidenceUuid_" + evidenceUUID);
                 graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
                 datasourceOwnerMap.put(evidenceUUID, nv1);
                 
@@ -565,7 +565,15 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        NodeValues nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
+        NodeValues nv1 = null;
+        String contactOfAccount = item.getMetadata().get(ExtraProperties.CONTACT_OF_ACCOUNT);
+        if(contactOfAccount != null) {
+            String service = item.getMetadata().get(ExtraProperties.USER_ACCOUNT_TYPE);
+            nv1 = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(contactOfAccount, service));
+            graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+        }
+        
+        if(nv1 == null) nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
         
         NodeValues nv2 = writePersonNode(item, null);
         

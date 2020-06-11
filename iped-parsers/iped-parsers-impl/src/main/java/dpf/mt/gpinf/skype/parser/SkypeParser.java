@@ -133,6 +133,7 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_NAME, name);
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getSkypeName());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
+                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getSkypeName());
                     cMetadata.set(ExtraProperties.USER_EMAIL, c.getEmail());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getAssignedPhone());
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());

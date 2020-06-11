@@ -80,6 +80,8 @@ public class ExtraProperties {
     
     public static final String USER_ACCOUNT = "userAccount"; //$NON-NLS-1$
     
+    public static final String CONTACT_OF_ACCOUNT = "contactOfAccount"; //$NON-NLS-1$
+    
     public static final String USER_ACCOUNT_TYPE = "accountType"; //$NON-NLS-1$
     
     public static final String USER_EMAIL = "emailAddress"; //$NON-NLS-1$
