@@ -8,7 +8,7 @@ import java.util.Date;
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
 
-public class SkypeContact {
+public class SkypeContact implements SkypeUser{
 
     String Id;
     String skypeName;

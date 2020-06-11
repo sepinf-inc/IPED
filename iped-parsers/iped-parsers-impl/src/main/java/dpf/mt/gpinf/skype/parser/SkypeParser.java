@@ -114,10 +114,14 @@ public class SkypeParser extends AbstractParser {
                 ReportGenerator r = new ReportGenerator(handler, metadata, sqlite.getSkypeName());
 
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();
+                SkypeAccount account = sqlite.getAccount();
                 
-                HashMap<String, SkypeContact> contactMap = new HashMap<>();
+                HashMap<String, SkypeUser> contactMap = new HashMap<>();
+                contactMap.put(account.getId(), account);
+                contactMap.put(account.getSkypeName(), account);
 
                 for (SkypeContact c : contatos) {
+                    contactMap.put(c.getId(), c);
                     contactMap.put(c.getSkypeName(), c);
                     
                     Metadata cMetadata = new Metadata();
@@ -148,14 +152,24 @@ public class SkypeParser extends AbstractParser {
                 int msgCount = 0;
                 for (SkypeConversation conv : convs) {
 
-                    if (conv.getMessages() == null) {
+                    if (conv.getMessages() == null || conv.getMessages().isEmpty()) {
                         /* se não houver mensagens na conversa não a processa */
                         continue;
                     }
                     msgCount += conv.getMessages().size();
-                    if (conv.getMessages().size() <= 0) {
-                        /* se não houver mensagens na conversa não a processa */
-                        continue;
+                    
+                    //normalize message recipients to use skypeName
+                    for (SkypeMessage sm : conv.getMessages()) {
+                        if(sm.getAutor() != null) {
+                            SkypeUser user = contactMap.get(sm.getAutor());
+                            if(user != null && user.getSkypeName() != null && !sm.getAutor().equals(user.getSkypeName()))
+                                sm.setAutor(user.getSkypeName());
+                        }
+                        if(sm.getDestino() != null) {
+                            SkypeUser user = contactMap.get(sm.getDestino());
+                            if(user != null && user.getSkypeName() != null && !sm.getDestino().equals(user.getSkypeName()))
+                                sm.setDestino(user.getSkypeName());
+                        }
                     }
 
                     /* adiciona a conversação */
@@ -258,31 +272,27 @@ public class SkypeParser extends AbstractParser {
                 Metadata meta = new Metadata();
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ACCOUNT_MIME_TYPE);
                 meta.set(HttpHeaders.CONTENT_TYPE, ACCOUNT_MIME_TYPE);
-                SkypeAccount a = sqlite.getAccount();
-                String name = a.getFullname();
-                if (name == null || name.trim().isEmpty())
-                    name = a.getSkypeName();
-
+                String name = account.getBestName();
                 meta.set(TikaCoreProperties.TITLE, name);
                 meta.set(ExtraProperties.USER_NAME, name);
-                meta.set(ExtraProperties.USER_ACCOUNT, a.getSkypeName());
+                meta.set(ExtraProperties.USER_ACCOUNT, account.getSkypeName());
                 meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
-                meta.set(ExtraProperties.USER_EMAIL, a.getEmail());
-                meta.set(ExtraProperties.USER_BIRTH, a.getBirthday());
-                meta.set(ExtraProperties.USER_NOTES, a.getAbout());
-                if(a.getPhoneHome() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneHome());
-                if(a.getPhoneOffice() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneOffice());
-                if(a.getPhoneMobile() != null) meta.add(ExtraProperties.USER_PHONE, a.getPhoneMobile());
-                if(a.getCity() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getCity());
-                if(a.getProvince() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getProvince());
-                if(a.getCountry() != null) meta.add(ExtraProperties.USER_ADDRESS, a.getCountry());
-                if(a.getAvatar() != null) {
-                    meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(a.getAvatar()));
+                meta.set(ExtraProperties.USER_EMAIL, account.getEmail());
+                meta.set(ExtraProperties.USER_BIRTH, account.getBirthday());
+                meta.set(ExtraProperties.USER_NOTES, account.getAbout());
+                if(account.getPhoneHome() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneHome());
+                if(account.getPhoneOffice() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneOffice());
+                if(account.getPhoneMobile() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneMobile());
+                if(account.getCity() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getCity());
+                if(account.getProvince() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getProvince());
+                if(account.getCountry() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getCountry());
+                if(account.getAvatar() != null) {
+                    meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
                 }
 
                 if (extractor.shouldParseEmbedded(meta)) {
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(
-                            r.generateSkypeAccountHtml(a, contatos.size(), transfers.size(), msgCount));
+                            r.generateSkypeAccountHtml(account, contatos.size(), transfers.size(), msgCount));
                     extractor.parseEmbedded(chatStream, handler, meta, false);
                 }
 
@@ -298,10 +308,10 @@ public class SkypeParser extends AbstractParser {
 
     }
     
-    private String formatSkypeName(Map<String, SkypeContact> contactMap, String skypeName) {
+    private String formatSkypeName(Map<String, SkypeUser> contactMap, String skypeName) {
         if(skypeName == null || skypeName.isEmpty())
             return Messages.getString("SkypeParser.UnknownAccount"); //$NON-NLS-1$
-        SkypeContact contact = contactMap.get(skypeName);
+        SkypeUser contact = contactMap.get(skypeName);
         if(contact != null && !skypeName.equals(contact.getBestName())) {
             return contact.getBestName() + " (" + skypeName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }else {
