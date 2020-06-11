@@ -167,8 +167,6 @@ public class VideoThumbsMaker {
             frequency = 1;
         }
 
-        String s1 = "VO: [jpeg] "; //$NON-NLS-1$
-        String s2 = " => "; //$NON-NLS-1$
         File[] files = null;
 
         Dimension targetDimension = getTargetDimension(maxSize, result.getDimension());
