@@ -46,7 +46,7 @@ import iped3.IItem;
  */
 public class ExportCSVTask extends AbstractTask {
 
-    private static int MIN_FLUSH_SIZE = 1000000;
+    private static int MIN_FLUSH_SIZE = 1 << 23;
     private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
 
     public static boolean exportFileProps = false;
@@ -213,6 +213,7 @@ public class ExportCSVTask extends AbstractTask {
             staticList = null;
             
             File tmp = new File(output.getAbsolutePath() + ".tmp");
+            tmp.delete();
             try(BufferedWriter writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.CREATE);
                     BufferedReader reader = Files.newBufferedReader(output.toPath())){
                 HashSet<HashValue> added = new HashSet<>();
