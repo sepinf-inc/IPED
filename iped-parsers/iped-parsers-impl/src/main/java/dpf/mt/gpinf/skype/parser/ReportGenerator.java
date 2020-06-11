@@ -192,7 +192,7 @@ public class ReportGenerator {
             byte b[] = c.getAvatar();
             if (b != null) {
                 out.println("<P>" + Messages.getString("SkypeReport.Avatar") //$NON-NLS-1$ //$NON-NLS-2$
-                        + " <img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
+                        + "<br><img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
                         + "\" title=\"File\"/> </P>"); //$NON-NLS-1$
             }
         } catch (Exception e) {
@@ -395,7 +395,7 @@ public class ReportGenerator {
             byte b[] = a.getAvatar();
             if (b != null) {
                 out.println("<P>" + Messages.getString("SkypeReport.Avatar") //$NON-NLS-1$ //$NON-NLS-2$
-                        + " <img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
+                        + "<br><img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
                         + "\" title=\"File\"/> </P>"); //$NON-NLS-1$
             }
         } catch (Exception e) {
