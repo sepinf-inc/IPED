@@ -343,6 +343,7 @@ public class GraphTask extends AbstractTask {
     }
     
     private NodeValues getAccountNodeValues(String value, Metadata meta) {
+        if(meta == null) return null;
         String service = meta.get(ExtraProperties.UFED_META_PREFIX + "SourceApplication");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
@@ -365,21 +366,14 @@ public class GraphTask extends AbstractTask {
         return nv;
     }
     
-    private NodeValues getNodeValues(String value) {
-        return getNodeValues(value, null);
-    }
-    
     private NodeValues getNodeValues(String value, Metadata metadata) {
-        NodeValues nv1 = getPhoneNodeValues(value);
-        if(nv1 == null) {
-            nv1 = getEmailNodeValues(value);
-        }
-        if(nv1 == null && metadata != null) {
-            nv1 = getAccountNodeValues(value, metadata);
-        }
-        if(nv1 == null) {
-            nv1 = getGenericNodeValues(value);
-        }
+        NodeValues nv1 = null;
+        String accountType = metadata.get(ExtraProperties.USER_ACCOUNT_TYPE);
+        if(SkypeParser.SKYPE.equals(accountType)) nv1 = getAccountNodeValues(value, metadata);
+        if(nv1 == null) nv1 = getPhoneNodeValues(value);
+        if(nv1 == null) nv1 = getEmailNodeValues(value);
+        if(nv1 == null) nv1 = getAccountNodeValues(value, metadata);
+        if(nv1 == null) nv1 = getGenericNodeValues(value);
         return nv1;
     }
   

@@ -54,6 +54,7 @@ public class SkypeParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
     
+    public static final String SKYPE = "Skype"; //$NON-NLS-1$
     public static final MediaType SKYPE_MIME = MediaType.application("sqlite-skype"); //$NON-NLS-1$
     public static final MediaType SKYPE_MIME_V12 = MediaType.application("sqlite-skype-v12"); //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>();
@@ -131,7 +132,7 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(TikaCoreProperties.TITLE, name);
                     cMetadata.set(ExtraProperties.USER_NAME, name);
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getSkypeName());
-                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                     cMetadata.set(ExtraProperties.USER_EMAIL, c.getEmail());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getAssignedPhone());
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
@@ -200,7 +201,7 @@ public class SkypeParser extends AbstractParser {
                             meta.set(TikaCoreProperties.CREATED, sm.getData());
                             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, conv.getId());
                             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(sm.getId()));
-                            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                            meta.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                             meta.set(ExtraProperties.MESSAGE_DATE, sm.getData());
                             meta.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, sm.getAutor()));
                             meta.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, sm.getDestino()));
@@ -232,7 +233,7 @@ public class SkypeParser extends AbstractParser {
                     tMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, t.getConversation().getId());
                     //TODO embed transfer in parent chat html
                     //tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(t.getId()));
-                    tMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                    tMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                     tMetadata.set(TikaCoreProperties.CREATED, t.getStart());
                     tMetadata.set(TikaCoreProperties.MODIFIED, t.getFinish());
                     tMetadata.set(ExtraProperties.MESSAGE_DATE, t.getStart());
@@ -276,7 +277,7 @@ public class SkypeParser extends AbstractParser {
                 meta.set(TikaCoreProperties.TITLE, name);
                 meta.set(ExtraProperties.USER_NAME, name);
                 meta.set(ExtraProperties.USER_ACCOUNT, account.getSkypeName());
-                meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Skype"); //$NON-NLS-1$
+                meta.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                 meta.set(ExtraProperties.USER_EMAIL, account.getEmail());
                 meta.set(ExtraProperties.USER_BIRTH, account.getBirthday());
                 meta.set(ExtraProperties.USER_NOTES, account.getAbout());
