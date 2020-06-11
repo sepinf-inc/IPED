@@ -346,17 +346,23 @@ public class GraphTask extends AbstractTask {
         String service = meta.get(ExtraProperties.UFED_META_PREFIX + "SourceApplication");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if(service == null) service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
-        if(service == null) service = meta.get(ExtraProperties.USER_ACCOUNT_TYPE);
+        boolean ipedAccount = false;
+        if(service == null) {
+            service = meta.get(ExtraProperties.USER_ACCOUNT_TYPE);
+            ipedAccount = true;
+        }
         if(service == null) return null;
+        NodeValues nv = null;
         int idx = value.lastIndexOf('(');
         if(idx != -1 && value.endsWith(")")) {
             String account = value.substring(idx + 1, value.length() - 1);
-            String name = value.substring(0, idx);
-            NodeValues nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service));
+            String name = value.substring(0, idx).trim();
+            nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(account, service));
             if(!name.isEmpty()) nv.addProp(ExtraProperties.USER_NAME, name);
-            return nv;
+        }else if(ipedAccount) {
+            nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT, getServiceAccount(value.trim(), service));
         }
-        return null;
+        return nv;
     }
     
     private NodeValues getNodeValues(String value) {

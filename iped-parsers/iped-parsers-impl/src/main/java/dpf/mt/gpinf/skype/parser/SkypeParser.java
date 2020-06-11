@@ -299,11 +299,13 @@ public class SkypeParser extends AbstractParser {
     }
     
     private String formatSkypeName(Map<String, SkypeContact> contactMap, String skypeName) {
+        if(skypeName == null || skypeName.isEmpty())
+            return Messages.getString("SkypeParser.UnknownAccount"); //$NON-NLS-1$
         SkypeContact contact = contactMap.get(skypeName);
-        if(contact != null) {
-            return contact.getBestName() + " (" + skypeName + ")";
+        if(contact != null && !skypeName.equals(contact.getBestName())) {
+            return contact.getBestName() + " (" + skypeName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }else {
-            return skypeName + " (" + skypeName + ")";
+            return skypeName;
         }
     }
 
