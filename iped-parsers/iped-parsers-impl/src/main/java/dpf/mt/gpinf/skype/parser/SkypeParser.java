@@ -240,9 +240,9 @@ public class SkypeParser extends AbstractParser {
                     tMetadata.set(ExtraProperties.MESSAGE_BODY, name);
                     tMetadata.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, t.getFrom()));
                     if (t.getType() == 3 && t.getConversation().getParticipantes() != null) {
-                        for (Iterator iterator = t.getConversation().getParticipantes().iterator(); iterator.hasNext();) {
-                            String recip = (String) iterator.next();
-                            tMetadata.add(Metadata.MESSAGE_TO, formatSkypeName(contactMap, recip));
+                        for (Iterator<String> iterator = t.getConversation().getParticipantes().iterator(); iterator.hasNext();) {
+                            String recip = formatSkypeName(contactMap, iterator.next());
+                            if(recip != null) tMetadata.add(Metadata.MESSAGE_TO, recip);
                         }
                     }else {
                         tMetadata.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, t.getTo()));
@@ -310,10 +310,12 @@ public class SkypeParser extends AbstractParser {
     }
     
     private String formatSkypeName(Map<String, SkypeUser> contactMap, String skypeName) {
-        if(skypeName == null || skypeName.isEmpty())
-            return Messages.getString("SkypeParser.UnknownAccount"); //$NON-NLS-1$
+        if(skypeName == null)
+            return null;
         SkypeUser contact = contactMap.get(skypeName);
-        if(contact != null && !skypeName.equals(contact.getBestName())) {
+        if(contact != null && contact.getSkypeName() != null && !contact.getSkypeName().equals(contact.getBestName())) {
+            return contact.getBestName() + " (" + contact.getSkypeName() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        }else if(contact != null && !skypeName.equals(contact.getBestName())) {
             return contact.getBestName() + " (" + skypeName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }else {
             return skypeName;
