@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -1037,6 +1038,7 @@ public class UfedXmlReader extends DataSourceReader {
                                 + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes)
                                 + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$
                         contact.setThumb(bytes);
+                        contact.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
                     }
                 }
                 String[] metas = contact.getMetadata().names();

@@ -505,12 +505,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
                     cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
+                    getAvatar(searcher, c);
                     if(c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
                     if (extractor.shouldParseEmbedded(cMetadata)) {
-                        getAvatar(searcher, c);
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(
                                 reportGenerator.genarateContactHtml(c));
                         extractor.parseEmbedded(chatStream, handler, cMetadata, false);
