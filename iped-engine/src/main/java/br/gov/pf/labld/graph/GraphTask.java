@@ -66,7 +66,7 @@ public class GraphTask extends AbstractTask {
   public static final String RELATIONSHIP_ID = "relId";
   public static final String RELATIONSHIP_SOURCE = "dataSource";
   
-  private Pattern ignoreEmailChars = Pattern.compile("[<>'\";]");
+  private Pattern ignoreEmailChars = Pattern.compile("[<>'\";()]");
   
   //TODO externalize to config file
   private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
