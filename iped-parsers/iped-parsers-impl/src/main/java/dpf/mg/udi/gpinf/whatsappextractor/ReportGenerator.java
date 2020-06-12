@@ -405,6 +405,7 @@ public class ReportGenerator {
                             }
                             
                         } else {
+                            out.println("<a onclick=" + onclick + ">"); //$NON-NLS-1$
                             if (message.getMessageType() == AUDIO_MESSAGE) {
                                 out.println("<img src=\"" //$NON-NLS-1$
                                         + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
@@ -414,6 +415,7 @@ public class ReportGenerator {
                                         + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
                                         + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
                             }
+                            out.println("</a>"); //$NON-NLS-1$
                         }
                         if (message.getMediaCaption() != null)
                             out.println("<br>" + message.getMediaCaption() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -448,7 +450,9 @@ public class ReportGenerator {
                             }
                         }
                         if(linkParam != null) {
-                            out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check(" + linkParam + ",this.checked)" + quote + " />");
+                            if(result != null && !result.isEmpty()) {
+                                out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check(" + linkParam + ",this.checked)" + quote + " />");
+                            }
                             out.println("<a onclick=" + quote + "app.open(" + linkParam + ")" + quote + " "); //$NON-NLS-1$ //$NON-NLS-2$
                         }
                         if(exportPath != null && !exportPath.isEmpty()) {
