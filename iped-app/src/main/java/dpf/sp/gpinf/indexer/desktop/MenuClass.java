@@ -26,7 +26,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import org.apache.tika.metadata.Metadata;
+
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
+import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
@@ -203,7 +206,13 @@ public class MenuClass extends JPopupMenu {
         
         navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
         navigateToParentChat.addActionListener(menuListener);
-        navigateToParentChat.setEnabled(item != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME));
+        boolean enableGoToChat = false;
+        if(item != null) {
+            enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME) ||
+                    (VCardParser.VCARD_MIME.equals(item.getMediaType()) && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
+                    && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+        }
+        navigateToParentChat.setEnabled(enableGoToChat);
         this.add(navigateToParentChat);
         
         this.addSeparator();
