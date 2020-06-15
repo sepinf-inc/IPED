@@ -202,6 +202,8 @@ public class MetadataViewer extends Viewer {
         for (String meta : metas) {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
+            if (meta.startsWith(ExtraProperties.SIMILARITY_META_PREFIX)) 
+                continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
             sb.append(meta);
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
