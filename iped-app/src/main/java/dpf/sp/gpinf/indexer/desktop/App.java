@@ -735,6 +735,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         butSimSearch.setEnabled(false);
         resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) {
+                    return;
+                }
                 boolean enabled = false;
                 int selIdx = resultsTable.getSelectedRow();
                 if (selIdx != -1) {
