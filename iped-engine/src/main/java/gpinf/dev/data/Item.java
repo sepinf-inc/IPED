@@ -229,7 +229,7 @@ public class Item implements ISleuthKitItem {
 
     private byte[] thumb;
 
-    private byte[] similarityFull, similarityIndex;
+    private byte[] imageSimilarityFeaturesFull, imageSimilarityFeaturesIndex;
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
@@ -1321,15 +1321,15 @@ public class Item implements ISleuthKitItem {
     }
 
     @Override
-    public byte[] getSimilarity(boolean isFull) {
-        return isFull ? similarityFull : similarityIndex;
+    public byte[] getImageSimilarityFeatures(boolean isFull) {
+        return isFull ? imageSimilarityFeaturesFull : imageSimilarityFeaturesIndex;
     }
 
-    public void setSimilarity(byte[] similarity, boolean isFull) {
+    public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures, boolean isFull) {
         if (isFull) {
-            this.similarityFull = similarity;
+            this.imageSimilarityFeaturesFull = imageSimilarityFeatures;
         } else {
-            this.similarityIndex = similarity;
+            this.imageSimilarityFeaturesIndex = imageSimilarityFeatures;
         }
     }
 

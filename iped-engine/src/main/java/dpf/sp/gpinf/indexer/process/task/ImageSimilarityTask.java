@@ -94,8 +94,8 @@ public class ImageSimilarityTask extends AbstractTask {
             BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
             byte[][] features = imageSimilarity.extractFeatures(img);
             if (features != null) {
-                evidence.setSimilarity(features[0], true);
-                evidence.setSimilarity(features[1], false);
+                evidence.setImageSimilarityFeatures(features[0], true);
+                evidence.setImageSimilarityFeatures(features[1], false);
                 totalProcessed.incrementAndGet();
             } else {
                 totalFailed.incrementAndGet();

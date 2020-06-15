@@ -24,7 +24,7 @@ public class SimilarImageSearch {
 
     public Query getQueryForSimilarImages(IItemId itemId, IPEDMultiSource appCase) {
         IItem item = appCase.getItemByItemId(itemId);
-        byte[] simIdx = item.getSimilarity(false);
+        byte[] simIdx = item.getImageSimilarityFeatures(false);
         if (simIdx == null) {
             return null;
         }
@@ -68,7 +68,7 @@ public class SimilarImageSearch {
             if (bytesRef == null) {
                 return 0;
             }
-            byte[] refSim = refItem.getSimilarity(true);
+            byte[] refSim = refItem.getImageSimilarityFeatures(true);
             byte[] currSim = bytesRef.bytes;
             int distance = 0;
             for (int i = 0; i < refSim.length; i++) {

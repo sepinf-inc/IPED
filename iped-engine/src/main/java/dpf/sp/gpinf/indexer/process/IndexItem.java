@@ -391,9 +391,9 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] simIdx = evidence.getSimilarity(false);
+        byte[] simIdx = evidence.getImageSimilarityFeatures(false);
         if (simIdx != null) {
-            doc.add(new StoredField(SIMILARITY, evidence.getSimilarity(true)));
+            doc.add(new StoredField(SIMILARITY, evidence.getImageSimilarityFeatures(true)));
             for (int i = 0; i < simIdx.length; i++) {
                 doc.add(new IntField(ExtraProperties.SIMILARITY_META_PREFIX + i, simIdx[i] & 0xFF, Field.Store.YES));
             }
@@ -797,7 +797,7 @@ public class IndexItem extends BasicProps {
                 
                 BytesRef bytesRef = doc.getBinaryValue(SIMILARITY);
                 if (bytesRef != null) {
-                    evidence.setSimilarity(bytesRef.bytes, true);
+                    evidence.setImageSimilarityFeatures(bytesRef.bytes, true);
                     byte[] simIdx = new byte[ImageSimilarity.numFeatures2];
                     for (int i = 0; i < simIdx.length; i++) {
                         value = doc.get(ExtraProperties.SIMILARITY_META_PREFIX + i);
@@ -805,7 +805,7 @@ public class IndexItem extends BasicProps {
                             simIdx[i] = Byte.parseByte(value);
                         }
                     }
-                    evidence.setSimilarity(simIdx, false);
+                    evidence.setImageSimilarityFeatures(simIdx, false);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
