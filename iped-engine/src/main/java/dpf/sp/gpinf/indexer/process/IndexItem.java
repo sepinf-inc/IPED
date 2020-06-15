@@ -81,6 +81,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
+import gpinf.similarity.ImageSimilarity;
 import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
@@ -389,6 +390,14 @@ public class IndexItem extends BasicProps {
 
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
+
+        byte[] simIdx = evidence.getSimilarity(false);
+        if (simIdx != null) {
+            doc.add(new StoredField(SIMILARITY, evidence.getSimilarity(true)));
+            for (int i = 0; i < simIdx.length; i++) {
+                doc.add(new IntField(ExtraProperties.SIMILARITY_META_PREFIX + i, simIdx[i] & 0xFF, Field.Store.YES));
+            }
+        }
 
         long off = evidence.getFileOffset();
         if (off != -1) {
@@ -784,6 +793,19 @@ public class IndexItem extends BasicProps {
                             e.printStackTrace();
                         }
                     }
+                }
+                
+                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY);
+                if (bytesRef != null) {
+                    evidence.setSimilarity(bytesRef.bytes, true);
+                    byte[] simIdx = new byte[ImageSimilarity.numFeatures2];
+                    for (int i = 0; i < simIdx.length; i++) {
+                        value = doc.get(ExtraProperties.SIMILARITY_META_PREFIX + i);
+                        if (value != null && !value.isEmpty()) {
+                            simIdx[i] = Byte.parseByte(value);
+                        }
+                    }
+                    evidence.setSimilarity(simIdx, false);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
