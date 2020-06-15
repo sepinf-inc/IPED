@@ -15,11 +15,11 @@ enablePhotoDNA = true
 enableKff = true
 
 # Enables hash lookup on LED database. Files with hashes 
-# on the database can be queried wiht filter "Hash Alert (Child Porn)"
+# on the database can be queried with filter "Hash Alert (Child Porn)"
 # Need to use hash md5 or sha-1.
 enableLedWkff = true
 
-# Enables nudity detection. For each image it creates atributes "scoreNudez" (1 to 1000)
+# Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
 # and classeNudez (1 to 5) for ranking and/or filtering.
 enableLedDie = true
 
@@ -27,7 +27,7 @@ enableLedDie = true
 excludeKffIgnorable = false
 
 # Ignores/discards duplicated files from the rest of processing (and from the case)
-# It can strongly speed up processing of cases whith backups. Hash calculation is need to be enabled.
+# It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
 ignoreDuplicates = false
 
 # Exports the properties of all files in the case to file "Lista de Arquivos.csv"
@@ -37,26 +37,26 @@ exportFileProps = true
 processFileSignatures = true
 
 # Enables parsing of files contents. It's necessary for several functions like
-# containers expansion, dettection of crypted content, metadata indexion, previews generation, etc.
+# containers expansion, detection of encrypted content, metadata indexing, previews generation, etc.
 enableFileParsing = true
 
 # Expands containers, like compressed files, e-mail boxes, emails e MS-Office documents.
 # File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
 expandContainers = true
 
-# Searches texts extracted from itens by regular expressions 
+# Searches texts extracted from items by regular expressions 
 # like social numbers, emails, URLs, credit cards, money values, etc. 
 # New expressions can be configured in file "conf/RegexConfig.txt"
 enableRegexSearch = true
 
-# Enables dettection of more than 70 idioms in document files.
+# Enables detection of more than 70 idioms in document files.
 enableLanguageDetect = true
 
 # EXPERIMENTAL function to recognize mentioned entities: names of people, organizations or places.
 # Requested models must be downloaded and put in the folder "optional-libs"
 # Download requested models from: StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
-# Model for Portuguese language has not be trained, so results may be insatisfatory
-# This function uses a lot of CPU, wich can increase processing duration by 4 times.
+# Model for Portuguese language has not be trained, so results may be unsatisfactory
+# This function uses a lot of CPU, which can increase processing duration by 4 times.
 # Advanced settings can be modified in file "conf/NamedEntityRecognitionConfig.txt"
 enableNamedEntityRecogniton = false
 
@@ -67,7 +67,7 @@ indexFileContents = true
 # In this option, raw strings are extracted from the files and indexed
 indexUnknownFiles = true
 
-# Index corrupted files with strings. For example, deleted and partially overwritten imagens
+# Index corrupted files with strings. For example, deleted and partially overwritten images
 # can have searchable plain text into them.
 indexCorruptedFiles = true
 
@@ -94,7 +94,7 @@ indexUnallocated = true
 # File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
 enableCarving = true
 
-# Enables carving that retrieves known files from the LED base, based on the beggining (64K) of the file.
+# Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
 # It's necessary to enable "addUnallocated" and to configure "ledWkffPath".
 enableKFFCarving = true
 
@@ -113,6 +113,6 @@ enableImageSimilarity = false
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"
 enableVideoThumbs = true
 
-# Enables HTML report generation on automatic extractions or from selected itens.
+# Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true
