@@ -101,7 +101,7 @@ enableKFFCarving = false
 # Enables specific carving of e-Mule "known.met" files. "addUnallocated" must be enabled.
 enableKnownMetCarving = false
 
-# Enables generation of images thumbnails during processing.
+# Enables the generation of images thumbnails during processing.
 # It can slow down processing, but strongly speeds up image preview in the gallery
 enableImageThumbs = true
 
