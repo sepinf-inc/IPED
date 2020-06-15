@@ -65,6 +65,7 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
@@ -73,6 +74,8 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -100,9 +103,6 @@ import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
-import bibliothek.gui.dock.common.event.CDockableStateListener;
-import bibliothek.gui.dock.common.intern.CDockable;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -114,6 +114,7 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.SimilarImageSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
@@ -122,6 +123,8 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
+import iped3.IItem;
+import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.IColumnsManager;
 import iped3.desktop.GUIProvider;
@@ -287,7 +290,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
             } catch (InvocationTargetException | InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -722,6 +724,33 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
+        CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getIcon("find", resPath));
+        galleryTabDock.addAction(butSimSearch);
+        galleryTabDock.addSeparator();
+        butSimSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                searchSimilarImages();
+            }
+        });
+        butSimSearch.setEnabled(false);
+        resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                boolean enabled = false;
+                int selIdx = resultsTable.getSelectedRow();
+                if (selIdx != -1) {
+                    IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                    if (itemId != null) {
+                        IItem item = appCase.getItemByItemId(itemId);
+                        if (item != null) {
+                            enabled = item.getSimilarity(false) != null;
+                        }
+                    }
+                }
+                butSimSearch.setEnabled(enabled);
+                menu.similarImages.setEnabled(enabled);
+            }
+        });
+
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
@@ -861,6 +890,20 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
 
             viewerDock.addSeparator();
+        }
+    }
+    
+    public void searchSimilarImages() {
+        int selIdx = resultsTable.getSelectedRow();
+        if (selIdx != -1) {
+            IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+            Query query = new SimilarImageSearch().getQueryForSimilarImages(itemId, appCase);
+            if (query != null) {
+                ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
+                sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
+                ((ResultTableRowSorter)resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
+                appletListener.updateFileListing(query);
+            }
         }
     }
 
@@ -1172,14 +1215,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowActivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -1191,26 +1230,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowIconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowOpened(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     public IMultiSearchResult getResults() {
