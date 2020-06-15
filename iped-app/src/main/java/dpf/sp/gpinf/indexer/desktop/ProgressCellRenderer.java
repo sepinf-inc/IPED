@@ -42,10 +42,14 @@ class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
             int row, int col) {
-        // int i = (int)Math.ceil(100*(Float)value/((Float)value + 1));
         int i = (int) Math.ceil((Float) value);
-        this.setValue(i);
-
+        if (i > 100) {
+            setString("REF"); 
+            this.setValue(100);
+        } else { 
+            setString(null);
+            this.setValue(i);
+        }
         return this;
     }
 
