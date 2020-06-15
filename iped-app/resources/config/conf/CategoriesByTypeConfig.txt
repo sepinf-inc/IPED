@@ -71,7 +71,7 @@ Web Bookmarks = application/x-ufed-html-bookmarks; application/x-ufed-webbookmar
 
 ISO disks = application/x-iso9660-image; application/x-udf-image;
 
-Virtual disks = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
+Virtual disks = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx
 
 Other disks = application/x-disk-image;
 

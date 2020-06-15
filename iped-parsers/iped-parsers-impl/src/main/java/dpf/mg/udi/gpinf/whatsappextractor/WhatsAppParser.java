@@ -417,14 +417,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
             }
             if (result.isEmpty()) {
-                // WhatsApp initial release 2009-01-01
-                long startTime = 1230768000;
-                long endTime = System.currentTimeMillis() / 1000;
                 if (contact.getId() != null && !contact.getId().isEmpty()) {
-                    result = searcher
-                            .search(BasicProps.NAME + ":(+" + escape(searcher, contact.getId()) + " +(jpg thumb)" //$NON-NLS-1$ //$NON-NLS-2$
-                                    + " +[" + startTime + " TO " + endTime + "])"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    result = filterGroupAvatars(result);
+                    result = searcher.search(BasicProps.NAME + ":(" + escape(searcher, contact.getId()) + " AND (jpg thumb))"); //$NON-NLS-1$ //$NON-NLS-2$
+                    result = filterAvatars(result, contact.getId());
                     Collections.sort(result, new AvatarComparator());
                 }
             }
@@ -453,14 +448,35 @@ public class WhatsAppParser extends SQLite3DBParser {
             return string;
     }
 
-    private List<IItemBase> filterGroupAvatars(List<IItemBase> avatars) {
+    private List<IItemBase> filterAvatars(List<IItemBase> avatars, String id) {
+        // WhatsApp initial release 2009-01-01
+        long startTime = 1230768000;
+        long endTime = System.currentTimeMillis() / 1000;
         ArrayList<IItemBase> result = new ArrayList<IItemBase>();
-        for (IItemBase item : avatars)
-            if (item.getName().split("-").length < 3) //$NON-NLS-1$
-                result.add(item);
+        for (IItemBase item : avatars) {
+            //filter group avatars and unrelated images
+            if (item.getName().startsWith(id) && item.getName().split("-").length < 3) { //$NON-NLS-1$
+                String str = item.getName().substring(id.length());
+                int idx = str.indexOf(".");
+                if(str.startsWith("-") && idx > 0){ //$NON-NLS-1$ //$NON-NLS-2$
+                    String t = str.substring(1, idx); //$NON-NLS-1$
+                    try {
+                        Long time = Long.valueOf(t);
+                        if(time > startTime && time < endTime) {
+                            result.add(item);
+                        }
+                    }catch(NumberFormatException e) {
+                        //ignore
+                    }
+                }else if(str.equals(".thumb") || str.equals(".jpg")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    result.add(item);
+                }
+            }
+        }   
         return result;
     }
 
+    //sort newer avatar to be first
     private class AvatarComparator implements Comparator<IItemBase> {
         @Override
         public int compare(IItemBase o1, IItemBase o2) {

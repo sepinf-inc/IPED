@@ -72,7 +72,7 @@ Favoritos Web = application/x-ufed-html-bookmarks; application/x-ufed-webbookmar
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
-Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
+Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx
 
 Outros Espelhos = application/x-disk-image;
 

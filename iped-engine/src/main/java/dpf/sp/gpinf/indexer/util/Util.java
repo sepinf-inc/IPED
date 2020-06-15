@@ -198,8 +198,8 @@ public class Util {
         String ext = item.getTypeExt();
         String name = item.getName();
         if(ext == null) return name;
-        ext = "." + ext;
-        if(name.endsWith(ext)) return name;
+        ext = "." + ext.toLowerCase();
+        if(name.toLowerCase().endsWith(ext)) return name;
         else return name + ext;
     }
 

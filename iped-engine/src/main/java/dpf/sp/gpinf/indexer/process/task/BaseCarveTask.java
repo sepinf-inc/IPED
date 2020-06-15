@@ -26,7 +26,6 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
@@ -45,6 +44,7 @@ public abstract class BaseCarveTask extends AbstractTask {
     protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
     protected static MediaType mtVmdk = MediaType.application("x-vmdk"); //$NON-NLS-1$
     protected static MediaType mtVhd = MediaType.application("x-vhd"); //$NON-NLS-1$
+    protected static MediaType mtVhdx = MediaType.application("x-vhdx"); //$NON-NLS-1$
     protected static MediaType mtVdi = MediaType.application("x-vdi"); //$NON-NLS-1$
     protected static MediaType mtUnknown = MediaType.application("octet-stream"); //$NON-NLS-1$
 
