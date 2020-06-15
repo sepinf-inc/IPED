@@ -742,7 +742,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     if (itemId != null) {
                         IItem item = appCase.getItemByItemId(itemId);
                         if (item != null) {
-                            enabled = item.getSimilarity(false) != null;
+                            enabled = item.getImageSimilarityFeatures(false) != null;
                         }
                     }
                 }
