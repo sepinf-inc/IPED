@@ -229,6 +229,8 @@ public class Item implements ISleuthKitItem {
 
     private byte[] thumb;
 
+    private byte[] similarityFull, similarityIndex;
+
     private ISeekableInputStreamFactory inputStreamFactory;
 
     static final int BUF_LEN = 8 * 1024 * 1024;
@@ -1316,6 +1318,19 @@ public class Item implements ISleuthKitItem {
 
     public void setThumb(byte[] thumb) {
         this.thumb = thumb;
+    }
+
+    @Override
+    public byte[] getSimilarity(boolean isFull) {
+        return isFull ? similarityFull : similarityIndex;
+    }
+
+    public void setSimilarity(byte[] similarity, boolean isFull) {
+        if (isFull) {
+            this.similarityFull = similarity;
+        } else {
+            this.similarityIndex = similarity;
+        }
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {
