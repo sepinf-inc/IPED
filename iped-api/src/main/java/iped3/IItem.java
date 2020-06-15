@@ -528,6 +528,8 @@ public interface IItem extends IItemBase {
     
     void setThumb(byte[] thumb);
 
+    void setSimilarity(byte[] similarity, boolean isFull);
+
     /**
      * @return returns the created evidenceFile.
      */
