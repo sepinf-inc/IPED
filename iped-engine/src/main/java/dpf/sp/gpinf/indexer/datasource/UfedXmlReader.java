@@ -564,7 +564,9 @@ public class UfedXmlReader extends DataSourceReader {
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
 
             if("MSISDN".equals(nameAttr) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
-                msisdns.add("+" + chars.toString().trim());
+                String msisdn = chars.toString().trim();
+                if(!msisdn.startsWith("+")) msisdn = "+" + msisdn;
+                msisdns.add(msisdn);
                 caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
                 
             }else if (qName.equals("item")) { //$NON-NLS-1$
