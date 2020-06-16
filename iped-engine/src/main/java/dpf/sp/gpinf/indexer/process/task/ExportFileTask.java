@@ -447,14 +447,14 @@ public class ExportFileTask extends AbstractTask {
                     int i = 0;
                     while(i != -1 && !Thread.currentThread().isInterrupted()) {
                     	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    	IOException exception = null;
+                    	Exception exception = null;
                     	try {
                     	    byte[] buf = new byte[8 * 1024];
                     	    while (baos.size() <= MAX_BUFFER_SIZE - buf.length && (i = inputStream.read(buf)) != -1) {
                                 baos.write(buf, 0, i);
                             }
-                    	}catch(IOException e) {
-                    	    //catch ioexceptions here to extract some content
+                    	}catch(Exception e) {
+                    	    //catch exceptions here to extract some content, even runtime exceptions
                     	    exception = e;
                     	}
                         if((i == -1 || exception != null) && storageCon.get(output) != null && total == 0) {
