@@ -27,11 +27,10 @@ import java.io.Reader;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
 import java.util.TimeZone;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -61,11 +60,11 @@ import org.sqlite.SQLiteException;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
-import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -107,6 +106,9 @@ public class SleuthkitReader extends DataSourceReader {
     // chamada content.getParent() é custosa, entao os valores já mapeados são
     // salvos neste cache
     private ArrayList<Integer> tskParentIds = new ArrayList<>();
+
+    private List<Integer> inheritedParents;
+    private String inheritedPath;
 
     private AddImageProcess addImage;
     private String deviceName;
@@ -239,7 +241,8 @@ public class SleuthkitReader extends DataSourceReader {
         tskChecked = true;
     }
 
-    public int read(File image) throws Exception {
+    @Override
+    public void read(File image, Item parent) throws Exception {
 
         checkTSKVersion();
 
@@ -268,8 +271,16 @@ public class SleuthkitReader extends DataSourceReader {
         tskParentIds.clear();
 
         deviceName = getEvidenceName(image);
-        dataSource = new DataSource(image);
-        dataSource.setName(deviceName);
+        if (parent == null) {
+            dataSource = new DataSource(image);
+            dataSource.setName(deviceName);
+            inheritedParents = Collections.emptyList();
+            inheritedPath = "";
+        } else {
+            inheritedParents = new ArrayList<>(parent.getParentIds());
+            inheritedParents.add(parent.getId());
+            inheritedPath = parent.getPath();
+        }
 
         String dbPath = output.getParent() + File.separator + DB_NAME;
 
@@ -394,6 +405,10 @@ public class SleuthkitReader extends DataSourceReader {
         }else if (waitLoadDbThread != null)
             waitLoadDbThread.join();
 
+    }
+
+    public int read(File image) throws Exception {
+        read(image, null);
         return 0;
     }
     
@@ -699,6 +714,7 @@ public class SleuthkitReader extends DataSourceReader {
         if (deviceName != null) {
             path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
+        path = inheritedPath + path;
         evidence.setPath(path);
     }
 
@@ -775,6 +791,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
             evidence.addParentId(parentId);
         }
+        evidence.addParentIds(inheritedParents);
 
         if (unalloc || absFile.isDirNameFlagSet(TSK_FS_NAME_FLAG_ENUM.UNALLOC)
                 || absFile.isMetaFlagSet(TSK_FS_META_FLAG_ENUM.UNALLOC)
@@ -857,12 +874,12 @@ public class SleuthkitReader extends DataSourceReader {
         String path = content.getUniquePath();
         if (deviceName != null) {
             if (path.indexOf('/', 1) == -1) {
-                evidence.setPath("/" + deviceName); //$NON-NLS-1$
+                evidence.setPath(inheritedPath + "/" + deviceName); //$NON-NLS-1$
             } else {
                 setPath(evidence, path);
             }
         } else {
-            evidence.setPath(path);
+            evidence.setPath(inheritedPath + path);
         }
 
         if (content instanceof Image) {
@@ -893,6 +910,7 @@ public class SleuthkitReader extends DataSourceReader {
             }
             evidence.addParentId(parentId);
         }
+        evidence.addParentIds(inheritedParents);
 
         caseData.addItem(evidence);
 

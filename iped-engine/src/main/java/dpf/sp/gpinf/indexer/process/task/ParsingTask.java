@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -192,7 +194,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             context.set(IItemSearcher.class, (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getCategories());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -234,6 +236,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             categoriesToExpand.add(line.trim());
         }
         reader.close();
+    }
+    
+    private static boolean isToAlwaysExpand(IItem item) {
+        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType()) ||
+                WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {
@@ -370,8 +377,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
             evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true"); //$NON-NLS-1$
+            metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         }
-        metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 
         String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
         if (value != null) {
@@ -381,6 +388,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
+        }
+        
+        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        if(base64Thumb != null) {
+            evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
+            metadata.remove(ExtraProperties.USER_THUMB);
+            evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
         }
 
     }

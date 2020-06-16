@@ -23,6 +23,7 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -243,6 +244,12 @@ public class SkipCommitedTask extends AbstractTask{
         String rootPrefix = getRootName(item.getPath());
         String oldUUID = prevRootNameToEvidenceUUID.get(rootPrefix);
         if(oldUUID != null) {
+            if(caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + oldUUID) == null) {
+                synchronized(caseData) {
+                    Object msisdns = caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
+                    caseData.putCaseObject(UfedXmlReader.MSISDN_PROP + oldUUID, msisdns);
+                }
+            }
             item.getDataSource().setUUID(oldUUID);
         }
     }

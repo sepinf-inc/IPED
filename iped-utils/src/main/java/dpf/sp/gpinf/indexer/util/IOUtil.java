@@ -103,20 +103,31 @@ public class IOUtil {
             }
         return result;
     }
-
+    
     public static void deletarDiretorio(File file) {
+        try {
+            deleteDirectory(file, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteDirectory(File file, boolean logError) throws IOException{
         if (file.isDirectory()) {
             String[] names = file.list();
             if (names != null)
                 for (int i = 0; i < names.length; i++) {
                     File subFile = new File(file, names[i]);
-                    deletarDiretorio(subFile);
+                    deleteDirectory(subFile, logError);
                 }
         }
         try {
             Files.delete(file.toPath());
-        } catch (Exception e) {
-            LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+        } catch (IOException e) {
+            if(logError) {
+                LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            else throw e;
         }
 
     }

@@ -32,6 +32,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.apache.tika.utils.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -375,18 +376,74 @@ public class LibpffPSTParser extends AbstractParser {
             if (item.exists()) {
                 metadata.set(TikaCoreProperties.TITLE, types[i]);
                 if (item.getName().equals("Contact.txt")) //$NON-NLS-1$
-                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
+                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_CONTACT_MIME); //$NON-NLS-1$
 
                 List<String> lines = readAllLines(item);
                 for (String line : lines) {
                     String[] l = line.split(":", 2); //$NON-NLS-1$
                     if (l.length > 1) {
                         String value = l[1].trim();
-                        if (!value.isEmpty())
+                        if (!value.isEmpty()) {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            fillMetadata(metadata, l[0].trim(), value);
+                        }
                     }
                 }
             }
+        }
+    }
+    
+    private void fillMetadata(Metadata metadata, String key, String val) {
+        switch(key) {
+            case "Account": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_ACCOUNT, val);
+                metadata.add(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
+                break;
+            case "Business phone number 1": //$NON-NLS-1$
+            case "Business phone number 2": //$NON-NLS-1$
+            case "Primary phone number": //$NON-NLS-1$
+            case "Company main phone number": //$NON-NLS-1$
+            case "Home phone number": //$NON-NLS-1$
+            case "Mobile phone number": //$NON-NLS-1$
+            case "Other phone number": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_PHONE, val);
+                break;
+            case "Email address 1": //$NON-NLS-1$
+            case "Email address 2": //$NON-NLS-1$
+            case "Email address 3": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_EMAIL, val);
+                break;
+            case "Company name":  //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_ORGANIZATION, val);
+                break;
+            case "Postal address": //$NON-NLS-1$
+            case "Home address": //$NON-NLS-1$
+            case "Work address": //$NON-NLS-1$
+            case "Other address": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_ADDRESS, val);
+                break;
+            case "Display name": //$NON-NLS-1$
+            case "Given name": //$NON-NLS-1$
+            case "Surname": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_NAME, val);
+                break;
+            case "Birthday": //$NON-NLS-1$
+                try {
+                  //TODO not checked, without sample, based on java parser output
+                    SimpleDateFormat df = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy"); //$NON-NLS-1$
+                    metadata.set(ExtraProperties.USER_BIRTH, df.parse(val));
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                break;
+            case "Personal home page": //$NON-NLS-1$
+            case "Business home page": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_URLS, val);
+                break;
+            case "Note": //$NON-NLS-1$
+            case "Comment": //$NON-NLS-1$
+                metadata.add(ExtraProperties.USER_NOTES, val);
+                break;
         }
     }
 

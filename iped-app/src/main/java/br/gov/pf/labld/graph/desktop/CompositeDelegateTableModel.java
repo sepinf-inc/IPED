@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.desktop;
+package br.gov.pf.labld.graph.desktop;
 
 import java.util.ArrayList;
 import java.util.Iterator;

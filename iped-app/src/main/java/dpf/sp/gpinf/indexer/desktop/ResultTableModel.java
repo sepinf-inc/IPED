@@ -266,8 +266,13 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }catch(NumberFormatException e) {}
                 
                 sb.append(values[i]);
-                if (i != values.length - 1)
+                if (i != values.length - 1) {
+                    if(i == 9) {
+                        sb.append(" ..."); //$NON-NLS-1$
+                        break;
+                    }
                     sb.append(" | "); //$NON-NLS-1$
+                }
             }
 
             value = sb.toString().trim();

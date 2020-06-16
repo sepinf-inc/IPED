@@ -96,8 +96,8 @@ public class SkypeSqliteV12 implements SkypeStorage {
 			account = new SkypeAccount();
 			account.setSkypeName(skypeName);
 			account.setId(accountContact.getId()); //$NON-NLS-1$
-			account.setAbout(accountContact.getSobre()); //$NON-NLS-1$
-			account.setMood(accountContact.getSobre()); //$NON-NLS-1$
+			account.setAbout(accountContact.getAbout()); //$NON-NLS-1$
+			account.setMood(accountContact.getAbout()); //$NON-NLS-1$
 			account.setFullname((String) json.get("fullname")); //$NON-NLS-1$
 			account.setPhoneHome((String) json.get("phone_home")); //$NON-NLS-1$
 			account.setPhoneMobile((String) json.get("phone_mobile")); //$NON-NLS-1$
@@ -348,7 +348,7 @@ public class SkypeSqliteV12 implements SkypeStorage {
 			System.out.print("SkypeSqliteV12: birthday parse error:"+(String) json.get("birthday"));
 		}
 
-		c.setSobre((String) json.get("mood")); //$NON-NLS-1$
+		c.setAbout((String) json.get("mood")); //$NON-NLS-1$
 
 		c.setAvatar(null);
 		c.setThumbUrl((String) json.get("thumbUrl"));

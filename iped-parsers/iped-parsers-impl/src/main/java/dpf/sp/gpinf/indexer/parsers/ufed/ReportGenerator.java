@@ -19,9 +19,9 @@ import iped3.util.ExtraProperties;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class ReportGenerator {
-
-    private static final int MAX_CHAT_SIZE = 5000000;
-
+    
+    private static final int MAX_CHAT_MESSAGES = 5000;
+    
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
@@ -35,8 +35,12 @@ public class ReportGenerator {
     public int getNextMsgNum() {
         return currentMsg;
     }
-
+    
     public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
+        return this.generateNextChatHtml(c, msgs, MAX_CHAT_MESSAGES);
+    }
+
+    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs, int maxChatSize) throws UnsupportedEncodingException {
         if (lastChat != c) {
             lastChat = c;
             currentMsg = 0;
@@ -67,7 +71,7 @@ public class ReportGenerator {
             boolean isGroup = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 2; //$NON-NLS-1$
             printMessage(out, m, isGroup, c.isDeleted());
 
-            if (currentMsg++ != msgs.size() - 1 && bout.size() >= MAX_CHAT_SIZE) {
+            if (currentMsg++ != msgs.size() - 1 && currentMsg % MAX_CHAT_MESSAGES == 0) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
@@ -81,7 +85,7 @@ public class ReportGenerator {
     }
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
-        out.println("<div class=\"linha\">"); //$NON-NLS-1$
+        out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name;
         if (message.isFromMe()) {
             out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
@@ -114,6 +118,7 @@ public class ReportGenerator {
         }
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
+                out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + message.getMediaHash() + "\",this.checked) />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
                 String ext = ""; //$NON-NLS-1$
                 int extIdx = message.getMediaName().lastIndexOf('.');
@@ -200,6 +205,7 @@ public class ReportGenerator {
                 + "<style>\n"
                 + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
                 + "\n</style>\n"
+                + "<style>.check {vertical-align: top;}</style>"
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n" //$NON-NLS-1$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$

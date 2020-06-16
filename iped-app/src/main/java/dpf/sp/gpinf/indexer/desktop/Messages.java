@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
@@ -12,8 +13,8 @@ public class Messages {
 
     private Messages() {
     }
-
-    public static String getString(String key) {
+    
+    public static String get(String key) {
         if (RESOURCE_BUNDLE == null) {
             String localeStr = System.getProperty("iped-locale"); //$NON-NLS-1$
             Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
@@ -26,6 +27,13 @@ public class Messages {
             e.printStackTrace();
             throw e;
         }
+    }
+    
+    public static String getString(String key, Object... args) {
+        String value = get(key);
+        if(args != null)
+            value = MessageFormat.format(value, args);
+        return value;
     }
 
     public static void resetLocale() {

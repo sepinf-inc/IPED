@@ -30,8 +30,8 @@ public class ExtractorIOS extends Extractor {
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts) {
-        super(databaseFile, contacts);
+    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
+        super(databaseFile, contacts, account);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
 
@@ -75,8 +75,13 @@ public class ExtractorIOS extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
+                if(account != null) m.setLocalResource(account.getId());
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
-                m.setRemoteResource(rs.getString("remoteResource")); //$NON-NLS-1$
+                String remoteResource = rs.getString("remoteResource");
+                if(remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
+                    remoteResource = chat.getRemote().getId();
+                }
+                m.setRemoteResource(remoteResource); //$NON-NLS-1$
                 m.setStatus(rs.getInt("status")); //$NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$

@@ -117,6 +117,8 @@ public interface IItem extends IItemBase {
      * @return o valor do atributo extra
      */
     Object getExtraAttribute(String key);
+    
+    Object getTempAttribute(String key);
 
     /**
      *
@@ -338,6 +340,8 @@ public interface IItem extends IItemBase {
      *            valor do atributo
      */
     void setExtraAttribute(String key, Object value);
+    
+    void setTempAttribute(String key, Object value);
 
     /**
      * Define o arquivo referente ao item, caso existente

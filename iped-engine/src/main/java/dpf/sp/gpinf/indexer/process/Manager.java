@@ -50,6 +50,7 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
@@ -455,6 +456,8 @@ public class Manager {
                     
                     LOGGER.info("Commiting sqlite storages...");
                     ExportFileTask.commitStorage(output);
+                    
+                    GraphTask.commit();
                     
                     ExportCSVTask.commit(output);
                     

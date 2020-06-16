@@ -8,6 +8,9 @@ public class MediaTypes {
     
     public static final MediaType METADATA_ENTRY = MediaType.application("x-metadata-entry"); //$NON-NLS-1$
     public static final MediaType UFED_EMAIL_MIME = MediaType.parse("message/x-ufed-email"); //$NON-NLS-1$
+    public static final MediaType UFED_MESSAGE_ATTACH_MIME = MediaType.parse("message/x-ufed-attachment"); //$NON-NLS-1$
+    public static final MediaType CHAT_MESSAGE_MIME = MediaType.parse("message/x-chat-message"); //$NON-NLS-1$
+    public static final MediaType UFED_MESSAGE_MIME = MediaType.application("x-ufed-instantmessage"); //$NON-NLS-1$
     
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
     
@@ -32,6 +35,10 @@ public class MediaTypes {
             getMediaTypeRegistry().addSuperType(type, parent);
         }
         return parent;
+    }
+    
+    public static boolean isInstanceOf(MediaType instance, MediaType parent) {
+        return instance != null && (instance.equals(parent) || isInstanceOf(getParentType(instance), parent));
     }
 
 }

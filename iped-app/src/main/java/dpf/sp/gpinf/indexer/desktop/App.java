@@ -105,6 +105,7 @@ import bibliothek.gui.dock.common.intern.CDockable;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -161,6 +162,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JTable resultsTable;
     GalleryTable gallery;
     public HitsTable hitsTable;
+    AppGraphAnalytics appGraphAnalytics;
 
     HitsTable subItemTable, duplicatesTable;
     JTree tree, bookmarksTree, categoryTree;
@@ -175,8 +177,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
-    DefaultSingleCDockable tableTabDock, galleryTabDock;
+    DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
     public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
+    DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
@@ -186,7 +189,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultSelectedColor;
     private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
-    MenuClass menu;
     JPanel topPanel;
     JPanel multiFilterAlert;
     boolean disposicaoVertical = false;
@@ -204,7 +206,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private int zoomLevel;
 
-    File casesPathFile;
+    public File casesPathFile;
     boolean isMultiCase;
     public JLabel status;
 
@@ -247,6 +249,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         return app;
     }
+    
+    public AppListener getAppListener() {
+        return appletListener;
+    }
 
     public AppSearchParams getSearchParams() {
         return this.appSearchParams;
@@ -254,6 +260,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public Manager getProcessingManager() {
         return processingManager;
+    }
+    
+    public MenuClass getContextMenu() {
+        return new MenuClass();
     }
 
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
@@ -485,6 +495,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
             }
         });
+        
+        appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController(appSearchParams);
         hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
@@ -722,6 +734,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
+        if (appGraphAnalytics != null) {
+            graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+        }
+        
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
@@ -775,6 +791,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(bookmarksTabDock);
         dockingControl.addDockable(tableTabDock);
         dockingControl.addDockable(galleryTabDock);
+        if (graphDock != null) {
+            dockingControl.addDockable(graphDock);
+        }
 
         for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
             DefaultSingleCDockable tabDock = iterator.next();
@@ -898,7 +917,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, 
-                galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock));
+                galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -923,6 +942,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private boolean metadataDefaultColor = true;
     private boolean evidenceDefaultColor = true;
     private boolean bookmarksDefaultColor = true;
+    private boolean graphDefaultColor = true;
+    
+    public void setGraphDefaultColor(boolean defaultColor) {
+        if (graphDefaultColor != defaultColor) {
+            graphDefaultColor = defaultColor;
+            setDockablesColors();
+        }
+    }
 
     public void setCategoriesDefaultColor(boolean defaultColor) {
         if (categoriesDefaultColor != defaultColor) {
@@ -957,6 +984,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         setTabColor(metadataTabDock, metadataDefaultColor);
         setTabColor(evidenceTabDock, evidenceDefaultColor);
         setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+        setTabColor(graphDock, graphDefaultColor);
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
@@ -1044,6 +1072,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 tabDock.setVisible(true);
                 nextLocation = tabDock.getBaseLocation().aside();
             }
+            
+            if (graphDock != null) {
+                graphDock.setLocation(nextLocation);
+                graphDock.setVisible(true);
+            }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
             hitsDock.setVisible(true);
@@ -1111,6 +1144,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 tabDock.setLocation(nextLocation);
                 tabDock.setVisible(true);
                 nextLocation = tabDock.getBaseLocation().aside();
+            }
+            
+            if (graphDock != null) {
+                graphDock.setLocation(nextLocation);
+                graphDock.setVisible(true);
             }
 
             hitsDock.setLocation(CLocation.base().normalSouth(0.3));
