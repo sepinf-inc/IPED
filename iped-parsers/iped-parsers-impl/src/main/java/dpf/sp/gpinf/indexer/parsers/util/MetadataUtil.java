@@ -19,6 +19,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -43,6 +44,7 @@ public class MetadataUtil {
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
+        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 

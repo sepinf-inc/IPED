@@ -218,7 +218,7 @@ public class GraphTask extends AbstractTask {
                 SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType) ||
                 SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType) ||
                 MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(mediaType) ||
-                "application/x-ufed-instantmessage".equals(mediaType)) {
+                MediaTypes.UFED_MESSAGE_MIME.equals(mediaType)) {
             return "message";
         }
         if(mediaType.startsWith("message") || mediaType.equals("application/vnd.ms-outlook")) {

@@ -52,6 +52,11 @@ public class HtmlLinkViewer extends HtmlViewer {
     public String getName() {
         return this.getClass().getSimpleName();
     }
+    
+    @Override
+    protected int getMaxHtmlSize() {
+        return Integer.MAX_VALUE;
+    }
 
     public class AttachmentOpen extends FileOpen {
 

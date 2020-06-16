@@ -40,19 +40,25 @@ import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
+import iped3.search.SearchResult;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class MenuListener implements ActionListener {
 
@@ -384,13 +390,27 @@ public class MenuListener implements ActionListener {
         else if(e.getSource() == menu.navigateToParentChat) {
             int selIdx = App.get().resultsTable.getSelectedRow();
             IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
-            int parentId = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId()).getParentId(itemId.getId());
-            if(parentId != -1) {
-                String position = App.get().appCase.getItemByItemId(itemId).getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+            IIPEDSource atomicSource = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId());
+            IItem item = App.get().appCase.getItemByItemId(itemId);
+            int chatId = -1;
+            if(!MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+                chatId = atomicSource.getParentId(itemId.getId());
+            }else {
+                IPEDSearcher searcher = new IPEDSearcher((IPEDSource)atomicSource);
+                searcher.setQuery(QueryParserUtil.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
+                try {
+                    SearchResult r = searcher.search();
+                    if(r.getLength() == 1) chatId = r.getId(0);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+            if(chatId != -1) {
+                String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 //TODO change viewer api to pass this
                 HtmlViewer.setPositionToScroll(position);
-                itemId = new ItemId(itemId.getSourceId(), parentId);
-                int luceneId = App.get().appCase.getLuceneId(itemId);
+                ItemId chatItemId = new ItemId(itemId.getSourceId(), chatId);
+                int luceneId = App.get().appCase.getLuceneId(chatItemId);
                 new FileProcessor(luceneId, false).execute();
             }else {
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("MenuListener.ChatNotFound")); //$NON-NLS-1$

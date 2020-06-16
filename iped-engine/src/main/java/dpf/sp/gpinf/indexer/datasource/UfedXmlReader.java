@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -653,7 +654,7 @@ public class UfedXmlReader extends DataSourceReader {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
-                    else if(prevUfedId != null && parentItem.getMediaType().toString().endsWith("instantmessage")){
+                    else if(prevUfedId != null && parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)){
                         parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":\"" + prevUfedId + "\"");
                         List<Item> attachs = attachsPerId.get(item.getParentId());
                         if(attachs == null) {
@@ -663,11 +664,10 @@ public class UfedXmlReader extends DataSourceReader {
                         attachs.add(item);
                     }
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
-                    item.setHash(DigestUtils.md5Hex(item.getPath()));
-                    updateName(item, UFEDChatParser.getChatName(item));
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
                     if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                    item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
@@ -818,7 +818,7 @@ public class UfedXmlReader extends DataSourceReader {
             String to = item.getMetadata().get(Message.MESSAGE_TO);
             boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
             if(to == null) {
-                if(item.getMediaType() != null && item.getMediaType().toString().endsWith("instantmessage")) {
+                if(item.getMediaType() != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
                     String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
                     for(String party : parties) {

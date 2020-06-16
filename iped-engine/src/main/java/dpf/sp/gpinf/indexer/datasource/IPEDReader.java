@@ -47,6 +47,7 @@ import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
@@ -623,6 +624,14 @@ public class IPEDReader extends DataSourceReader {
                         evidence.getMetadata().add(f.name(), casted.toString());
                     }
                 }
+            }
+            
+            //translate old msg ids to new ones
+            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
+            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
+            for (String msgId : ufedMsgIds) {
+                int newId = getId(msgId);
+                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
             caseData.addItem(evidence);

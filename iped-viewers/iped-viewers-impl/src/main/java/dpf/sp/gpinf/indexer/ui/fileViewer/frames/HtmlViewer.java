@@ -63,6 +63,10 @@ public class HtmlViewer extends Viewer {
     public static void setPositionToScroll(String position) {
         positionToScroll = position;
     }
+    
+    protected int getMaxHtmlSize() {
+        return MAX_SIZE;
+    }
 
     @Override
     public boolean isSupportedType(String contentType) {
@@ -116,7 +120,7 @@ public class HtmlViewer extends Viewer {
                     try {
                         file = content.getFile();
                         highlightTerms = terms;
-                        if (file.length() <= MAX_SIZE) {
+                        if (file.length() <= getMaxHtmlSize()) {
                             if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) { //$NON-NLS-1$ //$NON-NLS-2$
                                 try {
                                     tmpFile = File.createTempFile("indexador", ".html"); //$NON-NLS-1$ //$NON-NLS-2$

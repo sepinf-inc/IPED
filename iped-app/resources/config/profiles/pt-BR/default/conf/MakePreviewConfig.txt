@@ -11,4 +11,3 @@ supportedMimes = application/x-prefetch; text/x-vcard; application/x-bittorrent-
 
 # List of mimetypes which parsers insert links to other case items into preview
 supportedMimesWithLinks = application/x-emule; application/x-ares-galaxy; application/x-shareaza-library-dat
-supportedMimesWithLinks = application/x-ufed-chat; application/x-ufed-chat-whatsapp
