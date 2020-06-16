@@ -7,7 +7,7 @@ import java.util.*;
 public class ImageSimilarity {
     public static final int numFeatures1 = 1040;
     public static final int numFeatures2 = 72;
-    
+
     private static final int maxDim = 160;
     private static final int maxPixels = maxDim * maxDim;
     private static final short[] sqrt = new short[1 << 20];
@@ -22,7 +22,7 @@ public class ImageSimilarity {
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
     private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
     private int w, h;
-    
+
     static {
         for (int i = 0; i < 1000; i++) {
             int i10 = i << 10;
@@ -192,5 +192,14 @@ public class ImageSimilarity {
                 p6 = p9;
             }
         }
+    }
+
+    public static int distance(byte[] a, byte[] b) {
+        int distance = 0;
+        for (int i = 0; i < a.length; i++) {
+            int d = (a[i] & 0xFF) - (b[i] & 0xFF);
+            distance += d * d;
+        }
+        return distance;
     }
 }
