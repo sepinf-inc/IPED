@@ -37,6 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarImageSearch;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -131,7 +132,16 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 numFilters++;
             }
         }
+        
+        if (App.get().similarImagesQueryRefItem != null) {
+            Query similarImagesQuery = new SimilarImageSearch().getQueryForSimilarImages(numFilters > 0 ? result : null, App.get().similarImagesQueryRefItem);
+            if (similarImagesQuery != null) {
+                result = similarImagesQuery;
+                numFilters++;        
+            }
 
+        }
+        
         return result;
     }
 

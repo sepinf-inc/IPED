@@ -13,29 +13,35 @@ import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.BytesRef;
 
+import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
-import iped3.IItemId;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class SimilarImageSearch {
-    private static final int matchRange = 10;
-    private static final int matchMinimumPct = 70;
+    private static final int matchRange = 8;
+    private static final int matchMinimumPct = 80;
 
-    public Query getQueryForSimilarImages(IItemId itemId, IPEDMultiSource appCase) {
-        IItem item = appCase.getItemByItemId(itemId);
+    public CustomScoreQuery getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] simIdx = item.getImageSimilarityFeatures(false);
         if (simIdx == null) {
             return null;
         }
-        BooleanQuery query = new BooleanQuery();
+        BooleanQuery similarImagesQuery = new BooleanQuery();
         for (int i = 0; i < simIdx.length; i++) {
             String field = ExtraProperties.SIMILARITY_META_PREFIX + i;
             int value = simIdx[i] & 0xFF;
-            query.add(NumericRangeQuery.newIntRange(field, value - matchRange, value + matchRange, true, true), Occur.SHOULD);
+            similarImagesQuery.add(NumericRangeQuery.newIntRange(field, value - matchRange, value + matchRange, true, true), Occur.SHOULD);
         }
-        query.setMinimumNumberShouldMatch(matchMinimumPct * simIdx.length / 100);
-        CustomScoreQuery customScoreQuery = new SimilarImageCustomScoreQuery(query, item);
+        similarImagesQuery.setMinimumNumberShouldMatch(matchMinimumPct * simIdx.length / 100);
+
+        if (currentQuery != null) {
+            BooleanQuery q = new BooleanQuery();
+            q.add(currentQuery, Occur.MUST);
+            q.add(similarImagesQuery, Occur.MUST);
+            similarImagesQuery = q;
+        }
+        CustomScoreQuery customScoreQuery = new SimilarImageCustomScoreQuery(similarImagesQuery, item);
         return customScoreQuery;
     }
 
@@ -70,19 +76,17 @@ public class SimilarImageSearch {
             }
             byte[] refSim = refItem.getImageSimilarityFeatures(true);
             byte[] currSim = bytesRef.bytes;
-            int distance = 0;
-            for (int i = 0; i < refSim.length; i++) {
-                int d = (refSim[i] & 0xFF) - (currSim[i] & 0xFF);
-                distance += d * d;
-            }
+            int distance = ImageSimilarity.distance(refSim, currSim);
             if (distance == 0) {
                 String refHash = refItem.getHash();
                 if (refHash != null) {
                     String currHash = doc.get(BasicProps.HASH);
-                    if (refHash.equals(currHash)) return 200;
+                    if (refHash.equals(currHash)) {
+                        return 200;
+                    }
                 }
             }
-            float score = 100 - distance / (float)refSim.length;
+            float score = 100 - distance / (refSim.length / 2f);
             if (score < 1) score = 1;
             return score;
         }
