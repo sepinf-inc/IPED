@@ -37,6 +37,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -114,7 +116,6 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.SimilarImageSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
@@ -193,7 +194,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JPanel topPanel;
     JPanel multiFilterAlert;
     boolean disposicaoVertical = false;
-
+    
     public ResultTableModel resultsModel;
     List resultSortKeys;
     SubitemTableModel subItemModel = new SubitemTableModel();
@@ -206,6 +207,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color alertSelectedColor = Color.RED;
 
     private int zoomLevel;
+    
+    private SimilarImageFilterPanel similarImageFilterPanel;
+    public IItem similarImagesQueryRefItem;
 
     File casesPathFile;
     boolean isMultiCase;
@@ -417,17 +421,29 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         JLabel alertLabel = new JLabel(Messages.getString("App.FilterWarn")); //$NON-NLS-1$
         alertLabel.setForeground(Color.WHITE);
-        multiFilterAlert = new JPanel();
+        multiFilterAlert = new JPanel(new BorderLayout());
         multiFilterAlert.add(alertLabel);
         multiFilterAlert.setBackground(alertColor);
         multiFilterAlert.setMaximumSize(new Dimension(100, 100));
-        // multiFilterAlert.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1,
-        // true));
+        multiFilterAlert.setBorder(BorderFactory.createLineBorder(alertColor, 1));
         multiFilterAlert.setVisible(false);
 
+        similarImageFilterPanel = new SimilarImageFilterPanel();
+        similarImageFilterPanel.setVisible(false);
+        similarImageFilterPanel.addPropertyChangeListener(new PropertyChangeListener() {
+            public void propertyChange(PropertyChangeEvent evt) {
+                if (evt.getPropertyName().equals("close")) {
+                    similarImagesQueryRefItem = null;
+                    similarImageFilterPanel.setVisible(false);
+                    appletListener.updateFileListing();
+                }
+            }
+        });
+        
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
         topPanel.add(multiFilterAlert);
+        topPanel.add(similarImageFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(termo);
         topPanel.add(opcoes);
@@ -900,13 +916,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         int selIdx = resultsTable.getSelectedRow();
         if (selIdx != -1) {
             IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-            Query query = new SimilarImageSearch().getQueryForSimilarImages(itemId, appCase);
-            if (query != null) {
-                ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
-                sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
-                ((ResultTableRowSorter)resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
-                appletListener.updateFileListing(query);
+            if (itemId != null) {
+                similarImagesQueryRefItem = appCase.getItemByItemId(itemId);
+                if (similarImagesQueryRefItem.getImageSimilarityFeatures(false) == null) {
+                    similarImagesQueryRefItem = null;
+                } else {
+                    ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
+                    sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
+                    ((ResultTableRowSorter)resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
+                    appletListener.updateFileListing();
+                }
+            } else {
+                similarImagesQueryRefItem = null;
             }
+            similarImageFilterPanel.setCurrentItem(similarImagesQueryRefItem);
+            similarImageFilterPanel.setVisible(similarImagesQueryRefItem != null);
         }
     }
 
