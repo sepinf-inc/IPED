@@ -24,4 +24,4 @@ Verbose = false
 # Configuração de miniaturas de vídeos na galeria.
 # Comentar para desabilitar (imagem completa com todas as cenas extraídas será mostrada na galeria).
 # Formato: <Largura em pixels da imagem na galeria>,<Mínimo de cenas>,<Máximo de Cenas>.
-GalleryThumbs = 320,2,3
+#GalleryThumbs = 320,2,3
