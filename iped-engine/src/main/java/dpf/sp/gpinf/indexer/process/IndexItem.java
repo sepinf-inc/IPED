@@ -40,6 +40,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoubleField;
@@ -393,7 +394,9 @@ public class IndexItem extends BasicProps {
 
         byte[] simIdx = evidence.getImageSimilarityFeatures(false);
         if (simIdx != null) {
-            doc.add(new StoredField(SIMILARITY, evidence.getImageSimilarityFeatures(true)));
+            byte[] simFull = evidence.getImageSimilarityFeatures(true);
+            doc.add(new BinaryDocValuesField(SIMILARITY, new BytesRef(simFull)));
+            doc.add(new StoredField(SIMILARITY, simFull));
             for (int i = 0; i < simIdx.length; i++) {
                 doc.add(new IntField(ExtraProperties.SIMILARITY_META_PREFIX + i, simIdx[i] & 0xFF, Field.Store.YES));
             }

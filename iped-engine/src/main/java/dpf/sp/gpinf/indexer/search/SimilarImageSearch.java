@@ -5,6 +5,7 @@ import java.io.IOException;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
+import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.queries.CustomScoreProvider;
 import org.apache.lucene.queries.CustomScoreQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -22,7 +23,7 @@ public class SimilarImageSearch {
     private static final int matchRange = 8;
     private static final int matchMinimumPct = 80;
 
-    public CustomScoreQuery getQueryForSimilarImages(Query currentQuery, IItem item) {
+    public Query getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] simIdx = item.getImageSimilarityFeatures(false);
         if (simIdx == null) {
             return null;
@@ -41,6 +42,7 @@ public class SimilarImageSearch {
             q.add(similarImagesQuery, Occur.MUST);
             similarImagesQuery = q;
         }
+
         CustomScoreQuery customScoreQuery = new SimilarImageCustomScoreQuery(similarImagesQuery, item);
         return customScoreQuery;
     }
@@ -53,24 +55,25 @@ public class SimilarImageSearch {
             this.refItem = refItem;
         }
 
-        public CustomScoreProvider getCustomScoreProvider(final AtomicReaderContext atomicContext) {
+        public CustomScoreProvider getCustomScoreProvider(final AtomicReaderContext atomicContext) throws IOException {
             return new SimilarImageScoreProvider(atomicContext, refItem);
         }
     }
 
     class SimilarImageScoreProvider extends CustomScoreProvider {
-        private final AtomicReader atomicReader;
+        private final AtomicReader atomicReader; 
         private final IItem refItem;
+        private final BinaryDocValues similarityFeaturesValues;
 
-        public SimilarImageScoreProvider(AtomicReaderContext context, IItem refItem) {
+        public SimilarImageScoreProvider(AtomicReaderContext context, IItem refItem) throws IOException {
             super(context);
             atomicReader = context.reader();
             this.refItem = refItem;
+            similarityFeaturesValues = atomicReader.getBinaryDocValues(BasicProps.SIMILARITY);
         }
 
         public float customScore(int id, float subQueryScore, float valSrcScore) throws IOException {
-            Document doc = atomicReader.document(id);
-            BytesRef bytesRef = doc.getBinaryValue(BasicProps.SIMILARITY);
+            BytesRef bytesRef = similarityFeaturesValues.get(id);
             if (bytesRef == null) {
                 return 0;
             }
@@ -80,6 +83,7 @@ public class SimilarImageSearch {
             if (distance == 0) {
                 String refHash = refItem.getHash();
                 if (refHash != null) {
+                    Document doc = atomicReader.document(id);
                     String currHash = doc.get(BasicProps.HASH);
                     if (refHash.equals(currHash)) {
                         return 200;
