@@ -7,12 +7,11 @@
 
 # Thumbs extraction configuration, format: <frame pixel width>,<columns>,<rows>. 
 # The higher the resolution or number of thumbs, the slower the extraction.
-Layout = 240,4,5
+Layout = 256,4,5
 
 # Timeouts (in seconds) used by the mplayer monitor.
 # Change with caution, because high values can slow down processing of corrupted videos.
 # Low values can abort thumb extraction of valid videos.
-# Default values:
 #    - First execution timeout (must be higher because MPlayer can update its font cache).
 #    - Metadata extraction
 #    - Thumbnail extraction
@@ -21,4 +20,7 @@ Timeouts = 300,15,45
 # Enable or disable logging of mplayer messages, only for debugging problems
 Verbose = false
 
-
+# Gallery thumbnail configuration for videos.
+# Comment to disable (full video preview image will be shown in the gallery).
+# Format: <gallery image width in pixels, minimum number of frames, maximum of frames frames>.
+#GalleryThumbs = 320,2,3

@@ -342,11 +342,15 @@ public class ImageUtil {
     }
 
     public static BufferedImage getBestFramesFit(BufferedImage img, String comment, int targetWidth, int targetHeight) {
+        return getBestFramesFit(img, comment, targetWidth, targetHeight, -1, -1);
+    }
+
+    public static BufferedImage getBestFramesFit(BufferedImage img, String comment, int targetWidth, int targetHeight, int minFrames, int maxFrames) {
         int nRows = 0;
         int nCols = 0;
         if (comment != null && comment.startsWith("Frames")) { //$NON-NLS-1$
-            int p1 = comment.indexOf('=');
-            int p2 = comment.indexOf('x');
+            int p1 = comment.indexOf('='); //$NON-NLS-1$
+            int p2 = comment.indexOf('x'); //$NON-NLS-1$
             if (p1 > 0 && p2 > 0) {
                 nRows = Integer.parseInt(comment.substring(p1 + 1, p2));
                 nCols = Integer.parseInt(comment.substring(p2 + 1));
@@ -362,22 +366,26 @@ public class ImageUtil {
         int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
 
         int totalFrames = nCols * nRows;
+        if (maxFrames < 0 || maxFrames > totalFrames) maxFrames = totalFrames;
         int bestRows = nCols;
         int bestCols = nRows;
-        int minFrames = (int) Math.ceil(totalFrames * 0.8);
+        if (minFrames < 0) minFrames = (int) Math.ceil(maxFrames * 0.8);
         double maxUsage = 0;
-        for (int cols = 1; cols <= totalFrames; cols++) {
-            int rows = totalFrames / cols;
-            int nf = rows * cols;
-            if (nf < minFrames) continue;
-            int ww = (frameWidth + 1) * cols + border * 2;
-            int hh = (frameHeight + 1) * rows + border * 2;
-            double z = Math.min(targetWidth / (double) ww, targetHeight / (double) hh);
-            double currUsage = ww * z * hh * z * nf;
-            if (currUsage > maxUsage) {
-                maxUsage = currUsage;
-                bestRows = rows;
-                bestCols = cols;
+        for (int cols = 1; cols <= maxFrames; cols++) {
+            int maxRows = Math.max(1, maxFrames / cols);
+            int minRows = Math.max(1, minFrames / cols);
+            for (int rows = minRows; rows <= maxRows; rows++) {
+                int nf = rows * cols;
+                if (nf < minFrames || nf > totalFrames) continue;
+                int ww = (frameWidth + 1) * cols + border * 2;
+                int hh = (frameHeight + 1) * rows + border * 2;
+                double z = Math.min(targetWidth / (double) ww, targetHeight / (double) hh);
+                double currUsage = ww * z * hh * z + nf;
+                if (currUsage > maxUsage) {
+                    maxUsage = currUsage;
+                    bestRows = rows;
+                    bestCols = cols;
+                }
             }
         }
         if (bestRows == nRows && bestCols == nCols) return img;
@@ -390,12 +398,12 @@ public class ImageUtil {
         g2.setColor(new Color(22, 22, 22));
         g2.drawRect(0, 0, fit.getWidth() - 1, fit.getHeight() - 1);
 
-        double pos = 0;
+        double pos = rate * 0.5;
         for (int row = 0; row < bestRows; row++) {
             int y = row * (frameHeight + 1) + border;
             for (int col = 0; col < bestCols; col++) {
                 int x = col * (frameWidth + 1) + border;
-                int idx = (int) Math.round(pos);
+                int idx = (int) pos;
                 int sx = border + (border + frameWidth) * (idx % nCols);
                 int sy = border + (border + frameHeight) * (idx / nCols);
                 g2.drawImage(img, x, y, x + frameWidth, y + frameHeight, sx, sy, sx + frameWidth, sy + frameHeight, null);

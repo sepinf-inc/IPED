@@ -900,7 +900,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getImageThumbFile(String hash) {
-        File file = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
+        File file = Util.getFileFromHash(new File(output, ThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
