@@ -112,28 +112,6 @@ public class Configuration {
         }
     }
     
-    public void checkIfDefaultProfileWasChanged() {
-        try {
-            UTF8Properties defaultProps = new UTF8Properties();
-            defaultProps.load(new File(appRoot + "/" + CONFIG_FILE)); //$NON-NLS-1$
-            defaultProps.load(new File(appRoot + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
-            TreeMap<Object, Object> map = new TreeMap<>(defaultProps);
-            StringBuilder sb = new StringBuilder();
-            for(Entry<Object, Object> e : map.entrySet()) {
-                sb.append(e.getKey()).append(e.getValue());
-            }
-            String hash = DigestUtils.md5Hex(sb.toString());
-            if(!"ec35680a87b896a42e328a75c31aea48".equals(hash)) { //$NON-NLS-1$
-                System.err.println("You changed 'locale' in LocalConfig.txt but configured IPEDConfig.txt or conf/AdvancedConfig.txt in root folder! " //$NON-NLS-1$
-                        + "Please, restore those english config files to their defaults and set configuration in 'profiles/[lang]/default' folder!"); //$NON-NLS-1$
-                System.exit(1);
-            }
-            
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-    
     /**
      * Configurações a partir do caminho informado.
      */
