@@ -293,7 +293,7 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="aplication/x-skype-conversation">     
+    <mime-type type="application/x-skype-conversation">     
         <sub-class-of type="text/html"/>
     </mime-type>
     
