@@ -586,7 +586,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     insertField = false;
                     break;
                 }
-            if (f.equals(BasicProps.HAS_SIMILARITY_FEATURES)) 
+            if (f.startsWith(BasicProps.SIMILARITY_FEATURES)) 
                 continue;
             if (insertField) 
                 otherFields.add(f);

@@ -6,13 +6,12 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.AtomicReaderContext;
 import org.apache.lucene.index.BinaryDocValues;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.CustomScoreProvider;
 import org.apache.lucene.queries.CustomScoreQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
 
 import gpinf.similarity.ImageSimilarity;
@@ -20,18 +19,22 @@ import iped3.IItem;
 import iped3.util.BasicProps;
 
 public class SimilarImagesSearch {
+    private static final int range = 320;//TODO!
+
     public Query getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] similarityFeatures = item.getImageSimilarityFeatures();
         if (similarityFeatures == null) {
             return null;
         }
-        Query similarImagesQuery = new TermQuery(new Term(BasicProps.HAS_SIMILARITY_FEATURES, Boolean.TRUE.toString()));
 
+        BooleanQuery similarImagesQuery = new BooleanQuery();
         if (currentQuery != null) {
-            BooleanQuery q = new BooleanQuery();
-            q.add(currentQuery, Occur.MUST);
-            q.add(similarImagesQuery, Occur.MUST);
-            similarImagesQuery = q;
+            similarImagesQuery.add(currentQuery, Occur.MUST);
+        }
+
+        for (int i = 0; i < 4; i++) {
+            int refVal = similarityFeatures[i];
+            similarImagesQuery.add(NumericRangeQuery.newIntRange(BasicProps.SIMILARITY_FEATURES + i, refVal - range, refVal + range, true, true), Occur.MUST);
         }
 
         CustomScoreQuery customScoreQuery = new SimilarImageCustomScoreQuery(similarImagesQuery, item);
@@ -81,7 +84,8 @@ public class SimilarImagesSearch {
                     }
                 }
             }
-            float score = Math.max(0, 100 - distance / (refSimilarityFeatures.length / 3f));
+            //TODO 0
+            float score = Math.max(2, 100 - distance / (refSimilarityFeatures.length / 2f));
             return score;
         }
     }

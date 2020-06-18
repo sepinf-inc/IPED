@@ -395,8 +395,9 @@ public class IndexItem extends BasicProps {
         if (similarityFeatures != null) {
             doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
             doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new StringField(HAS_SIMILARITY_FEATURES, Boolean.TRUE.toString(), Field.Store.YES));
-            doc.add(new SortedDocValuesField(HAS_SIMILARITY_FEATURES, new BytesRef(Boolean.TRUE.toString())));
+            for (int i = 0; i < 4; i++) {
+                doc.add(new IntField(SIMILARITY_FEATURES + i, similarityFeatures[i], Field.Store.NO));
+            }
         }
 
         long off = evidence.getFileOffset();

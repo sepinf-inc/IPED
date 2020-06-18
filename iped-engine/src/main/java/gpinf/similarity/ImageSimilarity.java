@@ -3,12 +3,17 @@ package gpinf.similarity;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
+import java.awt.image.BufferedImageOp;
+import java.awt.image.ConvolveOp;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
+import java.awt.image.Kernel;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 public class ImageSimilarity {
-    private static final int numFeatures = 1040;
+    private static final int numFeatures = 1044;
     private static final int maxDim = 160;
     private static final int maxPixels = maxDim * maxDim;
     private static final short[] sqrt = new short[1 << 20];
@@ -18,8 +23,14 @@ public class ImageSimilarity {
     private final int[] pixels = new int[maxPixels];
     private final byte[] gray = new byte[maxPixels];
     private final int[] edges = new int[maxPixels];
+    private final int[][] channelCount = new int[4][256];
+    private final int[] cc0 = channelCount[0];
+    private final int[] cc1 = channelCount[1];
+    private final int[] cc2 = channelCount[2];
+    private final int[] cc3 = channelCount[3];
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
     private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
+    private final BufferedImageOp blurFilter;
     private int w, h;
 
     static {
@@ -31,11 +42,22 @@ public class ImageSimilarity {
         }
     }
 
+    public ImageSimilarity() {
+        float[] blurKernel = {0.1f,0.2f,0.1f,0.2f,0.8f,0.2f,0.1f,0.2f,0.1f};
+        Map<RenderingHints.Key, Object> map = new HashMap<RenderingHints.Key, Object>();
+        map.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+        map.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+        map.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        RenderingHints hints = new RenderingHints(map);
+        blurFilter = new ConvolveOp(new Kernel(3, 3, blurKernel), ConvolveOp.EDGE_NO_OP, hints);
+    }
+
     public byte[] extractFeatures(BufferedImage img) {
         if (img == null) return null;
         w = img.getWidth();
         h = img.getHeight();
         if (w <= 2 || h <= 2) return null;
+        blurFilter.filter(img, null);
         getPixels(img);
         trimBorders();
         if (w <= 2 || h <= 2) return null;
@@ -44,6 +66,9 @@ public class ImageSimilarity {
             Arrays.fill(hist[i], 0);
             Arrays.fill(histEdge[i], 0);
         }
+        for (int i = 0; i < 4; i++) {
+            Arrays.fill(channelCount[i], 0);
+        }
         int cut = w * h * 63 / 64;
         for (int y = 1; y < h - 1; y++) {
             int off = y * w + 1;
@@ -51,10 +76,17 @@ public class ImageSimilarity {
             for (int x = 1; x < w - 1; x++, off++) {
                 int dx = Math.abs((x << 1) - (w - 1));
                 int reg = dx * h + dy * w < cut ? 0 : 1;
-                int color = pixels[off] >>> 5;
-                int bb = (color >>> 16) & 7;
-                int gg = (color >>> 8) & 7;
-                int rr = color & 7;
+                int color = pixels[off];
+                int bb = (color >>> 16) & 255;
+                int gg = (color >>> 8) & 255;
+                int rr = color & 255;
+                cc0[bb]++;
+                cc1[gg]++;
+                cc2[rr]++;
+                cc3[gray[off] & 255]++;
+                bb >>>= 5;
+                rr >>>= 5;
+                gg >>>= 5;
                 int[] hr = hist[reg];
                 for (int i = Math.max(0, rr - 1); i < 8 && i <= rr + 1; i++) {
                     int wi = i == rr ? 1 : 0;
@@ -63,7 +95,7 @@ public class ImageSimilarity {
                         int wij = j == gg ? wi + 1 : wi;
                         int ij = ii | (j << 3);
                         for (int k = Math.max(0, bb - 1); k < 8 && k <= bb + 1; k++) {
-                            hr[ij | k] += wij << (k == bb ? wij + 1 : wij);
+                            hr[ij | k] += 1 << (k == bb ? wij + 1 : wij);
                         }
                     }
                 }
@@ -74,9 +106,20 @@ public class ImageSimilarity {
                 }
             }
         }
-        int idx = 0;
-        double m = 64 / Math.pow((w - 2) * (h - 2) * 4, power);
         byte[] features = new byte[numFeatures];
+        int total = (w - 2) * (h - 2);
+        for (int i = 0; i < 4; i++) {
+            int[] cci = channelCount[i];
+            int sum = 0;
+            for (int j = 0; j < 256; j++) {
+                if (((sum += cci[j]) << 1) >= total) {
+                    features[i] = (byte) (j - 128);
+                    break;
+                }
+            }
+        }
+        int idx = 4;
+        double m = 64 / Math.pow(total * 4, power);
         for (int i = 0; i < hist.length; i++) {
             int[] hi = hist[i];
             for (int j = 0; j < hi.length; j++, idx++) {
@@ -84,7 +127,7 @@ public class ImageSimilarity {
                 if (v > 0) features[idx] = range(Math.pow(v, power) * m);
             }
         }
-        m = 64 / Math.pow((w - 2) * (h - 2), power);
+        m = 64 / Math.pow(total, power);
         for (int i = 0; i < histEdge.length; i++) {
             int[] hi = histEdge[i];
             for (int j = 0; j < hi.length; j++, idx++) {
@@ -256,7 +299,7 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b) {
         int distance = 0;
-        for (int i = 0; i < a.length; i++) {
+        for (int i = 4; i < a.length; i++) {
             int d = a[i] - b[i];
             distance += d * d;
         }
