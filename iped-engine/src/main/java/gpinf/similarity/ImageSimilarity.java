@@ -8,9 +8,7 @@ import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 public class ImageSimilarity {
-    private static final int numFeaturesRaw = 1040;
-    private static final int numFeaturesPacked = numFeaturesRaw * 6 / 8;
-
+    private static final int numFeatures = 1040;
     private static final int maxDim = 160;
     private static final int maxPixels = maxDim * maxDim;
     private static final short[] sqrt = new short[1 << 20];
@@ -20,7 +18,6 @@ public class ImageSimilarity {
     private final int[] pixels = new int[maxPixels];
     private final byte[] gray = new byte[maxPixels];
     private final int[] edges = new int[maxPixels];
-    private final byte[] featuresRaw = new byte[numFeaturesRaw];
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
     private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
     private int w, h;
@@ -77,12 +74,12 @@ public class ImageSimilarity {
         }
         int idx = 0;
         double m = 64 / Math.pow((w - 2) * (h - 2) * 4, power);
-        Arrays.fill(featuresRaw, (byte) 0);
+        byte[] features = new byte[numFeatures];
         for (int i = 0; i < hist.length; i++) {
             int[] hi = hist[i];
             for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) featuresRaw[idx] = range(Math.pow(v, power) * m);
+                if (v > 0) features[idx] = range(Math.pow(v, power) * m);
             }
         }
         m = 64 / Math.pow((w - 2) * (h - 2), power);
@@ -90,18 +87,10 @@ public class ImageSimilarity {
             int[] hi = histEdge[i];
             for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) featuresRaw[idx] = range(Math.pow(v, power) * m);
+                if (v > 0) features[idx] = range(Math.pow(v, power) * m);
             }
         }
-        byte[] featuresPacked = new byte[numFeaturesPacked];
-        idx = 0;
-        for (int i = 0; i < numFeaturesRaw; i += 4) {
-            int p = featuresRaw[i] | (featuresRaw[i + 1] << 6) | (featuresRaw[i + 2] << 12) | (featuresRaw[i + 3] << 18);
-            featuresPacked[idx++] = (byte) (p & 255);
-            featuresPacked[idx++] = (byte) ((p >>> 8) & 255);
-            featuresPacked[idx++] = (byte) ((p >>> 16) & 255);
-        }
-        return featuresPacked;
+        return features;
     }
 
     private static final byte range(double v) {
@@ -178,14 +167,9 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b) {
         int distance = 0;
-        int d = 0;
-        for (int i = 0; i < a.length; i += 3) {
-            int aa = (a[i] & 255) | ((a[i + 1] & 255) << 8) | ((a[i + 2] & 255) << 16);
-            int bb = (b[i] & 255) | ((b[i + 1] & 255) << 8) | ((b[i + 2] & 255) << 16);
-            distance += (d = (aa & 63) - (bb & 63)) * d;
-            distance += (d = ((aa >>> 6) & 63) - ((bb >>> 6) & 63)) * d;
-            distance += (d = ((aa >>> 12) & 63) - ((bb >>> 12) & 63)) * d;
-            distance += (d = ((aa >>> 18) & 63) - ((bb >>> 18) & 63)) * d;
+        for (int i = 0; i < a.length; i++) {
+            int d = a[i] - b[i];
+            distance += d * d;
         }
         return distance;
     }
