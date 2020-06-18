@@ -29,6 +29,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
@@ -63,6 +65,8 @@ import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
 public class UfedXmlReader extends DataSourceReader {
+    
+    private static Logger LOGGER = LoggerFactory.getLogger(UfedXmlReader.class);
 
     private static final String[] HEADER_STRINGS = { "project id", "extractionType", "sourceExtractions" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
@@ -808,7 +812,7 @@ public class UfedXmlReader extends DataSourceReader {
                 fillMissingInfo(item);
                 caseData.addItem(item);
 
-            } catch (InterruptedException e) {
+            } catch (Exception e) {
                 throw new SAXException(e);
             }
         }
@@ -819,6 +823,8 @@ public class UfedXmlReader extends DataSourceReader {
             boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
             if(to == null) {
                 if(item.getMediaType() != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+                    //we have seen ufed messages without parent chat
+                    if(itemSeq.size() == 0) return;
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
                     String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
                     for(String party : parties) {
