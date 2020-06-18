@@ -37,6 +37,8 @@ public class ImageSimilarity {
         h = img.getHeight();
         if (w <= 2 || h <= 2) return null;
         getPixels(img);
+        trimBorders();
+        if (w <= 2 || h <= 2) return null;
         calcEdges();
         for (int i = 0; i < 2; i++) {
             Arrays.fill(hist[i], 0);
@@ -134,6 +136,93 @@ public class ImageSimilarity {
                 System.arraycopy(dataColor, y0, pixels, y1, w);
                 System.arraycopy(dataGray, y0, gray, y1, w);
             }
+        }
+    }
+
+    private void trimBorders() {
+        int tw = w;
+        int th = h;
+        int tolerance = 10;
+        int mode = -1;
+        for (int x = 0; x * 3 < w; x++) {
+            int s0 = 0;
+            int s1 = 0;
+            for (int y = 0; y < h; y++) {
+                int off = y * w + x;
+                int color = pixels[off];
+                int bb = (color >>> 16) & 255;
+                int gg = (color >>> 8) & 255;
+                int rr = color & 255;
+                s0 += rr + gg + bb;
+                off = y * w + (w - x - 1);
+                color = pixels[off];
+                bb = (color >>> 16) & 255;
+                gg = (color >>> 8) & 255;
+                rr = color & 255;
+                s1 += rr + gg + bb;
+            }
+            s0 /= h * 3;
+            s1 /= h * 3;
+            int detect = -1;
+            if (s0 < tolerance && s1 < tolerance) detect = 0;
+            else if (s0 > 255 - tolerance && s1 > 255 - tolerance) detect = 1;
+            if (detect == -1) {
+                break;
+            }
+            if (mode == -1) {
+                mode = detect;
+            } else if (mode != detect) {
+                break;
+            }
+            tw -= 2;
+        }
+        int x0 = (w - tw) / 2;
+        int x1 = x0 + tw;
+        for (int y = 0; y * 3 < h; y++) {
+            int s0 = 0;
+            int s1 = 0;
+            for (int x = x0; x < x1; x++) {
+                int off = y * w + x;
+                int color = pixels[off];
+                int bb = (color >>> 16) & 255;
+                int gg = (color >>> 8) & 255;
+                int rr = color & 255;
+                s0 += rr + gg + bb;
+                off = (h - y - 1) * w + x;
+                color = pixels[off];
+                bb = (color >>> 16) & 255;
+                gg = (color >>> 8) & 255;
+                rr = color & 255;
+                s1 += rr + gg + bb;
+            }
+            s0 /= tw * 3;
+            s1 /= tw * 3;
+            int detect = -1;
+            if (s0 < tolerance && s1 < tolerance) detect = 0;
+            else if (s0 > 255 - tolerance && s1 > 255 - tolerance) detect = 1;
+            if (detect == -1) {
+                break;
+            }
+            if (mode == -1) {
+                mode = detect;
+            } else if (mode != detect) {
+                break;
+            }
+        }
+        if (tw != w || th != h) {
+            int y0 = (h - th) / 2;
+            int y1 = y0 + th;
+            int pos = 0;
+            for (int y = y0; y < y1; y++) {
+                for (int x = x0; x < x1; x++) {
+                    int off = y * w + x;
+                    pixels[pos] = pixels[off];
+                    gray[pos] = gray[off];
+                    pos++;
+                }
+            }
+            w = tw;
+            h = th;
         }
     }
 
