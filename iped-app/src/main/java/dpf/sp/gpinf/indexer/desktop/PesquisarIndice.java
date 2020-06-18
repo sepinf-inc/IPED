@@ -223,6 +223,10 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
+                
+                if (App.get().similarImagesQueryRefItem != null) {
+                    result = ImageSimilarityLowScoreFilter.filter(result);
+                }
 
                 if (App.get().filterDuplicates.isSelected()) {
                     DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);

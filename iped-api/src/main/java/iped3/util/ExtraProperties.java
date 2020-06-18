@@ -54,8 +54,6 @@ public class ExtraProperties {
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$
 
-    public static final String SIMILARITY_META_PREFIX = BasicProps.SIMILARITY + ":"; //$NON-NLS-1$
-
     public static final String VIDEO_META_PREFIX = "video:"; //$NON-NLS-1$
 
     public static final String PDF_META_PREFIX = "pdf:"; //$NON-NLS-1$

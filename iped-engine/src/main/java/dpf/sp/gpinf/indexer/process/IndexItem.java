@@ -82,7 +82,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import gpinf.similarity.ImageSimilarity;
 import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
@@ -392,14 +391,12 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] simIdx = evidence.getImageSimilarityFeatures(false);
-        if (simIdx != null) {
-            byte[] simFull = evidence.getImageSimilarityFeatures(true);
-            doc.add(new BinaryDocValuesField(SIMILARITY, new BytesRef(simFull)));
-            doc.add(new StoredField(SIMILARITY, simFull));
-            for (int i = 0; i < simIdx.length; i++) {
-                doc.add(new IntField(ExtraProperties.SIMILARITY_META_PREFIX + i, simIdx[i] & 0xFF, Field.Store.YES));
-            }
+        byte[] similarityFeatures = evidence.getImageSimilarityFeatures();
+        if (similarityFeatures != null) {
+            doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
+            doc.add(new StringField(HAS_SIMILARITY_FEATURES, Boolean.TRUE.toString(), Field.Store.YES));
+            doc.add(new SortedDocValuesField(HAS_SIMILARITY_FEATURES, new BytesRef(Boolean.TRUE.toString())));
         }
 
         long off = evidence.getFileOffset();
@@ -798,17 +795,9 @@ public class IndexItem extends BasicProps {
                     }
                 }
                 
-                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY);
+                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
                 if (bytesRef != null) {
-                    evidence.setImageSimilarityFeatures(bytesRef.bytes, true);
-                    byte[] simIdx = new byte[ImageSimilarity.numFeatures2];
-                    for (int i = 0; i < simIdx.length; i++) {
-                        value = doc.get(ExtraProperties.SIMILARITY_META_PREFIX + i);
-                        if (value != null && !value.isEmpty()) {
-                            simIdx[i] = Byte.parseByte(value);
-                        }
-                    }
-                    evidence.setImageSimilarityFeatures(simIdx, false);
+                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$

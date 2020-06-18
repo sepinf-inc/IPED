@@ -528,7 +528,7 @@ public interface IItem extends IItemBase {
     
     void setThumb(byte[] thumb);
 
-    void setImageSimilarityFeatures(byte[] imageSimilarityFeatures, boolean isFull);
+    void setImageSimilarityFeatures(byte[] imageSimilarityFeatures);
 
     /**
      * @return returns the created evidenceFile.

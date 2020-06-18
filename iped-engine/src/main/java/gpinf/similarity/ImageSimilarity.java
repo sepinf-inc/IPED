@@ -1,24 +1,26 @@
 package gpinf.similarity;
 
-import java.awt.*;
-import java.awt.image.*;
-import java.util.*;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.awt.image.DataBufferByte;
+import java.awt.image.DataBufferInt;
+import java.util.Arrays;
 
 public class ImageSimilarity {
-    public static final int numFeatures1 = 1040;
-    public static final int numFeatures2 = 72;
+    private static final int numFeaturesRaw = 1040;
+    private static final int numFeaturesPacked = numFeaturesRaw * 6 / 8;
 
     private static final int maxDim = 160;
     private static final int maxPixels = maxDim * maxDim;
     private static final short[] sqrt = new short[1 << 20];
     private static final double power = 0.3;
-    private final int[][] hist1 = new int[2][512];
-    private final int[][] histEdge1 = new int[2][8];
-    private final int[] hist2 = new int[64];
-    private final int[] histEdge2 = new int[8];
+    private final int[][] hist = new int[2][512];
+    private final int[][] histEdge = new int[2][8];
     private final int[] pixels = new int[maxPixels];
     private final byte[] gray = new byte[maxPixels];
     private final int[] edges = new int[maxPixels];
+    private final byte[] featuresRaw = new byte[numFeaturesRaw];
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
     private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
     private int w, h;
@@ -32,7 +34,7 @@ public class ImageSimilarity {
         }
     }
 
-    public byte[][] extractFeatures(BufferedImage img) {
+    public byte[] extractFeatures(BufferedImage img) {
         if (img == null) return null;
         w = img.getWidth();
         h = img.getHeight();
@@ -40,11 +42,9 @@ public class ImageSimilarity {
         getPixels(img);
         calcEdges();
         for (int i = 0; i < 2; i++) {
-            Arrays.fill(hist1[i], 0);
-            Arrays.fill(histEdge1[i], 0);
+            Arrays.fill(hist[i], 0);
+            Arrays.fill(histEdge[i], 0);
         }
-        Arrays.fill(hist2, 0);
-        Arrays.fill(histEdge2, 0);
         int cut = w * h * 63 / 64;
         for (int y = 1; y < h - 1; y++) {
             int off = y * w + 1;
@@ -56,7 +56,7 @@ public class ImageSimilarity {
                 int bb = (color >>> 16) & 7;
                 int gg = (color >>> 8) & 7;
                 int rr = color & 7;
-                int[] hr1 = hist1[reg];
+                int[] hr = hist[reg];
                 for (int i = Math.max(0, rr - 1); i < 8 && i <= rr + 1; i++) {
                     int wi = i == rr ? 1 : 0;
                     int ii = i << 6;
@@ -64,62 +64,44 @@ public class ImageSimilarity {
                         int wij = j == gg ? wi + 1 : wi;
                         int ij = ii | (j << 3);
                         for (int k = Math.max(0, bb - 1); k < 8 && k <= bb + 1; k++) {
-                            hr1[ij | k] += wij << (k == bb ? wij + 1 : wij);
-                        }
-                    }
-                }
-                rr >>= 1;
-                gg >>= 1;
-                bb >>= 1;
-                for (int i = Math.max(0, rr - 1); i < 4 && i <= rr + 1; i++) {
-                    int wi = i == rr ? 1 : 0;
-                    int ii = i << 4;
-                    for (int j = Math.max(0, gg - 1); j < 4 && j <= gg + 1; j++) {
-                        int wij = j == gg ? wi + 1 : wi;
-                        int ij = ii | (j << 2);
-                        for (int k = Math.max(0, bb - 1); k < 4 && k <= bb + 1; k++) {
-                            hist2[ij | k] += wij << (k == bb ? wij + 1 : wij);
+                            hr[ij | k] += wij << (k == bb ? wij + 1 : wij);
                         }
                     }
                 }
                 int ee = edges[off] >>> 6;
-                hr1 = histEdge1[reg];
-                for (int i = Math.max(0, ee - 1); i < 8 && i < ee; i++) {
-                    int wi = 2 - Math.abs(i - ee);
-                    hr1[i] += wi;
-                    histEdge2[i] += wi;
+                hr = histEdge[reg];
+                for (int i = Math.max(0, ee - 1); i < 8 && i <= ee + 1; i++) {
+                    hr[i] += 2 - Math.abs(i - ee);
                 }
             }
         }
-        int idx1 = 0;
-        int idx2 = 0;
+        int idx = 0;
         double m = 64 / Math.pow((w - 2) * (h - 2) * 4, power);
-        byte[] features1 = new byte[numFeatures1];
-        byte[] features2 = new byte[numFeatures2];
-        for (int i = 0; i < hist1.length; i++) {
-            int[] hi = hist1[i];
-            for (int j = 0; j < hi.length; j++, idx1++) {
+        Arrays.fill(featuresRaw, (byte) 0);
+        for (int i = 0; i < hist.length; i++) {
+            int[] hi = hist[i];
+            for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) features1[idx1] = range(Math.pow(v, power) * m);
+                if (v > 0) featuresRaw[idx] = range(Math.pow(v, power) * m);
             }
         }
-        for (int j = 0; j < hist2.length; j++, idx2++) {
-            int v = hist2[j];
-            if (v > 0) features2[idx2] = range(Math.pow(v, power) * m);
-        }
-        m = 96 / Math.pow((w - 2) * (h - 2), power);
-        for (int i = 0; i < histEdge1.length; i++) {
-            int[] hi = histEdge1[i];
-            for (int j = 0; j < hi.length; j++, idx1++) {
+        m = 64 / Math.pow((w - 2) * (h - 2), power);
+        for (int i = 0; i < histEdge.length; i++) {
+            int[] hi = histEdge[i];
+            for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) features1[idx1] = range(Math.pow(v, power) * m);
+                if (v > 0) featuresRaw[idx] = range(Math.pow(v, power) * m);
             }
         }
-        for (int i = 0; i < histEdge2.length; i++, idx2++) {
-            int v = histEdge2[i];
-            if (v > 0) features1[idx2] = range(Math.pow(v, power) * m);
+        byte[] featuresPacked = new byte[numFeaturesPacked];
+        idx = 0;
+        for (int i = 0; i < numFeaturesRaw; i += 4) {
+            int p = featuresRaw[i] | (featuresRaw[i + 1] << 6) | (featuresRaw[i + 2] << 12) | (featuresRaw[i + 3] << 18);
+            featuresPacked[idx++] = (byte) (p & 255);
+            featuresPacked[idx++] = (byte) ((p >>> 8) & 255);
+            featuresPacked[idx++] = (byte) ((p >>> 16) & 255);
         }
-        return new byte[][] {features1,features2};
+        return featuresPacked;
     }
 
     private static final byte range(double v) {
@@ -196,9 +178,14 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b) {
         int distance = 0;
-        for (int i = 0; i < a.length; i++) {
-            int d = (a[i] & 0xFF) - (b[i] & 0xFF);
-            distance += d * d;
+        int d = 0;
+        for (int i = 0; i < a.length; i += 3) {
+            int aa = (a[i] & 255) | ((a[i + 1] & 255) << 8) | ((a[i + 2] & 255) << 16);
+            int bb = (b[i] & 255) | ((b[i + 1] & 255) << 8) | ((b[i + 2] & 255) << 16);
+            distance += (d = (aa & 63) - (bb & 63)) * d;
+            distance += (d = ((aa >>> 6) & 63) - ((bb >>> 6) & 63)) * d;
+            distance += (d = ((aa >>> 12) & 63) - ((bb >>> 12) & 63)) * d;
+            distance += (d = ((aa >>> 18) & 63) - ((bb >>> 18) & 63)) * d;
         }
         return distance;
     }

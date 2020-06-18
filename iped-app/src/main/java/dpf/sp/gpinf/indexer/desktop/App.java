@@ -761,7 +761,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     if (itemId != null) {
                         IItem item = appCase.getItemByItemId(itemId);
                         if (item != null) {
-                            enabled = item.getImageSimilarityFeatures(false) != null;
+                            enabled = item.getImageSimilarityFeatures() != null;
                         }
                     }
                 }
@@ -918,7 +918,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
             if (itemId != null) {
                 similarImagesQueryRefItem = appCase.getItemByItemId(itemId);
-                if (similarImagesQueryRefItem.getImageSimilarityFeatures(false) == null) {
+                if (similarImagesQueryRefItem.getImageSimilarityFeatures() == null) {
                     similarImagesQueryRefItem = null;
                 } else {
                     ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();

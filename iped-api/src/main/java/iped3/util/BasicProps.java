@@ -34,7 +34,8 @@ public class BasicProps {
     public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
     public static final String THUMB = "thumbnail"; //$NON-NLS-1$
-    public static final String SIMILARITY = "similarity"; //$NON-NLS-1$
+    public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
+    public static final String HAS_SIMILARITY_FEATURES = "hasSimilarityFeatures"; //$NON-NLS-1$
 
     public static final Set<String> SET = getBasicProps();
 
@@ -69,7 +70,8 @@ public class BasicProps {
         basicProps.add(CONTENTTYPE);
         basicProps.add(TREENODE);
         basicProps.add(THUMB);
-        basicProps.add(SIMILARITY);
+        basicProps.add(SIMILARITY_FEATURES);
+        basicProps.add(HAS_SIMILARITY_FEATURES);
         return basicProps;
     }
 
