@@ -793,7 +793,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }else {
                         caseData.incDiscoveredEvidences(-1);
                     }
-                    if(item.getMediaType() != null && item.getMediaType().getSubtype().endsWith("chat")) {
+                    if(MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {
                         inChat = false;
                         ignoreItems = false;
                     }
