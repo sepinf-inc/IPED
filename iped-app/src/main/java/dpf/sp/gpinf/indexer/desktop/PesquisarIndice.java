@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.search.SimilarImageSearch;
+import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -134,7 +134,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         }
         
         if (App.get().similarImagesQueryRefItem != null) {
-            Query similarImagesQuery = new SimilarImageSearch().getQueryForSimilarImages(numFilters > 0 ? result : null, App.get().similarImagesQueryRefItem);
+            Query similarImagesQuery = new SimilarImagesSearch().getQueryForSimilarImages(numFilters > 0 ? result : null, App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
                 result = similarImagesQuery;
                 numFilters++;        
@@ -223,7 +223,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
-                
+
                 if (App.get().similarImagesQueryRefItem != null) {
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }
