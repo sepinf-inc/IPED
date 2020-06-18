@@ -13,9 +13,8 @@ public class ExtraProperties {
 
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
     
-    // public static String EMBEDDED_PATH = "INDEXER_EMBEDDED_PATH";
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
-    // public static String INDEXER_ID = "INDEXER_ID";\
+    
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
     
     public static final Property VISIT_DATE = Property.internalDate("visitDate"); //$NON-NLS-1$
@@ -50,6 +49,8 @@ public class ExtraProperties {
 
     public static final String LINKED_ITEMS = "linkedItems"; //$NON-NLS-1$
 
+    public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
+    
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$

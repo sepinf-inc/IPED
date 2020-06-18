@@ -162,6 +162,7 @@ public class MetadataUtil {
         prefixVideoMetadata(metadata);
         prefixPDFMetadata(metadata);
         prefixDocMetadata(metadata);
+        prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
     }
 
@@ -303,6 +304,18 @@ public class MetadataUtil {
             if (!value.toLowerCase().contains(recipientsEmails[i].toLowerCase()))
                 value += " \"" + recipientsEmails[i] + "\""; //$NON-NLS-1$ //$NON-NLS-2$
             metadata.add(destMeta, value);
+        }
+    }
+    
+    private static void prefixBasicMetadata(Metadata metadata) {
+        for (String key : metadata.names()) {
+            if(BasicProps.SET.contains(key)) {
+                String[] values = metadata.getValues(key);
+                metadata.remove(key);
+                for (String val : values) {
+                    metadata.add(ExtraProperties.GENERIC_META_PREFIX + key, val);
+                }
+            }
         }
     }
 
