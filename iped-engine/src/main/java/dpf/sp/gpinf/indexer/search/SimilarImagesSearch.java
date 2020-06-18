@@ -19,7 +19,7 @@ import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
 import iped3.util.BasicProps;
 
-public class SimilarImageSearch {
+public class SimilarImagesSearch {
     public Query getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] similarityFeatures = item.getImageSimilarityFeatures();
         if (similarityFeatures == null) {
