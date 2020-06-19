@@ -40,7 +40,7 @@
         <xerial.sqlite.version>3.25.2</xerial.sqlite.version>
         <dockingframes.version>1.1.1</dockingframes.version>
     </properties>
-    
+
     <repositories>
     	<repository>
             <id>central</id>
@@ -59,7 +59,7 @@
         	</snapshots>
     	</repository>
     </repositories>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

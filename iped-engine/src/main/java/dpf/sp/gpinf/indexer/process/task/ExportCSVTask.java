@@ -46,12 +46,16 @@ import iped3.IItem;
  */
 public class ExportCSVTask extends AbstractTask {
 
-    private static int MIN_FLUSH_SIZE = 1000000;
+    private static int MIN_FLUSH_SIZE = 1 << 23;
     private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
 
     public static boolean exportFileProps = false;
 
     private static StringBuilder staticList = new StringBuilder();
+    
+    private CmdLineArgs args;
+    
+    private File tmp;
 
     /**
      * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser
@@ -202,17 +206,21 @@ public class ExportCSVTask extends AbstractTask {
     }
     
     public static void commit(File moduleDir) throws IOException {
+        if(!exportFileProps) return;
         File csv = new File(moduleDir.getParentFile(), CSV_NAME); 
         flush(csv);
         IOUtils.fsync(csv, false);
     }
 
     public void finish() throws IOException {
-        if (staticList != null) {
+        if (exportFileProps && staticList != null) {
             flush(output);
             staticList = null;
             
-            File tmp = new File(output.getAbsolutePath() + ".tmp");
+            if(!args.isContinue() && !args.isRestart())
+                return;
+            
+            //clean duplicate entries in csv
             try(BufferedWriter writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.CREATE);
                     BufferedReader reader = Files.newBufferedReader(output.toPath())){
                 HashSet<HashValue> added = new HashSet<>();
@@ -241,9 +249,14 @@ public class ExportCSVTask extends AbstractTask {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
         
-        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
             Files.delete(output.toPath());
+        }
+        
+        tmp = new File(output.getAbsolutePath() + ".tmp");
+        if(tmp.exists()) {
+            Files.delete(tmp.toPath());
         }
 
         String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$

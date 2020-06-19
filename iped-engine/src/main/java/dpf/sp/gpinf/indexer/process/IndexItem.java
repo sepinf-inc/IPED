@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -414,8 +415,8 @@ public class IndexItem extends BasicProps {
         }
 
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
-            if (entry.getValue() instanceof List) {
-                for (Object val : (List) entry.getValue()) {
+            if (entry.getValue() instanceof Collection) {
+                for (Object val : (Collection<?>) entry.getValue()) {
                     if (!typesMap.containsKey(entry.getKey()))
                         typesMap.put(entry.getKey(), val.getClass());
                     addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
@@ -867,14 +868,17 @@ public class IndexItem extends BasicProps {
                     } else
                         evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
                 } else {
-                    String val = f.stringValue();
-                    if(Date.class.equals(c)) {
+                    if(Date.class.equals(c) && f.stringValue() != null) {
                         //it was stored lowercase because query parser converts range queries to lowercase
-                        val = val.toUpperCase();
+                        String val = f.stringValue().toUpperCase();
+                        evidence.getMetadata().add(f.name(), val);
+                    }else {
+                        Object casted = getCastedValue(c, f);
+                        if(casted != null) {
+                            evidence.getMetadata().add(f.name(), casted.toString());
+                        }
                     }
-                    evidence.getMetadata().add(f.name(), val);
                 }
-                    
             }
 
             return evidence;
@@ -926,9 +930,13 @@ public class IndexItem extends BasicProps {
             }catch(ParseException e) {
                 return DateUtil.tryToParseDate(value);
             }   
-        }else if ((c != null && Number.class.isAssignableFrom(c)) || f.numericValue() != null)
-            return f.numericValue();
-        else
+        }else if (f.numericValue() != null) {
+            Number num = f.numericValue();
+            if(num.doubleValue() == num.longValue())
+                return num.longValue();
+            else
+                return num;
+        }else
             return f.stringValue();
     }
 

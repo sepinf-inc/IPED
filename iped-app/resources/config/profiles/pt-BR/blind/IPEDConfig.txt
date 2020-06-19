@@ -51,13 +51,15 @@ enableRegexSearch = true
 # Habilita detecção de mais de 70 idiomas nos documentos.
 enableLanguageDetect = true
 
-# Função EXPERIMENTAL de reconhecimento de entidades mencionadas: nomes de pessoas, organizações e lugares.
-# É necessário baixar e colocar na pasta optional-libs os modelos de interesse em:
-# StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
-# Ainda não foi treinado um modelo para o português, por isso os resultados podem não ser satisfatórios.
+# Função de reconhecimento de entidades mencionadas: nomes de pessoas, organizações e lugares.
+# Baixar o modelo de idioma StanfordCoreNLP 3.8 de https://stanfordnlp.github.io/CoreNLP/history.html e pôr na pasta optional_jars.
 # Esta função utiliza muita CPU, podendo aumentar o tempo de processamento em 4x.
 # Configurações avançadas podem ser alteradas em conf/NamedEntityRecognitionConfig.txt
 enableNamedEntityRecogniton = false
+
+# Função para geração de grafos de comunicações (emails, chamadas, mensagens...)
+# Opcionalmente gera nós e links a partir de hits de regex próximos (experimental). Pode ser habilitado em conf/GraphConfig.json 
+enableGraphGeneration = true
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true

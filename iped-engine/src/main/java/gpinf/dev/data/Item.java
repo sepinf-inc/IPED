@@ -137,6 +137,11 @@ public class Item implements ISleuthKitItem {
     private List<Integer> parentIds = new ArrayList<Integer>();
 
     private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
+    
+    /**
+     * Temporaty attributes present only during processing flow.
+     */
+    private Map<String, Object> tempAttributes = new HashMap<>();
 
     /**
      * Data de criação do arquivo.
@@ -1360,5 +1365,17 @@ public class Item implements ISleuthKitItem {
         child.setDeleted(this.isDeleted());
 
         return child;
+    }
+    
+    public Object getTempAttribute(String key) {
+        synchronized (tempAttributes) {
+            return tempAttributes.get(key);
+        }
+    }
+
+    public void setTempAttribute(String key, Object value) {
+        synchronized (tempAttributes) {
+            tempAttributes.put(key, value);
+        }
     }
 }

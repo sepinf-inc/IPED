@@ -47,6 +47,8 @@ public class HtmlViewer extends Viewer {
             + "<br><br><a href=\"\" onclick=\"app.openExternal()\">" //$NON-NLS-1$
             + Messages.getString("HtmlViewer.OpenExternally") //$NON-NLS-1$
             + "</a></body></html>"; //$NON-NLS-1$
+    
+    private static String positionToScroll;
 
     WebView htmlViewer;
     WebEngine webEngine;
@@ -56,6 +58,15 @@ public class HtmlViewer extends Viewer {
 
     protected volatile File file;
     protected Set<String> highlightTerms;
+    
+    //TODO change viewer api and move this to loadFile method
+    public static void setPositionToScroll(String position) {
+        positionToScroll = position;
+    }
+    
+    protected int getMaxHtmlSize() {
+        return MAX_SIZE;
+    }
 
     @Override
     public boolean isSupportedType(String contentType) {
@@ -109,7 +120,7 @@ public class HtmlViewer extends Viewer {
                     try {
                         file = content.getFile();
                         highlightTerms = terms;
-                        if (file.length() <= MAX_SIZE) {
+                        if (file.length() <= getMaxHtmlSize()) {
                             if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) { //$NON-NLS-1$ //$NON-NLS-2$
                                 try {
                                     tmpFile = File.createTempFile("indexador", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -182,13 +193,13 @@ public class HtmlViewer extends Viewer {
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
                     public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
+                        
+                        if (webEngine.isJavaScriptEnabled()) {
+                            JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
+                            window.setMember("app", fileOpenApp); //$NON-NLS-1$
+                        }
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
-
-                            if (webEngine.isJavaScriptEnabled()) {
-                                JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
-                                window.setMember("app", fileOpenApp); //$NON-NLS-1$
-                            }
 
                             if (file != null && !webEngine.getLocation().endsWith(file.getName()))
                                 return;
@@ -210,6 +221,10 @@ public class HtmlViewer extends Viewer {
                                 currTerm = queryTerms.length > 0 ? 0 : -1;
                                 scrollToNextHit(true);
                             }
+                            if(doc != null && positionToScroll != null) {
+                                scrollToPosition(positionToScroll);
+                                
+                            }
                         }
                     }
                 });
@@ -217,6 +232,15 @@ public class HtmlViewer extends Viewer {
             }
         });
 
+    }
+    
+    private void scrollToPosition(String position) {
+        try {
+            webEngine.executeScript("document.getElementById(\"" + position + "\").scrollIntoView(false);"); //$NON-NLS-1$
+            positionToScroll = null;
+        }catch(Exception e) {
+            //ignore
+        }
     }
 
     protected ArrayList<Object> hits;

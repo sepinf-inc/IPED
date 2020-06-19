@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -52,7 +53,7 @@ public class RegexTask extends AbstractTask {
 
     private boolean enabled = true;
     
-    private char[] cbuf = new char[1000000];
+    private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
 
@@ -66,6 +67,7 @@ public class RegexTask extends AbstractTask {
         int prefix, sufix;
         Automaton automaton;
         RunAutomaton pattern;
+        boolean ignoreCases;
 
         public Regex(String name, int prefix, int sufix, boolean ignoreCases, boolean ignoreDiacritics, String regex) {
             this(name, new RegExp(regex).toAutomaton(new DatatypesAutomatonProvider()), ignoreCases, ignoreDiacritics);
@@ -82,6 +84,7 @@ public class RegexTask extends AbstractTask {
                 aut = ignoreCases(aut);
             if (ignoreDiacritics)
                 aut = ignoreDiacritics(aut);
+            this.ignoreCases = ignoreCases;
             this.name = name;
             this.automaton = aut;
             this.pattern = new RunAutomaton(aut);
@@ -208,7 +211,7 @@ public class RegexTask extends AbstractTask {
 
         Item evidence = (Item) item;
 
-        if (!enabled || evidence.getTextCache() == null)
+        if (!enabled || evidence.getTextCache() == null || caseData.isIpedReport())
             return;
 
         try (Reader reader = evidence.getTextReader()) {
@@ -221,6 +224,7 @@ public class RegexTask extends AbstractTask {
     private void processRegex(IItem evidence, Reader reader) throws IOException {
 
         int k = 0;
+        long totalOffset = 0;
         while (k != -1) {
             int off = 0;
             k = 0;
@@ -229,9 +233,9 @@ public class RegexTask extends AbstractTask {
 
             String text = new String(cbuf, 0, off);
 
-            List<Set<String>> hitList = new ArrayList<Set<String>>();
+            List<Map<String, RegexHits>> hitList = new ArrayList<Map<String, RegexHits>>();
             for (int i = 0; i < regexList.size(); i++) {
-                hitList.add(new HashSet<String>());
+                hitList.add(new HashMap<>());
             }
 
             AutomatonMatcher fullMatcher = regexFull.pattern.newMatcher(text);
@@ -243,12 +247,19 @@ public class RegexTask extends AbstractTask {
                 for (Regex regex : regexList) {
                     if (regex.pattern.run(hit)) {
                         hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
+                        if(regex.ignoreCases)
+                            hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {
                             if (formatRegexMatches) {
                                 hit = regexValidator.format(regex, hit);
                             }
-                            Set<String> hits = hitList.get(i);
-                            hits.add(hit);
+                            Map<String, RegexHits> hitMap = hitList.get(i);
+                            RegexHits hits = hitMap.get(hit);
+                            if(hits == null) {
+                                hits = new RegexHits(hit);
+                                hitMap.put(hit, hits);
+                            }
+                            hits.addOffset(totalOffset + start + regex.prefix);
                         }
                     }
                     i++;
@@ -257,21 +268,31 @@ public class RegexTask extends AbstractTask {
             for (int i = 0; i < regexList.size(); i++) {
                 if (hitList.get(i).size() > 0) {
                     String key = REGEX_PREFIX + regexList.get(i).name;
-                    Set<String> hitSet = new HashSet<>();
-                    List<String> prevHits = (List<String>) evidence.getExtraAttribute(key);
-                    if (prevHits != null) {
+                    Collection<RegexHits> prevHits = (Collection<RegexHits>) evidence.getExtraAttribute(key);
+                    Map<String, RegexHits> hitsMap = hitList.get(i);
+                    if(prevHits == null) {
+                        evidence.setExtraAttribute(key, hitsMap.values());
+                    }else {
                         if(prevHits.size() >= MAX_RESULTS) {
                             evidence.setExtraAttribute("maxHitsReached" + key, "true");
-                            continue;
+                        }else {
+                            for(RegexHits hits : prevHits) {
+                                RegexHits prev = hitsMap.get(hits.getHit());
+                                if(prev != null) {
+                                    prev.addAll(hits.getOffsets());
+                                }else {
+                                    hitsMap.put(hits.getHit(), hits);
+                                }
+                            }
+                            evidence.setExtraAttribute(key, hitsMap.values());
                         }
-                        hitSet.addAll(prevHits);
                     }
-                    hitSet.addAll(hitList.get(i));
-                    evidence.setExtraAttribute(key, new ArrayList<>(hitSet));
+                    
                     if (regexList.get(i).name.equals(KEYWORDS_NAME))
                         evidence.setToExtract(true);
                 }
             }
+            totalOffset += off;
         }
     }
 

@@ -26,25 +26,34 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.KeyStroke;
 
+import org.apache.tika.metadata.Metadata;
+
+import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
+import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import iped3.IItem;
+import iped3.util.MediaTypes;
 
 public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
     JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, 
-    		marcarRecursivamenteSelecionados, desmarcarRecursivamenteSelecionados, 
-    		lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
+            marcarRecursivamenteSelecionados, desmarcarRecursivamenteSelecionados, 
+            lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, similarImages, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout;
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat;
 
     MenuListener menuListener;
 
-    // JCheckBoxMenuItem changeViewerTab;
     public MenuClass() {
+        this(null);
+    }
+    
+    public MenuClass(IItem item) {
         super();
 
         menuListener = new MenuListener(this);
@@ -54,24 +63,24 @@ public class MenuClass extends JPopupMenu {
         marcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(marcarSelecionados);
 
-		
-		desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
-		desmarcarSelecionados.addActionListener(menuListener);
-		desmarcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
- 		this.add(desmarcarSelecionados);
-		 
+        
+        desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
+        desmarcarSelecionados.addActionListener(menuListener);
+        desmarcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
+        this.add(desmarcarSelecionados);
+         
         marcarRecursivamenteSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
         marcarRecursivamenteSelecionados.addActionListener(menuListener);
         marcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
         this.add(marcarRecursivamenteSelecionados);
 
-		
-	    desmarcarRecursivamenteSelecionados = new	  JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted"));	//$NON-NLS-1$
-		desmarcarRecursivamenteSelecionados.addActionListener(menuListener);
-		desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
-		this.add(desmarcarRecursivamenteSelecionados);
-		         
-		  /*
+        
+        desmarcarRecursivamenteSelecionados = new     JMenuItem(Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
+        desmarcarRecursivamenteSelecionados.addActionListener(menuListener);
+        desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+        this.add(desmarcarRecursivamenteSelecionados);
+                 
+          /*
          * lerSelecionados = new JMenuItem("Marcar selecionados como lido");
          * lerSelecionados.addActionListener(menuListener); this.add(lerSelecionados);
          * 
@@ -186,29 +195,51 @@ public class MenuClass extends JPopupMenu {
         aumentarGaleria = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
         aumentarGaleria.addActionListener(menuListener);
         this.add(aumentarGaleria);
+        
+        this.addSeparator();
 
         if (!App.get().appCase.isFTKReport()) {
             navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
             navigateToParent.addActionListener(menuListener);
             this.add(navigateToParent);
         }
-
-        openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
-        openViewfile.addActionListener(menuListener);
-        this.add(openViewfile);
-
+        
+        navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
+        navigateToParentChat.addActionListener(menuListener);
+        boolean enableGoToChat = false;
+        if(item != null) {
+            enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME) ||
+                    (VCardParser.VCARD_MIME.equals(item.getMediaType()) && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
+                    && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+        }
+        navigateToParentChat.setEnabled(enableGoToChat);
+        this.add(navigateToParentChat);
+        
         this.addSeparator();
+
         similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
         similarDocs.addActionListener(menuListener);
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
         similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
         this.add(similarDocs);
-
+        
         similarImages = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
         similarImages.addActionListener(menuListener);
-        similarDocs.setEnabled(false);
-        this.add(similarImages);
+        similarDocs.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
+        this.add(similarImages);        
+
+        openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
+        openViewfile.addActionListener(menuListener);
+        openViewfile.setEnabled(item != null && item.getViewFile() != null);
+        this.add(openViewfile);
+        
+        this.addSeparator();
+        addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled());
+        addToGraph.addActionListener(menuListener);
+        this.add(addToGraph);
+        
         this.addSeparator();
 
         createReport = new JMenuItem(Messages.getString("MenuClass.GenerateReport")); //$NON-NLS-1$

@@ -446,6 +446,7 @@ public class VideoThumbTask extends ThumbTask {
                         if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {
                             img = ImageUtil.resizeImage(img, galleryThumbWidth, galleryThumbHeight);
                         }
+                        img = ImageUtil.getOpaqueImage(img);
                         ByteArrayOutputStream baos = new ByteArrayOutputStream();
                         ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
                         evidence.setThumb(baos.toByteArray());

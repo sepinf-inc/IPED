@@ -90,6 +90,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
             App.get().appCase.checkImagePaths();
 
             if (!updateItems) {
+                App.get().appGraphAnalytics.initGraphService();
+                
                 LOGGER.info("Loading Columns"); //$NON-NLS-1$
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
@@ -143,7 +145,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     @Override
     public void done() {
         CategoryTreeModel.install();
-        App.get().menu = new MenuClass();
         App.get().filterManager.loadFilters();
         MarcadoresController.get().atualizarGUIandHistory();
 

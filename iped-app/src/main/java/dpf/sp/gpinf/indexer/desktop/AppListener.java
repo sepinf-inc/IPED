@@ -137,7 +137,7 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().opcoes) {
-            App.get().menu.show(App.get(), App.get().opcoes.getX(), App.get().opcoes.getHeight());
+            App.get().getContextMenu().show(App.get(), App.get().opcoes.getX(), App.get().opcoes.getHeight());
         }
 
         if (evt.getSource() == App.get().checkBox) {
@@ -162,7 +162,7 @@ public class AppListener implements ActionListener, MouseListener {
         }
 
         if (evt.getSource() == App.get().exportToZip) {
-            App.get().menu.menuListener.exportFileTree(true, true);
+            App.get().getContextMenu().menuListener.exportFileTree(true, true);
         }
 
         clearSearchBox = false;

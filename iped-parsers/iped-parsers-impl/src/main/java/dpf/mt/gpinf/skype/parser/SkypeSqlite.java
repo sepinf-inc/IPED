@@ -577,7 +577,7 @@ public class SkypeSqlite implements SkypeStorage {
                 c.setAssignedPhone(phones);
 
                 c.setPstnNumber(rs.getString("pstnnumber")); //$NON-NLS-1$
-                c.setSobre(rs.getString("about")); //$NON-NLS-1$
+                c.setAbout(rs.getString("about")); //$NON-NLS-1$
                 byte[] b = rs.getBytes("avatar_image"); //$NON-NLS-1$
                 if (b != null) {
                     c.setAvatar(getThumb(b));

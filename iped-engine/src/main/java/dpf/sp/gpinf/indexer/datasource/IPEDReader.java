@@ -47,6 +47,7 @@ import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.DIETask;
@@ -122,6 +123,9 @@ public class IPEDReader extends DataSourceReader {
         DIETask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
+        if(deviceName.endsWith(Marcadores.EXT)) {
+            deviceName = null;
+        }
 
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiMarcadores) {
@@ -601,10 +605,10 @@ public class IPEDReader extends DataSourceReader {
             for (IndexableField f : doc.getFields()) {
                 if (BasicProps.SET.contains(f.name()))
                     continue;
+                Class<?> c = IndexItem.getMetadataTypes().get(f.name());
                 if (Item.getAllExtraAttributes().contains(f.name())) {
                     if (multiValuedFields.contains(f.name()))
                         continue;
-                    Class<?> c = IndexItem.getMetadataTypes().get(f.name());
                     if (isExtraAttrMultiValued(f.name())) {
                         multiValuedFields.add(f.name());
                         List<Object> fieldList = new ArrayList<>();
@@ -614,8 +618,20 @@ public class IPEDReader extends DataSourceReader {
                         evidence.setExtraAttribute(f.name(), fieldList);
                     } else
                         evidence.setExtraAttribute(f.name(), IndexItem.getCastedValue(c, f));
-                } else
-                    evidence.getMetadata().add(f.name(), f.stringValue());
+                } else {
+                    Object casted = IndexItem.getCastedValue(c, f);
+                    if(casted != null) {
+                        evidence.getMetadata().add(f.name(), casted.toString());
+                    }
+                }
+            }
+            
+            //translate old msg ids to new ones
+            String[] ufedMsgIds = evidence.getMetadata().getValues(UFEDChatParser.CHILD_MSG_IDS);
+            evidence.getMetadata().remove(UFEDChatParser.CHILD_MSG_IDS);
+            for (String msgId : ufedMsgIds) {
+                int newId = getId(msgId);
+                evidence.getMetadata().add(UFEDChatParser.CHILD_MSG_IDS, Integer.toString(newId));
             }
 
             caseData.addItem(evidence);

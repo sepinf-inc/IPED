@@ -43,6 +43,7 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
+import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
@@ -75,6 +76,7 @@ import iped3.IItemId;
 import iped3.IVersionsMap;
 import iped3.search.IMarcadores;
 import iped3.search.IMultiMarcadores;
+import iped3.util.BasicProps;
 
 public class IPEDSource implements Closeable, IIPEDSource {
 
@@ -124,6 +126,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
     Set<String> extraAttributes = new HashSet<String>();
+    
+    Set<String> evidenceUUIDs = new HashSet<String>();
 
     boolean isFTKReport = false, isReport = false;
     
@@ -200,6 +204,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
             populateLuceneIdToIdMap();
             invertIdToLuceneIdArray();
+            populateEvidenceUUIDs();
             splitedIds = getSplitedIds();
             countTotalItems();
 
@@ -261,6 +266,18 @@ public class IPEDSource implements Closeable, IIPEDSource {
         docs = new int[lastId + 1];
         for (int i = ids.length - 1; i >= 0; i--)
             docs[ids[i]] = i;
+    }
+    
+    private void populateEvidenceUUIDs() throws IOException {
+        SortedDocValues sdv = atomicReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
+        if(sdv == null) return;
+        for(int i = 0; i < sdv.getValueCount(); i++) {
+            evidenceUUIDs.add(sdv.lookupOrd(i).utf8ToString());
+        }
+    }
+    
+    public Set<String> getEvidenceUUIDs() {
+        return evidenceUUIDs;
     }
 
     private BitSet getSplitedIds() {
@@ -547,6 +564,20 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLuceneId(int id) {
         return docs[id];
+    }
+    
+    public int getParentId(int id) {
+        try {
+            Set<String> field = Collections.singleton(BasicProps.PARENTID);
+            Document doc = searcher.doc(getLuceneId(id), field);
+            String parent = doc.get(BasicProps.PARENTID);
+            if(parent != null && !parent.isEmpty()) {
+                return Integer.valueOf(parent);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return -1;
     }
 
     public long getTextSize(int id) {

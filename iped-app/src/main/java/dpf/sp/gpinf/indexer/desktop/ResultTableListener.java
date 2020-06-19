@@ -133,15 +133,20 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mouseReleased(MouseEvent evt) {
+        
+        IItemId itemId = null;
+        int viewIndex = App.get().resultsTable.getSelectedRow();
+        if(viewIndex != -1) {
+            int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
+            itemId = App.get().ipedResult.getItem(modelIdx);
+        }
         if (evt.getClickCount() == 2) {
-            int modelIdx = App.get().resultsTable
-                    .convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-            IItemId item = App.get().ipedResult.getItem(modelIdx);
-            int docId = App.get().appCase.getLuceneId(item);
+            int docId = App.get().appCase.getLuceneId(itemId);
             ExternalFileOpen.open(docId);
 
         } else if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
+            IItem item = itemId == null ? null : App.get().appCase.getItemByItemId(itemId);
+            new MenuClass(item).show((Component) evt.getSource(), evt.getX(), evt.getY());
 
         } else {
             processSelectedFile();
@@ -164,10 +169,6 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mousePressed(MouseEvent evt) {
-        if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
-
-        }
     }
 
     @Override

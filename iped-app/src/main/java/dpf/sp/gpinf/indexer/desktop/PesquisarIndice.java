@@ -35,12 +35,13 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
+import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -224,6 +225,23 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
 
+                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+                if (selectedEdges != null && !selectedEdges.isEmpty()) {
+                    numFilters++;
+                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
+                    ArrayList<Float> scores = new ArrayList<Float>();
+                    int i = 0;
+                    for (IItemId item : result.getIterator()) {
+                        if (selectedEdges.contains(item)) {
+                            filteredItems.add(item);
+                            scores.add(result.getScore(i));
+                        }
+                        i++;
+                    }
+                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+                
                 if (App.get().similarImagesQueryRefItem != null) {
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }

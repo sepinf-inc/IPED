@@ -7,8 +7,11 @@ import java.io.IOException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class ExternalFileOpen {
 
@@ -18,6 +21,11 @@ public class ExternalFileOpen {
         new Thread() {
             public void run() {
                 IItem item = App.get().appCase.getItemByLuceneID(luceneId);
+                String itemReferenceQuery = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
+                if(itemReferenceQuery != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)) {
+                    item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
+                    if(item == null) return;
+                }
                 try {
                     File file = item.getTempFile();
                     file.setReadOnly();

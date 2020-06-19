@@ -257,9 +257,22 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
+                try {
+                    //do not use scientific notation for longs
+                    Double d = Double.valueOf(values[i]);
+                    if(d.doubleValue() == d.longValue()) {
+                        values[i] = Long.toString(d.longValue());
+                    }
+                }catch(NumberFormatException e) {}
+                
                 sb.append(values[i]);
-                if (i != values.length - 1)
+                if (i != values.length - 1) {
+                    if(i == 9) {
+                        sb.append(" ..."); //$NON-NLS-1$
+                        break;
+                    }
                     sb.append(" | "); //$NON-NLS-1$
+                }
             }
 
             value = sb.toString().trim();
