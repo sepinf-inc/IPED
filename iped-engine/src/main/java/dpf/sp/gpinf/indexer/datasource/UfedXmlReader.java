@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,7 +23,6 @@ import java.util.TimeZone;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
@@ -568,11 +566,17 @@ public class UfedXmlReader extends DataSourceReader {
             if (nodeSeq.size() > 0)
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
 
-            if("MSISDN".equals(nameAttr) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
+            if(("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
                 String msisdn = chars.toString().trim();
-                if(!msisdn.startsWith("+")) msisdn = "+" + msisdn;
-                msisdns.add(msisdn);
-                caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
+                if(!msisdn.isEmpty()) {
+                    if(!msisdn.startsWith("+")) msisdn = "+" + msisdn;
+                    if("LastUsedMSISDN".equals(nameAttr)) {
+                        msisdns.add(0, msisdn);
+                    }else {
+                        msisdns.add(msisdn);
+                    }
+                    caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
+                }
                 
             }else if (qName.equals("item")) { //$NON-NLS-1$
                 if ("Tags".equals(nameAttr) && "Configuration".equals(chars.toString())) { //$NON-NLS-1$ //$NON-NLS-2$
