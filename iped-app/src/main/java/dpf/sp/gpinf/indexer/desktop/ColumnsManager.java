@@ -581,16 +581,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {
             boolean insertField = true;
-            for (int i = 0; i < customGroups.length; i++) 
+            for (int i = 0; i < customGroups.length; i++)
                 if (Arrays.asList(customGroups[i]).contains(f)) {
                     insertField = false;
                     break;
                 }
             if (f.startsWith(BasicProps.SIMILARITY_FEATURES)) 
                 continue;
-            if (insertField) 
+            if (insertField)
                 otherFields.add(f);
-            
         }
 
         fieldGroups = new String[customGroups.length + 2][];

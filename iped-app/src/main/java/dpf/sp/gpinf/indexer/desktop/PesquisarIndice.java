@@ -133,16 +133,15 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 numFilters++;
             }
         }
-        
+
         if (App.get().similarImagesQueryRefItem != null) {
             Query similarImagesQuery = new SimilarImagesSearch().getQueryForSimilarImages(numFilters > 0 ? result : null, App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
                 result = similarImagesQuery;
                 numFilters++;        
             }
-
         }
-        
+
         return result;
     }
 
@@ -224,7 +223,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
-
+                
                 Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
                 if (selectedEdges != null && !selectedEdges.isEmpty()) {
                     numFilters++;
@@ -241,7 +240,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
-                
+
                 if (App.get().similarImagesQueryRefItem != null) {
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }

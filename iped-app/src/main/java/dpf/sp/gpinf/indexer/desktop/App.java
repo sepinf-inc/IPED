@@ -196,7 +196,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JPanel topPanel;
     JPanel multiFilterAlert;
     boolean disposicaoVertical = false;
-    
+
     public ResultTableModel resultsModel;
     List resultSortKeys;
     SubitemTableModel subItemModel = new SubitemTableModel();
@@ -256,7 +256,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
         return app;
     }
-
+    
     public AppListener getAppListener() {
         return appletListener;
     }
@@ -268,7 +268,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public Manager getProcessingManager() {
         return processingManager;
     }
-
+    
     public MenuClass getContextMenu() {
         return new MenuClass();
     }
@@ -513,7 +513,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
             }
         });
-
+        
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController(appSearchParams);
@@ -1141,7 +1141,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 tabDock.setVisible(true);
                 nextLocation = tabDock.getBaseLocation().aside();
             }
-
+            
             if (graphDock != null) {
                 graphDock.setLocation(nextLocation);
                 graphDock.setVisible(true);
@@ -1214,7 +1214,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 tabDock.setVisible(true);
                 nextLocation = tabDock.getBaseLocation().aside();
             }
-
+            
             if (graphDock != null) {
                 graphDock.setLocation(nextLocation);
                 graphDock.setVisible(true);
