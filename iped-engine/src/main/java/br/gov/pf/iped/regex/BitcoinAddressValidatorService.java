@@ -27,7 +27,9 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_BITCOIN_ADDRESS");
+        return Arrays.asList("CRIPTOCOIN_BITCOIN_ADDRESS", "CRIPTOCOIN_BITCOIN_BIP38_ENC_PRIV_K", 
+                "CRIPTOCOIN_BITCOIN_WIF_PRIV_K_UNC_PUB_K", "CRIPTOCOIN_BITCOIN_WIF_PRIV_K_COMP_PUB_K",
+                "CRIPTOCOIN_BITCOIN_BIP32_HD_XPRV_KEY", "CRIPTOCOIN_BITCOIN_BIP32_HD_XPUB_KEY");
     }
 
     @Override
@@ -41,7 +43,23 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
         } else {
             try {
                 int addressHeader = getAddressHeader(addr);
-                return (addressHeader == 0 || addressHeader == 5);
+                switch (addr.charAt(0)) {
+                    case '1':
+                        return addressHeader == 0;
+                    case '3':
+                        return addressHeader == 5;
+                    case '5':
+                    case 'K':
+                    case 'L':
+                        return addressHeader == 128;
+                    default:           
+                }
+                
+                if (addr.startsWith("xpub")) {
+                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 178 || addressHeader == 30;
+                } else if (addr.startsWith("xprv")) {
+                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 173 || addressHeader == 228;
+                }
             } catch (Exception x) {
             }
         }
