@@ -25,7 +25,7 @@ public class ReportGenerator {
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
-    private Object lastChat;
+    private boolean firstHtml = true;
     private int currentMsg = 0;
 
     public ReportGenerator(IItemSearcher searcher) {
@@ -41,11 +41,8 @@ public class ReportGenerator {
     }
 
     public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs, int maxChatSize) throws UnsupportedEncodingException {
-        if (lastChat != c) {
-            lastChat = c;
-            currentMsg = 0;
-        }
-        if (currentMsg == msgs.size())
+
+        if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
             return null;
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -80,6 +77,8 @@ public class ReportGenerator {
 
         printMessageFileFooter(out);
         out.flush();
+        
+        firstHtml = false;
 
         return bout.toByteArray();
     }
