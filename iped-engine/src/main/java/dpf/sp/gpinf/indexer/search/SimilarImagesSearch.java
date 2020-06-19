@@ -38,7 +38,7 @@ public class SimilarImagesSearch {
      * So higher values will increase the distance weight, therefore reducing the score (i.e.
      * bringing less images).    
      */
-    private static final float distToScoreMult = 0.35f;
+    private static final float distToScoreMult = 4;
 
     public Query getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] similarityFeatures = item.getImageSimilarityFeatures();
