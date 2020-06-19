@@ -19,7 +19,26 @@ import iped3.IItem;
 import iped3.util.BasicProps;
 
 public class SimilarImagesSearch {
-    private static final int range = 320;//TODO!
+    /** 
+     * This range is used in the query to filter images, based only in 4 features (RGB and gray 
+     * channels median values of the whole image). Higher values will bring more images to be 
+     * evaluated (i.e. distance to reference image will be measured inside scoring (customScore() 
+     * method), so it can be slower. On the other hand, lower values may discard images that later
+     * would be considered good (i.e. close to reference image). 
+     */
+    private static final int range = 48;
+
+    /**
+     * Used to convert the raw squared distance from the reference image (>=0, in an arbitrary
+     * scale) to score (used to sort the results and to be shown on the table). Although the 
+     * score is (inside customScore()) limited to [0,100] (avoiding negative values that could 
+     * be produced by the conversion formula), scores < 1 will be later discarded (i.e. not 
+     * included in the results):
+     *      score = 100 - distance * distToScoreMult / numFeatures
+     * So higher values will increase the distance weight, therefore reducing the score (i.e.
+     * bringing less images).    
+     */
+    private static final float distToScoreMult = 0.35f;
 
     public Query getQueryForSimilarImages(Query currentQuery, IItem item) {
         byte[] similarityFeatures = item.getImageSimilarityFeatures();
@@ -84,9 +103,8 @@ public class SimilarImagesSearch {
                     }
                 }
             }
-            //TODO 0
-            float score = Math.max(2, 100 - distance / (refSimilarityFeatures.length / 2f));
-            return score;
+
+            return Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
         }
     }
 }
