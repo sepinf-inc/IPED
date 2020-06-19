@@ -86,23 +86,28 @@ public class ReportGenerator {
 
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
         out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
-        String name;
-        if (message.isFromMe()) {
-            out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
-            name = message.getLocalResource();
-        } else {
-            out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
-            name = message.getRemoteResource();
+        String name = null;
+        if(message.isSystemMessage()) {
+            out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
+        }else {
+            if (message.isFromMe()) {
+                out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                name = message.getLocalResource();
+            } else {
+                out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
+                name = message.getRemoteResource();
+            }
+            if (name == null)
+                name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
         }
-        if (name == null)
-            name = Messages.getString("ReportGenerator.Unknown"); //$NON-NLS-1$
 
         if (chatDeleted || message.isDeleted())
             out.println("🚫 "); //$NON-NLS-1$
 
-        out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + name + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
+        if(name != null)
+            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + name + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
-        if (message.getData() != null && !message.getData().isEmpty()) {
+        if (message.getData() != null && !message.getData().trim().isEmpty()) {
             if (message.getData().startsWith("BEGIN:VCARD")) { //$NON-NLS-1$
                 String[] lines = message.getData().split("\n"); //$NON-NLS-1$
                 for (String line : lines) {
@@ -113,8 +118,11 @@ public class ReportGenerator {
                     }
                 }
             } else {
-                out.print(message.getData() + "<br/>"); //$NON-NLS-1$
+                out.print(message.getData()); //$NON-NLS-1$
+                if(!message.isSystemMessage()) out.print("<br/>");
             }
+        }else if(message.isSystemMessage()) {
+            out.print("System Message"); //$NON-NLS-1$
         }
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
@@ -180,7 +188,7 @@ public class ReportGenerator {
 
         if (message.getTimeStamp() != null) {
             out.println("<span class=\"time\">"); //$NON-NLS-1$
-            out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+            out.println(timeFormat.format(message.getTimeStamp())); //$NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
         out.println("</div></div>"); //$NON-NLS-1$
