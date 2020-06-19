@@ -2,9 +2,6 @@ package br.gov.pf.labld.graph;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,6 +41,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UfedMessage;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -383,6 +381,9 @@ public class GraphTask extends AbstractTask {
         if(sender == null || sender.trim().isEmpty()) {
             return;
         }
+        if(MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME) && UfedMessage.SYSTEM_MESSAGE.equals(sender)) {
+            return;
+        }
         
         String relationType = getRelationType(evidence.getMediaType().toString());
         NodeValues nv1 = getNodeValues(sender, evidence.getMetadata());
@@ -550,8 +551,10 @@ public class GraphTask extends AbstractTask {
                 List<String> msisdns = (List<String>) caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + evidenceUUID);
                 if(msisdns != null && !msisdns.isEmpty()) {
                     NodeValues nv2 = this.getPhoneNodeValues(msisdns.get(0));
-                    String id = graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
-                    graphFileWriter.writeNodeReplace(nv1.label, nv1.propertyName, nv1.propertyValue, id);
+                    if(nv2 != null) {
+                        String id = graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
+                        graphFileWriter.writeNodeReplace(nv1.label, nv1.propertyName, nv1.propertyValue, id);
+                    }
                 }
             }
             return nv1;
