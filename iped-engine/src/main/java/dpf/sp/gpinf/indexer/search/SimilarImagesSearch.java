@@ -26,7 +26,7 @@ public class SimilarImagesSearch {
      * method), so it can be slower. On the other hand, lower values may discard images that later
      * would be considered good (i.e. close to reference image). 
      */
-    private static final int range = 48;
+    private static final int range = 64;
 
     /**
      * Used to convert the raw squared distance from the reference image (>=0, in an arbitrary
