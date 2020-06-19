@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.KeyboardFocusManager;
 import java.io.File;
 import java.io.IOException;
@@ -17,9 +18,11 @@ import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
 
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
@@ -223,13 +226,15 @@ public class ViewerController {
             Viewer bestViewer = getBestViewer(viewType);
             if (!bestViewer.getPanel().isShowing()) {
                 DefaultSingleCDockable viewerDock = dockPerViewer.get(bestViewer);
-                if (viewerDock != null) {
-                    bestViewer.loadFile(null);
-                    Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                    viewerDock.toFront();
-                    requested = bestViewer;
-                    if (focus != null) {
-                        focus.requestFocusInWindow();
+                if (!viewerDock.getExtendedMode().equals(ExtendedMode.MINIMIZED) && isContainerVisibleTab(viewerDock)) {
+                    if (viewerDock != null) {
+                        bestViewer.loadFile(null);
+                        Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                        viewerDock.toFront();
+                        requested = bestViewer;
+                        if (focus != null) {
+                            focus.requestFocusInWindow();
+                        }
                     }
                 }
             }
@@ -239,6 +244,20 @@ public class ViewerController {
                 updateViewer(viewer, true);
             }
         }
+    }
+
+    private boolean isContainerVisibleTab(DefaultSingleCDockable dock) {  
+        Container cont = dock.getContentPane();
+        if (cont != null) {
+            Container parent;
+            while ((parent = cont.getParent()) != null) {
+                if (parent instanceof EclipseTabPaneContent) {
+                    return parent.isShowing();
+                }
+                cont = parent;
+            }
+        }
+        return false;
     }
 
     public void changeToViewer(Viewer viewer) {
