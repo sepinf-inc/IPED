@@ -23,7 +23,6 @@ import iped3.IItem;
  */
 public class ImageSimilarityTask extends AbstractTask {
 
-    private static final String taskName = "Image Similarity"; //$NON-NLS-1$
     private static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
@@ -102,7 +101,7 @@ public class ImageSimilarityTask extends AbstractTask {
             t = System.currentTimeMillis() - t;
             totalTime.addAndGet(t);
         } catch (Exception e) {
-            logger.warn(evidence.getName(), e);
+            logger.warn(evidence.toString(), e);
         }
     }
 

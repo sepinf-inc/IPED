@@ -68,11 +68,6 @@ public class VideoThumbTask extends ThumbTask {
     private List<VideoThumbsOutputConfig> configs;
 
     /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "Video Thumbs Maker"; //$NON-NLS-1$
-
-    /**
      * Configuração principal de extração de cenas.
      */
     private VideoThumbsOutputConfig mainConfig;
@@ -413,8 +408,7 @@ public class VideoThumbTask extends ThumbTask {
                 totalTime.addAndGet(t);
             }
         } catch (Exception e) {
-            logger.warn(evidence + " : " + e.toString()); //$NON-NLS-1$
-            logger.debug(taskName, e);
+            logger.warn(evidence.toString(), e);
 
         } finally {
             // Tenta apaga possível temporários deixados "perdidos" (no caso normal eles
@@ -457,8 +451,7 @@ public class VideoThumbTask extends ThumbTask {
                         totalGallery.incrementAndGet();
                     }
                 } catch (Throwable e) {
-                    logger.warn("Error creating thumb: " + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    logger.debug(taskName, e);
+                    logger.warn(evidence.toString(), e);
                 }                
             }
             

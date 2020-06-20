@@ -219,8 +219,7 @@ public class ImageThumbTask extends ThumbTask {
             future.cancel(true);
             stats.incTimeouts();
             evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-            logger.warn("Timeout creating thumb: " //$NON-NLS-1$
-                    + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
         }
 
     }
@@ -294,8 +293,7 @@ public class ImageThumbTask extends ThumbTask {
                 } catch (TimeoutException e) {
                     stats.incTimeouts();
                     evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
-                    logger.warn("Timeout creating thumb: " //$NON-NLS-1$
-                            + evidence.getPath() + "(" + evidence.getLength() + " bytes)"); //$NON-NLS-1$ //$NON-NLS-2$
+                    logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
                 }
                 performanceStats[img == null ? 10 : 8]++; 
                 performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
@@ -353,8 +351,7 @@ public class ImageThumbTask extends ThumbTask {
             }
             
         } catch (Throwable e) {
-            logger.warn("Error creating thumb: " //$NON-NLS-1$
-                    + evidence.getPath() + "(" + evidence.getLength() + " bytes) " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn(evidence.toString(), e);
 
         } finally {
             if (tmp != null && !tmp.renameTo(thumbFile)) {
