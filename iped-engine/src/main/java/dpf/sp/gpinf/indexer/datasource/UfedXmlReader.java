@@ -15,10 +15,13 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -26,6 +29,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,6 +285,8 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     private class XMLContentHandler implements ContentHandler {
+        
+        private static final String LAST_USE_PREFIX = "last known use:";
 
         StringBuilder chars = new StringBuilder();
 
@@ -302,6 +308,8 @@ public class UfedXmlReader extends DataSourceReader {
         HashMap<Integer, List<Item>> attachsPerId = new HashMap<>();
         
         List<String> msisdns = new ArrayList<>();
+        TreeMap<Date, String> lastUseToMsisdn = new TreeMap<>();
+        
         boolean ignoreItems = false;
         boolean inChat = false;
 
@@ -569,13 +577,24 @@ public class UfedXmlReader extends DataSourceReader {
             if(("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
                 String msisdn = chars.toString().trim();
                 if(!msisdn.isEmpty()) {
-                    if(!msisdn.startsWith("+")) msisdn = "+" + msisdn;
-                    if("LastUsedMSISDN".equals(nameAttr)) {
-                        msisdns.add(0, msisdn);
-                    }else {
-                        msisdns.add(msisdn);
-                    }
+                    if("LastUsedMSISDN".equals(nameAttr)) msisdns.add(0, msisdn);
+                    else msisdns.add(msisdn);
                     caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
+                    
+                    for(String attrVal : currentNode.atts.values()) {
+                        if(attrVal.toLowerCase().startsWith(LAST_USE_PREFIX)) {
+                            attrVal = attrVal.substring(LAST_USE_PREFIX.length()).trim();
+                            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX");
+                            if(attrVal.contains("  ")) df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX");
+                            try {
+                                Date date = df.parse(attrVal);
+                                this.lastUseToMsisdn.put(date, msisdn);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+                    }
                 }
                 
             }else if (qName.equals("item")) { //$NON-NLS-1$
@@ -837,19 +856,32 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             }
-            String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
-            String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");            
-            if(item.getMetadata().get(Message.MESSAGE_TO) == null && !msisdns.isEmpty() &&
-                    ("Incoming".equals(direction) || "Missed".equals(direction) || 
-                     (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
-                item.getMetadata().set(Message.MESSAGE_TO, msisdns.get(0));
-                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
-            } else if(from == null && !msisdns.isEmpty() &&
-                    ("Outgoing".equals(direction) || fromOwner ||
-                     "Sent".equals(status) || "Unsent".equals(status))) {
-                item.getMetadata().set(Message.MESSAGE_FROM, msisdns.get(0));
-                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
+            if(!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType()) || MediaTypes.UFED_SMS_MIME.equals(item.getMediaType())
+                    || MediaTypes.UFED_MMS_MIME.equals(item.getMediaType()))) {
+                String likelyMsisdn = getLikelyMSISDN(item);
+                likelyMsisdn += Messages.getString("UfedXmlReader.LowConfidence");
+                String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
+                String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
+                if(item.getMetadata().get(Message.MESSAGE_TO) == null && likelyMsisdn != null &&
+                        ("Incoming".equals(direction) || "Missed".equals(direction) || 
+                         (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
+                    item.getMetadata().set(Message.MESSAGE_TO, likelyMsisdn);
+                } else if(from == null && likelyMsisdn != null &&
+                        ("Outgoing".equals(direction) || fromOwner ||
+                         "Sent".equals(status) || "Unsent".equals(status))) {
+                    item.getMetadata().set(Message.MESSAGE_FROM, likelyMsisdn);
+                }
             }
+        }
+        
+        private String getLikelyMSISDN(IItem item) {
+            Property time = Property.externalDate(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
+            Date date = item.getMetadata().getDate(time);
+            Entry<Date, String> entry = null;
+            if(date != null) entry = lastUseToMsisdn.ceilingEntry(date);
+            if(entry == null) entry = lastUseToMsisdn.lastEntry();
+            if(entry != null) return entry.getValue();
+            return msisdns.get(0);
         }
 
         private void setContent(Item item, String path) {
