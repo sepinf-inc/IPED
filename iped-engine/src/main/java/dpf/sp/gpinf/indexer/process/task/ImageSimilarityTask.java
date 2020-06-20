@@ -102,8 +102,7 @@ public class ImageSimilarityTask extends AbstractTask {
             t = System.currentTimeMillis() - t;
             totalTime.addAndGet(t);
         } catch (Exception e) {
-            logger.warn(e.toString());
-            logger.debug(taskName, e);
+            logger.warn(evidence.getName(), e);
         }
     }
 
