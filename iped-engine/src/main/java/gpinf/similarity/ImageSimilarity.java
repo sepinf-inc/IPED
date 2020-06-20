@@ -134,8 +134,7 @@ public class ImageSimilarity {
         Graphics2D gGray = auxGrayImg.createGraphics();
         gColor.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         gGray.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        int size = w * h;
-        if (size > maxPixels) {
+        if (w * h > maxPixels) {
             if (w > h) {
                 h = h * maxDim / w;
                 w = maxDim;
@@ -145,7 +144,6 @@ public class ImageSimilarity {
             }
             gColor.drawImage(img, 0, 0, w, h, null);
             gGray.drawImage(img, 0, 0, w, h, null);
-            size = w * h;
         } else {
             gColor.drawImage(img, 0, 0, null);
             gGray.drawImage(img, 0, 0, null);
@@ -202,6 +200,7 @@ public class ImageSimilarity {
             }
             tw -= 2;
         }
+        if (tw <= 2) return;
         int x0 = (w - tw) / 2;
         int x1 = x0 + tw;
         for (int y = 0; y * 3 < h; y++) {
@@ -234,6 +233,7 @@ public class ImageSimilarity {
             } else if (mode != detect) {
                 break;
             }
+            th -= 2;
         }
         if (tw != w || th != h) {
             int y0 = (h - th) / 2;
