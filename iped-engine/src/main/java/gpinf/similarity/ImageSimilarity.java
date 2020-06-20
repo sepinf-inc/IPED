@@ -3,19 +3,15 @@ package gpinf.similarity;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
-import java.awt.image.ConvolveOp;
 import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
-import java.awt.image.Kernel;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 
 public class ImageSimilarity {
     private static final int numFeatures = 1044;
     private static final int maxDim = 160;
     private static final int maxPixels = maxDim * maxDim;
+    private static final int trimTolerance = 16;
     private static final short[] sqrt = new short[1 << 20];
     private static final double power = 0.3;
     private final int[][] hist = new int[2][512];
@@ -30,7 +26,6 @@ public class ImageSimilarity {
     private final int[] cc3 = channelCount[3];
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
     private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
-    private final BufferedImageOp blurFilter;
     private int w, h;
 
     static {
@@ -42,22 +37,11 @@ public class ImageSimilarity {
         }
     }
 
-    public ImageSimilarity() {
-        float[] blurKernel = {0.1f,0.2f,0.1f,0.2f,0.8f,0.2f,0.1f,0.2f,0.1f};
-        Map<RenderingHints.Key, Object> map = new HashMap<RenderingHints.Key, Object>();
-        map.put(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        map.put(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-        map.put(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        RenderingHints hints = new RenderingHints(map);
-        blurFilter = new ConvolveOp(new Kernel(3, 3, blurKernel), ConvolveOp.EDGE_NO_OP, hints);
-    }
-
     public byte[] extractFeatures(BufferedImage img) {
         if (img == null) return null;
         w = img.getWidth();
         h = img.getHeight();
         if (w <= 2 || h <= 2) return null;
-        blurFilter.filter(img, null);
         getPixels(img);
         trimBorders();
         if (w <= 2 || h <= 2) return null;
@@ -185,7 +169,6 @@ public class ImageSimilarity {
     private void trimBorders() {
         int tw = w;
         int th = h;
-        int tolerance = 10;
         int mode = -1;
         for (int x = 0; x * 3 < w; x++) {
             int s0 = 0;
@@ -207,8 +190,8 @@ public class ImageSimilarity {
             s0 /= h * 3;
             s1 /= h * 3;
             int detect = -1;
-            if (s0 < tolerance && s1 < tolerance) detect = 0;
-            else if (s0 > 255 - tolerance && s1 > 255 - tolerance) detect = 1;
+            if (s0 < trimTolerance && s1 < trimTolerance) detect = 0;
+            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance) detect = 1;
             if (detect == -1) {
                 break;
             }
@@ -241,8 +224,8 @@ public class ImageSimilarity {
             s0 /= tw * 3;
             s1 /= tw * 3;
             int detect = -1;
-            if (s0 < tolerance && s1 < tolerance) detect = 0;
-            else if (s0 > 255 - tolerance && s1 > 255 - tolerance) detect = 1;
+            if (s0 < trimTolerance && s1 < trimTolerance) detect = 0;
+            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance) detect = 1;
             if (detect == -1) {
                 break;
             }
