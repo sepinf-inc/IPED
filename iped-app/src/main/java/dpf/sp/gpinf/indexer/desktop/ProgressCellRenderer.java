@@ -43,7 +43,7 @@ class ProgressCellRenderer extends JProgressBar implements TableCellRenderer {
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
             int row, int col) {
         int i = (int) Math.ceil((Float) value);
-        if (i > 100) {
+        if (i == 1000) {
             setString("REF"); 
             this.setValue(100);
         } else { 

@@ -99,7 +99,7 @@ public class SimilarImagesSearch {
                     Document doc = atomicReader.document(id);
                     String currHash = doc.get(BasicProps.HASH);
                     if (refHash.equals(currHash)) {
-                        return 200;
+                        return 1000;
                     }
                 }
             }
