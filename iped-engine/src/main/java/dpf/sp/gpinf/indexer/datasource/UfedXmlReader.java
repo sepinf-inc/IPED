@@ -9,6 +9,11 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -309,6 +314,7 @@ public class UfedXmlReader extends DataSourceReader {
         
         List<String> msisdns = new ArrayList<>();
         TreeMap<Date, String> lastUseToMsisdn = new TreeMap<>();
+        TreeMap<Date, String> iphoneSimSwitch = new TreeMap<>();
         
         boolean ignoreItems = false;
         boolean inChat = false;
@@ -603,6 +609,9 @@ public class UfedXmlReader extends DataSourceReader {
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
                     setContent(item, normalizePaths(chars.toString()));
+                    if(item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
+                        parseIphoneSimSwitch(item);
+                    }
 
                 } else if (!ignoreNameAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif")) //$NON-NLS-1$
                     if (item != null && !chars.toString().trim().isEmpty())
@@ -878,10 +887,40 @@ public class UfedXmlReader extends DataSourceReader {
             Property time = Property.externalDate(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
             Date date = item.getMetadata().getDate(time);
             Entry<Date, String> entry = null;
-            if(date != null) entry = lastUseToMsisdn.ceilingEntry(date);
+            if(date != null) entry = iphoneSimSwitch.floorEntry(date);
+            if(date != null && entry == null) entry = lastUseToMsisdn.ceilingEntry(date);
+            if(entry == null) entry = iphoneSimSwitch.firstEntry();
             if(entry == null) entry = lastUseToMsisdn.lastEntry();
             if(entry != null) return entry.getValue();
             return msisdns.get(0);
+        }
+        
+        private void parseIphoneSimSwitch(IItem item) {
+            File file = null;
+            try {
+                file = File.createTempFile("CellularUsage", "db");
+                try(InputStream is = item.getStream()){
+                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath()); 
+                        Statement st = conn.createStatement()) {
+                    String sql = "SELECT subscriber_mdn, last_update_time FROM subscriber_info"; //$NON-NLS-1$
+                    ResultSet rs = st.executeQuery(sql);
+                    while (rs.next()) {
+                        String msisdn = rs.getString(1);
+                        if(msisdn != null && !msisdn.isEmpty()) {
+                            int time = rs.getInt(2);
+                            Date date = new Date((time + 978307200l) * 1000l);
+                            iphoneSimSwitch.put(date, msisdn);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse " + item.getPath(), e.toString());
+                e.printStackTrace();
+            }finally {
+                if(file != null) file.delete();
+            }
         }
 
         private void setContent(Item item, String path) {
