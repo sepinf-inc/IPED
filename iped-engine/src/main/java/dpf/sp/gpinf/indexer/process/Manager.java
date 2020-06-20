@@ -749,9 +749,10 @@ public class Manager {
                     IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
             }
             // copia arquivo de assinaturas customizadas
-            IOUtil.copiaArquivo(
-                    new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
+            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
                     new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$
+            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + IndexItem.attrTypesFilename), //$NON-NLS-1$
+                    new File(output, "conf/" + IndexItem.attrTypesFilename)); //$NON-NLS-1$
             IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), //$NON-NLS-1$
                     new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$
         }
