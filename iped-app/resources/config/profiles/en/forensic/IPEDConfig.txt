@@ -107,8 +107,8 @@ enableKnownMetCarving = false
 # It can slow down processing, but strongly speeds up image preview in the gallery
 enableImageThumbs = true
 
-# Enables the generation of images features during processing that will allow searching for
-# visually similar images. "enableImageThumbs" must be enabled.
+# [Experimental] Enables the generation of images features during processing, allowing the search
+# for visually similar images. "enableImageThumbs" must be enabled.
 enableImageSimilarity = false
 
 # Enables extraction of image frames from video files
