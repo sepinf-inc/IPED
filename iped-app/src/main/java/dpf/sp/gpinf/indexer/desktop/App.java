@@ -229,6 +229,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     AppListener appletListener;
 
     private ResultSetViewerConfiguration resultSetViewerConfiguration;
+    
+    public boolean useVideoThumbsInGallery = false;
 
     private App() {
         this.appSearchParams = new AppSearchParams();
@@ -737,6 +739,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         if (appGraphAnalytics != null) {
             graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
         }
+
+        CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getIcon("video", resPath));
+        galleryTabDock.addAction(butToggleVideoFramesMode);
+        galleryTabDock.addSeparator();
+        butToggleVideoFramesMode.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                galleryModel.clearVideoThumbsInCache();
+                useVideoThumbsInGallery = !useVideoThumbsInGallery;
+                gallery.repaint();
+            }
+        });
         
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
