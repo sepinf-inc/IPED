@@ -349,8 +349,11 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.exportTerms) {
             new ExportIndexedTerms(App.get().appCase.getAtomicReader()).export();
 
-        } else if (e.getSource() == menu.similarImages) {
-            App.get().searchSimilarImages();
+        } else if (e.getSource() == menu.similarImagesCurrent) {
+            SimilarImageFilterActions.searchSimilarImages(false);
+
+        } else if (e.getSource() == menu.similarImagesExternal) {
+            SimilarImageFilterActions.searchSimilarImages(true);
             
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();

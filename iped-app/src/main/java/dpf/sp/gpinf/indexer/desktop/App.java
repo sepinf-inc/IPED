@@ -210,7 +210,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private int zoomLevel;
     
-    private SimilarImageFilterPanel similarImageFilterPanel;
+    public SimilarImageFilterPanel similarImageFilterPanel;
     public IItem similarImagesQueryRefItem;
 
     public File casesPathFile;
@@ -443,9 +443,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         similarImageFilterPanel.addPropertyChangeListener(new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("close")) {
-                    similarImagesQueryRefItem = null;
-                    similarImageFilterPanel.setVisible(false);
-                    appletListener.updateFileListing();
+                    SimilarImageFilterActions.clear();
                 }
             }
         });
@@ -761,7 +759,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         galleryTabDock.addSeparator();
         butSimSearch.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                searchSimilarImages();
+                SimilarImageFilterActions.searchSimilarImages(false);
             }
         });
         butSimSearch.setEnabled(false);
@@ -930,28 +928,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
     
-    public void searchSimilarImages() {
-        int selIdx = resultsTable.getSelectedRow();
-        if (selIdx != -1) {
-            IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-            if (itemId != null) {
-                similarImagesQueryRefItem = appCase.getItemByItemId(itemId);
-                if (similarImagesQueryRefItem.getImageSimilarityFeatures() == null) {
-                    similarImagesQueryRefItem = null;
-                } else {
-                    ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
-                    sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
-                    ((ResultTableRowSorter)resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
-                    appletListener.updateFileListing();
-                }
-            } else {
-                similarImagesQueryRefItem = null;
-            }
-            similarImageFilterPanel.setCurrentItem(similarImagesQueryRefItem);
-            similarImageFilterPanel.setVisible(similarImagesQueryRefItem != null);
-        }
-    }
-
     private void updateGalleryColCount(int inc) {
         int cnt = App.get().galleryModel.colCount + inc;
         if (cnt > 0 && cnt <= 40) {

@@ -32,6 +32,8 @@ import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import iped3.IItem;
 import iped3.util.MediaTypes;
 
@@ -44,7 +46,7 @@ public class MenuClass extends JPopupMenu {
     		lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
-            exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, similarImages, openViewfile, createReport,
+            exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, similarImagesCurrent, similarImagesExternal, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat;
 
     MenuListener menuListener;
@@ -224,11 +226,23 @@ public class MenuClass extends JPopupMenu {
         similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
         this.add(similarDocs);
         
-        similarImages = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
-        similarImages.addActionListener(menuListener);
-        similarImages.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
-        this.add(similarImages);        
+        submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
+        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
+        if (enabled != null) submenu.setEnabled(Boolean.valueOf(enabled.trim()));
+        else submenu.setEnabled(false);
+        this.add(submenu);
+        
+        similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
+        similarImagesCurrent.addActionListener(menuListener);
+        similarImagesCurrent.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
+        submenu.add(similarImagesCurrent);        
 
+        similarImagesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.External")); //$NON-NLS-1$
+        similarImagesExternal.addActionListener(menuListener);
+        similarImagesExternal.setEnabled(submenu.isEnabled());
+        submenu.add(similarImagesExternal);        
+        
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
         openViewfile.setEnabled(item != null && item.getViewFile() != null);

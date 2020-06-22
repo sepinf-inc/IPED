@@ -23,7 +23,7 @@ import iped3.IItem;
  */
 public class ImageSimilarityTask extends AbstractTask {
 
-    private static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
+    public static final String enableParam = "enableImageSimilarity"; //$NON-NLS-1$
     private static boolean taskEnabled = false;
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
