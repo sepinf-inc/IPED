@@ -14,6 +14,9 @@ import javax.swing.RowSorter;
 import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -113,5 +116,14 @@ public class SimilarImageFilterActions {
         }
         app.similarImageFilterPanel.setCurrentItem(app.similarImagesQueryRefItem);
         app.similarImageFilterPanel.setVisible(app.similarImagesQueryRefItem != null);
+    }
+    
+    public static boolean isFeatureEnabled() {
+        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
+        if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
+            return true;
+        }
+        return false;
     }
 }

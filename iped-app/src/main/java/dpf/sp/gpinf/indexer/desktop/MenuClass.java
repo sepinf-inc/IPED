@@ -32,8 +32,6 @@ import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import iped3.IItem;
 import iped3.util.MediaTypes;
 
@@ -227,10 +225,7 @@ public class MenuClass extends JPopupMenu {
         this.add(similarDocs);
         
         submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
-        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-        String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
-        if (enabled != null) submenu.setEnabled(Boolean.valueOf(enabled.trim()));
-        else submenu.setEnabled(false);
+        submenu.setEnabled(SimilarImageFilterActions.isFeatureEnabled());
         this.add(submenu);
         
         similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
