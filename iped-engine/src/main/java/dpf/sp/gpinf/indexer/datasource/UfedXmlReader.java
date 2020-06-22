@@ -705,7 +705,8 @@ public class UfedXmlReader extends DataSourceReader {
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
-                if ("InstantMessage".equals(type) || "Email".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) ||
+                        "SMS".equals(type) || "MMS".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().set(ExtraProperties.MESSAGE_DATE, date);
@@ -721,6 +722,8 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+                }
+                if("InstantMessage".equals(type)){
                     item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
