@@ -113,6 +113,8 @@
 						<#elseif photo.data??>
 							<#if photo.contentType??>
 								<#assign imgSrc=utils.base64(photo.contentType.mediaType, photo.data)>
+                            <#else>
+                                <#assign imgSrc=utils.base64("image/jpeg", photo.data)>
 							</#if>
 						</#if>
 						<#assign imgClass="photo">
