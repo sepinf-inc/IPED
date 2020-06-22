@@ -36,13 +36,17 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.util.IOUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
+
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class GraphFileWriter implements Closeable, Flushable {
     
@@ -299,34 +303,42 @@ public class GraphFileWriter implements Closeable, Flushable {
   
   //TODO improve to merge duplicate nodes instead of just skip
   public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
-      int num = -1;
+      AtomicInteger subDir = new AtomicInteger(-1);
       HashSet<String> ids = new HashSet<>();
-      for(File parent : csvParents) {
-          num++;
-          for(File input : parent.listFiles()) {
-              File dest = new File(output, num + "/" + input.getName());
-              dest.getParentFile().mkdirs();
-              if(input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv")){
-                  try(BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-                          BufferedReader reader = Files.newBufferedReader(input.toPath())){
-                      String line = null;
-                      while((line = reader.readLine()) != null) {
-                          String id = line.substring(0, line.indexOf(','));
-                          if(ids.add(id)) {
-                              writer.write(line);
-                              writer.write("\r\n");
+      csvParents.parallelStream().forEach(parent -> {
+          int num = subDir.incrementAndGet();
+          try {
+              for(File input : parent.listFiles()) {
+                  File dest = new File(output, num + "/" + input.getName());
+                  dest.getParentFile().mkdirs();
+                  if(input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv.gzip")){
+                      try(BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+                              BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(Files.newInputStream(input.toPath())), StandardCharsets.UTF_8))){
+                          String line = null;
+                          while((line = reader.readLine()) != null) {
+                              String id = line.substring(0, line.indexOf(','));
+                              if(ids.add(id)) {
+                                  writer.write(line);
+                                  writer.write("\r\n");
+                              }
                           }
                       }
+                  }else try(GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(input.toPath()))){
+                      Files.copy(gzis, dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                   }
-              }else {
-                  Files.copy(input.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
               }
+              File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
+              String args;
+              try(GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(importArgs.toPath()))){
+                  args = new String(IOUtil.loadInputStream(gzis), StandardCharsets.UTF_8);
+              }
+              args = args.replace(parent.getAbsolutePath(), importArgs.getParentFile().getAbsolutePath());
+              Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
+              
+          }catch(IOException e) {
+              throw new RuntimeException(e);
           }
-          File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
-          String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
-          args = args.replace(parent.getAbsolutePath(), importArgs.getParentFile().getAbsolutePath());
-          Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
-      }
+      });
   }
 
   public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
