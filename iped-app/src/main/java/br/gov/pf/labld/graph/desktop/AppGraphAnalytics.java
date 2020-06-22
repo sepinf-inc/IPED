@@ -35,6 +35,7 @@ import org.kharon.NodeAdapter;
 import org.kharon.StageAdapter;
 import org.kharon.StageMode;
 import org.kharon.layout.HistoryEnabledLayout;
+import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.renderers.Renderers;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PropertyContainer;
@@ -402,6 +403,8 @@ public class AppGraphAnalytics extends JPanel {
                 expandWorker.get();
                 LOGGER.info("Expand node {} took {}s", id, (System.currentTimeMillis() - t)/1000);
             }
+            applyDefaultLayout();
+            
         }catch(Exception e) {
             e.printStackTrace();
         }
@@ -911,6 +914,11 @@ public class AppGraphAnalytics extends JPanel {
 
   public GraphModel getGraphModel() {
     return graphModel;
+  }
+  
+  private void applyDefaultLayout() {
+      HistoryEnabledLayout layout = new GraphVizLayoutUniqueEdges(GraphVizAlgorithm.NEATO, new GraphVizIpedResolver());
+      applyLayout(layout);
   }
 
   public void applyLayout(HistoryEnabledLayout layout) {
