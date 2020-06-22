@@ -350,10 +350,10 @@ public class MenuListener implements ActionListener {
             new ExportIndexedTerms(App.get().appCase.getAtomicReader()).export();
 
         } else if (e.getSource() == menu.similarImagesCurrent) {
-            SimilarImageFilterActions.searchSimilarImages(false);
+            SimilarImagesFilterActions.searchSimilarImages(false);
 
         } else if (e.getSource() == menu.similarImagesExternal) {
-            SimilarImageFilterActions.searchSimilarImages(true);
+            SimilarImagesFilterActions.searchSimilarImages(true);
             
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();

@@ -24,7 +24,7 @@ import gpinf.dev.data.Item;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItemId;
 
-public class SimilarImageFilterActions {
+public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
     private static final GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 

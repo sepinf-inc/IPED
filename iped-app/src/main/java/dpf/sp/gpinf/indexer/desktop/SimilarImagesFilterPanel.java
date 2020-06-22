@@ -17,13 +17,13 @@ import javax.swing.JPanel;
 
 import iped3.IItem;
 
-public class SimilarImageFilterPanel extends JPanel {
+public class SimilarImagesFilterPanel extends JPanel {
     private static final long serialVersionUID = -6323740427378842045L;
     private BufferedImage img;
     private String refName;
     private int xc;
 
-    public SimilarImageFilterPanel() {
+    public SimilarImagesFilterPanel() {
         setPreferredSize(new Dimension(75, 50));
         setMaximumSize(getPreferredSize());
         String removeMsg = Messages.getString("ImageSimilarity.RemoveFilter");

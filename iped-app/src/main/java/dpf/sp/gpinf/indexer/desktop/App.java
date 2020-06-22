@@ -210,7 +210,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private int zoomLevel;
     
-    public SimilarImageFilterPanel similarImageFilterPanel;
+    public SimilarImagesFilterPanel similarImageFilterPanel;
     public IItem similarImagesQueryRefItem;
 
     public File casesPathFile;
@@ -438,12 +438,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         multiFilterAlert.setBorder(BorderFactory.createLineBorder(alertColor, 1));
         multiFilterAlert.setVisible(false);
 
-        similarImageFilterPanel = new SimilarImageFilterPanel();
+        similarImageFilterPanel = new SimilarImagesFilterPanel();
         similarImageFilterPanel.setVisible(false);
         similarImageFilterPanel.addPropertyChangeListener(new PropertyChangeListener() {
             public void propertyChange(PropertyChangeEvent evt) {
                 if (evt.getPropertyName().equals("close")) {
-                    SimilarImageFilterActions.clear();
+                    SimilarImagesFilterActions.clear();
                 }
             }
         });
@@ -754,13 +754,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
         }
         
-        if (SimilarImageFilterActions.isFeatureEnabled()) {
+        if (SimilarImagesFilterActions.isFeatureEnabled()) {
             CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getIcon("find", resPath));
             galleryTabDock.addAction(butSimSearch);
             galleryTabDock.addSeparator();
             butSimSearch.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
-                    SimilarImageFilterActions.searchSimilarImages(false);
+                    SimilarImagesFilterActions.searchSimilarImages(false);
                 }
             });
             butSimSearch.setEnabled(false);

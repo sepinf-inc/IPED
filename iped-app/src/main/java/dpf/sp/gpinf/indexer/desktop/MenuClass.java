@@ -225,7 +225,7 @@ public class MenuClass extends JPopupMenu {
         this.add(similarDocs);
         
         submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
-        submenu.setEnabled(SimilarImageFilterActions.isFeatureEnabled());
+        submenu.setEnabled(SimilarImagesFilterActions.isFeatureEnabled());
         this.add(submenu);
         
         similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
