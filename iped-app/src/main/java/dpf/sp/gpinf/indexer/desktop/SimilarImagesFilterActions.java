@@ -114,7 +114,7 @@ public class SimilarImagesFilterActions {
             ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
             app.appletListener.updateFileListing();
         }
-        app.similarImageFilterPanel.setCurrentItem(app.similarImagesQueryRefItem);
+        app.similarImageFilterPanel.setCurrentItem(app.similarImagesQueryRefItem, external);
         app.similarImageFilterPanel.setVisible(app.similarImagesQueryRefItem != null);
     }
     

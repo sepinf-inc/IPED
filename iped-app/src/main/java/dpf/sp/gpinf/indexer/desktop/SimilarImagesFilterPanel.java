@@ -21,13 +21,16 @@ public class SimilarImagesFilterPanel extends JPanel {
     private static final long serialVersionUID = -6323740427378842045L;
     private BufferedImage img;
     private String refName;
+    private boolean isRefExternal;
     private int xc;
 
     public SimilarImagesFilterPanel() {
         setPreferredSize(new Dimension(75, 50));
         setMaximumSize(getPreferredSize());
         String removeMsg = Messages.getString("ImageSimilarity.RemoveFilter");
-        String filterDescMsg = Messages.getString("ImageSimilarity.FilterTip");
+        String tooltipTitle = Messages.getString("ImageSimilarity.FilterTipTitle");
+        String tooltipDescInternal = Messages.getString("ImageSimilarity.FilterTipInternal");
+        String tooltipDescExternal = Messages.getString("ImageSimilarity.FilterTipExternal");
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getX() >= xc) {
@@ -38,7 +41,8 @@ public class SimilarImagesFilterPanel extends JPanel {
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
                 if (e.getX() < xc) {
-                    setToolTipText("<HTML>" + filterDescMsg + ": <b>" + refName + "</b></HTML>");
+                    setToolTipText("<HTML>" + tooltipTitle + "<br>" + (isRefExternal ? tooltipDescExternal
+                            : tooltipDescInternal) + ": <b>" + refName + "</b></HTML>");
                 } else {
                     setToolTipText(removeMsg);
                 }
@@ -46,13 +50,14 @@ public class SimilarImagesFilterPanel extends JPanel {
         });
     }
 
-    public void setCurrentItem(IItem currentItem) {
+    public void setCurrentItem(IItem currentItem, boolean external) {
         img = null;
         refName = "";
         if (currentItem != null) {
             byte[] thumb = currentItem.getThumb();
             if (thumb != null) {
                 refName = currentItem.getName();
+                isRefExternal = external;
                 ByteArrayInputStream bais = new ByteArrayInputStream(thumb);
                 try {
                     img = ImageIO.read(bais);
