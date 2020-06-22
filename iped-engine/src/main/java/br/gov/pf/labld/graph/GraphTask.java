@@ -234,7 +234,7 @@ public class GraphTask extends AbstractTask {
         }
         
         if(WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType) ||
-                mediaType.equals("application/x-ufed-call")) {
+                MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
             return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);
@@ -415,11 +415,13 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        List<String> msisdns = (List<String>)caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
         SortedSet<String> msisdnPhones = null;
-        if(msisdns != null && !msisdns.isEmpty()) {
+        //often msisdn is not reliable to be used to merge person nodes
+        /*
+        List<String> msisdns = (List<String>)caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
+        if(msisdns != null && msisdns.size() == 1) {
             msisdnPhones = getPhones(msisdns.toString());
-        }
+        }*/
         writePersonNode(item, msisdnPhones);
         
     }
