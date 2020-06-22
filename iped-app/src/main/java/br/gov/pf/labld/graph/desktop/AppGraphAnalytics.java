@@ -382,21 +382,25 @@ public class AppGraphAnalytics extends JPanel {
   
   private class ShowMoreConnectedNode extends SwingWorker<Void, Void>{
     
-    private static final int MAX_NEIGHBOURS = 25;
+    private static final int MAX_NEIGHBOURS = ExpandConfigurationDialog.MAX_NEIGHBOURS;
     private Long id;
 
     @Override
     protected Void doInBackground() {
         try {
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            id = graphService.getMoreConnectedNode();
-            if(id != null) {
+            long t = System.currentTimeMillis();
+            List<Long> ids = graphService.getMoreConnectedNodes(10);
+            LOGGER.info("Query {} most connected nodes took {}s", ids.size(), (System.currentTimeMillis() - t)/1000);
+            for(Long id : ids) {
                 AddNodeWorker worker = new AddNodeWorker(AppGraphAnalytics.this, Collections.singleton(id));
                 worker.execute();
                 worker.get();
+                t = System.currentTimeMillis();
                 ExpandNodeWorker expandWorker = new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS);
                 expandWorker.execute();
                 expandWorker.get();
+                LOGGER.info("Expand node {} took {}s", id, (System.currentTimeMillis() - t)/1000);
             }
         }catch(Exception e) {
             e.printStackTrace();
