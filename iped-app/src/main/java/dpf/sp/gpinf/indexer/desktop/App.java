@@ -754,34 +754,36 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
         }
         
-        CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getIcon("find", resPath));
-        galleryTabDock.addAction(butSimSearch);
-        galleryTabDock.addSeparator();
-        butSimSearch.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                SimilarImageFilterActions.searchSimilarImages(false);
-            }
-        });
-        butSimSearch.setEnabled(false);
-        resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-            public void valueChanged(ListSelectionEvent e) {
-                if (e.getValueIsAdjusting()) {
-                    return;
+        if (SimilarImageFilterActions.isFeatureEnabled()) {
+            CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getIcon("find", resPath));
+            galleryTabDock.addAction(butSimSearch);
+            galleryTabDock.addSeparator();
+            butSimSearch.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    SimilarImageFilterActions.searchSimilarImages(false);
                 }
-                boolean enabled = false;
-                int selIdx = resultsTable.getSelectedRow();
-                if (selIdx != -1) {
-                    IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-                    if (itemId != null) {
-                        IItem item = appCase.getItemByItemId(itemId);
-                        if (item != null) {
-                            enabled = item.getImageSimilarityFeatures() != null;
+            });
+            butSimSearch.setEnabled(false);
+            resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                public void valueChanged(ListSelectionEvent e) {
+                    if (e.getValueIsAdjusting()) {
+                        return;
+                    }
+                    boolean enabled = false;
+                    int selIdx = resultsTable.getSelectedRow();
+                    if (selIdx != -1) {
+                        IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                        if (itemId != null) {
+                            IItem item = appCase.getItemByItemId(itemId);
+                            if (item != null) {
+                                enabled = item.getImageSimilarityFeatures() != null;
+                            }
                         }
                     }
+                    butSimSearch.setEnabled(enabled);
                 }
-                butSimSearch.setEnabled(enabled);
-            }
-        });
+            });
+        }
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
