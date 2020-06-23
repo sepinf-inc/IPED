@@ -135,9 +135,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         }
 
         if (App.get().similarImagesQueryRefItem != null) {
-            Query similarImagesQuery = new SimilarImagesSearch().getQueryForSimilarImages(numFilters > 0 ? result : null, App.get().similarImagesQueryRefItem);
+            Query similarImagesQuery = new SimilarImagesSearch().getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
-                result = similarImagesQuery;
+                BooleanQuery boolQuery = new BooleanQuery();
+                boolQuery.add(result, Occur.MUST);
+                boolQuery.add(similarImagesQuery, Occur.MUST);
+                result = boolQuery;
+                searcher.setNoScoring(true);
                 numFilters++;        
             }
         }
@@ -242,6 +246,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 }
 
                 if (App.get().similarImagesQueryRefItem != null) {
+                    ImageSimilarityScorer.score(result, App.get().similarImagesQueryRefItem);
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }
 

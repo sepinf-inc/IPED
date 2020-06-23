@@ -6,7 +6,6 @@
 package iped3.search;
 
 import iped3.IItemId;
-import java.util.Iterator;
 
 /**
  *
@@ -22,4 +21,6 @@ public interface IMultiSearchResult {
 
     float getScore(int i);
 
+    void setScore(int i, float score);
+    
 }

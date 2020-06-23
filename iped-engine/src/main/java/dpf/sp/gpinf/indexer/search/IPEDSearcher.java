@@ -133,7 +133,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
         // obtém resultados calculando score
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
-        int maxResults = 1000000;
+        int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
         do {
             ScoreDoc lastScoreDoc = null;

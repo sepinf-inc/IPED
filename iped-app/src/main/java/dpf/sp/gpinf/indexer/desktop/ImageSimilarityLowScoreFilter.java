@@ -11,11 +11,11 @@ public class ImageSimilarityLowScoreFilter {
     public static MultiSearchResult filter(IMultiSearchResult result) {
         ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
-        int i = 0;
-        for (IItemId item : result.getIterator()) {
-            float score = result.getScore(i++);
+        int len = result.getLength();
+        for (int i = 0; i < len; i++) {
+            float score = result.getScore(i);
             if (score > 1) {
-                filteredItems.add(item);
+                filteredItems.add(result.getItem(i));
                 scores.add(score);
             }
         }
