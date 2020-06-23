@@ -3,11 +3,14 @@ package br.gov.pf.labld.graph;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPOutputStream;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -20,7 +23,6 @@ import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class GraphGenerator {
 
@@ -35,11 +37,11 @@ public class GraphGenerator {
   
   public boolean generate(ImportListener listener, File output, File... input) throws IOException {
     boolean imported = importDB(listener, output, input);
-    //moveGeneratedFiles(input, output);
 
     if (imported) {
       runPostImportOps(output);
     }
+    
     return imported;
   }
 
@@ -70,15 +72,6 @@ public class GraphGenerator {
     } catch (Exception e) {
       LOGGER.error("Error generating database.", e);
       return false;
-    }
-  }
-
-  private void moveGeneratedFiles(File input, File output) throws IOException {
-    File graphGeneratedOutput = new File(output, GraphTask.GENERATED_PATH);
-    try {
-      Files.move(input.toPath(), graphGeneratedOutput.toPath());
-    } catch (IOException e) {
-      IOUtil.copiaDiretorio(input, graphGeneratedOutput);
     }
   }
 
