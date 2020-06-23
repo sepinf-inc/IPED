@@ -44,18 +44,6 @@ public class GraphGenerator {
     
     return imported;
   }
-  
-  public void compressGeneratedFiles(File csvFolder) throws IOException {
-      Arrays.asList(csvFolder.listFiles()).parallelStream().forEach(f -> {
-          File gzip = new File(f.getAbsoluteFile() + ".gzip");
-          try(GZIPOutputStream gzos = new GZIPOutputStream(Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
-              Files.copy(f.toPath(), gzos);
-              f.delete();
-          } catch (IOException e) {
-              LOGGER.error("Error compressing " + f.getAbsolutePath(), e);
-          }
-    });
-  }
 
   private void runPostImportOps(File output) throws IOException {
     GraphService graphService = null;

@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.util.IOUtils;
@@ -70,6 +71,8 @@ public class GraphFileWriter implements Closeable, Flushable {
     super();
     this.root = root;
     root.mkdirs();
+    //needed for --append
+    uncompressPreviousCSVFiles();
     initReplaceWriter(root);
     if(defaultEntity != null) {
         configureDefaultEntityFields(defaultEntity);
@@ -301,6 +304,33 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
   }
   
+  public void compressGeneratedCSVFiles() throws IOException {
+      Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+          File gzip = new File(f.getAbsolutePath()+ ".gzip");
+          try(GZIPOutputStream gzos = new GZIPOutputStream(Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
+              Files.copy(f.toPath(), gzos);
+              f.delete();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    });
+  }
+  
+  public void uncompressPreviousCSVFiles() {
+      Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+          int idx = f.getAbsolutePath().lastIndexOf(".gzip");
+          if(idx != -1) {
+              File csv = new File(f.getAbsolutePath().substring(0, idx));
+              try(GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(f.toPath()))) {
+                  Files.copy(gzis, csv.toPath(), StandardCopyOption.REPLACE_EXISTING);
+              } catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              f.delete();
+          }
+    });
+  }
+  
   //TODO improve to merge duplicate nodes instead of just skip
   public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
       AtomicInteger subDir = new AtomicInteger(-1);
@@ -309,7 +339,7 @@ public class GraphFileWriter implements Closeable, Flushable {
           int num = subDir.incrementAndGet();
           try {
               for(File input : parent.listFiles()) {
-                  File dest = new File(output, num + "/" + input.getName());
+                  File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
                   dest.getParentFile().mkdirs();
                   if(input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR) && input.getName().endsWith(".csv.gzip")){
                       try(BufferedWriter writer = Files.newBufferedWriter(dest.toPath(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
@@ -328,10 +358,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                   }
               }
               File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
-              String args;
-              try(GZIPInputStream gzis = new GZIPInputStream(Files.newInputStream(importArgs.toPath()))){
-                  args = new String(IOUtil.loadInputStream(gzis), StandardCharsets.UTF_8);
-              }
+              String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
               args = args.replace(parent.getAbsolutePath(), importArgs.getParentFile().getAbsolutePath());
               Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8), StandardOpenOption.TRUNCATE_EXISTING);
               
