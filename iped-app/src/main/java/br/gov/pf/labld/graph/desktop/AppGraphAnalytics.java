@@ -398,7 +398,7 @@ public class AppGraphAnalytics extends JPanel {
                 worker.execute();
                 worker.get();
                 t = System.currentTimeMillis();
-                ExpandNodeWorker expandWorker = new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS);
+                ExpandNodeWorker expandWorker = new ExpandNodeWorker(Collections.singleton(graph.getNode(id.toString())), MAX_NEIGHBOURS);
                 expandWorker.execute();
                 expandWorker.get();
                 LOGGER.info("Expand node {} took {}s", id, (System.currentTimeMillis() - t)/1000);
@@ -527,7 +527,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() {
+    protected Void doInBackground() throws Exception{
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
