@@ -5,6 +5,7 @@ import java.awt.Frame;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -36,6 +37,7 @@ public class SpinnerDialog extends JDialog{
         JPanel labelPanel = new JPanel();
         JLabel jLabel = new JLabel(label);
         labelPanel.add(jLabel);
+        labelPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 0, 30));
         
         JPanel spinnerPanel = new JPanel();
         spinner = new JSpinner(model);
@@ -44,6 +46,7 @@ public class SpinnerDialog extends JDialog{
         JPanel okPanel = new JPanel();
         button = new JButton("OK"); //$NON-NLS-1$
         okPanel.add(button);
+        okPanel.setBorder(BorderFactory.createEmptyBorder(0, 10, 20, 10));
         
         button.addActionListener(new ActionListener() {
             @Override
