@@ -9,7 +9,7 @@ import java.util.Arrays;
 
 public class ImageSimilarity {
     public static final int maxDim = 160;
-    
+
     private static final int numFeatures = 1044;
     private static final int maxPixels = maxDim * maxDim;
     private static final int trimTolerance = 16;
@@ -286,6 +286,15 @@ public class ImageSimilarity {
         for (int i = 4; i < a.length; i++) {
             int d = a[i] - b[i];
             distance += d * d;
+        }
+        return distance;
+    }
+
+    public static int distance(byte[] a, byte[] b, int cut) {
+        int distance = 0;
+        for (int i = 4; i < a.length && distance < cut;) {
+            int d = a[i] - b[i++];
+            distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
         return distance;
     }
