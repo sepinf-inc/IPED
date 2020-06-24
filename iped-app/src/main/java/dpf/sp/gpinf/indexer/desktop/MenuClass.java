@@ -45,7 +45,7 @@ public class MenuClass extends JPopupMenu {
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat;
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns;
 
     MenuListener menuListener;
 
@@ -112,6 +112,10 @@ public class MenuClass extends JPopupMenu {
         gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
         gerenciarColunas.addActionListener(menuListener);
         submenu.add(gerenciarColunas);
+        
+        pinFirstColumns = new JMenuItem(Messages.getString("MenuClass.PinFirstCols")); //$NON-NLS-1$
+        pinFirstColumns.addActionListener(menuListener);
+        submenu.add(pinFirstColumns);
 
         lastColLayout = new JMenuItem(Messages.getString("MenuClass.LoadLastColLayout")); //$NON-NLS-1$
         lastColLayout.addActionListener(menuListener);
