@@ -384,14 +384,14 @@ public class AppGraphAnalytics extends JPanel {
   private class ShowMoreConnectedNode extends SwingWorker<Void, Void>{
     
     private static final int MAX_NEIGHBOURS = ExpandConfigurationDialog.MAX_NEIGHBOURS;
-    private Long id;
+    private List<Long> ids;
 
     @Override
     protected Void doInBackground() {
         try {
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
             long t = System.currentTimeMillis();
-            List<Long> ids = graphService.getMoreConnectedNodes(10);
+            ids = graphService.getMoreConnectedNodes(10);
             LOGGER.info("Query {} most connected nodes took {}s", ids.size(), (System.currentTimeMillis() - t)/1000);
             for(Long id : ids) {
                 AddNodeWorker worker = new AddNodeWorker(AppGraphAnalytics.this, Collections.singleton(id));
@@ -413,7 +413,7 @@ public class AppGraphAnalytics extends JPanel {
     
     @Override
     protected void done() {
-        if(id != null) {
+        if(!ids.isEmpty()) {
             JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.InitialGraphMsg"));
         }
     }
@@ -917,8 +917,10 @@ public class AppGraphAnalytics extends JPanel {
   }
   
   private void applyDefaultLayout() {
-      HistoryEnabledLayout layout = new GraphVizLayoutUniqueEdges(GraphVizAlgorithm.NEATO, new GraphVizIpedResolver());
-      applyLayout(layout);
+      if(!this.graph.isEmpty()) {
+          HistoryEnabledLayout layout = new GraphVizLayoutUniqueEdges(GraphVizAlgorithm.NEATO, new GraphVizIpedResolver());
+          applyLayout(layout);
+      }
   }
 
   public void applyLayout(HistoryEnabledLayout layout) {
