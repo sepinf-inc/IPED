@@ -6,12 +6,14 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.ArrayList;
+import java.util.List;
 
 import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.RowSorter;
 import javax.swing.SortOrder;
+import javax.swing.RowSorter.SortKey;
 import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -109,17 +111,21 @@ public class SimilarImagesFilterActions {
         }
 
         if (app.similarImagesQueryRefItem != null) {
-            ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
-            sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
-            ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
+            List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
+            if (sortKeys == null || sortKeys.isEmpty() || sortKeys.get(0).getColumn() != 2) {
+                ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
+                sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
+                ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
+            }
             app.appletListener.updateFileListing();
         }
         app.similarImageFilterPanel.setCurrentItem(app.similarImagesQueryRefItem, external);
         app.similarImageFilterPanel.setVisible(app.similarImagesQueryRefItem != null);
     }
-    
+
     public static boolean isFeatureEnabled() {
-        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
+                .next();
         String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
         if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
             return true;
