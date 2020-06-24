@@ -246,7 +246,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 }
 
                 if (App.get().similarImagesQueryRefItem != null) {
-                    ImageSimilarityScorer.score(result, App.get().similarImagesQueryRefItem);
+                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }
 
