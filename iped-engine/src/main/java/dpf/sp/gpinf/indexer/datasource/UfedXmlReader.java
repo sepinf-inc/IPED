@@ -775,8 +775,8 @@ public class UfedXmlReader extends DataSourceReader {
                     } else if ("Coordinate".equals(type)) { //$NON-NLS-1$
                         String lat = ExtraProperties.UFED_META_PREFIX + "Latitude"; //$NON-NLS-1$
                         String lon = ExtraProperties.UFED_META_PREFIX + "Longitude"; //$NON-NLS-1$
-                        parentItem.getMetadata().add(lat, item.getMetadata().get(lat));
-                        parentItem.getMetadata().add(lon, item.getMetadata().get(lon));
+                        parentItem.getMetadata().set(lat, item.getMetadata().get(lat));
+                        parentItem.getMetadata().set(lon, item.getMetadata().get(lon));
 
                     } else if ("Organization".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
@@ -787,8 +787,8 @@ public class UfedXmlReader extends DataSourceReader {
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
                         }
                     } else if ("UserID".equals(type)) { //$NON-NLS-1$
-                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$
-                        parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$                        
+                        if(value != null) parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
 
                     } else if ("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
