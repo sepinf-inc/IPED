@@ -209,6 +209,7 @@ public class SkypeParser extends AbstractParser {
                             meta.set(ExtraProperties.MESSAGE_BODY, sm.getConteudo());
                             meta.set("messageStatus", String.valueOf(sm.getChatMessageStatus()));
                             meta.set("sendingStatus", String.valueOf(sm.getSendingStatus()));
+                            meta.set(BasicProps.HASH, "");
                             if (sm.getDataEdicao() != null) {
                                 meta.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
                             }
