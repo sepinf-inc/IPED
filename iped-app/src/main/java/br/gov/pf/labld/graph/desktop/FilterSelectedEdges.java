@@ -113,10 +113,14 @@ public class FilterSelectedEdges {
         App.get().getAppListener().updateFileListing();
     }
     
-    public void clearSelection() {
+    public void clearSelection(boolean updateResults) {
         if(selectedEdges.size() > 0) {
             selectedEdges.clear();
-            updateResults();
+            if(updateResults) {
+                updateResults();
+            }else {
+                App.get().setGraphDefaultColor(true);
+            }
         }
     }
     
@@ -139,6 +143,5 @@ public class FilterSelectedEdges {
         }
         return result;
     }
-    
 
 }

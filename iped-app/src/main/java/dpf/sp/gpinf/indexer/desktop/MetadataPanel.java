@@ -55,7 +55,7 @@ import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IMultiSearchResult;
 
-public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener {
+public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
@@ -83,7 +83,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array;
 
-    boolean updatingProps = false, updatingList = false;
+    boolean updatingProps = false, updatingList = false, clearing = false;
     volatile boolean updatingResult = false;
 
     volatile boolean logScale = false;
@@ -719,9 +719,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if ((e != null && e.getValueIsAdjusting()) || updatingList)
             return;
 
-        // System.out.println("listSelectionEvent");
-
-        App.get().appletListener.updateFileListing();
+        if(!clearing) App.get().appletListener.updateFileListing();
 
         updateTabColor();
 
@@ -792,6 +790,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             sb.append(c);
         }
         return sb.toString();
+    }
+
+    @Override
+    public void clearFilter() {
+        clearing = true;
+        list.setListData(new ValueCount[0]);
+        clearing = false;
     }
 
 }

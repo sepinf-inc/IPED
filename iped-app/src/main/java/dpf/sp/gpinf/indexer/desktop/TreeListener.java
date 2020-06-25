@@ -52,12 +52,13 @@ import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
-public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener {
+public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
 
     Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
+    private boolean clearing = false;
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -179,7 +180,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
             App.get().setEvidenceDefaultColor(false);
         }
 
-        App.get().appletListener.updateFileListing();
+        if(!clearing) App.get().appletListener.updateFileListing();
 
         if (selection.size() == 1 && selection.iterator().next().getPathCount() > 2) {
             int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
@@ -199,6 +200,13 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     public void treeCollapsed(TreeExpansionEvent event) {
         collapsedTime = System.currentTimeMillis();
 
+    }
+
+    @Override
+    public void clearFilter() {
+        clearing = true;
+        App.get().tree.clearSelection();
+        clearing = false;
     }
 
 }

@@ -439,8 +439,11 @@ public class GraphTask extends AbstractTask {
         List<String> possiblePhones = new ArrayList<>();
         possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "PhoneNumber")));
         possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username")));
-        possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")));
         possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.USER_PHONE)));
+        for(String id : item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")) {
+            Matcher matcher = whatsappPattern.matcher(id);
+            if(matcher.find()) possiblePhones.add(id);
+        }
         SortedSet<String> formattedPhones = getPhones(possiblePhones.toString());
         if(msisdnPhones == null) msisdnPhones = Collections.emptySortedSet();
         formattedPhones.addAll(msisdnPhones);

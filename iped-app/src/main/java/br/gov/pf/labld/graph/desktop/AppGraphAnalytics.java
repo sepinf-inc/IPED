@@ -60,10 +60,11 @@ import br.gov.pf.labld.graph.desktop.renderers.PeopleNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PersonNodeRenderer;
 import br.gov.pf.labld.graph.desktop.renderers.PhoneNodeRenderer;
 import dpf.sp.gpinf.indexer.desktop.App;
+import dpf.sp.gpinf.indexer.desktop.ClearFilterListener;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
-public class AppGraphAnalytics extends JPanel {
+public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
 
   static Logger LOGGER = LoggerFactory.getLogger(AppGraphAnalytics.class);
 
@@ -253,12 +254,18 @@ public class AppGraphAnalytics extends JPanel {
       if(evt.isControlDown() || evt.isShiftDown())
           return;
       graphPane.deselectAll();
-      FilterSelectedEdges.getInstance().clearSelection();
+      FilterSelectedEdges.getInstance().clearSelection(true);
       if (SwingUtilities.isRightMouseButton(evt)) {
         stagePopup.show(graphPane, evt.getX(), evt.getY());
       }
     }
 
+  }
+  
+  @Override
+  public void clearFilter() {
+      graphPane.deselectAll();
+      FilterSelectedEdges.getInstance().clearSelection(false);
   }
   
   private class AppEdgeListener implements EdgeListener {

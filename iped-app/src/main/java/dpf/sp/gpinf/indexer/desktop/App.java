@@ -128,8 +128,8 @@ import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
-import iped3.desktop.IColumnsManager;
 import iped3.desktop.GUIProvider;
+import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
@@ -194,7 +194,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
-    JPanel multiFilterAlert;
+    ClearFilterButton clearAllFilters;
     boolean disposicaoVertical = false;
 
     public ResultTableModel resultsModel;
@@ -431,14 +431,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
         topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel alertLabel = new JLabel(Messages.getString("App.FilterWarn")); //$NON-NLS-1$
-        alertLabel.setForeground(Color.WHITE);
-        multiFilterAlert = new JPanel(new BorderLayout());
-        multiFilterAlert.add(alertLabel);
-        multiFilterAlert.setBackground(alertColor);
-        multiFilterAlert.setMaximumSize(new Dimension(100, 100));
-        multiFilterAlert.setBorder(BorderFactory.createLineBorder(alertColor, 1));
-        multiFilterAlert.setVisible(false);
+        clearAllFilters = new ClearFilterButton();
+        clearAllFilters.setMaximumSize(new Dimension(100, 100));
 
         similarImageFilterPanel = new SimilarImagesFilterPanel();
         similarImageFilterPanel.setVisible(false);
@@ -452,7 +446,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
-        topPanel.add(multiFilterAlert);
+        topPanel.add(clearAllFilters);
         topPanel.add(similarImageFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(termo);
@@ -691,6 +685,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
 
+        clearAllFilters.addClearListener(categoryListener);
+        clearAllFilters.addClearListener(bookmarksListener);
+        clearAllFilters.addClearListener(treeListener);
+        clearAllFilters.addClearListener(metadataPanel);
+        clearAllFilters.addClearListener(appletListener);
+        clearAllFilters.addClearListener(appGraphAnalytics);
+
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
         subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -752,9 +753,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
-        if (appGraphAnalytics != null) {
-            graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
-        }
+        graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
         CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"), IconUtil.getIcon("video", resPath));
         galleryTabDock.addAction(butToggleVideoFramesMode);

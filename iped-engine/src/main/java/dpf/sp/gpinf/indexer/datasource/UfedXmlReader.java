@@ -787,8 +787,15 @@ public class UfedXmlReader extends DataSourceReader {
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
                         }
                     } else if ("UserID".equals(type)) { //$NON-NLS-1$
-                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$                        
-                        if(value != null) parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$
+                        if(value != null) {
+                            if(!inChat) {
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                            }else {
+                                String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
+                                if(category != null) parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + category, value);
+                            }    
+                        }
 
                     } else if ("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
