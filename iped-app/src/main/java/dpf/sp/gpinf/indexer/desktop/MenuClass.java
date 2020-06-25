@@ -44,8 +44,9 @@ public class MenuClass extends JPopupMenu {
     		lerSelecionados, deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
-            exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, similarImagesCurrent, similarImagesExternal, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns;
+            exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
+            similarImagesCurrent, similarImagesExternal;
 
     MenuListener menuListener;
 
@@ -112,7 +113,7 @@ public class MenuClass extends JPopupMenu {
         gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
         gerenciarColunas.addActionListener(menuListener);
         submenu.add(gerenciarColunas);
-
+        
         pinFirstColumns = new JMenuItem(Messages.getString("MenuClass.PinFirstCols")); //$NON-NLS-1$
         pinFirstColumns.addActionListener(menuListener);
         submenu.add(pinFirstColumns);
@@ -227,7 +228,7 @@ public class MenuClass extends JPopupMenu {
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
         similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
         this.add(similarDocs);
-        
+
         submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
         submenu.setEnabled(SimilarImagesFilterActions.isFeatureEnabled());
         this.add(submenu);

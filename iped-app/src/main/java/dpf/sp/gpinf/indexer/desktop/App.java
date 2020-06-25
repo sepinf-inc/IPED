@@ -677,7 +677,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
-
+        
         clearAllFilters.addClearListener(categoryListener);
         clearAllFilters.addClearListener(bookmarksListener);
         clearAllFilters.addClearListener(treeListener);
@@ -935,7 +935,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             viewerDock.addSeparator();
         }
     }
-    
+
     private void updateGalleryColCount(int inc) {
         int cnt = App.get().galleryModel.colCount + inc;
         if (cnt > 0 && cnt <= 40) {
