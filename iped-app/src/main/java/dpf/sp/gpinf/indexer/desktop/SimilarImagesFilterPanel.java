@@ -26,6 +26,7 @@ public class SimilarImagesFilterPanel extends JPanel {
 
     public SimilarImagesFilterPanel() {
         setPreferredSize(new Dimension(75, 50));
+        setMinimumSize(getPreferredSize());
         setMaximumSize(getPreferredSize());
         String removeMsg = Messages.getString("ImageSimilarity.RemoveFilter");
         String tooltipTitle = Messages.getString("ImageSimilarity.FilterTipTitle");
