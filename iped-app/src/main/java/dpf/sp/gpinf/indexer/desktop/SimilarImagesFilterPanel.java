@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 
 import iped3.IItem;
 
-public class SimilarImagesFilterPanel extends JPanel {
+public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListener {
     private static final long serialVersionUID = -6323740427378842045L;
     private BufferedImage img;
     private String refName;
@@ -35,7 +35,7 @@ public class SimilarImagesFilterPanel extends JPanel {
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 if (e.getX() >= xc) {
-                    firePropertyChange("close", false, true);
+                    SimilarImagesFilterActions.clear();
                 }
             }
         });
@@ -103,5 +103,10 @@ public class SimilarImagesFilterPanel extends JPanel {
             g2.drawLine(x - closeSize, y - closeSize, x + closeSize, y + closeSize);
             g2.drawLine(x + closeSize, y - closeSize, x - closeSize, y + closeSize);
         }
+    }
+
+    @Override
+    public void clearFilter() {
+        SimilarImagesFilterActions.clear();
     }
 }

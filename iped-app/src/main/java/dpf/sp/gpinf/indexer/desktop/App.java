@@ -436,13 +436,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         similarImageFilterPanel = new SimilarImagesFilterPanel();
         similarImageFilterPanel.setVisible(false);
-        similarImageFilterPanel.addPropertyChangeListener(new PropertyChangeListener() {
-            public void propertyChange(PropertyChangeEvent evt) {
-                if (evt.getPropertyName().equals("close")) {
-                    SimilarImagesFilterActions.clear();
-                }
-            }
-        });
         
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
@@ -691,6 +684,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(metadataPanel);
         clearAllFilters.addClearListener(appletListener);
         clearAllFilters.addClearListener(appGraphAnalytics);
+        clearAllFilters.addClearListener(similarImageFilterPanel);
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
