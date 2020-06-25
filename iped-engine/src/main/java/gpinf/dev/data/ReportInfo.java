@@ -67,6 +67,7 @@ public class ReportInfo implements Serializable {
         String matNum = ""; //$NON-NLS-1$
         examiners.clear();
         examinersID.clear();
+        finalEvidenceDesc = null;
         // classe.clear();
         while ((str = in.readLine()) != null) {
             String[] s = str.split("=", 2); //$NON-NLS-1$
@@ -168,6 +169,7 @@ public class ReportInfo implements Serializable {
     }
     
     public void readJsonInfoFile(File file) throws IOException {
+        finalEvidenceDesc = null;
         String str = new String(Files.readAllBytes(file.toPath()), "UTF-8");
         JSONObject json = new JSONObject(str);
         reportNumber = json.getString("reportNumber");

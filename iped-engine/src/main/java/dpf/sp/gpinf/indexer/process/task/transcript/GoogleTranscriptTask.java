@@ -108,9 +108,11 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
             double score = 0;
             for(File part : parts) {
                 TextAndScore partResult = transcribeWavPart(part);
-                if(score > 0) sb.append(" ");
-                sb.append(partResult.text);
-                score += partResult.score;
+                if(partResult != null) {
+                    if(score > 0) sb.append(" ");
+                    sb.append(partResult.text);
+                    score += partResult.score;
+                }
                 part.delete();
             }
             TextAndScore result = new TextAndScore();
