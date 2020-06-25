@@ -90,6 +90,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
         JPanel okPanel = new JPanel(new BorderLayout());
         okPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         okPanel.add(generate, BorderLayout.EAST);
+        
+        append.setToolTipText(Messages.getString("ReportDialog.AppendWarning"));
 
         Box footer = Box.createVerticalBox();
         footer.add(noAttachs);

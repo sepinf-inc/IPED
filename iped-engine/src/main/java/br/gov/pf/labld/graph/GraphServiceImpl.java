@@ -71,23 +71,23 @@ public class GraphServiceImpl implements GraphService {
   }
   
   @Override
-  public Long getMoreConnectedNode() {
+  public List<Long> getMoreConnectedNodes(int maxNodes) {
       Transaction tx = null;
-      Long id = null;
+      List<Long> ids = new ArrayList<>();
       try {
         tx = graphDB.beginTx();
 
-        Result result = graphDB.execute("MATCH (n)--() RETURN n, count(n) as cnt ORDER BY cnt DESC LIMIT 1");
-        if (result.hasNext()) {
-          Node node = (Node) result.next().get("n");
-          id = node.getId();
+        Result result = graphDB.execute("MATCH (n) RETURN id(n) as id, size((n)--()) as degree ORDER BY degree DESC LIMIT " + maxNodes);
+        while (result.hasNext()) {
+          Long id = (Long) result.next().get("id");
+          ids.add(id);
         }
         tx.success();
         
       }finally {
         tx.close();
       }
-      return id;
+      return ids;
   }
 
   @Override

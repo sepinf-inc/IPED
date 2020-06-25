@@ -9,16 +9,24 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -26,6 +34,7 @@ import javax.xml.parsers.SAXParserFactory;
 import org.apache.commons.io.IOUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -281,6 +290,8 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     private class XMLContentHandler implements ContentHandler {
+        
+        private static final String LAST_USE_PREFIX = "last known use:";
 
         StringBuilder chars = new StringBuilder();
 
@@ -302,6 +313,9 @@ public class UfedXmlReader extends DataSourceReader {
         HashMap<Integer, List<Item>> attachsPerId = new HashMap<>();
         
         List<String> msisdns = new ArrayList<>();
+        TreeMap<Date, String> lastUseToMsisdn = new TreeMap<>();
+        TreeMap<Date, String> iphoneSimSwitch = new TreeMap<>();
+        
         boolean ignoreItems = false;
         boolean inChat = false;
 
@@ -569,13 +583,24 @@ public class UfedXmlReader extends DataSourceReader {
             if(("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null && "Device Info".equals(parentNode.atts.get("section"))) {
                 String msisdn = chars.toString().trim();
                 if(!msisdn.isEmpty()) {
-                    if(!msisdn.startsWith("+")) msisdn = "+" + msisdn;
-                    if("LastUsedMSISDN".equals(nameAttr)) {
-                        msisdns.add(0, msisdn);
-                    }else {
-                        msisdns.add(msisdn);
-                    }
+                    if("LastUsedMSISDN".equals(nameAttr)) msisdns.add(0, msisdn);
+                    else msisdns.add(msisdn);
                     caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
+                    
+                    for(String attrVal : currentNode.atts.values()) {
+                        if(attrVal.toLowerCase().startsWith(LAST_USE_PREFIX)) {
+                            attrVal = attrVal.substring(LAST_USE_PREFIX.length()).trim();
+                            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX");
+                            if(attrVal.contains("  ")) df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX");
+                            try {
+                                Date date = df.parse(attrVal);
+                                this.lastUseToMsisdn.put(date, msisdn);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+                    }
                 }
                 
             }else if (qName.equals("item")) { //$NON-NLS-1$
@@ -584,6 +609,9 @@ public class UfedXmlReader extends DataSourceReader {
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
                     setContent(item, normalizePaths(chars.toString()));
+                    if(item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
+                        parseIphoneSimSwitch(item);
+                    }
 
                 } else if (!ignoreNameAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif")) //$NON-NLS-1$
                     if (item != null && !chars.toString().trim().isEmpty())
@@ -677,7 +705,8 @@ public class UfedXmlReader extends DataSourceReader {
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
-                if ("InstantMessage".equals(type) || "Email".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) ||
+                        "SMS".equals(type) || "MMS".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().set(ExtraProperties.MESSAGE_DATE, date);
@@ -693,6 +722,8 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+                }
+                if("InstantMessage".equals(type)){
                     item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
@@ -744,8 +775,8 @@ public class UfedXmlReader extends DataSourceReader {
                     } else if ("Coordinate".equals(type)) { //$NON-NLS-1$
                         String lat = ExtraProperties.UFED_META_PREFIX + "Latitude"; //$NON-NLS-1$
                         String lon = ExtraProperties.UFED_META_PREFIX + "Longitude"; //$NON-NLS-1$
-                        parentItem.getMetadata().add(lat, item.getMetadata().get(lat));
-                        parentItem.getMetadata().add(lon, item.getMetadata().get(lon));
+                        parentItem.getMetadata().set(lat, item.getMetadata().get(lat));
+                        parentItem.getMetadata().set(lon, item.getMetadata().get(lon));
 
                     } else if ("Organization".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
@@ -756,8 +787,8 @@ public class UfedXmlReader extends DataSourceReader {
                             parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
                         }
                     } else if ("UserID".equals(type)) { //$NON-NLS-1$
-                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$
-                        parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                        String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$                        
+                        if(value != null) parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
 
                     } else if ("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
@@ -837,18 +868,61 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             }
-            String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
-            String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");            
-            if(item.getMetadata().get(Message.MESSAGE_TO) == null && !msisdns.isEmpty() &&
-                    ("Incoming".equals(direction) || "Missed".equals(direction) || 
-                     (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
-                item.getMetadata().set(Message.MESSAGE_TO, msisdns.get(0));
-                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
-            } else if(from == null && !msisdns.isEmpty() &&
-                    ("Outgoing".equals(direction) || fromOwner ||
-                     "Sent".equals(status) || "Unsent".equals(status))) {
-                item.getMetadata().set(Message.MESSAGE_FROM, msisdns.get(0));
-                item.setExtraAttribute("ufedMissedInfoFilledUp", "true");
+            if(!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType()) || MediaTypes.UFED_SMS_MIME.equals(item.getMediaType())
+                    || MediaTypes.UFED_MMS_MIME.equals(item.getMediaType()))) {
+                String likelyMsisdn = getLikelyMSISDN(item);
+                likelyMsisdn += Messages.getString("UfedXmlReader.LowConfidence");
+                String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
+                String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
+                if(item.getMetadata().get(Message.MESSAGE_TO) == null && likelyMsisdn != null &&
+                        ("Incoming".equals(direction) || "Missed".equals(direction) || 
+                         (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
+                    item.getMetadata().set(Message.MESSAGE_TO, likelyMsisdn);
+                } else if(from == null && likelyMsisdn != null &&
+                        ("Outgoing".equals(direction) || fromOwner ||
+                         "Sent".equals(status) || "Unsent".equals(status))) {
+                    item.getMetadata().set(Message.MESSAGE_FROM, likelyMsisdn);
+                }
+            }
+        }
+        
+        private String getLikelyMSISDN(IItem item) {
+            Property time = Property.externalDate(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
+            Date date = item.getMetadata().getDate(time);
+            Entry<Date, String> entry = null;
+            if(date != null) entry = iphoneSimSwitch.floorEntry(date);
+            if(date != null && entry == null) entry = lastUseToMsisdn.ceilingEntry(date);
+            if(entry == null) entry = iphoneSimSwitch.firstEntry();
+            if(entry == null) entry = lastUseToMsisdn.lastEntry();
+            if(entry != null) return entry.getValue();
+            return msisdns.get(0);
+        }
+        
+        private void parseIphoneSimSwitch(IItem item) {
+            File file = null;
+            try {
+                file = File.createTempFile("CellularUsage", "db");
+                try(InputStream is = item.getStream()){
+                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath()); 
+                        Statement st = conn.createStatement()) {
+                    String sql = "SELECT subscriber_mdn, last_update_time FROM subscriber_info"; //$NON-NLS-1$
+                    ResultSet rs = st.executeQuery(sql);
+                    while (rs.next()) {
+                        String msisdn = rs.getString(1);
+                        if(msisdn != null && !msisdn.isEmpty()) {
+                            int time = rs.getInt(2);
+                            Date date = new Date((time + 978307200l) * 1000l);
+                            iphoneSimSwitch.put(date, msisdn);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse " + item.getPath(), e.toString());
+                e.printStackTrace();
+            }finally {
+                if(file != null) file.delete();
             }
         }
 

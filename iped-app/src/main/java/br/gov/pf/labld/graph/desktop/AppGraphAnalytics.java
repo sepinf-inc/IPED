@@ -35,6 +35,7 @@ import org.kharon.NodeAdapter;
 import org.kharon.StageAdapter;
 import org.kharon.StageMode;
 import org.kharon.layout.HistoryEnabledLayout;
+import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.renderers.Renderers;
 import org.neo4j.graphdb.Path;
 import org.neo4j.graphdb.PropertyContainer;
@@ -382,22 +383,28 @@ public class AppGraphAnalytics extends JPanel {
   
   private class ShowMoreConnectedNode extends SwingWorker<Void, Void>{
     
-    private static final int MAX_NEIGHBOURS = 25;
-    private Long id;
+    private static final int MAX_NEIGHBOURS = ExpandConfigurationDialog.MAX_NEIGHBOURS;
+    private List<Long> ids;
 
     @Override
     protected Void doInBackground() {
         try {
             GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            id = graphService.getMoreConnectedNode();
-            if(id != null) {
+            long t = System.currentTimeMillis();
+            ids = graphService.getMoreConnectedNodes(10);
+            LOGGER.info("Query {} most connected nodes took {}s", ids.size(), (System.currentTimeMillis() - t)/1000);
+            for(Long id : ids) {
                 AddNodeWorker worker = new AddNodeWorker(AppGraphAnalytics.this, Collections.singleton(id));
                 worker.execute();
                 worker.get();
-                ExpandNodeWorker expandWorker = new ExpandNodeWorker(worker.getAddedNodes(), MAX_NEIGHBOURS);
+                t = System.currentTimeMillis();
+                ExpandNodeWorker expandWorker = new ExpandNodeWorker(Collections.singleton(graph.getNode(id.toString())), MAX_NEIGHBOURS);
                 expandWorker.execute();
                 expandWorker.get();
+                LOGGER.info("Expand node {} took {}s", id, (System.currentTimeMillis() - t)/1000);
             }
+            applyDefaultLayout();
+            
         }catch(Exception e) {
             e.printStackTrace();
         }
@@ -406,7 +413,7 @@ public class AppGraphAnalytics extends JPanel {
     
     @Override
     protected void done() {
-        if(id != null) {
+        if(!ids.isEmpty()) {
             JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.InitialGraphMsg"));
         }
     }
@@ -520,7 +527,7 @@ public class AppGraphAnalytics extends JPanel {
     }
 
     @Override
-    protected Void doInBackground() {
+    protected Void doInBackground() throws Exception{
       GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
       AppGraphAnalytics.this.graphStatusBar.setStatus(Messages.getString("GraphAnalysis.Processing"));
       AppGraphAnalytics.this.graphStatusBar.setProgress(0);
@@ -907,6 +914,13 @@ public class AppGraphAnalytics extends JPanel {
 
   public GraphModel getGraphModel() {
     return graphModel;
+  }
+  
+  private void applyDefaultLayout() {
+      if(!this.graph.isEmpty()) {
+          HistoryEnabledLayout layout = new GraphVizLayoutUniqueEdges(GraphVizAlgorithm.NEATO, new GraphVizIpedResolver());
+          applyLayout(layout);
+      }
   }
 
   public void applyLayout(HistoryEnabledLayout layout) {

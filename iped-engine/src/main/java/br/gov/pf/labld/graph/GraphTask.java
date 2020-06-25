@@ -64,7 +64,7 @@ public class GraphTask extends AbstractTask {
   public static final String RELATIONSHIP_ID = "relId";
   public static final String RELATIONSHIP_SOURCE = "dataSource";
   
-  private Pattern ignoreEmailChars = Pattern.compile("[<>'\";()]");
+  private static Pattern ignoreEmailChars = Pattern.compile("[<>'\";()]");
   
   //TODO externalize to config file
   private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
@@ -158,6 +158,7 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.close();
         }
         finishGraphGeneration();
+        graphFileWriter.compressGeneratedCSVFiles();
         graphFileWriter = null;
     }
   }
@@ -234,7 +235,7 @@ public class GraphTask extends AbstractTask {
         }
         
         if(WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType) ||
-                mediaType.equals("application/x-ufed-call")) {
+                MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
             return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);
@@ -415,11 +416,13 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        List<String> msisdns = (List<String>)caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
         SortedSet<String> msisdnPhones = null;
-        if(msisdns != null && !msisdns.isEmpty()) {
+        //often msisdn is not reliable to be used to merge person nodes
+        /*
+        List<String> msisdns = (List<String>)caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + item.getDataSource().getUUID());
+        if(msisdns != null && msisdns.size() == 1) {
             msisdnPhones = getPhones(msisdns.toString());
-        }
+        }*/
         writePersonNode(item, msisdnPhones);
         
     }

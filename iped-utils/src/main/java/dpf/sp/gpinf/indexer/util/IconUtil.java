@@ -10,7 +10,6 @@ import javax.swing.ImageIcon;
 
 public class IconUtil {
     private static final Map<String, ImageIcon> memoIcon = new HashMap<String, ImageIcon>();
-    //private static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
 
     public static final ImageIcon getIcon(String name, String resPath) {
         return getIcon(name, resPath, 0);

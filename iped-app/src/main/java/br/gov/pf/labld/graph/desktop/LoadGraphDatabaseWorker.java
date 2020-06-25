@@ -36,6 +36,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
 
   @Override
   protected Void doInBackground() throws Exception {
+      long t = System.currentTimeMillis();
       app.setEnabled(false);
       List<IPEDSource> cases = App.get().appCase.getAtomicSources();
       if(cases.size() == 1) {
@@ -49,6 +50,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
               loaded = initGraphService(multiCaseGraphPath);
           }
       }
+      AppGraphAnalytics.LOGGER.info("Init graph database took {}s", (System.currentTimeMillis() - t)/1000);
       return null;
   }
   

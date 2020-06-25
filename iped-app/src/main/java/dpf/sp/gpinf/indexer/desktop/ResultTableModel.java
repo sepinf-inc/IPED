@@ -244,15 +244,20 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
+                boolean sorted = false;
                 if (mayBeNumeric && sndv != null) {
-                    Arrays.sort(values, new Comparator<String>() {
-                        @Override
-                        public int compare(String o1, String o2) {
-                            return Double.valueOf(o1).compareTo(Double.valueOf(o2));
-                        }
-                    });
-                } else
-                    Arrays.sort(values, collator);
+                    try {
+                        Arrays.sort(values, new Comparator<String>() {
+                            @Override
+                            public int compare(String o1, String o2) {
+                                return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                            }
+                        });
+                        sorted = true;
+                    }catch(NumberFormatException e) {
+                    }
+                }
+                if(!sorted) Arrays.sort(values, collator);
             }
 
             StringBuilder sb = new StringBuilder();

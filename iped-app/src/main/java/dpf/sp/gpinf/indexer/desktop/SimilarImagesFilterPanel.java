@@ -25,7 +25,7 @@ public class SimilarImagesFilterPanel extends JPanel {
     private int xc;
 
     public SimilarImagesFilterPanel() {
-        setPreferredSize(new Dimension(75, 50));
+        setPreferredSize(new Dimension(52, 32));
         setMinimumSize(getPreferredSize());
         setMaximumSize(getPreferredSize());
         String removeMsg = Messages.getString("ImageSimilarity.RemoveFilter");
@@ -78,7 +78,7 @@ public class SimilarImagesFilterPanel extends JPanel {
 
             int pw = getWidth();
             int ph = getHeight();
-            int dx = 4;
+            int dx = 3;
             g2.setColor(Color.white);
             g2.fillRect(dx, 0, pw - dx, ph);
 
@@ -95,12 +95,13 @@ public class SimilarImagesFilterPanel extends JPanel {
             g2.drawRect(dx, 0, pw - dx - 1, ph - 1);
             g2.drawRect(dx + 1, 1, pw - dx - 3, ph - 3);
 
-            g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL));
+            g2.setStroke(new BasicStroke(1f, BasicStroke.CAP_SQUARE, BasicStroke.JOIN_BEVEL));
             g2.setColor(Color.darkGray);
             x = (xc + pw - 3) / 2;
             y = ph / 2;
-            g2.drawLine(x - 4, y - 4, x + 4, y + 4);
-            g2.drawLine(x + 4, y - 4, x - 4, y + 4);
+            int closeSize = 3;
+            g2.drawLine(x - closeSize, y - closeSize, x + closeSize, y + closeSize);
+            g2.drawLine(x + closeSize, y - closeSize, x - closeSize, y + closeSize);
         }
     }
 }

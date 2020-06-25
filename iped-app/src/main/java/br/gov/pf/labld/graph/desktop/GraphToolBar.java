@@ -14,7 +14,6 @@ import org.kharon.history.GraphAction;
 import org.kharon.history.GraphHistory;
 import org.kharon.history.GraphHistoryListener;
 import org.kharon.layout.graphviz.GraphVizAlgorithm;
-import org.kharon.layout.graphviz.GraphVizLayout;
 
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
@@ -93,7 +92,7 @@ public class GraphToolBar extends JToolBar implements GraphHistoryListener {
     for (GraphVizAlgorithm algo : GraphVizAlgorithm.values()) {
       URL layoutHLUrl = this.getClass().getResource("diagram-2x.png");
       JButton layoutHLBtn = createButton(
-          new ApplyGraphLayoutAction(app, new GraphVizLayout(algo, new GraphVizIpedResolver())),
+          new ApplyGraphLayoutAction(app, new GraphVizLayoutUniqueEdges(algo, new GraphVizIpedResolver())),
           "Layout " + algo.name(), layoutHLUrl);
       this.addBtn(layoutHLBtn);
     }

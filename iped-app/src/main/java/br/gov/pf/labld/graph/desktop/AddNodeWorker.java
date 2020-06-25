@@ -51,7 +51,6 @@ class AddNodeWorker extends SwingWorker<Void, Node> implements NodeQueryListener
     app.setProgress(0);
     GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
     graphService.getNodes(ids, this);
-    app.addNodes(nodes);
     return null;
   }
 

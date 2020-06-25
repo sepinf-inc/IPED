@@ -53,6 +53,6 @@ public interface GraphService {
 
   void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
 
-  Long getMoreConnectedNode();
+  List<Long> getMoreConnectedNodes(int maxNodes);
 
 }

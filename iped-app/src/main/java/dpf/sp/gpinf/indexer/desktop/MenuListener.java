@@ -53,6 +53,7 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import dpf.sp.gpinf.indexer.util.SpinnerDialog;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
@@ -296,33 +297,9 @@ public class MenuListener implements ActionListener {
             viewer.copyScreen();
 
         } else if (e.getSource() == menu.aumentarGaleria) {
-
-            int MAX_GALLERY_COLS = 40;
-
-            JDialog dialog = new JDialog();
-            dialog.setModal(true);
-            dialog.setTitle(Messages.getString("MenuListener.Gallery")); //$NON-NLS-1$
-            dialog.setBounds(0, 0, 180, 140);
-            SpinnerNumberModel model = new SpinnerNumberModel(App.get().galleryModel.colCount, 1, MAX_GALLERY_COLS, 1);
-            model.setValue(App.get().galleryModel.colCount);
-
-            JLabel msg = new JLabel(Messages.getString("MenuListener.Cols")); //$NON-NLS-1$
-            JSpinner spinner = new JSpinner(model);
-            JButton button = new JButton(Messages.getString("MenuListener.OK")); //$NON-NLS-1$
-
-            msg.setBounds(20, 15, 50, 20);
-            spinner.setBounds(80, 10, 50, 30);
-            button.setBounds(80, 50, 50, 30);
-
-            dialog.getContentPane().add(msg);
-            dialog.getContentPane().add(spinner);
-            dialog.getContentPane().add(button);
-            dialog.getContentPane().add(new JLabel());
-
-            spinner.addChangeListener(new SpinnerListener(model, dialog));
-            button.addActionListener(new SpinnerListener(model, dialog));
-
-            dialog.setLocationRelativeTo(App.get());
+            
+            SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"), Messages.getString("MenuListener.Cols"), App.get().galleryModel.colCount, 1, 40);
+            dialog.addChangeListener(new SpinnerListener());
             dialog.setVisible(true);
 
         } else if (e.getSource() == menu.gerenciarMarcadores) {
@@ -332,6 +309,14 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.gerenciarColunas) {
 
             ColumnsManager.getInstance().setVisible();
+
+        } else if (e.getSource() == menu.pinFirstColumns) {
+            
+            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            String msg = Messages.getString("MenuListener.PinFirstCols");
+            SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
+            dialog.setVisible(true);
+            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.gerenciarFiltros) {
 
@@ -438,19 +423,12 @@ public class MenuListener implements ActionListener {
         }
     }
 
-    static class SpinnerListener implements ChangeListener, ActionListener {
-
-        private SpinnerNumberModel model;
-        private Dialog dialog;
-
-        public SpinnerListener(SpinnerNumberModel model, Dialog dialog) {
-            this.model = model;
-            this.dialog = dialog;
-        }
+    private static class SpinnerListener implements ChangeListener {
 
         @Override
         public void stateChanged(ChangeEvent evt) {
-            App.get().galleryModel.colCount = model.getNumber().intValue();
+            
+            App.get().galleryModel.colCount = (Integer)((JSpinner)evt.getSource()).getValue();
             int colWidth = (int) App.get().gallery.getWidth() / App.get().galleryModel.colCount;
             App.get().gallery.setRowHeight(colWidth);
             int selRow = App.get().resultsTable.getSelectedRow();
@@ -462,11 +440,6 @@ public class MenuListener implements ActionListener {
                 App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
             }
 
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            dialog.dispose();
         }
 
     }

@@ -41,6 +41,8 @@ import dpf.sp.gpinf.indexer.desktop.Messages;
 public class ExpandConfigurationDialog extends JDialog implements MouseListener {
 
   private static final long serialVersionUID = -4634318483160759620L;
+  
+  public static final int MAX_NEIGHBOURS = 20;
 
   private AppGraphAnalytics app;
 
@@ -84,7 +86,7 @@ public class ExpandConfigurationDialog extends JDialog implements MouseListener 
     edges.setSelected(true);
     
     topXLabel.setText(Messages.getString("GraphAnalysis.Expand.MaxNodes"));
-    topXNodes.setText("25");
+    topXNodes.setText(Integer.toString(MAX_NEIGHBOURS));
     
     JPanel panel = new JPanel();
     panel.setLayout(new GridBagLayout());
