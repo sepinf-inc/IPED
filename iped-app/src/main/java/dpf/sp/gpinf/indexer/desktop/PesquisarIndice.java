@@ -273,11 +273,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
     @Override
     public void done() {
 
-        if (numFilters > 1)
-            App.get().multiFilterAlert.setVisible(true);
-        else
-            App.get().multiFilterAlert.setVisible(false);
-
+        App.get().clearAllFilters.setNumberOfFilters(numFilters);
+            
         if (!this.isCancelled())
             try {
                 App.get().ipedResult = this.get();

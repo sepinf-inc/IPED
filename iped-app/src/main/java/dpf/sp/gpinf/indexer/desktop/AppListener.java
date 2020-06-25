@@ -33,9 +33,11 @@ import javax.swing.JOptionPane;
 
 import org.apache.lucene.search.Query;
 
-public class AppListener implements ActionListener, MouseListener {
-
-    volatile boolean clearSearchBox = false;
+public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
+    
+    private String texto = ""; //$NON-NLS-1$
+    private boolean clearAllFilters = false;
+    private boolean clearSearchBox = false;
 
     public void updateFileListing() {
         updateFileListing(null);
@@ -73,23 +75,6 @@ public class AppListener implements ActionListener, MouseListener {
         App.get().parentItemModel.results = new LuceneSearchResult(0);
         App.get().parentItemModel.fireTableDataChanged();
 
-        String texto = ""; //$NON-NLS-1$
-        if (App.get().termo.getSelectedItem() != null) {
-            texto = App.get().termo.getSelectedItem().toString();
-            if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
-                texto = ""; //$NON-NLS-1$
-                clearSearchBox = true;
-                App.get().termo.setSelectedItem(""); //$NON-NLS-1$
-            }
-            texto = texto.trim();
-            MarcadoresController.get().addToRecentSearches(texto);
-        }
-
-        if (!texto.isEmpty())
-            App.get().termo.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
-        else
-            App.get().termo.setBorder(null);
-
         try {
             PesquisarIndice task;
             if (query == null)
@@ -107,9 +92,10 @@ public class AppListener implements ActionListener, MouseListener {
 
     @Override
     public void actionPerformed(ActionEvent evt) {
+        
+        boolean updateFileList = false;
 
-        if (!clearSearchBox && (evt.getActionCommand().equals("comboBoxChanged")) && //$NON-NLS-1$
-                !App.get().filterManager.isUpdatingFilter() && !MarcadoresController.get().updatingHistory) {
+        if (evt.getSource() == App.get().filtro && !App.get().filterManager.isUpdatingFilter() ) {
 
             int filterIndex = App.get().filtro.getSelectedIndex();
             if (filterIndex == 0 || filterIndex == -1) {
@@ -118,16 +104,39 @@ public class AppListener implements ActionListener, MouseListener {
                 App.get().filtro.setBackground(App.get().alertColor);
             }
 
-            updateFileListing();
+            updateFileList = true;
+        }
+        
+        if(evt.getSource() == App.get().termo && !clearSearchBox && !MarcadoresController.get().isUpdatingHistory()) {
+            if (App.get().termo.getSelectedItem() != null) {
+                texto = App.get().termo.getSelectedItem().toString();
+                if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
+                    texto = ""; //$NON-NLS-1$
+                    clearSearchBox = true;
+                    App.get().termo.setSelectedItem(""); //$NON-NLS-1$
+                }
+                texto = texto.trim();
+                MarcadoresController.get().addToRecentSearches(texto);
+            }
 
+            if (!texto.isEmpty())
+                App.get().termo.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
+            else
+                App.get().termo.setBorder(null);
+            
+            updateFileList = true;
         }
 
         if (evt.getSource() == App.get().filterDuplicates) {
-            if (App.get().filterDuplicates.getForeground() == App.get().alertColor)
+            if (!App.get().filterDuplicates.isSelected())
                 App.get().filterDuplicates.setForeground(App.get().topPanel.getBackground());
             else
                 App.get().filterDuplicates.setForeground(App.get().alertColor);
 
+            updateFileList = true;
+        }
+        
+        if(!clearAllFilters && updateFileList) {
             updateFileListing();
         }
 
@@ -201,6 +210,16 @@ public class AppListener implements ActionListener, MouseListener {
     public void mouseReleased(MouseEvent arg0) {
         // TODO Auto-generated method stub
 
+    }
+
+    @Override
+    public void clearFilter() {
+        clearAllFilters = true;
+        App.get().filtro.setSelectedIndex(0);
+        App.get().termo.setSelectedItem(""); //$NON-NLS-1$
+        if(App.get().filterDuplicates.isSelected())
+            App.get().filterDuplicates.doClick();
+        clearAllFilters = false;
     }
 
 }
