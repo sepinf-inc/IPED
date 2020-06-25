@@ -31,10 +31,14 @@ public class SimilarImagesFilterActions {
     private static final GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
     public static void clear() {
+        clear(true);
+    }
+    
+    public static void clear(boolean updateResults) {
         App app = App.get();
         app.similarImagesQueryRefItem = null;
         app.similarImageFilterPanel.setVisible(false);
-        app.appletListener.updateFileListing();
+        if(updateResults) app.appletListener.updateFileListing();
     }
 
     public static void searchSimilarImages(boolean external) {

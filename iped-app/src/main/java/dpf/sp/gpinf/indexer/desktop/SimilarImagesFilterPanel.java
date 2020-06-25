@@ -105,6 +105,6 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
 
     @Override
     public void clearFilter() {
-        SimilarImagesFilterActions.clear();
+        SimilarImagesFilterActions.clear(false);
     }
 }
