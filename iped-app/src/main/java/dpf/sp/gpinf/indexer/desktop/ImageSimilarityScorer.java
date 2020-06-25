@@ -72,6 +72,7 @@ public class ImageSimilarityScorer {
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
         int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
+        int itemsPerThread = (len + numThreads - 1) / numThreads;
         for (int k = 0; k < numThreads; k++) {
             int threadIdx = k;
             (threads[k] = new Thread() {
@@ -83,7 +84,9 @@ public class ImageSimilarityScorer {
                         e.printStackTrace();
                         return;
                     }
-                    for (int i = threadIdx; i < len; i += numThreads) {
+                    int i0 = Math.min(len, itemsPerThread * threadIdx);
+                    int i1 = Math.min(len, i0 + itemsPerThread);
+                    for (int i = i0; i < i1; i++) {
                         IItemId itemId = result.getItem(i);
                         int luceneId = App.get().appCase.getLuceneId(itemId);
                         BytesRef bytesRef = similarityFeaturesValues.get(luceneId);
