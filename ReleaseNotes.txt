@@ -7,6 +7,7 @@ News:
 #25 Store small subitems, thumbs and ocr text in containers, speeding up case copying and deletion (Luis Nassif) 
 #29 Improved HexViewer with goto, search, charset selection, layout customization and more (Guilherme Dutra)
 #70 Regex validators for bitcoin cash, ethereum and riple criptocurrencies, now enabled by default (Fabio Pfeifer)
+#152 Add regexes and validation for bitcoin related private Keys (Fabio Pfeifer)
 #61 Parsers for torrent and resume.dat files (Fabio Pfeifer)
 #31 Parser for Windows 10 user activities timeline (Matheus Bichara)
 #14 Basic parser for SkypeV12 (Patrick Bernardina)
