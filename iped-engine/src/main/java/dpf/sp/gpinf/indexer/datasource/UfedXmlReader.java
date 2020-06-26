@@ -23,6 +23,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 import java.util.TimeZone;
@@ -859,6 +860,18 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
         
+        private HashMap<String, String[]> toCache = new LinkedHashMap<String, String[]>(16, 0.75f, true) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected boolean removeEldestEntry(Entry<String, String[]> eldest) {
+                return this.size() > 1000;
+            }
+        };
+        
+        private Property toProperty = Property.internalText(Message.MESSAGE_TO);
+        
         private void fillMissingInfo(Item item) {
             String from = item.getMetadata().get(Message.MESSAGE_FROM);
             String to = item.getMetadata().get(Message.MESSAGE_TO);
@@ -869,10 +882,18 @@ public class UfedXmlReader extends DataSourceReader {
                     if(itemSeq.size() == 0) return;
                     IItem parentChat = itemSeq.get(itemSeq.size() - 1);
                     String[] parties = parentChat.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                    ArrayList<String> toList = new ArrayList<>();
                     for(String party : parties) {
                         if((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
-                            item.getMetadata().add(Message.MESSAGE_TO, party);
+                            toList.add(party);
                     }
+                    String key = toList.toString();
+                    String[] val = toCache.get(key);
+                    if(val == null) {
+                        val = toList.toArray(new String[toList.size()]);
+                        toCache.put(key, val);
+                    }
+                    item.getMetadata().set(toProperty, val);
                 }
             }
             if(!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType()) || MediaTypes.UFED_SMS_MIME.equals(item.getMediaType())
