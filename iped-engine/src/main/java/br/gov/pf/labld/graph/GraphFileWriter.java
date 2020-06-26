@@ -577,7 +577,6 @@ public class GraphFileWriter implements Closeable, Flushable {
             normalizeNodes(replaces);
         }else {
             replaceRels(replaces);
-            deduplicateLines();
         }
     }
 
@@ -614,21 +613,6 @@ public class GraphFileWriter implements Closeable, Flushable {
       }
       output.delete();
       tmp.renameTo(output);
-    }
-    
-    private void deduplicateLines() throws IOException {
-        List<String> lines = Files.readAllLines(output.toPath());
-        Collections.sort(lines);
-        try(Writer writer = Files.newBufferedWriter(output.toPath(), StandardOpenOption.TRUNCATE_EXISTING)){
-            String prevLine = "";
-            for(String line : lines) {
-                if(!line.equals(prevLine)) {
-                    writer.write(line);
-                    writer.write("\r\n");
-                }
-                prevLine = line;
-            }
-        }
     }
 
     public void normalizeNodes(Map<String, String> replaces) throws IOException {
@@ -704,6 +688,10 @@ public class GraphFileWriter implements Closeable, Flushable {
 
     @Override
     public synchronized void flush() throws IOException {
+      /*
+       * TODO copy tmp.csv to final csv could take a long time in commits (blocking processing) and computer could crash in the middle.
+       * Get rid of temp csvs and using a csv recovery strategy when normalizing at end should be better for --continue processing.
+       */
       if(temp.exists()) {
           try(Reader reader = Files.newBufferedReader(temp.toPath())){
               char[] cbuf = new char[1 << 20];
