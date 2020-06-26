@@ -76,11 +76,10 @@ public class UFEDChatParser extends AbstractParser {
                 return;
 
             String query = BasicProps.PARENTID + ":" + chat.getId(); //$NON-NLS-1$
-            List<IItemBase> items = searcher.search(query);
 
             List<UfedMessage> messages = new ArrayList<>();
 
-            for (IItemBase msg : items) {
+            for (IItemBase msg : searcher.searchIterable(query)) {
                 
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
                 if(attachRefs.length == 0) {

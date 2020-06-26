@@ -17,6 +17,8 @@ import java.util.List;
 public interface IItemSearcher extends Closeable {
 
     List<IItemBase> search(String luceneQuery);
+    
+    Iterable<IItemBase> searchIterable(String luceneQuery);
 
     String escapeQuery(String string);
 
