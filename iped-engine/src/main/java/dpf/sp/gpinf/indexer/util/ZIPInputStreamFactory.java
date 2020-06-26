@@ -63,7 +63,13 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             throw new IOException(e1);
         }
         if (bytes != null) {
-            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes)) {
+                @Override
+                public void close() throws IOException {
+                    super.close();
+                    this.sbc = null;
+                }
+            };
         }
         final Path finalTmp = tmp;
         return new SeekableFileInputStream(finalTmp.toFile()) {
