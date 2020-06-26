@@ -500,6 +500,13 @@ public class GraphFileWriter implements Closeable, Flushable {
     private StringBuilder sb = new StringBuilder();
     private LinkedHashSet<String> fieldPositions = new LinkedHashSet<>();
     private HashMap<String, String> fieldTypes = new HashMap<>();
+    
+    private Set<String> prevNodeRecords = Collections.newSetFromMap(new LinkedHashMap<String, Boolean>(16, 0.75f, true){
+        @Override
+        protected boolean removeEldestEntry(Entry entry) {
+            return this.size() > 10000;
+        }
+    });
 
     private String prefix;
     private String name;
@@ -536,10 +543,11 @@ public class GraphFileWriter implements Closeable, Flushable {
       }
       fieldPositions.addAll(record.keySet());
       Iterator<String> iterator = fieldPositions.iterator();
+      StringBuilder line = new StringBuilder();
       while (iterator.hasNext()) {
         String field = iterator.next();
         Object value = record.get(field);
-        sb.append("\"");
+        line.append("\"");
         if (value != null) {
           String strVal = null;
           if (value instanceof Collection) {
@@ -551,14 +559,17 @@ public class GraphFileWriter implements Closeable, Flushable {
           strVal = QUOTE_PATTERN.matcher(strVal).replaceAll("'");
           strVal = SLASH_PATTERN.matcher(strVal).replaceAll("\\\\\\\\\\\\\\\\");
           strVal = LINE_BREAK_PATTERN.matcher(strVal).replaceAll(" ");
-          sb.append(strVal);
+          line.append(strVal);
         }
-        sb.append("\"");
+        line.append("\"");
         if (iterator.hasNext()) {
-            sb.append(",");
+            line.append(",");
         }
       }
-      sb.append("\r\n");
+      line.append("\r\n");
+      if(!isNodeWriter || prevNodeRecords.add(line.toString())) {
+          sb.append(line);
+      }
     }
     
     public void normalize(Map<String, String> replaces) throws IOException {
