@@ -24,6 +24,8 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
@@ -53,6 +55,8 @@ import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
 public class GraphTask extends AbstractTask {
+  
+  private static final Logger logger = LoggerFactory.getLogger(GraphTask.class);
 
   public static final String DB_NAME = "graph.db";
   public static final String DB_PATH = "neo4j/databases";
@@ -142,22 +146,29 @@ public class GraphTask extends AbstractTask {
   
   public static void commit() throws IOException {
       if(graphFileWriter != null) {
+          logger.info("Commiting graph CSVs...");
           graphFileWriter.flush();
+          logger.info("Commiting graph CSVs finished.");
       }
   }
   
   private void finishGraphGeneration() throws IOException {
+      WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+      logger.info("Generating graph database...");
       File graphDbOutput = new File(output, GraphTask.DB_PATH);
       File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
       GraphGenerator graphGenerator = new GraphGenerator();
       graphGenerator.generate(graphDbOutput, graphDbGenerated);
+      logger.info("Generating graph database finished.");
   }
 
   @Override
   public void finish() throws Exception {
     if (graphFileWriter != null) {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
+        logger.info("Finishing graph CSVs...");
         graphFileWriter.close(caseData.isIpedReport());
+        logger.info("Finishing graph CSVs finished.");
         if(caseData.isIpedReport()) {
             File prevCSVRoot = new File(Configuration.getInstance().appRoot, GraphTask.GENERATED_PATH);
             for(File file : prevCSVRoot.listFiles()) {
@@ -171,7 +182,10 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.close();
         }
         finishGraphGeneration();
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
+        logger.info("Compressing graph CSVs...");
         graphFileWriter.compressGeneratedCSVFiles();
+        logger.info("Compressing graph CSVs finished.");
         graphFileWriter = null;
     }
   }
