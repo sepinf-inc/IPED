@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -23,6 +24,8 @@ import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.i18n.phonenumbers.NumberParseException;
 import com.google.i18n.phonenumbers.PhoneNumberMatch;
@@ -52,6 +55,8 @@ import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
 public class GraphTask extends AbstractTask {
+  
+  private static final Logger logger = LoggerFactory.getLogger(GraphTask.class);
 
   public static final String DB_NAME = "graph.db";
   public static final String DB_PATH = "neo4j/databases";
@@ -79,6 +84,18 @@ public class GraphTask extends AbstractTask {
           WhatsAppParser.WHATSAPP_CONTACT.toString(), 
           "application/windows-adress-book",
           "application/x-ufed-contact"};
+  
+  private static final int MAX_PHONE_CACHE_KEY = 50 * 1024;
+  
+  private static Map<String, SortedSet<String>> formattedPhonesCache = Collections.synchronizedMap(new LinkedHashMap<String, SortedSet<String>>(16, 0.75f, true) {
+
+    private static final long serialVersionUID = 1L;
+
+    @Override
+      protected boolean removeEldestEntry(Entry<String, SortedSet<String>> eldest){
+          return this.size() > 500;
+      }
+  });
 
   private GraphConfiguration configuration;
 
@@ -129,22 +146,29 @@ public class GraphTask extends AbstractTask {
   
   public static void commit() throws IOException {
       if(graphFileWriter != null) {
+          logger.info("Commiting graph CSVs...");
           graphFileWriter.flush();
+          logger.info("Commiting graph CSVs finished.");
       }
   }
   
   private void finishGraphGeneration() throws IOException {
+      WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+      logger.info("Generating graph database...");
       File graphDbOutput = new File(output, GraphTask.DB_PATH);
       File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
       GraphGenerator graphGenerator = new GraphGenerator();
       graphGenerator.generate(graphDbOutput, graphDbGenerated);
+      logger.info("Generating graph database finished.");
   }
 
   @Override
   public void finish() throws Exception {
     if (graphFileWriter != null) {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
+        logger.info("Finishing graph CSVs...");
         graphFileWriter.close(caseData.isIpedReport());
+        logger.info("Finishing graph CSVs finished.");
         if(caseData.isIpedReport()) {
             File prevCSVRoot = new File(Configuration.getInstance().appRoot, GraphTask.GENERATED_PATH);
             for(File file : prevCSVRoot.listFiles()) {
@@ -158,7 +182,10 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.close();
         }
         finishGraphGeneration();
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
+        logger.info("Compressing graph CSVs...");
         graphFileWriter.compressGeneratedCSVFiles();
+        logger.info("Compressing graph CSVs finished.");
         graphFileWriter = null;
     }
   }
@@ -269,6 +296,11 @@ public class GraphTask extends AbstractTask {
     
     //PhoneNumberUtil is thread safe???
     private SortedSet<String> getPhones(String value){
+        SortedSet<String> result = formattedPhonesCache.get(value);
+        if(result != null) {
+            return result;
+        }
+        result = new TreeSet<>();
         PhoneNumberUtil phoneUtil = PhoneNumberUtil.getInstance();
         Set<PhoneNumber> phoneNumbers = new HashSet<>();
         Matcher whatsappMacher = whatsappPattern.matcher(value);
@@ -283,7 +315,6 @@ public class GraphTask extends AbstractTask {
         for(PhoneNumberMatch m : phoneUtil.findNumbers(value, configuration.getPhoneRegion(), Leniency.POSSIBLE, Integer.MAX_VALUE)) {
             phoneNumbers.add(m.number());
         }
-        SortedSet<String> result = new TreeSet<>();
         for(PhoneNumber phoneNumber : phoneNumbers) {
             String phone = phoneUtil.format(phoneNumber, PhoneNumberFormat.INTERNATIONAL);
             if(configuration.getPhoneRegion().equals("BR")) {
@@ -293,6 +324,9 @@ public class GraphTask extends AbstractTask {
                 }
             }
             result.add(phone);
+        }
+        if(value.length() <= MAX_PHONE_CACHE_KEY) {
+            formattedPhonesCache.put(value, result);
         }
         return result;
     }
