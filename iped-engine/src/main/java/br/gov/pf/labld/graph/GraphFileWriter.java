@@ -12,9 +12,9 @@ import java.io.InputStreamReader;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
-import java.io.Reader;
 import java.io.Serializable;
 import java.io.Writer;
+import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -46,8 +45,6 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.util.IOUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
-
-import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class GraphFileWriter implements Closeable, Flushable {
     
@@ -494,7 +491,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     /**
      * 5MB buffer size
      */
-    private static final int MIN_SIZE_TO_FLUSH = 1024 * 1024;
+    private static final int MIN_SIZE_TO_FLUSH = 5 * 1024 * 1024;
 
     private Writer out;
     private StringBuilder sb = new StringBuilder();
@@ -512,7 +509,7 @@ public class GraphFileWriter implements Closeable, Flushable {
     private String name;
     private String suffix;
     private File output;
-    private File temp;
+    private File commitLog;
     private File fieldData;
     private boolean isNodeWriter;
 
@@ -526,8 +523,16 @@ public class GraphFileWriter implements Closeable, Flushable {
       String fileName = prefix + SEPARATOR + name + SEPARATOR + suffix + ".csv";
       this.output = new File(root, fileName);
       this.fieldData = new File(root, fileName + SEPARATOR + "fieldData");
-      this.temp = new File(root, fileName + ".tmp");
-      Files.deleteIfExists(temp.toPath());
+      this.commitLog = new File(root, fileName + ".commit");
+      if(commitLog.exists()) {
+          byte[] bytes = Files.readAllBytes(commitLog.toPath());
+          long size = Long.parseLong(new String(bytes, StandardCharsets.ISO_8859_1));
+          try (FileOutputStream fos = new FileOutputStream(output, true);
+                  FileChannel fc = fos.getChannel()){
+              fc.truncate(size);
+          }
+          Files.delete(commitLog.toPath());
+      }
       this.out = new OutputStreamWriter(new FileOutputStream(output, output.exists()), StandardCharsets.UTF_8);
       this.prefix = prefix;
       this.name = name;
@@ -537,15 +542,26 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     @SuppressWarnings("unchecked")
-    public synchronized void write(Map<String, Object> record) throws IOException {
-      if(sb.length() >= MIN_SIZE_TO_FLUSH) {
-          writeToTemp();
+    public void write(Map<String, Object> record) throws IOException {
+      String data = null;
+      synchronized(this) {
+          if(sb.length() >= MIN_SIZE_TO_FLUSH) {
+              data = sb.toString();
+              sb = new StringBuilder();
+          }
       }
-      fieldPositions.addAll(record.keySet());
-      Iterator<String> iterator = fieldPositions.iterator();
+      if(data != null) {
+         flush(data, false);
+      }
+      String[] fields;
+      synchronized(fieldPositions) {
+          fieldPositions.addAll(record.keySet());
+          fields = fieldPositions.toArray(new String[fieldPositions.size()]);
+      }
+      
       StringBuilder line = new StringBuilder();
-      while (iterator.hasNext()) {
-        String field = iterator.next();
+      for(int i = 0; i < fields.length; i++) {
+        String field = fields[i];
         Object value = record.get(field);
         line.append("\"");
         if (value != null) {
@@ -562,13 +578,15 @@ public class GraphFileWriter implements Closeable, Flushable {
           line.append(strVal);
         }
         line.append("\"");
-        if (iterator.hasNext()) {
+        if(i < fields.length - 1){
             line.append(",");
         }
       }
       line.append("\r\n");
       if(!isNodeWriter || prevNodeRecords.add(line.toString())) {
-          sb.append(line);
+          synchronized(this) {
+              sb.append(line);
+          }
       }
     }
     
@@ -679,34 +697,31 @@ public class GraphFileWriter implements Closeable, Flushable {
         return strs.toArray(new String[strs.size()]);
     }
     
-    private synchronized void writeToTemp() throws IOException {
-        try(Writer writer = Files.newBufferedWriter(temp.toPath(), StandardOpenOption.CREATE, StandardOpenOption.APPEND)){
-            writer.write(sb.toString());
+    @Override
+    public void flush() throws IOException {
+        String data = null;
+        synchronized(this) {
+            data = sb.toString();
             sb = new StringBuilder();
         }
+        flushFieldData();
+        flush(data, true);
     }
-
-    @Override
-    public synchronized void flush() throws IOException {
-      /*
-       * TODO copy tmp.csv to final csv could take a long time in commits (blocking processing) and computer could crash in the middle.
-       * Get rid of temp csvs and using a csv recovery strategy when normalizing at end should be better for --continue processing.
-       */
-      if(temp.exists()) {
-          try(Reader reader = Files.newBufferedReader(temp.toPath())){
-              char[] cbuf = new char[1 << 20];
-              int read = 0;
-              while((read = reader.read(cbuf)) != -1) {
-                  out.write(cbuf, 0, read);
-              }
+    
+    private void flush(String data, boolean commit) throws IOException {
+      synchronized(out) {
+          if(!commitLog.exists()) {
+              Long size = output.length();
+              Files.write(commitLog.toPath(), size.toString().getBytes(StandardCharsets.ISO_8859_1), StandardOpenOption.CREATE);
+              IOUtils.fsync(commitLog, false);
           }
-          temp.delete();
+          out.write(data);
+          if(commit) {
+              out.flush();
+              IOUtils.fsync(output, false);
+              Files.delete(commitLog.toPath());
+          }
       }
-      out.write(sb.toString());
-      sb = new StringBuilder();
-      out.flush();
-      IOUtils.fsync(output, false);
-      flushFieldData();
     }
 
     @Override
@@ -721,12 +736,14 @@ public class GraphFileWriter implements Closeable, Flushable {
         private LinkedHashSet<String> fieldPositions;
     }
     
-    private synchronized void flushFieldData() throws IOException {
+    private void flushFieldData() throws IOException {
         FieldData data = new FieldData();
         data.fieldPositions = this.fieldPositions;
         data.fieldTypes = this.fieldTypes;
-        try(ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(fieldData.toPath()))){
-            oos.writeObject(data);
+        synchronized(this.fieldPositions) {
+            try(ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(fieldData.toPath()))){
+                oos.writeObject(data);
+            }
         }
         IOUtils.fsync(fieldData, false);
     }
