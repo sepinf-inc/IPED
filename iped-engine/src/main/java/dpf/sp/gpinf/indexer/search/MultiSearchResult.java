@@ -34,6 +34,14 @@ public class MultiSearchResult implements IMultiSearchResult {
         return scores[i];
     }
 
+    public final void setScore(int i, float score) {
+        scores[i] = score;
+    }
+
+    public final void setItem(int i, IItemId itemId) {
+        ids[i] = itemId;
+    }
+
     public Iterable<IItemId> getIterator() {
         return new ItemIdIterator();
     }

@@ -234,6 +234,8 @@ public class Item implements ISleuthKitItem {
 
     private byte[] thumb;
 
+    private byte[] imageSimilarityFeatures;
+
     private ISeekableInputStreamFactory inputStreamFactory;
 
     static final int BUF_LEN = 8 * 1024 * 1024;
@@ -1321,6 +1323,15 @@ public class Item implements ISleuthKitItem {
 
     public void setThumb(byte[] thumb) {
         this.thumb = thumb;
+    }
+
+    @Override
+    public byte[] getImageSimilarityFeatures() {
+        return imageSimilarityFeatures;
+    }
+
+    public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures) {
+        this.imageSimilarityFeatures = imageSimilarityFeatures;
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {

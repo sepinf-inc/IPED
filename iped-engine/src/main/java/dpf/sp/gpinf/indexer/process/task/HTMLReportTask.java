@@ -56,6 +56,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
@@ -68,7 +71,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
@@ -82,15 +84,12 @@ import iped3.IItem;
  */
 public class HTMLReportTask extends AbstractTask {
 
+    private static Logger logger = LoggerFactory.getLogger(HTMLReportTask.class);
+
     /**
      * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
      */
     private static final Collator collator = getCollator();
-
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "HTML Report Task"; //$NON-NLS-1$
 
     /**
      * Nome da subpasta com versões de visualização dos arquivos.
@@ -256,9 +255,9 @@ public class HTMLReportTask extends AbstractTask {
                 String value = confParams.getProperty("enableHTMLReport"); //$NON-NLS-1$
                 if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
                     taskEnabled = true;
-                    Log.info(taskName, "Task enabled."); //$NON-NLS-1$
+                    logger.info("Task enabled."); //$NON-NLS-1$
                 } else {
-                    Log.info(taskName, "Task disabled."); //$NON-NLS-1$
+                    logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
                 }
@@ -343,7 +342,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (args != null) {
                     File infoFile = args.getAsap();
                     if (infoFile != null) {
-                        Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
+                        logger.info("Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                         if (!infoFile.exists()) {
                             throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                         }
@@ -381,7 +380,7 @@ public class HTMLReportTask extends AbstractTask {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
             if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
-                Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
+                logger.error("Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
                 return;
             }
 
@@ -397,8 +396,8 @@ public class HTMLReportTask extends AbstractTask {
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             } 
             
-            Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
-            Log.info(taskName, "Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
+            logger.info("Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
+            logger.info("Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
                 throw new FileNotFoundException("Template folder not found!"); //$NON-NLS-1$
             }
@@ -443,7 +442,7 @@ public class HTMLReportTask extends AbstractTask {
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
-            Log.info(taskName, "Report creation time (seconds): " + t); //$NON-NLS-1$
+            logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
             
             graphicsMagicConverter.close();
         }

@@ -41,6 +41,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoubleField;
@@ -390,6 +391,15 @@ public class IndexItem extends BasicProps {
 
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
+
+        byte[] similarityFeatures = evidence.getImageSimilarityFeatures();
+        if (similarityFeatures != null) {
+            doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
+            for (int i = 0; i < 4; i++) {
+                doc.add(new IntField(SIMILARITY_FEATURES + i, similarityFeatures[i], Field.Store.NO));
+            }
+        }
 
         long off = evidence.getFileOffset();
         if (off != -1) {
@@ -785,6 +795,11 @@ public class IndexItem extends BasicProps {
                             e.printStackTrace();
                         }
                     }
+                }
+                
+                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
+                if (bytesRef != null) {
+                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$

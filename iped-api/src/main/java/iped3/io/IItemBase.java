@@ -140,6 +140,8 @@ public interface IItemBase extends IStreamSource {
 
     public byte[] getThumb();
 
+    public byte[] getImageSimilarityFeatures();
+
     public BufferedInputStream getBufferedStream() throws IOException;
 
     /**

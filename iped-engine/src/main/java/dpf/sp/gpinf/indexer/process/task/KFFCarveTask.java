@@ -26,10 +26,6 @@ import iped3.IHashValue;
 public class KFFCarveTask extends BaseCarveTask {
     
     private static Logger logger = LoggerFactory.getLogger(KFFCarveTask.class);
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "KFF Carving"; //$NON-NLS-1$
 
     /**
      * Indica se a tarefa está habilitada ou não.
@@ -123,7 +119,7 @@ public class KFFCarveTask extends BaseCarveTask {
                 logger.info("Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
                 logger.info("512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " //$NON-NLS-1$ //$NON-NLS-2$
                         + nf.format(num512total.get()));
-                logger.info("Bytes hashes: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
+                logger.info("Bytes hashed: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
             }
         }
     }
@@ -199,8 +195,7 @@ public class KFFCarveTask extends BaseCarveTask {
                 offset += read512;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.warn("Error KFFCarving on: " + evidence.getPath() + " : " + e); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn(evidence.toString(), e);
         } finally {
             IOUtil.closeQuietly(is);
         }

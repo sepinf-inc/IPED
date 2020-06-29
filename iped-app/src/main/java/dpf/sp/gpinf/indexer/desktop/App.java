@@ -37,6 +37,8 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -65,6 +67,7 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
+import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
@@ -73,6 +76,8 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -120,6 +125,8 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
+import iped3.IItem;
+import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
@@ -202,6 +209,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color alertSelectedColor = Color.RED;
 
     private int zoomLevel;
+    
+    public SimilarImagesFilterPanel similarImageFilterPanel;
+    public IItem similarImagesQueryRefItem;
 
     public File casesPathFile;
     boolean isMultiCase;
@@ -296,7 +306,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
             } catch (InvocationTargetException | InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -425,9 +434,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters = new ClearFilterButton();
         clearAllFilters.setMaximumSize(new Dimension(100, 100));
 
+        similarImageFilterPanel = new SimilarImagesFilterPanel();
+        similarImageFilterPanel.setVisible(false);
+        
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
         topPanel.add(clearAllFilters);
+        topPanel.add(similarImageFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(termo);
         topPanel.add(opcoes);
@@ -671,6 +684,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(metadataPanel);
         clearAllFilters.addClearListener(appletListener);
         clearAllFilters.addClearListener(appGraphAnalytics);
+        clearAllFilters.addClearListener(similarImageFilterPanel);
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
@@ -746,6 +760,37 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
         
+        if (SimilarImagesFilterActions.isFeatureEnabled()) {
+            CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"), IconUtil.getIcon("find", resPath));
+            galleryTabDock.addAction(butSimSearch);
+            galleryTabDock.addSeparator();
+            butSimSearch.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    SimilarImagesFilterActions.searchSimilarImages(false);
+                }
+            });
+            butSimSearch.setEnabled(false);
+            resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                public void valueChanged(ListSelectionEvent e) {
+                    if (e.getValueIsAdjusting()) {
+                        return;
+                    }
+                    boolean enabled = false;
+                    int selIdx = resultsTable.getSelectedRow();
+                    if (selIdx != -1) {
+                        IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                        if (itemId != null) {
+                            IItem item = appCase.getItemByItemId(itemId);
+                            if (item != null) {
+                                enabled = item.getImageSimilarityFeatures() != null;
+                            }
+                        }
+                    }
+                    butSimSearch.setEnabled(enabled);
+                }
+            });
+        }
+
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
@@ -1218,14 +1263,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowActivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -1237,26 +1278,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowIconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowOpened(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     public IMultiSearchResult getResults() {

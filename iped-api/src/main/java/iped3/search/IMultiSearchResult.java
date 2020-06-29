@@ -6,7 +6,6 @@
 package iped3.search;
 
 import iped3.IItemId;
-import java.util.Iterator;
 
 /**
  *

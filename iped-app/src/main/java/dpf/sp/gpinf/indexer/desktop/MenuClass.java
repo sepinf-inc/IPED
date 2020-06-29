@@ -45,7 +45,8 @@ public class MenuClass extends JPopupMenu {
             diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
             importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns;
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
+            similarImagesCurrent, similarImagesExternal;
 
     MenuListener menuListener;
 
@@ -228,6 +229,20 @@ public class MenuClass extends JPopupMenu {
         similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
         this.add(similarDocs);
 
+        submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
+        submenu.setEnabled(SimilarImagesFilterActions.isFeatureEnabled());
+        this.add(submenu);
+        
+        similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
+        similarImagesCurrent.addActionListener(menuListener);
+        similarImagesCurrent.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
+        submenu.add(similarImagesCurrent);        
+
+        similarImagesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.External")); //$NON-NLS-1$
+        similarImagesExternal.addActionListener(menuListener);
+        similarImagesExternal.setEnabled(submenu.isEnabled());
+        submenu.add(similarImagesExternal);        
+        
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
         openViewfile.setEnabled(item != null && item.getViewFile() != null);
