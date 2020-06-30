@@ -80,13 +80,17 @@ public class UFEDChatParser extends AbstractParser {
             List<UfedMessage> messages = new ArrayList<>();
 
             for (IItemBase msg : searcher.searchIterable(query)) {
-                
+                query = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
-                if(attachRefs.length == 0) {
+                if(attachRefs.length > 0) {
+                    query = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
+                }else if(msg.hasChildren()) {
+                    query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
+                }
+                if(query == null) {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);
                 }else {
-                    query = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" "));
                     List<IItemBase> attachs = searcher.search(query);
                     for(IItemBase attach : attachs) {
                         UfedMessage m = createMessage(msg, attach);
