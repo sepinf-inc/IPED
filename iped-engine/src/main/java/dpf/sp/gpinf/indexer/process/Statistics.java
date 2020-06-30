@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
 
@@ -287,6 +288,8 @@ public class Statistics {
                 .iterator().next();
         LOGGER.info("Operating System: {}", System.getProperty("os.name")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Java Version: {}", System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
+        String warn = Util.getJavaVersionWarn();
+        if(warn != null) LOGGER.error(warn); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Architecture: {}", System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Current Directory: {}", System.getProperty("user.dir")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("CPU Cores: {}", Runtime.getRuntime().availableProcessors()); //$NON-NLS-1$

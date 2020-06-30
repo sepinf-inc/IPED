@@ -42,12 +42,45 @@ import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
 
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 
 public class Util {
+    
+    public static final Integer MIN_JAVA_VER = 8;
+    public static final Integer MAX_JAVA_VER = 8;
+
+    // These java versions have a WebView bug that crashes the JVM: JDK-8196011
+    private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171"};
+    
+    public static String getJavaVersionWarn() {
+        String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
+        if (versionStr.startsWith("1.")) //$NON-NLS-1$
+            versionStr = versionStr.substring(2, 3);
+        int dotIdx = versionStr.indexOf("."); //$NON-NLS-1$
+        if (dotIdx > -1)
+            versionStr = versionStr.substring(0, dotIdx);
+        Integer version = Integer.valueOf(versionStr);
+
+        if (version < MIN_JAVA_VER) {
+            return Messages.getString("JavaVersion.Error").replace("{}", MIN_JAVA_VER.toString()); //$NON-NLS-1$
+        }
+        if (version > MAX_JAVA_VER) {
+            return Messages.getString("JavaVersion.Warn").replace("{}", version.toString()); //$NON-NLS-1$
+        }
+        for (String ver : buggedVersions) {
+            if (System.getProperty("java.version").equals(ver))
+                return Messages.getString("JavaVersion.Bug").replace("{1}", ver).replace("{2}", MAX_JAVA_VER.toString()); //$NON-NLS-1$
+        }
+        
+        if(!System.getProperty("os.arch").contains("64"))
+            return Messages.getString("JavaVersion.Arch"); //$NON-NLS-1$
+        
+        return null;
+    }
     
     public static String getPersistentId(IItem item) {
         String id = (String)item.getExtraAttribute(IndexItem.PERSISTENT_ID);
