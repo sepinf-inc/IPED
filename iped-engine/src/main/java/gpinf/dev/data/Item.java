@@ -1264,23 +1264,12 @@ public class Item implements ISleuthKitItem {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("File: " + name); //$NON-NLS-1$
-        sb.append("\n\t\tPath: ").append(getPath()); //$NON-NLS-1$
+        sb.append("Item: ").append(getPath()); //$NON-NLS-1$
         if (type != null) {
-            sb.append("\n\t\t").append("File type: ") //$NON-NLS-1$ //$NON-NLS-2$
-                    .append(type.getLongDescr());
-        }
-        if (creationDate != null) {
-            sb.append("\n\t\tCreation: ").append(creationDate.toString()); //$NON-NLS-1$
-        }
-        if (modificationDate != null) {
-            sb.append("\n\t\tModification: ").append(modificationDate.toString()); //$NON-NLS-1$
-        }
-        if (accessDate != null) {
-            sb.append("\n\t\tLast Accessed: ").append(accessDate.toString()); //$NON-NLS-1$
+            sb.append(" type: ").append(type.getLongDescr()); //$NON-NLS-1$
         }
         if (length != null) {
-            sb.append("\n\t\tSize: ").append(length); //$NON-NLS-1$
+            sb.append(" size: ").append(length); //$NON-NLS-1$
         }
         return sb.toString();
     }
