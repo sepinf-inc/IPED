@@ -81,8 +81,8 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
-    private static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
-
+    
+    public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
     
@@ -692,7 +692,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) //$NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
                     else if(prevUfedId != null && parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)){
-                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":\"" + prevUfedId + "\"");
+                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":" + prevUfedId);
                         List<Item> attachs = attachsPerId.get(item.getParentId());
                         if(attachs == null) {
                             attachs = new ArrayList<>();
@@ -825,7 +825,7 @@ public class UfedXmlReader extends DataSourceReader {
                                 for(Item attach : attachs) {
                                     processItem(attach);
                                     String ufedId = attach.getMetadata().get(UFED_ID);
-                                    item.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":\"" + ufedId + "\"");
+                                    item.getMetadata().add(ExtraProperties.LINKED_ITEMS, QueryParserUtil.escape(UFED_ID) + ":" + ufedId);
                                 }
                             }else if(attachs != null) {
                                 caseData.incDiscoveredEvidences(-1);
