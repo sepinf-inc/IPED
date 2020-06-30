@@ -166,7 +166,7 @@ searchThreads = 1
 maxBackups = 1
 
 # Intervalo (em segundos) entre a realização dos backups
-backupInterval = 60
+backupInterval = 3600
 
 # Habilita por padrão gerenciamento automático de colunas
 autoManageCols = true
