@@ -74,7 +74,7 @@ public class ViewerController {
 
     public ViewerController(AppSearchParams params) {
         //These viewers will have their own docking frame
-        viewers.add(new HexViewerPlus(new HexSearcherImpl(), Configuration.getInstance().configPath));
+        viewers.add(new HexViewerPlus(new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer(params));
         viewers.add(new MetadataViewer() {
             @Override
