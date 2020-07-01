@@ -574,11 +574,16 @@ public class Manager {
                         ipedCase.close();
                         throw new InterruptedException("Processing canceled!"); //$NON-NLS-1$
                     }
-
-                    IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
-                    if (pesquisa.searchAll().getLength() > 0) {
-                        palavrasFinais.add(palavra);
+                    
+                    try {
+                        IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
+                        if (pesquisa.searchAll().getLength() > 0) {
+                            palavrasFinais.add(palavra);
+                        }
+                    }catch(Exception e) {
+                        LOGGER.error("Erro filtering by {} {}", palavra, e.toString());
                     }
+                    
                 }
                 ipedCase.close();
 
