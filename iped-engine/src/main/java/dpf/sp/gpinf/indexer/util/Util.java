@@ -82,6 +82,24 @@ public class Util {
         return null;
     }
     
+    public static String getRootName(String path) {
+        int fromIndex = path.charAt(0) == '/' || path.charAt(0) == '\\' ? 1 : 0;
+        int slashIdx = path.indexOf('/', fromIndex);
+        int backSlashIndx = path.indexOf('\\', fromIndex);
+        int expanderIdx = path.indexOf(">>", fromIndex);
+        if(slashIdx == -1) {
+            slashIdx = path.length();
+        }
+        if(backSlashIndx == -1) {
+            backSlashIndx = path.length();
+        }
+        if(expanderIdx == -1) {
+            expanderIdx = path.length();
+        }
+        int endIndex = Math.min(slashIdx, Math.min(backSlashIndx, expanderIdx));
+        return path.substring(fromIndex, endIndex);
+    }
+    
     public static String getPersistentId(IItem item) {
         String id = (String)item.getExtraAttribute(IndexItem.PERSISTENT_ID);
         if(id == null) {

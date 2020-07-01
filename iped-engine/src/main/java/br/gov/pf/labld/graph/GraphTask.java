@@ -49,6 +49,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -586,12 +587,14 @@ public class GraphTask extends AbstractTask {
         return sb.toString().trim();
     }
     
-    private NodeValues getGenericOwnerNode(String evidenceUUID) throws IOException {
+    private NodeValues getGenericOwnerNode(IItem item) throws IOException {
+        String evidenceUUID = item.getDataSource().getUUID();
         synchronized(this.getClass()) {
             NodeValues nv1 = datasourceOwnerMap.get(evidenceUUID);
             if(nv1 == null) {
-                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID, "evidenceUuid_" + evidenceUUID);
-                graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
+                nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID, evidenceUUID);
+                nv1.addProp(BasicProps.NAME, Util.getRootName(item.getPath()));
+                graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
                 datasourceOwnerMap.put(evidenceUUID, nv1);
                 
                 List<String> msisdns = (List<String>) caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + evidenceUUID);
@@ -622,7 +625,7 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         }
         
-        if(nv1 == null) nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
+        if(nv1 == null) nv1 = getGenericOwnerNode(item);
         
         NodeValues nv2 = writePersonNode(item, null);
         
@@ -642,7 +645,7 @@ public class GraphTask extends AbstractTask {
             return;
         }
         
-        NodeValues nv1 = getGenericOwnerNode(item.getDataSource().getUUID());
+        NodeValues nv1 = getGenericOwnerNode(item);
         
         NodeValues nv2;
         Map<String, Object> nodeProps = new HashMap<>();

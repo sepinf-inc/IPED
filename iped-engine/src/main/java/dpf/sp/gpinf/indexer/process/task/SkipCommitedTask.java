@@ -84,7 +84,7 @@ public class SkipCommitedTask extends AbstractTask{
                 if(!prevRootNameToEvidenceUUID.containsValue(uuid)) {
                     Document luceneDoc = aReader.document(doc);
                     String path = luceneDoc.get(BasicProps.PATH);
-                    prevRootNameToEvidenceUUID.put(getRootName(path), uuid);
+                    prevRootNameToEvidenceUUID.put(Util.getRootName(path), uuid);
                 }
             }
             args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -144,24 +144,6 @@ public class SkipCommitedTask extends AbstractTask{
             commitedPersistentIds = new HashValue[0];
         }
         
-    }
-    
-    private static String getRootName(String path) {
-        int fromIndex = path.charAt(0) == '/' || path.charAt(0) == '\\' ? 1 : 0;
-        int slashIdx = path.indexOf('/', fromIndex);
-        int backSlashIndx = path.indexOf('\\', fromIndex);
-        int expanderIdx = path.indexOf(">>", fromIndex);
-        if(slashIdx == -1) {
-            slashIdx = path.length();
-        }
-        if(backSlashIndx == -1) {
-            backSlashIndx = path.length();
-        }
-        if(expanderIdx == -1) {
-            expanderIdx = path.length();
-        }
-        int endIndex = Math.min(slashIdx, Math.min(backSlashIndx, expanderIdx));
-        return path.substring(fromIndex, endIndex);
     }
     
     private void collectParentsWithoutAllSubitems(AtomicReader aReader, SortedDocValues persistIds, NumericDocValues ids, String parentIdField, String subitemCountField) throws IOException {
@@ -241,7 +223,7 @@ public class SkipCommitedTask extends AbstractTask{
         stats.resetCarvedIgnored(item);
         
         //change evidenceUUID to previous processing evidenceUUID
-        String rootPrefix = getRootName(item.getPath());
+        String rootPrefix = Util.getRootName(item.getPath());
         String oldUUID = prevRootNameToEvidenceUUID.get(rootPrefix);
         if(oldUUID != null) {
             if(caseData.getCaseObject(UfedXmlReader.MSISDN_PROP + oldUUID) == null) {

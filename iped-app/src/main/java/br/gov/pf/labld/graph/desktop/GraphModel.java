@@ -51,7 +51,7 @@ public class GraphModel {
     int dynSize = (int) (2 * Math.ceil(Math.log(neo4jNode.getDegree() + 1)));
     
     if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
-      node.setSize(30 + dynSize);
+      node.setSize(20 + dynSize);
       node.setColor(Color.RED);
     } else if (type.equals(GraphConfiguration.CONTACT_GROUP_LABEL)) {
       node.setSize(25 + dynSize);
