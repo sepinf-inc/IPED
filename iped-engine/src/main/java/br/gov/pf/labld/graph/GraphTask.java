@@ -73,7 +73,7 @@ public class GraphTask extends AbstractTask {
   
   //TODO externalize to config file
   private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]{1,64}\\@[0-9a-zA-Z\\-]{2,64}(\\.[0-9a-zA-Z\\-]{2,25}){1,3}");
-  private static Pattern whatsappPattern = Pattern.compile("([0-9]{5,20})\\@[sg]\\.whatsapp\\.net");
+  private static Pattern whatsappPattern = Pattern.compile("([0-9]{7,20})\\@[sg]\\.whatsapp\\.net");
   private static Pattern oldBRPhonePattern = Pattern.compile("(\\+55 \\d\\d )([7-9]\\d{3}\\-\\d{4})");
   
   //TODO externalize to config file
@@ -485,9 +485,15 @@ public class GraphTask extends AbstractTask {
         String[] name = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Name");
         if(name.length == 0) name = item.getMetadata().getValues(ExtraProperties.USER_NAME);
         
-        String[] accounts = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username");
-        if(accounts.length == 0) accounts = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID");
-        if(accounts.length == 0) accounts = item.getMetadata().getValues(ExtraProperties.USER_ACCOUNT);
+        String[] accounts = item.getMetadata().getValues(ExtraProperties.USER_ACCOUNT);
+        if(accounts.length == 0) accounts = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Username");
+        if(accounts.length == 0) {
+            ArrayList<String> ids = new ArrayList<>();
+            for(String id : item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")) {
+                if(!id.contains("whatsapp.net")) ids.add(id);
+            }
+            accounts = ids.toArray(new String[ids.size()]);
+        }
         
         String[] accountType = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if(accountType.length == 0) accountType = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Source");
