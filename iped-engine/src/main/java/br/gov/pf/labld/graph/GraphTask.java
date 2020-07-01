@@ -476,8 +476,7 @@ public class GraphTask extends AbstractTask {
         possiblePhones.addAll(Arrays.asList(item.getMetadata().getValues(ExtraProperties.USER_PHONE)));
         for(String id : item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "UserID")) {
             Matcher matcher = whatsappPattern.matcher(id);
-            //just add wa ids with at least 8 numbers
-            if(matcher.find() && id.substring(matcher.start()).indexOf('@') >= 8) possiblePhones.add(id);
+            if(matcher.find()) possiblePhones.add(id);
         }
         SortedSet<String> formattedPhones = getPhones(possiblePhones.toString());
         if(msisdnPhones == null) msisdnPhones = Collections.emptySortedSet();
