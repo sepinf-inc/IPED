@@ -35,8 +35,12 @@ import iped3.search.IQueryBuilder;
 public class QueryBuilder implements IQueryBuilder {
 
     private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
-
-    private HashMap<String, NumericConfig> numericConfigMap;
+    
+    private static HashMap<String, NumericConfig> numericConfigCache;
+    
+    private static IIPEDSource prevIpedCase;
+    
+    private static Object lock = new Object();
 
     private IIPEDSource ipedCase;
 
@@ -147,11 +151,14 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     private HashMap<String, NumericConfig> getNumericConfigMap() {
+        
+        synchronized(lock) {
+            if(ipedCase == prevIpedCase && numericConfigCache != null) {
+                return numericConfigCache;
+            } 
+        }
 
-        if (numericConfigMap != null)
-            return numericConfigMap;
-
-        numericConfigMap = new HashMap<String, NumericConfig>();
+        HashMap<String, NumericConfig> numericConfigMap = new HashMap<>();
 
         DecimalFormat nf = new DecimalFormat();
         NumericConfig configLong = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.LONG);
@@ -183,6 +190,11 @@ public class QueryBuilder implements IQueryBuilder {
         } catch (IOException e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
+        }
+        
+        synchronized(lock) {
+            numericConfigCache = numericConfigMap;
+            prevIpedCase = ipedCase;
         }
 
         return numericConfigMap;
