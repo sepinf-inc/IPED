@@ -8,6 +8,15 @@ public class UfedMessage extends Message{
     
     private String transcription;
     private String transcriptConfidence;
+    private String mediatrueExtension;
+    
+    public String getMediaTrueExt() {
+        return mediatrueExtension;
+    }
+
+    public void setMediaTrueExt(String trueExtension) {
+        this.mediatrueExtension = trueExtension;
+    }
     
     public String getTranscription() {
         return transcription;

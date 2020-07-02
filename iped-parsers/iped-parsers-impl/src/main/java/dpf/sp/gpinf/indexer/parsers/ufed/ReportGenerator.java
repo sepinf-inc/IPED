@@ -127,10 +127,7 @@ public class ReportGenerator {
             if (message.getMediaHash() != null) {
                 out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + message.getMediaHash() + "\",this.checked) />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
-                String ext = ""; //$NON-NLS-1$
-                int extIdx = message.getMediaName().lastIndexOf('.');
-                if (extIdx > -1)
-                    ext = message.getMediaName().substring(extIdx);
+                String ext = "." + message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$
                 if (!exportPath.isEmpty())
                     out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
