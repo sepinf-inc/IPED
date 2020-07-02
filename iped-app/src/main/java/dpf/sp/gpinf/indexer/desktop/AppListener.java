@@ -107,7 +107,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
             updateFileList = true;
         }
         
-        if(evt.getSource() == App.get().termo && !clearSearchBox && !MarcadoresController.get().isUpdatingHistory()) {
+        if(evt.getSource() == App.get().termo && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !MarcadoresController.get().isUpdatingHistory()) {
             if (App.get().termo.getSelectedItem() != null) {
                 texto = App.get().termo.getSelectedItem().toString();
                 if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
