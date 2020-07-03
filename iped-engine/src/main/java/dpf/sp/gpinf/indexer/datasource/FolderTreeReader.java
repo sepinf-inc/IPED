@@ -194,9 +194,10 @@ public class FolderTreeReader extends DataSourceReader {
                 } catch (InterruptedException e) {
                     return FileVisitResult.TERMINATE;
                 }
-                
+
                 if (attr.isDirectory()) {
-                    //must getId() after caseData.addItem(), it could set item id to previous id with --continue
+                    // must getId() after caseData.addItem(), it could set item id to previous id
+                    // with --continue
                     parentIds.addLast(item.getId());
                     paths.addLast(fileName);
                 }

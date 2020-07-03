@@ -41,7 +41,7 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class MakePreviewTask extends AbstractTask {
-    
+
     private static Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
 
     public static final String viewFolder = "view"; //$NON-NLS-1$
@@ -160,7 +160,7 @@ public class MakePreviewTask extends AbstractTask {
             final TikaInputStream tis = evidence.getTikaStream();
 
             final ParseContext context = new ParseContext();
-            IItemSearcher itemSearcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
+            IItemSearcher itemSearcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
             context.set(IItemSearcher.class, itemSearcher);
             context.set(IItemBase.class, evidence);
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));

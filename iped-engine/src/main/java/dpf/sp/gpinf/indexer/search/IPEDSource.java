@@ -126,15 +126,15 @@ public class IPEDSource implements Closeable, IIPEDSource {
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
     Set<String> extraAttributes = new HashSet<String>();
-    
+
     Set<String> evidenceUUIDs = new HashSet<String>();
 
     boolean isFTKReport = false, isReport = false;
-    
+
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
     }
-    
+
     public static File getTempIndexDir(File moduleDir) throws IOException {
         File prevTempInfoFile = getTempDirInfoFile(moduleDir);
         String prevTemp = new String(Files.readAllBytes(prevTempInfoFile.toPath()), "UTF-8");
@@ -163,7 +163,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            if(!index.exists()) {
+            if (!index.exists()) {
                 throw new RuntimeException("Index not found: " + defaultIndex.getAbsolutePath()); //$NON-NLS-1$
             }
         }
@@ -267,15 +267,16 @@ public class IPEDSource implements Closeable, IIPEDSource {
         for (int i = ids.length - 1; i >= 0; i--)
             docs[ids[i]] = i;
     }
-    
+
     private void populateEvidenceUUIDs() throws IOException {
         SortedDocValues sdv = atomicReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
-        if(sdv == null) return;
-        for(int i = 0; i < sdv.getValueCount(); i++) {
+        if (sdv == null)
+            return;
+        for (int i = 0; i < sdv.getValueCount(); i++) {
             evidenceUUIDs.add(sdv.lookupOrd(i).utf8ToString());
         }
     }
-    
+
     public Set<String> getEvidenceUUIDs() {
         return evidenceUUIDs;
     }
@@ -316,7 +317,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private void loadCategories() {
         try {
             Fields fields = atomicReader.fields();
-            if(fields == null)
+            if (fields == null)
                 return;
             Terms terms = fields.terms(IndexItem.CATEGORY);
             TermsEnum termsEnum = terms.iterator(null);
@@ -500,7 +501,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 if (newPaths.size() > 0) {
                     testCanWriteToCase(sleuthFile);
                     sleuthCase.setImagePaths(id, newPaths);
-                } else if(iw == null)
+                } else if (iw == null)
                     askNewImagePath(id, paths, sleuthFile);
         }
     }
@@ -521,8 +522,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private void askNewImagePath(long imgId, List<String> paths, File sleuthFile) throws TskCoreException, IOException {
         SelectImagePathWithDialog sip = new SelectImagePathWithDialog(new File(paths.get(0)));
-        File newImage =  sip.askImagePathInGUI();
-        
+        File newImage = sip.askImagePathInGUI();
+
         ArrayList<String> newPaths = new ArrayList<String>();
         if (paths.size() == 1) {
             newPaths.add(newImage.getAbsolutePath());
@@ -565,13 +566,13 @@ public class IPEDSource implements Closeable, IIPEDSource {
     public int getLuceneId(int id) {
         return docs[id];
     }
-    
+
     public int getParentId(int id) {
         try {
             Set<String> field = Collections.singleton(BasicProps.PARENTID);
             Document doc = searcher.doc(getLuceneId(id), field);
             String parent = doc.get(BasicProps.PARENTID);
-            if(parent != null && !parent.isEmpty()) {
+            if (parent != null && !parent.isEmpty()) {
                 return Integer.valueOf(parent);
             }
         } catch (IOException e) {

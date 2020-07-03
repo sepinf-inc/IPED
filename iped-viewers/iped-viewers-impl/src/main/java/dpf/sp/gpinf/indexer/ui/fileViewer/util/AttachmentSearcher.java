@@ -5,7 +5,7 @@ import java.io.File;
 import iped3.IItem;
 
 public interface AttachmentSearcher {
-    
+
     File getTmpFile(String luceneQuery);
 
     IItem getItem(String luceneQuery);

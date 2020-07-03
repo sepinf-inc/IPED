@@ -23,19 +23,19 @@ import iped3.util.BasicProps;
  *
  */
 public class ItemNodeGenerator {
-    
+
     private ICaseData caseData;
     private GraphConfiguration configuration;
     private GraphFileWriter graphFileWriter;
-    
+
     public ItemNodeGenerator(ICaseData caseData, GraphConfiguration configuration, GraphFileWriter graphFileWriter) {
         this.caseData = caseData;
         this.configuration = configuration;
         this.graphFileWriter = graphFileWriter;
     }
-    
+
     public void generateNodeForItem(IItem evidence) throws IOException {
-        
+
         IpedCase ipedCase = (IpedCase) caseData.getCaseObject(IpedCase.class.getName());
         List<Integer> parentIds = evidence.getParentIds();
 
@@ -45,7 +45,7 @@ public class ItemNodeGenerator {
         boolean isGraphDatasource = false;
 
         if (isDir && !isCaseRoot) {
-          return;
+            return;
         }
 
         Map<String, Object> nodeProperties = new HashMap<>();
@@ -57,45 +57,45 @@ public class ItemNodeGenerator {
         String propertyName = "evidenceId";
         Object identifier = evidence.getId();
         if (entityType != null) {
-          IpedDatasourceType type = IpedDatasourceType.valueOf(entityType.toString());
+            IpedDatasourceType type = IpedDatasourceType.valueOf(entityType.toString());
 
-          GraphEntity entity;
-          if (type == IpedDatasourceType.PERSON) {
-            entity = configuration.getEntity(configuration.getDefaultPersonEntity());
-          } else if (type == IpedDatasourceType.BUSINESS) {
-            entity = configuration.getEntity(configuration.getDefaultBusinessEntity());
-          } else if (type == IpedDatasourceType.GENERIC) {
-            entity = configuration.getEntity(configuration.getDefaultEntity());
-          } else {
-            throw new IllegalArgumentException("Unknown X-EntityType:" + entityType);
-          }
+            GraphEntity entity;
+            if (type == IpedDatasourceType.PERSON) {
+                entity = configuration.getEntity(configuration.getDefaultPersonEntity());
+            } else if (type == IpedDatasourceType.BUSINESS) {
+                entity = configuration.getEntity(configuration.getDefaultBusinessEntity());
+            } else if (type == IpedDatasourceType.GENERIC) {
+                entity = configuration.getEntity(configuration.getDefaultEntity());
+            } else {
+                throw new IllegalArgumentException("Unknown X-EntityType:" + entityType);
+            }
 
-          labels.add(DynLabel.label("DATASOURCE"));
-          isGraphDatasource = true;
+            labels.add(DynLabel.label("DATASOURCE"));
+            isGraphDatasource = true;
 
-          nodeProperties.put("type", type.name());
+            nodeProperties.put("type", type.name());
 
-          Object entityProperty = evidence.getExtraAttribute("X-EntityProperty");
-          Object entityPropertyValue = evidence.getExtraAttribute("X-EntityPropertyValue");
+            Object entityProperty = evidence.getExtraAttribute("X-EntityProperty");
+            Object entityPropertyValue = evidence.getExtraAttribute("X-EntityPropertyValue");
 
-          label = DynLabel.label(entity.getLabel());
-          if (entityProperty != null) {
-            propertyName = entityProperty.toString();
-          } else {
-            propertyName = "evidenceId";
-          }
+            label = DynLabel.label(entity.getLabel());
+            if (entityProperty != null) {
+                propertyName = entityProperty.toString();
+            } else {
+                propertyName = "evidenceId";
+            }
 
-          if (entityPropertyValue != null) {
-            identifier = entityPropertyValue.toString();
-          } else {
-            identifier = evidence.getId();
-          }
+            if (entityPropertyValue != null) {
+                identifier = entityPropertyValue.toString();
+            } else {
+                identifier = evidence.getId();
+            }
 
-          nodeProperties.put(propertyName, entityPropertyValue);
+            nodeProperties.put(propertyName, entityPropertyValue);
         } else {
-          label = DynLabel.label(configuration.getDefaultEntity());
-          propertyName = "evidenceId";
-          identifier = evidence.getId();
+            label = DynLabel.label(configuration.getDefaultEntity());
+            propertyName = "evidenceId";
+            identifier = evidence.getId();
         }
 
         nodeProperties.put("evidenceId", evidence.getId());
@@ -104,51 +104,51 @@ public class ItemNodeGenerator {
 
         Object category = evidence.getTempAttribute(BasicProps.CATEGORY);
         if (category == null) {
-          if (!evidence.getCategorySet().isEmpty()) {
-            category = evidence.getCategorySet().iterator().next();
-          }
+            if (!evidence.getCategorySet().isEmpty()) {
+                category = evidence.getCategorySet().iterator().next();
+            }
         }
 
         String categoryValue;
         if (category != null) {
-          categoryValue = category.toString();
+            categoryValue = category.toString();
         } else {
-          categoryValue = null;
+            categoryValue = null;
         }
         nodeProperties.put("category", categoryValue);
 
         String hash = evidence.getHash();
         if (hash != null && !hash.isEmpty()) {
-          nodeProperties.put("hash", hash);
+            nodeProperties.put("hash", hash);
         }
 
         Object reader = evidence.getExtraAttribute("X-Reader");
         if (reader != null && !reader.toString().isEmpty()) {
-          nodeProperties.put("source", reader.toString());
+            nodeProperties.put("source", reader.toString());
         }
 
         nodeProperties.put(propertyName, identifier);
-        
+
         String nodeId = graphFileWriter.writeCreateNode(propertyName, identifier, nodeProperties, label,
-            labels.toArray(new Label[labels.size()]));
-        
+                labels.toArray(new Label[labels.size()]));
+
         if (isGraphDatasource) {
-          graphFileWriter.writeNodeReplace(DynLabel.label(configuration.getDefaultEntity()), "evidenceId", evidence.getId(),
-              nodeId);
+            graphFileWriter.writeNodeReplace(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
+                    evidence.getId(), nodeId);
         }
-        
+
         RelationshipType relationshipType = DynRelationshipType.withName(configuration.getDefaultRelationship());
 
         if (isIpedCase && parentIds.size() > 2) {
-          // Cria vinculo da evidencia com a entrada do datasource se ipedCase.
-          Integer inputId = parentIds.get(2);
-          graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, identifier,
-              relationshipType);
+            // Cria vinculo da evidencia com a entrada do datasource se ipedCase.
+            Integer inputId = parentIds.get(2);
+            graphFileWriter.writeCreateRelationship(label, "evidenceId", inputId, label, propertyName, identifier,
+                    relationshipType);
         } else if (isIpedCase && parentIds.size() == 2) {
-          // Cria vinculo da entrada com o datasource se ipedCase.
-          Integer datasourceId = parentIds.get(1);
-          graphFileWriter.writeCreateRelationship(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
-              datasourceId, label, propertyName, identifier, relationshipType);
+            // Cria vinculo da entrada com o datasource se ipedCase.
+            Integer datasourceId = parentIds.get(1);
+            graphFileWriter.writeCreateRelationship(DynLabel.label(configuration.getDefaultEntity()), "evidenceId",
+                    datasourceId, label, propertyName, identifier, relationshipType);
         }
     }
 

@@ -22,9 +22,11 @@ public class ExternalFileOpen {
             public void run() {
                 IItem item = App.get().appCase.getItemByLuceneID(luceneId);
                 String itemReferenceQuery = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
-                if(itemReferenceQuery != null && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)) {
+                if (itemReferenceQuery != null
+                        && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)) {
                     item = new AttachmentSearcherImpl().getItem(itemReferenceQuery);
-                    if(item == null) return;
+                    if (item == null)
+                        return;
                 }
                 try {
                     File file = item.getTempFile();

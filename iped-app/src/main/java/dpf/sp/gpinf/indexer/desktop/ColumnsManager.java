@@ -102,7 +102,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.WKFF_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
-            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED};
+            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED };
 
     public static final String[] email = ExtraProperties.EMAIL_PROPS;
 
@@ -154,11 +154,11 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         textFieldNameFilter.setText(emptyFilter);
         textFieldNameFilter.setForeground(Color.gray);
     }
-    
+
     public void setPinnedColumns(int firstColsToPin) {
         this.firstColsToPin = firstColsToPin;
     }
-    
+
     public int getPinnedColumns() {
         return this.firstColsToPin;
     }
@@ -339,7 +339,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         final ProgressDialog progress = new ProgressDialog(App.get(), null, false, 100, ModalityType.TOOLKIT_MODAL);
         progress.setNote(Messages.getString("ColumnsManager.LoadingCols")); //$NON-NLS-1$
-        
+
         new Thread() {
             public void run() {
                 final Set<String> usedCols = getUsedCols(progress);
@@ -355,9 +355,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private Set<String> getUsedCols2(ProgressDialog progress) {
-        
+
         progress.setMaximum(indexFields.length);
-        
+
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         TreeSet<String> dinamicFields = new TreeSet<>(collator);
@@ -415,9 +415,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         return dinamicFields;
     }
-    
+
     private Set<String> getUsedCols(ProgressDialog progress) {
-                
+
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
         TreeSet<String> dinamicFields = new TreeSet<>(collator);
@@ -426,14 +426,14 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         int i = 0;
         for (IItemId item : App.get().ipedResult.getIterator())
             docs[i++] = App.get().appCase.getLuceneId(item);
-        
+
         int MAX_ITEMS_TO_CHECK = 50;
         progress.setMaximum(MAX_ITEMS_TO_CHECK);
-        
+
         int interval = docs.length / MAX_ITEMS_TO_CHECK;
         if (interval == 0)
             interval = 1;
-        
+
         int p = 0;
         for (i = 0; i < docs.length; i += interval) {
             if (progress.isCanceled())
@@ -441,7 +441,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             try {
                 Document doc = App.get().appCase.getReader().document(docs[i]);
                 for (String field : indexFields) {
-                    if(doc.getField(field) != null)
+                    if (doc.getField(field) != null)
                         dinamicFields.add(field);
                 }
             } catch (IOException e) {
@@ -456,20 +456,21 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         if (dinamicFields == null)
             return;
-        
+
         Set<String> colNamesToPin = new HashSet<>();
         for (int i = 2; i < Math.min(firstColsToPin, App.get().resultsTable.getColumnCount()); i++) {
-            colNamesToPin.add(App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
+            colNamesToPin.add(
+                    App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
         }
 
         for (String field : (List<String>) colState.visibleFields.clone()) {
-            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase()) &&
-                    !field.equals(BasicProps.LENGTH)) //length header changes to listed items total size info
+            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase())
+                    && !field.equals(BasicProps.LENGTH)) // length header changes to listed items total size info
             {
                 updateGUICol(field, false);
             }
         }
-        
+
         int newColStart = App.get().resultsTable.getColumnCount();
 
         for (String field : dinamicFields) {
@@ -477,7 +478,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 updateGUICol(field, true);
         }
 
-        //move important new cols to front
+        // move important new cols to front
         int newPosEmail = firstColsToPin;
         int newPosOther = firstColsToPin;
         for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
@@ -486,15 +487,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosEmail++);
                 newPosOther++;
-            }else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
+            } else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
                 App.get().resultsTable.moveColumn(i, newPosOther++);
             }
         }
-        
-        //move important old cols to front
+
+        // move important old cols to front
         int lastOldCol = newColStart - 1 + newPosOther - firstColsToPin;
         newPosEmail = firstColsToPin;
-        for (int i = newPosOther; i <= lastOldCol ; i++) {
+        for (int i = newPosOther; i <= lastOldCol; i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
             if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
@@ -617,7 +618,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     insertField = false;
                     break;
                 }
-            if (f.startsWith(BasicProps.SIMILARITY_FEATURES)) 
+            if (f.startsWith(BasicProps.SIMILARITY_FEATURES))
                 continue;
             if (insertField)
                 otherFields.add(f);
@@ -670,7 +671,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }
 
     }
-    
+
     private Map<String, Integer> lastWidths = new HashMap<>();
 
     private void updateGUICol(String colName, boolean insert) {
@@ -686,7 +687,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 modelIdx += ResultTableModel.fixedCols.length;
 
             TableColumn tc = new TableColumn(modelIdx);
-            if(lastWidths.containsKey(colName))
+            if (lastWidths.containsKey(colName))
                 tc.setPreferredWidth(lastWidths.get(colName));
             else
                 tc.setPreferredWidth(150);

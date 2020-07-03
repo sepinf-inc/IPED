@@ -111,7 +111,7 @@ public class Configuration {
             logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
         }
     }
-    
+
     /**
      * Configurações a partir do caminho informado.
      */
@@ -119,7 +119,7 @@ public class Configuration {
 
         configPath = configPathStr;
 
-        if(appRoot == null) {
+        if (appRoot == null) {
             appRoot = getAppRoot(configPath);
         }
 
@@ -212,7 +212,7 @@ public class Configuration {
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
-        
+
         loadLibsAndToolPaths();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
@@ -231,7 +231,7 @@ public class Configuration {
 
         KFFConfig kffConfig = new KFFConfig();
         configManager.addObject(kffConfig);
-        
+
         OCRConfig ocrConfig = new OCRConfig();
         configManager.addObject(ocrConfig);
 

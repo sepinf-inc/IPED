@@ -17,42 +17,42 @@ import br.gov.pf.labld.graph.PathQueryListener;
 
 public abstract class AbstractSearchLinksQuery implements SearchLinksQuery {
 
-  @Override
-  public void search(String start, String end, GraphDatabaseService graphDB, PathQueryListener listener) {
-    Map<String, Object> params = new HashMap<>(2);
-    params.put("start", start);
-    params.put("end", end);
+    @Override
+    public void search(String start, String end, GraphDatabaseService graphDB, PathQueryListener listener) {
+        Map<String, Object> params = new HashMap<>(2);
+        params.put("start", start);
+        params.put("end", end);
 
-    Transaction tx = null;
-    try {
-      tx = graphDB.beginTx();
+        Transaction tx = null;
+        try {
+            tx = graphDB.beginTx();
 
-      Result result = graphDB.execute(getQuery(), params);
-      ResourceIterator<Path> resourceIterator = result.columnAs("path");
+            Result result = graphDB.execute(getQuery(), params);
+            ResourceIterator<Path> resourceIterator = result.columnAs("path");
 
-      boolean continueQuery = true;
-      while (continueQuery && resourceIterator.hasNext()) {
-        Path path = resourceIterator.next();
-        continueQuery = listener.pathFound(path);
-      }
+            boolean continueQuery = true;
+            while (continueQuery && resourceIterator.hasNext()) {
+                Path path = resourceIterator.next();
+                continueQuery = listener.pathFound(path);
+            }
 
-      tx.success();
-    } finally {
-      tx.close();
+            tx.success();
+        } finally {
+            tx.close();
+        }
     }
-  }
 
-  protected String getQuery() {
-    try (InputStream in = new BufferedInputStream(openQueryFile())) {
-      return IOUtils.toString(in, "utf-8");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    protected String getQuery() {
+        try (InputStream in = new BufferedInputStream(openQueryFile())) {
+            return IOUtils.toString(in, "utf-8");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
-  }
 
-  protected InputStream openQueryFile() {
-    String resourceName = this.getClass().getSimpleName() + ".cypher";
-    return this.getClass().getResourceAsStream(resourceName);
-  }
+    protected InputStream openQueryFile() {
+        String resourceName = this.getClass().getSimpleName() + ".cypher";
+        return this.getClass().getResourceAsStream(resourceName);
+    }
 
 }

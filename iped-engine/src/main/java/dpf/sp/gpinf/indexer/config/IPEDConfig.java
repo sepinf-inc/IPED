@@ -9,7 +9,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import java.nio.file.Path;
 
 public class IPEDConfig extends AbstractPropertiesConfigurable {
-    
+
     boolean toAddUnallocated = false;
     boolean toAddFileSlacks = false;
     boolean enableHtmlReport = true;
@@ -44,9 +44,9 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
     public boolean isToAddFileSlacks() {
         return toAddFileSlacks;
     }
-    
+
     public boolean isHtmlReportEnabled() {
-    	return enableHtmlReport;
+        return enableHtmlReport;
     }
 
     @Override
@@ -84,10 +84,10 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, value.trim());
         }
-        
+
         value = properties.getProperty(ENABLEHTMLREPORT);
         if (value != null && !value.trim().isEmpty()) {
-        	enableHtmlReport = Boolean.valueOf(value.trim());
+            enableHtmlReport = Boolean.valueOf(value.trim());
         }
 
     }

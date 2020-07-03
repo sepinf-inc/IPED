@@ -23,7 +23,7 @@ public abstract class WAContactsExtractor {
     }
 
     public abstract void extractContactList() throws WAExtractorException;
-    
+
     protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }

@@ -21,15 +21,15 @@ import javax.swing.filechooser.FileFilter;
 
 import gpinf.dev.data.ReportInfo;
 
-public class ReportInfoDialog extends JDialog implements ActionListener{
-    
+public class ReportInfoDialog extends JDialog implements ActionListener {
+
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     private ReportInfo reportInfo = new ReportInfo();
-    
+
     JDialog infoDialog;
     JButton infoButton = new JButton(Messages.getString("ReportDialog.LoadButton")); //$NON-NLS-1$
     JButton okButton = new JButton("OK"); //$NON-NLS-1$
@@ -44,7 +44,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
     JTextField rLabNumber = new JTextField();
     JTextField rLabDate = new JTextField();
     JTextArea rEvidences = new JTextArea();
-    
+
     private GridBagConstraints getGridBagConstraints(int x, int y, int width, int height) {
         GridBagConstraints c = new GridBagConstraints();
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -60,10 +60,10 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
         c.gridheight = height;
         return c;
     }
-    
+
     public ReportInfoDialog(JDialog owner) {
         super(owner);
-        
+
         infoDialog = this;
         infoDialog.setTitle(Messages.getString("ReportDialog.CaseInfo")); //$NON-NLS-1$
         infoDialog.setBounds(0, 0, 500, 550);
@@ -71,9 +71,9 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
 
         JPanel fullPanel = new JPanel(new BorderLayout());
         fullPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        
+
         JPanel panel = new JPanel(new GridBagLayout());
-        
+
         JLabel loadFile = new JLabel();
         loadFile.setText(Messages.getString("ReportDialog.LoadInfo"));
         panel.add(loadFile, getGridBagConstraints(0, 0, 2, 1));
@@ -102,7 +102,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
         JLabel request = new JLabel(Messages.getString("ReportDialog.Request")); //$NON-NLS-1$
         panel.add(request, getGridBagConstraints(0, 6, 1, 1));
         panel.add(rRequestForm, getGridBagConstraints(1, 6, 2, 1));
-        
+
         JLabel requestDate = new JLabel(Messages.getString("ReportDialog.RequestDate")); //$NON-NLS-1$
         panel.add(requestDate, getGridBagConstraints(0, 7, 1, 1));
         panel.add(rRequestDate, getGridBagConstraints(1, 7, 2, 1));
@@ -124,21 +124,21 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
         panel.add(rEvidences, getGridBagConstraints(1, 11, 2, 2));
         rEvidences.setLineWrap(true);
         rEvidences.setWrapStyleWord(true);
-        
+
         fullPanel.add(panel, BorderLayout.CENTER);
         JPanel bPanel = new JPanel(new BorderLayout());
         bPanel.add(okButton, BorderLayout.EAST);
         fullPanel.add(bPanel, BorderLayout.SOUTH);
 
         infoDialog.getContentPane().add(fullPanel);
-        
+
         infoButton.addActionListener(this);
         okButton.addActionListener(this);
     }
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        
+
         if (e.getSource() == infoButton) {
             JFileChooser fileChooser = new JFileChooser();
             fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
@@ -148,33 +148,32 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
                 File infoFile = fileChooser.getSelectedFile();
                 try {
                     reportInfo = new ReportInfo();
-                    if(infoFile.getName().endsWith(".json"))
+                    if (infoFile.getName().endsWith(".json"))
                         reportInfo.readJsonInfoFile(infoFile);
-                    else if(infoFile.getName().endsWith(".asap"))
+                    else if (infoFile.getName().endsWith(".asap"))
                         reportInfo.readAsapInfoFile(infoFile);
-                    
+
                     populateTextFields(reportInfo);
-                    
+
                 } catch (IOException e1) {
                     e1.printStackTrace();
                     JOptionPane.showMessageDialog(null, "Error loading case info file: " + e1.toString()); //$NON-NLS-1$
                 }
             }
-            
+
         }
-        
-        if(e.getSource() == okButton) {
+
+        if (e.getSource() == okButton) {
             loadTextFields();
             this.setVisible(false);
         }
-        
+
     }
-    
+
     private class InfoFileFilter extends FileFilter {
         @Override
         public boolean accept(File f) {
-            return  f.isDirectory() || 
-                    f.getName().toLowerCase().endsWith(".asap") || //$NON-NLS-1$
+            return f.isDirectory() || f.getName().toLowerCase().endsWith(".asap") || //$NON-NLS-1$
                     f.getName().toLowerCase().endsWith(".json");
         }
 
@@ -183,7 +182,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
             return "*.json;*.asap"; //$NON-NLS-1$
         }
     }
-    
+
     private void populateTextFields(ReportInfo info) {
         rNumber.setText(info.reportNumber);
         rDate.setText(info.reportDate);
@@ -197,7 +196,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
         rLabDate.setText(info.labCaseDate);
         rEvidences.setText(info.getEvidenceDescHtml());
     }
-    
+
     private void loadTextFields() {
         reportInfo.reportNumber = rNumber.getText().trim();
         reportInfo.reportDate = rDate.getText().trim();
@@ -211,7 +210,7 @@ public class ReportInfoDialog extends JDialog implements ActionListener{
         reportInfo.labCaseDate = rLabDate.getText().trim();
         reportInfo.fillEvidenceFromText(rEvidences.getText().trim());
     }
-    
+
     public ReportInfo getReportInfo() {
         return reportInfo;
     }

@@ -32,8 +32,7 @@ public class ExtractorAndroid extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
             String selectChatQuery = hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
@@ -95,7 +94,8 @@ public class ExtractorAndroid extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
-                if(account != null) m.setLocalResource(account.getId());
+                if (account != null)
+                    m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
@@ -103,10 +103,10 @@ public class ExtractorAndroid extends Extractor {
                 int media_size = rs.getInt("mediaSize"); //$NON-NLS-1$
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if(remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
+                if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
                     remoteResource = remote.getId();
                 }
-                m.setRemoteResource(remoteResource); //$NON-NLS-1$
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$

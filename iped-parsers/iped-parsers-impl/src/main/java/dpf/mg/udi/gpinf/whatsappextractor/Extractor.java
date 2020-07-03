@@ -33,7 +33,7 @@ public abstract class Extractor {
     }
 
     protected abstract List<Chat> extractChatList() throws WAExtractorException;
-    
+
     protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }

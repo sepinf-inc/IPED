@@ -6,19 +6,19 @@ import javax.swing.AbstractAction;
 
 public class OpenExportLinkAction extends AbstractAction {
 
-  private static final long serialVersionUID = -2484826492967842455L;
+    private static final long serialVersionUID = -2484826492967842455L;
 
-  private AppGraphAnalytics app;
+    private AppGraphAnalytics app;
 
-  public OpenExportLinkAction(AppGraphAnalytics app) {
-    super();
-    this.app = app;
-  }
+    public OpenExportLinkAction(AppGraphAnalytics app) {
+        super();
+        this.app = app;
+    }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    ExportLinksDialog dialog = new ExportLinksDialog(app);
-    dialog.setVisible(true);
-  }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        ExportLinksDialog dialog = new ExportLinksDialog(app);
+        dialog.setVisible(true);
+    }
 
 }

@@ -33,5 +33,5 @@ public class RippleAddressValidatorService extends BasicAbstractRegexValidatorSe
         }
         return false;
     }
-    
+
 }

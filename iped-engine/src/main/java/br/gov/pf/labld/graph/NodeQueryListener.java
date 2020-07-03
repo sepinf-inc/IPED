@@ -4,6 +4,6 @@ import org.neo4j.graphdb.Node;
 
 public interface NodeQueryListener {
 
-  public boolean nodeFound(Node node);
-  
+    public boolean nodeFound(Node node);
+
 }

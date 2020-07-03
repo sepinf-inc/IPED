@@ -196,7 +196,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     private ParseContext getTikaContext(IItem item) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-        ParseContext context = expander.getTikaContext((IPEDSource)appSearchParams.lastSelectedSource);
+        ParseContext context = expander.getTikaContext((IPEDSource) appSearchParams.lastSelectedSource);
         expander.setExtractEmbedded(false);
         return context;
     }
@@ -220,7 +220,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
             // this can cause ConcurrentModificationException if another viewer access
             // metadata at same time
-            //Metadata metadata = item.getMetadata();
+            // Metadata metadata = item.getMetadata();
             Metadata metadata = MetadataUtil.clone(item.getMetadata());
 
             ParsingTask.fillMetadata(item, metadata);

@@ -95,7 +95,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         offsetFile.setLength(len);
         offsetFile.setSumVolume(false);
         offsetFile.setParent(parentEvidence);
-        
+
         offsetFile.setDeleted(parentEvidence.isDeleted());
 
         if (mediaType != null)
@@ -108,21 +108,21 @@ public abstract class BaseCarveTask extends AbstractTask {
     }
 
     protected void addOffsetFile(IItem offsetFile, IItem parentEvidence) {
-        
+
         if (offsetFile.isCarved()) {
             incItensCarved();
         }
-        Integer numSubitems = (Integer)parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
-        if(numSubitems == null) {
+        Integer numSubitems = (Integer) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
+        if (numSubitems == null) {
             numSubitems = 0;
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, ++numSubitems);
-        
+
         // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
         // processa no worker atual
         boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
         ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
-        
+
         worker.processNewItem(offsetFile, time);
     }
 
@@ -170,7 +170,7 @@ public abstract class BaseCarveTask extends AbstractTask {
             }
         }
         parentItem.setHasChildren(true);
-        
+
         Util.generatePersistentId(Util.getPersistentId(parentItem), carvedItem);
     }
 

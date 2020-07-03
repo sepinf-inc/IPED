@@ -44,12 +44,11 @@ public class RTFParser2 extends AbstractParser {
      */
     private static final long serialVersionUID = -4165069489372320313L;
 
-    private static final Set<MediaType> SUPPORTED_TYPES =
-            Collections.singleton(MediaType.application("rtf"));
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("rtf"));
     /**
      * maximum number of bytes per embedded object/pict (default: 20MB)
      */
-    private static int EMB_OBJ_MAX_BYTES = 20 * 1024 * 1024; //20MB
+    private static int EMB_OBJ_MAX_BYTES = 20 * 1024 * 1024; // 20MB
 
     /**
      * See {@link #setMaxBytesForEmbeddedObject(int)}.
@@ -62,13 +61,13 @@ public class RTFParser2 extends AbstractParser {
     }
 
     /**
-     * Bytes for embedded objects are currently cached in memory.
-     * If something goes wrong during the parsing of an embedded object,
-     * it is possible that a read length may be crazily too long
-     * and cause a heap crash.
+     * Bytes for embedded objects are currently cached in memory. If something goes
+     * wrong during the parsing of an embedded object, it is possible that a read
+     * length may be crazily too long and cause a heap crash.
      *
-     * @param max maximum number of bytes to allow for embedded objects.  If
-     *            the embedded object has more than this number of bytes, skip it.
+     * @param max
+     *            maximum number of bytes to allow for embedded objects. If the
+     *            embedded object has more than this number of bytes, skip it.
      * @deprecated use {@link #setMemoryLimitInKb(int)} instead
      */
     @Deprecated
@@ -77,7 +76,7 @@ public class RTFParser2 extends AbstractParser {
         USE_STATIC = true;
     }
 
-    //get rid of this once we get rid of the other static maxbytes...
+    // get rid of this once we get rid of the other static maxbytes...
     private static volatile boolean USE_STATIC = false;
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -85,17 +84,16 @@ public class RTFParser2 extends AbstractParser {
     }
 
     @Field
-    private int memoryLimitInKb = EMB_OBJ_MAX_BYTES/1024;
+    private int memoryLimitInKb = EMB_OBJ_MAX_BYTES / 1024;
 
-    public void parse(
-            InputStream stream, ContentHandler handler,
-            Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         metadata.set(Metadata.CONTENT_TYPE, "application/rtf");
         TaggedInputStream tagged = new TaggedInputStream(stream);
         try {
             XHTMLContentHandler xhtmlHandler = new XHTMLContentHandler(handler, metadata);
-            RTFEmbObjHandler embObjHandler = new RTFEmbObjHandler(xhtmlHandler, metadata, context, getMemoryLimitInKb());
+            RTFEmbObjHandler embObjHandler = new RTFEmbObjHandler(xhtmlHandler, metadata, context,
+                    getMemoryLimitInKb());
             final TextExtractor2 ert = new TextExtractor2(xhtmlHandler, metadata, embObjHandler);
             ert.extract(stream);
         } catch (IOException e) {
@@ -111,12 +109,12 @@ public class RTFParser2 extends AbstractParser {
     }
 
     private int getMemoryLimitInKb() {
-        //there's a race condition here, but it shouldn't matter.
+        // there's a race condition here, but it shouldn't matter.
         if (USE_STATIC) {
             if (EMB_OBJ_MAX_BYTES < 0) {
                 return EMB_OBJ_MAX_BYTES;
             }
-            return EMB_OBJ_MAX_BYTES/1024;
+            return EMB_OBJ_MAX_BYTES / 1024;
         }
         return memoryLimitInKb;
     }

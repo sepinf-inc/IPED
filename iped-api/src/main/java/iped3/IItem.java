@@ -99,7 +99,7 @@ public interface IItem extends IItemBase {
     String getIdInDataSource();
 
     ISeekableInputStreamFactory getInputStreamFactory();
-    
+
     String getParentIdInDataSource();
 
     /**
@@ -117,7 +117,7 @@ public interface IItem extends IItemBase {
      * @return o valor do atributo extra
      */
     Object getExtraAttribute(String key);
-    
+
     Object getTempAttribute(String key);
 
     /**
@@ -340,7 +340,7 @@ public interface IItem extends IItemBase {
      *            valor do atributo
      */
     void setExtraAttribute(String key, Object value);
-    
+
     void setTempAttribute(String key, Object value);
 
     /**
@@ -527,9 +527,9 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
-    
+
     void setParentIdInDataSource(String string);
-    
+
     void setThumb(byte[] thumb);
 
     void setImageSimilarityFeatures(byte[] imageSimilarityFeatures);

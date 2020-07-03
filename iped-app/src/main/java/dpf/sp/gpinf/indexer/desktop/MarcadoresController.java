@@ -31,7 +31,7 @@ public class MarcadoresController {
             }
         });
     }
-    
+
     public boolean isUpdatingHistory() {
         return updatingHistory;
     }

@@ -221,7 +221,7 @@ public class HTMLReportTask extends AbstractTask {
      * geração de miniaturas.
      */
     private static final Set<String> currentFiles = new HashSet<String>();
-    
+
     private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
     /**
@@ -347,16 +347,16 @@ public class HTMLReportTask extends AbstractTask {
                             throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                         }
                         try {
-                            if(infoFile.getName().endsWith(".asap")) //$NON-NLS-1$
+                            if (infoFile.getName().endsWith(".asap")) //$NON-NLS-1$
                                 info.readAsapInfoFile(infoFile);
-                            else if(infoFile.getName().endsWith(".json")) //$NON-NLS-1$
+                            else if (infoFile.getName().endsWith(".json")) //$NON-NLS-1$
                                 info.readJsonInfoFile(infoFile);
-                            else if(infoFile.getName().endsWith(".report")) { //$NON-NLS-1$
+                            else if (infoFile.getName().endsWith(".report")) { //$NON-NLS-1$
                                 ReportInfo ri = ReportInfo.readReportInfoFile(infoFile);
                                 ri.reportHeader = info.reportHeader;
                                 info = ri;
                             }
-                                
+
                         } catch (Exception e) {
                             e.printStackTrace();
                             init.set(true);
@@ -375,7 +375,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void finish() throws Exception {
-    	
+
         if (taskEnabled && caseData.containsReport() && info != null) {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
@@ -391,19 +391,20 @@ public class HTMLReportTask extends AbstractTask {
             String codePath = Configuration.getInstance().appRoot;
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
-            if(!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = (LocaleConfig)ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+            if (!new File(templatesFolder, reportRootModel).exists()) {
+                LocaleConfig localeConf = (LocaleConfig) ConfigurationManager.getInstance()
+                        .findObjects(LocaleConfig.class).iterator().next();
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
-            } 
-            
+            }
+
             logger.info("Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
             logger.info("Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
                 throw new FileNotFoundException("Template folder not found!"); //$NON-NLS-1$
             }
-            
+
             File templateSubFolder = new File(templatesFolder, "modelos"); //$NON-NLS-1$
-            if(!templateSubFolder.exists())
+            if (!templateSubFolder.exists())
                 templateSubFolder = new File(templatesFolder, "templates"); //$NON-NLS-1$
 
             long t = System.currentTimeMillis();
@@ -429,21 +430,21 @@ public class HTMLReportTask extends AbstractTask {
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), //$NON-NLS-1$
                     new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
-            
+
             File reportRootModelFile = new File(templatesFolder, reportRootModel);
-            if(!reportRootModelFile.exists())
+            if (!reportRootModelFile.exists())
                 reportRootModelFile = new File(templatesFolder, "report.htm"); //$NON-NLS-1$
             Files.copy(reportRootModelFile.toPath(), new File(reportSubFolder.getParentFile(), reportRoot).toPath());
-            
+
             File help = new File(templatesFolder, "ajuda.htm"); //$NON-NLS-1$
-            if(help.exists())
+            if (help.exists())
                 copyFile(help, reportSubFolder);
-            
+
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
             logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
-            
+
             graphicsMagicConverter.close();
         }
     }
@@ -925,12 +926,12 @@ public class HTMLReportTask extends AbstractTask {
             thumbFile.getParentFile().mkdirs();
         }
         try {
-            if(evidence.getThumb() != null) {
+            if (evidence.getThumb() != null) {
                 Files.write(thumbFile.toPath(), evidence.getThumb());
                 return;
             }
             BufferedImage img = null;
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { //$NON-NLS-1$
+            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);
@@ -1156,7 +1157,7 @@ public class HTMLReportTask extends AbstractTask {
             e.printStackTrace();
         }
     }
-    
+
 }
 
 /**

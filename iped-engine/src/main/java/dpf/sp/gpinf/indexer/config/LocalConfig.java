@@ -13,9 +13,9 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
-    
+
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
-    
+
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -109,7 +109,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (outputOnSSD || !indexTempOnSSD || Boolean.valueOf(System.getProperty(SYS_PROP_APPEND)))
             indexTemp = null;
     }
-    
+
     public void setIndexerTemp(File temp) {
         indexerTemp = temp;
         indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$

@@ -61,7 +61,7 @@ public class HitsTableModel extends AbstractTableModel {
         try {
             if (col == 0) {
                 return row + 1;
-            } 
+            }
             long hitOff = textViewer.textParser.getHits().get(row);
             int hitLen = textViewer.textParser.getSortedHits().get(hitOff)[0];
 

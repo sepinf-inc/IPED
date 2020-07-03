@@ -105,9 +105,9 @@ public class ReportGenerator {
                 + "<TH>" + Messages.getString("SkypeReport.EditedDate") + "</TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + "<TH>" + Messages.getString("SkypeReport.RemoteID") + "</TH>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        if(c instanceof SkypeConversationV14) {
+        if (c instanceof SkypeConversationV14) {
             out.println("<TH>JSON</TH>"); //$NON-NLS-1$
-        }                
+        }
 
         out.println("</TR>"); //$NON-NLS-1$
 
@@ -130,16 +130,17 @@ public class ReportGenerator {
                     byte[] thumb = item.getThumb();
                     String query = BasicProps.HASH + ":" + item.getHash();
                     String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
-                    out.println("<input class=\"ck\" type=\"checkbox\" onclick=app.check(\"" + query + "\",this.checked) />");
+                    out.println("<input class=\"ck\" type=\"checkbox\" onclick=app.check(\"" + query
+                            + "\",this.checked) />");
                     out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
                     out.println(" href=\"" + exportPath + "\">");
-                    if(thumb != null) {
+                    if (thumb != null) {
                         out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                                 + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
                     }
                     out.print("<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     out.println("</a></TD>"); //$NON-NLS-1$
-                    
+
                 } catch (Exception e) {
                     out.print("</TD>"); //$NON-NLS-1$
                     e.printStackTrace();
@@ -147,7 +148,7 @@ public class ReportGenerator {
             } else {
                 out.print("<TD>" + FormatUtil.format(sm.getConteudo()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            if(sm instanceof SkypeMessageV12) {
+            if (sm instanceof SkypeMessageV12) {
                 out.println("<td>"); //$NON-NLS-1$
                 out.println(((SkypeMessageV12) sm).getJSONdata());
                 out.println("</td>"); //$NON-NLS-1$
@@ -168,7 +169,7 @@ public class ReportGenerator {
 
         out.println("</TABLE>"); //$NON-NLS-1$
 
-        if(c instanceof SkypeConversationV14) {
+        if (c instanceof SkypeConversationV14) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
             out.println(((SkypeConversationV14) c).getJSONdata());
@@ -232,13 +233,13 @@ public class ReportGenerator {
 
         out.println("</TABLE>"); //$NON-NLS-1$
 
-        if(c instanceof SkypeContactV8) {
+        if (c instanceof SkypeContactV8) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
             out.println(((SkypeContactV8) c).getJSONdata());
             out.println("</p>"); //$NON-NLS-1$
         }
-        
+
         endDocument(out);
 
         out.flush();
@@ -365,7 +366,8 @@ public class ReportGenerator {
             String query = c.getItemQuery();
             out.println("<p>" + Messages.getString("SkypeReport.LikelyFile") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             String quotedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-            out.println("<input class=\"ck\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\" />");
+            out.println(
+                    "<input class=\"ck\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\" />");
             out.println("<a onclick=\"app.open(" + quotedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
             List<IItemBase> result = Util.getItems(query, searcher);
             if (result != null && !result.isEmpty()) {

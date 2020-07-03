@@ -59,7 +59,7 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     @Override
-	public void searchMediaCache(IItemSearcher searcher) {
+    public void searchMediaCache(IItemSearcher searcher) {
         if (baseSkypeFolder == null)
             return;
         baseSkypeFolder = baseSkypeFolder.replace('\\', '/');
@@ -264,8 +264,8 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     private static final String SELECT_CACHE_DB = "select id, key, serialized_data, actual_size from assets where key like '%URI' order by actual_size desc"; //$NON-NLS-1$
-    
-    private class NameSize{
+
+    private class NameSize {
         String name;
         long size;
     }
@@ -296,7 +296,7 @@ public class SkypeSqlite implements SkypeStorage {
             NameSize result = new NameSize();
             result.name = str.substring(start, end - 1);
             result.size = rs.getLong("actual_size"); //$NON-NLS-1$
-            
+
             return result;
 
         } catch (Exception e) {
@@ -345,7 +345,8 @@ public class SkypeSqlite implements SkypeStorage {
                 boolean originalFound = false;
                 for (IItemBase item : cachedMediaList) {
                     String nome = item.getName();
-                    if (nome.startsWith("i" + urlFile.getId() + "^") && item.getLength() == urlFile.getSize()) { //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    if (nome.startsWith("i" + urlFile.getId() + "^") && item.getLength() == urlFile.getSize()) { //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                 // //$NON-NLS-3$
                         urlFile.setCacheFile(item);
                         originalFound = true;
                         break;
@@ -372,7 +373,7 @@ public class SkypeSqlite implements SkypeStorage {
         NameSize nameSize = getFileNameFromCacheDb(urlFile.getUri());
         if (nameSize != null) {
             String name = nameSize.name;
-            if(name.startsWith("^") && name.indexOf("^", 1) == 51) {
+            if (name.startsWith("^") && name.indexOf("^", 1) == 51) {
                 name = name.split("\\^")[1];
             }
             for (IItemBase item : cachedMediaList) {
@@ -446,7 +447,7 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     @Override
-	public List<SkypeConversation> extraiMensagens() throws SkypeParserException {
+    public List<SkypeConversation> extraiMensagens() throws SkypeParserException {
         conversations = new Hashtable<Integer, SkypeConversation>();
 
         try (Statement stmt = getConnection().createStatement();) {
@@ -486,10 +487,10 @@ public class SkypeSqlite implements SkypeStorage {
                     int messageType = rs.getInt("type"); //$NON-NLS-1$
 
                     sm = new SkypeMessage();
-                    sm.setId(Long.toString(rs.getLong("messageId")) ); //$NON-NLS-1$
+                    sm.setId(Long.toString(rs.getLong("messageId"))); //$NON-NLS-1$
                     sm.setAutor(rs.getString("author")); //$NON-NLS-1$
                     sm.setFromMe(skypeName.equals(sm.getAutor()));
-                    if ((sm.getAutor()!=null) && !sm.getAutor().equals(skypeName)) {
+                    if ((sm.getAutor() != null) && !sm.getAutor().equals(skypeName)) {
                         sm.setDestino(skypeName);
                     } else {
                         sm.setDestino(rs.getString("identity")); //$NON-NLS-1$
@@ -545,7 +546,7 @@ public class SkypeSqlite implements SkypeStorage {
             + "from contacts"; //$NON-NLS-1$
 
     @Override
-	public List<SkypeContact> extraiContatos() throws SkypeParserException {
+    public List<SkypeContact> extraiContatos() throws SkypeParserException {
         try (Statement stmt = getConnection().createStatement();) {
 
             ResultSet rs = stmt.executeQuery(SkypeSqlite.SELECT_CONTACTS);
@@ -646,7 +647,7 @@ public class SkypeSqlite implements SkypeStorage {
             + " 				left join Messages m on m.guid = t.chatmsg_guid "; //$NON-NLS-1$
 
     @Override
-	public List<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException {
+    public List<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException {
         try (Statement stmt = getConnection().createStatement();) {
 
             ResultSet rs = stmt.executeQuery(SkypeSqlite.SELECT_FILE_TRANSFER);
@@ -712,12 +713,12 @@ public class SkypeSqlite implements SkypeStorage {
     }
 
     @Override
-	public String getSkypeName() {
+    public String getSkypeName() {
         return skypeName;
     }
 
     @Override
-	public SkypeAccount getAccount() {
+    public SkypeAccount getAccount() {
         return account;
     }
 

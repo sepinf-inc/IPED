@@ -254,25 +254,27 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                             }
                         });
                         sorted = true;
-                    }catch(NumberFormatException e) {
+                    } catch (NumberFormatException e) {
                     }
                 }
-                if(!sorted) Arrays.sort(values, collator);
+                if (!sorted)
+                    Arrays.sort(values, collator);
             }
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
                 try {
-                    //do not use scientific notation for longs
+                    // do not use scientific notation for longs
                     Double d = Double.valueOf(values[i]);
-                    if(d.doubleValue() == d.longValue()) {
+                    if (d.doubleValue() == d.longValue()) {
                         values[i] = Long.toString(d.longValue());
                     }
-                }catch(NumberFormatException e) {}
-                
+                } catch (NumberFormatException e) {
+                }
+
                 sb.append(values[i]);
                 if (i != values.length - 1) {
-                    if(i == 9) {
+                    if (i == 9) {
                         sb.append(" ..."); //$NON-NLS-1$
                         break;
                     }
@@ -297,9 +299,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 } catch (Exception e) {
                     // e.printStackTrace();
                 }
-            
-            if(Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
-                //it was stored lowercase because query parser converts range queries to lowercase
+
+            if (Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
+                // it was stored lowercase because query parser converts range queries to
+                // lowercase
                 value = value.toUpperCase();
             }
 

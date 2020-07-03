@@ -38,7 +38,7 @@ public class GalleryValue {
         this.icon = icon;
         this.id = id;
     }
-    
+
     @Override
     public String toString() {
         return name;

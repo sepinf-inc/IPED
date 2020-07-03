@@ -13,7 +13,7 @@ public class Messages {
 
     private Messages() {
     }
-    
+
     public static String get(String key) {
         if (RESOURCE_BUNDLE == null) {
             String localeStr = System.getProperty("iped-locale"); //$NON-NLS-1$
@@ -28,10 +28,10 @@ public class Messages {
             throw e;
         }
     }
-    
+
     public static String getString(String key, Object... args) {
         String value = get(key);
-        if(args != null)
+        if (args != null)
             value = MessageFormat.format(value, args);
         return value;
     }

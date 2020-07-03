@@ -6,20 +6,20 @@ import javax.swing.AbstractAction;
 
 public class ShowPanelAction extends AbstractAction {
 
-  private static final long serialVersionUID = 6677856850841139551L;
+    private static final long serialVersionUID = 6677856850841139551L;
 
-  private CaseManagement caseManagement;
-  private String panelName;
+    private CaseManagement caseManagement;
+    private String panelName;
 
-  public ShowPanelAction(CaseManagement caseManagement, String panelName) {
-    super();
-    this.caseManagement = caseManagement;
-    this.panelName = panelName;
-  }
+    public ShowPanelAction(CaseManagement caseManagement, String panelName) {
+        super();
+        this.caseManagement = caseManagement;
+        this.panelName = panelName;
+    }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    caseManagement.showPanel(panelName);
-  }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        caseManagement.showPanel(panelName);
+    }
 
 }

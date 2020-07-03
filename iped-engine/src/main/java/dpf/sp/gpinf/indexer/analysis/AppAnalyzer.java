@@ -49,7 +49,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
-        
+
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
         analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);

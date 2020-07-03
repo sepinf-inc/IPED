@@ -2,7 +2,7 @@ package dpf.mt.gpinf.skype.parser;
 
 import java.util.Date;
 
-public class SkypeAccount implements SkypeUser{
+public class SkypeAccount implements SkypeUser {
 
     String id;
     String skypeName;
@@ -166,7 +166,7 @@ public class SkypeAccount implements SkypeUser{
     public void setRegistrationTimestamp(Date registrationTimestamp) {
         this.registrationTimestamp = registrationTimestamp;
     }
-    
+
     public String getBestName() {
         String name = getFullname();
         if (name == null || name.trim().isEmpty())

@@ -72,7 +72,7 @@ public class ReportGenerator {
 
         return bout.toByteArray();
     }
-    
+
     public byte[] generateAccountHtml(WAAccount account) throws UnsupportedEncodingException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
@@ -351,8 +351,9 @@ public class ReportGenerator {
                         if (result != null && !result.isEmpty()) {
                             String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(result.get(0));
                             if (!exportPath.isEmpty()) {
-                                if(onclick != null) {
-                                    String onCheck = onclick.replaceFirst(".open", ".check").replace("\")", "\",this.checked)");
+                                if (onclick != null) {
+                                    String onCheck = onclick.replaceFirst(".open", ".check").replace("\")",
+                                            "\",this.checked)");
                                     out.println("<input class=\"check\" type=\"checkbox\" onclick=" + onCheck + "/>");
                                 }
                                 out.println("<a "); //$NON-NLS-1$
@@ -391,10 +392,11 @@ public class ReportGenerator {
                                     out.println("</video>"); //$NON-NLS-1$
                                 }
                                 String transcription = result.get(0).getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
-                                if(transcription != null) {
+                                if (transcription != null) {
                                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
-                                    String confidence = result.get(0).getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
-                                    if(confidence != null) {
+                                    String confidence = result.get(0).getMetadata()
+                                            .get(ExtraProperties.CONFIDENCE_ATTR);
+                                    if (confidence != null) {
                                         float score = Float.valueOf(confidence) * 100;
                                         out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
                                     }
@@ -403,7 +405,7 @@ public class ReportGenerator {
                                     out.println("</i><br/>"); //$NON-NLS-1$
                                 }
                             }
-                            
+
                         } else {
                             out.println("<a onclick=" + onclick + ">"); //$NON-NLS-1$
                             if (message.getMessageType() == AUDIO_MESSAGE) {
@@ -449,16 +451,17 @@ public class ReportGenerator {
                                 exportPath = getReportExportPath(result.get(0), message.getMessageType());
                             }
                         }
-                        if(linkParam != null) {
-                            if(result != null && !result.isEmpty()) {
-                                out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check(" + linkParam + ",this.checked)" + quote + " />");
+                        if (linkParam != null) {
+                            if (result != null && !result.isEmpty()) {
+                                out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check("
+                                        + linkParam + ",this.checked)" + quote + " />");
                             }
                             out.println("<a onclick=" + quote + "app.open(" + linkParam + ")" + quote + " "); //$NON-NLS-1$ //$NON-NLS-2$
                         }
-                        if(exportPath != null && !exportPath.isEmpty()) {
+                        if (exportPath != null && !exportPath.isEmpty()) {
                             out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                         }
-                        if(linkParam != null) {
+                        if (linkParam != null) {
                             out.println(">"); //$NON-NLS-1$
                         }
                         thumb = message.getThumbData();
@@ -601,11 +604,10 @@ public class ReportGenerator {
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")+ "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                + "<style>\n"
-                + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
-                + "\n</style>\n"
-                + "<script>\n" //$NON-NLS-1$
+                + "	<link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico") //$NON-NLS-1$ //$NON-NLS-2$
+                + "\" />\n" //$NON-NLS-1$
+                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
+                + "\n</style>\n" + "<script>\n" //$NON-NLS-2$
                 + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
                 + "css.type = \"text/css\";\n" //$NON-NLS-1$
                 + "var inHtml = \"\";\n" //$NON-NLS-1$
@@ -623,8 +625,7 @@ public class ReportGenerator {
                 + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
                 + "</script>\n" //$NON-NLS-1$
                 + VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
-                + "<style>.check {vertical-align: top;}</style>"
-                + "<body>\n" //$NON-NLS-1$
+                + "<style>.check {vertical-align: top;}</style>" + "<body>\n" //$NON-NLS-2$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$
                 + "	<span class=\"left\">" //$NON-NLS-1$
                 + " &nbsp; "); //$NON-NLS-1$

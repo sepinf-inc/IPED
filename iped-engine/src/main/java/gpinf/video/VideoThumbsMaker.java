@@ -45,7 +45,7 @@ public class VideoThumbsMaker {
     private static final int maxLines = 20000;
 
     public String getVersion() {
-        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer}));
+        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer }));
 
         ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
         if (res.exitCode != 0) {
@@ -84,8 +84,8 @@ public class VideoThumbsMaker {
         VideoProcessResult result = new VideoProcessResult();
 
         File in = inOrg;
-        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] {mplayer,"-nosound","-noautosub", //$NON-NLS-1$ //$NON-NLS-2$
-                "-noconsolecontrols","-vo","null","-ao","null","-frames","0","-identify",in.getPath()})); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
+        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$
+                "-noconsolecontrols", "-vo", "null", "-ao", "null", "-frames", "0", "-identify", in.getPath() })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
         File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
         subTmp.mkdir();
@@ -172,7 +172,7 @@ public class VideoThumbsMaker {
         Dimension targetDimension = getTargetDimension(maxSize, result.getDimension());
 
         String scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
-        
+
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
         cmds.add("-speed"); //$NON-NLS-1$
@@ -194,9 +194,9 @@ public class VideoThumbsMaker {
             cmds.add(videoStream);
         }
 
-        cmds.addAll(Arrays.asList(new String[] {"-vo", //$NON-NLS-1$
+        cmds.addAll(Arrays.asList(new String[] { "-vo", //$NON-NLS-1$
                 "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape //$NON-NLS-1$ //$NON-NLS-2$
-                        + subTmp.getPath().replace('\\', '/') + escape}));
+                        + subTmp.getPath().replace('\\', '/') + escape }));
 
         String rot = null;
         boolean transposed = false;
@@ -204,14 +204,15 @@ public class VideoThumbsMaker {
             rot = "rotate=1"; //$NON-NLS-1$
             transposed = true;
         } else if (result.getRotation() == 180) {
-            rot = "flip,mirror"; //$NON-NLS-1$ 
+            rot = "flip,mirror"; //$NON-NLS-1$
         } else if (result.getRotation() == 270) {
             transposed = true;
-            rot = "rotate=2"; //$NON-NLS-1$ 
+            rot = "rotate=2"; //$NON-NLS-1$
         }
 
-        cmds.addAll(Arrays.asList(new String[] {"-ao","null","-ss","1","-sstep",String.valueOf(frequency),"-frames", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-                String.valueOf(maxThumbs + 1),in.getPath()}));
+        cmds.addAll(
+                Arrays.asList(new String[] { "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                        String.valueOf(maxThumbs + 1), in.getPath() }));
 
         cmds.addAll(vfOptions(scale, rot));
 
@@ -332,7 +333,7 @@ public class VideoThumbsMaker {
         d.height = d.width;
         d.width = aux;
     }
-    
+
     private Dimension getTargetDimension(int maxSize, Dimension srcDimension) {
         double zoom = maxSize / (double) Math.max(1, Math.max(srcDimension.height, srcDimension.width));
         int w = (int) Math.round(srcDimension.width * zoom);
@@ -374,7 +375,7 @@ public class VideoThumbsMaker {
         if (!isWindows) {
             return null;
         }
-        String[] cdir = new String[] {"cmd","/c","dir","/x",in.getPath()}; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        String[] cdir = new String[] { "cmd", "/c", "dir", "/x", in.getPath() }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         ExecResult res = run(cdir, 1000);
         String sdir = res.output;
         if (sdir != null && res.exitCode == 0) {

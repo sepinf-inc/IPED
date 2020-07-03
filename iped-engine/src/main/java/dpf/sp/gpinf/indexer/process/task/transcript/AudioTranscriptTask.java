@@ -7,25 +7,25 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
-public class AudioTranscriptTask extends AbstractTask{
-    
+public class AudioTranscriptTask extends AbstractTask {
+
     private static final String IMPL_CLASS_KEY = "implementationClass";
-    
+
     private AbstractTranscriptTask impl;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        
+
         UTF8Properties props = new UTF8Properties();
         props.load(new File(confDir, AbstractTranscriptTask.CONF_FILE));
-                
+
         String className = props.getProperty(IMPL_CLASS_KEY).trim();
-        
+
         impl = (AbstractTranscriptTask) Class.forName(className).newInstance();
         impl.setWorker(worker);
         impl.init(confParams, confDir);
     }
-    
+
     public boolean isEnabled() {
         return impl.isEnabled();
     }

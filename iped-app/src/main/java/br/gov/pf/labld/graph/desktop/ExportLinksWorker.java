@@ -25,126 +25,126 @@ import dpf.sp.gpinf.indexer.desktop.Messages;
 
 public class ExportLinksWorker extends SwingWorker<Void, Void> implements LinkQueryListener {
 
-  private static Logger LOGGER = LoggerFactory.getLogger(ExportLinksWorker.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ExportLinksWorker.class);
 
-  private GraphModel model;
-  private ExportLinksDialog dialog;
-  private File output;
-  private ExportLinksQuery query;
+    private GraphModel model;
+    private ExportLinksDialog dialog;
+    private File output;
+    private ExportLinksQuery query;
 
-  private Writer out;
+    private Writer out;
 
-  public ExportLinksWorker(GraphModel model, ExportLinksDialog dialog, File output, ExportLinksQuery query) {
-    super();
-    this.model = model;
-    this.dialog = dialog;
-    this.output = output;
-    this.query = query;
-  }
-
-  @Override
-  public void linkFound(Node node1, Node node2) {
-    try {
-
-      writeNode(node1);
-      out.write(",");
-      writeNode(node2);
-
-      out.write("\r\n");
-    } catch (IOException e) {
-      throw new RuntimeException(e);
+    public ExportLinksWorker(GraphModel model, ExportLinksDialog dialog, File output, ExportLinksQuery query) {
+        super();
+        this.model = model;
+        this.dialog = dialog;
+        this.output = output;
+        this.query = query;
     }
-  }
 
-  private void writeNode(Node node) throws IOException {
-    String[] fieldNames = model.getDefaultFieldNames(node);
+    @Override
+    public void linkFound(Node node1, Node node2) {
+        try {
 
-    String type = model.getType(node);
-    String field = null;
-    String value = null;
-    for (String fieldName : fieldNames) {
-      try {
-        if (value == null || value.isEmpty()) {
-          Object property = node.getProperty(fieldName);
-          if (property != null) {
-            value = property.toString();
-            field = fieldName;
-          }
+            writeNode(node1);
+            out.write(",");
+            writeNode(node2);
+
+            out.write("\r\n");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
-      } catch (NotFoundException e) {
-        // Nothing to do.
-      }
-    }
-    if (value == null) {
-      Iterator<String> keys = node.getPropertyKeys().iterator();
-      if (keys.hasNext()) {
-        field = keys.next();
-        value = node.getProperty(field).toString();
-      } else {
-        field = "";
-        value = "";
-      }
-    }
-    out.write("\"");
-    out.write(type);
-    out.write("\"");
-    out.write(",");
-    out.write("\"");
-    out.write(field);
-    out.write("\"");
-    out.write(",");
-    out.write("\"");
-    out.write(value);
-    out.write("\"");
-
-  }
-
-  @Override
-  protected Void doInBackground() throws Exception {
-    out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), Charset.forName("utf-8")));
-
-    writeHeader();
-
-    GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-    try {
-      graphService.findLinks(query, this);
-    } catch (Exception e) {
-      LOGGER.error(e.getMessage(), e);
     }
 
-    dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    dialog.setEnabled(false);
+    private void writeNode(Node node) throws IOException {
+        String[] fieldNames = model.getDefaultFieldNames(node);
 
-    return null;
-  }
+        String type = model.getType(node);
+        String field = null;
+        String value = null;
+        for (String fieldName : fieldNames) {
+            try {
+                if (value == null || value.isEmpty()) {
+                    Object property = node.getProperty(fieldName);
+                    if (property != null) {
+                        value = property.toString();
+                        field = fieldName;
+                    }
+                }
+            } catch (NotFoundException e) {
+                // Nothing to do.
+            }
+        }
+        if (value == null) {
+            Iterator<String> keys = node.getPropertyKeys().iterator();
+            if (keys.hasNext()) {
+                field = keys.next();
+                value = node.getProperty(field).toString();
+            } else {
+                field = "";
+                value = "";
+            }
+        }
+        out.write("\"");
+        out.write(type);
+        out.write("\"");
+        out.write(",");
+        out.write("\"");
+        out.write(field);
+        out.write("\"");
+        out.write(",");
+        out.write("\"");
+        out.write(value);
+        out.write("\"");
 
-  private void writeHeader() throws IOException {
-
-    out.write(Messages.get("GraphAnalysis.Type"));
-    out.write(",");
-    out.write(Messages.get("GraphAnalysis.Property"));
-    out.write(",");
-    out.write(Messages.get("GraphAnalysis.Value"));
-    out.write(",");
-    out.write(Messages.get("GraphAnalysis.Type"));
-    out.write(",");
-    out.write(Messages.get("GraphAnalysis.Property"));
-    out.write(",");
-    out.write(Messages.get("GraphAnalysis.Value"));
-    out.write("\r\n");
-
-  }
-
-  @Override
-  protected void done() {
-    if (out != null) {
-      try {
-        out.close();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
-    dialog.showSucessMessage(output);
-  }
+
+    @Override
+    protected Void doInBackground() throws Exception {
+        out = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(output), Charset.forName("utf-8")));
+
+        writeHeader();
+
+        GraphService graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+        try {
+            graphService.findLinks(query, this);
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+
+        dialog.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        dialog.setEnabled(false);
+
+        return null;
+    }
+
+    private void writeHeader() throws IOException {
+
+        out.write(Messages.get("GraphAnalysis.Type"));
+        out.write(",");
+        out.write(Messages.get("GraphAnalysis.Property"));
+        out.write(",");
+        out.write(Messages.get("GraphAnalysis.Value"));
+        out.write(",");
+        out.write(Messages.get("GraphAnalysis.Type"));
+        out.write(",");
+        out.write(Messages.get("GraphAnalysis.Property"));
+        out.write(",");
+        out.write(Messages.get("GraphAnalysis.Value"));
+        out.write("\r\n");
+
+    }
+
+    @Override
+    protected void done() {
+        if (out != null) {
+            try {
+                out.close();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        dialog.showSucessMessage(output);
+    }
 
 }

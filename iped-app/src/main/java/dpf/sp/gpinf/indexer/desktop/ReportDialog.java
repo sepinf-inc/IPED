@@ -95,7 +95,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
         JPanel okPanel = new JPanel(new BorderLayout());
         okPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         okPanel.add(generate, BorderLayout.EAST);
-        
+
         append.setToolTipText(Messages.getString("ReportDialog.AppendWarning"));
 
         Box footer = Box.createVerticalBox();
@@ -146,19 +146,20 @@ public class ReportDialog implements ActionListener, TableModelListener {
         table.getColumnModel().getColumn(2).setMaxWidth(150);
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
-        
+
         table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
-            
+
             private boolean listenerAdded = false;
 
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int col) {
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int col) {
                 JTableHeader header = table.getTableHeader();
                 if (!listenerAdded) {
                     header.addMouseListener(new MouseAdapter() {
                         @Override
                         public void mouseClicked(MouseEvent e) {
-                            if(header.columnAtPoint(e.getPoint()) == 0){
+                            if (header.columnAtPoint(e.getPoint()) == 0) {
                                 selectAll.doClick();
                             }
                         }
@@ -168,9 +169,9 @@ public class ReportDialog implements ActionListener, TableModelListener {
                 return selectAll;
             }
         });
-        
+
         selectAll.addActionListener(this);
-        
+
     }
 
     private class TableModel extends DefaultTableModel {
@@ -220,9 +221,9 @@ public class ReportDialog implements ActionListener, TableModelListener {
             if (isInputOK())
                 generateReport();
         }
-        
-        if(e.getSource() == selectAll) {
-            for(int i = 0; i < table.getRowCount(); i++) {
+
+        if (e.getSource() == selectAll) {
+            for (int i = 0; i < table.getRowCount(); i++) {
                 table.setValueAt(selectAll.isSelected(), i, 0);
             }
         }

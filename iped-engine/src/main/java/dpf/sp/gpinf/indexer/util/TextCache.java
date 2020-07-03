@@ -18,7 +18,7 @@ public class TextCache implements Closeable {
     private Writer writer;
     private long size = 0;
     private boolean diskCacheEnabled = true;
-    
+
     public void setEnableDiskCache(boolean diskCacheEnabled) {
         this.diskCacheEnabled = diskCacheEnabled;
     }
@@ -36,11 +36,10 @@ public class TextCache implements Closeable {
         }
 
         if (sb != null && sb.length() < MAX_MEMORY_CHARS) {
-            if(sb.length() + len > MAX_MEMORY_CHARS)
+            if (sb.length() + len > MAX_MEMORY_CHARS)
                 len = MAX_MEMORY_CHARS - sb.length();
             sb.append(buf, off, len);
         }
-            
 
         if (writer != null)
             try {
@@ -66,15 +65,15 @@ public class TextCache implements Closeable {
             writer.close();
             writer = null;
         }
-        
+
         Reader reader = null;
         if (sb != null)
             reader = new StringReader(sb.toString());
 
         if (tmp != null)
             reader = Files.newBufferedReader(tmp.toPath());
-        
-        if(reader != null)
+
+        if (reader != null)
             return new KnownSizeReader(reader);
 
         return null;
@@ -87,11 +86,11 @@ public class TextCache implements Closeable {
         if (tmp != null)
             tmp.delete();
     }
-    
-    public class KnownSizeReader extends Reader{
-        
+
+    public class KnownSizeReader extends Reader {
+
         private Reader delegate;
-        
+
         public KnownSizeReader(Reader delegate) {
             this.delegate = delegate;
         }
@@ -105,11 +104,11 @@ public class TextCache implements Closeable {
         public void close() throws IOException {
             delegate.close();
         }
-        
+
         public long getSize() {
             return size;
         }
-        
+
     }
 
 }

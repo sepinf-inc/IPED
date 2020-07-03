@@ -56,7 +56,7 @@ public interface IIPEDSource extends Closeable {
     Set<String> getKeywords();
 
     int getLastId();
-    
+
     int getParentId(int id);
 
     int getLuceneId(IItemId itemId);
@@ -82,7 +82,7 @@ public interface IIPEDSource extends Closeable {
     int getTotalItens();
 
     IVersionsMap getViewToRawMap();
-    
+
     Set<String> getEvidenceUUIDs();
 
     boolean isFTKReport();

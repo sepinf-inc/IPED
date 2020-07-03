@@ -39,8 +39,7 @@ public class ExtractorIOS extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_LIST)) {
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
@@ -75,13 +74,14 @@ public class ExtractorIOS extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
-                if(account != null) m.setLocalResource(account.getId());
+                if (account != null)
+                    m.setLocalResource(account.getId());
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if(remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
+                if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
                     remoteResource = chat.getRemote().getId();
                 }
-                m.setRemoteResource(remoteResource); //$NON-NLS-1$
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(rs.getInt("status")); //$NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$

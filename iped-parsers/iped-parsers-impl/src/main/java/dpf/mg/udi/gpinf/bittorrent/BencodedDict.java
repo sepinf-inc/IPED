@@ -150,30 +150,31 @@ public class BencodedDict {
 
         return resp;
     }
-    
+
     private String getUnknownCharsetString(byte[] data) {
         return Util.decodeUnknowCharset(data);
     }
-    
+
     /**
      * Used to build output as Hex
      */
-    private static final char[] DIGITS_LOWER =
-        {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'};
-    
+    private static final char[] DIGITS_LOWER = { '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd',
+            'e', 'f' };
+
     /**
      * Copied from apache commons codec binary.
      * 
-     * Converts an array of bytes into an array of characters representing the hexadecimal values of each byte in order.
-     * The returned array will be double the length of the passed array, as it takes two characters to represent any
+     * Converts an array of bytes into an array of characters representing the
+     * hexadecimal values of each byte in order. The returned array will be double
+     * the length of the passed array, as it takes two characters to represent any
      * given byte.
      *
      * @param data
      *            a byte[] to convert to Hex characters
      * @param toDigits
      *            the output alphabet (must contain at least 16 chars)
-     * @return A char[] containing the appropriate characters from the alphabet
-     *         For best results, this should be either upper- or lower-case hex.
+     * @return A char[] containing the appropriate characters from the alphabet For
+     *         best results, this should be either upper- or lower-case hex.
      * @since 1.4
      */
     private static char[] encodeHex(final byte[] data) {

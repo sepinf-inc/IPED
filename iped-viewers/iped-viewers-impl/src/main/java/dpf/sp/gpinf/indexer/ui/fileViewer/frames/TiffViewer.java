@@ -81,7 +81,8 @@ public class TiffViewer extends ImageViewer {
                     currentPage = newPage;
                     displayPage();
                 } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null, "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
+                    JOptionPane.showMessageDialog(null,
+                            "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
                 }
             }
         });
@@ -125,7 +126,8 @@ public class TiffViewer extends ImageViewer {
 
     private void disposeResources() {
         try {
-            if (reader != null) reader.dispose();
+            if (reader != null)
+                reader.dispose();
         } catch (Exception e) {
         }
         IOUtil.closeQuietly(iis);
@@ -140,7 +142,8 @@ public class TiffViewer extends ImageViewer {
             @Override
             public void run() {
                 disposeResources();
-                if (!content.equals(currentContent)) return;
+                if (!content.equals(currentContent))
+                    return;
                 try {
                     is = currentContent.getStream();
                     iis = ImageIO.createImageInputStream(is);
@@ -164,14 +167,16 @@ public class TiffViewer extends ImageViewer {
         executor.submit(new Runnable() {
             @Override
             public void run() {
-                if (content != currentContent) return;
+                if (content != currentContent)
+                    return;
                 try {
                     int w0 = reader.getWidth(currentPage - 1);
                     int h0 = reader.getHeight(currentPage - 1);
 
                     ImageReadParam params = reader.getDefaultReadParam();
                     int sampling = w0 > h0 ? w0 / 1000 : h0 / 1000;
-                    if (sampling < 1) sampling = 1;
+                    if (sampling < 1)
+                        sampling = 1;
                     int finalW = (int) Math.ceil((float) w0 / sampling);
                     int finalH = (int) Math.ceil((float) h0 / sampling);
 
@@ -185,7 +190,8 @@ public class TiffViewer extends ImageViewer {
                     e.printStackTrace();
 
                 } finally {
-                    if (image != null) image = getCompatibleImage(image);
+                    if (image != null)
+                        image = getCompatibleImage(image);
                 }
                 if (rotation != 0) {
                     imagePanel.setImage(ImageUtil.rotatePos(image, rotation));
@@ -212,15 +218,17 @@ public class TiffViewer extends ImageViewer {
 
     private BufferedImage getCompatibleImage(BufferedImage image) {
         // obtain the current system graphical settings
-        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice().getDefaultConfiguration();
+        GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
+                .getDefaultConfiguration();
 
-        //if image is already compatible and optimized for current system settings,
+        // if image is already compatible and optimized for current system settings,
         if (image.getColorModel().equals(gfx_config.getColorModel())) {
             return image;
         }
 
         // image is not optimized, so create a new image that is
-        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(), image.getTransparency());
+        BufferedImage new_image = gfx_config.createCompatibleImage(image.getWidth(), image.getHeight(),
+                image.getTransparency());
 
         // get the graphics context of the new image to draw the old image on
         Graphics2D g2d = (Graphics2D) new_image.getGraphics();

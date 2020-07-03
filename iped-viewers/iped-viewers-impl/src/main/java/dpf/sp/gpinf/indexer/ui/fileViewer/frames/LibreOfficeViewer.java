@@ -130,8 +130,7 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.equals("image/cdr") //$NON-NLS-1$
                 || contentType.equals("application/coreldraw") //$NON-NLS-1$
                 || contentType.equals("application/x-vnd.corel.zcf.draw.document+zip") //$NON-NLS-1$
-                || isSpreadSheet(contentType) 
-                || isPresentation(contentType);
+                || isSpreadSheet(contentType) || isPresentation(contentType);
 
     }
 
@@ -399,16 +398,16 @@ public class LibreOfficeViewer extends Viewer {
                 }
             }
         }.start();
-    
+
     }
-    
+
     private void cleanDocument(DocumentDescriptor descriptor) {
         try {
             boolean isVisible = noaPanel.isVisible();
             noaPanel.setVisible(false);
             if (isVisible) {
-                document = officeApplication.getDocumentService().loadDocument(officeFrame,
-                        blankDoc.getAbsolutePath(), descriptor);
+                document = officeApplication.getDocumentService().loadDocument(officeFrame, blankDoc.getAbsolutePath(),
+                        descriptor);
                 adjustLayout();
                 noaPanel.revalidate();
             }
@@ -519,7 +518,8 @@ public class LibreOfficeViewer extends Viewer {
     }
 
     private void convertToPPTX() {
-        //Replaces the content type to convert from PPSX to PPTX, using fast (in-place) ZIP access
+        // Replaces the content type to convert from PPSX to PPTX, using fast (in-place)
+        // ZIP access
         String s1 = "presentationml.slideshow";
         String s2 = "presentationml.presentation";
         FileSystem fs = null;
@@ -548,7 +548,7 @@ public class LibreOfficeViewer extends Viewer {
             out = null;
             Files.delete(temp);
         } catch (Exception e) {
-            //e.printStackTrace();
+            // e.printStackTrace();
         } finally {
             IOUtil.closeQuietly(in);
             IOUtil.closeQuietly(out);
@@ -888,7 +888,8 @@ public class LibreOfficeViewer extends Viewer {
                                 xSel.select(sheetHit[1]);
 
                             } else if (document instanceof IPresentationDocument) {
-                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class, officeFrame.getXFrame().getController());
+                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class,
+                                        officeFrame.getXFrame().getController());
                                 drawView.setCurrentPage((XDrawPage) hits.get(--currentHit));
 
                             }

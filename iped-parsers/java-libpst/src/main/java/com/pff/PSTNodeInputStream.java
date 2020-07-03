@@ -394,9 +394,9 @@ public class PSTNodeInputStream extends InputStream {
         if (this.currentLocation == location) {
             return;
         }
-        
-        //nassif patch
-        if(skipPointsSet == null) {
+
+        // nassif patch
+        if (skipPointsSet == null) {
             skipPointsSet = new TreeSet<Long>(skipPoints);
         }
 
@@ -404,26 +404,20 @@ public class PSTNodeInputStream extends InputStream {
         Long skipPoint = 0L;
         this.currentBlock = 0;
         if (this.allData == null) {
-            //nassif patch
+            // nassif patch
             skipPoint = this.skipPointsSet.higher(location);
-            if(skipPoint == null) {
+            if (skipPoint == null) {
                 skipPoint = this.skipPointsSet.last();
                 currentBlock = skipPointsSet.size() - 1;
-            }else {
+            } else {
                 currentBlock = skipPointsSet.headSet(skipPoint).size() - 1;
             }
             /*
-            skipPoint = this.skipPoints.get(this.currentBlock + 1);
-            while (location >= skipPoint) {
-                this.currentBlock++;
-                // is this the last block?
-                if (this.currentBlock == this.skipPoints.size() - 1) {
-                    // that's all folks
-                    break;
-                } else {
-                    skipPoint = this.skipPoints.get(this.currentBlock + 1);
-                }
-            }*/
+             * skipPoint = this.skipPoints.get(this.currentBlock + 1); while (location >=
+             * skipPoint) { this.currentBlock++; // is this the last block? if
+             * (this.currentBlock == this.skipPoints.size() - 1) { // that's all folks
+             * break; } else { skipPoint = this.skipPoints.get(this.currentBlock + 1); } }
+             */
         }
 
         // now move us to the right position in there

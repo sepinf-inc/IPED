@@ -53,15 +53,15 @@ public class SkypeParser extends AbstractParser {
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     public static final String SKYPE = "Skype"; //$NON-NLS-1$
     public static final MediaType SKYPE_MIME = MediaType.application("sqlite-skype"); //$NON-NLS-1$
     public static final MediaType SKYPE_MIME_V12 = MediaType.application("sqlite-skype-v12"); //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = new HashSet<MediaType>();
-    
+
     static {
-    	SUPPORTED_TYPES.add(SKYPE_MIME);
-    	SUPPORTED_TYPES.add(SKYPE_MIME_V12);
+        SUPPORTED_TYPES.add(SKYPE_MIME);
+        SUPPORTED_TYPES.add(SKYPE_MIME_V12);
     }
 
     private SQLite3Parser sqliteParser = new SQLite3Parser();
@@ -79,7 +79,7 @@ public class SkypeParser extends AbstractParser {
     public static final String CONVERSATION_MIME_TYPE = "application/x-skype-conversation"; //$NON-NLS-1$
 
     private boolean extractMessages = true;
-    
+
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
@@ -103,12 +103,13 @@ public class SkypeParser extends AbstractParser {
 
         final TikaInputStream tis = TikaInputStream.get(stream, tmp);
         try {
-            //call here instead of catch clause because calls, videos and other info are not parsed currently
+            // call here instead of catch clause because calls, videos and other info are
+            // not parsed currently
             sqliteParser.parse(tis, handler, metadata, context);
 
             if (extractor.shouldParseEmbedded(metadata)) {
                 sqlite = new SkypeStorageFactory().createFromMediaType(tis, metadata, context, filePath);
-                
+
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
 
@@ -116,7 +117,7 @@ public class SkypeParser extends AbstractParser {
 
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();
                 SkypeAccount account = sqlite.getAccount();
-                
+
                 HashMap<String, SkypeUser> contactMap = new HashMap<>();
                 contactMap.put(account.getId(), account);
                 contactMap.put(account.getSkypeName(), account);
@@ -124,7 +125,7 @@ public class SkypeParser extends AbstractParser {
                 for (SkypeContact c : contatos) {
                     contactMap.put(c.getId(), c);
                     contactMap.put(c.getSkypeName(), c);
-                    
+
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CONTACT_MIME_TYPE);
                     cMetadata.set(HttpHeaders.CONTENT_TYPE, CONTACT_MIME_TYPE);
@@ -139,7 +140,7 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
                     cMetadata.set(ExtraProperties.USER_ADDRESS, c.getCity());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getAbout());
-                    if(c.getAvatar() != null) {
+                    if (c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
@@ -159,17 +160,19 @@ public class SkypeParser extends AbstractParser {
                         continue;
                     }
                     msgCount += conv.getMessages().size();
-                    
-                    //normalize message recipients to use skypeName
+
+                    // normalize message recipients to use skypeName
                     for (SkypeMessage sm : conv.getMessages()) {
-                        if(sm.getAutor() != null) {
+                        if (sm.getAutor() != null) {
                             SkypeUser user = contactMap.get(sm.getAutor());
-                            if(user != null && user.getSkypeName() != null && !sm.getAutor().equals(user.getSkypeName()))
+                            if (user != null && user.getSkypeName() != null
+                                    && !sm.getAutor().equals(user.getSkypeName()))
                                 sm.setAutor(user.getSkypeName());
                         }
-                        if(sm.getDestino() != null) {
+                        if (sm.getDestino() != null) {
                             SkypeUser user = contactMap.get(sm.getDestino());
-                            if(user != null && user.getSkypeName() != null && !sm.getDestino().equals(user.getSkypeName()))
+                            if (user != null && user.getSkypeName() != null
+                                    && !sm.getDestino().equals(user.getSkypeName()))
                                 sm.setDestino(user.getSkypeName());
                         }
                     }
@@ -216,9 +219,9 @@ public class SkypeParser extends AbstractParser {
                             if (sm.getAnexoUri() != null && sm.getAnexoUri().getCacheFile() != null) {
                                 IItemBase item = sm.getAnexoUri().getCacheFile();
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
-                                meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); //$NON-NLS-1$
+                                meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); // $NON-NLS-1$
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
-                            }    
+                            }
 
                             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
                         }
@@ -233,8 +236,9 @@ public class SkypeParser extends AbstractParser {
                     String name = Messages.getString("SkypeParser.SkypeTransfer") + t.getFilename(); //$NON-NLS-1$
                     tMetadata.set(TikaCoreProperties.TITLE, name);
                     tMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, t.getConversation().getId());
-                    //TODO embed transfer in parent chat html
-                    //tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(t.getId()));
+                    // TODO embed transfer in parent chat html
+                    // tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION,
+                    // String.valueOf(t.getId()));
                     tMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
                     tMetadata.set(TikaCoreProperties.CREATED, t.getStart());
                     tMetadata.set(TikaCoreProperties.MODIFIED, t.getFinish());
@@ -242,14 +246,16 @@ public class SkypeParser extends AbstractParser {
                     tMetadata.set(ExtraProperties.MESSAGE_BODY, name);
                     tMetadata.set(Metadata.MESSAGE_FROM, formatSkypeName(contactMap, t.getFrom()));
                     if (t.getType() == 3 && t.getConversation().getParticipantes() != null) {
-                        for (Iterator<String> iterator = t.getConversation().getParticipantes().iterator(); iterator.hasNext();) {
+                        for (Iterator<String> iterator = t.getConversation().getParticipantes().iterator(); iterator
+                                .hasNext();) {
                             String recip = formatSkypeName(contactMap, iterator.next());
-                            if(recip != null) tMetadata.add(Metadata.MESSAGE_TO, recip);
+                            if (recip != null)
+                                tMetadata.add(Metadata.MESSAGE_TO, recip);
                         }
-                    }else {
+                    } else {
                         tMetadata.set(Metadata.MESSAGE_TO, formatSkypeName(contactMap, t.getTo()));
                     }
-                    
+
                     if (searcher != null) {
                         t.setItemQuery(getItemQuery(t, searcher));
                         t.setItem(getItem(t.getItemQuery(), searcher));
@@ -283,13 +289,19 @@ public class SkypeParser extends AbstractParser {
                 meta.set(ExtraProperties.USER_EMAIL, account.getEmail());
                 meta.set(ExtraProperties.USER_BIRTH, account.getBirthday());
                 meta.set(ExtraProperties.USER_NOTES, account.getAbout());
-                if(account.getPhoneHome() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneHome());
-                if(account.getPhoneOffice() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneOffice());
-                if(account.getPhoneMobile() != null) meta.add(ExtraProperties.USER_PHONE, account.getPhoneMobile());
-                if(account.getCity() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getCity());
-                if(account.getProvince() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getProvince());
-                if(account.getCountry() != null) meta.add(ExtraProperties.USER_ADDRESS, account.getCountry());
-                if(account.getAvatar() != null) {
+                if (account.getPhoneHome() != null)
+                    meta.add(ExtraProperties.USER_PHONE, account.getPhoneHome());
+                if (account.getPhoneOffice() != null)
+                    meta.add(ExtraProperties.USER_PHONE, account.getPhoneOffice());
+                if (account.getPhoneMobile() != null)
+                    meta.add(ExtraProperties.USER_PHONE, account.getPhoneMobile());
+                if (account.getCity() != null)
+                    meta.add(ExtraProperties.USER_ADDRESS, account.getCity());
+                if (account.getProvince() != null)
+                    meta.add(ExtraProperties.USER_ADDRESS, account.getProvince());
+                if (account.getCountry() != null)
+                    meta.add(ExtraProperties.USER_ADDRESS, account.getCountry());
+                if (account.getAvatar() != null) {
                     meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
                 }
 
@@ -310,16 +322,17 @@ public class SkypeParser extends AbstractParser {
         }
 
     }
-    
+
     private String formatSkypeName(Map<String, SkypeUser> contactMap, String skypeName) {
-        if(skypeName == null)
+        if (skypeName == null)
             return null;
         SkypeUser contact = contactMap.get(skypeName);
-        if(contact != null && contact.getSkypeName() != null && !contact.getSkypeName().equals(contact.getBestName())) {
+        if (contact != null && contact.getSkypeName() != null
+                && !contact.getSkypeName().equals(contact.getBestName())) {
             return contact.getBestName() + " (" + contact.getSkypeName() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        }else if(contact != null && !skypeName.equals(contact.getBestName())) {
+        } else if (contact != null && !skypeName.equals(contact.getBestName())) {
             return contact.getBestName() + " (" + skypeName + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        }else {
+        } else {
             return skypeName;
         }
     }

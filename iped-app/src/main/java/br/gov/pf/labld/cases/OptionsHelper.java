@@ -24,71 +24,71 @@ import org.apache.commons.io.IOUtils;
 
 public class OptionsHelper {
 
-  private Properties props;
+    private Properties props;
 
-  public OptionsHelper(String fileName) {
-    super();
-    this.props = getProperties(fileName);
-  }
-
-  private Properties getProperties(String fileName) {
-    File configFile = getFile(fileName);
-    Properties props = new Properties();
-    try (Reader in = new InputStreamReader(new BufferedInputStream(new FileInputStream(configFile)),
-        Charset.forName("utf-8"))) {
-      props.load(in);
-    } catch (IOException e) {
-      // Nothing to do.
+    public OptionsHelper(String fileName) {
+        super();
+        this.props = getProperties(fileName);
     }
-    return props;
-  }
 
-  private static File getFile(String fileName) {
-    File file = new File(getRootDir(), fileName);
-    return file;
-  }
+    private Properties getProperties(String fileName) {
+        File configFile = getFile(fileName);
+        Properties props = new Properties();
+        try (Reader in = new InputStreamReader(new BufferedInputStream(new FileInputStream(configFile)),
+                Charset.forName("utf-8"))) {
+            props.load(in);
+        } catch (IOException e) {
+            // Nothing to do.
+        }
+        return props;
+    }
 
-  public boolean getBoolean(String key) {
-    return Boolean.parseBoolean(props.getProperty(key, "false"));
-  }
+    private static File getFile(String fileName) {
+        File file = new File(getRootDir(), fileName);
+        return file;
+    }
 
-  public static File writeToFile(String fileName, Map<String, Object> properties) throws IOException {
-    File configFile = getFile(fileName);
-    if (!configFile.exists()) {
-      configFile.createNewFile();
+    public boolean getBoolean(String key) {
+        return Boolean.parseBoolean(props.getProperty(key, "false"));
     }
-    String fileContent;
-    try (Reader in = new InputStreamReader(new BufferedInputStream(new FileInputStream(configFile)))) {
-      fileContent = IOUtils.toString(in);
-    }
-    for (Entry<String, Object> entry : properties.entrySet()) {
-      String name = entry.getKey();
-      Object value = entry.getValue();
-      Pattern pattern = Pattern.compile(name + "\\s*=\\s*(.+)");
-      Matcher matcher = pattern.matcher(fileContent);
 
-      String newProp = name + " = " + value;
-      if (matcher.find()) {
-        fileContent = matcher.replaceAll(newProp);
-      } else {
-        fileContent += "\r\n" + newProp;
-      }
-    }
-    try (Writer out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(configFile)),
-        Charset.forName("utf-8"))) {
-      IOUtils.write(fileContent, out);
-    }
-    return configFile;
-  }
+    public static File writeToFile(String fileName, Map<String, Object> properties) throws IOException {
+        File configFile = getFile(fileName);
+        if (!configFile.exists()) {
+            configFile.createNewFile();
+        }
+        String fileContent;
+        try (Reader in = new InputStreamReader(new BufferedInputStream(new FileInputStream(configFile)))) {
+            fileContent = IOUtils.toString(in);
+        }
+        for (Entry<String, Object> entry : properties.entrySet()) {
+            String name = entry.getKey();
+            Object value = entry.getValue();
+            Pattern pattern = Pattern.compile(name + "\\s*=\\s*(.+)");
+            Matcher matcher = pattern.matcher(fileContent);
 
-  private static File getRootDir() {
-    try {
-      URI uri = OptionsHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-      File rootDir = Paths.get(uri).normalize().toFile().getParentFile();
-      return rootDir;
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
+            String newProp = name + " = " + value;
+            if (matcher.find()) {
+                fileContent = matcher.replaceAll(newProp);
+            } else {
+                fileContent += "\r\n" + newProp;
+            }
+        }
+        try (Writer out = new OutputStreamWriter(new BufferedOutputStream(new FileOutputStream(configFile)),
+                Charset.forName("utf-8"))) {
+            IOUtils.write(fileContent, out);
+        }
+        return configFile;
     }
-  }
+
+    private static File getRootDir() {
+        try {
+            URI uri = OptionsHelper.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            File rootDir = Paths.get(uri).normalize().toFile().getParentFile();
+            return rootDir;
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
 }

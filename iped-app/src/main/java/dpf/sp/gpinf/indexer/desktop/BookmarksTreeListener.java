@@ -41,7 +41,8 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             }
         }
 
-        if(!clearing) App.get().appletListener.updateFileListing();
+        if (!clearing)
+            App.get().appletListener.updateFileListing();
 
         if (selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty()) {
             App.get().setBookmarksDefaultColor(true);

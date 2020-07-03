@@ -52,7 +52,7 @@ public class HtmlLinkViewer extends HtmlViewer {
     public String getName() {
         return this.getClass().getSimpleName();
     }
-    
+
     @Override
     protected int getMaxHtmlSize() {
         return Integer.MAX_VALUE;
@@ -80,7 +80,7 @@ public class HtmlLinkViewer extends HtmlViewer {
                 this.openFile(file);
             }
         }
-        
+
         public void check(String luceneQuery, boolean checked) {
             attachSearcher.checkItem(luceneQuery, checked);
         }

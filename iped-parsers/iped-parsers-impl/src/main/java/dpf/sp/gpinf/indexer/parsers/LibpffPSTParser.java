@@ -376,7 +376,7 @@ public class LibpffPSTParser extends AbstractParser {
             if (item.exists()) {
                 metadata.set(TikaCoreProperties.TITLE, types[i]);
                 if (item.getName().equals("Contact.txt")) //$NON-NLS-1$
-                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_CONTACT_MIME); //$NON-NLS-1$
+                    metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_CONTACT_MIME); // $NON-NLS-1$
 
                 List<String> lines = readAllLines(item);
                 for (String line : lines) {
@@ -392,9 +392,9 @@ public class LibpffPSTParser extends AbstractParser {
             }
         }
     }
-    
+
     private void fillMetadata(Metadata metadata, String key, String val) {
-        switch(key) {
+        switch (key) {
             case "Account": //$NON-NLS-1$
                 metadata.add(ExtraProperties.USER_ACCOUNT, val);
                 metadata.add(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
@@ -413,7 +413,7 @@ public class LibpffPSTParser extends AbstractParser {
             case "Email address 3": //$NON-NLS-1$
                 metadata.add(ExtraProperties.USER_EMAIL, val);
                 break;
-            case "Company name":  //$NON-NLS-1$
+            case "Company name": //$NON-NLS-1$
                 metadata.add(ExtraProperties.USER_ORGANIZATION, val);
                 break;
             case "Postal address": //$NON-NLS-1$
@@ -429,7 +429,7 @@ public class LibpffPSTParser extends AbstractParser {
                 break;
             case "Birthday": //$NON-NLS-1$
                 try {
-                  //TODO not checked, without sample, based on java parser output
+                    // TODO not checked, without sample, based on java parser output
                     SimpleDateFormat df = new SimpleDateFormat("EEE MMM dd HH:mm:ss z yyyy"); //$NON-NLS-1$
                     metadata.set(ExtraProperties.USER_BIRTH, df.parse(val));
                 } catch (ParseException e) {
@@ -465,7 +465,7 @@ public class LibpffPSTParser extends AbstractParser {
                     if (l[0].trim().equals("Recipient type")) { //$NON-NLS-1$
                         String type = l[1].trim();
                         name = OutlookPSTParser.formatNameAndAddress(name, addr);
-                        if(!name.isEmpty()) {
+                        if (!name.isEmpty()) {
                             if (type.equals("To")) //$NON-NLS-1$
                                 to.add(name);
                             else if (type.equals("CC")) //$NON-NLS-1$
@@ -479,15 +479,18 @@ public class LibpffPSTParser extends AbstractParser {
             }
             if (to.size() > 0) {
                 to.stream().forEach(r -> metadata.add(Message.MESSAGE_TO, r));
-                preview.append("<b>TO:</b> " + SimpleHTMLEncoder.htmlEncode(to.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                preview.append("<b>TO:</b> " //$NON-NLS-1$
+                        + SimpleHTMLEncoder.htmlEncode(to.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             if (cc.size() > 0) {
                 cc.stream().forEach(r -> metadata.add(Message.MESSAGE_CC, r));
-                preview.append("<b>CC:</b> " + SimpleHTMLEncoder.htmlEncode(cc.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                preview.append("<b>CC:</b> " //$NON-NLS-1$
+                        + SimpleHTMLEncoder.htmlEncode(cc.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
             if (bcc.size() > 0) {
                 bcc.stream().forEach(r -> metadata.add(Message.MESSAGE_BCC, r));
-                preview.append("<b>bcc:</b> " + SimpleHTMLEncoder.htmlEncode(bcc.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                preview.append("<b>bcc:</b> " //$NON-NLS-1$
+                        + SimpleHTMLEncoder.htmlEncode(bcc.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
     }
@@ -515,13 +518,13 @@ public class LibpffPSTParser extends AbstractParser {
 
                         if (l[0].trim().equals("Sender name")) { //$NON-NLS-1$
                             from = value;
-                        }else if (l[0].trim().equals("Sender email address")) { //$NON-NLS-1$
+                        } else if (l[0].trim().equals("Sender email address")) { //$NON-NLS-1$
                             fromAddr = value;
                         } else if (l[0].trim().equals("Sent representing name")) { //$NON-NLS-1$
-                            if(from.isEmpty())
+                            if (from.isEmpty())
                                 from = value;
                         } else if (l[0].trim().equals("Sent representing email address")) { //$NON-NLS-1$
-                            if(fromAddr.isEmpty())
+                            if (fromAddr.isEmpty())
                                 fromAddr = value;
                         } else
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -529,7 +532,7 @@ public class LibpffPSTParser extends AbstractParser {
                 }
             }
             from = OutlookPSTParser.formatNameAndAddress(from, fromAddr);
-            if(!from.isEmpty()) {
+            if (!from.isEmpty()) {
                 preview.append("<b>From:</b> " + SimpleHTMLEncoder.htmlEncode(from) + "<br>\n"); //$NON-NLS-1$ //$NON-NLS-2$
                 metadata.set(Message.MESSAGE_FROM, from);
             }

@@ -40,8 +40,9 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
                 if (e.getX() < xc) {
-                    setToolTipText("<HTML>" + tooltipTitle + "<br>" + (isRefExternal ? tooltipDescExternal
-                            : tooltipDescInternal) + ": <b>" + refName + "</b></HTML>");
+                    setToolTipText("<HTML>" + tooltipTitle + "<br>"
+                            + (isRefExternal ? tooltipDescExternal : tooltipDescInternal) + ": <b>" + refName
+                            + "</b></HTML>");
                 } else {
                     setToolTipText(removeMsg);
                 }

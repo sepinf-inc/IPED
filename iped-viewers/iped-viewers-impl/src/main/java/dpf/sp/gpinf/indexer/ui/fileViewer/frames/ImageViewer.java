@@ -118,7 +118,8 @@ public class ImageViewer extends Viewer implements ActionListener {
                     } else {
                         String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
-                            image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(), imagePanel.getHeight());
+                            image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
+                                    imagePanel.getHeight());
                         }
                     }
                 }
@@ -176,12 +177,12 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void scrollToNextHit(boolean forward) {
     }
-    
+
     @Override
     public int getHitsSupported() {
         return -1;
     }
-    
+
     @Override
     public void setToolbarVisible(boolean isVisible) {
         super.setToolbarVisible(isVisible);
@@ -258,10 +259,12 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
         String cmd = e.getActionCommand();
         if (cmd.equals(actionRotLeft)) {
-            if (--rotation < 0) rotation = 3;
+            if (--rotation < 0)
+                rotation = 3;
             updateRotation();
         } else if (cmd.equals(actionRotRight)) {
-            if (++rotation > 3) rotation = 0;
+            if (++rotation > 3)
+                rotation = 0;
             updateRotation();
         } else if (cmd.equals(actionZoomIn)) {
             imagePanel.changeZoom(1.2, null);
@@ -280,6 +283,7 @@ public class ImageViewer extends Viewer implements ActionListener {
         BufferedImage img = image;
         updatePanel(ImageUtil.rotatePos(img, rotation));
         int factor = sliderBrightness.getValue();
-        if (factor != 0) updateBrightness(factor);
+        if (factor != 0)
+            updateBrightness(factor);
     }
 }

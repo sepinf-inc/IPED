@@ -41,14 +41,14 @@ import iped3.IItem;
  * métodos para enviar as estatísticas para arquivo de log.
  */
 public class Statistics {
-    
+
     private static final String CARVED_IGNORED_MAP_FILE = "data/carvedIgnoredMap.dat";
 
     private static Logger LOGGER = LoggerFactory.getLogger(Statistics.class);
     private static Statistics instance = null;
 
     private static final float IO_ERROR_RATE_TO_WARN = 0.05f;
-    
+
     private HashMap<HashValue, Integer> ignoredMap = new HashMap<>();
 
     ICaseData caseData;
@@ -77,9 +77,9 @@ public class Statistics {
     public static Statistics get() {
         return instance;
     }
-    
+
     public int getCarvedIgnoredNum(HashValue persistentId) {
-        synchronized(ignoredMap) {
+        synchronized (ignoredMap) {
             return ignoredMap.getOrDefault(persistentId, 0);
         }
     }
@@ -89,39 +89,39 @@ public class Statistics {
         this.indexDir = indexDir;
         loadPrevCarvedIgnoredMap();
     }
-    
+
     private void loadPrevCarvedIgnoredMap() {
         File file = new File(indexDir.getParentFile(), CARVED_IGNORED_MAP_FILE);
-        if(file.exists()) {
-            try(ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))){
+        if (file.exists()) {
+            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
                 ignoredMap = (HashMap<HashValue, Integer>) ois.readObject();
-                
+
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
         }
     }
-    
+
     public void incCarvedIgnored(IItem item) {
         this.incCorruptCarveIgnored();
-        HashValue parentPersistId = new HashValue((String)item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
-        synchronized(ignoredMap) {
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
+        synchronized (ignoredMap) {
             Integer ignored = ignoredMap.getOrDefault(parentPersistId, 0);
             ignoredMap.put(parentPersistId, ++ignored);
         }
     }
-    
+
     public void resetCarvedIgnored(IItem item) {
-        HashValue parentPersistId = new HashValue((String)item.getExtraAttribute(IndexItem.PERSISTENT_ID));
-        synchronized(ignoredMap) {
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PERSISTENT_ID));
+        synchronized (ignoredMap) {
             ignoredMap.remove(parentPersistId);
         }
     }
-    
+
     public void commit() throws IOException {
         File file = new File(indexDir.getParentFile(), CARVED_IGNORED_MAP_FILE);
-        synchronized(ignoredMap) {
-            try(ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))){
+        synchronized (ignoredMap) {
+            try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
                 oos.writeObject(ignoredMap);
             }
         }
@@ -289,7 +289,8 @@ public class Statistics {
         LOGGER.info("Operating System: {}", System.getProperty("os.name")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Java Version: {}", System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
         String warn = Util.getJavaVersionWarn();
-        if(warn != null) LOGGER.error(warn); //$NON-NLS-1$ //$NON-NLS-2$
+        if (warn != null)
+            LOGGER.error(warn); // $NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Architecture: {}", System.getProperty("os.arch")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Current Directory: {}", System.getProperty("user.dir")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("CPU Cores: {}", Runtime.getRuntime().availableProcessors()); //$NON-NLS-1$
