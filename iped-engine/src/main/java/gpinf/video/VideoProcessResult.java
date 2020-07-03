@@ -33,6 +33,7 @@ public class VideoProcessResult {
     private String videoStream;
     private long videoDuration;
     private Dimension dimension;
+    private int rotation;
     private float FPS;
     private long bitRate;
     private String videoFormat, videoCodec;
@@ -81,6 +82,10 @@ public class VideoProcessResult {
         this.timeout = timeout;
     }
 
+    public int getRotation() {
+        return rotation;
+    }
+
     public String getVideoStream() {
         return videoStream;
     }
@@ -100,10 +105,11 @@ public class VideoProcessResult {
         videoDuration = getDuration(info);
         dimension = getDimension(info);
         videoStream = getVideoStream(info);
-
+        rotation = getRotation(info);
+        
         setFPS(getFPS(info));
         setBitRate(getBitRate(info));
-        setVideoFormat(getStringInfo(info, "ID_VIDEO_FPS")); //$NON-NLS-1$
+        setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT")); //$NON-NLS-1$
         setVideoCodec(getStringInfo(info, "ID_VIDEO_CODEC")); //$NON-NLS-1$
 
         getClipInfos(info);
@@ -167,6 +173,21 @@ public class VideoProcessResult {
         }
     }
 
+    private int getRotation(String info) throws Exception {
+        String s1 = "_ROTATE="; //$NON-NLS-1$
+        int p1 = info.indexOf(s1);
+        if (p1 < 0) {
+            return 0;
+        }
+        int p2 = info.indexOf('\n', p1);
+        String s = info.substring(p1 + s1.length(), p2);
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+    }
+    
     private String getStringInfo(String info, String s1) throws Exception {
         s1 += "="; //$NON-NLS-1$
         int p1 = info.indexOf(s1);

@@ -23,7 +23,6 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Log;
 import iped3.IHashValue;
 import iped3.IItem;
 
@@ -42,7 +41,6 @@ public class LedKFFTask extends AbstractTask {
     private static Object lock = new Object();
     private static HashMap<String, IHashValue[]> hashArrays;
     public static KffItem[] kffItems;
-    private static final String taskName = "LED Database Search"; //$NON-NLS-1$
     private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
     private static final int idxMd5 = 0;
     private static final int idxMd5_64K = 1;
@@ -169,7 +167,7 @@ public class LedKFFTask extends AbstractTask {
                 Arrays.sort(kffItems);
                 writeCache(ledWkffCache, cacheKey);
             }
-            Log.info(taskName, "Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
+            logger.info("Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
             LedHashes.hashMap = hashArrays;
         }
     }

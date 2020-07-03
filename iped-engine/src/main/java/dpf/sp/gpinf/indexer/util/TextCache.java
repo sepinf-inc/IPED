@@ -66,12 +66,16 @@ public class TextCache implements Closeable {
             writer.close();
             writer = null;
         }
-
+        
+        Reader reader = null;
         if (sb != null)
-            return new StringReader(sb.toString());
+            reader = new StringReader(sb.toString());
 
         if (tmp != null)
-            return Files.newBufferedReader(tmp.toPath());
+            reader = Files.newBufferedReader(tmp.toPath());
+        
+        if(reader != null)
+            return new KnownSizeReader(reader);
 
         return null;
     }
@@ -82,6 +86,30 @@ public class TextCache implements Closeable {
             writer.close();
         if (tmp != null)
             tmp.delete();
+    }
+    
+    public class KnownSizeReader extends Reader{
+        
+        private Reader delegate;
+        
+        public KnownSizeReader(Reader delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public int read(char[] cbuf, int off, int len) throws IOException {
+            return delegate.read(cbuf, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
+        
+        public long getSize() {
+            return size;
+        }
+        
     }
 
 }

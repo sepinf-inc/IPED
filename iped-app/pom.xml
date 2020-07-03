@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.17.2</version>
+        <version>3.18</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -35,6 +35,11 @@
             <groupId>org.dockingframes</groupId>
             <artifactId>docking-frames-common</artifactId>
             <version>${dockingframes.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.filipesimoes</groupId>
+            <artifactId>kharon</artifactId>
+            <version>0.1.5</version>
         </dependency>
         
     </dependencies>
@@ -323,6 +328,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-graphviz</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>graphviz</groupId>
+                                    <artifactId>graphviz</artifactId>
+                                    <version>2.38</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${tools.dir}/graphviz</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-tsk-patch</id>
                         <phase>package</phase>
                         <goals>
@@ -357,6 +381,26 @@
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
                                     <destFileName>libreoffice.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                     <execution>
+                        <id>copy-caffviewer</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem> <!--  https://caff.de/projects/caffviewer/caffviewer.jar  -->
+                                    <groupId>de.caff</groupId>
+                                    <artifactId>caffviewer</artifactId>
+                                    <version>3.13.07</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${tools.dir}/caffviewer</outputDirectory>
+                                    <destFileName>caffviewer.jar</destFileName>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -429,7 +473,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>1.25.1</version>
+                                    <version>1.26</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
@@ -526,6 +570,28 @@
                             </archive>
                         </configuration>
                     </execution>
+                    <!--execution>
+                        <id>create-gui-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <excludes>
+                                <exclude>*.netbeans_automatic_build*</exclude>
+                            </excludes>
+                            <finalName>iped-gui</finalName>
+                            <outputDirectory>${release.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <classpathPrefix>lib/</classpathPrefix>
+                                    <mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass>
+                                </manifest>
+                            </archive>
+                        </configuration>
+                    </execution-->
                     <execution>
                         <id>create-search-jar</id>
                         <goals>

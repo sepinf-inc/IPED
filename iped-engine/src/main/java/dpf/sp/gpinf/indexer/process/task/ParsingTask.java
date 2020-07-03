@@ -25,6 +25,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -33,6 +34,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
@@ -55,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -68,14 +71,15 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.io.IItemBase;
@@ -107,11 +111,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static final String ENABLE_PARSING = "enableFileParsing"; //$NON-NLS-1$
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
+    public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
+    
+    private static final int MAX_SUBITEM_DEPTH = 100;
+    private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
     private static boolean expandContainers = false;
     private static boolean enableFileParsing = true;
 
-    public static int subitensDiscovered = 0;
+    public static AtomicInteger subitensDiscovered = new AtomicInteger();
     private static HashSet<String> categoriesToExpand = new HashSet<String>();
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
@@ -124,7 +132,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
     private volatile int depth = 0;
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
-
+    private int numSubitems = 0;
     private IndexerDefaultParser autoParser;
 
     public ParsingTask() {
@@ -183,10 +191,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if(ipedsource != null) {
             context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
         }else {
-            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker != null ? worker.writer : null));
+            context.set(IItemSearcher.class, (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getCategories());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -229,6 +237,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
         reader.close();
     }
+    
+    private static boolean isToAlwaysExpand(IItem item) {
+        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType()) ||
+                WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
+    }
 
     private static boolean isToBeExpanded(Collection<String> categories) {
 
@@ -246,12 +259,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         return result;
     }
 
-    private static synchronized void incSubitensDiscovered() {
-        subitensDiscovered++;
-    }
-
     public static int getSubitensDiscovered() {
-        return subitensDiscovered;
+        return subitensDiscovered.get();
     }
 
     public void process(IItem evidence) throws IOException {
@@ -355,9 +364,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         } finally {
             // IOUtil.closeQuietly(tis);
             reader.close();
-
+            if(numSubitems > 0) {
+                evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
+            }
             metadataToExtraAttribute(evidence);
-            IOUtil.closeQuietly(context.get(IItemSearcher.class));
         }
 
     }
@@ -367,8 +377,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
             evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true"); //$NON-NLS-1$
+            metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         }
-        metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 
         String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
         if (value != null) {
@@ -378,6 +388,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
+        }
+        
+        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        if(base64Thumb != null) {
+            evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
+            metadata.remove(ExtraProperties.USER_THUMB);
+            evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
         }
 
     }
@@ -447,8 +464,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             Item subItem = new Item();
             subItem.setPath(subitemPath);
+            subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-
+            
+            Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
+            subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
+            
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
             handler.characters(nameChars, 0, nameChars.length);
@@ -456,6 +477,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (!extractEmbedded) {
                 return;
             }
+            
+            Integer depth = (Integer)evidence.getExtraAttribute(SUBITEM_DEPTH);
+            if(depth == null) depth = 0;
+            if(++depth > MAX_SUBITEM_DEPTH) {
+                throw new IOException("Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
             // root has children
             evidence.setHasChildren(true);
@@ -536,7 +564,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                     //When external parsing is on, items MUST be sent to queue, or errors will occur
                     ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO; 
                     worker.processNewItem(subItem, time);
-                    incSubitensDiscovered();
+                    subitensDiscovered.incrementAndGet();
+                    numSubitems++;
 
                     long diff = (System.nanoTime() / 1000) - start;
                     Long prevTime = timeInDepth.get(depth);
@@ -597,8 +626,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (value != null & !value.trim().isEmpty()) {
             enableFileParsing = Boolean.valueOf(value.trim());
         }
-
-        subitensDiscovered = 0;
 
     }
 

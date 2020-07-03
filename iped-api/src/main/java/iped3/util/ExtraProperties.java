@@ -13,9 +13,8 @@ public class ExtraProperties {
 
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
     
-    // public static String EMBEDDED_PATH = "INDEXER_EMBEDDED_PATH";
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
-    // public static String INDEXER_ID = "INDEXER_ID";\
+    
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
     
     public static final Property VISIT_DATE = Property.internalDate("visitDate"); //$NON-NLS-1$
@@ -50,6 +49,8 @@ public class ExtraProperties {
 
     public static final String LINKED_ITEMS = "linkedItems"; //$NON-NLS-1$
 
+    public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
+    
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$
@@ -74,9 +75,39 @@ public class ExtraProperties {
     
     public static final String LOCAL_PATH = "localPath"; //$NON-NLS-1$
     
+    public static final String USER_PHONE = "phoneNumber"; //$NON-NLS-1$
+    
+    public static final String USER_NAME = "userName"; //$NON-NLS-1$
+    
+    public static final String USER_ACCOUNT = "userAccount"; //$NON-NLS-1$
+    
+    public static final String CONTACT_OF_ACCOUNT = "contactOfAccount"; //$NON-NLS-1$
+    
+    public static final String USER_ACCOUNT_TYPE = "accountType"; //$NON-NLS-1$
+    
+    public static final String USER_EMAIL = "emailAddress"; //$NON-NLS-1$
+    
+    public static final String USER_ADDRESS = "userAddress"; //$NON-NLS-1$
+    
+    public static final String USER_ORGANIZATION = "userOrganization"; //$NON-NLS-1$
+    
+    public static final String USER_NOTES = "userNotes"; //$NON-NLS-1$
+    
+    public static final String USER_URLS = "userUrls"; //$NON-NLS-1$
+    
+    public static final Property USER_BIRTH = Property.internalDate("userBirthday"); //$NON-NLS-1$
+    
+    public static final String USER_THUMB = "userPhoto"; //$NON-NLS-1$
+    
+    public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
+    
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$
     
     public static final Property CARVEDOFFSET_METADATA_NAME = Property.internalInteger("CarvedOffset"); //$NON-NLS-1$
+    
+    public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
+	
+    public static final String CONFIDENCE_ATTR = AUDIO_META_PREFIX + "transcriptConfidence";
     
     public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC,

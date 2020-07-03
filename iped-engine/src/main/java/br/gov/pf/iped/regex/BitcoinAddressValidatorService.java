@@ -2,24 +2,15 @@ package br.gov.pf.iped.regex;
 
 import java.io.File;
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 
-/**
- * Copied and adapted from https://github.com/timqi/btc_address_validator
- *
- */
 public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorService {
 
-    private static final char[] ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray();
-
-    private static final int[] INDEXES = new int[128];
-
-    private static final MessageDigest digest;
+    private static final Base58CheckedValidator base58validator = new Base58CheckedValidator(
+            "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray());
 
     private static int[] BECH32_CHARSET_REV = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -29,21 +20,6 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     private static int[] BECH32_GENERATOR = { 0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3 };
 
-    static {
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-
-        for (int i = 0; i < INDEXES.length; i++) {
-            INDEXES[i] = -1;
-        }
-        for (int i = 0; i < ALPHABET.length; i++) {
-            INDEXES[ALPHABET[i]] = i;
-        }
-    }
-
     @Override
     public void init(File confDir) {
         // Nothing to do.
@@ -51,7 +27,9 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_BITCOIN_ADDRESS");
+        return Arrays.asList("CRIPTOCOIN_BITCOIN_ADDRESS", "CRIPTOCOIN_BITCOIN_BIP38_ENC_PRIV_K",
+                "CRIPTOCOIN_BITCOIN_WIF_PRIV_K_UNC_PUB_K", "CRIPTOCOIN_BITCOIN_WIF_PRIV_K_COMP_PUB_K",
+                "CRIPTOCOIN_BITCOIN_BIP32_HD_XPRV_KEY", "CRIPTOCOIN_BITCOIN_BIP32_HD_XPUB_KEY");
     }
 
     @Override
@@ -65,7 +43,23 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
         } else {
             try {
                 int addressHeader = getAddressHeader(addr);
-                return (addressHeader == 0 || addressHeader == 5);
+                switch (addr.charAt(0)) {
+                    case '1':
+                        return addressHeader == 0;
+                    case '3':
+                        return addressHeader == 5;
+                    case '5':
+                    case 'K':
+                    case 'L':
+                        return addressHeader == 128;
+                    default:
+                }
+
+                if (addr.startsWith("xpub")) {
+                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 178 || addressHeader == 30;
+                } else if (addr.startsWith("xprv")) {
+                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 173 || addressHeader == 228;
+                }
             } catch (Exception x) {
             }
         }
@@ -73,100 +67,8 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     }
 
     private static int getAddressHeader(String address) throws IOException {
-        byte[] tmp = decodeChecked(address);
+        byte[] tmp = base58validator.decodeChecked(address);
         return tmp[0] & 0xFF;
-    }
-
-    private static byte[] decodeChecked(String input) throws IOException {
-        byte[] tmp = decodeBase58To25Bytes(input);
-        if (tmp.length < 4)
-            throw new IOException("BTC AddressFormatException Input too short");
-        byte[] bytes = copyOfRange(tmp, 0, tmp.length - 4);
-        byte[] checksum = copyOfRange(tmp, tmp.length - 4, tmp.length);
-
-        tmp = doubleDigest(bytes);
-        byte[] hash = copyOfRange(tmp, 0, 4);
-        if (!Arrays.equals(checksum, hash))
-            throw new IOException("BTC AddressFormatException Checksum does not validate");
-
-        return bytes;
-    }
-
-    private static byte[] decodeBase58To25Bytes(String input) {
-        if (input.length() == 0) {
-            return new byte[0];
-        }
-        byte[] input58 = new byte[input.length()];
-        // Transform the String to a base58 byte sequence
-        for (int i = 0; i < input.length(); ++i) {
-            char c = input.charAt(i);
-            int digit58 = -1;
-            if (c >= 0 && c < 128) {
-                digit58 = INDEXES[c];
-            }
-            if (digit58 < 0) {
-                return null;
-            }
-
-            input58[i] = (byte) digit58;
-        }
-
-        // Count leading zeroes
-        int zeroCount = 0;
-        while (zeroCount < input58.length && input58[zeroCount] == 0) {
-            ++zeroCount;
-        }
-        // The encoding
-        byte[] temp = new byte[input.length()];
-        int j = temp.length;
-
-        int startAt = zeroCount;
-        while (startAt < input58.length) {
-            byte mod = divmod256(input58, startAt);
-            if (input58[startAt] == 0) {
-                ++startAt;
-            }
-
-            temp[--j] = mod;
-        }
-        // Do no add extra leading zeroes, move j to first non null byte.
-        while (j < temp.length && temp[j] == 0) {
-            ++j;
-        }
-
-        return copyOfRange(temp, j - zeroCount, temp.length);
-    }
-
-    private static byte[] doubleDigest(byte[] input) {
-        return doubleDigest(input, 0, input.length);
-    }
-
-    private static byte[] doubleDigest(byte[] input, int offset, int length) {
-        synchronized (digest) {
-            digest.reset();
-            digest.update(input, offset, length);
-            byte[] first = digest.digest();
-            return digest.digest(first);
-        }
-    }
-
-    private static byte divmod256(byte[] number58, int startAt) {
-        int remainder = 0;
-        for (int i = startAt; i < number58.length; i++) {
-            int digit58 = (int) number58[i] & 0xFF;
-            int temp = remainder * 58 + digit58;
-
-            number58[i] = (byte) (temp / 256);
-
-            remainder = temp % 256;
-        }
-        return (byte) remainder;
-    }
-
-    private static byte[] copyOfRange(byte[] source, int from, int to) {
-        byte[] range = new byte[to - from];
-        System.arraycopy(source, from, range, 0, range.length);
-        return range;
     }
 
     /*

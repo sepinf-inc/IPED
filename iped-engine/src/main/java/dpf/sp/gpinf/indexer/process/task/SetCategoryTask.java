@@ -33,6 +33,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.Messages;
 import iped3.IItem;
+import iped3.util.BasicProps;
 
 /**
  * Classe que carrega o mapeamento de mimeTypes para Categoria da aplicação.
@@ -117,6 +118,15 @@ public class SetCategoryTask extends AbstractTask {
             String category = get(e.getMediaType());
             e.setCategory(category);
         }
+        
+        String category;
+        if (e.isDir()) {
+            category = FOLDER_CATEGORY;
+        }else {
+            category = get(e.getMediaType());
+        }
+        e.setCategory(category);
+        e.setTempAttribute(BasicProps.CATEGORY, category);
 
     }
 

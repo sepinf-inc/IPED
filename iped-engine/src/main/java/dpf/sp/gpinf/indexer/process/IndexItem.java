@@ -28,6 +28,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.ConcurrentModificationException;
@@ -40,6 +41,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
 import org.apache.lucene.document.DoubleField;
@@ -58,6 +60,7 @@ import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.NumericUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -80,8 +83,8 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
-import iped3.IItem;
 import iped3.IEvidenceFileType;
+import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
@@ -95,6 +98,9 @@ public class IndexItem extends BasicProps {
 
     public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
+    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
+    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
+    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
@@ -172,6 +178,7 @@ public class IndexItem extends BasicProps {
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
+        IOUtils.fsync(metadataTypesFile, false);
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
@@ -228,7 +235,8 @@ public class IndexItem extends BasicProps {
         if (value != null) {
             doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
-
+        }
+        if(evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourcePath() != null) {
             Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
             value = Util.getRelativePath(output, srcPath.toFile());
             doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
@@ -237,6 +245,12 @@ public class IndexItem extends BasicProps {
             value = evidence.getInputStreamFactory().getClass().getName();
             doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+        }
+        
+        intVal = evidence.getSubitemId();
+        if (intVal != null) {
+            doc.add(new IntField(SUBITEMID, intVal, Field.Store.YES));
+            doc.add(new NumericDocValuesField(SUBITEMID, intVal));
         }
 
         intVal = evidence.getParentId();
@@ -378,6 +392,15 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
+        byte[] similarityFeatures = evidence.getImageSimilarityFeatures();
+        if (similarityFeatures != null) {
+            doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
+            for (int i = 0; i < 4; i++) {
+                doc.add(new IntField(SIMILARITY_FEATURES + i, similarityFeatures[i], Field.Store.NO));
+            }
+        }
+
         long off = evidence.getFileOffset();
         if (off != -1) {
             doc.add(new StoredField(OFFSET, Long.toString(off)));
@@ -392,8 +415,8 @@ public class IndexItem extends BasicProps {
         }
 
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
-            if (entry.getValue() instanceof List) {
-                for (Object val : (List) entry.getValue()) {
+            if (entry.getValue() instanceof Collection) {
+                for (Object val : (Collection<?>) entry.getValue()) {
                     if (!typesMap.containsKey(entry.getKey()))
                         typesMap.put(entry.getKey(), val.getClass());
                     addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
@@ -659,6 +682,11 @@ public class IndexItem extends BasicProps {
             if (value != null) {
                 evidence.setParentId(Integer.valueOf(value));
             }
+            
+            value = doc.get(IndexItem.SUBITEMID);
+            if (value != null) {
+                evidence.setSubitemId(Integer.valueOf(value));
+            }
 
             value = doc.get(IndexItem.EVIDENCE_UUID);
             if (value != null) {
@@ -722,6 +750,8 @@ public class IndexItem extends BasicProps {
                 value = doc.get(IndexItem.ID_IN_SOURCE);
                 if (value != null && !value.isEmpty()) {
                     evidence.setIdInDataSource(value.trim());
+                }
+                if (doc.get(IndexItem.SOURCE_PATH) != null) {
                     String relPath = doc.get(IndexItem.SOURCE_PATH);
                     Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
                     SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
@@ -765,6 +795,11 @@ public class IndexItem extends BasicProps {
                             e.printStackTrace();
                         }
                     }
+                }
+                
+                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
+                if (bytesRef != null) {
+                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
@@ -833,14 +868,17 @@ public class IndexItem extends BasicProps {
                     } else
                         evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
                 } else {
-                    String val = f.stringValue();
-                    if(Date.class.equals(c)) {
+                    if(Date.class.equals(c) && f.stringValue() != null) {
                         //it was stored lowercase because query parser converts range queries to lowercase
-                        val = val.toUpperCase();
+                        String val = f.stringValue().toUpperCase();
+                        evidence.getMetadata().add(f.name(), val);
+                    }else {
+                        Object casted = getCastedValue(c, f);
+                        if(casted != null) {
+                            evidence.getMetadata().add(f.name(), casted.toString());
+                        }
                     }
-                    evidence.getMetadata().add(f.name(), val);
                 }
-                    
             }
 
             return evidence;
@@ -892,9 +930,13 @@ public class IndexItem extends BasicProps {
             }catch(ParseException e) {
                 return DateUtil.tryToParseDate(value);
             }   
-        }else if ((c != null && Number.class.isAssignableFrom(c)) || f.numericValue() != null)
-            return f.numericValue();
-        else
+        }else if (f.numericValue() != null) {
+            Number num = f.numericValue();
+            if(num.doubleValue() == num.longValue())
+                return num.longValue();
+            else
+                return num;
+        }else
             return f.stringValue();
     }
 

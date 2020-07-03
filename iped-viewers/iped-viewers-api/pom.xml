@@ -3,7 +3,7 @@
   <parent>
     <groupId>iped</groupId>
     <artifactId>iped-viewers</artifactId>
-    <version>3.17.2</version>
+    <version>3.18</version>
   </parent>
   
   <artifactId>iped-viewers-api</artifactId>

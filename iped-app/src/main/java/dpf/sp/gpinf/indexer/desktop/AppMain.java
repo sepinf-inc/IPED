@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,15 +22,11 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class AppMain {
 
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
-    private static final int MIN_JAVA_VER = 8;
-    private static final int MAX_JAVA_VER = 8;
-
-    // These java versions have a WebView bug that crashes the JVM: JDK-8196011
-    private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171" };
 
     File casePath;
     File testPath;// = new File("E:\\teste\\noteAcer-forensic-3.15-2");
@@ -52,37 +47,14 @@ public class AppMain {
         try {
             if (System.getProperty("iped.javaVersionChecked") != null) //$NON-NLS-1$
                 return;
+            
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
-                    String versionStr = System.getProperty("java.version"); //$NON-NLS-1$
-                    if (versionStr.startsWith("1.")) //$NON-NLS-1$
-                        versionStr = versionStr.substring(2, 3);
-                    int dotIdx = versionStr.indexOf("."); //$NON-NLS-1$
-                    if (dotIdx > -1)
-                        versionStr = versionStr.substring(0, dotIdx);
-                    int version = Integer.valueOf(versionStr);
-
-                    if (version < MIN_JAVA_VER) {
-                        JOptionPane.showMessageDialog(null, Messages.getString("AppMain.javaVerError.1") + MIN_JAVA_VER //$NON-NLS-1$
-                                + Messages.getString("AppMain.javaVerError.2"), //$NON-NLS-1$
-                                Messages.getString("AppMain.error.Title"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
-                        System.exit(1);
+                    String warn = Util.getJavaVersionWarn();
+                    if(warn != null) {
+                        JOptionPane.showMessageDialog(null, warn, Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
                     }
-                    if (version > MAX_JAVA_VER) {
-                        JOptionPane.showMessageDialog(null, Messages.getString("AppMain.javaVerWarn.1") + version //$NON-NLS-1$
-                                + Messages.getString("AppMain.javaVerWarn.2"), //$NON-NLS-1$
-                                Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
-                    }
-                    for (String ver : buggedVersions) {
-                        if (System.getProperty("java.version").equals(ver))
-                            JOptionPane.showMessageDialog(null, Messages.getString("AppMain.javaVerBug.1") + ver + //$NON-NLS-1$
-                            Messages.getString("AppMain.javaVerBug.2"), //$NON-NLS-1$
-                                    Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
-                    }
-                    if(!System.getProperty("os.arch").contains("64"))
-                        JOptionPane.showMessageDialog(null, "You are using a java 32bits, things may not work properly. It is strongly recommended to install a java 64bits!"); //$NON-NLS-1$
-                        
                     Messages.resetLocale();
                 }
             });
@@ -202,13 +174,12 @@ public class AppMain {
                 String[] customArgs = CustomLoader.getCustomLoaderArgs(this.getClass().getName(), args, logFile);
 
                 CustomLoader.run(customArgs, jars);
-                return;
 
             } else {
                 App.get().getSearchParams().codePath = libDir.getAbsolutePath();
                 App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-
-                InicializarBusca init = new InicializarBusca(App.get().getSearchParams(), processingManager);
+    
+                InicializarBusca init = new InicializarBusca(processingManager);
                 init.execute();
             }
 

@@ -15,11 +15,11 @@ enablePhotoDNA = false
 enableKff = true
 
 # Enables hash lookup on LED database. Files with hashes 
-# on the database can be queried wiht filter "Hash Alert (Child Porn)"
+# on the database can be queried with filter "Hash Alert (Child Porn)"
 # Need to use hash md5 or sha-1.
 enableLedWkff = false
 
-# Enables nudity detection. For each image it creates atributes "scoreNudez" (1 to 1000)
+# Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
 # and classeNudez (1 to 5) for ranking and/or filtering.
 enableLedDie = false
 
@@ -27,7 +27,7 @@ enableLedDie = false
 excludeKffIgnorable = false
 
 # Ignores/discards duplicated files from the rest of processing (and from the case)
-# It can strongly speed up processing of cases whith backups. Hash calculation is need to be enabled.
+# It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
 ignoreDuplicates = false
 
 # Exports the properties of all files in the case to file "Lista de Arquivos.csv"
@@ -37,28 +37,30 @@ exportFileProps = true
 processFileSignatures = true
 
 # Enables parsing of files contents. It's necessary for several functions like
-# containers expansion, dettection of crypted content, metadata indexion, previews generation, etc.
+# containers expansion, detection of encrypted content, metadata indexing, previews generation, etc.
 enableFileParsing = true
 
 # Expands containers, like compressed files, e-mail boxes, emails e MS-Office documents.
 # File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
 expandContainers = true
 
-# Searches texts extracted from itens by regular expressions 
+# Searches texts extracted from items by regular expressions 
 # like social numbers, emails, URLs, credit cards, money values, etc. 
 # New expressions can be configured in file "conf/RegexConfig.txt"
 enableRegexSearch = true
 
-# Enables dettection of more than 70 idioms in document files.
+# Enables detection of more than 70 idioms in document files.
 enableLanguageDetect = true
 
-# EXPERIMENTAL function to recognize mentioned entities: names of people, organizations or places.
-# Requested models must be downloaded and put in the folder "optional-libs"
-# Download requested models from: StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
-# Model for Portuguese language has not be trained, so results may be insatisfatory
-# This function uses a lot of CPU, wich can increase processing duration by 4 times.
-# Advanced settings can be modified in file "conf/NamedEntityRecognitionConfig.txt"
+# Feature to recognize named entities: people, organizations or places.
+# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in optional_jars folder.
+# This feature is CPU heavy, it can increase processing time by 4x.
+# Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
 enableNamedEntityRecogniton = false
+
+# Feature to create link graphs of communications (calls, messages, emails...)
+# Optionally it can create entities and links based on nearby regex hits (experimental). It could be enabled in conf/GraphConfig.json
+enableGraphGeneration = true
 
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
@@ -67,7 +69,7 @@ indexFileContents = true
 # In this option, raw strings are extracted from the files and indexed
 indexUnknownFiles = true
 
-# Index corrupted files with strings. For example, deleted and partially overwritten imagens
+# Index corrupted files with strings. For example, deleted and partially overwritten images
 # can have searchable plain text into them.
 indexCorruptedFiles = true
 
@@ -75,6 +77,10 @@ indexCorruptedFiles = true
 # Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
 # Advanced OCR options, such as the Tesseract path on Linux, can be modified in "conf/AdvancedConfig.txt"
 enableOCR = false
+
+# Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
+# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
+enableAudioTranscription = false
 
 # Adds and processes files fileSlacks
 addFileSlacks = true
@@ -90,7 +96,7 @@ indexUnallocated = true
 # File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
 enableCarving = true
 
-# Enables carving that retrieves known files from the LED base, based on the beggining (64K) of the file.
+# Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
 # It's necessary to enable "addUnallocated" and to configure "ledWkffPath".
 enableKFFCarving = false
 
@@ -101,10 +107,14 @@ enableKnownMetCarving = false
 # It can slow down processing, but strongly speeds up image preview in the gallery
 enableImageThumbs = true
 
+# [Experimental] Enables the generation of images features during processing, allowing the search
+# for visually similar images. "enableImageThumbs" must be enabled.
+enableImageSimilarity = false
+
 # Enables extraction of image frames from video files
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"
 enableVideoThumbs = true
 
-# Enables HTML report generation on automatic extractions or from selected itens.
+# Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true

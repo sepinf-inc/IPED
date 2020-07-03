@@ -98,7 +98,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
             IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
-            IndexItem.PARENTIDs, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
+            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.WKFF_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
@@ -125,6 +125,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private JComboBox<Object> combo;
     private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
     private JTextField textFieldNameFilter;
+    private int firstColsToPin = 7;
 
     private boolean autoManageCols;
 
@@ -137,6 +138,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     public void dispose() {
         dialog.setVisible(false);
         instance = null;
+        getInstance().loadedFields = this.loadedFields;
+        getInstance().colState = this.colState;
     }
 
     public void setVisible() {
@@ -150,6 +153,14 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private void clearNameFilter() {
         textFieldNameFilter.setText(emptyFilter);
         textFieldNameFilter.setForeground(Color.gray);
+    }
+    
+    public void setPinnedColumns(int firstColsToPin) {
+        this.firstColsToPin = firstColsToPin;
+    }
+    
+    public int getPinnedColumns() {
+        return this.firstColsToPin;
     }
 
     @Override
@@ -445,27 +456,49 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         if (dinamicFields == null)
             return;
+        
+        Set<String> colNamesToPin = new HashSet<>();
+        for (int i = 2; i < Math.min(firstColsToPin, App.get().resultsTable.getColumnCount()); i++) {
+            colNamesToPin.add(App.get().resultsTable.getColumnModel().getColumn(i).getHeaderValue().toString().toLowerCase());
+        }
 
-        for (String field : (List<String>) colState.visibleFields.clone())
-            if (!dinamicFields.contains(field) && !field.equals(ResultTableModel.SCORE_COL)
-                    && !field.equals(ResultTableModel.BOOKMARK_COL)
-                    && !field.equals(BasicProps.LENGTH))
+        for (String field : (List<String>) colState.visibleFields.clone()) {
+            if (!dinamicFields.contains(field) && !colNamesToPin.contains(field.toLowerCase()) &&
+                    !field.equals(BasicProps.LENGTH)) //length header changes to listed items total size info
+            {
                 updateGUICol(field, false);
-
-        int firstCol = App.get().resultsTable.getColumnCount();
+            }
+        }
+        
+        int newColStart = App.get().resultsTable.getColumnCount();
 
         for (String field : dinamicFields) {
             if (!colState.visibleFields.contains(field))
                 updateGUICol(field, true);
         }
 
-        int newPos = 4;
-        for (int i = firstCol; i < App.get().resultsTable.getColumnCount(); i++) {
+        //move important new cols to front
+        int newPosEmail = firstColsToPin;
+        int newPosOther = firstColsToPin;
+        for (int i = newColStart; i < App.get().resultsTable.getColumnCount(); i++) {
             TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
             String colName = col.getHeaderValue().toString();
-            if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)
-                    || colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
-                App.get().resultsTable.moveColumn(i, newPos++);
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosEmail++);
+                newPosOther++;
+            }else if (colName.toLowerCase().startsWith(ExtraProperties.UFED_META_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosOther++);
+            }
+        }
+        
+        //move important old cols to front
+        int lastOldCol = newColStart - 1 + newPosOther - firstColsToPin;
+        newPosEmail = firstColsToPin;
+        for (int i = newPosOther; i <= lastOldCol ; i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            if (colName.startsWith(ExtraProperties.MESSAGE_PREFIX)) {
+                App.get().resultsTable.moveColumn(i, newPosEmail++);
             }
         }
     }
@@ -584,6 +617,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     insertField = false;
                     break;
                 }
+            if (f.startsWith(BasicProps.SIMILARITY_FEATURES)) 
+                continue;
             if (insertField)
                 otherFields.add(f);
         }

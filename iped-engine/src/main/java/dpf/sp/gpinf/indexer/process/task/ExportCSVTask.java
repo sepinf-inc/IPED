@@ -18,18 +18,26 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Properties;
 
+import org.apache.lucene.util.IOUtils;
+
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 
@@ -38,13 +46,16 @@ import iped3.IItem;
  */
 public class ExportCSVTask extends AbstractTask {
 
-    private static int MAX_MEM_SIZE = 1000000;
+    private static int MIN_FLUSH_SIZE = 1 << 23;
     private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
 
     public static boolean exportFileProps = false;
-    public static volatile boolean headerWritten = false;
 
-    private StringBuilder list = new StringBuilder();
+    private static StringBuilder staticList = new StringBuilder();
+    
+    private CmdLineArgs args;
+    
+    private File tmp;
 
     /**
      * Indica que itens ignorados, como duplicados ou kff ignorable, devem ser
@@ -68,6 +79,8 @@ public class ExportCSVTask extends AbstractTask {
         if (!exportFileProps || (caseData.isIpedReport() && !evidence.isToAddToCase())) {
             return;
         }
+        
+        StringBuilder list = new StringBuilder();
 
         String value = evidence.getName();
         if (value == null) {
@@ -150,13 +163,18 @@ public class ExportCSVTask extends AbstractTask {
             value = ""; //$NON-NLS-1$
         }
         list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        
+        String persistentId = Util.getPersistentId(evidence);
+        list.append("\"").append(persistentId).append("\"");
 
         list.append("\r\n"); //$NON-NLS-1$
 
-        if (list.length() > MAX_MEM_SIZE) {
-            flush();
+        synchronized(this.getClass()) {
+            staticList.append(list);
+            if(staticList.length() >= MIN_FLUSH_SIZE) {
+                flush(output);
+            }
         }
-
     }
 
     private String escape(String value) {
@@ -168,27 +186,61 @@ public class ExportCSVTask extends AbstractTask {
         return str.toString().replace("\"", "\"\""); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    public void flush() throws IOException {
-        flush(list, output);
-        list = new StringBuilder();
-    }
-
-    private static synchronized void flush(StringBuilder list, File output) throws IOException {
-        FileOutputStream fos = new FileOutputStream(output, true);
-        OutputStreamWriter writer = new OutputStreamWriter(fos, "UTF-8"); //$NON-NLS-1$
-        if (!headerWritten) {
-            byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
-            fos.write(utf8bom);
-            writer.write(Messages.getString("ExportCSVTask.CsvColNames")); //$NON-NLS-1$
-            headerWritten = true;
+    private static synchronized void flush(File output) throws IOException {
+        if(!output.exists()){
+            writeHeader(output);
         }
-        writer.write(list.toString());
-        writer.close();
+        try(BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardOpenOption.APPEND)){
+            writer.write(staticList.toString());
+        }
+        staticList = new StringBuilder();
+    }
+    
+    private static void writeHeader(File file) throws IOException {
+        try(OutputStream os = Files.newOutputStream(file.toPath(), StandardOpenOption.CREATE_NEW);
+                Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)){
+            byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+            os.write(utf8bom);
+            writer.write(Messages.getString("ExportCSVTask.CsvColNames")); //$NON-NLS-1$
+        }
+    }
+    
+    public static void commit(File moduleDir) throws IOException {
+        if(!exportFileProps) return;
+        File csv = new File(moduleDir.getParentFile(), CSV_NAME); 
+        flush(csv);
+        IOUtils.fsync(csv, false);
     }
 
     public void finish() throws IOException {
-        if (exportFileProps) {
-            flush();
+        if (exportFileProps && staticList != null) {
+            flush(output);
+            staticList = null;
+            
+            if(!args.isContinue() && !args.isRestart())
+                return;
+            
+            //clean duplicate entries in csv
+            try(BufferedWriter writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.CREATE);
+                    BufferedReader reader = Files.newBufferedReader(output.toPath())){
+                HashSet<HashValue> added = new HashSet<>();
+                String line = null;
+                boolean header = true;
+                while((line = reader.readLine()) != null) {
+                    HashValue globalId = null;
+                    if(!header) {
+                        int idx = line.lastIndexOf(";\"");
+                        globalId = new HashValue(line.substring(idx + 2, line.length() - 1));
+                    }
+                    if(header || added.add(globalId)) {
+                        writer.write(line);
+                        writer.write("\r\n");
+                    }
+                    header = false;
+                }
+            }
+            output.delete();
+            tmp.renameTo(output);
         }
     }
 
@@ -196,8 +248,15 @@ public class ExportCSVTask extends AbstractTask {
     public void init(Properties confProps, File confDir) throws Exception {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
-        if (output.exists() && !Boolean.valueOf(System.getProperty(LocalConfig.SYS_PROP_APPEND))) {
+        
+        args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
             Files.delete(output.toPath());
+        }
+        
+        tmp = new File(output.getAbsolutePath() + ".tmp");
+        if(tmp.exists()) {
+            Files.delete(tmp.toPath());
         }
 
         String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
@@ -207,8 +266,6 @@ public class ExportCSVTask extends AbstractTask {
         if (value != null && !value.isEmpty()) {
             exportFileProps = Boolean.valueOf(value);
         }
-
-        headerWritten = false;
 
     }
 

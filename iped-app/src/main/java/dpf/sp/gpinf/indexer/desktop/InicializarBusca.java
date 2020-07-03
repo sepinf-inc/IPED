@@ -29,19 +29,13 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.IViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.control.ViewerControl;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -49,16 +43,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     private boolean updateItems;
 
-    private AppSearchParams appSearchParams = null;
     private TreeViewModel treeModel;
     private Manager manager;
 
-    public InicializarBusca(AppSearchParams params, Manager manager) {
-        this(params, manager, false);
+    public InicializarBusca(Manager manager) {
+        this(manager, false);
     }
 
-    public InicializarBusca(AppSearchParams params, Manager manager, boolean updateItems) {
-        this.appSearchParams = params;
+    public InicializarBusca(Manager manager, boolean updateItems) {
         this.manager = manager;
         this.updateItems = updateItems;
     }
@@ -75,7 +67,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     protected Void doInBackground() {
         publish(0);
@@ -99,6 +90,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
             App.get().appCase.checkImagePaths();
 
             if (!updateItems) {
+                App.get().appGraphAnalytics.initGraphService();
+                
                 LOGGER.info("Loading Columns"); //$NON-NLS-1$
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
@@ -113,11 +106,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().setAutoParser(autoParser);
 
                 FileProcessor exibirAjuda = new FileProcessor(-1, false);
-
-                IViewerControl viewerControl = ViewerControl.getInstance();
-                viewerControl.createViewers(this.appSearchParams, exibirAjuda);
-                this.appSearchParams.textViewer = this.appSearchParams.compositeViewer.getTextViewer();
-                App.get().setTextViewer((TextViewer) this.appSearchParams.textViewer);
+                exibirAjuda.execute();
 
                 LOGGER.info("Listing all items"); //$NON-NLS-1$
                 PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
@@ -156,7 +145,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     @Override
     public void done() {
         CategoryTreeModel.install();
-        App.get().menu = new MenuClass();
         App.get().filterManager.loadFilters();
         MarcadoresController.get().atualizarGUIandHistory();
 
@@ -167,10 +155,10 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         }
 
         if (updateItems) {
-            App.get().appletListener.updateFileListing();
             ColumnsManager.getInstance().dispose();
-            App.get().dialogBar.setVisible(false);
+            App.get().appletListener.updateFileListing();
         }
+        App.get().dialogBar.setVisible(false);
     }
 
 }

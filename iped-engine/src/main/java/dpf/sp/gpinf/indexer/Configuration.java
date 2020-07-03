@@ -18,21 +18,18 @@
  */
 package dpf.sp.gpinf.indexer;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.nio.file.Paths;
-import java.security.NoSuchAlgorithmException;
+import java.util.Map.Entry;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.mime.MimeTypesFactory;
-import org.bouncycastle.jcajce.provider.digest.MD5.Digest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,8 +47,8 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
@@ -112,29 +109,6 @@ public class Configuration {
         if (Configuration.class.getClassLoader().getClass().getName().equals(CustomURLClassLoader.class.getName())) {
             logger = LoggerFactory.getLogger(Configuration.class);
             logger.info("Loading configuration from " + configPath); //$NON-NLS-1$
-        }
-    }
-    
-    public void checkIfDefaultProfileWasChanged() {
-        try {
-            UTF8Properties defaultProps = new UTF8Properties();
-            defaultProps.load(new File(appRoot + "/" + CONFIG_FILE));
-            defaultProps.load(new File(appRoot + "/conf/" + EXTRA_CONFIG_FILE));
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            TreeMap<Object, Object> map = new TreeMap<>(defaultProps);
-            ObjectOutputStream oos = new ObjectOutputStream(baos);
-            oos.writeObject(map);
-            oos.close();
-            byte[] bytes = Digest.getInstance("MD5").digest(baos.toByteArray());
-            String hash = new String(Hex.encodeHex(bytes, false));
-            if(!"BD510D87881634974C3C9B23C1564165".equals(hash)) {
-                System.err.println("You changed 'locale' in LocalConfig.txt but configured IPEDConfig.txt or conf/AdvancedConfig.txt in root folder! "
-                        + "Please, restore those english config files to their defaults and set configuration in 'profiles/[lang]/default' folder!");
-                System.exit(1);
-            }
-            
-        } catch (IOException | NoSuchAlgorithmException e) {
-            e.printStackTrace();
         }
     }
     

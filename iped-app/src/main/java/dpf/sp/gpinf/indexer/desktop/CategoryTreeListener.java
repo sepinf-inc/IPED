@@ -17,12 +17,13 @@ import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.desktop.CategoryTreeModel.Category;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
-public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener {
+public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 
     BooleanQuery query;
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
+    private boolean clearing = false;
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -59,7 +60,7 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             }
         }
 
-        App.get().appletListener.updateFileListing();
+        if(!clearing) App.get().appletListener.updateFileListing();
 
     }
 
@@ -86,6 +87,13 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     public void treeCollapsed(TreeExpansionEvent event) {
         collapsed = System.currentTimeMillis();
 
+    }
+
+    @Override
+    public void clearFilter() {
+        clearing = true;
+        App.get().categoryTree.clearSelection();
+        clearing = false;
     }
 
 }

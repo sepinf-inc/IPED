@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -17,6 +18,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
@@ -87,6 +89,12 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--append", description = "add data to be processed to an existent case")
     private boolean appendIndex;
+    
+    @Parameter(names = "--continue", description = "continue a stopped or aborted processing")
+    private boolean isContinue;
+    
+    @Parameter(names = "--restart", description = "discard last aborted processing and start from beginning")
+    private boolean restart;
 
     @Parameter(names = "--nogui", description = "do not open progress windows, text mode processing")
     private boolean nogui;
@@ -111,6 +119,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private Map<String, String> extraParams = new HashMap<>();
 
     private List<String> allArgs;
+    
+    private HashSet<String> evidenceNames = new HashSet<>();
 
     @Override
     public List<File> getDatasources() {
@@ -191,6 +201,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     public boolean isAppendIndex() {
         return appendIndex;
     }
+    
+    @Override
+    public boolean isContinue() {
+        return isContinue;
+    }
+    
+    @Override
+    public boolean isRestart() {
+        return restart;
+    }
 
     @Override
     public boolean isNogui() {
@@ -236,7 +256,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 return allArgs.get(i + 3);
             }
         }
-        return null;
+        return datasource.getName();
     }
 
     public static class FileExistsValidator implements IParameterValidator {
@@ -279,6 +299,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      */
     public void saveIntoCaseData(ICaseData caseData) {
         caseData.putCaseObject(CmdLineArgs.class.getName(), this);
+        caseData.putCaseObject(SkipCommitedTask.DATASOURCE_NAMES, evidenceNames);
     }
 
     /**
@@ -299,12 +320,22 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             printUsageAndExit(jc, e);
         }
     }
+    
+    private void checkDuplicateDataSources() {
+        for(File source : datasources) {
+            String name = getDataSourceName(source);
+            if(!evidenceNames.add(name)) {
+                throw new ParameterException("Duplicate evidence names not allowed: " + name);
+            }
+        }
+    }
 
     private void printUsageAndExit(JCommander jc, Exception e) {
         System.out.println(Versao.APP_NAME);
-        if (e != null)
-            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
         jc.usage();
+        if (e != null) {
+            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         System.exit(1);
     }
 
@@ -335,6 +366,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             for (File dataSource : this.datasources) {
                 IndexFiles.getInstance().dataSource.add(dataSource);
             }
+            checkDuplicateDataSources();
         }
 
         if (this.ocr != null) {

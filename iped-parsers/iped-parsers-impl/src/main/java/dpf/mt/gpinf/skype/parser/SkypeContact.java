@@ -8,14 +8,14 @@ import java.util.Date;
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
 
-public class SkypeContact {
+public class SkypeContact implements SkypeUser{
 
-    int Id;
+    String Id;
     String skypeName;
     String pstnNumber;
     String fullName;
     String city;
-    String sobre;
+    String about;
     String displayName;
     String assignedPhone;
     private byte[] avatar;
@@ -26,11 +26,11 @@ public class SkypeContact {
     Date lastOnlineDate;
     Date lastUsed;
 
-    public int getId() {
+    public String getId() {
         return Id;
     }
 
-    public void setId(int id) {
+    public void setId(String id) {
         Id = id;
     }
 
@@ -57,6 +57,15 @@ public class SkypeContact {
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
+    
+    public String getBestName() {
+        String name = getFullName();
+        if (name == null || name.trim().isEmpty())
+            name = getDisplayName();
+        if (name == null || name.trim().isEmpty())
+            name = getSkypeName();
+        return name;
+    }
 
     public String getCity() {
         return city;
@@ -66,12 +75,12 @@ public class SkypeContact {
         this.city = city;
     }
 
-    public String getSobre() {
-        return sobre;
+    public String getAbout() {
+        return about;
     }
 
-    public void setSobre(String sobre) {
-        this.sobre = sobre;
+    public void setAbout(String sobre) {
+        this.about = sobre;
     }
 
     public String getDisplayName() {

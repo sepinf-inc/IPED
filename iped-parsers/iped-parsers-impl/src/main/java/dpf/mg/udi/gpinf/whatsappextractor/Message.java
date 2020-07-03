@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 
+import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
+
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -262,9 +264,37 @@ public class Message {
     public void setMessageStatus(MessageStatus messageStatus) {
         this.messageStatus = messageStatus;
     }
+    
+    public boolean isSystemMessage() {
+        switch (messageType) {
+            case MESSAGES_NOW_ENCRYPTED:
+            case ENCRIPTION_KEY_CHANGED:
+            case GROUP_CREATED:
+            case USER_JOINED_GROUP:
+            case USER_JOINED_GROUP_FROM_LINK:
+            case USERS_JOINED_GROUP:
+            case USER_LEFT_GROUP:
+            case USER_REMOVED_FROM_GROUP:
+            case GROUP_ICON_CHANGED:
+            case GROUP_ICON_DELETED:
+            case GROUP_DESCRIPTION_CHANGED:
+            case SUBJECT_CHANGED:
+            case YOU_ADMIN:
+            case UNKNOWN_MESSAGE:
+                return true;
+        }
+        return false;
+    }
+    
+    public boolean isCall() {
+        return  messageType == MessageType.VIDEO_CALL || 
+                messageType == MessageType.VOICE_CALL ||
+                messageType == MessageType.MISSED_VIDEO_CALL || 
+                messageType == MessageType.MISSED_VOICE_CALL;
+    }
 
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, SHARED_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {

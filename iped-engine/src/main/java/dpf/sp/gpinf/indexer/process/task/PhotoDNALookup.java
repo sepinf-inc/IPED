@@ -105,8 +105,10 @@ public class PhotoDNALookup extends AbstractTask{
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
-        
+        if(vptree != null) {
+            vptree.clear();
+            vptree = null;
+        }
     }
 
     @Override

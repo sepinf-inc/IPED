@@ -7,8 +7,7 @@
 
 # Configuração de Extracao de Cenas, no formato <Largura em pixels de cada cena>,<Número de colunas>,<Número de linhas>. 
 # Quanto mais cenas/resolução mais lento o processo de extração.
-Layout = 240,4,5
-
+Layout = 256,4,5
 
 # Timeouts (em segundos) utilizado pelo processo de controle do MPlayer.
 # Alterar com cuidado pois valores muito grandes podem causar lentidão no processamento no caso de videos corrompidos.
@@ -19,8 +18,10 @@ Layout = 240,4,5
 #    - Processamento normal do vídeo 
 Timeouts = 300,15,45
 
-
 # Habilita(true) / Desabilita(false), apenas para depuração de problemas, o redirecionamento de toda saída do MPlayer para o log.
 Verbose = false
 
-
+# Configuração de miniaturas de vídeos na galeria.
+# Comentar para desabilitar (imagem completa com todas as cenas extraídas será mostrada na galeria).
+# Formato: <Largura em pixels da imagem na galeria>,<Mínimo de cenas>,<Máximo de Cenas>.
+GalleryThumbs = 320,2,3

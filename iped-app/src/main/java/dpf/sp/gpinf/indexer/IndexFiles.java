@@ -157,9 +157,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
         if (cmdLineParams.getProfile() != null) {
             profile = cmdLineParams.getProfile();
-        } else if (!locale.equals("en") && !isReportFromCaseFolder) //$NON-NLS-1$
+        } else if (!isReportFromCaseFolder) {
             profile = "default"; //$NON-NLS-1$
-
+        }
         if (profile != null)
             configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -311,10 +311,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.info(Versao.APP_NAME);
 
             Configuration.getInstance().loadConfigurables(indexador.configPath);
-            
-            if(!indexador.locale.equals("en") && "default".equals(indexador.profile)) {
-                Configuration.getInstance().checkIfDefaultProfileWasChanged();
-            }
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();

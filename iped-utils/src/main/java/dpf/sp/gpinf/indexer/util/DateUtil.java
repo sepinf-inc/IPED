@@ -45,6 +45,7 @@ public class DateUtil {
         // yyyy-mm-ddThh...
         dateFormats.add(createDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", UTC));   // UTC/Zulu
         dateFormats.add(createDateFormat("yyyy-MM-dd'T'HH:mm:ssZ", null));    // With timezone
+        dateFormats.add(createDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSX", null));// With timezone
         dateFormats.add(createDateFormat("yyyy-MM-dd'T'HH:mm:ss", null));     // Without timezone
         // yyyy-mm-dd hh...
         dateFormats.add(createDateFormat("yyyy-MM-dd' 'HH:mm:ss'Z'", UTC));   // UTC/Zulu

@@ -24,6 +24,7 @@ import iped3.datasource.IDataSource;
 import java.io.File;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import gpinf.dev.data.Item;
 
 /**
  * Classe abstrata base para leitura dos itens de uma fonte de dados (pasta,
@@ -95,6 +96,18 @@ public abstract class DataSourceReader {
      *             Caso algum erro inesperado ocorra durante a leitura dos dados
      */
     public abstract int read(File datasource) throws Exception;
+    
+    /**
+     * Lê a fonte de dados informada considerando a evidencia passada como parent.
+     * @param datasource Fonte de dados que será processada/lida.
+     * @param parent Evidencia parent.
+     * @throws Exception
+     * @see DataSourceReader#read(File)
+     */
+    public void read(File datasource, Item parent) throws Exception {
+      throw new IllegalAccessException("Method read(File datasource, EvidenceFile parent) not implemented in class "
+          + this.getClass().getName() + ".");
+    }
 
     /**
      *
@@ -114,7 +127,7 @@ public abstract class DataSourceReader {
     public String getEvidenceName(File datasource) {
         CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
         if (cmdArgs.getDname() == null || cmdArgs.getDname().size() == 0) {
-            return null;
+            return datasource.getName();
         }
         return cmdArgs.getDataSourceName(datasource);
     }

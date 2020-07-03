@@ -39,12 +39,13 @@ import dpf.sp.gpinf.indexer.ConstantsViewer;
 public class GraphicsMagicConverter implements Closeable {
 
     private static final String RESOLUTION = "resolution"; //$NON-NLS-1$
+    private static final String THREADS = "threads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
 
-    private static String[] CMD = { "gm", "convert", "-density", "96", "-sample", RESOLUTION, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+    private static String[] CMD = { "gm", "convert", "-limit", THREADS, "1", "-density", "96", "-sample", RESOLUTION, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
 
@@ -127,6 +128,11 @@ public class GraphicsMagicConverter implements Closeable {
             int exit = p.waitFor();
             if (exit == 0) {
                 CMD[0] = "magick";
+                for (int i = 1; i < CMD.length; i++) {
+                    if (CMD[i].equals(THREADS)) {
+                        CMD[i] = "thread";
+                    }
+                }
             } else
                 throw new IOException("error");
 
@@ -185,7 +191,7 @@ public class GraphicsMagicConverter implements Closeable {
         try {
             p = pb.start();
         } catch (IOException e1) {
-            Log.error("ImageMagickConverter", "Error executing imageMagick/graphicsMagick" //$NON-NLS-1$ //$NON-NLS-2$
+            Log.error("ImageMagickConverter", "Error executing imageMagick/graphicsMagick. " //$NON-NLS-1$ //$NON-NLS-2$
                     + "Check if it is installed and if its path is configured!"); //$NON-NLS-1$
         }
         BufferedImage result = null;

@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.ui.hitsViewer;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import java.nio.ByteBuffer;
 
 import javax.swing.table.AbstractTableModel;
@@ -28,12 +27,13 @@ import javax.swing.table.AbstractTableModel;
 public class HitsTableModel extends AbstractTableModel {
 
     private static final long serialVersionUID = 1L;
-    private AppSearchParams appSearchParams;
+    private final ATextViewer textViewer;
 
     private String[] columnNames = { "", Messages.getString("HitsTableModel.ContentHits") }; //$NON-NLS-1$ //$NON-NLS-2$
 
-    public HitsTableModel(AppSearchParams params) {
-        this.appSearchParams = params;
+    public HitsTableModel(ATextViewer textViewer) {
+        this.textViewer = textViewer;
+        textViewer.setHitsModel(this);
     }
 
     @Override
@@ -44,8 +44,8 @@ public class HitsTableModel extends AbstractTableModel {
     @Override
     public int getRowCount() {
 
-        if (appSearchParams.textViewer != null && appSearchParams.textViewer.textParser != null) {
-            return appSearchParams.textViewer.textParser.getSortedHits().size();
+        if (textViewer != null && textViewer.textParser != null) {
+            return textViewer.textParser.getSortedHits().size();
         }
 
         return 0;
@@ -61,20 +61,19 @@ public class HitsTableModel extends AbstractTableModel {
         try {
             if (col == 0) {
                 return row + 1;
-            } else {
-                long hitOff = appSearchParams.textViewer.textParser.getHits().get(row);
-                int hitLen = appSearchParams.textViewer.textParser.getSortedHits().get(hitOff)[0];
+            } 
+            long hitOff = textViewer.textParser.getHits().get(row);
+            int hitLen = textViewer.textParser.getSortedHits().get(hitOff)[0];
 
-                ByteBuffer data = ByteBuffer.allocate(hitLen);
-                int nread;
-                do {
-                    nread = appSearchParams.textViewer.textParser.getParsedFile().read(data, hitOff);
-                    hitOff += nread;
-                } while (nread != -1 && data.hasRemaining());
+            ByteBuffer data = ByteBuffer.allocate(hitLen);
+            int nread;
+            do {
+                nread = textViewer.textParser.getParsedFile().read(data, hitOff);
+                hitOff += nread;
+            } while (nread != -1 && data.hasRemaining());
 
-                data.flip();
-                return "<html><body>" + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + "</body></html>"; //$NON-NLS-1$ //$NON-NLS-2$
-            }
+            data.flip();
+            return "<html><body>" + (new String(data.array(), ATextViewer.TEXT_ENCODING)) + "</body></html>"; //$NON-NLS-1$ //$NON-NLS-2$
         } catch (Exception e) {
             // e.printStackTrace();
             return ""; //$NON-NLS-1$

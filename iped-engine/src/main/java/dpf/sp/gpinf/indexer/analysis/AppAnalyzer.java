@@ -28,6 +28,7 @@ import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.PhotoDNATask;
@@ -47,6 +48,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
+        analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
         
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);

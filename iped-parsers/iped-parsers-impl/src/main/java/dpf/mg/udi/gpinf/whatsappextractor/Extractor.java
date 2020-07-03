@@ -10,10 +10,12 @@ public abstract class Extractor {
     protected final File databaseFile;
     protected List<Chat> chatList;
     protected final WAContactsDirectory contacts;
+    protected WAAccount account;
 
-    protected Extractor(File databaseFile, WAContactsDirectory contacts) {
+    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         this.databaseFile = databaseFile;
         this.contacts = contacts;
+        this.account = account;
     }
 
     /**

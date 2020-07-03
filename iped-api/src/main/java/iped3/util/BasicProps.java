@@ -27,12 +27,14 @@ public class BasicProps {
     public static final String HASCHILD = "hasChildren"; //$NON-NLS-1$
     public static final String CARVED = "carved"; //$NON-NLS-1$
     public static final String SUBITEM = "subitem"; //$NON-NLS-1$
+    public static final String SUBITEMID = "subitemId"; //$NON-NLS-1$
     public static final String OFFSET = "offset"; //$NON-NLS-1$
     public static final String DUPLICATE = "duplicate"; //$NON-NLS-1$
     public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
     public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
     public static final String THUMB = "thumbnail"; //$NON-NLS-1$
+    public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
 
     public static final Set<String> SET = getBasicProps();
 
@@ -60,12 +62,14 @@ public class BasicProps {
         basicProps.add(HASCHILD);
         basicProps.add(CARVED);
         basicProps.add(SUBITEM);
+        basicProps.add(SUBITEMID);
         basicProps.add(OFFSET);
         basicProps.add(DUPLICATE);
         basicProps.add(TIMEOUT);
         basicProps.add(CONTENTTYPE);
         basicProps.add(TREENODE);
         basicProps.add(THUMB);
+        basicProps.add(SIMILARITY_FEATURES);
         return basicProps;
     }
 

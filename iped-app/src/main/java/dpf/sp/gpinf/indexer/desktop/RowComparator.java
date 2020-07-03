@@ -184,7 +184,7 @@ public class RowComparator implements Comparator<Integer> {
             throw new RuntimeException(Messages.getString("RowComparator.SortCanceled")); //$NON-NLS-1$
 
         if (scoreCol)
-            return (int) (app.ipedResult.getScore(a) - app.ipedResult.getScore(b));
+            return Float.compare(app.ipedResult.getScore(a), app.ipedResult.getScore(b));
 
         IItemId itemA = app.ipedResult.getItem(a);
         IItemId itemB = app.ipedResult.getItem(b);

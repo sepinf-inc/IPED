@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.process;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.lucene.index.IndexWriter;
@@ -27,31 +28,57 @@ public class ItemSearcher implements IItemSearcher {
     public ItemSearcher(File caseFolder, IndexWriter iw) {
         this.caseFolder = caseFolder;
         this.iw = iw;
+        this.iSource = new IPEDSource(caseFolder, iw);
     }
 
     @Override
     public List<IItemBase> search(String luceneQuery) {
 
         List<IItemBase> items = new ArrayList<IItemBase>();
-        try {
-            if (iSource == null)
-                iSource = new IPEDSource(caseFolder, iw);
+        for(IItemBase item : searchIterable(luceneQuery)) {
+            items.add(item);
+        }
+        return items;
+    }
+    
+    @Override
+    public Iterable<IItemBase> searchIterable(String luceneQuery) {
+        
+        SearchResult result = getResult(luceneQuery);
+        
+        return new Iterable<IItemBase>() {
+            @Override
+            public Iterator<IItemBase> iterator() {
+                return new Iterator<IItemBase>() {
+                    
+                    int pos = 0;
 
-            IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
-            searcher.setTreeQuery(true);
-            searcher.setNoScoring(true);
-            SearchResult result = searcher.search();
+                    @Override
+                    public boolean hasNext() {
+                        return pos < result.getLength();
+                    }
 
-            for (int i = 0; i < result.getLength(); i++) {
-                int id = result.getId(i);
-                items.add(iSource.getItemByID(id));
+                    @Override
+                    public IItemBase next() {
+                        return iSource.getItemByID(result.getId(pos++));
+                    }
+                    
+                };
             }
-
+        };
+    }
+    
+    private SearchResult getResult(String luceneQuery) {
+        IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
+        searcher.setTreeQuery(true);
+        searcher.setNoScoring(true);
+        try {
+            return searcher.search();
+            
         } catch (Exception e) {
             e.printStackTrace();
+            return new SearchResult(new int[0], new float[0]);
         }
-
-        return items;
     }
 
     @Override

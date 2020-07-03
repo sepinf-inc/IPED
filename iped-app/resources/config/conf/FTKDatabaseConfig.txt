@@ -1,32 +1,32 @@
 ########################################################################
-# Configurações do Banco de Dados para relatórios do FTK3+
+# Deprecated. FTK3+ database connection params to index FTK reports.
 ########################################################################
 
-#Aplicativo de banco de dados (oracle, postgreSQL ou sqlserver)
+# Database server type
 #DatabaseType = oracle
 DatabaseType = postgreSQL
 #DatabaseType = sqlserver
 
-# IP e porta do Banco de Dados
+# IP and port
 ServerName = 127.0.0.1
 #PortNumber = 1521
 PortNumber = 5432
 #PortNumber = 1433
 
-#Usuário e senha do banco
+# db user and password
 #User = sys as sysdba
 User = postgres
 #User = sa
 Password = pcf
 
-# Serviço/Nome do banco de dados
+# database/service name
 #ServiceName = ftk2
 ServiceName = adg
 
-#Versao do schema FTK no Banco (FTK 3.2: 32, 3.3: 33, 3.4: 40, 4.0: 41, 4.1: 42, 
+# FTK database schema (FTK 3.2: 32, 3.3: 33, 3.4: 40, 4.0: 41, 4.1: 42, 
 # 4.2: ADG53, 5.0: ADG54, 5.1: ADG55, 5.6: ADG510, 6.0: ADG6)
 VersaoFTK = auto
 
-#Configurações da conexão Java
+# java connection params
 DriverType = thin
 NetworkProtocol = ipc

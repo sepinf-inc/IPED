@@ -128,8 +128,13 @@ public class KFFTask extends AbstractTask {
             }
 
             try {
-                db = DBMaker.newFileDB(kffDb).transactionDisable().mmapFileEnableIfSupported().asyncWriteEnable()
-                        .asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000).make();
+                DBMaker dbMaker = DBMaker.newFileDB(kffDb).transactionDisable().mmapFileEnableIfSupported();
+                if(importing) {
+                    dbMaker.asyncWriteEnable().asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000);
+                }else {
+                    dbMaker.readOnly();
+                }
+                db  = dbMaker.make();
 
             } catch (ArrayIndexOutOfBoundsException e) {
                 throw new Exception("Hash database seems corrupted. Import or copy again BOTH files " //$NON-NLS-1$
@@ -171,6 +176,14 @@ public class KFFTask extends AbstractTask {
             LOGGER.info("Items ignored by hash database lookup: {}", excluded); //$NON-NLS-1$
         }
         excluded = -1;
+        
+        if(db != null) {
+            db.close();
+            db = null;
+        }
+        md5Map = null;
+        sha1Map = null;
+        map = null;
     }
 
     public void importKFF(File kffDir) throws IOException {
@@ -230,6 +243,7 @@ public class KFFTask extends AbstractTask {
             }
             reader.close();
             db.commit();
+            db.close();
             monitor.close();
         }
     }

@@ -23,6 +23,11 @@ public interface IItemBase extends IStreamSource {
      *         FTK3+
      */
     public Integer getParentId();
+    
+    /**
+     * @return the subitem order into its parent, null if this is not a subitem.
+     */
+    public Integer getSubitemId();
 
     /**
      * @return nome do arquivo
@@ -134,6 +139,8 @@ public interface IItemBase extends IStreamSource {
     public File getViewFile();
 
     public byte[] getThumb();
+
+    public byte[] getImageSimilarityFeatures();
 
     public BufferedInputStream getBufferedStream() throws IOException;
 

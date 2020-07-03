@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
 
 /**
  * Visualizador Html específico que abre links apontando para arquivos do caso,
@@ -32,11 +33,6 @@ public class HtmlLinkViewer extends HtmlViewer {
 
     private AttachmentSearcher attachSearcher;
 
-    public interface AttachmentSearcher {
-
-        abstract File getTmpFile(String luceneQuery);
-    }
-
     public HtmlLinkViewer(AttachmentSearcher attachSearcher) {
         this.attachSearcher = attachSearcher;
         this.fileOpenApp = new AttachmentOpen();
@@ -55,6 +51,11 @@ public class HtmlLinkViewer extends HtmlViewer {
     @Override
     public String getName() {
         return this.getClass().getSimpleName();
+    }
+    
+    @Override
+    protected int getMaxHtmlSize() {
+        return Integer.MAX_VALUE;
     }
 
     public class AttachmentOpen extends FileOpen {
@@ -78,6 +79,10 @@ public class HtmlLinkViewer extends HtmlViewer {
             } else {
                 this.openFile(file);
             }
+        }
+        
+        public void check(String luceneQuery, boolean checked) {
+            attachSearcher.checkItem(luceneQuery, checked);
         }
 
     }

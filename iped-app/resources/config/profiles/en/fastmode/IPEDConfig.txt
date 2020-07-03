@@ -25,5 +25,6 @@ addUnallocated = false
 indexUnallocated = false
 enableCarving = false
 enableImageThumbs = false
+enableImageSimilarity = false
 enableVideoThumbs = false
 enableHTMLReport = false

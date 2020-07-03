@@ -39,7 +39,6 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Log;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
@@ -62,11 +61,6 @@ public class DIETask extends AbstractTask {
      * Instância da classe reponsável pela extração de features.
      */
     private static AbstractDie die;
-
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "Explicit Image detection (DIE)"; //$NON-NLS-1$
 
     /**
      * Nome do atributo incluído com o resultado (score de 1 a 1000) da detecção.
@@ -146,7 +140,7 @@ public class DIETask extends AbstractTask {
                     taskEnabled = true;
 
                 if (!taskEnabled) {
-                    Log.info(taskName, "Task disabled."); //$NON-NLS-1$
+                    logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
                 }
@@ -177,8 +171,8 @@ public class DIETask extends AbstractTask {
                 if (die == null)
                     throw new IPEDException("Error loading DIE implementation: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
 
-                Log.info(taskName, "Task enabled."); //$NON-NLS-1$
-                Log.info(taskName, "Trees loaded: " + predictor.size()); //$NON-NLS-1$
+                logger.info("Task enabled."); //$NON-NLS-1$
+                logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
                 init.set(true);
             }
         }
@@ -192,12 +186,13 @@ public class DIETask extends AbstractTask {
     	synchronized (finished) {
     		graphicsMagicConverter.close();
             if (taskEnabled && !finished.get()) {
-                Log.info(taskName, "Total images processed: " + totalProcessed); //$NON-NLS-1$
-                Log.info(taskName, "Total images not processed: " + totalFailed); //$NON-NLS-1$
+                die = null;
+                predictor = null;
+                logger.info("Total images processed: " + totalProcessed); //$NON-NLS-1$
+                logger.info("Total images not processed: " + totalFailed); //$NON-NLS-1$
                 long total = totalProcessed.longValue() + totalFailed.longValue();
                 if (total != 0) {
-                    Log.info(taskName,
-                            "Mean processing time per image (milliseconds): " + (totalTime.longValue() / total)); //$NON-NLS-1$
+                    logger.info("Average processing time (milliseconds/image): " + (totalTime.longValue() / total)); //$NON-NLS-1$
                 }
                 finished.set(true);
             }
@@ -249,8 +244,7 @@ public class DIETask extends AbstractTask {
             t = System.currentTimeMillis() - t;
             totalTime.addAndGet(t);
         } catch (Exception e) {
-            Log.warning(taskName, e.toString());
-            Log.debug(taskName, e);
+            logger.warn(evidence.toString(), e);
         }
     }
 
@@ -268,7 +262,7 @@ public class DIETask extends AbstractTask {
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
-            if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
+            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { //$NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);

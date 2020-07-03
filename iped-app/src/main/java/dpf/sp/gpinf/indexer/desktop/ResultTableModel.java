@@ -244,22 +244,40 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
+                boolean sorted = false;
                 if (mayBeNumeric && sndv != null) {
-                    Arrays.sort(values, new Comparator<String>() {
-                        @Override
-                        public int compare(String o1, String o2) {
-                            return Double.valueOf(o1).compareTo(Double.valueOf(o2));
-                        }
-                    });
-                } else
-                    Arrays.sort(values, collator);
+                    try {
+                        Arrays.sort(values, new Comparator<String>() {
+                            @Override
+                            public int compare(String o1, String o2) {
+                                return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                            }
+                        });
+                        sorted = true;
+                    }catch(NumberFormatException e) {
+                    }
+                }
+                if(!sorted) Arrays.sort(values, collator);
             }
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
+                try {
+                    //do not use scientific notation for longs
+                    Double d = Double.valueOf(values[i]);
+                    if(d.doubleValue() == d.longValue()) {
+                        values[i] = Long.toString(d.longValue());
+                    }
+                }catch(NumberFormatException e) {}
+                
                 sb.append(values[i]);
-                if (i != values.length - 1)
+                if (i != values.length - 1) {
+                    if(i == 9) {
+                        sb.append(" ..."); //$NON-NLS-1$
+                        break;
+                    }
                     sb.append(" | "); //$NON-NLS-1$
+                }
             }
 
             value = sb.toString().trim();

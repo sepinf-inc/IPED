@@ -35,8 +35,9 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
     boolean useNIOFSDirectory = false;
+    int commitIntervalSeconds = 1800;
     private boolean storeTextCacheOnDisk = true;
-    private static int textSplitSize = 10000000;
+    private static int textSplitSize = 10485760;
     private static int textOverlapSize = 10000;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
@@ -239,6 +240,16 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty()) {
             useNIOFSDirectory = Boolean.valueOf(value.trim());
         }
+        
+        value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            commitIntervalSeconds = Integer.parseInt(value.trim());
+        }
+        
+    }
+    
+    public int getCommitIntervalSeconds() {
+        return commitIntervalSeconds;
     }
     
     public boolean isUseNIOFSDirectory() {

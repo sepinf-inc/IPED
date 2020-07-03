@@ -12,11 +12,12 @@ import javax.swing.event.TreeSelectionEvent;
 import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
-public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener {
+public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 
     public HashSet<String> selection = new HashSet<String>();
     private volatile boolean updatingSelection = false;
     private long collapsed = 0;
+    private boolean clearing = false;
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -40,7 +41,7 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
             }
         }
 
-        App.get().appletListener.updateFileListing();
+        if(!clearing) App.get().appletListener.updateFileListing();
 
         if (selection.contains(BookmarksTreeModel.ROOT) || selection.isEmpty()) {
             App.get().setBookmarksDefaultColor(true);
@@ -102,6 +103,13 @@ public class BookmarksTreeListener implements TreeSelectionListener, TreeExpansi
     public void treeCollapsed(TreeExpansionEvent event) {
         collapsed = System.currentTimeMillis();
 
+    }
+
+    @Override
+    public void clearFilter() {
+        clearing = true;
+        App.get().bookmarksTree.clearSelection();
+        clearing = false;
     }
 
 }
