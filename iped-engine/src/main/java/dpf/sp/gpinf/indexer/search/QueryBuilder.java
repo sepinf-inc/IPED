@@ -19,6 +19,7 @@ import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
@@ -62,6 +63,8 @@ public class QueryBuilder implements IQueryBuilder {
                 // System.out.println("boolean query");
             } else {
                 TreeSet<Term> termSet = new TreeSet<Term>();
+                if (query instanceof BoostQuery)
+                    query = ((BoostQuery) query).getQuery();
                 if (query instanceof TermQuery)
                     termSet.add(((TermQuery) query).getTerm());
                 if (query instanceof PhraseQuery) {
@@ -71,12 +74,6 @@ public class QueryBuilder implements IQueryBuilder {
                     } else
                         termSet.addAll(Arrays.asList(((PhraseQuery) query).getTerms()));
                 }
-                    /*
-                     * String queryStr = query.toString(); String field = IndexItem.CONTENT + ":\"";
-                     * //$NON-NLS-1$ if (queryStr.startsWith(field)) { String term =
-                     * queryStr.substring(queryStr.indexOf(field) + field.length(),
-                     * queryStr.lastIndexOf("\"")); //$NON-NLS-1$ result.add(term.toLowerCase()); }
-                     */
 
                 for (Term term : termSet)
                     if (term.field().equalsIgnoreCase(IndexItem.CONTENT)) {
