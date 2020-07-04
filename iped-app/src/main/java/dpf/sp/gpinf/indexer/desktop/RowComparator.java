@@ -24,7 +24,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
@@ -46,7 +45,7 @@ public class RowComparator implements Comparator<Integer> {
     private boolean bookmarkCol = false;
     private boolean scoreCol = false;
 
-    private volatile static AtomicReader atomicReader;
+    private volatile static LeafReader atomicReader;
     private static boolean loadDocValues = true;
 
     private App app = App.get();
@@ -105,7 +104,7 @@ public class RowComparator implements Comparator<Integer> {
             return;
 
         try {
-            atomicReader = App.get().appCase.getAtomicReader();
+            atomicReader = App.get().appCase.getLeafReader();
 
             if (IndexItem.getMetadataTypes().get(indexedField) == null
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
@@ -170,7 +169,7 @@ public class RowComparator implements Comparator<Integer> {
     };
 
     public static boolean isNewIndexReader() {
-        return atomicReader != App.get().appCase.getAtomicReader();
+        return atomicReader != App.get().appCase.getLeafReader();
     }
 
     public boolean isStringComparator() {

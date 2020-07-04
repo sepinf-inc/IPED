@@ -2,10 +2,13 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -20,9 +23,9 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -34,7 +37,7 @@ import iped3.search.IQueryBuilder;
 
 public class QueryBuilder implements IQueryBuilder {
 
-    private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
+    private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer();
 
     private static HashMap<String, NumericConfig> numericConfigCache;
 
@@ -53,27 +56,28 @@ public class QueryBuilder implements IQueryBuilder {
         if (query != null)
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                    if (clause.getQuery() instanceof PhraseQuery && ((PhraseQuery) clause.getQuery()).getSlop() == 0) {
-                        String queryStr = clause.getQuery().toString();
-                        // System.out.println("phrase: " + queryStr);
-                        String field = IndexItem.CONTENT + ":\""; //$NON-NLS-1$
-                        if (queryStr.startsWith(field)) {
-                            String term = queryStr.substring(queryStr.indexOf(field) + field.length(),
-                                    queryStr.lastIndexOf("\"")); //$NON-NLS-1$
-                            result.add(term.toLowerCase());
-                            // System.out.println(term);
-                        }
-
-                    } else {
-                        // System.out.println(clause.getQuery().toString());
-                        result.addAll(getQueryStrings(clause.getQuery()));
-                    }
-
+                    // System.out.println(clause.getQuery().toString());
+                    result.addAll(getQueryStrings(clause.getQuery()));
                 }
                 // System.out.println("boolean query");
             } else {
                 TreeSet<Term> termSet = new TreeSet<Term>();
-                query.extractTerms(termSet);
+                if (query instanceof TermQuery)
+                    termSet.add(((TermQuery) query).getTerm());
+                if (query instanceof PhraseQuery) {
+                    List<Term> terms = Arrays.asList(((PhraseQuery) query).getTerms());
+                    if (((PhraseQuery) query).getSlop() == 0) {
+                        result.add(terms.stream().map(t -> t.text()).collect(Collectors.joining(" "))); //$NON-NLS-1$
+                    } else
+                        termSet.addAll(Arrays.asList(((PhraseQuery) query).getTerms()));
+                }
+                    /*
+                     * String queryStr = query.toString(); String field = IndexItem.CONTENT + ":\"";
+                     * //$NON-NLS-1$ if (queryStr.startsWith(field)) { String term =
+                     * queryStr.substring(queryStr.indexOf(field) + field.length(),
+                     * queryStr.lastIndexOf("\"")); //$NON-NLS-1$ result.add(term.toLowerCase()); }
+                     */
+
                 for (Term term : termSet)
                     if (term.field().equalsIgnoreCase(IndexItem.CONTENT)) {
                         result.add(term.text().toLowerCase());

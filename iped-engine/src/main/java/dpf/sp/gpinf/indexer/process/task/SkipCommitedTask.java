@@ -12,7 +12,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexReader;
@@ -77,7 +77,7 @@ public class SkipCommitedTask extends AbstractTask {
         firstInit = false;
 
         try (IndexReader reader = DirectoryReader.open(worker.writer, true)) {
-            AtomicReader aReader = SlowCompositeReaderWrapper.wrap(reader);
+            LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
 
             SortedDocValues evidenceUUIDs = aReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
@@ -151,8 +151,8 @@ public class SkipCommitedTask extends AbstractTask {
 
     }
 
-    private void collectParentsWithoutAllSubitems(AtomicReader aReader, SortedDocValues persistIds,
-            NumericDocValues ids, String parentIdField, String subitemCountField) throws IOException {
+    private void collectParentsWithoutAllSubitems(LeafReader aReader, SortedDocValues persistIds, NumericDocValues ids,
+            String parentIdField, String subitemCountField) throws IOException {
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
         if (parentContainers == null) {
             return;

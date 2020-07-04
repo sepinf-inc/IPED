@@ -641,10 +641,10 @@ public class IPEDReader extends DataSourceReader {
     }
 
     private boolean isExtraAttrMultiValued(String field) throws IOException {
-        Object docValues = ipedCase.getAtomicReader().getSortedSetDocValues(field);
+        Object docValues = ipedCase.getLeafReader().getSortedSetDocValues(field);
         if (docValues != null)
             return true;
-        docValues = ipedCase.getAtomicReader().getSortedNumericDocValues(field);
+        docValues = ipedCase.getLeafReader().getSortedNumericDocValues(field);
         if (docValues != null)
             return true;
 

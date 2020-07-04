@@ -58,6 +58,7 @@ import org.apache.lucene.document.SortedSetDocValuesField;
 import org.apache.lucene.document.StoredField;
 import org.apache.lucene.document.StringField;
 import org.apache.lucene.document.TextField;
+import org.apache.lucene.index.IndexOptions;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
@@ -132,7 +133,7 @@ public class IndexItem extends BasicProps {
     private static FieldType storedTokenizedNoNormsField = new FieldType();
 
     static {
-        storedTokenizedNoNormsField.setIndexed(true);
+        storedTokenizedNoNormsField.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         storedTokenizedNoNormsField.setOmitNorms(true);
         storedTokenizedNoNormsField.setStored(true);
 
@@ -157,7 +158,7 @@ public class IndexItem extends BasicProps {
     private static final FieldType getContentField() {
         if (contentField == null) {
             FieldType field = new FieldType();
-            field.setIndexed(true);
+            field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
             field.setOmitNorms(true);
             AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                     .findObjects(AdvancedIPEDConfig.class).iterator().next();
@@ -178,7 +179,7 @@ public class IndexItem extends BasicProps {
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
-        IOUtils.fsync(metadataTypesFile, false);
+        IOUtils.fsync(metadataTypesFile.toPath(), false);
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {

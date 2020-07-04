@@ -16,7 +16,6 @@ import javax.swing.JOptionPane;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.util.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -125,7 +124,7 @@ public class Statistics {
                 oos.writeObject(ignoredMap);
             }
         }
-        IOUtils.fsync(file, false);
+        Util.fsync(file.toPath());
     }
 
     synchronized public int getSplits() {

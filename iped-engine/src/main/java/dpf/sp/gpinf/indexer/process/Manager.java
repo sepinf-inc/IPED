@@ -54,7 +54,6 @@ import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -308,12 +307,13 @@ public class Manager {
     }
 
     private IndexWriterConfig getIndexWriterConfig() {
-        IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
+        IndexWriterConfig conf = new IndexWriterConfig(AppAnalyzer.get());
         conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
-        conf.setMaxThreadStates(localConfig.getNumThreads());
+        conf.setCommitOnClose(true);
         conf.setSimilarity(new IndexerSimilarity());
         ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
+        mergeScheduler.disableAutoIOThrottle();
         if ((localConfig.isIndexTempOnSSD() && indexDir != finalIndexDir) || localConfig.isOutputOnSSD()) {
             mergeScheduler.setMaxMergesAndThreads(8, 4);
         }

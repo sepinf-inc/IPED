@@ -5,20 +5,22 @@
  */
 package iped3;
 
-import iped3.exception.IPEDException;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Set;
+
 import org.apache.lucene.analysis.Analyzer;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
+
+import iped3.exception.IPEDException;
+import iped3.search.IMarcadores;
+import iped3.search.IMultiMarcadores;
 
 /**
  *
@@ -37,7 +39,9 @@ public interface IIPEDSource extends Closeable {
 
     Analyzer getAnalyzer();
 
-    AtomicReader getAtomicReader();
+    LeafReader getLeafReader();
+
+    LeafReader getAtomicReader();
 
     File getCaseDir();
 

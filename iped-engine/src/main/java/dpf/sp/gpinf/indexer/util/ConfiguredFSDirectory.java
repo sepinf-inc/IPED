@@ -21,9 +21,9 @@ public class ConfiguredFSDirectory {
 
         FSDirectory result;
         if (advConfig.isUseNIOFSDirectory()) {
-            result = new NIOFSDirectory(indexDir);
+            result = new NIOFSDirectory(indexDir.toPath());
         } else {
-            result = FSDirectory.open(indexDir);
+            result = FSDirectory.open(indexDir.toPath());
         }
         LOGGER.info("Using " + result.getClass().getSimpleName() + " to open index...");
         return result;

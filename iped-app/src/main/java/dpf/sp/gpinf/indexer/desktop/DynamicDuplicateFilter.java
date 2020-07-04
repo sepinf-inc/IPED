@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -25,7 +25,7 @@ public class DynamicDuplicateFilter {
     public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException {
         if (ipedCase != ipedSource) {
             ipedCase = ipedSource;
-            AtomicReader reader = ipedCase.getAtomicReader();
+            LeafReader reader = ipedCase.getLeafReader();
             docValues = reader.getSortedDocValues(IndexItem.HASH);
         }
     }
