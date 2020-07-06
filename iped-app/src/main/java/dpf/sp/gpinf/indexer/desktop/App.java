@@ -37,8 +37,6 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
@@ -67,7 +65,6 @@ import javax.swing.JTable;
 import javax.swing.JTree;
 import javax.swing.KeyStroke;
 import javax.swing.ListSelectionModel;
-import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
@@ -341,23 +338,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void destroy() {
+        boolean processingFinished = processingManager == null || processingManager.isProcessingFinished();
         try {
-
-            if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
-            }
             if (viewerController != null) {
                 viewerController.dispose();
             }
+            if (this.resultsTable != null) {
+                ColumnsManager.getInstance().dispose();
+            }
+
             appCase.close();
 
-            if (processingManager == null || processingManager.isProcessingFinished()) {
+            if (processingFinished) {
                 if (processingManager != null)
                     processingManager.deleteTempDir();
                 if (logConfiguration != null)
                     logConfiguration.closeConsoleLogFile();
-
-                System.exit(0);
 
             } else {
                 processingManager.setSearchAppOpen(false);
@@ -366,6 +362,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        if (processingFinished) {
+            System.exit(0);
         }
     }
 
