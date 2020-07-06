@@ -36,8 +36,8 @@ class InputStreamResource2 implements ForkResource {
         int m;
         try {
             m = stream.read(buffer);
-            
-        //Runtime exceptions are possible, eg: OLEParser
+
+            // Runtime exceptions are possible, eg: OLEParser
         } catch (Exception e) {
             // returning causes deadlock
             // return e;

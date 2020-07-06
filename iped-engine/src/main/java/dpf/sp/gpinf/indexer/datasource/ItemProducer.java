@@ -69,13 +69,8 @@ public class ItemProducer extends Thread {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] {
-                FTK3ReportReader.class,
-                SleuthkitReader.class,
-                IPEDReader.class,
-                UfedXmlReader.class,
-                AD1DataSourceReader.class,
-                IpedCaseReader.class,
+        Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
+                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, IpedCaseReader.class,
                 FolderTreeReader.class // deve ser o último
         };
 
@@ -118,14 +113,15 @@ public class ItemProducer extends Thread {
 
                 }
                 caseData.incAlternativeFiles(alternativeFiles);
-                
-                //executed only when restarting interrupted processing
-                Set<HashValue> parentsWithLostSubitems = (Set<HashValue>)caseData.getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
-                if(parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
+
+                // executed only when restarting interrupted processing
+                Set<HashValue> parentsWithLostSubitems = (Set<HashValue>) caseData
+                        .getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
+                if (parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
                     IPEDReader reader = new IPEDReader(caseData, output, listOnly);
                     reader.read(parentsWithLostSubitems, manager);
                 }
-                
+
             }
             if (!listOnly) {
                 Item evidence = new Item();

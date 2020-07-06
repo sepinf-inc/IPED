@@ -44,7 +44,7 @@ import com.drew.metadata.jpeg.JpegDirectory;
 public class ImageUtil {
 
     public static final Set<String> jdkImagesSupported = getjdkImageMimesSupported();
-    private static final int[] orientations = new int[] {1,5,3,7};
+    private static final int[] orientations = new int[] { 1, 5, 3, 7 };
 
     private static final Set<String> getjdkImageMimesSupported() {
         HashSet<String> set = new HashSet<String>();
@@ -308,13 +308,13 @@ public class ImageUtil {
         IIOMetadataNode root = (IIOMetadataNode) meta.getAsTree("javax_imageio_jpeg_image_1.0"); //$NON-NLS-1$
         is.close();
         reader.dispose();
-        return new Object[] {img,findAttribute(root, "comment")}; //$NON-NLS-1$
+        return new Object[] { img, findAttribute(root, "comment") }; //$NON-NLS-1$
     }
 
     /**
      * Read image comment.
      *
-     * @return Comment metadata, or null if no metadata is present. 
+     * @return Comment metadata, or null if no metadata is present.
      */
     public static String readJpegMetaDataComment(InputStream is) throws IOException {
         ImageReader reader = null;
@@ -330,11 +330,13 @@ public class ImageUtil {
         } catch (Exception e) {
         } finally {
             try {
-                if (iis != null) iis.close();
+                if (iis != null)
+                    iis.close();
             } catch (Exception e) {
             }
             try {
-                if (reader != null) reader.dispose();
+                if (reader != null)
+                    reader.dispose();
             } catch (Exception e) {
             }
         }
@@ -345,18 +347,20 @@ public class ImageUtil {
         return getBestFramesFit(img, comment, targetWidth, targetHeight, -1, -1);
     }
 
-    public static BufferedImage getBestFramesFit(BufferedImage img, String comment, int targetWidth, int targetHeight, int minFrames, int maxFrames) {
+    public static BufferedImage getBestFramesFit(BufferedImage img, String comment, int targetWidth, int targetHeight,
+            int minFrames, int maxFrames) {
         int nRows = 0;
         int nCols = 0;
         if (comment != null && comment.startsWith("Frames")) { //$NON-NLS-1$
-            int p1 = comment.indexOf('='); //$NON-NLS-1$
-            int p2 = comment.indexOf('x'); //$NON-NLS-1$
+            int p1 = comment.indexOf('='); // $NON-NLS-1$
+            int p2 = comment.indexOf('x'); // $NON-NLS-1$
             if (p1 > 0 && p2 > 0) {
                 nRows = Integer.parseInt(comment.substring(p1 + 1, p2));
                 nCols = Integer.parseInt(comment.substring(p2 + 1));
             }
         }
-        if (nRows <= 0 || nCols <= 0) return img;
+        if (nRows <= 0 || nCols <= 0)
+            return img;
 
         int imgWidth = img.getWidth();
         int imgHeight = img.getHeight();
@@ -366,17 +370,20 @@ public class ImageUtil {
         int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
 
         int totalFrames = nCols * nRows;
-        if (maxFrames < 0 || maxFrames > totalFrames) maxFrames = totalFrames;
+        if (maxFrames < 0 || maxFrames > totalFrames)
+            maxFrames = totalFrames;
         int bestRows = nCols;
         int bestCols = nRows;
-        if (minFrames < 0) minFrames = (int) Math.ceil(maxFrames * 0.8);
+        if (minFrames < 0)
+            minFrames = (int) Math.ceil(maxFrames * 0.8);
         double maxUsage = 0;
         for (int cols = 1; cols <= maxFrames; cols++) {
             int maxRows = Math.max(1, maxFrames / cols);
             int minRows = Math.max(1, minFrames / cols);
             for (int rows = minRows; rows <= maxRows; rows++) {
                 int nf = rows * cols;
-                if (nf < minFrames || nf > totalFrames) continue;
+                if (nf < minFrames || nf > totalFrames)
+                    continue;
                 int ww = (frameWidth + 1) * cols + border * 2;
                 int hh = (frameHeight + 1) * rows + border * 2;
                 double z = Math.min(targetWidth / (double) ww, targetHeight / (double) hh);
@@ -388,10 +395,12 @@ public class ImageUtil {
                 }
             }
         }
-        if (bestRows == nRows && bestCols == nCols) return img;
+        if (bestRows == nRows && bestCols == nCols)
+            return img;
 
         double rate = totalFrames / (double) (bestRows * bestCols);
-        BufferedImage fit = new BufferedImage(bestCols * (frameWidth + 1) + border * 2, bestRows * (frameHeight + 1) + border * 2, BufferedImage.TYPE_INT_BGR);
+        BufferedImage fit = new BufferedImage(bestCols * (frameWidth + 1) + border * 2,
+                bestRows * (frameHeight + 1) + border * 2, BufferedImage.TYPE_INT_BGR);
         Graphics2D g2 = (Graphics2D) fit.getGraphics();
         g2.setColor(new Color(222, 222, 222));
         g2.fillRect(0, 0, fit.getWidth(), fit.getHeight());
@@ -406,14 +415,15 @@ public class ImageUtil {
                 int idx = (int) pos;
                 int sx = border + (border + frameWidth) * (idx % nCols);
                 int sy = border + (border + frameHeight) * (idx / nCols);
-                g2.drawImage(img, x, y, x + frameWidth, y + frameHeight, sx, sy, sx + frameWidth, sy + frameHeight, null);
+                g2.drawImage(img, x, y, x + frameWidth, y + frameHeight, sx, sy, sx + frameWidth, sy + frameHeight,
+                        null);
                 pos += rate;
             }
         }
         g2.dispose();
         return fit;
     }
-    
+
     /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.
@@ -526,9 +536,9 @@ public class ImageUtil {
                         Integer tagOrientation = dir.getInteger(ExifIFD0Directory.TAG_ORIENTATION);
                         if (tagOrientation != null)
                             return tagOrientation;
-                        }
                     }
                 }
+            }
         } catch (Exception e) {
         }
         return -1;

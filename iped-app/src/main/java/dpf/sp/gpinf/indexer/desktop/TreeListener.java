@@ -180,7 +180,8 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
             App.get().setEvidenceDefaultColor(false);
         }
 
-        if(!clearing) App.get().appletListener.updateFileListing();
+        if (!clearing)
+            App.get().appletListener.updateFileListing();
 
         if (selection.size() == 1 && selection.iterator().next().getPathCount() > 2) {
             int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;

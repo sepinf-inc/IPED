@@ -214,8 +214,8 @@ public class KnownMetParser extends AbstractParser {
         xhtml.endDocument();
     }
 
-    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemSearcher searcher, String name, String hashAlgo,
-            String p2pHash) throws SAXException {
+    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemSearcher searcher, String name,
+            String hashAlgo, String p2pHash) throws SAXException {
         if (searcher == null) {
             xhtml.characters(name);
             return;

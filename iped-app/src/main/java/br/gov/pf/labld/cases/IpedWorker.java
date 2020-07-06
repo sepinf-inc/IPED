@@ -4,27 +4,27 @@ import javax.swing.SwingWorker;
 
 public class IpedWorker extends SwingWorker<Void, Void> {
 
-  private IpedCase ipedCase;
-  private IpedCase oldCase;
-  private CaseManagement caseManagement;
+    private IpedCase ipedCase;
+    private IpedCase oldCase;
+    private CaseManagement caseManagement;
 
-  public IpedWorker(IpedCase ipedCase, IpedCase oldCase, CaseManagement caseManagement) {
-    super();
-    this.ipedCase = ipedCase;
-    this.oldCase = oldCase;
-    this.caseManagement = caseManagement;
-  }
+    public IpedWorker(IpedCase ipedCase, IpedCase oldCase, CaseManagement caseManagement) {
+        super();
+        this.ipedCase = ipedCase;
+        this.oldCase = oldCase;
+        this.caseManagement = caseManagement;
+    }
 
-  @Override
-  protected Void doInBackground() throws Exception {
-    IpedProcessHelper processHelper = new IpedProcessHelper(ipedCase, oldCase, caseManagement.getProfile());
-    processHelper.process();
-    return null;
-  }
+    @Override
+    protected Void doInBackground() throws Exception {
+        IpedProcessHelper processHelper = new IpedProcessHelper(ipedCase, oldCase, caseManagement.getProfile());
+        processHelper.process();
+        return null;
+    }
 
-  @Override
-  protected void done() {
-    caseManagement.dispose();
-  }
+    @Override
+    protected void done() {
+        caseManagement.dispose();
+    }
 
 }

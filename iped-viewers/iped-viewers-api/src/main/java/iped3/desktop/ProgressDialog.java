@@ -58,9 +58,9 @@ public class ProgressDialog implements ActionListener, Runnable {
     private volatile boolean canceled = false, closed = false;
 
     private CancelableWorker task;
-	
-	private int length = 0;
-	private int extraWidth = 0;
+
+    private int length = 0;
+    private int extraWidth = 0;
 
     public void setTask(CancelableWorker task) {
         this.task = task;
@@ -70,13 +70,13 @@ public class ProgressDialog implements ActionListener, Runnable {
         this(parent, task, false);
     }
 
-	public ProgressDialog(Component parent, CancelableWorker task, int lines) {
-		this(parent, task, false);
-		if (lines <= 0 )
-			lines = 1;
-		this.length = 20*lines;
-	}		
-	
+    public ProgressDialog(Component parent, CancelableWorker task, int lines) {
+        this(parent, task, false);
+        if (lines <= 0)
+            lines = 1;
+        this.length = 20 * lines;
+    }
+
     public ProgressDialog(Component parent, CancelableWorker task, boolean indeterminate) {
         this(parent, task, indeterminate, DEFAULT_MILLIS_TO_POPUP, Dialog.ModalityType.MODELESS);
     }
@@ -119,13 +119,13 @@ public class ProgressDialog implements ActionListener, Runnable {
             dialog = new JDialog((Frame) parent, modal);
         else if (parent instanceof Dialog)
             dialog = new JDialog((Dialog) parent, modal);
-        else if(parent != null)
+        else if (parent != null)
             dialog = new JDialog(SwingUtilities.windowForComponent(parent), modal);
         else
             dialog = new JDialog(null, modal);
-        
+
         dialog.setAlwaysOnTop(true);
-        dialog.setBounds(0, 0, 260 + extraWidth, 140+length);
+        dialog.setBounds(0, 0, 260 + extraWidth, 140 + length);
         dialog.setTitle(Messages.getString("ProgressDialog.Progress")); //$NON-NLS-1$
 
         msg = new JLabel(note);
@@ -133,9 +133,9 @@ public class ProgressDialog implements ActionListener, Runnable {
         progressBar.setMaximum(100);
         button = new JButton(Messages.getString("ProgressDialog.Cancel")); //$NON-NLS-1$
 
-        msg.setBounds(20, 10, 200 + extraWidth, 20+length);
-        progressBar.setBounds(20, 30+length, 200 + extraWidth, 25);
-        button.setBounds(140 + extraWidth, 60+length, 80, 30);
+        msg.setBounds(20, 10, 200 + extraWidth, 20 + length);
+        progressBar.setBounds(20, 30 + length, 200 + extraWidth, 25);
+        button.setBounds(140 + extraWidth, 60 + length, 80, 30);
 
         dialog.getContentPane().add(msg);
         dialog.getContentPane().add(progressBar);

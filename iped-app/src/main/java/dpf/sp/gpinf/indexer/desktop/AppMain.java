@@ -47,13 +47,14 @@ public class AppMain {
         try {
             if (System.getProperty("iped.javaVersionChecked") != null) //$NON-NLS-1$
                 return;
-            
+
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
                     String warn = Util.getJavaVersionWarn();
-                    if(warn != null) {
-                        JOptionPane.showMessageDialog(null, warn, Messages.getString("AppMain.warn.Title"), JOptionPane.WARNING_MESSAGE); //$NON-NLS-1$
+                    if (warn != null) {
+                        JOptionPane.showMessageDialog(null, warn, Messages.getString("AppMain.warn.Title"), //$NON-NLS-1$
+                                JOptionPane.WARNING_MESSAGE);
                     }
                     Messages.resetLocale();
                 }
@@ -82,11 +83,11 @@ public class AppMain {
 
         libDir = detectLibDir();
         casePath = libDir.getParentFile().getParentFile();
-        
-        if(!new File(casePath, "indexador").exists()) //$NON-NLS-1$
+
+        if (!new File(casePath, "indexador").exists()) //$NON-NLS-1$
             casePath = null;
     }
-    
+
     private File detectLibDir() {
         URL url = AppMain.class.getProtectionDomain().getCodeSource().getLocation();
         File jarFile = null;
@@ -95,7 +96,7 @@ public class AppMain {
                 jarFile = new File(url.toURI());
             else
                 jarFile = new File(url.toURI().getSchemeSpecificPart());
-            
+
             return jarFile.getParentFile();
 
         } catch (Exception e) {
@@ -143,8 +144,8 @@ public class AppMain {
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
             LogConfiguration logConfiguration = null;
-            
-            if(libDir == null)
+
+            if (libDir == null)
                 libDir = detectLibDir();
 
             if (processingManager == null) {
@@ -155,7 +156,7 @@ public class AppMain {
                 if (!fromCustomLoader)
                     LOGGER.info(Versao.APP_NAME);
             }
-            
+
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
@@ -178,7 +179,7 @@ public class AppMain {
             } else {
                 App.get().getSearchParams().codePath = libDir.getAbsolutePath();
                 App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
-    
+
                 InicializarBusca init = new InicializarBusca(processingManager);
                 init.execute();
             }

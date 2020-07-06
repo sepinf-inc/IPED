@@ -25,11 +25,11 @@ public class ReportInfo implements Serializable {
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     private static final String EVIDENCE_DELIMITER = "<br>\n";
     private static final String ID_DESC_DELIMITER = ": ";
-    private static final String EVIDENCE_PREFIX = Messages.getString("ReportInfo.EvidencePrefix"); //$NON-NLS-1$;
-    
+    private static final String EVIDENCE_PREFIX = Messages.getString("ReportInfo.EvidencePrefix"); //$NON-NLS-1$ ;
+
     public String reportNumber;
     public String reportDate;
     public String reportHeader;
@@ -44,14 +44,14 @@ public class ReportInfo implements Serializable {
     public List<String> examinersID = new ArrayList<>();
     public List<EvidenceDesc> evidences = new ArrayList<>();
     public String finalEvidenceDesc;
-    
-    class EvidenceDesc implements Serializable{
-        
+
+    class EvidenceDesc implements Serializable {
+
         private static final long serialVersionUID = 1L;
 
         String id, desc;
     }
-    
+
     /**
      * Lê arquivo com informações do caso (para inclusão em página informativa do
      * relatório).
@@ -126,48 +126,49 @@ public class ReportInfo implements Serializable {
             evidenceDesc = new String[] { matDesc };
             evidenceNumbers = new String[] { matNum };
         }
-        for(int i = 0; i < evidenceDesc.length; i++) {
+        for (int i = 0; i < evidenceDesc.length; i++) {
             EvidenceDesc e = new EvidenceDesc();
             e.id = evidenceNumbers[i];
             e.desc = evidenceDesc[i];
             evidences.add(e);
         }
     }
-    
+
     public String getEvidenceDescHtml() {
-        if(finalEvidenceDesc != null) {
+        if (finalEvidenceDesc != null) {
             return finalEvidenceDesc;
         }
         StringBuilder mat = new StringBuilder();
         for (int i = 0; i < evidences.size(); i++) {
             if (i > 0) {
-                mat.append(EVIDENCE_DELIMITER); //$NON-NLS-1$
+                mat.append(EVIDENCE_DELIMITER); // $NON-NLS-1$
             }
-            mat.append(EVIDENCE_PREFIX).append(evidences.get(i).id).append(ID_DESC_DELIMITER).append(evidences.get(i).desc); //$NON-NLS-1$ //$NON-NLS-2$
+            mat.append(EVIDENCE_PREFIX).append(evidences.get(i).id).append(ID_DESC_DELIMITER)
+                    .append(evidences.get(i).desc); // $NON-NLS-1$ //$NON-NLS-2$
         }
         return mat.toString();
     }
-    
+
     public String getExaminersText() {
-        if(examiners.size() == 1)
+        if (examiners.size() == 1)
             return examiners.get(0);
         String result = "";
-        for(String examiner : examiners)
+        for (String examiner : examiners)
             result += examiner + "; ";
         return result;
     }
-    
+
     public void fillExaminersFromText(String text) {
         examiners.clear();
         String[] es = text.split(";");
-        for(String e : es)
+        for (String e : es)
             examiners.add(e.trim());
     }
-    
+
     public void fillEvidenceFromText(String text) {
         finalEvidenceDesc = text;
     }
-    
+
     public void readJsonInfoFile(File file) throws IOException {
         finalEvidenceDesc = null;
         String str = new String(Files.readAllBytes(file.toPath()), "UTF-8");
@@ -176,7 +177,7 @@ public class ReportInfo implements Serializable {
         reportDate = json.getString("reportDate");
         reportTitle = json.getString("reportTitle");
         JSONArray array = json.getJSONArray("examiners");
-        for(int i = 0; i < array.length(); i++)
+        for (int i = 0; i < array.length(); i++)
             examiners.add(array.getString(i));
         caseNumber = json.getString("caseNumber");
         requestForm = json.getString("requestForm");
@@ -185,7 +186,7 @@ public class ReportInfo implements Serializable {
         labCaseNumber = json.getString("labCaseNumber");
         labCaseDate = json.getString("labCaseDate");
         array = json.getJSONArray("evidences");
-        for(int i = 0; i < array.length(); i++) {
+        for (int i = 0; i < array.length(); i++) {
             JSONObject evidence = array.getJSONObject(i);
             EvidenceDesc e = new EvidenceDesc();
             e.id = evidence.getString("id");
@@ -193,7 +194,7 @@ public class ReportInfo implements Serializable {
             evidences.add(e);
         }
     }
-    
+
     public File writeReportInfoFile() throws IOException {
         File tmp = File.createTempFile("iped-", ".report");
         FileOutputStream fos = new FileOutputStream(tmp);
@@ -202,7 +203,7 @@ public class ReportInfo implements Serializable {
         oos.close();
         return tmp;
     }
-    
+
     public static ReportInfo readReportInfoFile(File file) throws IOException, ClassNotFoundException {
         FileInputStream fis = new FileInputStream(file);
         ObjectInputStream ois = new ObjectInputStream(fis);
@@ -211,5 +212,5 @@ public class ReportInfo implements Serializable {
         fis.close();
         return reportInfo;
     }
-    
+
 }

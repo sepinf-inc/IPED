@@ -19,7 +19,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         IItem item = getItem(luceneQuery);
         try {
             return item.getTempFile();
-            
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,7 +51,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             MultiSearchResult result = searcher.multiSearch();
             if (result.getLength() == 0)
                 return;
-            for(IItemId item : result.getIterator()) {
+            for (IItemId item : result.getIterator()) {
                 App.get().appCase.getMultiMarcadores().setSelected(checked, item, App.get().appCase);
             }
             MarcadoresController.get().atualizarGUI();
@@ -59,8 +59,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
-        
+
     }
 
 }

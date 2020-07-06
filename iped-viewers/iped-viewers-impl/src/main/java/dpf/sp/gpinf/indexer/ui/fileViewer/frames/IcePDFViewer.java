@@ -45,7 +45,7 @@ public class IcePDFViewer extends Viewer {
 
     private final Object lock = new Object();
     private volatile IStreamSource lastContent;
-    
+
     @Override
     public boolean isSupportedType(String contentType) {
         return contentType.equals("application/pdf"); //$NON-NLS-1$
@@ -76,7 +76,7 @@ public class IcePDFViewer extends Viewer {
         new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
 
         pdfController = new SwingController() {
-            //Override openDocument, to avoid opening dialog messages
+            // Override openDocument, to avoid opening dialog messages
             public void openDocument(String pathname) {
                 if (pathname != null && pathname.length() > 0) {
                     try {
@@ -90,7 +90,7 @@ public class IcePDFViewer extends Viewer {
                     }
                 }
             }
-            
+
             public void closeDocument() {
                 try {
                     if (document != null) {
@@ -163,9 +163,9 @@ public class IcePDFViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final Set<String> highlightTerms) {
-        
+
         lastContent = content;
-        
+
         if (content == null) {
             pdfController.closeDocument();
             labelMsg.setVisible(false);
@@ -183,14 +183,16 @@ public class IcePDFViewer extends Viewer {
             @Override
             public void run() {
                 synchronized (lock) {
-                    if (!content.equals(lastContent)) return;
-                    
+                    if (!content.equals(lastContent))
+                        return;
+
                     labelMsg.setVisible(false);
                     viewerPanel.setVisible(false);
 
                     try {
                         pdfController.openDocument(content.getFile().getAbsolutePath());
-                        if (!content.equals(lastContent)) return;
+                        if (!content.equals(lastContent))
+                            return;
 
                         if (!isDocumentValid()) {
                             labelMsg.setVisible(true);
@@ -198,22 +200,23 @@ public class IcePDFViewer extends Viewer {
                             return;
                         }
                         pdfController.setToolBarVisible(isToolbarVisible());
-    
+
                         if (fitMode != pdfController.getDocumentViewController().getFitMode()) {
                             pdfController.setPageFitMode(fitMode, true);
                         }
-    
+
                         if (pdfController.isUtilityPaneVisible()) {
                             pdfController.setUtilityPaneVisible(false);
                         }
-    
+
                         viewerPanel.setVisible(true);
                         viewerPanel.revalidate();
                         getPanel().revalidate();
-    
+
                         highlightText(highlightTerms, content);
                     } catch (Exception e) {
-                        if (content == null || !content.equals(lastContent)) return;
+                        if (content == null || !content.equals(lastContent))
+                            return;
                         labelMsg.setVisible(true);
                         getPanel().revalidate();
                     }
@@ -226,18 +229,21 @@ public class IcePDFViewer extends Viewer {
     private boolean isDocumentValid() {
         try {
             Document document = pdfController.getDocument();
-            if (document == null) return false;
+            if (document == null)
+                return false;
             Catalog catalog = document.getCatalog();
-            if (catalog == null) return false;
+            if (catalog == null)
+                return false;
             PageTree tree = catalog.getPageTree();
-            if (tree == null) return false;
+            if (tree == null)
+                return false;
             Page page = tree.getPage(0);
             return page != null;
         } catch (Exception e) {
         }
         return false;
     }
-    
+
     private ArrayList<Integer> hitPages;
 
     private void highlightText(Set<String> highlightTerms, IStreamSource content) {
@@ -260,7 +266,7 @@ public class IcePDFViewer extends Viewer {
             totalHits = 0;
             hitPages = new ArrayList<Integer>();
             for (int i = 0; i < pdfController.getDocument().getNumberOfPages(); i++) {
-                if(content != lastContent) {
+                if (content != lastContent) {
                     break;
                 }
                 int hits = search.searchHighlightPage(i);

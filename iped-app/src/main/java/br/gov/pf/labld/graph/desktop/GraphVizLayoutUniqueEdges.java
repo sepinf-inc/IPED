@@ -15,7 +15,7 @@ import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.layout.graphviz.GraphVizLayout;
 import org.kharon.layout.graphviz.GraphVizResolver;
 
-public class GraphVizLayoutUniqueEdges extends GraphVizLayout{
+public class GraphVizLayoutUniqueEdges extends GraphVizLayout {
 
     public GraphVizLayoutUniqueEdges(GraphVizAlgorithm algorithm, GraphVizResolver graphVizResolver) {
         super(algorithm, graphVizResolver);
@@ -57,7 +57,7 @@ public class GraphVizLayoutUniqueEdges extends GraphVizLayout{
 
         Collection<Edge> edges = graph.getEdges(start);
         HashMap<String, Edge> overlappedEdges = new HashMap<>();
-        for(Edge edge : edges) {
+        for (Edge edge : edges) {
             overlappedEdges.putIfAbsent(edge.getSource() + "-" + edge.getTarget(), edge);
         }
         subGraph.addEdges(overlappedEdges.values());

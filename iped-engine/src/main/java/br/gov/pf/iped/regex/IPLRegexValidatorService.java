@@ -10,32 +10,32 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 
 public class IPLRegexValidatorService extends BasicAbstractRegexValidatorService {
 
-  private static final String REPLACEMENT = " ";
+    private static final String REPLACEMENT = " ";
 
-  private static final String REGEX_NAME = "IPL";
-  
-  private final Pattern NOT_ALLOWED_CHARS_PATTERN = Pattern.compile("[^IPLRE0-9\\-]");
+    private static final String REGEX_NAME = "IPL";
 
-  @Override
-  public boolean validate(String hit) {
-    return true;
-  }
+    private final Pattern NOT_ALLOWED_CHARS_PATTERN = Pattern.compile("[^IPLRE0-9\\-]");
 
-  @Override
-  public String format(String hit) {
-    Matcher matcher = NOT_ALLOWED_CHARS_PATTERN.matcher(hit);
-    return matcher.replaceAll(REPLACEMENT).trim();
-  }
+    @Override
+    public boolean validate(String hit) {
+        return true;
+    }
 
-  @Override
-  public List<String> getRegexNames() {
-    return Arrays.asList(REGEX_NAME);
-  }
+    @Override
+    public String format(String hit) {
+        Matcher matcher = NOT_ALLOWED_CHARS_PATTERN.matcher(hit);
+        return matcher.replaceAll(REPLACEMENT).trim();
+    }
+
+    @Override
+    public List<String> getRegexNames() {
+        return Arrays.asList(REGEX_NAME);
+    }
 
     @Override
     public void init(File confDir) {
         // TODO Auto-generated method stub
-        
+
     }
 
 }

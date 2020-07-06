@@ -46,7 +46,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
             sum += m.getTotalSelected();
         return sum;
     }
-    
+
     public int getTotalItens() {
         int sum = 0;
         for (IMarcadores m : map.values())
@@ -299,7 +299,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiMarcadores) {
             MultiMarcadores state = (MultiMarcadores) obj;
-            if(state.getTotalItens() != this.getTotalItens())
+            if (state.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
             map = state.map;
         } else {

@@ -42,7 +42,8 @@ public class ItemInfo implements Serializable {
     private String path, hash;
     private boolean carved = false;
 
-    public ItemInfo(int id, String hash, Collection<String> bookmarks, Collection<String> categories, String path, boolean carved) {
+    public ItemInfo(int id, String hash, Collection<String> bookmarks, Collection<String> categories, String path,
+            boolean carved) {
         this.id = id;
         this.hash = hash;
         this.bookmarks = bookmarks;
@@ -82,7 +83,7 @@ public class ItemInfo implements Serializable {
     public Collection<String> getBookmarks() {
         return bookmarks;
     }
-    
+
     public Collection<String> getCategories() {
         return categories;
     }

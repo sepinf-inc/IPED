@@ -117,8 +117,9 @@ import iped3.io.SeekableInputStream;
  */
 
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
-    
-    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador" + File.separator + "default.hvp";
+
+    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
+            + File.separator + "default.hvp";
 
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
@@ -465,7 +466,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dispose() {
 
     }
-    
+
     @Override
     public int getHitsSupported() {
         return 1;
@@ -2927,7 +2928,7 @@ class ByteArraySeekData extends ByteArrayEditableData {
         if (file != null && file.equals(this.file)) {
             return;
         }
-        
+
         clear();
 
         this.file = file;
@@ -2983,7 +2984,7 @@ class ByteArraySeekData extends ByteArrayEditableData {
         }
 
     }
-    
+
     void fireReadError() {
         // do nothing by default
     }

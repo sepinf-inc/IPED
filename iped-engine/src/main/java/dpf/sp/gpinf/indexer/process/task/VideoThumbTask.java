@@ -332,7 +332,8 @@ public class VideoThumbTask extends ThumbTask {
                 total = totalGallery.longValue();
                 if (total > 0) {
                     logger.info("Total gallery thumbs generated: " + total); //$NON-NLS-1$
-                    logger.info("Average gallery thumb generation time (milliseconds/video): " + (totalTimeGallery.longValue() / total)); //$NON-NLS-1$
+                    logger.info("Average gallery thumb generation time (milliseconds/video): " //$NON-NLS-1$
+                            + (totalTimeGallery.longValue() / total));
                 }
             }
         }
@@ -366,7 +367,7 @@ public class VideoThumbTask extends ThumbTask {
                 }
                 return;
             }
-            
+
             processedVideos.put(evidence.getHash(), null);
         }
 
@@ -425,17 +426,18 @@ public class VideoThumbTask extends ThumbTask {
             if (r.isSuccess())
                 saveMetadata(r, evidence.getMetadata());
 
-            //If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery, with fewer frames
+            // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
+            // with fewer frames
             if (galleryThumbWidth > 0 && mainOutFile != null && mainOutFile.exists()) {
                 try {
                     long t = System.currentTimeMillis();
                     Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
-                    BufferedImage fullImg = (BufferedImage)read[0];
-                    String comment = (String)read[1];
+                    BufferedImage fullImg = (BufferedImage) read[0];
+                    String comment = (String) read[1];
                     int galleryThumbHeight = galleryThumbWidth / 30 * 29;
-                    BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth, galleryThumbHeight, 
-                            galleryMinThumbs, galleryMaxThumbs);
-                    
+                    BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth,
+                            galleryThumbHeight, galleryMinThumbs, galleryMaxThumbs);
+
                     if (img != null && !img.equals(fullImg)) {
                         if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {
                             img = ImageUtil.resizeImage(img, galleryThumbWidth, galleryThumbHeight);
@@ -452,9 +454,9 @@ public class VideoThumbTask extends ThumbTask {
                     }
                 } catch (Throwable e) {
                     logger.warn(evidence.toString(), e);
-                }                
+                }
             }
-            
+
             // Guarda resultado do processamento
             synchronized (processedVideos) {
                 processedVideos.put(evidence.getHash(), r);

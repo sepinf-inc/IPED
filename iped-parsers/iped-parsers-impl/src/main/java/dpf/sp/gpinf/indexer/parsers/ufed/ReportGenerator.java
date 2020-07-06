@@ -19,9 +19,9 @@ import iped3.util.ExtraProperties;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class ReportGenerator {
-    
+
     private static final int MAX_CHAT_MESSAGES = 5000;
-    
+
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
@@ -35,12 +35,13 @@ public class ReportGenerator {
     public int getNextMsgNum() {
         return currentMsg;
     }
-    
+
     public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
         return this.generateNextChatHtml(c, msgs, MAX_CHAT_MESSAGES);
     }
 
-    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs, int maxChatSize) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs, int maxChatSize)
+            throws UnsupportedEncodingException {
 
         if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
             return null;
@@ -77,7 +78,7 @@ public class ReportGenerator {
 
         printMessageFileFooter(out);
         out.flush();
-        
+
         firstHtml = false;
 
         return bout.toByteArray();
@@ -86,9 +87,9 @@ public class ReportGenerator {
     private void printMessage(PrintWriter out, UfedMessage message, boolean group, boolean chatDeleted) {
         out.println("<div id=\"" + message.getId() + "\" class=\"linha\">"); //$NON-NLS-1$
         String name = null;
-        if(message.isSystemMessage()) {
+        if (message.isSystemMessage()) {
             out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
-        }else {
+        } else {
             if (message.isFromMe()) {
                 out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
                 name = message.getLocalResource();
@@ -103,7 +104,7 @@ public class ReportGenerator {
         if (chatDeleted || message.isDeleted())
             out.println("🚫 "); //$NON-NLS-1$
 
-        if(name != null)
+        if (name != null)
             out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" + name + "</span><br/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (message.getData() != null && !message.getData().trim().isEmpty()) {
@@ -117,15 +118,17 @@ public class ReportGenerator {
                     }
                 }
             } else {
-                out.print(message.getData()); //$NON-NLS-1$
-                if(!message.isSystemMessage()) out.print("<br/>");
+                out.print(message.getData()); // $NON-NLS-1$
+                if (!message.isSystemMessage())
+                    out.print("<br/>");
             }
-        }else if(message.isSystemMessage()) {
+        } else if (message.isSystemMessage()) {
             out.print("System Message"); //$NON-NLS-1$
         }
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
-                out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + message.getMediaHash() + "\",this.checked) />");
+                out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:"
+                        + message.getMediaHash() + "\",this.checked) />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
                 String ext = "." + message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$
@@ -167,13 +170,13 @@ public class ReportGenerator {
         }
         if (message.getMediaCaption() != null)
             out.println("<br>" + message.getMediaCaption()); //$NON-NLS-1$
-        
+
         String transcription = message.getTranscription();
-        if(transcription != null) {
+        if (transcription != null) {
             out.print("<br>");
             out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
             String confidence = message.getTranscriptConfidence();
-            if(confidence != null) {
+            if (confidence != null) {
                 float score = Float.valueOf(confidence) * 100;
                 out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -184,7 +187,7 @@ public class ReportGenerator {
 
         if (message.getTimeStamp() != null) {
             out.println("<span class=\"time\">"); //$NON-NLS-1$
-            out.println(timeFormat.format(message.getTimeStamp())); //$NON-NLS-1$
+            out.println(timeFormat.format(message.getTimeStamp())); // $NON-NLS-1$
             out.println("</span>"); //$NON-NLS-1$
         }
         out.println("</div></div>"); //$NON-NLS-1$
@@ -205,12 +208,10 @@ public class ReportGenerator {
                 + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
                 + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico")+ "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                + "<style>\n"
-                + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-1$
-                + "\n</style>\n"
-                + "<style>.check {vertical-align: top;}</style>"
-                + "</head>\n" //$NON-NLS-1$
+                + " <link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico") //$NON-NLS-1$ //$NON-NLS-2$
+                + "\" />\n" //$NON-NLS-1$
+                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
+                + "\n</style>\n" + "<style>.check {vertical-align: top;}</style>" + "</head>\n" //$NON-NLS-3$
                 + "<body>\n" //$NON-NLS-1$
                 + "<div id=\"topbar\">\n" //$NON-NLS-1$
                 + "	<span class=\"left\">" //$NON-NLS-1$

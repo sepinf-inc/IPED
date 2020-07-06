@@ -24,7 +24,7 @@ import iped3.IItem;
 import iped3.IHashValue;
 
 public class KFFCarveTask extends BaseCarveTask {
-    
+
     private static Logger logger = LoggerFactory.getLogger(KFFCarveTask.class);
 
     /**
@@ -208,7 +208,8 @@ public class KFFCarveTask extends BaseCarveTask {
     private static boolean isAcceptedType(MediaType mediaType) {
         return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile)
                 || mediaType.getBaseType().equals(mtDiskImage) || mediaType.getBaseType().equals(mtUnknown)
-                || mediaType.getBaseType().equals(mtVdi) || mediaType.getBaseType().equals(mtVhd) || mediaType.getBaseType().equals(mtVhdx)
-                || mediaType.getBaseType().equals(mtVmdk) || mediaType.getBaseType().equals(mtVolumeShadow);
+                || mediaType.getBaseType().equals(mtVdi) || mediaType.getBaseType().equals(mtVhd)
+                || mediaType.getBaseType().equals(mtVhdx) || mediaType.getBaseType().equals(mtVmdk)
+                || mediaType.getBaseType().equals(mtVolumeShadow);
     }
 }

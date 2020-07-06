@@ -265,8 +265,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         updatingProps = true;
         props.removeAllItems();
         int selIdx = groups.getSelectedIndex();
-        if(selIdx != -1) {
-        	String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
+        if (selIdx != -1) {
+            String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
             for (String f : fields)
                 props.addItem(f);
         }
@@ -719,7 +719,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if ((e != null && e.getValueIsAdjusting()) || updatingList)
             return;
 
-        if(!clearing) App.get().appletListener.updateFileListing();
+        if (!clearing)
+            App.get().appletListener.updateFileListing();
 
         updateTabColor();
 

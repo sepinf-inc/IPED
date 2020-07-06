@@ -223,19 +223,20 @@ public class CaseData implements ICaseData {
 
         queue.put(item);
     }
-    
+
     private void computeGlobalId(IItem item) {
         HashValue persistentId = new HashValue(Util.getPersistentId(item));
-        Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>)objectMap.get(SkipCommitedTask.GLOBALID_ID_MAP);
-      //changes id to previous processing id if using --continue
-        if(globalToIdMap != null) {
+        Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
+                .get(SkipCommitedTask.GLOBALID_ID_MAP);
+        // changes id to previous processing id if using --continue
+        if (globalToIdMap != null) {
             Integer previousId = globalToIdMap.get(persistentId);
-            if(previousId != null) {
+            if (previousId != null) {
                 item.setId(previousId.intValue());
-            }else {
+            } else {
                 String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
                 previousId = globalToIdMap.get(new HashValue(splittedTextId));
-                if(previousId != null) {
+                if (previousId != null) {
                     item.setId(previousId.intValue());
                 }
             }

@@ -106,7 +106,7 @@ public class DIETask extends AbstractTask {
     private static final AtomicLong totalTime = new AtomicLong();
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
-    
+
     private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
     @Override
@@ -146,7 +146,7 @@ public class DIETask extends AbstractTask {
                 }
 
                 File dieDat = new File(diePath.trim());
-                if(!dieDat.exists())
+                if (!dieDat.exists())
                     dieDat = new File(new File(Configuration.getInstance().appRoot), diePath.trim());
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
@@ -183,8 +183,8 @@ public class DIETask extends AbstractTask {
      * no Log.
      */
     public void finish() throws Exception {
-    	synchronized (finished) {
-    		graphicsMagicConverter.close();
+        synchronized (finished) {
+            graphicsMagicConverter.close();
             if (taskEnabled && !finished.get()) {
                 die = null;
                 predictor = null;
@@ -262,7 +262,7 @@ public class DIETask extends AbstractTask {
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { //$NON-NLS-1$
+            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);

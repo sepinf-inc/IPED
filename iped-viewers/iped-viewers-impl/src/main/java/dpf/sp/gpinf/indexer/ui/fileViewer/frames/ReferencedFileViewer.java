@@ -18,17 +18,17 @@ import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
-public class ReferencedFileViewer extends Viewer{
-    
+public class ReferencedFileViewer extends Viewer {
+
     private String labelPrefix;
-    
+
     private JLabel typeNotSupported;
-    
+
     private ViewersRepository multiViewer;
     private AttachmentSearcher attachSearcher;
     private IItem lastItem;
     private Tika tika;
-    
+
     public ReferencedFileViewer(ViewersRepository multiViewer, AttachmentSearcher attachSearcher) {
         super();
         this.multiViewer = multiViewer;
@@ -45,58 +45,60 @@ public class ReferencedFileViewer extends Viewer{
 
     @Override
     public boolean isSupportedType(String contentType) {
-        return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType) ||
-                SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType) ||
-                MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
+        return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType)
+                || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
+                || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }
 
     @Override
     public void init() {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
     public void dispose() {
-        if(lastItem != null) lastItem.dispose();
+        if (lastItem != null)
+            lastItem.dispose();
     }
 
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
-        
-        if(content == null) {
-            if(lastItem != null) lastItem.dispose();
+
+        if (content == null) {
+            if (lastItem != null)
+                lastItem.dispose();
             typeNotSupported.setVisible(false);
             return;
         }
-        
-        if(content instanceof IItem) {
+
+        if (content instanceof IItem) {
             IItem item = (IItem) content;
             String query = item.getMetadata().get(ExtraProperties.LINKED_ITEMS);
             lastItem = attachSearcher.getItem(query);
-            if(lastItem == null) {
+            if (lastItem == null) {
                 typeNotSupported.setVisible(false);
-            }else if(lastItem.getViewFile() != null) {
+            } else if (lastItem.getViewFile() != null) {
                 FileContentSource viewContent = new FileContentSource(lastItem.getViewFile());
                 String mediaType = detectType(lastItem.getViewFile());
                 load(viewContent, mediaType, highlightTerms);
-            }else
+            } else
                 load(lastItem, lastItem.getMediaType().toString(), highlightTerms);
         }
-        
+
     }
-    
+
     private void load(IStreamSource content, String mediaType, Set<String> highlightTerms) {
-        if(multiViewer.isSupportedType(mediaType)) {
+        if (multiViewer.isSupportedType(mediaType)) {
             multiViewer.loadFile(content, mediaType, highlightTerms);
-        }else {
+        } else {
             typeNotSupported.setText(labelPrefix + mediaType);
             typeNotSupported.setVisible(true);
         }
     }
-    
+
     private String detectType(File file) {
-        if(tika == null)
+        if (tika == null)
             tika = new Tika();
         try {
             return tika.detect(file);
@@ -108,7 +110,7 @@ public class ReferencedFileViewer extends Viewer{
     @Override
     public void scrollToNextHit(boolean forward) {
         // TODO Auto-generated method stub
-        
+
     }
 
 }

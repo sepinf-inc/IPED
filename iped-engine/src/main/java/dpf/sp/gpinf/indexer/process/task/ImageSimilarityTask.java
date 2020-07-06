@@ -48,7 +48,8 @@ public class ImageSimilarityTask extends AbstractTask {
         synchronized (init) {
             if (!init.get()) {
                 String enabled = confParams.getProperty(enableParam);
-                if (enabled != null) taskEnabled = Boolean.valueOf(enabled.trim());
+                if (enabled != null)
+                    taskEnabled = Boolean.valueOf(enabled.trim());
 
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
@@ -80,7 +81,8 @@ public class ImageSimilarityTask extends AbstractTask {
     }
 
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() || evidence.getHash() == null) {
+        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+                || evidence.getHash() == null) {
             return;
         }
 

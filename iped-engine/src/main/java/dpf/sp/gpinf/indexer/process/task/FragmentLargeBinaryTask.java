@@ -13,16 +13,17 @@ import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 
 /**
- * Breaks large binary files (indexed by strings) into smaller pieces to be indexed.
+ * Breaks large binary files (indexed by strings) into smaller pieces to be
+ * indexed.
  * 
  * @author Nassif
  *
  */
-public class FragmentLargeBinaryTask extends BaseCarveTask{
-    
+public class FragmentLargeBinaryTask extends BaseCarveTask {
+
     private static final int FRAG_SIZE = 10 * 1024 * 1024;
     private static final int OVERLAP = 1024;
-    
+
     private IndexerDefaultParser autoParser;
 
     @Override
@@ -33,9 +34,9 @@ public class FragmentLargeBinaryTask extends BaseCarveTask{
     @Override
     public void finish() throws Exception {
         // TODO Auto-generated method stub
-        
+
     }
-    
+
     @Override
     public boolean isEnabled() {
         return !caseData.isIpedReport();
@@ -43,10 +44,10 @@ public class FragmentLargeBinaryTask extends BaseCarveTask{
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        
+
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        
+
         if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment()
                 && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
                 && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
@@ -59,14 +60,14 @@ public class FragmentLargeBinaryTask extends BaseCarveTask{
                 if (Thread.currentThread().isInterrupted())
                     return;
             }
-            
-            //set an empty text in parent
+
+            // set an empty text in parent
             TextCache textCache = new TextCache();
             ((Item) evidence).setParsedTextCache(textCache);
         }
-        
+
     }
-    
+
     private void addFragmentFile(IItem parentEvidence, long off, long len, int fragNum) {
         String name = parentEvidence.getName() + "_" + fragNum; //$NON-NLS-1$
         Item fragFile = getOffsetFile(parentEvidence, off, len, name, parentEvidence.getMediaType());

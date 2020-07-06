@@ -6,9 +6,9 @@ import br.gov.pf.labld.graph.PathQueryListener;
 
 public interface SearchLinksQuery {
 
-  void search(String start, String end, GraphDatabaseService graphDB, PathQueryListener listener);
+    void search(String start, String end, GraphDatabaseService graphDB, PathQueryListener listener);
 
-  String getQueryName();
+    String getQueryName();
 
-  String getLabel();
+    String getLabel();
 }

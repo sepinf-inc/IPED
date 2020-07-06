@@ -60,7 +60,8 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
             }
         }
 
-        if(!clearing) App.get().appletListener.updateFileListing();
+        if (!clearing)
+            App.get().appletListener.updateFileListing();
 
     }
 

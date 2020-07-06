@@ -13,46 +13,47 @@ import org.neo4j.graphdb.Node;
 
 public interface GraphService {
 
-  void start(File path) throws IOException;
+    void start(File path) throws IOException;
 
-  void stop() throws IOException;
+    void stop() throws IOException;
 
-  GraphDatabaseService getGraphDb();
+    GraphDatabaseService getGraphDb();
 
-  File getDbFile();
+    File getDbFile();
 
-  void getEdges(String[] ids, EdgeQueryListener listener);
+    void getEdges(String[] ids, EdgeQueryListener listener);
 
-  void getNodes(Collection<Long> ids, NodeQueryListener listener);
+    void getNodes(Collection<Long> ids, NodeQueryListener listener);
 
-  void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes);
+    void getNeighbours(Long id, NodeEdgeQueryListener listener, int maxNodes);
 
-  void getConnections(Set<Long> ids, EdgeQueryListener listener);
+    void getConnections(Set<Long> ids, EdgeQueryListener listener);
 
-  void getPaths(Long source, Long target, int maxDistance, PathQueryListener listener);
+    void getPaths(Long source, Long target, int maxDistance, PathQueryListener listener);
 
-  void search(String param, NodeQueryListener listener);
+    void search(String param, NodeQueryListener listener);
 
-  void findConnections(Long id, ConnectionQueryListener listener);
-  
-  void findRelationships(Long id, ConnectionQueryListener listener);
+    void findConnections(Long id, ConnectionQueryListener listener);
 
-  void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener, int maxNodes);
-  
-  void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId, NodeEdgeQueryListener listener, int maxNodes);
+    void findRelationships(Long id, ConnectionQueryListener listener);
 
-  List<Node> search(Label label, Map<String, Object> params);
+    void getNeighboursWithLabels(Collection<String> labels, Long nodeId, NodeEdgeQueryListener listener, int maxNodes);
 
-  void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering);
+    void getNeighboursWithRelationships(Collection<String> relationships, Long nodeId, NodeEdgeQueryListener listener,
+            int maxNodes);
 
-  void findLabels(LabelQueryListener listener);
+    List<Node> search(Label label, Map<String, Object> params);
 
-  void findLinks(ExportLinksQuery query, LinkQueryListener listener);
+    void search(Label label, Map<String, Object> params, NodeQueryListener listener, String... ordering);
 
-  void advancedSearch(String string, FreeQueryListener listener);
+    void findLabels(LabelQueryListener listener);
 
-  void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
+    void findLinks(ExportLinksQuery query, LinkQueryListener listener);
 
-  List<Long> getMoreConnectedNodes(int maxNodes);
+    void advancedSearch(String string, FreeQueryListener listener);
+
+    void getRelationships(Collection<Long> ids, EdgeQueryListener listener);
+
+    List<Long> getMoreConnectedNodes(int maxNodes);
 
 }

@@ -15,126 +15,127 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import iped3.IItemId;
 
 public class FilterSelectedEdges {
-    
+
     private static FilterSelectedEdges INSTANCE = new FilterSelectedEdges();
-    
+
     private Set<Edge> selectedEdges = new HashSet<>();
-    
+
     private FilterSelectedEdges() {
     }
-    
+
     public static FilterSelectedEdges getInstance() {
         return INSTANCE;
     }
-    
+
     public void selectEdges(Collection<Edge> edges, boolean keepSelection) {
-        if(!keepSelection) {
+        if (!keepSelection) {
             this.selectedEdges.clear();
         }
         boolean added = false;
-        for(Edge edge : edges) {
-            if(edge instanceof OverlappedEdges) {
-                OverlappedEdges overlapped = (OverlappedEdges)edge;
-                for(Edge e : overlapped.getEdges()) {
-                    if(selectedEdges.add(e))
+        for (Edge edge : edges) {
+            if (edge instanceof OverlappedEdges) {
+                OverlappedEdges overlapped = (OverlappedEdges) edge;
+                for (Edge e : overlapped.getEdges()) {
+                    if (selectedEdges.add(e))
                         added = true;
                 }
-            }else {
-                if(selectedEdges.add(edge))
+            } else {
+                if (selectedEdges.add(edge))
                     added = true;
             }
         }
-        if(added) {
+        if (added) {
             updateResults();
         }
     }
-    
+
     public void setEdge(Edge edge) {
-        if(edge instanceof OverlappedEdges) {
-            OverlappedEdges edges = (OverlappedEdges)edge;
-            if(selectedEdges.size() == edges.getEdgeCount()) {
+        if (edge instanceof OverlappedEdges) {
+            OverlappedEdges edges = (OverlappedEdges) edge;
+            if (selectedEdges.size() == edges.getEdgeCount()) {
                 boolean equal = true;
-                for(Edge e : edges.getEdges()) {
-                    if(!selectedEdges.contains(e)) {
+                for (Edge e : edges.getEdges()) {
+                    if (!selectedEdges.contains(e)) {
                         equal = false;
                         break;
                     }
                 }
-                if(equal) {
+                if (equal) {
                     return;
                 }
             }
         }
         addEdge(edge, false);
     }
-    
+
     public void addEdge(Edge edge, boolean keepSelection) {
-        if(!keepSelection) {
+        if (!keepSelection) {
             this.selectedEdges.clear();
         }
-        if(edge instanceof OverlappedEdges) {
-            OverlappedEdges edges = (OverlappedEdges)edge;
-            for(Edge e : edges.getEdges()) {
+        if (edge instanceof OverlappedEdges) {
+            OverlappedEdges edges = (OverlappedEdges) edge;
+            for (Edge e : edges.getEdges()) {
                 selectedEdges.add(e);
             }
-        }else {
+        } else {
             selectedEdges.add(edge);
         }
         updateResults();
     }
-    
+
     public void removeEdge(Edge edge) {
-        if(edge instanceof OverlappedEdges) {
-            OverlappedEdges edges = (OverlappedEdges)edge;
-            for(Edge e : edges.getEdges()) {
+        if (edge instanceof OverlappedEdges) {
+            OverlappedEdges edges = (OverlappedEdges) edge;
+            for (Edge e : edges.getEdges()) {
                 selectedEdges.remove(e);
             }
-        }else {
+        } else {
             selectedEdges.remove(edge);
         }
         updateResults();
     }
-    
+
     public void unselecEdgesOfNodes(Collection<String> nodeIds) {
         Iterator<Edge> iter = selectedEdges.iterator();
         boolean update = false;
-        while(iter.hasNext()) {
+        while (iter.hasNext()) {
             Edge edge = iter.next();
-            if(nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget())) {
+            if (nodeIds.contains(edge.getSource()) || nodeIds.contains(edge.getTarget())) {
                 iter.remove();
                 update = true;
             }
         }
-        if(update) updateResults();
+        if (update)
+            updateResults();
     }
-    
+
     private void updateResults() {
         App.get().setGraphDefaultColor(selectedEdges.isEmpty());
         App.get().getAppListener().updateFileListing();
     }
-    
+
     public void clearSelection(boolean updateResults) {
-        if(selectedEdges.size() > 0) {
+        if (selectedEdges.size() > 0) {
             selectedEdges.clear();
-            if(updateResults) {
+            if (updateResults) {
                 updateResults();
-            }else {
+            } else {
                 App.get().setGraphDefaultColor(true);
             }
         }
     }
-    
-    public Set<IItemId> getItemIdsOfSelectedEdges(){
+
+    public Set<IItemId> getItemIdsOfSelectedEdges() {
         HashMap<String, Integer> map = new HashMap<>();
         int i = 0;
-        for(IPEDSource source : App.get().appCase.getAtomicSources()) {
-            for(String uuid : source.getEvidenceUUIDs()) {
+        for (IPEDSource source : App.get().appCase.getAtomicSources()) {
+            for (String uuid : source.getEvidenceUUIDs()) {
                 map.put(uuid, i);
             }
             i++;
         }
         Set<IItemId> result = new HashSet<>();
-        for(Edge edge : selectedEdges) {
+        for (Edge edge : selectedEdges) {
             String[] values = edge.getLabel().split("_");
             String uuid = values[0];
             String id = values[1];

@@ -275,15 +275,15 @@ public class OutlookPSTParser extends AbstractParser {
             processAttachs(email, path + ">>" + email.getSubject(), parent); //$NON-NLS-1$
         }
     }
-    
+
     private void fillMetadata(Metadata metadata, String prop, String... values) {
         HashSet<String> set = new HashSet<>();
-        for(String val : values) {
-            if(val != null && !val.isEmpty()) {
+        for (String val : values) {
+            if (val != null && !val.isEmpty()) {
                 set.add(val);
             }
         }
-        for(String val : set) {
+        for (String val : set) {
             metadata.add(prop, val);
         }
     }
@@ -300,17 +300,25 @@ public class OutlookPSTParser extends AbstractParser {
                     suffix = contact.getSMTPAddress();
                 if (suffix != null && !suffix.isEmpty())
                     objName += "-" + suffix; //$NON-NLS-1$
-                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_CONTACT_MIME); //$NON-NLS-1$
+                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_CONTACT_MIME); // $NON-NLS-1$
                 metadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
                 fillMetadata(metadata, ExtraProperties.USER_ACCOUNT, contact.getAccount());
-                fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(), contact.getMiddleName(), contact.getSurname(), contact.getNickname());
-                fillMetadata(metadata, ExtraProperties.USER_EMAIL, contact.getEmailAddress(), contact.getEmail1EmailAddress(), contact.getEmail2EmailAddress(), contact.getEmail3EmailAddress());
-                fillMetadata(metadata, ExtraProperties.USER_PHONE, contact.getPrimaryTelephoneNumber(), contact.getCompanyMainPhoneNumber(), contact.getRadioTelephoneNumber(), contact.getCarTelephoneNumber(),
-                        contact.getBusinessTelephoneNumber(), contact.getBusiness2TelephoneNumber(), contact.getMobileTelephoneNumber(), contact.getHomeTelephoneNumber(), contact.getOtherTelephoneNumber());
-                fillMetadata(metadata, ExtraProperties.USER_ADDRESS, contact.getHomeAddress(), contact.getWorkAddress(), contact.getPostalAddress(), contact.getOtherAddress());
+                fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(),
+                        contact.getMiddleName(), contact.getSurname(), contact.getNickname());
+                fillMetadata(metadata, ExtraProperties.USER_EMAIL, contact.getEmailAddress(),
+                        contact.getEmail1EmailAddress(), contact.getEmail2EmailAddress(),
+                        contact.getEmail3EmailAddress());
+                fillMetadata(metadata, ExtraProperties.USER_PHONE, contact.getPrimaryTelephoneNumber(),
+                        contact.getCompanyMainPhoneNumber(), contact.getRadioTelephoneNumber(),
+                        contact.getCarTelephoneNumber(), contact.getBusinessTelephoneNumber(),
+                        contact.getBusiness2TelephoneNumber(), contact.getMobileTelephoneNumber(),
+                        contact.getHomeTelephoneNumber(), contact.getOtherTelephoneNumber());
+                fillMetadata(metadata, ExtraProperties.USER_ADDRESS, contact.getHomeAddress(), contact.getWorkAddress(),
+                        contact.getPostalAddress(), contact.getOtherAddress());
                 metadata.set(ExtraProperties.USER_BIRTH, contact.getBirthday());
                 fillMetadata(metadata, ExtraProperties.USER_ORGANIZATION, contact.getCompanyName());
-                fillMetadata(metadata, ExtraProperties.USER_URLS, contact.getPersonalHomePage(), contact.getBusinessHomePage());
+                fillMetadata(metadata, ExtraProperties.USER_URLS, contact.getPersonalHomePage(),
+                        contact.getBusinessHomePage());
                 fillMetadata(metadata, ExtraProperties.USER_NOTES, contact.getNote(), contact.getComment());
             } else
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
@@ -381,19 +389,19 @@ public class OutlookPSTParser extends AbstractParser {
             return o1.getName().compareTo(o2.getName());
         }
     }
-    
+
     private static Pattern ignoreChars = Pattern.compile("[<>'\";]");//$NON-NLS-1$
-    
-    public static String formatNameAndAddress(String name, String address){
-        if(address == null)
+
+    public static String formatNameAndAddress(String name, String address) {
+        if (address == null)
             address = ""; //$NON-NLS-1$
         address = ignoreChars.matcher(address).replaceAll(" ").trim(); //$NON-NLS-1$
-        if(name == null)
+        if (name == null)
             return address;
         name = ignoreChars.matcher(name).replaceAll(" ").trim();//$NON-NLS-1$
-        if(name.isEmpty())
+        if (name.isEmpty())
             return address;
-        if(address.isEmpty())
+        if (address.isEmpty())
             return name;
         if (!name.contains(address)) {
             name += " <" + address + ">"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -447,8 +455,8 @@ public class OutlookPSTParser extends AbstractParser {
                     PSTRecipient recip = email.getRecipient(i);
                     if (recipTypes[k][0].equals(recip.getRecipientType())) {
                         String recipName = formatNameAndAddress(recip.getDisplayName(), recip.getEmailAddress());
-                        if(!recipName.isEmpty()) {
-                            recipients.add(recipName); //$NON-NLS-1$
+                        if (!recipName.isEmpty()) {
+                            recipients.add(recipName); // $NON-NLS-1$
                         }
                     }
                 }
@@ -456,7 +464,8 @@ public class OutlookPSTParser extends AbstractParser {
                     String key = metaRecips[k];
                     recipients.stream().forEach(r -> metadata.add(key, r));
                     preview.append("<b>" + recipTypes[k][1] + "</b> " //$NON-NLS-1$ //$NON-NLS-2$
-                            + SimpleHTMLEncoder.htmlEncode(recipients.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                            + SimpleHTMLEncoder.htmlEncode(recipients.stream().collect(Collectors.joining("; "))) //$NON-NLS-1$
+                            + "<br>"); //$NON-NLS-1$
                 }
             }
 
@@ -484,16 +493,17 @@ public class OutlookPSTParser extends AbstractParser {
                 metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(bodyHtml, true));
             } else {
                 String text = email.getBody();
-                if(text == null || text.trim().isEmpty()) {
+                if (text == null || text.trim().isEmpty()) {
                     text = email.getRTFBody();
-                    if(text != null) {
+                    if (text != null) {
                         try {
                             RTFParser2 parser = new RTFParser2();
                             BodyContentHandler handler = new BodyContentHandler();
-                            parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(), context);
+                            parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(),
+                                    context);
                             text = handler.toString();
-                            
-                        }catch(Exception e) {
+
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }

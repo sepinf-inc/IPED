@@ -15,9 +15,9 @@ public abstract class SeekableInputStreamFactory implements ISeekableInputStream
         this.dataSource = dataSource;
         checkIfDataSourceExists();
     }
-    
+
     protected void checkIfDataSourceExists() {
-        if(dataSource != null && !Files.exists(dataSource)) {
+        if (dataSource != null && !Files.exists(dataSource)) {
             SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(dataSource.toFile());
             this.dataSource = siwd.askImagePathInGUI().toPath();
         }

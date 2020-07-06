@@ -15,7 +15,7 @@ public class UFEDReaderConfig extends AbstractPropertiesConfigurable {
         }
     };
 
-    String phoneParsersToUse = "external"; //$NON-NLS-1$;
+    String phoneParsersToUse = "external"; //$NON-NLS-1$ ;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {

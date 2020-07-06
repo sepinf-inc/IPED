@@ -182,7 +182,7 @@ public class IndexItem extends BasicProps {
     }
 
     public static void loadMetadataTypes(File confDir) throws IOException, ClassNotFoundException {
-        if(typesMap.size() > 0)
+        if (typesMap.size() > 0)
             return;
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         if (metadataTypesFile.exists()) {
@@ -193,7 +193,7 @@ public class IndexItem extends BasicProps {
             }
         }
     }
-    
+
     private static final String normalize(String value) {
         return normalize(value, true);
     }
@@ -236,7 +236,7 @@ public class IndexItem extends BasicProps {
             doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
         }
-        if(evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourcePath() != null) {
+        if (evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourcePath() != null) {
             Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
             value = Util.getRelativePath(output, srcPath.toFile());
             doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
@@ -246,7 +246,7 @@ public class IndexItem extends BasicProps {
             doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
         }
-        
+
         intVal = evidence.getSubitemId();
         if (intVal != null) {
             doc.add(new IntField(SUBITEMID, intVal, Field.Store.YES));
@@ -454,8 +454,8 @@ public class IndexItem extends BasicProps {
             keyPrefix = "_num_"; //$NON-NLS-1$
         }
         if (oValue instanceof Date) {
-            String value = DateUtils.formatDate((Date)oValue);
-            //query parser converts range queries to lowercase
+            String value = DateUtils.formatDate((Date) oValue);
+            // query parser converts range queries to lowercase
             doc.add(new StringField(key, value.toLowerCase(), Field.Store.YES));
             if (!isMultiValued)
                 doc.add(new SortedDocValuesField(key, new BytesRef(value)));
@@ -582,7 +582,7 @@ public class IndexItem extends BasicProps {
         }
 
         Date date = DateUtil.tryToParseDate(value);
-        if(date != null) {
+        if (date != null) {
             oValue = date;
             typesMap.put(key, Date.class);
         }
@@ -682,7 +682,7 @@ public class IndexItem extends BasicProps {
             if (value != null) {
                 evidence.setParentId(Integer.valueOf(value));
             }
-            
+
             value = doc.get(IndexItem.SUBITEMID);
             if (value != null) {
                 evidence.setSubitemId(Integer.valueOf(value));
@@ -789,14 +789,14 @@ public class IndexItem extends BasicProps {
                         File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
                                 "jpg"); //$NON-NLS-1$
                         try {
-                            if(thumbFile.exists())
+                            if (thumbFile.exists())
                                 evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                 }
-                
+
                 BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
                 if (bytesRef != null) {
                     evidence.setImageSimilarityFeatures(bytesRef.bytes);
@@ -868,13 +868,14 @@ public class IndexItem extends BasicProps {
                     } else
                         evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
                 } else {
-                    if(Date.class.equals(c) && f.stringValue() != null) {
-                        //it was stored lowercase because query parser converts range queries to lowercase
+                    if (Date.class.equals(c) && f.stringValue() != null) {
+                        // it was stored lowercase because query parser converts range queries to
+                        // lowercase
                         String val = f.stringValue().toUpperCase();
                         evidence.getMetadata().add(f.name(), val);
-                    }else {
+                    } else {
                         Object casted = getCastedValue(c, f);
-                        if(casted != null) {
+                        if (casted != null) {
                             evidence.getMetadata().add(f.name(), casted.toString());
                         }
                     }
@@ -890,27 +891,28 @@ public class IndexItem extends BasicProps {
         return null;
 
     }
-    
+
     private static File checkIfEvidenceFolderExists(Item evidence, File localFile) {
-        if(evidence.getPath().contains(">>"))
+        if (evidence.getPath().contains(">>"))
             return localFile;
         Path path;
         try {
             path = Paths.get(evidence.getPath());
-        }catch(InvalidPathException e) {
+        } catch (InvalidPathException e) {
             return localFile;
         }
         String pathSuffix = "";
-        if(path.getNameCount() > 1)
+        if (path.getNameCount() > 1)
             pathSuffix = path.subpath(1, path.getNameCount()).toString();
-        if(localFile.toPath().endsWith(pathSuffix)) {
-            String evidenceFolderStr = localFile.getAbsolutePath().substring(0, localFile.getAbsolutePath().lastIndexOf(pathSuffix));
+        if (localFile.toPath().endsWith(pathSuffix)) {
+            String evidenceFolderStr = localFile.getAbsolutePath().substring(0,
+                    localFile.getAbsolutePath().lastIndexOf(pathSuffix));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
-            if(mappedFolder == null) {
-                if(evidenceFolder.exists()) {
+            if (mappedFolder == null) {
+                if (evidenceFolder.exists()) {
                     mappedFolder = evidenceFolder;
-                }else {
+                } else {
                     SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
                     mappedFolder = siwd.askImagePathInGUI();
                 }
@@ -923,20 +925,21 @@ public class IndexItem extends BasicProps {
 
     public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
         if (Date.class.equals(c)) {
-            //it was stored lowercase because query parser converts range queries to lowercase
+            // it was stored lowercase because query parser converts range queries to
+            // lowercase
             String value = f.stringValue().toUpperCase();
             try {
                 return DateUtil.stringToDate(value);
-            }catch(ParseException e) {
+            } catch (ParseException e) {
                 return DateUtil.tryToParseDate(value);
-            }   
-        }else if (f.numericValue() != null) {
+            }
+        } else if (f.numericValue() != null) {
             Number num = f.numericValue();
-            if(num.doubleValue() == num.longValue())
+            if (num.doubleValue() == num.longValue())
                 return num.longValue();
             else
                 return num;
-        }else
+        } else
             return f.stringValue();
     }
 

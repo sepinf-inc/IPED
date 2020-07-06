@@ -4,16 +4,16 @@ import dpf.sp.gpinf.indexer.desktop.Messages;
 
 public class CallLinksQuery extends AbstractSearchLinksQuery {
 
-  private static final String QUERY_NAME = "CALLS";
+    private static final String QUERY_NAME = "CALLS";
 
-  @Override
-  public String getQueryName() {
-    return QUERY_NAME;
-  }
+    @Override
+    public String getQueryName() {
+        return QUERY_NAME;
+    }
 
-  @Override
-  public String getLabel() {
-    return Messages.get("GraphAnalysis.LinksCalls");
-  }
+    @Override
+    public String getLabel() {
+        return Messages.get("GraphAnalysis.LinksCalls");
+    }
 
 }

@@ -93,13 +93,13 @@ public class Util {
             if (count0 > 0 && count0 * 2 >= 0.9 * (float) max) {
                 return new String(data, StandardCharsets.UTF_16LE);
             }
-                
+
             String result = new String(data, StandardCharsets.UTF_8);
-            
-            if(result.contains("�")) {
-                result = new String(data, "windows-1252"); //$NON-NLS-1$ 
+
+            if (result.contains("�")) {
+                result = new String(data, "windows-1252"); //$NON-NLS-1$
             }
-            
+
             return result;
 
         } catch (UnsupportedEncodingException e) {

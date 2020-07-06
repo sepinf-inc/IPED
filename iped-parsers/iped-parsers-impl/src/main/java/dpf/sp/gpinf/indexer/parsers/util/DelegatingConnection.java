@@ -29,7 +29,7 @@ public class DelegatingConnection implements Connection {
     public DelegatingConnection(Connection delegate) {
         this.delegate = delegate;
     }
-    
+
     public Connection getDelegate() {
         return delegate;
     }

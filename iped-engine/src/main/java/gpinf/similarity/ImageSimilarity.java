@@ -39,13 +39,16 @@ public class ImageSimilarity {
     }
 
     public byte[] extractFeatures(BufferedImage img) {
-        if (img == null) return null;
+        if (img == null)
+            return null;
         w = img.getWidth();
         h = img.getHeight();
-        if (w <= 2 || h <= 2) return null;
+        if (w <= 2 || h <= 2)
+            return null;
         getPixels(img);
         trimBorders();
-        if (w <= 2 || h <= 2) return null;
+        if (w <= 2 || h <= 2)
+            return null;
         calcEdges();
         for (int i = 0; i < 2; i++) {
             Arrays.fill(hist[i], 0);
@@ -109,7 +112,8 @@ public class ImageSimilarity {
             int[] hi = hist[i];
             for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) features[idx] = range(Math.pow(v, power) * m);
+                if (v > 0)
+                    features[idx] = range(Math.pow(v, power) * m);
             }
         }
         m = 64 / Math.pow(total, power);
@@ -117,7 +121,8 @@ public class ImageSimilarity {
             int[] hi = histEdge[i];
             for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
-                if (v > 0) features[idx] = range(Math.pow(v, power) * m);
+                if (v > 0)
+                    features[idx] = range(Math.pow(v, power) * m);
             }
         }
         return features;
@@ -125,8 +130,10 @@ public class ImageSimilarity {
 
     private static final byte range(double v) {
         int i = (int) Math.round(v);
-        if (i < 0) return (byte) 0;
-        if (i > 63) return (byte) 63;
+        if (i < 0)
+            return (byte) 0;
+        if (i > 63)
+            return (byte) 63;
         return (byte) i;
     }
 
@@ -189,8 +196,10 @@ public class ImageSimilarity {
             s0 /= h * 3;
             s1 /= h * 3;
             int detect = -1;
-            if (s0 < trimTolerance && s1 < trimTolerance) detect = 0;
-            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance) detect = 1;
+            if (s0 < trimTolerance && s1 < trimTolerance)
+                detect = 0;
+            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance)
+                detect = 1;
             if (detect == -1) {
                 break;
             }
@@ -201,7 +210,8 @@ public class ImageSimilarity {
             }
             tw -= 2;
         }
-        if (tw <= 2) return;
+        if (tw <= 2)
+            return;
         int x0 = (w - tw) / 2;
         int x1 = x0 + tw;
         for (int y = 0; y * 3 < h; y++) {
@@ -224,8 +234,10 @@ public class ImageSimilarity {
             s0 /= tw * 3;
             s1 /= tw * 3;
             int detect = -1;
-            if (s0 < trimTolerance && s1 < trimTolerance) detect = 0;
-            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance) detect = 1;
+            if (s0 < trimTolerance && s1 < trimTolerance)
+                detect = 0;
+            else if (s0 > 255 - trimTolerance && s1 > 255 - trimTolerance)
+                detect = 1;
             if (detect == -1) {
                 break;
             }

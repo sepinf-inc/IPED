@@ -33,12 +33,13 @@ public class SimilarImagesFilterActions {
     public static void clear() {
         clear(true);
     }
-    
+
     public static void clear(boolean updateResults) {
         App app = App.get();
         app.similarImagesQueryRefItem = null;
         app.similarImageFilterPanel.setVisible(false);
-        if(updateResults) app.appletListener.updateFileListing();
+        if (updateResults)
+            app.appletListener.updateFileListing();
     }
 
     public static void searchSimilarImages(boolean external) {
@@ -67,8 +68,8 @@ public class SimilarImagesFilterActions {
                 BufferedInputStream is = null;
                 try {
                     is = new BufferedInputStream(new FileInputStream(file));
-                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor, ImageSimilarity.maxDim
-                            * sampleFactor);
+                    img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
+                            ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
                 } finally {
                     IOUtil.closeQuietly(is);
@@ -92,8 +93,8 @@ public class SimilarImagesFilterActions {
                     app.similarImagesQueryRefItem = new Item();
                     app.similarImagesQueryRefItem.setName(file.getName());
                     app.similarImagesQueryRefItem.setThumb(baos.toByteArray());
-                    app.similarImagesQueryRefItem.setImageSimilarityFeatures(new ImageSimilarity().extractFeatures(
-                            img));
+                    app.similarImagesQueryRefItem
+                            .setImageSimilarityFeatures(new ImageSimilarity().extractFeatures(img));
                 } else {
                     JOptionPane.showMessageDialog(App.get(), Messages.getString("ImageSimilarity.ExternalError"),
                             Messages.getString("ImageSimilarity.ExternalTitle"), JOptionPane.ERROR_MESSAGE);

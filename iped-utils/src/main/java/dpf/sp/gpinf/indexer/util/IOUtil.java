@@ -103,7 +103,7 @@ public class IOUtil {
             }
         return result;
     }
-    
+
     public static void deletarDiretorio(File file) {
         try {
             deleteDirectory(file, true);
@@ -112,7 +112,7 @@ public class IOUtil {
         }
     }
 
-    public static void deleteDirectory(File file, boolean logError) throws IOException{
+    public static void deleteDirectory(File file, boolean logError) throws IOException {
         if (file.isDirectory()) {
             String[] names = file.list();
             if (names != null)
@@ -124,10 +124,10 @@ public class IOUtil {
         try {
             Files.delete(file.toPath());
         } catch (IOException e) {
-            if(logError) {
+            if (logError) {
                 LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
-            }
-            else throw e;
+            } else
+                throw e;
         }
 
     }
@@ -191,10 +191,9 @@ public class IOUtil {
 
         return bos.toByteArray();
     }
-    
 
     private static Path tmpDir = null;
-    
+
     public static boolean isTemporaryFile(File file) {
         if (tmpDir == null) {
             tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));

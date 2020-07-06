@@ -34,10 +34,10 @@ public class MetadataUtil {
     private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
-    
+
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
-    
-    private static Set<String> getIgnorePreviewMetas(){
+
+    private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
         ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
         ignorePreviewMetas.add(Metadata.CONTENT_LENGTH);
@@ -306,10 +306,10 @@ public class MetadataUtil {
             metadata.add(destMeta, value);
         }
     }
-    
+
     private static void prefixBasicMetadata(Metadata metadata) {
         for (String key : metadata.names()) {
-            if(BasicProps.SET.contains(key)) {
+            if (BasicProps.SET.contains(key)) {
                 String[] values = metadata.getValues(key);
                 metadata.remove(key);
                 for (String val : values) {
@@ -411,13 +411,13 @@ public class MetadataUtil {
 
         return false;
     }
-    
+
     public static final Metadata clone(Metadata metadata) {
         Metadata clone = new Metadata();
         String[] keys = metadata.names();
         for (String key : keys) {
             String[] values = metadata.getValues(key);
-            for(String val : values) {
+            for (String val : values) {
                 clone.add(key, val);
             }
         }

@@ -9,30 +9,30 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 
 public class PlacaRegexValidatorService extends BasicAbstractRegexValidatorService {
 
-  protected static final Pattern NON_WORD = Pattern.compile("\\W");
+    protected static final Pattern NON_WORD = Pattern.compile("\\W");
 
-  private static final String[] REGEX_NAME = {"CAR", "PLACA"};
+    private static final String[] REGEX_NAME = { "CAR", "PLACA" };
 
-  @Override
-  public boolean validate(String hit) {
-    return true;
-  }
+    @Override
+    public boolean validate(String hit) {
+        return true;
+    }
 
-  @Override
-  public String format(String hit) {
-    hit = NON_WORD.matcher(hit).replaceAll("");
-    hit = hit.toUpperCase();
-    return hit;
-  }
+    @Override
+    public String format(String hit) {
+        hit = NON_WORD.matcher(hit).replaceAll("");
+        hit = hit.toUpperCase();
+        return hit;
+    }
 
-  @Override
-  public List<String> getRegexNames() {
-    return Arrays.asList(REGEX_NAME);
-  }
+    @Override
+    public List<String> getRegexNames() {
+        return Arrays.asList(REGEX_NAME);
+    }
 
-  @Override
-  public void init(File confDir) {
-      // TODO Auto-generated method stub
-  }
+    @Override
+    public void init(File confDir) {
+        // TODO Auto-generated method stub
+    }
 
 }

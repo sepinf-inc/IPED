@@ -8,7 +8,7 @@ import java.util.Date;
  * @author Patrick Dalla Bernardina patrick.pdb@dpf.gov.br
  */
 
-public class SkypeContact implements SkypeUser{
+public class SkypeContact implements SkypeUser {
 
     String Id;
     String skypeName;
@@ -57,7 +57,7 @@ public class SkypeContact implements SkypeUser{
     public void setFullName(String fullName) {
         this.fullName = fullName;
     }
-    
+
     public String getBestName() {
         String name = getFullName();
         if (name == null || name.trim().isEmpty())

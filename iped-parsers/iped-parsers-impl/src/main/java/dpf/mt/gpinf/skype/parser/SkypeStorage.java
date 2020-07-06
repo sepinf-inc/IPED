@@ -7,18 +7,18 @@ import iped3.search.IItemSearcher;
 
 public interface SkypeStorage extends Closeable {
 
-	void searchMediaCache(IItemSearcher searcher);
+    void searchMediaCache(IItemSearcher searcher);
 
-	Collection<SkypeConversation> extraiMensagens() throws SkypeParserException;
+    Collection<SkypeConversation> extraiMensagens() throws SkypeParserException;
 
-	Collection<SkypeContact> extraiContatos() throws SkypeParserException;
+    Collection<SkypeContact> extraiContatos() throws SkypeParserException;
 
-	Collection<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException;
+    Collection<SkypeFileTransfer> extraiTransferencias() throws SkypeParserException;
 
-	String getSkypeName();
+    String getSkypeName();
 
-	SkypeAccount getAccount();
-	
-	Connection getConnection() throws SkypeParserException;
+    SkypeAccount getAccount();
+
+    Connection getConnection() throws SkypeParserException;
 
 }

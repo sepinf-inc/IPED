@@ -8,20 +8,20 @@ import dpf.sp.gpinf.indexer.desktop.App;
 
 public class ExpandConfigurationAction extends AbstractAction {
 
-  private static final long serialVersionUID = 6277963012519118927L;
+    private static final long serialVersionUID = 6277963012519118927L;
 
-  private AppGraphAnalytics app;
+    private AppGraphAnalytics app;
 
-  public ExpandConfigurationAction(AppGraphAnalytics app) {
-    super();
-    this.app = app;
-  }
+    public ExpandConfigurationAction(AppGraphAnalytics app) {
+        super();
+        this.app = app;
+    }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    ExpandConfigurationDialog dialog = new ExpandConfigurationDialog(App.get(), app);
-    dialog.loadData();
-    dialog.setVisible(true);
-  }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        ExpandConfigurationDialog dialog = new ExpandConfigurationDialog(App.get(), app);
+        dialog.loadData();
+        dialog.setVisible(true);
+    }
 
 }

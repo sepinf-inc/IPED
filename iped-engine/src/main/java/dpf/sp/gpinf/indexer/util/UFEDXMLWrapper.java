@@ -15,10 +15,11 @@ public class UFEDXMLWrapper extends Reader {
     private static final String suffix = "</value>";
     private static final String cDataStart = "<![CDATA[";
     private static final String cDataEnd = "]]>";
-    
-    private static final Pattern invalidPattern = Pattern.compile("(&#x0;)|(&#x1;)|(&#x2;)|(&#x3;)|(&#x4;)|(&#x5;)|(&#x6;)|(&#x7;)|(&#x8;)|"
-            + "(&#xB;)|(&#xC;)|(&#xE;)|(&#xF;)|(&#x10;)|(&#x11;)|(&#x12;)|(&#x13;)|(&#x14;)|(&#x15;)|(&#x16;)|(&#x17;)|(&#x18;)|(&#x19;)|"
-            + "(&#x1A;)|(&#x1B;)|(&#x1C;)|(&#x1D;)|(&#x1E;)|(&#x1F;)");
+
+    private static final Pattern invalidPattern = Pattern
+            .compile("(&#x0;)|(&#x1;)|(&#x2;)|(&#x3;)|(&#x4;)|(&#x5;)|(&#x6;)|(&#x7;)|(&#x8;)|"
+                    + "(&#xB;)|(&#xC;)|(&#xE;)|(&#xF;)|(&#x10;)|(&#x11;)|(&#x12;)|(&#x13;)|(&#x14;)|(&#x15;)|(&#x16;)|(&#x17;)|(&#x18;)|(&#x19;)|"
+                    + "(&#x1A;)|(&#x1B;)|(&#x1C;)|(&#x1D;)|(&#x1E;)|(&#x1F;)");
 
     BufferedReader reader;
     String buffer;
@@ -65,8 +66,8 @@ public class UFEDXMLWrapper extends Reader {
                 buffer = buffer.substring(0, i) + cDataEnd + buffer.substring(i);
                 replacing = false;
             }
-        }else {
-            if(buffer.contains("&#x"))
+        } else {
+            if (buffer.contains("&#x"))
                 buffer = invalidPattern.matcher(buffer).replaceAll("?");
         }
 

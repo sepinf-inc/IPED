@@ -78,7 +78,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         try {
             File dbFile = TikaInputStream.get(stream, tmp).getFile();
             File walTemp = exportWalLog(dbFile, context);
-            if(walTemp != null) {
+            if (walTemp != null) {
                 tmp.addResource(new Closeable() {
                     @Override
                     public void close() {
@@ -88,12 +88,12 @@ public class SQLite3DBParser extends AbstractDBParser {
                 });
             }
             String connectionString = getConnectionString(dbFile);
-            
+
             SQLiteConfig config = new SQLiteConfig();
 
             config.setReadOnly(true);
             connection = config.createConnection(connectionString);
-            
+
             connection = new DelegatingConnection(connection) {
                 @Override
                 public void close() throws SQLException {
@@ -111,22 +111,22 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         return connection;
     }
-    
+
     private File exportWalLog(File dbFile, ParseContext context) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         if (IOUtil.isTemporaryFile(dbFile)) {
-            if(searcher != null) {
+            if (searcher != null) {
                 IItemBase dbItem = context.get(IItemBase.class);
-                if(dbItem != null) {
+                if (dbItem != null) {
                     String dbPath = dbItem.getPath();
                     String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
                     List<IItemBase> items = searcher.search(walQuery);
-                    if(items.size() > 0) {
+                    if (items.size() > 0) {
                         IItemBase wal = items.get(0);
                         File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                        try(InputStream in = wal.getBufferedStream()){
+                        try (InputStream in = wal.getBufferedStream()) {
                             Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        }catch(IOException e) {
+                        } catch (IOException e) {
                             e.printStackTrace();
                         }
                         return walTemp;
@@ -136,11 +136,10 @@ public class SQLite3DBParser extends AbstractDBParser {
         }
         return null;
     }
-    
-    
-    
+
     @Override
-    protected String getConnectionString(InputStream stream, Metadata metadata, ParseContext context) throws IOException {
+    protected String getConnectionString(InputStream stream, Metadata metadata, ParseContext context)
+            throws IOException {
         throw new RuntimeException("Not Implemented"); //$NON-NLS-1$
     }
 

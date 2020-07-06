@@ -71,11 +71,11 @@ public class DuplicateTask extends AbstractTask {
             hashMap = new HashMap<IHashValue, IHashValue>();
             caseData.putCaseObject(HASH_MAP, hashMap);
 
-            try(IndexReader reader = DirectoryReader.open(worker.writer, true)){
+            try (IndexReader reader = DirectoryReader.open(worker.writer, true)) {
                 AtomicReader aReader = SlowCompositeReaderWrapper.wrap(reader);
                 SortedDocValues sdv = aReader.getSortedDocValues(IndexItem.HASH);
-                if(sdv != null) {
-                    for(int ord = 0; ord < sdv.getValueCount(); ord++) {
+                if (sdv != null) {
+                    for (int ord = 0; ord < sdv.getValueCount(); ord++) {
                         String hash = sdv.lookupOrd(ord).utf8ToString();
                         if (hash != null && !hash.isEmpty()) {
                             IHashValue hValue = new HashValue(hash);
@@ -83,8 +83,8 @@ public class DuplicateTask extends AbstractTask {
                         }
                     }
                 }
-            }catch(IndexNotFoundException e) {
-                //ignore
+            } catch (IndexNotFoundException e) {
+                // ignore
             }
         }
 

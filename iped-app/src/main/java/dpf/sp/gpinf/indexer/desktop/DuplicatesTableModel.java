@@ -157,9 +157,9 @@ public class DuplicatesTableModel extends AbstractTableModel
     public void listDuplicates(Document doc) {
 
         String hash = doc.get(IndexItem.HASH);
-        if(hash == null || hash.trim().isEmpty())
+        if (hash == null || hash.trim().isEmpty())
             return;
-        
+
         String textQuery = IndexItem.HASH + ":" + hash;
 
         String id = doc.get(IndexItem.ID);

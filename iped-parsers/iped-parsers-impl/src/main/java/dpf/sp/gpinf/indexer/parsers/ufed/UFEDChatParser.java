@@ -46,7 +46,7 @@ public class UFEDChatParser extends AbstractParser {
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
     public static final String META_FROM_OWNER = ExtraProperties.UFED_META_PREFIX + "fromOwner"; //$NON-NLS-1$
     public static final String CHILD_MSG_IDS = ExtraProperties.UFED_META_PREFIX + "msgChildIds"; //$NON-NLS-1$
-    
+
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME);
@@ -82,17 +82,17 @@ public class UFEDChatParser extends AbstractParser {
             for (IItemBase msg : searcher.searchIterable(query)) {
                 query = null;
                 String[] attachRefs = msg.getMetadata().getValues(ExtraProperties.LINKED_ITEMS);
-                if(attachRefs.length > 0) {
+                if (attachRefs.length > 0) {
                     query = Arrays.asList(attachRefs).stream().collect(Collectors.joining(" ")); //$NON-NLS-1$
-                }else if(msg.hasChildren()) {
+                } else if (msg.hasChildren()) {
                     query = BasicProps.PARENTID + ":" + msg.getId(); //$NON-NLS-1$
                 }
-                if(query == null) {
+                if (query == null) {
                     UfedMessage m = createMessage(msg);
                     messages.add(m);
-                }else {
+                } else {
                     List<IItemBase> attachs = searcher.search(query);
-                    for(IItemBase attach : attachs) {
+                    for (IItemBase attach : attachs) {
                         UfedMessage m = createMessage(msg, attach);
                         messages.add(m);
                     }
@@ -100,7 +100,7 @@ public class UFEDChatParser extends AbstractParser {
             }
 
             Collections.sort(messages, new MessageComparator());
-            
+
             if (extractor.shouldParseEmbedded(metadata)) {
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
                 byte[] bytes = reportGenerator.generateNextChatHtml(chat, messages);
@@ -116,7 +116,7 @@ public class UFEDChatParser extends AbstractParser {
                     firstMsg = nextMsg;
                     byte[] nextBytes = reportGenerator.generateNextChatHtml(chat, messages);
 
-                    //copy parent metadata
+                    // copy parent metadata
                     for (String meta : chat.getMetadata().names()) {
                         if (meta.contains(ExtraProperties.UFED_META_PREFIX))
                             for (String val : chat.getMetadata().getValues(meta))
@@ -139,21 +139,21 @@ public class UFEDChatParser extends AbstractParser {
             e.printStackTrace();
             throw e;
 
-        }finally {
+        } finally {
             xhtml.endDocument();
         }
 
     }
-    
+
     private UfedMessage createMessage(IItemBase msg) {
         return createMessage(msg, null);
     }
-    
+
     private UfedMessage createMessage(IItemBase msg, IItemBase attach) {
         UfedMessage m = new UfedMessage();
         m.setId(msg.getId());
-        for(String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
-            if(!body.startsWith(ATTACHED_MEDIA_MSG))
+        for (String body : msg.getMetadata().getValues(ExtraProperties.MESSAGE_BODY)) {
+            if (!body.startsWith(ATTACHED_MEDIA_MSG))
                 m.setData(body);
         }
         m.setFromMe(Boolean.valueOf(msg.getMetadata().get(META_FROM_OWNER)));
@@ -169,7 +169,7 @@ public class UFEDChatParser extends AbstractParser {
             m.setRemoteResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_TO));
             m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
         }
-        if(attach != null) {
+        if (attach != null) {
             m.setMediaHash(attach.getHash(), false);
             m.setMediaName(attach.getName());
             m.setMediaTrueExt(attach.getTypeExt());
@@ -189,7 +189,7 @@ public class UFEDChatParser extends AbstractParser {
         }
         return m;
     }
-    
+
     public static String getChatName(IItemBase item) {
         String name = "Chat"; //$NON-NLS-1$
         String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
@@ -205,7 +205,7 @@ public class UFEDChatParser extends AbstractParser {
         }
         return name;
     }
-    
+
     private void storeMsgIds(List<UfedMessage> messages, Metadata metadata) {
         for (Message m : messages) {
             metadata.add(CHILD_MSG_IDS, Long.toString(m.getId()));

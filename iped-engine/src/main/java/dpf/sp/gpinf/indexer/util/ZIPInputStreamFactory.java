@@ -43,8 +43,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         } catch (ZipException e1) {
             throw new IOException(e1);
         }
-        if(zae == null) {
-            return  new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
+        if (zae == null) {
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
             if (zae.getUncompressedSize() <= MAX_MEM_BYTES) {

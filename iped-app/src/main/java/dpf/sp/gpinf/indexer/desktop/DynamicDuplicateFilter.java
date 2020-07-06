@@ -36,7 +36,7 @@ public class DynamicDuplicateFilter {
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         boolean filterOrdZero = false;
-        if(!docValues.lookupOrd(0).utf8ToString().isEmpty()) {
+        if (!docValues.lookupOrd(0).utf8ToString().isEmpty()) {
             filterOrdZero = true;
         }
         for (IItemId item : result.getIterator()) {
