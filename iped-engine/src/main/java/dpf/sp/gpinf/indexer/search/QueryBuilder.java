@@ -60,11 +60,10 @@ public class QueryBuilder implements IQueryBuilder {
                     // System.out.println(clause.getQuery().toString());
                     result.addAll(getQueryStrings(clause.getQuery()));
                 }
-                // System.out.println("boolean query");
+            } else if (query instanceof BoostQuery) {
+                result.addAll(getQueryStrings(((BoostQuery) query).getQuery()));
             } else {
                 TreeSet<Term> termSet = new TreeSet<Term>();
-                if (query instanceof BoostQuery)
-                    query = ((BoostQuery) query).getQuery();
                 if (query instanceof TermQuery)
                     termSet.add(((TermQuery) query).getTerm());
                 if (query instanceof PhraseQuery) {
@@ -72,7 +71,7 @@ public class QueryBuilder implements IQueryBuilder {
                     if (((PhraseQuery) query).getSlop() == 0) {
                         result.add(terms.stream().map(t -> t.text()).collect(Collectors.joining(" "))); //$NON-NLS-1$
                     } else
-                        termSet.addAll(Arrays.asList(((PhraseQuery) query).getTerms()));
+                        termSet.addAll(terms);
                 }
 
                 for (Term term : termSet)
