@@ -13,7 +13,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.util.IOUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -280,7 +279,7 @@ public class IndexTask extends AbstractTask {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
         Set<String> extraAttr = Item.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
-        IOUtils.fsync(extraAttributtesFile, false);
+        Util.fsync(extraAttributtesFile.toPath());
     }
 
     private void loadExtraAttributes() throws ClassNotFoundException, IOException {

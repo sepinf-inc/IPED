@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
@@ -68,7 +68,7 @@ public class ImageSimilarityScorer {
         if (len == 0 || refSimilarityFeatures == null) {
             return;
         }
-        AtomicReader atomicReader = App.get().appCase.getAtomicReader();
+        LeafReader leafReader = App.get().appCase.getLeafReader();
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
         int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
@@ -79,7 +79,7 @@ public class ImageSimilarityScorer {
                 public void run() {
                     BinaryDocValues similarityFeaturesValues = null;
                     try {
-                        similarityFeaturesValues = atomicReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+                        similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -101,7 +101,7 @@ public class ImageSimilarityScorer {
                                 String refHash = refItem.getHash();
                                 if (refHash != null) {
                                     try {
-                                        Document doc = atomicReader.document(luceneId);
+                                        Document doc = leafReader.document(luceneId);
                                         String currHash = doc.get(BasicProps.HASH);
                                         if (refHash.equals(currHash)) {
                                             score = identicalScore;
@@ -152,9 +152,9 @@ public class ImageSimilarityScorer {
         float minScore = result.getScore(topResults.get(topResults.size() - 1));
 
         BinaryDocValues similarityFeaturesValues = null;
-        AtomicReader atomicReader = App.get().appCase.getAtomicReader();
+        LeafReader leafReader = App.get().appCase.getLeafReader();
         try {
-            similarityFeaturesValues = atomicReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+            similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;

@@ -18,10 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.analysis;
 
-import java.io.Reader;
-
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.Version;
 
 /*
  * Tokenizador específico para a propriedade 'categoria'. Um item pode ver várias categorias,
@@ -31,8 +28,8 @@ public class CategoryTokenizer extends CharTokenizer {
 
     public static final char SEPARATOR = 0x00;
 
-    public CategoryTokenizer(Version matchVersion, Reader input) {
-        super(matchVersion, input);
+    public CategoryTokenizer() {
+        super();
     }
 
     @Override

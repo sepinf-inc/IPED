@@ -3,14 +3,14 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.IOException;
 import java.util.ArrayList;
 
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.LeafReader;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class LoadIndexFields {
 
-    public static String[] addExtraFields(AtomicReader atomicReader, String[] defaultFields) {
+    public static String[] addExtraFields(LeafReader atomicReader, String[] defaultFields) {
 
         ArrayList<String> names = new ArrayList<String>();
         for (String f : defaultFields) {

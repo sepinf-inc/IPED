@@ -41,6 +41,7 @@ import java.util.TreeSet;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.lucene.util.IOUtils;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -55,6 +56,10 @@ public class Util {
 
     // These java versions have a WebView bug that crashes the JVM: JDK-8196011
     private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171" };
+
+    public static void fsync(Path path) throws IOException {
+        IOUtils.fsync(path, false);
+    }
 
     public static String getJavaVersionWarn() {
         String versionStr = System.getProperty("java.version"); //$NON-NLS-1$

@@ -32,8 +32,6 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Properties;
 
-import org.apache.lucene.util.IOUtils;
-
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
@@ -210,7 +208,7 @@ public class ExportCSVTask extends AbstractTask {
             return;
         File csv = new File(moduleDir.getParentFile(), CSV_NAME);
         flush(csv);
-        IOUtils.fsync(csv, false);
+        Util.fsync(csv.toPath());
     }
 
     public void finish() throws IOException {

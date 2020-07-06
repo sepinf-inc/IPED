@@ -36,11 +36,11 @@ import java.util.concurrent.Executors;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
@@ -99,7 +99,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     SleuthkitCase sleuthCase;
     IndexReader reader;
-    AtomicReader atomicReader;
+    LeafReader atomicReader;
     IndexWriter iw;
     IndexSearcher searcher;
     Analyzer analyzer;
@@ -320,7 +320,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
             if (fields == null)
                 return;
             Terms terms = fields.terms(IndexItem.CATEGORY);
-            TermsEnum termsEnum = terms.iterator(null);
+            TermsEnum termsEnum = terms.iterator();
             while (termsEnum.next() != null) {
                 String cat = termsEnum.term().utf8ToString();
                 categories.add(cat);
@@ -617,7 +617,11 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return reader;
     }
 
-    public AtomicReader getAtomicReader() {
+    public LeafReader getAtomicReader() {
+        return this.atomicReader;
+    }
+
+    public LeafReader getLeafReader() {
         return this.atomicReader;
     }
 

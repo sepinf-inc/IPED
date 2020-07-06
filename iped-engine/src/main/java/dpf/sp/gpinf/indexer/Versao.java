@@ -18,14 +18,11 @@
  */
 package dpf.sp.gpinf.indexer;
 
-import org.apache.lucene.util.Version;
-
 /**
  * Classe que contém as constantes da aplicação.
  */
 public class Versao {
 
-    public static Version current = Version.LUCENE_4_9;
     public static String APP_VERSION = "3.18-beta"; //$NON-NLS-1$
     public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION; //$NON-NLS-1$
     public static String APP_EXT = "IPED"; //$NON-NLS-1$

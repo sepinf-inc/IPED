@@ -54,7 +54,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -301,7 +301,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         ProgressDialog progress = new ProgressDialog(App.get(), null);
         progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
         try {
-            AtomicReader reader = App.get().appCase.getAtomicReader();
+            LeafReader reader = App.get().appCase.getLeafReader();
             SortedDocValues sdv = reader.getSortedDocValues(BasicProps.HASH);
 
             progress.setMaximum(uniqueSelectedIds.size() + reader.maxDoc());

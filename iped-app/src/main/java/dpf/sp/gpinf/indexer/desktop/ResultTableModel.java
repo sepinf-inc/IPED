@@ -236,9 +236,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
             }
 
-            SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);
+            SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
             if (sndv == null)
-                sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+                sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
 
             boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
 

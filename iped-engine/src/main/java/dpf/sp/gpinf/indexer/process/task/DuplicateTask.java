@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Properties;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexReader;
@@ -72,7 +72,7 @@ public class DuplicateTask extends AbstractTask {
             caseData.putCaseObject(HASH_MAP, hashMap);
 
             try (IndexReader reader = DirectoryReader.open(worker.writer, true)) {
-                AtomicReader aReader = SlowCompositeReaderWrapper.wrap(reader);
+                LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
                 SortedDocValues sdv = aReader.getSortedDocValues(IndexItem.HASH);
                 if (sdv != null) {
                     for (int ord = 0; ord < sdv.getValueCount(); ord++) {

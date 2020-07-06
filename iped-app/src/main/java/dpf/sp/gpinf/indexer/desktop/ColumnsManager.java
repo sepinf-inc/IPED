@@ -37,7 +37,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -383,7 +383,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 int interval = docs.length / MAX_ITEMS_TO_CHECK;
                 if (interval == 0)
                     interval = 1;
-                AtomicReader reader = null;
+                LeafReader reader = null;
                 Bits bits0 = null, bits1 = null, bits2 = null;
                 for (i = 0; i < docs.length; i += interval) {
                     while (docs[i] >= docBases[baseOrd + 1]) {
@@ -555,7 +555,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         if (indexFields == null || lastCase != App.get().appCase) {
             lastCase = App.get().appCase;
-            indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getAtomicReader(), new String[0]);
+            indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getLeafReader(), new String[0]);
         }
 
         TreeSet<String> extraAttrs = new TreeSet<String>();

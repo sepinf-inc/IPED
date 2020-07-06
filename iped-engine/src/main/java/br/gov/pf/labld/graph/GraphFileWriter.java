@@ -42,9 +42,10 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.lucene.util.IOUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
+
+import dpf.sp.gpinf.indexer.util.Util;
 
 public class GraphFileWriter implements Closeable, Flushable {
 
@@ -477,7 +478,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                     replaceWriter.write("\r\n");
                 }
             }
-            IOUtils.fsync(replaceFile, false);
+            Util.fsync(replaceFile.toPath());
         }
     }
 
@@ -730,12 +731,12 @@ public class GraphFileWriter implements Closeable, Flushable {
                     Long size = output.length();
                     Files.write(commitLog.toPath(), size.toString().getBytes(StandardCharsets.ISO_8859_1),
                             StandardOpenOption.CREATE);
-                    IOUtils.fsync(commitLog, false);
+                    Util.fsync(commitLog.toPath());
                 }
                 out.write(data);
                 if (commit) {
                     out.flush();
-                    IOUtils.fsync(output, false);
+                    Util.fsync(output.toPath());
                     Files.delete(commitLog.toPath());
                 }
             }
@@ -762,7 +763,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                     oos.writeObject(data);
                 }
             }
-            IOUtils.fsync(fieldData, false);
+            Util.fsync(fieldData.toPath());
         }
 
         @SuppressWarnings("unchecked")

@@ -30,7 +30,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SlowCompositeReaderWrapper;
@@ -65,7 +65,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
 
-    private volatile static AtomicReader reader;
+    private volatile static LeafReader reader;
 
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
@@ -421,7 +421,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     private void countValues(boolean updateResult) throws IOException {
 
-        reader = App.get().appCase.getAtomicReader();
+        reader = App.get().appCase.getLeafReader();
 
         String field = (String) props.getSelectedItem();
         if (field == null) {

@@ -336,7 +336,7 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.exportTerms) {
-            new ExportIndexedTerms(App.get().appCase.getAtomicReader()).export();
+            new ExportIndexedTerms(App.get().appCase.getLeafReader()).export();
 
         } else if (e.getSource() == menu.similarImagesCurrent) {
             SimilarImagesFilterActions.searchSimilarImages(false);
