@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -75,7 +77,12 @@ public class GraphImportRunner {
 
     args.add(getJreExecutable().getAbsolutePath());
     args.add("-cp");
-    args.add(ImportTool.class.getProtectionDomain().getCodeSource().getLocation().getPath());
+    try {
+        URL url = ImportTool.class.getProtectionDomain().getCodeSource().getLocation();
+        args.add(new File(url.toURI()).getAbsolutePath());
+    } catch (URISyntaxException e1) {
+        throw new IOException(e1);
+    }
 
     args.add(ImportTool.class.getName());
 
