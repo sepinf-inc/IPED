@@ -314,20 +314,17 @@ public class IPEDSource implements Closeable, IIPEDSource {
         }
     }
 
-    private void loadCategories() {
-        try {
-            Fields fields = atomicReader.fields();
-            if (fields == null)
-                return;
-            Terms terms = fields.terms(IndexItem.CATEGORY);
-            TermsEnum termsEnum = terms.iterator();
-            while (termsEnum.next() != null) {
-                String cat = termsEnum.term().utf8ToString();
-                categories.add(cat);
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
+    private void loadCategories() throws IOException {
+        Fields fields = atomicReader.fields();
+        if (fields == null)
+            return;
+        Terms terms = fields.terms(IndexItem.CATEGORY);
+        if (terms == null)
+            return;
+        TermsEnum termsEnum = terms.iterator();
+        while (termsEnum.next() != null) {
+            String cat = termsEnum.term().utf8ToString();
+            categories.add(cat);
         }
     }
 
