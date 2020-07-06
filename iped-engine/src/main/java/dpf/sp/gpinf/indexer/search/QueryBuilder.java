@@ -18,6 +18,7 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
 import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
@@ -115,6 +116,9 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
+        
+        if(texto.trim().startsWith("* "))
+            texto = texto.trim().replaceFirst("\\* ", "*:* ");
 
         if (texto.trim().isEmpty())
             return new MatchAllDocsQuery();
@@ -142,12 +146,39 @@ public class QueryBuilder implements IQueryBuilder {
             }
 
             try {
-                return parser.parse(texto, null);
+                Query q = parser.parse(texto, null);
+                q = handleNegativeQueries(q, analyzer);
+                return q;
+                
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
                 throw new QueryNodeException(e);
             }
         }
 
+    }
+    
+    private Query handleNegativeQueries(Query q, Analyzer analyzer) {
+        if(q instanceof BoostQuery) {
+            float boost = ((BoostQuery) q).getBoost();
+            Query query = ((BoostQuery) q).getQuery();
+            return new BoostQuery(handleNegativeQueries(query, analyzer), boost);
+        }
+        if(q instanceof BooleanQuery) {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            boolean allNegative = true;
+            for (BooleanClause clause : ((BooleanQuery) q).clauses()) {
+                Query subQ = handleNegativeQueries(clause.getQuery(), analyzer);
+                builder.add(subQ, clause.getOccur());
+                if(clause.getOccur() != Occur.MUST_NOT) {
+                    allNegative = false;
+                }
+            }
+            if(allNegative) {
+                builder.add(new MatchAllDocsQuery(), Occur.SHOULD);
+            }
+            return builder.build();
+        }
+        return q;
     }
 
     private HashMap<String, NumericConfig> getNumericConfigMap() {
