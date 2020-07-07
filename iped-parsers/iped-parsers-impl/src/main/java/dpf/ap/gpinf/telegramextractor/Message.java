@@ -6,6 +6,7 @@ public class Message {
 	private long id;
 	private String mediaHash;
 	private String mediaFile;
+	private String mediaName;
 	boolean fromMe=false;
 	private Contact remetente;
 	private Chat chat;
@@ -98,5 +99,11 @@ public class Message {
 	}
 	public void setHashThumb(String hashThumb) {
 		this.hashThumb = hashThumb;
+	}
+	public String getMediaName() {
+		return mediaName;
+	}
+	public void setMediaName(String mediaName) {
+		this.mediaName = mediaName;
 	}
 }

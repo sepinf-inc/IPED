@@ -3,6 +3,7 @@ package dpf.ap.gpinf.telegramextractor;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import java.sql.Connection;
@@ -10,12 +11,17 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
 import dpf.ap.gpinf.telegram.tgnet.*;
+import dpf.ap.gpinf.telegram.tgnet.TLRPC.DocumentAttribute;
 import dpf.ap.gpinf.telegram.tgnet.TLRPC.PhotoSize;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -98,6 +104,8 @@ public class Extractor {
             }
         } catch (Exception e ) {
             //log error
+        	e.printStackTrace();
+        	
         }
 
         return l;
@@ -120,6 +128,7 @@ public class Extractor {
 
     	                    if (m!=null ) {
     	                        Message message= new Message(mid,chat);
+    	                        
 
     	                        message.setFromMe(rs.getInt("out")==1);
 
@@ -129,9 +138,10 @@ public class Extractor {
     	                        
     	                       
     	                        message.setData(m.message);
-    	                        System.out.println(message.getData());
-    	                        message.setTimeStamp(new Date(m.date));
-    	                        //message.timeStamp=LocalDateTime.ofInstant(Instant.ofEpochSecond(toLong(m.date)), ZoneId.systemDefault())
+    	                       
+    	                        
+    	                        message.setTimeStamp(Date.from(Instant.ofEpochSecond(m.date)));
+    	                        //message.timeStamp=LocalDateTime.ofInstant(Instant.ofEpochSecond(), ZoneId.systemDefault())
     	                        if(m.media!=null) {
     	                            if(m.media.document!=null) {
     	                                extractDocument(message,m.media.document);
@@ -193,7 +203,42 @@ public class Extractor {
     	        return msgs;
     }
     
-    protected void extractDocument(Message message,TLRPC.Document document) {
+    protected void extractDocument(Message message,TLRPC.Document document) throws IOException {
+    	message.setMediaMime(document.mime_type);
+    	message.setMediaName(document.id+"");
+    	List<IItemBase> result = null;
+    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ message.getMediaName(),searcher);
+        message.setMediaFile(getPathFromResult(result, document.size));
+        message.setMediaHash(getSha256(result, document.size));
+        
+    	if(message.getMediaName().contains("5332534912568264569")) {
+    		
+    		System.out.println("olha o arquivo "+message.getMediaName()) ;
+    		
+    		System.out.println("sha-256 "+result.get(0).getExtraAttribute("sha-256").toString());
+    		
+    	}
+    	       
+        if(message.getMediaFile()==null){
+            for( DocumentAttribute at :document.attributes){
+                //tentar achar pelo nome do arquivo original
+                if(at.file_name!=null){
+                	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ at.file_name,searcher);
+                    message.setMediaFile(getPathFromResult(result, document.size));
+                    if(message.getMediaFile()!=null){
+                        break;
+                    }
+                }
+            }
+        }
+
+
+        if(message.getMediaFile()==null && document.thumbs.size()>0){
+            String file=getFileFromPhoto(document.thumbs);
+            if(file!=null) {
+                message.setThumb(FileUtils.readFileToByteArray(new File(file)));
+            }
+        }
     	
     }
     
@@ -217,16 +262,28 @@ public class Extractor {
     	}
     	return null;
 	}
+    protected String getSha256(List<IItemBase> result,int size) {
+    	for(IItemBase f:result) {
+    		if(f.getFile().getAbsoluteFile().length()==size) {
+        		return f.getExtraAttribute("sha-256").toString().toLowerCase();
+        	}	
+    	}
+    	return null;
+	}
+    
     
     private String getFileFromPhoto(ArrayList<PhotoSize> sizes) {
     	List<IItemBase> result = null;
     	
 	    for(TLRPC.PhotoSize img:sizes) {
+	    	if(img.location==null) {
+	    		continue;
+	    	}
 	    	String name=""+img.location.volume_id+"_"+img.location.local_id;
 	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ name+".jpg",searcher);
 	    	
             if(result==null || result.isEmpty()){
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ name+"*",searcher);
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ name,searcher);
             }
             if(result!=null){
             	return getPathFromResult(result, img.size);
