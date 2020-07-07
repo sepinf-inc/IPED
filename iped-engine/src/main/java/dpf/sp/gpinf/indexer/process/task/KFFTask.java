@@ -136,9 +136,9 @@ public class KFFTask extends AbstractTask {
                 }
                 db = dbMaker.make();
 
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new Exception("Hash database seems corrupted. Import or copy again BOTH files " //$NON-NLS-1$
-                        + "kff.db and kff.db.p to database folder " + kffDb.getParent()); //$NON-NLS-1$
+            } catch (java.io.IOError | ArrayIndexOutOfBoundsException e) {
+                throw new Exception("Hash database " + kffDb.getParent() + " seems corrupted."
+                        + " Point kffDb to a clean database or delete it and import the hashes again.", e);
             }
 
             md5Map = db.getHashMap("md5Map"); //$NON-NLS-1$
