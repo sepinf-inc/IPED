@@ -378,10 +378,9 @@ public class ReportGenerator {
                                 if (message.getMessageType() == AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
                                     source = getSourceFileIfExists(result.get(0)).orElse("");
-                                    out.println("<img class=\"iped-audio\" src=\"" //$NON-NLS-1$
-                                            + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
-                                            + "\" width=\"100\" height=\"102\" title=\"Audio\" " + "data-src1=\""
-                                            + exportPath + "\" " + "data-src2=\"" + source + "\" />"); //$NON-NLS-2$
+                                    out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
+                                            + " title=\"Audio\" " + "data-src1=\"" + exportPath + "\" " + "data-src2=\"" //$NON-NLS-4$
+                                            + source + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
@@ -397,11 +396,9 @@ public class ReportGenerator {
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
-                                        out.println("<img class=\"iped-video\" src=\"" //$NON-NLS-1$
-                                                + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
-                                                + "\" width=\"100\" height=\"102\" title=\"Video\""); //$NON-NLS-1$
+                                        out.println("<div class=\"videoImg iped-video\" title=\"Video\""); //$NON-NLS-1$
                                         out.println(" data-src1=\"" + exportPath + "\"");
-                                        out.println(" data-src2=\"" + source + "\" />");
+                                        out.println(" data-src2=\"" + source + "\" ></div>");
                                     }
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
@@ -423,13 +420,9 @@ public class ReportGenerator {
                         } else {
                             out.println("<a onclick=" + onclick + ">"); //$NON-NLS-1$
                             if (message.getMessageType() == AUDIO_MESSAGE) {
-                                out.println("<img src=\"" //$NON-NLS-1$
-                                        + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
-                                        + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
+                                out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
                             } else {
-                                out.println("<img src=\"" //$NON-NLS-1$
-                                        + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
-                                        + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                                out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
                             }
                             out.println("</a>"); //$NON-NLS-1$
                         }
@@ -490,13 +483,9 @@ public class ReportGenerator {
 
                         } else {
                             if (message.getMessageType() == IMAGE_MESSAGE) { // $NON-NLS-1$
-                                out.println("<img src=\"" //$NON-NLS-1$
-                                        + Util.getImageResourceAsEmbedded("img/image.png") //$NON-NLS-1$
-                                        + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                                out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
                             } else
-                                out.println("Attachment:<br><img src=\"" //$NON-NLS-1$
-                                        + Util.getImageResourceAsEmbedded("img/attach.png") //$NON-NLS-1$
-                                        + "\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
+                                out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
                         }
                         if (linkParam != null) {
                             out.println("</a>"); //$NON-NLS-1$
@@ -517,20 +506,16 @@ public class ReportGenerator {
                     "<div style=\"display: inline-block;\"><svg id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 15\" width=\"16\" height=\"15\">"); //$NON-NLS-1$
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
-                    out.println(
-                            "<path fill=\"#859479\" d=\"M9.75 7.713H8.244V5.359a.5.5 0 0 0-.5-.5H7.65a.5.5 0 0 0-.5.5v2.947a.5.5 0 0 0 .5.5h.094l.003-.001.003.002h2a.5.5 0 0 0 .5-.5v-.094a.5.5 0 0 0-.5-.5zm0-5.263h-3.5c-1.82 0-3.3 1.48-3.3 3.3v3.5c0 1.82 1.48 3.3 3.3 3.3h3.5c1.82 0 3.3-1.48 3.3-3.3v-3.5c0-1.82-1.48-3.3-3.3-3.3zm2 6.8a2 2 0 0 1-2 2h-3.5a2 2 0 0 1-2-2v-3.5a2 2 0 0 1 2-2h3.5a2 2 0 0 1 2 2v3.5z\"></path>"); //$NON-NLS-1$
+                    out.println("<div class=\"unsent\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_SENT:
-                    out.println(
-                            "<path fill=\"#92A58C\" d=\"M10.91 3.316l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z\"></path>"); //$NON-NLS-1$
+                    out.println("<div class=\"sent\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_DELIVERED:
-                    out.println(
-                            "<path fill=\"#92A58C\" d=\"M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z\"></path>"); //$NON-NLS-1$
+                    out.println("<div class=\"delivered\"></div>"); //$NON-NLS-1$
                     break;
                 case MESSAGE_VIEWED:
-                    out.println(
-                            "<path fill=\"#4FC3F7\" d=\"M15.01 3.316l-.478-.372a.365.365 0 0 0-.51.063L8.666 9.879a.32.32 0 0 1-.484.033l-.358-.325a.319.319 0 0 0-.484.032l-.378.483a.418.418 0 0 0 .036.541l1.32 1.266c.143.14.361.125.484-.033l6.272-8.048a.366.366 0 0 0-.064-.512zm-4.1 0l-.478-.372a.365.365 0 0 0-.51.063L4.566 9.879a.32.32 0 0 1-.484.033L1.891 7.769a.366.366 0 0 0-.515.006l-.423.433a.364.364 0 0 0 .006.514l3.258 3.185c.143.14.361.125.484-.033l6.272-8.048a.365.365 0 0 0-.063-.51z\"></path>"); //$NON-NLS-1$
+                    out.println("<div class=\"viewed\"></div>"); //$NON-NLS-1$
                     break;
             }
             out.println("</svg></div>"); //$NON-NLS-1$

@@ -27,7 +27,7 @@ function createMediaElement(elementType, imgElement) {
 }
 
 function createMediaControls() {
-    document.querySelectorAll("img.iped-video, img.iped-audio").forEach((el) => {
+    document.querySelectorAll(".iped-video, .iped-audio").forEach((el) => {
         var mediaType = "video";
         if (el.className.search("iped-audio") >= 0) {
             mediaType = "audio";
