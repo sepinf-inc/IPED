@@ -11,6 +11,7 @@
             .tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}
             .cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}
             .check {vertical-align: top;}
+            .iped-audio, .iped-video { display: block; }
         </style>
         <script>
             ${javascript}

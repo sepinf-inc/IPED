@@ -13,6 +13,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.commons.text.StringSubstitutor;
@@ -30,7 +31,7 @@ import iped3.util.ExtraProperties;
 
 /**
  *
- * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
+ * @author Fabio Melo Pfeifer <pfeifer.fmp@pf.gov.br>
  */
 public class ReportGenerator {
 
@@ -373,36 +374,36 @@ public class ReportGenerator {
                                 if (onclick != null)
                                     out.println("onclick=" + onclick); //$NON-NLS-1$
                                 out.println(" href=\"" + exportPath + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
+                                String source;
                                 if (message.getMessageType() == AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
-                                    out.println("<img class=\"iped-show\" src=\"" //$NON-NLS-1$
+                                    source = getSourceFileIfExists(result.get(0)).orElse("");
+                                    out.println("<img class=\"iped-audio\" src=\"" //$NON-NLS-1$
                                             + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
-                                            + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
-                                    out.println("</a><br/>"); //$NON-NLS-1$
-                                    out.println("<audio class=\"iped-hide\" controls>"); //$NON-NLS-1$
-                                    out.println("<source src=\"" + exportPath + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                                    printSourceFileIfExists(result.get(0), out);
-                                    out.println("</audio>"); //$NON-NLS-1$
+                                            + "\" width=\"100\" height=\"102\" title=\"Audio\" " + "data-src1=\""
+                                            + exportPath + "\" " + "data-src2=\"" + source + "\" />"); //$NON-NLS-2$
+                                    out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
                                     thumb = message.getThumbData();
                                     if (thumb == null && result != null && !result.isEmpty())
                                         thumb = result.get(0).getThumb();
+                                    source = getSourceFileIfExists(result.get(0)).orElse("");
                                     if (thumb != null) {
-                                        out.println("<img class=\"thumb iped-show\" src=\""); //$NON-NLS-1$
+                                        out.println("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.println("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" data-src1=\"" + exportPath + "\"");
+                                        out.println(" data-src2=\"" + source + "\"");
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
-                                        out.println("<img class=\"iped-show\" src=\"" //$NON-NLS-1$
+                                        out.println("<img class=\"iped-video\" src=\"" //$NON-NLS-1$
                                                 + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
-                                                + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                                                + "\" width=\"100\" height=\"102\" title=\"Video\""); //$NON-NLS-1$
+                                        out.println(" data-src1=\"" + exportPath + "\"");
+                                        out.println(" data-src2=\"" + source + "\" />");
                                     }
-                                    out.println("</a><br/>"); //$NON-NLS-1$
-                                    out.println("<video class=\"iped-hide\" controls>"); //$NON-NLS-1$
-                                    out.println("<source src=\"" + exportPath + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
-                                    printSourceFileIfExists(result.get(0), out);
-                                    out.println("</video>"); //$NON-NLS-1$
+                                    out.println("</a><br>"); //$NON-NLS-1$
                                 }
                                 String transcription = result.get(0).getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
@@ -547,15 +548,16 @@ public class ReportGenerator {
         }
     }
 
-    private static void printSourceFileIfExists(IItemBase item, PrintWriter out) {
+    private Optional<String> getSourceFileIfExists(IItemBase item) {
         if (item.hasFile()) {
             File origFile = item.getFile();
             String path = getRelativePath(origFile);
             if (path != null) {
                 path = ajustPath(path);
-                out.println("<source src=\"" + path + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
+            return Optional.of(path);
         }
+        return Optional.empty();
     }
 
     private static String ajustPath(String path) {
