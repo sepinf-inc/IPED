@@ -8,8 +8,6 @@ import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.Set;
 
-import netscape.javascript.JSObject;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
@@ -20,7 +18,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import iped3.io.IStreamSource;
-
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -30,6 +27,7 @@ import javafx.scene.Scene;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 @SuppressWarnings("restriction")
 public class HtmlViewer extends Viewer {
@@ -192,12 +190,10 @@ public class HtmlViewer extends Viewer {
                 final WebEngine webEngine = htmlViewer.getEngine();
                 webEngine.getLoadWorker().stateProperty().addListener(new ChangeListener<Worker.State>() {
                     @Override
-                    public void changed(ObservableValue ov, Worker.State oldState, Worker.State newState) {
+                    public void changed(ObservableValue<? extends Worker.State> ov, Worker.State oldState,
+                            Worker.State newState) {
 
-                        if (webEngine.isJavaScriptEnabled()) {
-                            JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
-                            window.setMember("app", fileOpenApp); //$NON-NLS-1$
-                        }
+                        addJavascriptListener(webEngine);
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
@@ -229,9 +225,25 @@ public class HtmlViewer extends Viewer {
                     }
                 });
 
+                webEngine.getLoadWorker().progressProperty().addListener(new ChangeListener<Number>() {
+
+                    @Override
+                    public void changed(ObservableValue<? extends Number> observable, Number oldValue,
+                            Number newValue) {
+                        addJavascriptListener(webEngine);
+                    }
+                });
+
             }
         });
 
+    }
+
+    private void addJavascriptListener(WebEngine webEngine) {
+        if (webEngine.isJavaScriptEnabled()) {
+            JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
+            window.setMember("app", fileOpenApp); //$NON-NLS-1$
+        }
     }
 
     private void scrollToPosition(String position) {
