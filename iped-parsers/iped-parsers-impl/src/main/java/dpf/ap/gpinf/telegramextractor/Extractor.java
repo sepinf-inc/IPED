@@ -90,7 +90,7 @@ public class Extractor {
 
                 }
                 if(cg!=null) {
-                	System.out.println("Nome do chat "+cg.getName());
+                	System.out.println("Nome do chat "+cg.getId());
                     ArrayList<Message> messages=extractMessages(conn, cg);
                     if(messages == null || messages.isEmpty())
                         continue;
@@ -109,6 +109,26 @@ public class Extractor {
         }
 
         return l;
+    }
+    protected void extractLink(Message message,TLRPC.WebPage webpage) {
+    	message.setLink(true);
+        message.setMediaMime("link");
+        //message.data+="link compartilhado: "+m.media.webpage.display_url
+        if(webpage.photo!=null) {
+            String img=getFileFromPhoto(webpage.photo.sizes);
+            
+
+            if(img!=null){
+            	try {
+                    message.setLinkImage(FileUtils.readFileToByteArray(new File(img)));
+                    message.setMediaMime("link/Image");
+            	}catch (Exception e) {
+					// TODO: handle exception
+				}
+            }
+           
+            
+        }
     }
     
     protected ArrayList<Message> extractMessages(Connection conn ,Chat chat) throws Exception{
@@ -152,34 +172,20 @@ public class Extractor {
 
     	                            }
     	                            if(m.media.webpage!=null) {
-    	                                message.setLink(true);
-    	                                message.setMediaMime("link");
-    	                                //message.data+="link compartilhado: "+m.media.webpage.display_url
-    	                                if(m.media.webpage.photo!=null) {
-    	                                    String img=getFileFromPhoto(m.media.webpage.photo.sizes);
-    	                                    
-
-    	                                    if(img!=null){
-    	                                    	try {
-	    	                                        message.setLinkImage(FileUtils.readFileToByteArray(new File(img)));
-	    	                                        message.setMediaMime("link/Image");
-    	                                    	}catch (Exception e) {
-													// TODO: handle exception
-												}
-    	                                    }
-    	                                   
-    	                                    
-    	                                }
+    	                            	extractLink(message, m.media.webpage);
+    	                            	    	                                
     	                            }
 
 
     	                            if(message.getMediaFile()!=null){
-    	                            	File f=new File(message.getMediaFile());
-    	                                try {
-    	                                	message.setMediaHash(Util.hashFile(new FileInputStream(f)));
-    	                                }catch(Exception e) {
-    	                                	
-    	                                }
+    	                            	if(message.getMediaHash()==null) {
+	    	                            	File f=new File(message.getMediaFile());
+	    	                                try {
+	    	                                	message.setMediaHash(Util.hashFile(new FileInputStream(f)));
+	    	                                }catch(Exception e) {
+	    	                                	
+	    	                                }
+    	                            	}
     	                                
     	                            }else{
     	                                message.setMediaHash(null);
@@ -215,7 +221,7 @@ public class Extractor {
     		
     		System.out.println("olha o arquivo "+message.getMediaName()) ;
     		
-    		System.out.println("sha-256 "+result.get(0).getExtraAttribute("sha-256").toString());
+    		System.out.println("sha-256 "+message.getMediaHash());
     		
     	}
     	       
@@ -223,7 +229,7 @@ public class Extractor {
             for( DocumentAttribute at :document.attributes){
                 //tentar achar pelo nome do arquivo original
                 if(at.file_name!=null){
-                	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ at.file_name,searcher);
+                	//result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ at.file_name,searcher);
                     message.setMediaFile(getPathFromResult(result, document.size));
                     if(message.getMediaFile()!=null){
                         break;
@@ -265,7 +271,7 @@ public class Extractor {
     protected String getSha256(List<IItemBase> result,int size) {
     	for(IItemBase f:result) {
     		if(f.getFile().getAbsoluteFile().length()==size) {
-        		return f.getExtraAttribute("sha-256").toString().toLowerCase();
+        		return f.getExtraAttribute("sha-256").toString();
         	}	
     	}
     	return null;

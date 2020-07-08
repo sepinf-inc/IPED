@@ -9,10 +9,23 @@ import java.io.UnsupportedEncodingException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.List;
+
+import com.drew.metadata.Tag;
+
+
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
+
 public class ReportGenerator {
 	private final long MAXLEN=5000000;
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
+    private IItemSearcher searcher;
+    public void setSearcher(IItemSearcher s) {
+    	searcher=s;
+    }
+    
 	public byte[] generateChatHtml(Chat c)
             throws UnsupportedEncodingException {
         
@@ -47,6 +60,171 @@ public class ReportGenerator {
         return bout.toByteArray();
     }
 	
+	
+	
+	private void printVideo(PrintWriter out, Message message) {
+		if(message.getMediaHash()!=null) {
+			
+			TagHtml link=new TagHtml("a");
+			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("href", message.getMediaFile());
+			
+			byte thumb[] = message.getThumb();
+            System.out.println("chegou aqui 1!!");
+			if (thumb == null) {
+            	List<IItemBase> result = null;
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("sha-256:"+ message.getMediaHash(),searcher);
+            	if(result != null && !result.isEmpty()) {
+            		
+            		thumb = result.get(0).getThumb();
+            	}
+            	
+            	
+            }
+			System.out.println("chegou aqui 2!!");
+            
+            TagHtml img=new TagHtml("img");
+        	img.setAtribute("class", "iped-show");
+        	if(thumb!=null) {
+        		img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+        	}
+        	img.setAtribute("width", "100");
+        	img.setAtribute("height", "102");
+        	img.setAtribute("title","Video");
+        	link.getInner().add(img);
+        	link.getInner().add(" teste ");
+        	System.out.println("chegou aqui 3!!");
+        	System.out.println(link.toString());
+        	out.println(link.toString());
+        	out.println("<br/>");
+			
+        	TagHtml video=new TagHtml("video");
+			video.setAtribute("class", "iped-hide");
+			video.setAtribute("controls", null);
+        	video.getInner().add("<source src=\"" + message.getMediaFile() + "\"/>");
+			out.println(video.toString());
+			out.println("<br/>");
+			
+			
+			
+		}else {
+			 out.print("<img class=\"iped-show\" src=\"");
+			 out.print(dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
+             out.println("\" width=\"100\" height=\"102\" title=\"Video\"/>"); 
+			
+		}
+		
+	}
+	
+	
+	private void printAudio(PrintWriter out, Message message) {
+		TagHtml img=new TagHtml("img");
+		
+    	
+    	img.setAtribute("src", dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/audio.png"));
+    	
+    	img.setAtribute("width", "100");
+    	img.setAtribute("height", "102");
+    	img.setAtribute("title","Video");
+    	
+		if(message.getMediaHash()!=null) {
+			
+			TagHtml link=new TagHtml("a");
+			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("href", message.getMediaFile());
+			           
+			img.setAtribute("class", "iped-show");
+        	link.getInner().add(img);
+        	link.getInner().add(" teste ");
+        	System.out.println("chegou aqui 3!!");
+        	System.out.println(link.toString());
+        	out.println(link.toString());
+        	out.println("<br/>");
+			
+        	TagHtml audio=new TagHtml("audio");
+        	audio.setAtribute("class", "iped-hide");
+			audio.setAtribute("controls", null);
+			audio.getInner().add("<source src=\"" + message.getMediaFile() + "\"/>");
+			out.println(audio.toString());
+			
+			
+			
+			
+		}else {
+			
+			out.println(img.toString());
+		}
+		
+	}
+	
+	private void printImage(PrintWriter out, Message message) {
+		if(message.getMediaHash()!=null) {
+			TagHtml link=new TagHtml("a");
+			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("href", message.getMediaFile());
+			
+			byte thumb[] = message.getThumb();
+	      
+			if (thumb == null) {
+	        	List<IItemBase> result = null;
+	        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("sha-256:"+ message.getMediaHash(),searcher);
+	        	if(result != null && !result.isEmpty()) {
+	        		
+	        		thumb = result.get(0).getThumb();
+	        	}
+	        	
+	        	
+	        }
+			
+	        
+	        TagHtml img=new TagHtml("img");
+	    	img.setAtribute("class", "iped-show");
+	    	if(thumb!=null) {
+	    		img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+	    	}
+	    	img.setAtribute("width", "100");
+	    	img.setAtribute("height", "102");
+	    	img.setAtribute("title","Image");
+	    	link.getInner().add(img);
+	    	link.getInner().add(" teste ");
+	    	
+	    	System.out.println(link.toString());
+	    	out.println(link.toString());
+	    			
+		}else {
+			 out.print("<img src=\"");
+			 out.print(dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/image.png"));
+             out.println("\" width=\"100\" height=\"102\" title=\"Video\"/>"); 
+		}
+		out.println("<br/>");
+		
+	}
+	
+	private void printLink(PrintWriter out, Message message) {
+		if(message.getLinkImage()!=null) {
+					
+			byte thumb[] = message.getLinkImage();
+	      
+				        
+	        TagHtml img=new TagHtml("img");
+	    	
+	    	if(thumb!=null) {
+	    		img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+	    	}
+	    	img.setAtribute("width", "100");
+	    	img.setAtribute("height", "102");
+	    	img.setAtribute("title","Link image");
+	    		    	    	
+	    	System.out.println("imagem de link");
+	    	out.println(img);
+	    	out.println("<br/>");
+	    			
+		}
+		
+		
+	}
+	
+	
 	private void printMessage(PrintWriter out, Message message, boolean group) {
 		out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 		if (message.isFromMe()) {
@@ -70,16 +248,19 @@ public class ReportGenerator {
         }
 		if(message.getMediaMime()!=null) {
 			if(message.getMediaMime().toLowerCase().startsWith("video")) {
-								
+				printVideo(out, message);
 			}
 			if(message.getMediaMime().toLowerCase().startsWith("image")) {
+				printImage(out, message);
 				
 			}
 			if(message.getMediaMime().toLowerCase().startsWith("audio")) {
-				
+				printAudio(out,message);
 			}
-			System.out.println("Achou o arquivo!!!!"+message.getChat().getId());
-			out.println("Arquivo "+message.getMediaFile());
+			if(message.getMediaMime().toLowerCase().startsWith("link")) {
+				printLink(out,message);
+			}
+			
 		}
 		if (message.getData() != null) {
             out.print(message.getData() + "<br/>"); //$NON-NLS-1$
