@@ -307,8 +307,10 @@ public class GraphTask extends AbstractTask {
         Matcher whatsappMacher = whatsappPattern.matcher(value);
         while (whatsappMacher.find()) {
             String phone = whatsappMacher.group(1);
+            value = value.replace(phone, " ");
+            phone = "+" + phone;
             try {
-                phoneNumbers.add(phoneUtil.parse(phone, configuration.getPhoneRegion()));
+                phoneNumbers.add(phoneUtil.parse(phone, null));
             } catch (NumberParseException e) {
                 e.printStackTrace();
             }

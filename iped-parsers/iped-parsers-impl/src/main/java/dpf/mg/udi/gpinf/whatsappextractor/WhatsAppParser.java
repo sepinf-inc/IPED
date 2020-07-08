@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -236,8 +238,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ACCOUNT.toString());
         meta.set(TikaCoreProperties.TITLE, account.getTitle());
         meta.set(ExtraProperties.USER_NAME, account.getName());
-        meta.set(ExtraProperties.USER_PHONE, account.getId());
-        meta.set(ExtraProperties.USER_ACCOUNT, account.getId());
+        meta.set(ExtraProperties.USER_PHONE, getInternationalPhone(account.getId()));
+        meta.set(ExtraProperties.USER_ACCOUNT, account.getFullId());
         meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
         meta.set(ExtraProperties.USER_NOTES, account.getStatus());
         if (account.getAvatar() != null) {
@@ -253,6 +255,16 @@ public class WhatsAppParser extends SQLite3DBParser {
             ByteArrayInputStream bais = new ByteArrayInputStream(reportGenerator.generateAccountHtml(account));
             extractor.parseEmbedded(bais, handler, meta, false);
         }
+    }
+
+    private static final Pattern numbers = Pattern.compile("[0-9]+");
+
+    private String getInternationalPhone(String id) {
+        Matcher m = numbers.matcher(id);
+        if (m.matches())
+            return "+" + id;
+        else
+            return null;
     }
 
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
@@ -292,11 +304,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private String formatContact(WAContact contact) {
         if (contact.getName() == null)
-            return contact.getId();
+            return contact.getFullId();
         else if (contact.getName().trim().equals(contact.getId()))
-            return contact.getId();
+            return contact.getFullId();
         else
-            return contact.getName().trim() + " (" + contact.getId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return contact.getName().trim() + " (" + contact.getFullId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private void extractMessages(String chatName, List<Message> messages, WAAccount account,
@@ -528,10 +540,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CONTACT.toString());
                     cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
-                    cMetadata.set(ExtraProperties.USER_PHONE, c.getId());
-                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId());
+                    cMetadata.set(ExtraProperties.USER_PHONE, getInternationalPhone(c.getId()));
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getFullId());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
-                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getId());
+                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getFullId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {

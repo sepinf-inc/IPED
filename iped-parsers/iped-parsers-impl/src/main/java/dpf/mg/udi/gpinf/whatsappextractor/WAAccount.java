@@ -20,6 +20,8 @@ import com.dd.plist.PropertyListParser;
 
 public class WAAccount extends WAContact {
 
+    private static final String idSuffix = "@s.whatsapp.net"; //$NON-NLS-1$
+
     public WAAccount(String id) {
         super(id);
     }
@@ -43,6 +45,9 @@ public class WAAccount extends WAContact {
                 if (value == null)
                     return null;
             }
+            if (!value.endsWith(idSuffix))
+                value += idSuffix;
+
             WAAccount account = new WAAccount(value);
 
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
@@ -72,7 +77,11 @@ public class WAAccount extends WAContact {
                 if (value == null)
                     return null;
             }
-            WAAccount account = new WAAccount(value.toString());
+            String strVal = value.toString();
+            if (!strVal.endsWith(idSuffix))
+                strVal += idSuffix;
+
+            WAAccount account = new WAAccount(strVal);
 
             value = rootDict.get("FullUserName");
             if (value != null)

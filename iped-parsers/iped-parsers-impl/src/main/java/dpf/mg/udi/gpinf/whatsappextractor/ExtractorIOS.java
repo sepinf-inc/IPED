@@ -1,6 +1,28 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.APP_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.CONTACT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_FROM_SENDER;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GIF_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_CREATED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_DELETED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.URL_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USERS_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
 import java.sql.Connection;
@@ -79,7 +101,7 @@ public class ExtractorIOS extends Extractor {
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
                 if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
-                    remoteResource = chat.getRemote().getId();
+                    remoteResource = chat.getRemote().getFullId();
                 }
                 m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(rs.getInt("status")); //$NON-NLS-1$
