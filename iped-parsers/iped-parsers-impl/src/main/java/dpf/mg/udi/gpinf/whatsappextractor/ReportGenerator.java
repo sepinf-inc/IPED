@@ -1,15 +1,23 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.function.Supplier;
+
+import org.apache.commons.text.StringSubstitutor;
+import org.apache.commons.text.lookup.StringLookup;
+import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
@@ -30,6 +38,9 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
+    private static final String template = Util.readResourceAsString("wachat-html-template.txt");
+    private static final String css = Util.readResourceAsString("css/whatsapp.css");
+    private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private IItemSearcher searcher;
     private Chat lastChat;
     private int currentMsg = 0;
@@ -108,8 +119,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory)
-            throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory) {
         if (lastChat != c) {
             lastChat = c;
             currentMsg = 0;
@@ -117,36 +127,39 @@ public class ReportGenerator {
         if (currentMsg == c.getMessages().size())
             return null;
 
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+        ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
+        PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        printMessageFileHeader(out, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar());
-        if (currentMsg > 0)
-            out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                    + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        String lastDate = null;
-        while (currentMsg < c.getMessages().size()) {
-            Message m = c.getMessages().get(currentMsg);
-            String thisDate = dateFormat.format(m.getTimeStamp());
-            if (lastDate == null || !lastDate.equals(thisDate)) {
+        printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
+            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+            PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
+            if (currentMsg > 0)
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + thisDate + "</div></div>"); //$NON-NLS-1$
-                lastDate = thisDate;
+                        + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+
+            String lastDate = null;
+            while (currentMsg < c.getMessages().size()) {
+                Message m = c.getMessages().get(currentMsg);
+                String thisDate = dateFormat.format(m.getTimeStamp());
+                if (lastDate == null || !lastDate.equals(thisDate)) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + thisDate + "</div></div>"); //$NON-NLS-1$
+                    lastDate = thisDate;
+                }
+                printMessage(out, m, c.isGroupChat(), contactsDirectory);
+
+                if (currentMsg++ != c.getMessages().size() - 1 && bout.size() >= MAX_CHAT_SIZE) {
+                    out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                            + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                    break;
+                }
             }
-            printMessage(out, m, c.isGroupChat(), contactsDirectory);
+            out.flush();
+            return new String(bout.toByteArray(), StandardCharsets.UTF_8);
+        });
 
-            if (currentMsg++ != c.getMessages().size() - 1 && bout.size() >= MAX_CHAT_SIZE) {
-                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
-                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
-                break;
-            }
-        }
-
-        printMessageFileFooter(out);
-        out.flush();
-
-        return bout.toByteArray();
+        printWriter.flush();
+        return chatBytes.toByteArray();
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory) {
@@ -596,54 +609,35 @@ public class ReportGenerator {
             return "File"; //$NON-NLS-1$
     }
 
-    private static void printMessageFileHeader(PrintWriter out, String title, String id, byte[] avatar) {
-        out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
-                + "<html>\n" //$NON-NLS-1$
-                + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + id + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
-                + "	<meta name=\"viewport\" content=\"width=device-width\" />\n" //$NON-NLS-1$
-                + "     <meta charset=\"UTF-8\" />\n" //$NON-NLS-1$
-                + "	<link rel=\"shortcut icon\" href=\"" + Util.getImageResourceAsEmbedded("img/favicon.ico") //$NON-NLS-1$ //$NON-NLS-2$
-                + "\" />\n" //$NON-NLS-1$
-                + "<style>\n" + Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
-                + "\n</style>\n" + "<script>\n" //$NON-NLS-2$
-                + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
-                + "css.type = \"text/css\";\n" //$NON-NLS-1$
-                + "var inHtml = \"\";\n" //$NON-NLS-1$
-                + "if (navigator.userAgent.search(\"JavaFX\") >= 0) {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: none; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: block; }\";\n" //$NON-NLS-1$
-                + "} else {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: block; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: none; }\";\n" //$NON-NLS-1$
-                + "}\n" //$NON-NLS-1$
-                + "css.innerHTML = inHtml;\n" //$NON-NLS-1$
-                + "document.head.appendChild(css);\n" //$NON-NLS-1$
-                + "function openIfExists(url1, url2){\r\n" + "    var img1 = new Image();\r\n"
-                + "    img1.onload = () => window.location = url1;\r\n"
-                + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
-                + "</script>\n" //$NON-NLS-1$
-                + VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
-                + "<style>.check {vertical-align: top;}</style>" + "<body>\n" //$NON-NLS-2$
-                + "<div id=\"topbar\">\n" //$NON-NLS-1$
-                + "	<span class=\"left\">" //$NON-NLS-1$
-                + " &nbsp; "); //$NON-NLS-1$
-        if (avatar != null)
-            out.println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(avatar) //$NON-NLS-1$
-                    + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
-        out.println(title + "</span>\n" //$NON-NLS-1$
-                + "</div>\n" //$NON-NLS-1$
-                + "<div id=\"conversation\">\n" //$NON-NLS-1$
-                + "<br/><br/><br/>"); //$NON-NLS-1$
-    }
+    private void printMessageFile(PrintWriter out, String title, String id, byte[] avatar, Supplier<String> messages) {
+        String strAvatar;
+        if (avatar == null || avatar.length == 0) {
+            strAvatar = Util.getImageResourceAsEmbedded("img/avatar.png");
+        } else {
+            strAvatar = "data:image/jpg;base64," + Util.encodeBase64(avatar);
+        }
+        StringSubstitutor interpolator = new StringSubstitutor(new StringLookup() {
 
-    private static void printMessageFileFooter(PrintWriter out) {
-        out.println("	<br /><br /><br />\n" //$NON-NLS-1$
-                + "</div>\n" //$NON-NLS-1$
-                + "<div id=\"lastmsg\">&nbsp;</div>\n" //$NON-NLS-1$
-                + "</body>\n" //$NON-NLS-1$
-                + "</html>"); //$NON-NLS-1$
+            @Override
+            public String lookup(String key) {
+                switch (key) {
+                    case "title":
+                        return title;
+                    case "id":
+                        return id;
+                    case "avatar":
+                        return strAvatar;
+                    case "messages":
+                        return messages.get();
+                    case "javascript":
+                        return js;
+                    case "css":
+                        return css;
+                }
+                return StringLookupFactory.INSTANCE.interpolatorStringLookup().lookup(key);
+            }
+        });
+        out.println(interpolator.replace(template));
     }
 
 }

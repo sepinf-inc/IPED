@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>${id}</title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        <meta name="viewport" content="width=device-width" />
+        <meta charset="UTF-8" />
+        <link rel="shortcut icon" href="${favicon}"" />
+        <style>
+            ${css}
+            .tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}
+            .cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}
+            .check {vertical-align: top;}
+        </style>
+        <script>
+            ${javascript}
+        </script>
+    </head>
+    <body>
+        <div id="topbar">
+          <span class="left">
+            <img src="data:image/jpg;base64,${avatar}" width="40" height="40" />
+            ${title}
+          </span>
+        </div>
+        <div id="conversation"><br><br><br>
+        ${messages}
+        <br><br><br>
+        <div id="lastmsg">&nbsp;</div>
+    </body>
+</html>
