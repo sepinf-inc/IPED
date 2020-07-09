@@ -46,10 +46,8 @@ public class GraphModel {
 
         if (type.contains(GraphConfiguration.DATASOURCE_LABEL)) {
             node.setSize(20 + dynSize);
-            node.setColor(Color.RED);
         } else if (type.equals(GraphConfiguration.CONTACT_GROUP_LABEL)) {
             node.setSize(25 + dynSize);
-            node.setColor(new Color(8, 160, 56));
         } else {
             node.setSize(20 + dynSize);
         }
