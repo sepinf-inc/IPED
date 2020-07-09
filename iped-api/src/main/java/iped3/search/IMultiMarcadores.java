@@ -84,4 +84,8 @@ public interface IMultiMarcadores extends Serializable {
 
     void setInReport(String label, boolean checked);
 
+    void addSelectionListener(SelectionListener listener);
+
+    void removeSelectionListener(SelectionListener listener);
+
 }

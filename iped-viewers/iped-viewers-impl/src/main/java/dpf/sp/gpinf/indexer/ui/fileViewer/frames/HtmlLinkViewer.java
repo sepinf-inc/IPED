@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.io.File;
 import java.lang.reflect.InvocationTargetException;
+import java.util.HashSet;
+import java.util.Set;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -13,6 +15,10 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
+import iped3.IItemId;
+import iped3.io.IStreamSource;
+import iped3.search.SelectionListener;
+import javafx.application.Platform;
 
 /**
  * Visualizador Html específico que abre links apontando para arquivos do caso,
@@ -21,7 +27,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
  * @author Nassif
  *
  */
-public class HtmlLinkViewer extends HtmlViewer {
+public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlLinkViewer.class);
 
@@ -32,6 +38,8 @@ public class HtmlLinkViewer extends HtmlViewer {
     public static final String UFED_HTML_REPORT_MIME = "application/x-ufed-html-report"; //$NON-NLS-1$
 
     private AttachmentSearcher attachSearcher;
+
+    private HashSet<String> hashes = new HashSet<>();
 
     public HtmlLinkViewer(AttachmentSearcher attachSearcher) {
         this.attachSearcher = attachSearcher;
@@ -56,6 +64,15 @@ public class HtmlLinkViewer extends HtmlViewer {
     @Override
     protected int getMaxHtmlSize() {
         return Integer.MAX_VALUE;
+    }
+
+    @Override
+    public void loadFile(final IStreamSource content, final Set<String> terms) {
+        hashes.clear();
+        if (content != null) {
+            attachSearcher.createSelectionCache();
+        }
+        super.loadFile(content, terms);
     }
 
     public class AttachmentOpen extends FileOpen {
@@ -85,6 +102,55 @@ public class HtmlLinkViewer extends HtmlViewer {
             attachSearcher.checkItem(luceneQuery, checked);
         }
 
+        public boolean isChecked(String hash) {
+            hashes.add(hash);
+            return attachSearcher.isChecked(hash);
+        }
+
+    }
+
+    @SuppressWarnings("restriction")
+    private void runScript(String script) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                webEngine.executeScript(script);
+            }
+        });
+    }
+
+    @SuppressWarnings("restriction")
+    @Override
+    protected void checkSelected() {
+        String script = "var x = document.getElementsByClassName(\"check\");"
+                + "for(var i = 0; i < x.length; i++) {var hash = x[i].name; x[i].checked = app.isChecked(hash);}";
+        runScript(script);
+    }
+
+    @Override
+    public void setSelected(IItemId item, boolean value) {
+        if (hashes.isEmpty())
+            return;
+        String hash = attachSearcher.getHash(item);
+        if (!hashes.contains(hash))
+            return;
+        String script = "var x = document.getElementsByName(\"" + hash + "\");"
+                + "for(var i = 0; i < x.length; i++) x[i].checked = " + value + ";";
+        runScript(script);
+    }
+
+    @Override
+    public void clearSelected() {
+        String script = "var x = document.getElementsByClassName(\"check\");"
+                + "for(var i = 0; i < x.length; i++) x[i].checked = false;";
+        runScript(script);
+    }
+
+    @Override
+    public void selectAll() {
+        String script = "var x = document.getElementsByClassName(\"check\");"
+                + "for(var i = 0; i < x.length; i++) x[i].checked = true;";
+        runScript(script);
     }
 
 }

@@ -23,7 +23,6 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
@@ -58,6 +57,7 @@ import iped3.io.IStreamSource;
 public class ViewerController {
     private final List<Viewer> viewers = new ArrayList<Viewer>();
     private final ATextViewer textViewer;
+    private final HtmlLinkViewer linkViewer;
     private final ViewersRepository viewersRepository;
     private final Map<Viewer, DefaultSingleCDockable> dockPerViewer = new HashMap<Viewer, DefaultSingleCDockable>();
     private final Set<Viewer> updatedViewers = new HashSet<Viewer>();
@@ -92,10 +92,12 @@ public class ViewerController {
         if (javaFX) {
             viewersRepository.addViewer(new HtmlViewer());
             viewersRepository.addViewer(new EmailViewer());
-            viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
+            linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
+            viewersRepository.addViewer(linkViewer);
             viewersRepository.addViewer(new TikaHtmlViewer());
         } else {
             viewersRepository.addViewer(new NoJavaFXViewer());
+            linkViewer = null;
         }
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
@@ -158,6 +160,10 @@ public class ViewerController {
 
     public ViewersRepository getMultiViewer() {
         return viewersRepository;
+    }
+
+    public HtmlLinkViewer getHtmlLinkViewer() {
+        return linkViewer;
     }
 
     public void dispose() {

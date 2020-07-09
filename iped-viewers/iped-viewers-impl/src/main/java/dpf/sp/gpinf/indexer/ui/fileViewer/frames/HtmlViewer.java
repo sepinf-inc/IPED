@@ -232,6 +232,7 @@ public class HtmlViewer extends Viewer {
                     public void changed(ObservableValue<? extends Document> observable, Document oldValue,
                             Document newValue) {
                         addJavascriptListener(webEngine);
+                        checkSelected();
                     }
 
                 });
@@ -249,6 +250,10 @@ public class HtmlViewer extends Viewer {
             }
         });
 
+    }
+
+    protected void checkSelected() {
+        // to be overriden
     }
 
     private void addJavascriptListener(WebEngine webEngine) {
