@@ -66,7 +66,8 @@ public class ReportGenerator {
 		if(message.getMediaHash()!=null) {
 			
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			System.out.println("abc1234: "+message.getMediaHash());
 			link.setAtribute("href", message.getMediaFile());
 			
 			byte thumb[] = message.getThumb();
@@ -130,7 +131,7 @@ public class ReportGenerator {
 		if(message.getMediaHash()!=null) {
 			
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
 			link.setAtribute("href", message.getMediaFile());
 			           
 			img.setAtribute("class", "iped-show");
@@ -160,7 +161,7 @@ public class ReportGenerator {
 	private void printImage(PrintWriter out, Message message) {
 		if(message.getMediaHash()!=null) {
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclik","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
 			link.setAtribute("href", message.getMediaFile());
 			
 			byte thumb[] = message.getThumb();
