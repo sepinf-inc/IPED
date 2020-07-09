@@ -20,7 +20,7 @@
     <body>
         <div id="topbar">
           <span class="left">
-            <img src="data:image/jpg;base64,${avatar}" width="40" height="40" />
+            <img src="${avatar}" width="40" height="40" />
             ${title}
           </span>
         </div>
