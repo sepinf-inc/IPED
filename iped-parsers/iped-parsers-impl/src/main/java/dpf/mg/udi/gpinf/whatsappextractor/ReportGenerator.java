@@ -536,8 +536,8 @@ public class ReportGenerator {
             String path = getRelativePath(origFile);
             if (path != null) {
                 path = ajustPath(path);
+                return Optional.of(path);
             }
-            return Optional.of(path);
         }
         return Optional.empty();
     }
