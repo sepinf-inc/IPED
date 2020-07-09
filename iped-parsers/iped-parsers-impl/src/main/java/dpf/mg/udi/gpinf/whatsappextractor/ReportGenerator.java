@@ -35,7 +35,7 @@ import iped3.util.ExtraProperties;
  */
 public class ReportGenerator {
 
-    private static final int MAX_CHAT_SIZE = 5000000;
+    private static final int MAX_MESSAGES_IN_CHAT_FILE = 5000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
@@ -148,8 +148,8 @@ public class ReportGenerator {
                     lastDate = thisDate;
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory);
-
-                if (currentMsg++ != c.getMessages().size() - 1 && bout.size() >= MAX_CHAT_SIZE) {
+                currentMsg += 1;
+                if (currentMsg != c.getMessages().size() && currentMsg >= MAX_MESSAGES_IN_CHAT_FILE) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
