@@ -56,20 +56,11 @@ import javax.swing.event.ListSelectionListener;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.BytesRef;
-import org.apache.lucene.util.NumericUtils;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
 import iped3.util.BasicProps;
@@ -439,14 +430,6 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                 int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
                 IItemId id = app.ipedResult.getItem(rowModel);
                 uniqueSelectedIds.add(id);
-
-                VersionsMap viewMap = (VersionsMap) app.appCase.getAtomicSourceBySourceId(id.getSourceId())
-                        .getViewToRawMap();
-                Integer id2 = viewMap.getRaw(id.getId());
-                if (id2 == null)
-                    id2 = viewMap.getView(id.getId());
-                if (id2 != null)
-                    uniqueSelectedIds.add(new ItemId(id.getSourceId(), id2));
             }
         }
 
