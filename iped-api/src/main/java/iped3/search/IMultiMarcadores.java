@@ -5,8 +5,6 @@
  */
 package iped3.search;
 
-import iped3.IItemId;
-import iped3.IIPEDSource;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -15,6 +13,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+
+import iped3.IItemId;
 
 /**
  *
@@ -74,7 +74,7 @@ public interface IMultiMarcadores extends Serializable {
 
     void selectAll();
 
-    void setSelected(boolean value, IItemId item, IIPEDSource ipedCase);
+    void setSelected(boolean value, IItemId item);
 
     public String getLabelComment(String labelName);
 

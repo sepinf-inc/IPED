@@ -68,8 +68,8 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return map.get(item.getSourceId()).isSelected(item.getId());
     }
 
-    public void setSelected(boolean value, IItemId item, IIPEDSource ipedCase) {
-        map.get(item.getSourceId()).setSelected(value, item.getId(), ipedCase);
+    public void setSelected(boolean value, IItemId item) {
+        map.get(item.getSourceId()).setSelected(value, item.getId());
     }
 
     public List<String> getLabelList(IItemId item) {

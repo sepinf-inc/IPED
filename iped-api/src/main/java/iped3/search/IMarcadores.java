@@ -5,7 +5,6 @@
  */
 package iped3.search;
 
-import iped3.IIPEDSource;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -14,7 +13,8 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
+
+import iped3.IIPEDSource;
 
 /**
  *
@@ -86,7 +86,7 @@ public interface IMarcadores extends Serializable {
 
     void selectAll();
 
-    void setSelected(boolean value, int id, IIPEDSource ipedCase);
+    void setSelected(boolean value, int id);
 
     void updateCookie();
 

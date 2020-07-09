@@ -434,12 +434,8 @@ public class Marcadores implements Serializable, IMarcadores {
         return (Marcadores) Util.readObject(file.getAbsolutePath());
     }
 
-    public void setSelected(boolean value, int id, IIPEDSource ipedCase) {
-        setSelected(value, id, true, ipedCase);
-    }
-
-    private void setSelected(boolean value, int id, boolean changeCount, IIPEDSource ipedCase) {
-        if (value != selected[id] && changeCount) {
+    public void setSelected(boolean value, int id) {
+        if (value != selected[id]) {
             if (value)
                 selectedItens++;
             else
