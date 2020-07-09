@@ -225,6 +225,18 @@ public class HtmlViewer extends Viewer {
                     }
                 });
 
+                // some htmls need this to javascript work early
+                webEngine.documentProperty().addListener(new ChangeListener<Document>() {
+
+                    @Override
+                    public void changed(ObservableValue<? extends Document> observable, Document oldValue,
+                            Document newValue) {
+                        addJavascriptListener(webEngine);
+                    }
+
+                });
+
+                // but other htmls need this to javascript work early
                 webEngine.getLoadWorker().progressProperty().addListener(new ChangeListener<Number>() {
 
                     @Override
