@@ -19,25 +19,20 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -46,7 +41,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -75,7 +69,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
@@ -226,8 +219,6 @@ public class Manager {
             interromperIndexacao();
             throw e;
         }
-
-        saveViewToOriginalFileMap();
 
         filtrarPalavrasChave();
 
@@ -602,66 +593,6 @@ public class Manager {
             LOGGER.error("Error filtering keywords", e); //$NON-NLS-1$
         }
 
-    }
-
-    private void saveViewToOriginalFileMap() throws Exception {
-
-        VersionsMap viewToRaw = new VersionsMap(0);
-
-        if (FTK3ReportReader.wasExecuted) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                    Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$
-            LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
-
-            IPEDSource ipedCase = new IPEDSource(output.getParentFile());
-            String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))"; //$NON-NLS-1$
-            IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
-            LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
-
-            HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
-            for (int i = 0; i < alternatives.getLength(); i++) {
-                if (Thread.interrupted()) {
-                    ipedCase.close();
-                    throw new InterruptedException("Processing Canceled!"); //$NON-NLS-1$
-                }
-                Document doc = ipedCase.getSearcher().doc(alternatives.getLuceneIds()[i]);
-                String ftkId = doc.get(IndexItem.FTKID);
-                int id = Integer.valueOf(doc.get(IndexItem.ID));
-                viewMap.put(ftkId, id);
-            }
-            alternatives = null;
-            ipedCase.close();
-
-            IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
-            Bits liveDocs = MultiFields.getLiveDocs(reader);
-            viewToRaw = new VersionsMap(stats.getLastId() + 1);
-
-            for (int i = 0; i < reader.maxDoc(); i++) {
-                if (liveDocs != null && !liveDocs.get(i)) {
-                    continue;
-                }
-
-                Document doc = reader.document(i);
-                String ftkId = doc.get(IndexItem.FTKID);
-                int id = Integer.valueOf(doc.get(IndexItem.ID));
-                // String export = doc.get(IndexItem.EXPORT);
-
-                Integer viewId = viewMap.get(ftkId);
-                if (viewId != null && viewId != id /* && !viewToRaw.isView(viewId) && !export.contains(".[AD].") */) {
-                    viewToRaw.put(viewId, id);
-                }
-
-            }
-            reader.close();
-
-            LOGGER.info("Created {} preview mappings.", viewToRaw.getMappings()); //$NON-NLS-1$
-        }
-
-        FileOutputStream fileOut = new FileOutputStream(new File(output, "data/alternativeToOriginals.ids")); //$NON-NLS-1$
-        ObjectOutputStream out = new ObjectOutputStream(fileOut);
-        out.writeObject(viewToRaw);
-        out.close();
-        fileOut.close();
     }
 
     private void removeEmptyTreeNodes() {

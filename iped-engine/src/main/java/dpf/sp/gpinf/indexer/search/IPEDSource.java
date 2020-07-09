@@ -68,12 +68,10 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.Item;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.IVersionsMap;
 import iped3.search.IMarcadores;
 import iped3.search.IMultiMarcadores;
 import iped3.util.BasicProps;
@@ -121,7 +119,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private int lastId = 0;
 
     BitSet splitedIds = new BitSet();
-    VersionsMap viewToRawMap = new VersionsMap(0);
 
     LinkedHashSet<String> keywords = new LinkedHashSet<String>();
 
@@ -207,11 +204,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
             populateEvidenceUUIDs();
             splitedIds = getSplitedIds();
             countTotalItems();
-
-            /** FTK specific, will be removed */
-            File viewToRawFile = new File(moduleDir, "data/alternativeToOriginals.ids"); //$NON-NLS-1$
-            if (viewToRawFile.exists())
-                viewToRawMap = (VersionsMap) Util.readObject(viewToRawFile.getAbsolutePath());
 
             File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
             if (textSizesFile.exists()) {
@@ -640,10 +632,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLastId() {
         return lastId;
-    }
-
-    public IVersionsMap getViewToRawMap() {
-        return viewToRawMap;
     }
 
     public boolean isFTKReport() {
