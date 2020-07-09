@@ -502,8 +502,6 @@ public class ReportGenerator {
         out.println("<span class=\"time\">"); //$NON-NLS-1$
         out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         if (message.isFromMe() && message.getMessageStatus() != null) {
-            out.println(
-                    "<div style=\"display: inline-block;\"><svg id=\"Layer_1\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 16 15\" width=\"16\" height=\"15\">"); //$NON-NLS-1$
             switch (message.getMessageStatus()) {
                 case MESSAGE_UNSENT:
                     out.println("<div class=\"unsent\"></div>"); //$NON-NLS-1$
@@ -518,7 +516,6 @@ public class ReportGenerator {
                     out.println("<div class=\"viewed\"></div>"); //$NON-NLS-1$
                     break;
             }
-            out.println("</svg></div>"); //$NON-NLS-1$
         }
         out.println("</span>"); //$NON-NLS-1$
         out.println("</div></div>"); //$NON-NLS-1$
