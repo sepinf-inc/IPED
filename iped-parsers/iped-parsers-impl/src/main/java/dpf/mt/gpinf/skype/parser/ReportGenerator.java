@@ -1,8 +1,6 @@
 package dpf.mt.gpinf.skype.parser;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -18,7 +16,6 @@ import dpf.mt.gpinf.skype.parser.v8.SkypeConversationV14;
 import dpf.mt.gpinf.skype.parser.v8.SkypeMessageV12;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -64,7 +61,7 @@ public class ReportGenerator {
                 + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } " //$NON-NLS-1$
                 + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } " //$NON-NLS-1$
                 + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }" //$NON-NLS-1$
-                + ".ck {vertical-align: top; }" //$NON-NLS-1$
+                + ".check {vertical-align: top; }" //$NON-NLS-1$
                 + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} " //$NON-NLS-1$
                 + "</style>"); //$NON-NLS-1$
         out.println("</HEAD>"); //$NON-NLS-1$
@@ -130,8 +127,8 @@ public class ReportGenerator {
                     byte[] thumb = item.getThumb();
                     String query = BasicProps.HASH + ":" + item.getHash();
                     String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
-                    out.println("<input class=\"ck\" type=\"checkbox\" onclick=app.check(\"" + query
-                            + "\",this.checked) />");
+                    out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"" + query
+                            + "\",this.checked) name=\"" + item.getHash() + "\" />");
                     out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
                     out.println(" href=\"" + exportPath + "\">");
                     if (thumb != null) {
@@ -367,9 +364,13 @@ public class ReportGenerator {
             out.println("<p>" + Messages.getString("SkypeReport.LikelyFile") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
             String quotedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
             out.println(
-                    "<input class=\"ck\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\" />");
-            out.println("<a onclick=\"app.open(" + quotedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
+                    "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\"");
             List<IItemBase> result = Util.getItems(query, searcher);
+            if (result != null && !result.isEmpty()) {
+                out.println(" name=\"" + result.get(0).getHash() + "\"");
+            }
+            out.println(" />");
+            out.println("<a onclick=\"app.open(" + quotedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));
                 if (!exportPath.isEmpty())
