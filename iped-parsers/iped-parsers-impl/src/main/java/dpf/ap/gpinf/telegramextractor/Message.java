@@ -4,15 +4,16 @@ import java.util.Date;
 
 public class Message {
 	private long id;
-	private String mediaHash;
-	private String mediaFile;
-	private String mediaName;
+	private String mediaHash=null;
+	private String mediaFile=null;
+	private String mediaName=null;
 	boolean fromMe=false;
-	private Contact remetente;
-	private Chat chat;
-	private String data;
-	private Date timeStamp;
-	private String mediaMime;
+	private String type=null;
+	private Contact remetente=null;
+	private Chat chat=null;
+	private String data=null;
+	private Date timeStamp=null;
+	private String mediaMime=null;
 	private boolean link=false;
 	private byte[] linkImage=null;
 	private byte[] thumb=null;
@@ -105,5 +106,11 @@ public class Message {
 	}
 	public void setMediaName(String mediaName) {
 		this.mediaName = mediaName;
+	}
+	public String getType() {
+		return type;
+	}
+	public void setType(String type) {
+		this.type = type;
 	}
 }

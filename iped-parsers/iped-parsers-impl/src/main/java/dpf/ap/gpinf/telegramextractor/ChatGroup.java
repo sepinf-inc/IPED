@@ -9,6 +9,7 @@ public class ChatGroup extends Chat {
 	HashMap<String,dadosMembros> members;
 	public ChatGroup(long id,Contact c,String name) {
 		super(id,c,name);
+		this.setGroup(true);
 		members=new HashMap<>();
 		
 	}

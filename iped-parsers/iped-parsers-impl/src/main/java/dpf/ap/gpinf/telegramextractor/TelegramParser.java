@@ -31,6 +31,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.util.Set;
 
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -67,21 +68,33 @@ public class TelegramParser extends SQLite3DBParser {
 		EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 		
-		for(Chat c:e.chatList) {
+		for(Chat c:e.getChatList()) {
 			//System.out.println("teste telegram");
 			byte[] bytes=r.generateChatHtml(c);
 			Metadata chatMetadata = new Metadata();
-			 chatMetadata.set(TikaCoreProperties.TITLE, c.getName());
-             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
-             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-             
-             ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-             extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-             
+			String title="Telegram_";
+			if(c.isGroup()) {
+				title+="Group";
+			}else {
+				title+="Chat";
+			}
+			title+="_"+c.getName();
+			chatMetadata.set(TikaCoreProperties.TITLE, title);
+	        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
+	        chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+	         
+	        ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+	        extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+	         
 		
 			
 		}
-		
+		try {
+			conn.close();
+		} catch (SQLException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
 	}
 
 }

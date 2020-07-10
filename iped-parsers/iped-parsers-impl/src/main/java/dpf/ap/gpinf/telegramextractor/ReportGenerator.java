@@ -66,7 +66,7 @@ public class ReportGenerator {
 		if(message.getMediaHash()!=null) {
 			
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"hash:" + message.getMediaHash() + "\")");
 			System.out.println("abc1234: "+message.getMediaHash());
 			link.setAtribute("href", message.getMediaFile());
 			
@@ -74,7 +74,7 @@ public class ReportGenerator {
             System.out.println("chegou aqui 1!!");
 			if (thumb == null) {
             	List<IItemBase> result = null;
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("sha-256:"+ message.getMediaHash(),searcher);
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:"+ message.getMediaHash(),searcher);
             	if(result != null && !result.isEmpty()) {
             		
             		thumb = result.get(0).getThumb();
@@ -109,10 +109,21 @@ public class ReportGenerator {
 			
 			
 		}else {
-			 out.print("<img class=\"iped-show\" src=\"");
-			 out.print(dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
-             out.println("\" width=\"100\" height=\"102\" title=\"Video\"/>"); 
-			
+			TagHtml img=new TagHtml("img");
+						 
+			 String msg="";
+			 if(message.getThumb()!=null) {
+				 msg="thumb"; 
+				 img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(message.getThumb()));
+				 
+			 }else {
+				 img.setAtribute("src",dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
+			 }
+			 img.setAtribute("width", "100");
+			 img.setAtribute("height", "102");
+			 img.setAtribute("title", "Video");
+			 out.println(img.toString());
+			 out.println(msg);
 		}
 		
 	}
@@ -131,7 +142,7 @@ public class ReportGenerator {
 		if(message.getMediaHash()!=null) {
 			
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"hash:" + message.getMediaHash() + "\")");
 			link.setAtribute("href", message.getMediaFile());
 			           
 			img.setAtribute("class", "iped-show");
@@ -161,14 +172,14 @@ public class ReportGenerator {
 	private void printImage(PrintWriter out, Message message) {
 		if(message.getMediaHash()!=null) {
 			TagHtml link=new TagHtml("a");
-			link.setAtribute("onclick","app.open(\"sha-256:" + message.getMediaHash() + "\")");
+			link.setAtribute("onclick","app.open(\"hash:" + message.getMediaHash() + "\")");
 			link.setAtribute("href", message.getMediaFile());
 			
 			byte thumb[] = message.getThumb();
 	      
 			if (thumb == null) {
 	        	List<IItemBase> result = null;
-	        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("sha-256:"+ message.getMediaHash(),searcher);
+	        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:"+ message.getMediaHash(),searcher);
 	        	if(result != null && !result.isEmpty()) {
 	        		
 	        		thumb = result.get(0).getThumb();
@@ -179,7 +190,7 @@ public class ReportGenerator {
 			
 	        
 	        TagHtml img=new TagHtml("img");
-	    	img.setAtribute("class", "iped-show");
+	    	//img.setAtribute("class", "iped-show");
 	    	if(thumb!=null) {
 	    		img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
 	    	}
@@ -193,9 +204,12 @@ public class ReportGenerator {
 	    	out.println(link.toString());
 	    			
 		}else {
-			 out.print("<img src=\"");
-			 out.print(dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/image.png"));
-             out.println("\" width=\"100\" height=\"102\" title=\"Video\"/>"); 
+			 TagHtml img=new TagHtml("img");
+			 img.setAtribute("src", dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/image.png"));
+			 img.setAtribute("width", "100");
+			 img.setAtribute("height", "102");
+			 img.setAtribute("title","Image");
+			 out.println(img.toString());
 		}
 		out.println("<br/>");
 		
@@ -235,13 +249,16 @@ public class ReportGenerator {
             if (group) {
                 
                 
-                String number = "";
+                
                 Contact contact = message.getRemetente();
-                String name = contact == null ? null : contact.getName();
+                String number = contact.getPhone();
+                String name = contact.getName();
                 if (name == null)
-                    name = number;
-                else
-                    name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                    name = "ID-"+contact.getId();
+                else if(number!=null && number.length()>0) {
+                	name += " (phone: " + number + ")";
+                }
+                     
                 out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
                         + name + "</span><br/>"); //$NON-NLS-1$
                 
@@ -265,6 +282,9 @@ public class ReportGenerator {
 		}
 		if (message.getData() != null) {
             out.print(message.getData() + "<br/>"); //$NON-NLS-1$
+        }else {
+        	if(message.getType()!=null)
+        		out.print(message.getType());
         }
 		
 		out.println("<span class=\"time\">"); //$NON-NLS-1$

@@ -6,6 +6,10 @@ import java.io.FileInputStream;
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+import org.apache.commons.lang.builder.ToStringStyle;
+import org.bouncycastle.crypto.engines.ISAACEngine;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -30,14 +34,12 @@ public class Extractor {
 	public Extractor(Connection conn) {
 		this.conn=conn;
 	}
-    File databaseFile;
-	HashMap<String, Integer> logHash=new HashMap<String, Integer>();
+    private File databaseFile;
+	
 
-    
-    String database;
-    ArrayList<Chat> chatList=null;
+    private ArrayList<Chat> chatList=null;
 
-    HashMap<String, Contact> contacts = new HashMap<String,Contact>();
+    private HashMap<Long, Contact> contacts = new HashMap<>();
     
     
     void performExtraction() {
@@ -52,9 +54,16 @@ public class Extractor {
             //log de erro
         }
     }
-    
+   
     protected Contact getContact(long id) {
-    	return null;
+    	if(contacts.get(id)!=null) {
+    		return contacts.get(id); 
+    	}else {
+    		Contact c=new Contact(id);
+    		contacts.put(id, c);
+    		return c;
+    	}
+    	
     }
     
     protected ArrayList<Chat> extractChatList(){
@@ -84,6 +93,7 @@ public class Extractor {
                     SerializedData s = new SerializedData(dados);
                     TLRPC.Chat c = TLRPC.Chat.TLdeserialize(s, s.readInt32(false), false);
                     Contact cont=getContact(c.id);
+                    cont.setName(chatName);
                     searchAvatarFileName(cont,c.photo.photo_big,c.photo.photo_small);
                     
                     cg = new ChatGroup(chatId,cont , chatName);
@@ -147,7 +157,25 @@ public class Extractor {
     	                    TLRPC.Message m = TLRPC.Message.TLdeserialize (sd, aux, false);  	                    
 
     	                    if (m!=null ) {
+    	                    	
     	                        Message message= new Message(mid,chat);
+    	                        if(m.action!=null) {
+    	                        	if(m.action.call!=null) {
+    	                        		message.setType("call duration:"+m.action.duration);
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatJoinedByLink) {
+    	                        		message.setType("chatjoinlnk");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatAddUser) {
+    	                        		message.setType("chatadd");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionUserJoined) {
+    	                        		message.setType("userjoin");
+    	                        	}
+    	                        	
+    	                        }
+    	                        
+    	                        
     	                        
 
     	                        message.setFromMe(rs.getInt("out")==1);
@@ -213,15 +241,15 @@ public class Extractor {
     	message.setMediaMime(document.mime_type);
     	message.setMediaName(document.id+"");
     	List<IItemBase> result = null;
-    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ message.getMediaName(),searcher);
+    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ message.getMediaName()+"\"",searcher);
         message.setMediaFile(getPathFromResult(result, document.size));
-        message.setMediaHash(getSha256(result, document.size));
+        message.setMediaHash(getHash(result, document.size));
         
     	if(message.getMediaName().contains("5332534912568264569")) {
     		
     		System.out.println("olha o arquivo "+message.getMediaName()) ;
     		
-    		System.out.println("sha-256 "+message.getMediaHash());
+    		System.out.println("hash "+message.getMediaHash());
     		
     	}
     	       
@@ -229,9 +257,10 @@ public class Extractor {
             for( DocumentAttribute at :document.attributes){
                 //tentar achar pelo nome do arquivo original
                 if(at.file_name!=null){
-                	//result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ at.file_name,searcher);
-                    message.setMediaFile(getPathFromResult(result, document.size));
-                    if(message.getMediaFile()!=null){
+                	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ "\""+at.file_name+"\"",searcher);
+                    String path=getPathFromResult(result, document.size);
+                    if(path!=null){
+                    	message.setThumb(FileUtils.readFileToByteArray(new File(path)));
                         break;
                     }
                 }
@@ -261,18 +290,39 @@ public class Extractor {
     }
     
     protected String getPathFromResult(List<IItemBase> result,int size) {
+    	if(result==null) {
+    		return null;
+    	}
     	for(IItemBase f:result) {
-    		if(f.getFile().getAbsoluteFile().length()==size) {
-        		return f.getFile().getAbsolutePath();
-        	}	
+    		try {
+				if(f.getTempFile()!=null && f.getTempFile().getAbsoluteFile().length()==size) {
+					if(f.getFile()!=null) {						
+						return f.getFile().getAbsolutePath();				    	
+					}else {
+						return f.getTempFile().getAbsolutePath();
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
     	return null;
 	}
-    protected String getSha256(List<IItemBase> result,int size) {
+    protected String getHash(List<IItemBase> result,int size) {
+    	if(result==null)
+    		return null;
     	for(IItemBase f:result) {
-    		if(f.getFile().getAbsoluteFile().length()==size) {
-        		return f.getExtraAttribute("sha-256").toString();
-        	}	
+    		try {
+				if(f.getTempFile()!=null) {
+					if(f.getTempFile().getAbsoluteFile().length()==size) {
+						return f.getHash();
+					}	
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
     	}
     	return null;
 	}
@@ -286,10 +336,10 @@ public class Extractor {
 	    		continue;
 	    	}
 	    	String name=""+img.location.volume_id+"_"+img.location.local_id;
-	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ name+".jpg",searcher);
+	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+".jpg\"",searcher);
 	    	
             if(result==null || result.isEmpty()){
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ name,searcher);
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
             }
             if(result!=null){
             	return getPathFromResult(result, img.size);
@@ -301,29 +351,68 @@ public class Extractor {
 		
 	}
 
-	protected void extractContacts() {
+	protected void extractContacts() throws SQLException {
+		if(conn!=null) {
+            PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL);
+            if(stmt!=null){
+                ResultSet rs= stmt.executeQuery();
+                if(rs==null)
+                	return;
+                
+                while (rs.next()){
+                	SerializedData s= new SerializedData(rs.getBytes("data"));
+                	TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
+                    if(user!=null){
+                        Contact cont=getContact(user.id);
+                        cont.setName(user.first_name);
+                        cont.setUsername(user.username);
+                        cont.setPhone(user.phone);
+                        if(user.photo!=null){
+                        	try {
+                        		searchAvatarFileName(cont,user.photo.photo_big,user.photo.photo_small);
+                        	}catch (IOException e) {
+                        		// TODO: handle exception
+                        		e.printStackTrace();
+							}
+                        }
+                    }
+                }
+                
+            }
+        }
     	
     }
     
     
-    protected void searchAvatarFileName(Contact contact,TLRPC.FileLocation big,TLRPC.FileLocation small) {
-        /*
+    protected void searchAvatarFileName(Contact contact,TLRPC.FileLocation big,TLRPC.FileLocation small) throws IOException {
+        List<IItemBase> result=null;
+        int size=0;
+        String name=null;
         if(big!=null){
-            file=fileList.findFileByName("" + big.volume_id + "_" + big.local_id+".jpg")
-            if(file==null) {
-                file = fileList.findFileContainingName("" + big.volume_id + "_" + big.local_id, null)
+        	name=""+ big.volume_id + "_" + big.local_id+".jpg";
+	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
+            
+            if(result==null || result.isEmpty()) {
+            	name="" + big.volume_id + "_" + big.local_id;
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
             }
         }
-        if(file==null && small!=null){
-            file=fileList.findFileByName("" + small.volume_id + "_" + small.local_id+".jpg")
-            if(file==null) {
-                file = fileList.findFileContainingName("" + small.volume_id + "_" + small.local_id, null)
+        if((result==null || result.isEmpty()) && small!=null){
+        	name=""+ small.volume_id + "_" + small.local_id+".jpg";
+        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
+            
+            if(result==null || result.isEmpty()) {
+            	name="" + small.volume_id + "_" + small.local_id;
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);;
             }
         }
-        if(file!=null) {
-            contact.avatar = file
+        if(result!=null && !result.isEmpty()) {
+        	File f=result.get(0).getTempFile().getAbsoluteFile();
+        	System.out.println("avatar " +name);
+        	System.out.println("arq "+f.getName());
+            contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
-        */
+        
     }
     
     
@@ -332,7 +421,13 @@ public class Extractor {
     }
 
 
-    private static final String CHATS_SQL ="SELECT d.did as chatId,u.name as nomeChat,u.data as dadosChat,"
+    public ArrayList<Chat> getChatList() {
+		return chatList;
+	}
+	public HashMap<Long, Contact> getContacts() {
+		return contacts;
+	}
+	private static final String CHATS_SQL ="SELECT d.did as chatId,u.name as nomeChat,u.data as dadosChat,"
     		+ "c.name as groupName, c.data as dadosGrupo "
     		+ "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
     		+ "order by d.date desc";
@@ -342,7 +437,7 @@ public class Extractor {
         
 
 
-
+    private static final String EXTRACT_CONTACTS_SQL="SELECT * FROM users";
    
     
     

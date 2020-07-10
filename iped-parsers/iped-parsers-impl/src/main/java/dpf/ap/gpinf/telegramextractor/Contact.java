@@ -2,8 +2,13 @@ package dpf.ap.gpinf.telegramextractor;
 
 public class Contact {
 	private long id;
-	private String name;
-	private String phone;
+	private String name=null;
+	private String username=null;
+	private String phone=null;
+	private byte[] avatar=null;
+	public Contact(long id) {
+		this.id=id;
+	}
 	public long getId() {
 		return id;
 	}
@@ -21,6 +26,18 @@ public class Contact {
 	}
 	public void setPhone(String telefone) {
 		this.phone = telefone;
+	}
+	public String getUsername() {
+		return username;
+	}
+	public void setUsername(String username) {
+		this.username = username;
+	}
+	public byte[] getAvatar() {
+		return avatar;
+	}
+	public void setAvatar(byte[] avatar) {
+		this.avatar = avatar;
 	}
 
 }
