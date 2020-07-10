@@ -149,7 +149,7 @@ public class ReportGenerator {
                 }
                 printMessage(out, m, c.isGroupChat(), contactsDirectory);
                 currentMsg += 1;
-                if (currentMsg != c.getMessages().size() && currentMsg >= MAX_MESSAGES_IN_CHAT_FILE) {
+                if (currentMsg != c.getMessages().size() && currentMsg % MAX_MESSAGES_IN_CHAT_FILE == 0) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                             + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                     break;
