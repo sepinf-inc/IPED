@@ -17,6 +17,6 @@ public interface AttachmentSearcher {
 
     String getHash(IItemId itemId);
 
-    void createSelectionCache();
+    void updateSelectionCache();
 
 }

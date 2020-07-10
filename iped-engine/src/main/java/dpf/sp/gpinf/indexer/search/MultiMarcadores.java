@@ -61,7 +61,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         for (IMarcadores m : map.values())
             m.clearSelected();
         for (SelectionListener l : selectionListeners)
-            l.clearSelected();
+            l.clearAll();
     }
 
     public void selectAll() {

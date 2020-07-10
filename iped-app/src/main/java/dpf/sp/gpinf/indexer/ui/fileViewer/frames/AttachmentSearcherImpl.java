@@ -73,6 +73,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
 
     }
 
+    @Override
     public boolean isChecked(String hash) {
         if (sdv == null) {
             return false;
@@ -81,6 +82,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         return selectedHashOrds.get(ord);
     }
 
+    @Override
     public String getHash(IItemId itemId) {
         if (sdv == null) {
             return null;
@@ -89,7 +91,8 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         return sdv.get(luceneId).utf8ToString();
     }
 
-    public void createSelectionCache() {
+    @Override
+    public void updateSelectionCache() {
         try {
             sdv = App.get().appCase.getAtomicReader().getSortedDocValues(BasicProps.HASH);
         } catch (IOException e) {

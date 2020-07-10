@@ -11,7 +11,7 @@ public interface SelectionListener {
 
     void setSelected(IItemId item, boolean value);
 
-    void clearSelected();
+    void clearAll();
 
     void selectAll();
 
