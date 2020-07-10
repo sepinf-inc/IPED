@@ -74,6 +74,9 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
     }
 
     public boolean isChecked(String hash) {
+        if (sdv == null) {
+            return false;
+        }
         int ord = sdv.lookupTerm(new BytesRef(hash));
         return selectedHashOrds.get(ord);
     }
@@ -92,6 +95,9 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        if (sdv == null) {
+            return;
+        }
         selectedHashOrds.clear();
         for (IPEDSource source : App.get().appCase.getAtomicSources()) {
             for (int id = 0; id <= source.getLastId(); id++) {
@@ -99,7 +105,8 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
                     ItemId itemId = new ItemId(source.getSourceId(), id);
                     int luceneId = App.get().appCase.getLuceneId(itemId);
                     int ord = sdv.getOrd(luceneId);
-                    selectedHashOrds.set(ord);
+                    if (ord > -1)
+                        selectedHashOrds.set(ord);
                 }
             }
         }
