@@ -43,7 +43,7 @@ public class ReportGenerator {
     private static final String css = Util.readResourceAsString("css/whatsapp.css");
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
     private IItemSearcher searcher;
-    private Chat lastChat;
+    private boolean firstFragment = true;
     private int currentMsg = 0;
 
     public ReportGenerator(IItemSearcher searcher) {
@@ -121,12 +121,11 @@ public class ReportGenerator {
     }
 
     public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory) {
-        if (lastChat != c) {
-            lastChat = c;
-            currentMsg = 0;
-        }
-        if (currentMsg == c.getMessages().size())
+
+        if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
+
+        firstFragment = false;
 
         ByteArrayOutputStream chatBytes = new ByteArrayOutputStream();
         PrintWriter printWriter = new PrintWriter(new OutputStreamWriter(chatBytes, StandardCharsets.UTF_8)); // $NON-NLS-1$
