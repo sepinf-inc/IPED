@@ -60,13 +60,15 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     public void clearSelected() {
         for (IMarcadores m : map.values())
             m.clearSelected();
-        selectionListeners.stream().forEach(l -> l.clearSelected());
+        for (SelectionListener l : selectionListeners)
+            l.clearSelected();
     }
 
     public void selectAll() {
         for (IMarcadores m : map.values())
             m.selectAll();
-        selectionListeners.stream().forEach(l -> l.selectAll());
+        for (SelectionListener l : selectionListeners)
+            l.selectAll();
     }
 
     public boolean isSelected(IItemId item) {
@@ -75,7 +77,8 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
 
     public void setSelected(boolean value, IItemId item) {
         map.get(item.getSourceId()).setSelected(value, item.getId());
-        selectionListeners.stream().forEach(l -> l.setSelected(item, value));
+        for (SelectionListener l : selectionListeners)
+            l.setSelected(item, value);
     }
 
     public List<String> getLabelList(IItemId item) {
