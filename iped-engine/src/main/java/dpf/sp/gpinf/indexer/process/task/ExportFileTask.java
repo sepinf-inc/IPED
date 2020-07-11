@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -39,11 +40,13 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.Deflater;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorOutputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.slf4j.Logger;
@@ -529,8 +532,8 @@ public class ExportFileTask extends AbstractTask {
             try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(INSERT_DATA)) {
                 ps.setString(1, md5.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                        .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                OutputStream gzippedOut = new GzipCompressorOutputStream(baos, getGzipParams());
+                // OutputStream gzippedOut = new LZ4BlockOutputStream(baos);
                 gzippedOut.write(buf, 0, len);
                 gzippedOut.close();
                 byte[] bytes = baos.toByteArray();
@@ -544,6 +547,12 @@ public class ExportFileTask extends AbstractTask {
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
         evidence.setLength((long) len);
+    }
+
+    private GzipParameters getGzipParams() {
+        GzipParameters compression = new GzipParameters();
+        compression.setCompressionLevel(Deflater.BEST_SPEED);
+        return compression;
     }
 
     public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory {
@@ -583,8 +592,8 @@ public class ExportFileTask extends AbstractTask {
                         }
                     }
                 }
-                InputStream gzippedIn = new CompressorStreamFactory()
-                        .createCompressorInputStream(CompressorStreamFactory.GZIP, new ByteArrayInputStream(bytes));
+                InputStream gzippedIn = new GZIPInputStream(new ByteArrayInputStream(bytes));
+                // gzippedIn = new LZ4BlockInputStream(new ByteArrayInputStream(bytes));
                 bytes = IOUtils.toByteArray(gzippedIn);
                 gzippedIn.close();
                 return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
