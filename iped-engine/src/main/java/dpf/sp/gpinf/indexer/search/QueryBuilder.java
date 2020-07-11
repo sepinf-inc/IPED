@@ -70,7 +70,7 @@ public class QueryBuilder implements IQueryBuilder {
                 if (query instanceof PhraseQuery) {
                     List<Term> terms = Arrays.asList(((PhraseQuery) query).getTerms());
                     if (((PhraseQuery) query).getSlop() == 0) {
-                        result.add(terms.stream().map(t -> t.text()).collect(Collectors.joining(" "))); //$NON-NLS-1$
+                        result.add(terms.stream().map(t -> t.text().toLowerCase()).collect(Collectors.joining(" "))); //$NON-NLS-1$
                     } else
                         termSet.addAll(terms);
                 }
