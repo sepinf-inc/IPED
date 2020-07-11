@@ -146,25 +146,15 @@ public class ReportGenerator {
 
             } else if (message.getMediaMime() != null) {
                 if (message.getMediaMime().startsWith("audio")) { //$NON-NLS-1$
-                    out.println("<img src=\"" //$NON-NLS-1$
-                            + Util.getImageResourceAsEmbedded("img/audio.png") //$NON-NLS-1$
-                            + "\" width=\"100\" height=\"102\" title=\"Audio\"/>"); //$NON-NLS-1$
+                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().startsWith("video")) { //$NON-NLS-1$
-                    out.println("<img src=\"" //$NON-NLS-1$
-                            + Util.getImageResourceAsEmbedded("img/video.png") //$NON-NLS-1$
-                            + "\" width=\"100\" height=\"102\" title=\"Video\"/>"); //$NON-NLS-1$
+                    out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().startsWith("image")) { //$NON-NLS-1$
-                    out.println("<img src=\"" //$NON-NLS-1$
-                            + Util.getImageResourceAsEmbedded("img/image.png") //$NON-NLS-1$
-                            + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                    out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
                 } else if (message.getMediaMime().contains("contact")) { //$NON-NLS-1$
-                    out.println("<img src=\"" //$NON-NLS-1$
-                            + Util.getImageResourceAsEmbedded("img/contact.png") //$NON-NLS-1$
-                            + "\" width=\"100\" height=\"102\" title=\"Image\"/>"); //$NON-NLS-1$
+                    out.println("<div class=\"contactImg\" title=\"Contact\"></div>"); //$NON-NLS-1$
                 } else
-                    out.println("Attachment:<br><img src=\"" //$NON-NLS-1$
-                            + Util.getImageResourceAsEmbedded("img/attach.png") //$NON-NLS-1$
-                            + "\" width=\"100\" height=\"102\" title=\"Doc\"/>"); //$NON-NLS-1$
+                    out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
             }
             out.println("</a>"); //$NON-NLS-1$
         }
