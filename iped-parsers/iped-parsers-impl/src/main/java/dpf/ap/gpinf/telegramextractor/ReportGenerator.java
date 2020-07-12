@@ -14,31 +14,76 @@ import java.util.List;
 import com.drew.metadata.Tag;
 
 
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class ReportGenerator {
-	private final long MAXLEN=5000000;
+	
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
     private IItemSearcher searcher;
     public void setSearcher(IItemSearcher s) {
     	searcher=s;
     }
+    private String format(String s) {
+    	if(s==null || s.isEmpty()){
+    		return "-";
+    	}
+    	return s;
+    }
     
-	public byte[] generateChatHtml(Chat c)
+    public byte[] genarateContactHtml(Contact contact) throws UnsupportedEncodingException {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+
+        out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
+                + "<html>\n" //$NON-NLS-1$
+                + "<head>\n" //$NON-NLS-1$
+                + "	<title>" + contact.getId() + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + "</head>\n" //$NON-NLS-1$
+                + "<body>\n"); //$NON-NLS-1$
+
+        if (contact.getAvatar() != null)
+            out.println("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(contact.getAvatar()) //$NON-NLS-1$
+                    + "\" width=\"112\"/><br>"); //$NON-NLS-1$
+        out.println(Messages.getString("TelegramContact.ContactID") + contact.getId()); 
+        out.println("<br>" + Messages.getString("TelegramContact.FirstName") + format(contact.getName() )); 
+        out.println("<br>" + Messages.getString("TelegramContact.LastName") + format(contact.getLastName() )); 
+        out.println("<br>" + Messages.getString("TelegramContact.Username") + format(contact.getUsername())); 
+        out.println("<br>" + Messages.getString("TelegramContact.Phone") + format(contact.getPhone()));
+        out.println("</body>\n</html>"); //$NON-NLS-1$
+
+        out.flush();
+        out.close();
+
+        return bout.toByteArray();
+    }
+    
+	public byte[] generateChatHtml(Chat c,int start,int end)
             throws UnsupportedEncodingException {
         
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
-
-        printMessageFileHeader(out, c.getName(), c.getId()+"");
+        String title=c.getName();
+        if(!c.isGroup()) {
+        	if(c.getC().getPhone()!=null)
+        		title+=" phone:"+c.getC().getPhone();
+        	else if(c.getC().getUsername()!=null)
+        		title+=" user:"+c.getC().getUsername();
+        }
+        
+        printMessageFileHeader(out, title, c.getId()+"",c.getC().getAvatar());
         
 
-        int currentMsg=0;
+        int currentMsg=start;
         String lastDate=null;
-        while (currentMsg < c.getMessages().size()) {
+        if(end>c.getMessages().size()) {
+        	end=c.getMessages().size();
+        }
+        while (currentMsg < end) {
             Message m = c.getMessages().get(currentMsg++);
             String thisDate = dateFormat.format(m.getTimeStamp());
             if (lastDate == null || !lastDate.equals(thisDate)) {
@@ -48,9 +93,7 @@ public class ReportGenerator {
             }
             
             printMessage(out, m, c.isGroup());
-            if(bout.size()>MAXLEN) {
-            	break;
-            }
+           
             
         }
 
@@ -281,11 +324,12 @@ public class ReportGenerator {
 			
 		}
 		if (message.getData() != null) {
-            out.print(message.getData() + "<br/>"); //$NON-NLS-1$
+            out.print(message.getData()); //$NON-NLS-1$
         }else {
         	if(message.getType()!=null)
         		out.print(message.getType());
         }
+		out.println("<br/>");
 		
 		out.println("<span class=\"time\">"); //$NON-NLS-1$
         out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$ 
@@ -296,7 +340,7 @@ public class ReportGenerator {
 	}
 	
 	
-	private static void printMessageFileHeader(PrintWriter out, String title, String id) {
+	private static void printMessageFileHeader(PrintWriter out, String title, String id,byte[] avatar) {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
@@ -332,6 +376,11 @@ public class ReportGenerator {
                 + "	<span class=\"left\">" //$NON-NLS-1$
                 + " &nbsp; "); //$NON-NLS-1$
         
+        if (avatar != null) {
+            out.println("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(avatar) //$NON-NLS-1$
+                    + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
+            System.out.println("avatar");
+        }
         out.println(title + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$
                 + "<div id=\"conversation\">\n" //$NON-NLS-1$

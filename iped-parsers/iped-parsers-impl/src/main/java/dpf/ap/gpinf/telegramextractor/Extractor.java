@@ -81,9 +81,12 @@ public class Extractor {
                     dados = rs.getBytes("dadosChat");
                     SerializedData s = new SerializedData(dados);
                     TLRPC.User u = TLRPC.User.TLdeserialize(s, s.readInt32(false), false);
-
+                    
                     if (u!=null) {
                     	Contact cont=getContact(u.id);
+                    	if(cont.getAvatar()==null && u.photo!=null) {
+                    		searchAvatarFileName(cont,u.photo.photo_big,u.photo.photo_small);
+                    	}
                          cg=new Chat(chatId,cont , chatName);
                         //println(u.first_name)
 
@@ -94,6 +97,7 @@ public class Extractor {
                     TLRPC.Chat c = TLRPC.Chat.TLdeserialize(s, s.readInt32(false), false);
                     Contact cont=getContact(c.id);
                     cont.setName(chatName);
+                    
                     searchAvatarFileName(cont,c.photo.photo_big,c.photo.photo_small);
                     
                     cg = new ChatGroup(chatId,cont , chatName);
@@ -164,13 +168,47 @@ public class Extractor {
     	                        		message.setType("call duration:"+m.action.duration);
     	                        	}
     	                        	if(m.action instanceof TLRPC.TL_messageActionChatJoinedByLink) {
-    	                        		message.setType("chatjoinlnk");
+    	                        		message.setType("User Join chat by link");
     	                        	}
     	                        	if(m.action instanceof TLRPC.TL_messageActionChatAddUser) {
-    	                        		message.setType("chatadd");
+    	                        		message.setType("Chat Add User");
     	                        	}
     	                        	if(m.action instanceof TLRPC.TL_messageActionUserJoined) {
-    	                        		message.setType("userjoin");
+    	                        		message.setType("User Join");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionHistoryClear) {
+    	                        		message.setType("History Clear");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatDeleteUser) {
+    	                        		message.setType("User deleted");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChannelCreate) {
+    	                        		message.setType("Channel created");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionUserUpdatedPhoto) {
+    	                        		message.setType("User update photo");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatEditPhoto) {
+    	                        		message.setType("Chat update photo");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatDeletePhoto) {
+    	                        		message.setType("Chat delete photo");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatEditTitle) {   	                        		
+    	                        		message.setType("Change title to "+m.action.title);
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionContactSignUp) {
+    	                        		message.setType("Contact sign up");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionChatMigrateTo) {
+    	                        		message.setType("Chat migrate");
+    	                        	}
+    	                        	if(m.action instanceof TLRPC.TL_messageActionPinMessage) {
+    	                        		message.setType("Message pinned");
+    	                        	}
+    	                        	
+    	                        	if(message.getType()==null) {
+    	                        		System.out.println("tipo "+ReflectionToStringBuilder.toString(m.action));
     	                        	}
     	                        	
     	                        }
@@ -358,7 +396,7 @@ public class Extractor {
                 ResultSet rs= stmt.executeQuery();
                 if(rs==null)
                 	return;
-                
+                int nphones=0;
                 while (rs.next()){
                 	SerializedData s= new SerializedData(rs.getBytes("data"));
                 	TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
@@ -367,6 +405,9 @@ public class Extractor {
                         cont.setName(user.first_name);
                         cont.setUsername(user.username);
                         cont.setPhone(user.phone);
+                        if(user.phone!=null) {
+                        	nphones++;
+                        }
                         if(user.photo!=null){
                         	try {
                         		searchAvatarFileName(cont,user.photo.photo_big,user.photo.photo_small);
@@ -377,6 +418,7 @@ public class Extractor {
                         }
                     }
                 }
+                System.out.println("tot_phones "+nphones);
                 
             }
         }
