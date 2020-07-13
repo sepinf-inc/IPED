@@ -81,7 +81,7 @@ public class SignatureTask extends AbstractTask {
 
                     // workaround for #197. Should we check TSK_FS_META_FLAG_ENUM?
                     int i = 0;
-                    while (MediaType.OCTET_STREAM.equals(type)) {
+                    while (MediaType.OCTET_STREAM.equals(type) && i < HFS_ATTR_SUFFIX.length) {
                         String suffix = HFS_ATTR_SUFFIX[i++];
                         if (evidence.getName().endsWith(suffix)) {
                             String name = evidence.getName().substring(0, evidence.getName().lastIndexOf(suffix));
