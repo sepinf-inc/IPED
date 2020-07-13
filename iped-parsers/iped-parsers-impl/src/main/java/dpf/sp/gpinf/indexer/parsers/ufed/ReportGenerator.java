@@ -20,7 +20,7 @@ import iped3.util.ExtraProperties;
  */
 public class ReportGenerator {
 
-    private static final int MAX_CHAT_MESSAGES = 5000;
+    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
@@ -37,11 +37,6 @@ public class ReportGenerator {
     }
 
     public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs) throws UnsupportedEncodingException {
-        return this.generateNextChatHtml(c, msgs, MAX_CHAT_MESSAGES);
-    }
-
-    public byte[] generateNextChatHtml(IItemBase c, List<UfedMessage> msgs, int maxChatSize)
-            throws UnsupportedEncodingException {
 
         if ((!firstHtml && currentMsg == 0) || (currentMsg > 0 && currentMsg == msgs.size()))
             return null;
@@ -69,7 +64,7 @@ public class ReportGenerator {
             boolean isGroup = c.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants").length > 2; //$NON-NLS-1$
             printMessage(out, m, isGroup, c.isDeleted());
 
-            if (currentMsg++ != msgs.size() - 1 && currentMsg % MAX_CHAT_MESSAGES == 0) {
+            if (currentMsg++ != msgs.size() - 1 && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
                 break;
