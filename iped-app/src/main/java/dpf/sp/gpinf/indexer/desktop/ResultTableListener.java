@@ -23,31 +23,26 @@ import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.text.Collator;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.JTable;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.table.TableRowSorter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
 
 public class ResultTableListener implements ListSelectionListener, MouseListener, KeyListener {
@@ -274,7 +269,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
                             rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem, App.get().appCase);
+                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem);
                     }
                 }
             }

@@ -61,8 +61,8 @@ public class ReportGenerator {
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$
                 + "<head>\n" //$NON-NLS-1$
-                + "	<title>" + contact.getId() + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
-                + "	<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
+                + " <title>" + contact.getId() + "</title>\n" //$NON-NLS-1$ //$NON-NLS-2$
+                + " <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n" //$NON-NLS-1$
                 + "</head>\n" //$NON-NLS-1$
                 + "<body>\n"); //$NON-NLS-1$
 
@@ -367,7 +367,8 @@ public class ReportGenerator {
                                 if (onclick != null) {
                                     String onCheck = onclick.replaceFirst(".open", ".check").replace("\")",
                                             "\",this.checked)");
-                                    out.println("<input class=\"check\" type=\"checkbox\" onclick=" + onCheck + "/>");
+                                    out.println("<input class=\"check\" type=\"checkbox\" onclick=" + onCheck
+                                            + " name=\"" + result.get(0).getHash() + "\" />");
                                 }
                                 out.println("<a "); //$NON-NLS-1$
                                 if (onclick != null)
@@ -460,7 +461,8 @@ public class ReportGenerator {
                         if (linkParam != null) {
                             if (result != null && !result.isEmpty()) {
                                 out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check("
-                                        + linkParam + ",this.checked)" + quote + " />");
+                                        + linkParam + ",this.checked)" + quote + " name=\"" + result.get(0).getHash()
+                                        + "\"/>");
                             }
                             out.println("<a onclick=" + quote + "app.open(" + linkParam + ")" + quote + " "); //$NON-NLS-1$ //$NON-NLS-2$
                         }

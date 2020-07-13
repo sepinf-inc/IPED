@@ -85,7 +85,7 @@ public class SubitemTableModel extends AbstractTableModel
     @Override
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
+                App.get().appCase.getItemId(results.getLuceneIds()[row]));
         MarcadoresController.get().atualizarGUI();
     }
 

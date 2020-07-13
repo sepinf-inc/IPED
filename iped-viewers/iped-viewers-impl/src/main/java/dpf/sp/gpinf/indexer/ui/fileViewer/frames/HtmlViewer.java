@@ -52,7 +52,7 @@ public class HtmlViewer extends Viewer {
     WebEngine webEngine;
     boolean enableJavascript = false;
     boolean enableProxy = true;
-    FileOpen fileOpenApp = new FileOpen();
+    FileHandler fileHandler = new FileHandler();
 
     protected volatile File file;
     protected Set<String> highlightTerms;
@@ -149,7 +149,7 @@ public class HtmlViewer extends Viewer {
         });
     }
 
-    public class FileOpen {
+    public class FileHandler {
 
         public void openExternal() {
             openFile(file);
@@ -224,37 +224,15 @@ public class HtmlViewer extends Viewer {
                         }
                     }
                 });
-
-                // some htmls need this to javascript work early
-                webEngine.documentProperty().addListener(new ChangeListener<Document>() {
-
-                    @Override
-                    public void changed(ObservableValue<? extends Document> observable, Document oldValue,
-                            Document newValue) {
-                        addJavascriptListener(webEngine);
-                    }
-
-                });
-
-                // but other htmls need this to javascript work early
-                webEngine.getLoadWorker().progressProperty().addListener(new ChangeListener<Number>() {
-
-                    @Override
-                    public void changed(ObservableValue<? extends Number> observable, Number oldValue,
-                            Number newValue) {
-                        addJavascriptListener(webEngine);
-                    }
-                });
-
             }
         });
 
     }
 
-    private void addJavascriptListener(WebEngine webEngine) {
+    protected void addJavascriptListener(WebEngine webEngine) {
         if (webEngine.isJavaScriptEnabled()) {
             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
-            window.setMember("app", fileOpenApp); //$NON-NLS-1$
+            window.setMember("app", fileHandler); //$NON-NLS-1$
         }
     }
 

@@ -123,7 +123,7 @@ public class ReportGenerator {
         if (message.getMediaHash() != null || message.getThumbData() != null || message.getMediaName() != null) {
             if (message.getMediaHash() != null) {
                 out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:"
-                        + message.getMediaHash() + "\",this.checked) />");
+                        + message.getMediaHash() + "\",this.checked) name=\"" + message.getMediaHash() + "\" />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
                 String ext = "." + message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$

@@ -21,6 +21,7 @@ import iped3.IItemId;
 import iped3.search.IMarcadores;
 import iped3.search.IMultiMarcadores;
 import iped3.search.IMultiSearchResult;
+import iped3.search.SelectionListener;
 
 public class MultiMarcadores implements Serializable, IMultiMarcadores {
 
@@ -28,6 +29,8 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
      * 
      */
     private static final long serialVersionUID = 1L;
+
+    private List<SelectionListener> selectionListeners = new ArrayList<>();
 
     Map<Integer, IMarcadores> map = new HashMap<Integer, IMarcadores>();
 
@@ -57,19 +60,25 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     public void clearSelected() {
         for (IMarcadores m : map.values())
             m.clearSelected();
+        for (SelectionListener l : selectionListeners)
+            l.clearAll();
     }
 
     public void selectAll() {
         for (IMarcadores m : map.values())
             m.selectAll();
+        for (SelectionListener l : selectionListeners)
+            l.selectAll();
     }
 
     public boolean isSelected(IItemId item) {
         return map.get(item.getSourceId()).isSelected(item.getId());
     }
 
-    public void setSelected(boolean value, IItemId item, IIPEDSource ipedCase) {
-        map.get(item.getSourceId()).setSelected(value, item.getId(), ipedCase);
+    public void setSelected(boolean value, IItemId item) {
+        map.get(item.getSourceId()).setSelected(value, item.getId());
+        for (SelectionListener l : selectionListeners)
+            l.setSelected(item, value);
     }
 
     public List<String> getLabelList(IItemId item) {
@@ -345,6 +354,16 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         HashSet<String> labelNames = new HashSet<String>();
         labelNames.add(labelName);
         return hasLabel(item, labelNames);
+    }
+
+    @Override
+    public void addSelectionListener(SelectionListener listener) {
+        selectionListeners.add(listener);
+    }
+
+    @Override
+    public void removeSelectionListener(SelectionListener listener) {
+        selectionListeners.remove(listener);
     }
 
 }

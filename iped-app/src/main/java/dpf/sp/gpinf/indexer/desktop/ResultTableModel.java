@@ -169,7 +169,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row), app.appCase);
+        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
