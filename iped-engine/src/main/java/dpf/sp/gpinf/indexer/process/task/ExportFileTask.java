@@ -41,10 +41,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
-import java.util.zip.GZIPInputStream;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
@@ -592,7 +592,7 @@ public class ExportFileTask extends AbstractTask {
                         }
                     }
                 }
-                InputStream gzippedIn = new GZIPInputStream(new ByteArrayInputStream(bytes));
+                InputStream gzippedIn = new GzipCompressorInputStream(new ByteArrayInputStream(bytes));
                 // gzippedIn = new LZ4BlockInputStream(new ByteArrayInputStream(bytes));
                 bytes = IOUtils.toByteArray(gzippedIn);
                 gzippedIn.close();
