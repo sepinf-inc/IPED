@@ -76,13 +76,15 @@ import iped3.search.IMultiMarcadores;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
-import iped3.util.MediaTypes;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 /*
  * Enfileira para processamento os arquivos selecionados via interface de pesquisa de uma indexação anterior.
  */
 public class IPEDReader extends DataSourceReader {
+
+    public static final String ORIG_CASE_MODULE_DIR = "originalCaseModuleDir";
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
@@ -169,6 +171,7 @@ public class IPEDReader extends DataSourceReader {
         this.state = state;
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
+        caseData.putCaseObject(ORIG_CASE_MODULE_DIR, indexDir.getParentFile());
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
         ipedCase = new IPEDSource(new File(basePath));
         ipedCase.checkImagePaths();

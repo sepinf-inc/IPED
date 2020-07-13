@@ -40,8 +40,8 @@ import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UfedMessage;
@@ -171,7 +171,8 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.close(caseData.isIpedReport());
             logger.info("Finishing graph CSVs finished.");
             if (caseData.isIpedReport()) {
-                File prevCSVRoot = new File(Configuration.getInstance().appRoot, GraphTask.GENERATED_PATH);
+                File prevCaseModuleDir = (File) caseData.getCaseObject(IPEDReader.ORIG_CASE_MODULE_DIR);
+                File prevCSVRoot = new File(prevCaseModuleDir, GraphTask.GENERATED_PATH);
                 for (File file : prevCSVRoot.listFiles()) {
                     File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
                     if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
