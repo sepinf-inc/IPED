@@ -174,13 +174,13 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
                 List<Chat> chatList = waExtractor.getChatList();
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
 
                 int chatVirtualId = 0;
                 for (Chat c : chatList) {
                     getAvatar(searcher, c.getRemote());
                     int frag = 0;
                     int firstMsg = 0;
+                    ReportGenerator reportGenerator = new ReportGenerator(searcher);
                     byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
                     while (bytes != null) {
                         Metadata chatMetadata = new Metadata();
