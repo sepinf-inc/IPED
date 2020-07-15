@@ -1,8 +1,8 @@
 package dpf.sp.gpinf.indexer.search;
 
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.Query;
 
 import iped3.IItem;
@@ -25,13 +25,14 @@ public class SimilarImagesSearch {
             return null;
         }
 
-        BooleanQuery similarImagesQuery = new BooleanQuery();
+        BooleanQuery.Builder similarImagesQuery = new BooleanQuery.Builder();
         for (int i = 0; i < 4; i++) {
             int refVal = similarityFeatures[i];
-            similarImagesQuery.add(NumericRangeQuery.newIntRange(BasicProps.SIMILARITY_FEATURES + i, refVal - range,
-                    refVal + range, true, true), Occur.MUST);
+            similarImagesQuery.add(
+                    IntPoint.newRangeQuery(BasicProps.SIMILARITY_FEATURES + i, refVal - range, refVal + range),
+                    Occur.MUST);
         }
 
-        return similarImagesQuery;
+        return similarImagesQuery.build();
     }
 }
