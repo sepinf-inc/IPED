@@ -25,13 +25,15 @@ public class SimilarImagesSearch {
             return null;
         }
 
-        BooleanQuery.Builder similarImagesQuery = new BooleanQuery.Builder();
+        int[] lower = new int[4];
+        int[] upper = new int[4];
         for (int i = 0; i < 4; i++) {
             int refVal = similarityFeatures[i];
-            similarImagesQuery.add(
-                    IntPoint.newRangeQuery(BasicProps.SIMILARITY_FEATURES + i, refVal - range, refVal + range),
-                    Occur.MUST);
+            lower[i] = refVal - range;
+            upper[i] = refVal + range;
         }
+        BooleanQuery.Builder similarImagesQuery = new BooleanQuery.Builder();
+        similarImagesQuery.add(IntPoint.newRangeQuery(BasicProps.SIMILARITY_FEATURES, lower, upper), Occur.MUST);
 
         return similarImagesQuery.build();
     }
