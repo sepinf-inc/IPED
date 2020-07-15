@@ -707,7 +707,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     public void setColumnRenderer(TableColumn tc) {
         if (ResultTableModel.SCORE_COL.equals(loadedFields.get(tc.getModelIndex() - ResultTableModel.fixedCols.length)))
-            tc.setCellRenderer(new ProgressCellRenderer());
+            ;// tc.setCellRenderer(new ProgressCellRenderer());
     }
 
 }

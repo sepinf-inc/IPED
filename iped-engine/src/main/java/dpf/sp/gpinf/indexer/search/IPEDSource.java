@@ -42,7 +42,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
@@ -66,6 +65,7 @@ import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
+import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
@@ -338,9 +338,10 @@ public class IPEDSource implements Closeable, IIPEDSource {
             Directory directory = ConfiguredFSDirectory.open(index);
             reader = DirectoryReader.open(directory);
         } else {
-            reader = DirectoryReader.open(iw, true);
+            reader = DirectoryReader.open(iw, true, false);
         }
 
+        // TODO get rid of deprecated SlowCompositeReaderWrapper
         atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 
         openSearcher();

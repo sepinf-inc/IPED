@@ -13,10 +13,9 @@ import java.util.stream.Collectors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.FieldType.NumericType;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
-import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
+import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
@@ -26,7 +25,6 @@ import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.NumericUtils;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -41,7 +39,7 @@ public class QueryBuilder implements IQueryBuilder {
 
     private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer();
 
-    private static HashMap<String, NumericConfig> numericConfigCache;
+    private static HashMap<String, PointsConfig> pointsConfigCache;
 
     private static IIPEDSource prevIpedCase;
 
@@ -132,8 +130,8 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setFuzzyPrefixLength(2);
             parser.setFuzzyMinSim(0.7f);
             parser.setDateResolution(DateTools.Resolution.SECOND);
-            parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
-            parser.setNumericConfigMap(getNumericConfigMap());
+            parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
+            parser.setPointsConfigMap(getPointsConfigMap());
 
             // remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
             AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
@@ -181,27 +179,27 @@ public class QueryBuilder implements IQueryBuilder {
         return q;
     }
 
-    private HashMap<String, NumericConfig> getNumericConfigMap() {
+    private HashMap<String, PointsConfig> getPointsConfigMap() {
 
         synchronized (lock) {
-            if (ipedCase == prevIpedCase && numericConfigCache != null) {
-                return numericConfigCache;
+            if (ipedCase == prevIpedCase && pointsConfigCache != null) {
+                return pointsConfigCache;
             }
         }
 
-        HashMap<String, NumericConfig> numericConfigMap = new HashMap<>();
+        HashMap<String, PointsConfig> pointsConfigMap = new HashMap<>();
 
         DecimalFormat nf = new DecimalFormat();
-        NumericConfig configLong = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.LONG);
-        NumericConfig configInt = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.INT);
-        NumericConfig configFloat = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.FLOAT);
-        NumericConfig configDouble = new NumericConfig(NumericUtils.PRECISION_STEP_DEFAULT, nf, NumericType.DOUBLE);
+        PointsConfig configLong = new PointsConfig(nf, Long.class);
+        PointsConfig configInt = new PointsConfig(nf, Integer.class);
+        PointsConfig configFloat = new PointsConfig(nf, Float.class);
+        PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
-        numericConfigMap.put(IndexItem.LENGTH, configLong);
-        numericConfigMap.put(IndexItem.ID, configInt);
-        numericConfigMap.put(IndexItem.SLEUTHID, configInt);
-        numericConfigMap.put(IndexItem.PARENTID, configInt);
-        numericConfigMap.put(IndexItem.FTKID, configInt);
+        pointsConfigMap.put(IndexItem.LENGTH, configLong);
+        pointsConfigMap.put(IndexItem.ID, configInt);
+        pointsConfigMap.put(IndexItem.SLEUTHID, configInt);
+        pointsConfigMap.put(IndexItem.PARENTID, configInt);
+        pointsConfigMap.put(IndexItem.FTKID, configInt);
 
         try {
             for (String field : ipedCase.getAtomicReader().fields()) {
@@ -209,13 +207,13 @@ public class QueryBuilder implements IQueryBuilder {
                 if (type == null)
                     continue;
                 if (type.equals(Integer.class) || type.equals(Byte.class))
-                    numericConfigMap.put(field, configInt);
+                    pointsConfigMap.put(field, configInt);
                 else if (type.equals(Long.class))
-                    numericConfigMap.put(field, configLong);
+                    pointsConfigMap.put(field, configLong);
                 else if (type.equals(Float.class))
-                    numericConfigMap.put(field, configFloat);
+                    pointsConfigMap.put(field, configFloat);
                 else if (type.equals(Double.class))
-                    numericConfigMap.put(field, configDouble);
+                    pointsConfigMap.put(field, configDouble);
             }
 
         } catch (IOException e) {
@@ -224,10 +222,10 @@ public class QueryBuilder implements IQueryBuilder {
         }
 
         synchronized (lock) {
-            numericConfigCache = numericConfigMap;
+            pointsConfigCache = pointsConfigMap;
             prevIpedCase = ipedCase;
         }
 
-        return numericConfigMap;
+        return pointsConfigMap;
     }
 }

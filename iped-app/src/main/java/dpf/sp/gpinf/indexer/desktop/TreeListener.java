@@ -18,17 +18,11 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -47,18 +41,24 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.util.SwingUtil;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
 public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
 
-    Query treeQuery, recursiveTreeQuery;
+    private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
     private boolean clearing = false;
+
+    public Query getQuery() {
+        if (App.get().recursiveTreeList.isSelected())
+            return recursiveTreeQuery;
+        else
+            return treeQuery;
+    }
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -90,7 +90,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
         } else {
             String treeQueryStr = ""; //$NON-NLS-1$
-            recursiveTreeQuery = new BooleanQuery();
+            BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
 
             for (TreePath path : selection) {
                 Document doc = ((Node) path.getLastPathComponent()).getDoc();
@@ -103,11 +103,12 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
                 treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                         + sourceUUID + ") "; //$NON-NLS-1$
 
-                BooleanQuery subQuery = new BooleanQuery();
+                BooleanQuery.Builder subQuery = new BooleanQuery.Builder();
                 subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
                 subQuery.add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
-                ((BooleanQuery) recursiveTreeQuery).add(subQuery, Occur.SHOULD);
+                recursiveQueryBuilder.add(subQuery.build(), Occur.SHOULD);
             }
+            recursiveTreeQuery = recursiveQueryBuilder.build();
 
             try {
                 treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
