@@ -5,11 +5,10 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
@@ -117,8 +116,8 @@ public class GraphImportRunner {
 
     public File writeArgsFile(File databaseDir, String dbName, boolean highIO) throws IOException {
         File file = File.createTempFile(ARGS_FILE_NAME, ".txt");
-        try (BufferedWriter writer = new BufferedWriter(
-                new OutputStreamWriter(new FileOutputStream(file), Charset.forName("utf-8")))) {
+        // neo4j-3.4.10 uses platform default encoding
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
 
             writer.write("--into ");
             writer.write("\"" + databaseDir.getAbsolutePath() + "\"");
