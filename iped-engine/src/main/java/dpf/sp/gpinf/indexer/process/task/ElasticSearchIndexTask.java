@@ -12,7 +12,12 @@ import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.http.HttpHost;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.config.RequestConfig;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
@@ -26,6 +31,7 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
@@ -90,6 +96,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static HashMap<String, String> cmdLineFields = new HashMap<>();
 
+    private static String user, password;
+
     private String indexName;
 
     private BulkRequest bulkRequest = new BulkRequest();
@@ -130,13 +138,26 @@ public class ElasticSearchIndexTask extends AbstractTask {
             parseCmdLineFields(cmdFields);
         }
 
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(host, port, "http"))
+        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, "http"))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
                         return requestConfigBuilder.setConnectTimeout(connect_timeout).setSocketTimeout(timeout_millis);
                     }
-                }));
+                });
+
+        if (user != null && password != null) {
+            CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+            credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(user, password));
+            clientBuilder.setHttpClientConfigCallback(new HttpClientConfigCallback() {
+                @Override
+                public HttpAsyncClientBuilder customizeHttpClient(HttpAsyncClientBuilder httpClientBuilder) {
+                    return httpClientBuilder.setDefaultCredentialsProvider(credentialsProvider);
+                }
+            });
+        }
+
+        client = new RestHighLevelClient(clientBuilder);
 
         boolean ping = client.ping(RequestOptions.DEFAULT);
         if (!ping) {
@@ -149,8 +170,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void parseCmdLineFields(String cmdFields) {
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
-            String[] pair = entry.split(":");
-            cmdLineFields.put(pair[0], pair[1]);
+            String[] pair = entry.split(":", 2);
+            if ("user".equals(pair[0]))
+                user = pair[1];
+            else if ("password".equals(pair[0]))
+                password = pair[1];
+            else
+                cmdLineFields.put(pair[0], pair[1]);
         }
     }
 
