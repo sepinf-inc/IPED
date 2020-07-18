@@ -527,7 +527,7 @@ public class LibreOfficeViewer extends Viewer {
         BufferedWriter out = null;
         try {
             Path zipFilePath = lastFile.toPath();
-            fs = FileSystems.newFileSystem(zipFilePath, null);
+            fs = FileSystems.newFileSystem(zipFilePath, (ClassLoader) null);
             Path source = fs.getPath("/[Content_Types].xml");
             Path temp = fs.getPath("/tmp.xml");
             Files.move(source, temp);
