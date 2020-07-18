@@ -19,11 +19,11 @@ jobs:
       run: mvn -B package --file pom.xml
     - shell: bash
       run:
-        cd target && mv release iped-snapshot-$(sha) && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$(sha)
+        cd target && mv release iped-snapshot-$($sha) && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$($sha)
     - name: Upload snapshot
       uses: actions/upload-artifact@v1
       with:
-        name: iped-snapshot-$(sha)
+        name: iped-snapshot-$($sha)
         path: iped-snapshot.tar.gz
 
   build-java11:
