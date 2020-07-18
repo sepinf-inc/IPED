@@ -6,7 +6,8 @@ jobs:
   build-java8:
 
     runs-on: ubuntu-latest
-
+    env:
+      sha: $(git rev-parse --short "$GITHUB_SHA")
     steps:
     - uses: actions/checkout@v1
     - name: Set up JDK 1.8
@@ -18,11 +19,11 @@ jobs:
       run: mvn -B package --file pom.xml
     - shell: bash
       run:
-        cd target && mv release snapshot && tar -zcvf ../iped-snapshot.tar.gz snapshot
+        cd target && mv release iped-snapshot-$sha && tar -zcvf ../iped-snapshot.tar.gz iped-snapshot-$sha
     - name: Upload snapshot
       uses: actions/upload-artifact@v1
       with:
-        name: iped-snapshot
+        name: iped-snapshot-$sha
         path: iped-snapshot.tar.gz
 
   build-java11:
