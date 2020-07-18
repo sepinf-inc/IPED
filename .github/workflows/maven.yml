@@ -17,13 +17,12 @@ jobs:
     - name: Build with Maven
       run: mvn -B package --file pom.xml
     - shell: bash
-        run: |
-          tar -zcvf iped-snapshot.tar.gz target/release
-     - name: Upload snapshot
-        uses: actions/upload-artifact@v1
-        with:
-          name: snapshot
-          path: iped-snapshot.tar.gz
+      run: tar -zcvf iped-snapshot.tar.gz target/release
+    - name: Upload snapshot
+      uses: actions/upload-artifact@v1
+      with:
+        name: snapshot
+        path: iped-snapshot.tar.gz
 
   build-java11:
 
