@@ -18,7 +18,7 @@ jobs:
       run: mvn -B package --file pom.xml
     - shell: bash
       run:
-        cd target/release && tar -zcvf ../../iped-snapshot.tar.gz .
+        cd target && mv release snapshot && tar -zcvf ../iped-snapshot.tar.gz snapshot
     - name: Upload snapshot
       uses: actions/upload-artifact@v1
       with:
