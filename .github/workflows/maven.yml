@@ -16,3 +16,17 @@ jobs:
         java-package: jdk+fx
     - name: Build with Maven
       run: mvn -B package --file pom.xml
+
+  build2:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up JDK 14
+      uses: actions/setup-java@v1
+      with:
+        java-version: 14
+        java-package: jdk+fx
+    - name: Build with Maven
+      run: mvn -B package --file pom.xml
