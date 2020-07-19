@@ -22,7 +22,7 @@ jobs:
     - name: Upload snapshot
       uses: actions/upload-artifact@v1
       with:
-        name: iped-snapshot-${{ GITHUB_SHA }}
+        name: iped-snapshot-${{ github.sha }}
         path: iped-snapshot.tar.gz
 
   build-java11:
