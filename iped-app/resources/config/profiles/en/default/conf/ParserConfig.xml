@@ -107,6 +107,7 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
+		<parser class="dpf.ap.gpinf.telegramextractor.TelegramParser"></parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>

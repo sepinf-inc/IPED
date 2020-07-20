@@ -2,10 +2,15 @@ package dpf.ap.gpinf.telegramextractor;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
+
+import dpf.ap.gpinf.telegram.tgnet.SerializedData;
+import dpf.ap.gpinf.telegram.tgnet.TLRPC;
 
 import java.nio.ByteBuffer;
 public class Util {
@@ -24,6 +29,25 @@ public class Util {
         return byteArrayToHex(DatatypeConverter.parseBase64Binary(str));
     }
 	
+	public static Object getAtribute(Object obj,String atr) throws Exception {
+		Field f=obj.getClass().getField(atr);
+		return f.get(obj);
+		
+	}
+	public static Object deserialize(String classe,byte[] dados) {
+		try {
+			Object  osd=Class.forName("SerializedData").getConstructor(byte[].class).newInstance(dados);
+			Method m=osd.getClass().getMethod("readInt32");
+			int aux=(Integer)m.invoke(osd, false);
+			m=Class.forName(classe).getMethod("TLdeserialize");
+			return m.invoke(null, osd,aux,false);
+		}catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+		}
+		return null;
+        //TLRPC.User u = TLRPC.User.TLdeserialize(s, s.readInt32(false), false);
+	}
 	
 	public static String hashFile(InputStream is) {
         String hash = null;

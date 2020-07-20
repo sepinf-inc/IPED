@@ -29,6 +29,7 @@ import dpf.ap.gpinf.telegram.tgnet.TLRPC.DocumentAttribute;
 import dpf.ap.gpinf.telegram.tgnet.TLRPC.PhotoSize;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 public class Extractor {
 	Connection conn;
 	public Extractor(Connection conn) {
@@ -105,14 +106,12 @@ public class Extractor {
                 }
                 if(cg!=null) {
                 	System.out.println("Nome do chat "+cg.getId());
-                    ArrayList<Message> messages=extractMessages(conn, cg);
+                    /*
+                	ArrayList<Message> messages=extractMessages(conn, cg);
                     if(messages == null || messages.isEmpty())
                         continue;
-                    if(cg.isGroup()){
-                        ChatGroup group = (ChatGroup)cg; 
-                        //group.members.putAll(getGroupMembers(conn ,cg.id,messages))
-                    }
-                    cg.messages.addAll(messages);
+                   */
+                    //cg.messages.addAll(messages);
                     l.add(cg);
                 }
             }
@@ -145,7 +144,7 @@ public class Extractor {
         }
     }
     
-    protected ArrayList<Message> extractMessages(Connection conn ,Chat chat) throws Exception{
+    protected ArrayList<Message> extractMessages(Chat chat) throws Exception{
     	ArrayList<Message> msgs=new ArrayList<Message>();
     	        PreparedStatement stmt=conn.prepareStatement(EXTRACT_MESSAGES_SQL);
     	        if(stmt!=null) {
@@ -278,10 +277,12 @@ public class Extractor {
     protected void extractDocument(Message message,TLRPC.Document document) throws IOException {
     	message.setMediaMime(document.mime_type);
     	message.setMediaName(document.id+"");
+    	
     	List<IItemBase> result = null;
-    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ message.getMediaName()+"\"",searcher);
+    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ message.getMediaName()+"\"",searcher);
         message.setMediaFile(getPathFromResult(result, document.size));
         message.setMediaHash(getHash(result, document.size));
+        message.setThumb(getThumb(result, document.size));
         
     	if(message.getMediaName().contains("5332534912568264569")) {
     		
@@ -290,15 +291,17 @@ public class Extractor {
     		System.out.println("hash "+message.getMediaHash());
     		
     	}
-    	       
+    	    	       
         if(message.getMediaFile()==null){
             for( DocumentAttribute at :document.attributes){
                 //tentar achar pelo nome do arquivo original
                 if(at.file_name!=null){
-                	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:"+ "\""+at.file_name+"\"",searcher);
+                	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":"+ "\""+at.file_name+"\"",searcher);
                     String path=getPathFromResult(result, document.size);
                     if(path!=null){
-                    	message.setThumb(FileUtils.readFileToByteArray(new File(path)));
+                    	message.setMediaFile(path);
+                    	message.setMediaHash(getHash(result, document.size));
+                    	message.setThumb(getThumb(result, document.size));
                         break;
                     }
                 }
@@ -306,7 +309,7 @@ public class Extractor {
         }
 
 
-        if(message.getMediaFile()==null && document.thumbs.size()>0){
+        if(message.getThumb()==null && document.thumbs!=null && document.thumbs.size()>0){
             String file=getFileFromPhoto(document.thumbs);
             if(file!=null) {
                 message.setThumb(FileUtils.readFileToByteArray(new File(file)));
@@ -365,6 +368,17 @@ public class Extractor {
     	return null;
 	}
     
+    protected byte[] getThumb(List<IItemBase> result,int size) {
+    	if(result==null)
+    		return null;
+    	for(IItemBase f:result) {
+    		if(f.getLength()==size) {
+					return f.getThumb();
+    		}
+    	}
+    	return null;
+	}
+    
     
     private String getFileFromPhoto(ArrayList<PhotoSize> sizes) {
     	List<IItemBase> result = null;
@@ -374,10 +388,10 @@ public class Extractor {
 	    		continue;
 	    	}
 	    	String name=""+img.location.volume_id+"_"+img.location.local_id;
-	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+".jpg\"",searcher);
+	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+".jpg\"  - size:0",searcher);
 	    	
             if(result==null || result.isEmpty()){
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"  - size:0",searcher);
             }
             if(result!=null){
             	return getPathFromResult(result, img.size);
@@ -390,6 +404,14 @@ public class Extractor {
 	}
 
 	protected void extractContacts() throws SQLException {
+		try {
+			Object o=Class.forName("telegramdecoder.DecoderTelegram").newInstance();
+			System.out.println(ReflectionToStringBuilder.toString(o));
+		}catch (Exception e) {
+			System.out.println("erro ao carregar");
+			// TODO: handle exception
+			
+		}
 		if(conn!=null) {
             PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL);
             if(stmt!=null){
@@ -402,15 +424,17 @@ public class Extractor {
                 	TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
                     if(user!=null){
                         Contact cont=getContact(user.id);
+                        
                         cont.setName(user.first_name);
                         cont.setUsername(user.username);
                         cont.setPhone(user.phone);
                         if(user.phone!=null) {
                         	nphones++;
                         }
-                        if(user.photo!=null){
+                        if(cont.getAvatar()!=null &&  user.photo!=null){
                         	try {
-                        		searchAvatarFileName(cont,user.photo.photo_big,user.photo.photo_small);
+                        		if(user.phone!=null)
+                        			searchAvatarFileName(cont,user.photo.photo_big,user.photo.photo_small);
                         	}catch (IOException e) {
                         		// TODO: handle exception
                         		e.printStackTrace();
@@ -432,21 +456,23 @@ public class Extractor {
         String name=null;
         if(big!=null){
         	name=""+ big.volume_id + "_" + big.local_id+".jpg";
-	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
+	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"  - "+BasicProps.LENGTH+":0",searcher);
             
-            if(result==null || result.isEmpty()) {
+           /* if(result==null || result.isEmpty()) {
             	name="" + big.volume_id + "_" + big.local_id;
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"",searcher);
             }
+            */
         }
         if((result==null || result.isEmpty()) && small!=null){
         	name=""+ small.volume_id + "_" + small.local_id+".jpg";
-        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);
-            
+        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\" - "+BasicProps.LENGTH+":0",searcher);
+            /*
             if(result==null || result.isEmpty()) {
             	name="" + small.volume_id + "_" + small.local_id;
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("name:\""+ name+"\"",searcher);;
+            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"",searcher);;
             }
+            */
         }
         if(result!=null && !result.isEmpty()) {
         	File f=result.get(0).getTempFile().getAbsoluteFile();

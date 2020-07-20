@@ -20,6 +20,16 @@ body
 	z-index:100;
 }
 
+#topbar.telegram
+{
+	position:fixed;
+	background:#5682a3;
+	border:1px solid #394d4d;
+	width:640px;
+	z-index:100;
+}
+
+
 #topbar .left
 {
 	float: left;

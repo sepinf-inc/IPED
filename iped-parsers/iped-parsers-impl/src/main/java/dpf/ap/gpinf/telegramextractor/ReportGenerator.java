@@ -69,7 +69,7 @@ public class ReportGenerator {
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
         String title=c.getName();
         if(!c.isGroup()) {
-        	if(c.getC().getPhone()!=null)
+        	if(c.getC().getPhone()!=null) 
         		title+=" phone:"+c.getC().getPhone();
         	else if(c.getC().getUsername()!=null)
         		title+=" user:"+c.getC().getUsername();
@@ -131,6 +131,8 @@ public class ReportGenerator {
         	img.setAtribute("class", "iped-show");
         	if(thumb!=null) {
         		img.setAtribute("src", "data:image/jpg;base64,"+dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+        	}else {
+        		img.setAtribute("src",dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
         	}
         	img.setAtribute("width", "100");
         	img.setAtribute("height", "102");
@@ -371,8 +373,8 @@ public class ReportGenerator {
                 + "</script>\n" //$NON-NLS-1$
                 + dpf.mg.udi.gpinf.vcardparser.VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
                 + "<style>.check {vertical-align: top;}</style>"
-                + "<body>\n" //$NON-NLS-1$
-                + "<div id=\"topbar\">\n" //$NON-NLS-1$
+                + "<body style='background-image:url("+dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg")+")'>\n" //$NON-NLS-1$
+                + "<div id=\"topbar\" class='telegram'>\n" //$NON-NLS-1$
                 + "	<span class=\"left\">" //$NON-NLS-1$
                 + " &nbsp; "); //$NON-NLS-1$
         

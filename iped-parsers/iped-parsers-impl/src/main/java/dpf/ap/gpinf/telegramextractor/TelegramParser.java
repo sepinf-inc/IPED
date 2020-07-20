@@ -85,7 +85,7 @@ public class TelegramParser extends SQLite3DBParser {
                 cMetadata.set(TikaCoreProperties.TITLE, c.getName());
                 cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                 cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
-                cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId()+"");
+                cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId()+""); 
                 cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
                 cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
                 if(c.getAvatar() != null) {
@@ -98,6 +98,12 @@ public class TelegramParser extends SQLite3DBParser {
 		
 		for(Chat c:e.getChatList()) {
 			//System.out.println("teste telegram");
+			try {
+				c.getMessages().addAll( e.extractMessages(c));
+			}catch (Exception ex) {
+				// TODO: handle exception
+				ex.printStackTrace();
+			}
 			for(int i=0;i*MAXMSGS<c.messages.size();i++) {
 				byte[] bytes=r.generateChatHtml(c,i*MAXMSGS,(i+1)*MAXMSGS);
 				Metadata chatMetadata = new Metadata();

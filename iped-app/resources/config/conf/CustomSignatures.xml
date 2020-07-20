@@ -235,7 +235,19 @@
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="msgstore*.db"/>
     </mime-type>
-    
+	
+	<mime-type type="application/x-telegram-db">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="cache4.db"/>
+    </mime-type>
+	
+     <mime-type type="application/x-telegram-chat">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	<mime-type type="contact/x-telegram-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	
     <mime-type type="application/x-whatsapp-chatstorage">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ChatStorage.sqlite"/>
