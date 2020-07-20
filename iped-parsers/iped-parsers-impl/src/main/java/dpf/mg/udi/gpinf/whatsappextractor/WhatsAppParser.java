@@ -35,6 +35,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -72,15 +74,15 @@ public class WhatsAppParser extends SQLite3DBParser {
      * 
      */
     private static final long serialVersionUID = 1L;
-    
+
     public static final String WHATSAPP = "WhatsApp";
 
     public static final MediaType WA_USER_XML = MediaType.application("x-whatsapp-user-xml"); //$NON-NLS-1$
-    
+
     public static final MediaType WA_USER_PLIST = MediaType.application("x-whatsapp-user-plist"); //$NON-NLS-1$
-    
+
     public static final MediaType WHATSAPP_ACCOUNT = MediaType.application("x-whatsapp-account"); //$NON-NLS-1$
-    
+
     public static final MediaType MSG_STORE = MediaType.application("x-whatsapp-db"); //$NON-NLS-1$
 
     public static final MediaType WA_DB = MediaType.application("x-whatsapp-wadb"); //$NON-NLS-1$
@@ -92,22 +94,24 @@ public class WhatsAppParser extends SQLite3DBParser {
     public static final MediaType WHATSAPP_CHAT = MediaType.parse("application/x-whatsapp-chat"); //$NON-NLS-1$
 
     public static final MediaType WHATSAPP_CONTACT = MediaType.parse("contact/x-whatsapp-contact"); //$NON-NLS-1$
-    
+
     public static final MediaType WHATSAPP_MESSAGE = MediaType.parse("message/x-whatsapp-message"); //$NON-NLS-1$
-    
+
     public static final MediaType WHATSAPP_ATTACHMENT = MediaType.parse("message/x-whatsapp-attachment"); //$NON-NLS-1$
-    
+
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
-    
-    //ugly workaround to show message type before caption (values are shown in sort order)
+
+    // ugly workaround to show message type before caption (values are shown in sort
+    // order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2, WA_USER_XML, WA_USER_PLIST);
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
+            WA_USER_XML, WA_USER_PLIST);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
     private SQLite3Parser sqliteParser = new SQLite3Parser();
-    
+
     private boolean extractMessages = true;
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
@@ -118,7 +122,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
     }
-    
+
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;
@@ -133,9 +137,9 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         if (mimetype.equals(WA_USER_XML.toString())) {
             parseWhatsAppAccount(stream, context, handler, true);
-        }else if (mimetype.equals(WA_USER_PLIST.toString())) {
+        } else if (mimetype.equals(WA_USER_PLIST.toString())) {
             parseWhatsAppAccount(stream, context, handler, false);
-        }else if (mimetype.equals(MSG_STORE.toString())) {
+        } else if (mimetype.equals(MSG_STORE.toString())) {
             parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
         } else if (mimetype.equals(WA_DB.toString())) {
             parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
@@ -164,25 +168,25 @@ public class WhatsAppParser extends SQLite3DBParser {
                     filePath = itemInfo.getPath();
                 }
                 WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, extFactory.getClass());
-                
-                String dbPath = ((ItemInfo)context.get(ItemInfo.class)).getPath();
+
+                String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
                 Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
                 List<Chat> chatList = waExtractor.getChatList();
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
 
                 int chatVirtualId = 0;
                 for (Chat c : chatList) {
                     getAvatar(searcher, c.getRemote());
                     int frag = 0;
                     int firstMsg = 0;
+                    ReportGenerator reportGenerator = new ReportGenerator(searcher);
                     byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
                     while (bytes != null) {
                         Metadata chatMetadata = new Metadata();
                         int nextMsg = reportGenerator.getNextMsgNum();
-                        
-                        List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg); 
+
+                        List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
                         storeLinkedHashes(msgSubset, chatMetadata, searcher);
                         storeLocations(msgSubset, chatMetadata);
 
@@ -192,20 +196,21 @@ public class WhatsAppParser extends SQLite3DBParser {
                         String chatName = c.getTitle();
                         if (frag > 0 || nextBytes != null)
                             chatName += "_" + frag++; //$NON-NLS-1$
-                        
+
                         chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                         chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
                         chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
-                        if(extractMessages && msgSubset.size() > 0) {
+                        if (extractMessages && msgSubset.size() > 0) {
                             chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                         }
 
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                         extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                         bytes = nextBytes;
-                        
-                        if(extractMessages) {
-                            extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
+
+                        if (extractMessages) {
+                            extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler,
+                                    extractor);
                         }
                     }
                 }
@@ -220,24 +225,27 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
     }
-    
-    private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid) throws SAXException, IOException {
+
+    private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid)
+            throws SAXException, IOException {
         WAAccount account = null;
-        if(isAndroid) account = WAAccount.getFromAndroidXml(is);
-        else account = WAAccount.getFromIOSPlist(is);
-        
+        if (isAndroid)
+            account = WAAccount.getFromAndroidXml(is);
+        else
+            account = WAAccount.getFromIOSPlist(is);
+
         Metadata meta = new Metadata();
         meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ACCOUNT.toString());
         meta.set(TikaCoreProperties.TITLE, account.getTitle());
         meta.set(ExtraProperties.USER_NAME, account.getName());
-        meta.set(ExtraProperties.USER_PHONE, account.getId());
-        meta.set(ExtraProperties.USER_ACCOUNT, account.getId());
+        meta.set(ExtraProperties.USER_PHONE, getInternationalPhone(account.getId()));
+        meta.set(ExtraProperties.USER_ACCOUNT, account.getFullId());
         meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
         meta.set(ExtraProperties.USER_NOTES, account.getStatus());
-        if(account.getAvatar() != null) {
+        if (account.getAvatar() != null) {
             meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
         }
-        
+
         IItemSearcher searcher = context.get(IItemSearcher.class);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
@@ -248,17 +256,29 @@ public class WhatsAppParser extends SQLite3DBParser {
             extractor.parseEmbedded(bais, handler, meta, false);
         }
     }
-    
+
+    private static final Pattern numbers = Pattern.compile("[0-9]+");
+
+    private String getInternationalPhone(String id) {
+        Matcher m = numbers.matcher(id);
+        if (m.matches())
+            return "+" + id;
+        else
+            return null;
+    }
+
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
         String query = BasicProps.NAME + ":";
-        if(isAndroid) query += "\"com.whatsapp_preferences.xml\"";
-        else query += "\"group.net.whatsapp.WhatsApp.shared.plist\"";
+        if (isAndroid)
+            query += "\"com.whatsapp_preferences.xml\"";
+        else
+            query += "\"group.net.whatsapp.WhatsApp.shared.plist\"";
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
-        if(item != null) {
-            try(InputStream is = item.getBufferedStream()){
+        if (item != null) {
+            try (InputStream is = item.getBufferedStream()) {
                 WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
-                if(account != null)
+                if (account != null)
                     return account;
             } catch (IOException e) {
                 e.printStackTrace();
@@ -266,14 +286,14 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         return new WAAccount("unknownAccount");
     }
-    
+
     private IItemBase getBestItem(List<IItemBase> result, String path) {
-        if(result.size() == 1) {
+        if (result.size() == 1) {
             return result.get(0);
-        }else if(result.size() > 1) {
-            while((path = new File(path).getParent()) != null) {
-                for(IItemBase item : result) {
-                    if(item.getPath().startsWith(path)) {
+        } else if (result.size() > 1) {
+            while ((path = new File(path).getParent()) != null) {
+                for (IItemBase item : result) {
+                    if (item.getPath().startsWith(path)) {
                         return item;
                     }
                 }
@@ -281,20 +301,21 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         return null;
     }
-    
+
     private String formatContact(WAContact contact) {
-        if(contact.getName() == null)
-            return contact.getId();
-        else if(contact.getName().trim().equals(contact.getId()))
-            return contact.getId();
+        if (contact.getName() == null)
+            return contact.getFullId();
+        else if (contact.getName().trim().equals(contact.getId()))
+            return contact.getFullId();
         else
-            return contact.getName().trim() + " (" + contact.getId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            return contact.getName().trim() + " (" + contact.getFullId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
-    
-    private void extractMessages(String chatName, List<Message> messages, WAAccount account, WAContactsDirectory contacts, int parentVirtualId,
-            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+
+    private void extractMessages(String chatName, List<Message> messages, WAAccount account,
+            WAContactsDirectory contacts, int parentVirtualId, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
-        for(dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
+        for (dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
@@ -303,62 +324,64 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
-            
-            if(!m.isSystemMessage()) {
+
+            if (!m.isSystemMessage()) {
                 String local = formatContact(account);
                 String remote = m.getRemoteResource();
                 if (remote != null) {
                     WAContact contact = contacts.getContact(remote);
                     remote = contact == null ? remote : formatContact(contact);
                 }
-                if(m.isFromMe()) {
+                if (m.isFromMe()) {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
-                }else {
+                } else {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, local);
                 }
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
             meta.set(ExtraProperties.URL, m.getUrl());
-            
+
             meta.set("mediaName", m.getMediaName());
             meta.set("mediaMime", m.getMediaMime());
-            if(m.getMediaSize() != 0) {
+            if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if(m.getMediaHash() != null) {
+            if (m.getMediaHash() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
             }
-            
-            //TODO store thumb in metadata?
-            
-            if(m.getMessageType() == MessageType.LOCATION_MESSAGE || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
+
+            // TODO store thumb in metadata?
+
+            if (m.getMessageType() == MessageType.LOCATION_MESSAGE
+                    || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
                 meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
-            
-            if(m.getMessageStatus() != null) {
+
+            if (m.getMessageStatus() != null) {
                 meta.set("messageStatus", m.getMessageStatus().toString());
             }
-            
-            if(m.isCall()) {
+
+            if (m.isCall()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CALL.toString());
                 meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration()));
             }
-            
-            if(meta.get(ExtraProperties.MESSAGE_BODY) == null) {
+
+            if (meta.get(ExtraProperties.MESSAGE_BODY) == null) {
                 meta.set(ExtraProperties.MESSAGE_BODY, MESSAGE_TYPE_PREFIX + m.getMessageType().toString());
             }
-            if(m.getMediaCaption() != null) {
+            if (m.getMediaCaption() != null) {
                 meta.add(ExtraProperties.MESSAGE_BODY, m.getMediaCaption());
             }
-            if(m.getVcards() != null && !m.getVcards().isEmpty()) {
+            if (m.getVcards() != null && !m.getVcards().isEmpty()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, VCardParser.VCARD_MIME.toString());
                 for (String vcard : m.getVcards()) {
-                    extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler, meta, false);
+                    extractor.parseEmbedded(new ByteArrayInputStream(vcard.getBytes(StandardCharsets.UTF_8)), handler,
+                            meta, false);
                 }
-            }else {
+            } else {
                 meta.set(BasicProps.HASH, "");
                 extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
             }
@@ -418,7 +441,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             if (result.isEmpty()) {
                 if (contact.getId() != null && !contact.getId().isEmpty()) {
-                    result = searcher.search(BasicProps.NAME + ":(" + escape(searcher, contact.getId()) + " AND (jpg thumb))"); //$NON-NLS-1$ //$NON-NLS-2$
+                    result = searcher
+                            .search(BasicProps.NAME + ":(" + escape(searcher, contact.getId()) + " AND (jpg thumb))"); //$NON-NLS-1$ //$NON-NLS-2$
                     result = filterAvatars(result, contact.getId());
                     Collections.sort(result, new AvatarComparator());
                 }
@@ -454,29 +478,29 @@ public class WhatsAppParser extends SQLite3DBParser {
         long endTime = System.currentTimeMillis() / 1000;
         ArrayList<IItemBase> result = new ArrayList<IItemBase>();
         for (IItemBase item : avatars) {
-            //filter group avatars and unrelated images
+            // filter group avatars and unrelated images
             if (item.getName().startsWith(id) && item.getName().split("-").length < 3) { //$NON-NLS-1$
                 String str = item.getName().substring(id.length());
                 int idx = str.indexOf(".");
-                if(str.startsWith("-") && idx > 0){ //$NON-NLS-1$ //$NON-NLS-2$
-                    String t = str.substring(1, idx); //$NON-NLS-1$
+                if (str.startsWith("-") && idx > 0) { //$NON-NLS-1$ //$NON-NLS-2$
+                    String t = str.substring(1, idx); // $NON-NLS-1$
                     try {
                         Long time = Long.valueOf(t);
-                        if(time > startTime && time < endTime) {
+                        if (time > startTime && time < endTime) {
                             result.add(item);
                         }
-                    }catch(NumberFormatException e) {
-                        //ignore
+                    } catch (NumberFormatException e) {
+                        // ignore
                     }
-                }else if(str.equals(".thumb") || str.equals(".jpg")) { //$NON-NLS-1$ //$NON-NLS-2$
+                } else if (str.equals(".thumb") || str.equals(".jpg")) { //$NON-NLS-1$ //$NON-NLS-2$
                     result.add(item);
                 }
             }
-        }   
+        }
         return result;
     }
 
-    //sort newer avatar to be first
+    // sort newer avatar to be first
     private class AvatarComparator implements Comparator<IItemBase> {
         @Override
         public int compare(IItemBase o1, IItemBase o2) {
@@ -506,8 +530,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 WAContactsDirectory contacts = getWAContactsDirectoryForPath(path, null, null);
                 contacts.putAll(waExtractor.getContactsDirectory());
-                
-                String dbPath = ((ItemInfo)context.get(ItemInfo.class)).getPath();
+
+                String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
                 ReportGenerator reportGenerator = new ReportGenerator(searcher);
@@ -516,13 +540,13 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CONTACT.toString());
                     cMetadata.set(TikaCoreProperties.TITLE, c.getTitle());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
-                    cMetadata.set(ExtraProperties.USER_PHONE, c.getId());
-                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId());
+                    cMetadata.set(ExtraProperties.USER_PHONE, getInternationalPhone(c.getId()));
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getFullId());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
-                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getId());
+                    cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getFullId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
                     getAvatar(searcher, c);
-                    if(c.getAvatar() != null) {
+                    if (c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
 
@@ -543,7 +567,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private WAContactsDirectory getWAContactsDirectoryForPath(String path, IItemSearcher searcher, Class<?> extFactoryClass) throws IOException, WAExtractorException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+    private WAContactsDirectory getWAContactsDirectoryForPath(String path, IItemSearcher searcher,
+            Class<?> extFactoryClass)
+            throws IOException, WAExtractorException, InstantiationException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
         if (path == null) {
             path = ""; //$NON-NLS-1$
         } else if (path.contains("/")) { //$NON-NLS-1$
@@ -559,15 +586,18 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         return cd;
     }
-    
-    private WAContactsDirectory getContacts(String path, IItemSearcher searcher, Class<?> extFactoryClass) throws IOException, WAExtractorException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-        if(searcher == null) {
+
+    private WAContactsDirectory getContacts(String path, IItemSearcher searcher, Class<?> extFactoryClass)
+            throws IOException, WAExtractorException, InstantiationException, IllegalAccessException,
+            IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+        if (searcher == null) {
             return new WAContactsDirectory();
         }
         String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
-        query += " && " + BasicProps.CONTENTTYPE + ":(\"" + WA_DB.toString() + "\" || \"" + CONTACTS_V2.toString() + "\")";
+        query += " && " + BasicProps.CONTENTTYPE + ":(\"" + WA_DB.toString() + "\" || \"" + CONTACTS_V2.toString()
+                + "\")";
         List<IItemBase> items = searcher.search(query);
-        if(items.size() == 0) {
+        if (items.size() == 0) {
             return new WAContactsDirectory();
         }
         IItemBase item = items.get(0);
@@ -575,8 +605,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         context.set(IItemSearcher.class, searcher);
         context.set(IItemBase.class, item);
         ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.newInstance();
-        
-        try(InputStream is = item.getBufferedStream()){
+
+        try (InputStream is = item.getBufferedStream()) {
             extFactory.setConnectionParams(is, null, context, this);
             WAContactsExtractor waExtractor = extFactory.createContactsExtractor(item.getTempFile());
             waExtractor.extractContactList();
@@ -585,24 +615,24 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private static abstract class ExtractorFactory {
-        
+
         InputStream is;
         Metadata metadata;
         ParseContext context;
         WhatsAppParser connFactory;
-        
+
         abstract Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account);
 
         abstract WAContactsExtractor createContactsExtractor(File file);
-        
+
         void setConnectionParams(InputStream is, Metadata metadata, ParseContext context, WhatsAppParser connFactory) {
             this.is = is;
             this.metadata = metadata;
             this.context = context;
             this.connFactory = connFactory;
         }
-        
-        protected Connection getConnection() throws SQLException{
+
+        protected Connection getConnection() throws SQLException {
             try {
                 return connFactory.getConnection(is, metadata, context);
             } catch (IOException e) {
@@ -611,9 +641,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    //must be static and non be private because of newInstance in getContacts() method
+    // must be static and non be private because of newInstance in getContacts()
+    // method
     protected static class ExtractorAndroidFactory extends ExtractorFactory {
-        
+
         @Override
         public Extractor createMessageExtractor(File file, WAContactsDirectory directory, WAAccount account) {
             return new ExtractorAndroid(file, directory, account) {
@@ -636,7 +667,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    //must be static and non be private because of newInstance in getContacts() method
+    // must be static and non be private because of newInstance in getContacts()
+    // method
     protected static class ExtractorIOSFactory extends ExtractorFactory {
 
         @Override

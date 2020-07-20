@@ -50,14 +50,14 @@ import iped3.util.ExtraProperties;
 public class VCardParser extends AbstractParser {
 
     private static final long serialVersionUID = -7436203736342471550L;
-    
+
     public static final MediaType VCARD_MIME = MediaType.text("x-vcard"); //$NON-NLS-1$
-    
+
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(VCARD_MIME);
-    
+
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;
-    
+
     static {
         TEMPLATE_CFG.setClassForTemplateLoading(VCardParser.class, "");
         TEMPLATE_CFG.setWhitespaceStripping(true);
@@ -66,7 +66,7 @@ public class VCardParser extends AbstractParser {
         } catch (Exception e) {
         }
     }
-    
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -83,85 +83,94 @@ public class VCardParser extends AbstractParser {
         try {
             xhtml.startDocument();
             List<VCard> vcards = Ezvcard.parse(text).all();
-            
-            for(VCard vcard : vcards) {
+
+            for (VCard vcard : vcards) {
                 extractMetadata(vcard, metadata);
             }
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            try(PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8))){
+            try (PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8))) {
                 new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
             }
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
-            
+
             new IndentityHtmlParser().parse(is, context, xhtml);
-            
+
         } finally {
             xhtml.endDocument();
         }
     }
-    
+
     private void extractMetadata(VCard vcard, Metadata metadata) {
         String name = null;
-        if(vcard.getFormattedName() != null) {
+        if (vcard.getFormattedName() != null) {
             name = vcard.getFormattedName().getValue();
         }
-        if(name == null && vcard.getStructuredName() != null) {
+        if (name == null && vcard.getStructuredName() != null) {
             ArrayList<String> names = new ArrayList<>();
             names.add(vcard.getStructuredName().getGiven());
             names.addAll(vcard.getStructuredName().getAdditionalNames());
             names.add(vcard.getStructuredName().getFamily());
             name = names.stream().filter(n -> n != null && !n.isEmpty()).collect(Collectors.joining(" "));
         }
-        if(name == null && vcard.getNickname() != null) {
+        if (name == null && vcard.getNickname() != null) {
             name = vcard.getNickname().getValues().toString();
         }
-        if(name != null && !name.trim().isEmpty())
+        if (name != null && !name.trim().isEmpty())
             metadata.add(ExtraProperties.USER_NAME, name.trim());
-        
-        if(vcard.getBirthday() != null) {
+
+        if (vcard.getBirthday() != null) {
             metadata.set(ExtraProperties.USER_BIRTH, vcard.getBirthday().getDate());
-        }else if(vcard.getAnniversary() != null) {
+        } else if (vcard.getAnniversary() != null) {
             metadata.set(ExtraProperties.USER_BIRTH, vcard.getAnniversary().getDate());
         }
-        
-        for(Telephone t : vcard.getTelephoneNumbers()) {
+
+        for (Telephone t : vcard.getTelephoneNumbers()) {
             metadata.add(ExtraProperties.USER_PHONE, t.getText());
         }
-        
-        for(Email e : vcard.getEmails()) {
+
+        for (Email e : vcard.getEmails()) {
             metadata.add(ExtraProperties.USER_EMAIL, e.getValue());
-        } 
-        
-        for(Address a : vcard.getAddresses()) {
+        }
+
+        for (Address a : vcard.getAddresses()) {
             metadata.add(ExtraProperties.USER_ADDRESS, getAddressString(a));
-        } 
-        
-        for(Organization o : vcard.getOrganizations()) {
+        }
+
+        for (Organization o : vcard.getOrganizations()) {
             metadata.add(ExtraProperties.USER_ORGANIZATION, o.getValues().toString());
-        } 
-        
-        if(vcard.getNotes() != null) {
+        }
+
+        if (vcard.getNotes() != null) {
             vcard.getNotes().stream().forEach(n -> metadata.add(ExtraProperties.USER_NOTES, n.getValue()));
         }
-        if(vcard.getUrls() != null) {
+        if (vcard.getUrls() != null) {
             vcard.getUrls().stream().forEach(n -> metadata.add(ExtraProperties.USER_URLS, n.getValue()));
         }
-        if(vcard.getPhotos() != null && vcard.getPhotos().size() > 0) {
-            metadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(vcard.getPhotos().get(0).getData()));
+        if (vcard.getPhotos() != null && vcard.getPhotos().size() > 0) {
+            metadata.set(ExtraProperties.USER_THUMB,
+                    Base64.getEncoder().encodeToString(vcard.getPhotos().get(0).getData()));
         }
     }
-    
+
     private String getAddressString(Address a) {
         StringBuilder sb = new StringBuilder();
-        if(a.getLabel() != null) sb.append(a.getLabel()).append(": ");
-        if(a.getStreetAddressFull() != null) sb.append(a.getStreetAddressFull()).append(" ");
-        if(a.getExtendedAddressFull() != null) sb.append(a.getExtendedAddressFull()).append(" ");
-        if(a.getLocality() != null) sb.append(a.getLocality()).append(" ");
-        if(a.getRegion() != null) sb.append(a.getRegion()).append(" ");
-        if(a.getCountry() != null) sb.append(a.getCountry()).append(" ");
-        if(a.getPostalCode() != null) sb.append("ZIP ").append(a.getPostalCode()).append(" ");
-        if(a.getGeo() != null) sb.append(a.getGeo());
+        if (a.getLabel() != null)
+            sb.append(a.getLabel()).append(": ");
+        if (a.getStreetAddressFull() != null)
+            sb.append(a.getStreetAddressFull()).append(" ");
+        if (a.getExtendedAddressFull() != null)
+            sb.append(a.getExtendedAddressFull()).append(" ");
+        if (a.getLocality() != null)
+            sb.append(a.getLocality()).append(" ");
+        if (a.getRegion() != null)
+            sb.append(a.getRegion()).append(" ");
+        if (a.getCountry() != null)
+            sb.append(a.getCountry()).append(" ");
+        if (a.getPostalCode() != null)
+            sb.append("ZIP ").append(a.getPostalCode()).append(" ");
+        if (a.getGeo() != null)
+            sb.append(a.getGeo());
         return sb.toString().trim();
     }
 

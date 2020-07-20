@@ -16,7 +16,7 @@ public class IconUtil {
     }
 
     public static final ImageIcon getIcon(String name, String resPath, int iconSize) {
-        String key = resPath+"/"+name + "/"+ iconSize;
+        String key = resPath + "/" + name + "/" + iconSize;
         synchronized (memoIcon) {
             if (memoIcon.containsKey(key)) {
                 return memoIcon.get(key);
@@ -25,7 +25,8 @@ public class IconUtil {
         try {
             ImageIcon icon = new ImageIcon(IconUtil.class.getResource(resPath + name + ".png"));
             if (iconSize > 0) {
-                double zoom = Math.min(iconSize / (double) icon.getIconWidth(), iconSize / (double) icon.getIconHeight());
+                double zoom = Math.min(iconSize / (double) icon.getIconWidth(),
+                        iconSize / (double) icon.getIconHeight());
                 int w = (int) Math.round(zoom * icon.getIconWidth());
                 int h = (int) Math.round(zoom * icon.getIconHeight());
                 BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);

@@ -10,20 +10,20 @@ import javax.swing.filechooser.FileFilter;
 import dpf.sp.gpinf.indexer.util.Messages;
 
 public class SelectImagePathWithDialog implements Runnable {
-    
+
     private File origImage;
     private File newImage;
     private boolean selectFolder = false;
-    
+
     public SelectImagePathWithDialog(File origImage) {
         this.origImage = origImage;
     }
-    
+
     public SelectImagePathWithDialog(File origImage, boolean selectFolder) {
         this.origImage = origImage;
         this.selectFolder = selectFolder;
     }
-    
+
     public File askImagePathInGUI() {
         int i = 0;
         do {
@@ -33,8 +33,8 @@ public class SelectImagePathWithDialog implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }while(++i < 2 && (newImage == null || !newImage.exists()));
-        
+        } while (++i < 2 && (newImage == null || !newImage.exists()));
+
         return newImage;
     }
 
@@ -45,15 +45,15 @@ public class SelectImagePathWithDialog implements Runnable {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle(Messages.getString("SelectImage.NewImgPath") + origImage.getName()); //$NON-NLS-1$
         fileChooser.setFileFilter(new ImageFilter(origImage));
-        if(selectFolder)
+        if (selectFolder)
             fileChooser.setFileSelectionMode(JFileChooser.FILES_AND_DIRECTORIES);
-        
+
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             newImage = fileChooser.getSelectedFile();
         } else
             newImage = null;
     }
-    
+
     private class ImageFilter extends FileFilter {
 
         private String ext;

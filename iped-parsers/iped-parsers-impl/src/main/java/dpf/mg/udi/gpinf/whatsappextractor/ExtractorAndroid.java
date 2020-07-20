@@ -1,6 +1,33 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.APP_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.CONTACT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_FROM_SENDER;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GIF_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_CREATED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SHARE_LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SUBJECT_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.WAITING_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
 import java.sql.Connection;
@@ -32,8 +59,7 @@ public class ExtractorAndroid extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
             String selectChatQuery = hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
@@ -95,7 +121,8 @@ public class ExtractorAndroid extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
-                if(account != null) m.setLocalResource(account.getId());
+                if (account != null)
+                    m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
@@ -103,10 +130,10 @@ public class ExtractorAndroid extends Extractor {
                 int media_size = rs.getInt("mediaSize"); //$NON-NLS-1$
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
-                if(remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
-                    remoteResource = remote.getId();
+                if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
+                    remoteResource = remote.getFullId();
                 }
-                m.setRemoteResource(remoteResource); //$NON-NLS-1$
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$

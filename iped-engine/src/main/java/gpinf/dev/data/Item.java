@@ -131,13 +131,13 @@ public class Item implements ISleuthKitItem {
     private Integer ftkID;
 
     private Integer parentId;
-    
+
     private Integer subitemId;
 
     private List<Integer> parentIds = new ArrayList<Integer>();
 
     private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
-    
+
     /**
      * Temporaty attributes present only during processing flow.
      */
@@ -227,7 +227,7 @@ public class Item implements ISleuthKitItem {
     private Integer sleuthId;
 
     private String idInDataSource;
-    
+
     private String parentIdInDataSource;
 
     private TikaInputStream tis;
@@ -508,7 +508,7 @@ public class Item implements ISleuthKitItem {
     public Integer getParentId() {
         return parentId;
     }
-    
+
     public Integer getSubitemId() {
         return subitemId;
     }
@@ -526,11 +526,11 @@ public class Item implements ISleuthKitItem {
      * @return ids dos itens pai concatenados com espaço
      */
     public String getParentIdsString() {
-        StringBuilder parents = new StringBuilder(); //$NON-NLS-1$
+        StringBuilder parents = new StringBuilder(); // $NON-NLS-1$
         int i = 0;
         for (Integer id : parentIds) {
             parents.append(id);
-            if(++i < parentIds.size()) {
+            if (++i < parentIds.size()) {
                 parents.append(" ");
             }
         }
@@ -629,7 +629,7 @@ public class Item implements ISleuthKitItem {
                 }
 
                 // workaround para itens carveados apontando para tmpFile do pai que foi apagado
-                //Sometimes NPE is thrown, needs investigation...
+                // Sometimes NPE is thrown, needs investigation...
             } catch (IOException | NullPointerException e) {
                 file = null;
             }
@@ -1091,7 +1091,7 @@ public class Item implements ISleuthKitItem {
         int p = name.lastIndexOf("."); //$NON-NLS-1$
         extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
     }
-    
+
     public void setSubitemId(Integer subitemId) {
         this.subitemId = subitemId;
     }
@@ -1338,11 +1338,11 @@ public class Item implements ISleuthKitItem {
     public void setIdInDataSource(String idInDataSource) {
         this.idInDataSource = idInDataSource;
     }
-    
+
     public void setParentIdInDataSource(String string) {
         this.parentIdInDataSource = string;
     }
-    
+
     public String getParentIdInDataSource() {
         return this.parentIdInDataSource;
     }
@@ -1355,7 +1355,7 @@ public class Item implements ISleuthKitItem {
 
         return child;
     }
-    
+
     public Object getTempAttribute(String key) {
         synchronized (tempAttributes) {
             return tempAttributes.get(key);

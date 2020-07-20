@@ -59,7 +59,7 @@ public class ProxySever {
         }
 
         if (serverSocket != null) {
-            new Thread() {
+            Thread t = new Thread() {
                 public void run() {
                     while (true) {
                         try {
@@ -72,7 +72,9 @@ public class ProxySever {
                         }
                     }
                 }
-            }.start();
+            };
+            t.setDaemon(true);
+            t.start();
         }
 
     }

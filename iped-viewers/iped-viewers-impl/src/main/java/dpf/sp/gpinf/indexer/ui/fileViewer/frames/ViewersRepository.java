@@ -164,7 +164,7 @@ public class ViewersRepository extends Viewer {
             currentViewer.copyScreen();
         }
     }
-    
+
     public Viewer getCurrentViewer() {
         return currentViewer;
     }

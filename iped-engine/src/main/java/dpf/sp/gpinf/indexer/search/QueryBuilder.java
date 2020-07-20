@@ -2,10 +2,13 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.text.DecimalFormat;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
@@ -15,14 +18,16 @@ import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.NumericConfig;
 import org.apache.lucene.search.BooleanClause;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BoostQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.util.NumericUtils;
 
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -34,12 +39,12 @@ import iped3.search.IQueryBuilder;
 
 public class QueryBuilder implements IQueryBuilder {
 
-    private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer(Versao.current);
-    
+    private static Analyzer spaceAnalyzer = new WhitespaceAnalyzer();
+
     private static HashMap<String, NumericConfig> numericConfigCache;
-    
+
     private static IIPEDSource prevIpedCase;
-    
+
     private static Object lock = new Object();
 
     private IIPEDSource ipedCase;
@@ -53,27 +58,23 @@ public class QueryBuilder implements IQueryBuilder {
         if (query != null)
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                    if (clause.getQuery() instanceof PhraseQuery && ((PhraseQuery) clause.getQuery()).getSlop() == 0) {
-                        String queryStr = clause.getQuery().toString();
-                        // System.out.println("phrase: " + queryStr);
-                        String field = IndexItem.CONTENT + ":\""; //$NON-NLS-1$
-                        if (queryStr.startsWith(field)) {
-                            String term = queryStr.substring(queryStr.indexOf(field) + field.length(),
-                                    queryStr.lastIndexOf("\"")); //$NON-NLS-1$
-                            result.add(term.toLowerCase());
-                            // System.out.println(term);
-                        }
-
-                    } else {
-                        // System.out.println(clause.getQuery().toString());
-                        result.addAll(getQueryStrings(clause.getQuery()));
-                    }
-
+                    // System.out.println(clause.getQuery().toString());
+                    result.addAll(getQueryStrings(clause.getQuery()));
                 }
-                // System.out.println("boolean query");
+            } else if (query instanceof BoostQuery) {
+                result.addAll(getQueryStrings(((BoostQuery) query).getQuery()));
             } else {
                 TreeSet<Term> termSet = new TreeSet<Term>();
-                query.extractTerms(termSet);
+                if (query instanceof TermQuery)
+                    termSet.add(((TermQuery) query).getTerm());
+                if (query instanceof PhraseQuery) {
+                    List<Term> terms = Arrays.asList(((PhraseQuery) query).getTerms());
+                    if (((PhraseQuery) query).getSlop() == 0) {
+                        result.add(terms.stream().map(t -> t.text().toLowerCase()).collect(Collectors.joining(" "))); //$NON-NLS-1$
+                    } else
+                        termSet.addAll(terms);
+                }
+
                 for (Term term : termSet)
                     if (term.field().equalsIgnoreCase(IndexItem.CONTENT)) {
                         result.add(term.text().toLowerCase());
@@ -115,6 +116,9 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
+        
+        if(texto.trim().startsWith("* "))
+            texto = texto.trim().replaceFirst("\\* ", "*:* ");
 
         if (texto.trim().isEmpty())
             return new MatchAllDocsQuery();
@@ -142,20 +146,47 @@ public class QueryBuilder implements IQueryBuilder {
             }
 
             try {
-                return parser.parse(texto, null);
+                Query q = parser.parse(texto, null);
+                q = handleNegativeQueries(q, analyzer);
+                return q;
+                
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
                 throw new QueryNodeException(e);
             }
         }
 
     }
+    
+    private Query handleNegativeQueries(Query q, Analyzer analyzer) {
+        if(q instanceof BoostQuery) {
+            float boost = ((BoostQuery) q).getBoost();
+            Query query = ((BoostQuery) q).getQuery();
+            return new BoostQuery(handleNegativeQueries(query, analyzer), boost);
+        }
+        if(q instanceof BooleanQuery) {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            boolean allNegative = true;
+            for (BooleanClause clause : ((BooleanQuery) q).clauses()) {
+                Query subQ = handleNegativeQueries(clause.getQuery(), analyzer);
+                builder.add(subQ, clause.getOccur());
+                if(clause.getOccur() != Occur.MUST_NOT) {
+                    allNegative = false;
+                }
+            }
+            if(allNegative) {
+                builder.add(new MatchAllDocsQuery(), Occur.SHOULD);
+            }
+            return builder.build();
+        }
+        return q;
+    }
 
     private HashMap<String, NumericConfig> getNumericConfigMap() {
-        
-        synchronized(lock) {
-            if(ipedCase == prevIpedCase && numericConfigCache != null) {
+
+        synchronized (lock) {
+            if (ipedCase == prevIpedCase && numericConfigCache != null) {
                 return numericConfigCache;
-            } 
+            }
         }
 
         HashMap<String, NumericConfig> numericConfigMap = new HashMap<>();
@@ -191,8 +222,8 @@ public class QueryBuilder implements IQueryBuilder {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
-        
-        synchronized(lock) {
+
+        synchronized (lock) {
             numericConfigCache = numericConfigMap;
             prevIpedCase = ipedCase;
         }

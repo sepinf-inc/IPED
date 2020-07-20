@@ -6,18 +6,18 @@ import javax.swing.AbstractAction;
 
 public class RedoAction extends AbstractAction {
 
-  private static final long serialVersionUID = 5853095468097097009L;
+    private static final long serialVersionUID = 5853095468097097009L;
 
-  private AppGraphAnalytics app;
+    private AppGraphAnalytics app;
 
-  public RedoAction(AppGraphAnalytics app) {
-    super();
-    this.app = app;
-  }
+    public RedoAction(AppGraphAnalytics app) {
+        super();
+        this.app = app;
+    }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    this.app.redo();
-  }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        this.app.redo();
+    }
 
 }

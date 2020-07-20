@@ -25,7 +25,6 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
@@ -40,7 +39,7 @@ public class AppAnalyzer {
 
     public static Analyzer get() {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
-        analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(Versao.current, true));
+        analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(true));
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
@@ -49,8 +48,8 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
-        
-        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+
+        StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
         analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
         analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), hashAnalyzer);
@@ -59,7 +58,7 @@ public class AppAnalyzer {
         analyzerPerField.put(HashTask.HASH.SHA512.toString(), hashAnalyzer);
         analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
-        StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(Versao.current, false);
+        StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(false);
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                 .findObjects(AdvancedIPEDConfig.class).iterator().next();
         defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());

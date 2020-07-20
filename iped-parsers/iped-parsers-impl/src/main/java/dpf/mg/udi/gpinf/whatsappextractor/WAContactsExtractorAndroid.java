@@ -16,8 +16,7 @@ public class WAContactsExtractorAndroid extends WAContactsExtractor {
 
     @Override
     public void extractContactList() throws WAExtractorException {
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
 
             try (ResultSet rs = stmt.executeQuery(SELECT_CONTACT_NAMES)) {
 

@@ -106,7 +106,7 @@ public class VideoProcessResult {
         dimension = getDimension(info);
         videoStream = getVideoStream(info);
         rotation = getRotation(info);
-        
+
         setFPS(getFPS(info));
         setBitRate(getBitRate(info));
         setVideoFormat(getStringInfo(info, "ID_VIDEO_FORMAT")); //$NON-NLS-1$
@@ -187,7 +187,7 @@ public class VideoProcessResult {
             return 0;
         }
     }
-    
+
     private String getStringInfo(String info, String s1) throws Exception {
         s1 += "="; //$NON-NLS-1$
         int p1 = info.indexOf(s1);

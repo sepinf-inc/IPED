@@ -2742,6 +2742,7 @@ pHYs = java.lang.String
 page-topic = java.lang.String
 parserException = java.lang.String
 patches = java.lang.Integer
+phoneNumber = java.lang.String
 pdf:AAPL:Keywords = java.lang.String
 pdf:Accessibility = java.lang.String
 pdf:AlternatesCreated = java.lang.String

@@ -7,10 +7,10 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 
 public class LocaleConfig extends AbstractPropertiesConfigurable {
-    
+
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
-    
-    private static final String HOST_COUNTRY = "hostCountryCode"; 
+
+    private static final String HOST_COUNTRY = "hostCountryCode";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -21,12 +21,12 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
 
     static {
         String country = System.getProperty(HOST_COUNTRY);
-        if(country == null) {
+        if (country == null) {
             System.setProperty(HOST_COUNTRY, Locale.getDefault().getCountry());
         }
         Locale.setDefault(Locale.forLanguageTag("en")); //$NON-NLS-1$
     }
-    
+
     public static String getHostCountry() {
         return System.getProperty(HOST_COUNTRY);
     }

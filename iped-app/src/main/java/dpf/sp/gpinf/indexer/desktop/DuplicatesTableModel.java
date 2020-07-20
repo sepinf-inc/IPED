@@ -34,8 +34,8 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.search.IIPEDSearcher;
-import iped3.search.LuceneSearchResult;
 import iped3.search.IMultiSearchResult;
+import iped3.search.LuceneSearchResult;
 
 public class DuplicatesTableModel extends AbstractTableModel
         implements MouseListener, ListSelectionListener, SearchResultTableModel {
@@ -87,7 +87,7 @@ public class DuplicatesTableModel extends AbstractTableModel
     @Override
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
-                App.get().appCase.getItemId(results.getLuceneIds()[row]), App.get().appCase);
+                App.get().appCase.getItemId(results.getLuceneIds()[row]));
         MarcadoresController.get().atualizarGUI();
     }
 
@@ -157,9 +157,9 @@ public class DuplicatesTableModel extends AbstractTableModel
     public void listDuplicates(Document doc) {
 
         String hash = doc.get(IndexItem.HASH);
-        if(hash == null || hash.trim().isEmpty())
+        if (hash == null || hash.trim().isEmpty())
             return;
-        
+
         String textQuery = IndexItem.HASH + ":" + hash;
 
         String id = doc.get(IndexItem.ID);

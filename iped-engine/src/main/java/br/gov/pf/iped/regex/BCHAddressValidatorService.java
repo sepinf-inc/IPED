@@ -24,7 +24,7 @@ public class BCHAddressValidatorService extends BasicAbstractRegexValidatorServi
             -1, -1, -1, 15, -1, 10, 17, 21, 20, 26, 30, 7, 5, -1, -1, -1, -1, -1, -1, -1, 29, -1, 24, 13, 25, 9, 8, 23,
             -1, 18, 22, 31, 27, 19, -1, 1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1, -1, 29, -1, 24, 13,
             25, 9, 8, 23, -1, 18, 22, 31, 27, 19, -1, 1, 0, 3, 16, 11, 28, 12, 14, 6, 4, 2, -1, -1, -1, -1, -1 };
-    
+
     private static final String BCH_PREFIX = "bitcoincash:";
 
     @Override
@@ -81,7 +81,7 @@ public class BCHAddressValidatorService extends BasicAbstractRegexValidatorServi
     }
 
     private static boolean cashAddrVerifyChecksum(String value) {
-        if(!value.startsWith(BCH_PREFIX)) {
+        if (!value.startsWith(BCH_PREFIX)) {
             value = BCH_PREFIX + value;
         }
         return bech32Polymod(expandData(value)) == 0;

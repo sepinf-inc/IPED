@@ -118,11 +118,11 @@ public class SetCategoryTask extends AbstractTask {
             String category = get(e.getMediaType());
             e.setCategory(category);
         }
-        
+
         String category;
         if (e.isDir()) {
             category = FOLDER_CATEGORY;
-        }else {
+        } else {
             category = get(e.getMediaType());
         }
         e.setCategory(category);

@@ -9,8 +9,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.BinaryDocValues;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
@@ -22,13 +22,13 @@ import iped3.util.BasicProps;
 public class ImageSimilarityScorer {
     /**
      * Constant used in the conversion from the raw squared distance (>=0, in an
-     * arbitrary scale) of the reference image to the actual score (used to sort
-     * the results and to be shown on the table). Although the score is limited
-     * to [0,100] (avoiding negative values that could be produced by the
-     * conversion formula), scores < 1 will be later discarded (i.e. not
-     * included in the results): score = 100 - distance * distToScoreMult /
-     * numFeatures So higher values will increase the distance weight, therefore
-     * reducing the score (i.e. bringing less images).
+     * arbitrary scale) of the reference image to the actual score (used to sort the
+     * results and to be shown on the table). Although the score is limited to
+     * [0,100] (avoiding negative values that could be produced by the conversion
+     * formula), scores < 1 will be later discarded (i.e. not included in the
+     * results): score = 100 - distance * distToScoreMult / numFeatures So higher
+     * values will increase the distance weight, therefore reducing the score (i.e.
+     * bringing less images).
      */
     private static final float distToScoreMult = 4;
 
@@ -40,9 +40,9 @@ public class ImageSimilarityScorer {
 
     /**
      * For the best (maxTop) images found, organize them not only based on the
-     * distance to the reference image. For each image, up to (rangeCheck)
-     * images after the current one is checked and possibly reordered to present
-     * results in a more convenient way (grouping similar images).
+     * distance to the reference image. For each image, up to (rangeCheck) images
+     * after the current one is checked and possibly reordered to present results in
+     * a more convenient way (grouping similar images).
      */
     private static final int maxTop = 2000;
     private static final int rangeCheck = 100;
@@ -68,7 +68,7 @@ public class ImageSimilarityScorer {
         if (len == 0 || refSimilarityFeatures == null) {
             return;
         }
-        AtomicReader atomicReader = App.get().appCase.getAtomicReader();
+        LeafReader leafReader = App.get().appCase.getLeafReader();
         int numThreads = Runtime.getRuntime().availableProcessors();
         Thread[] threads = new Thread[numThreads];
         int evalCut = (int) (100 * refSimilarityFeatures.length / distToScoreMult);
@@ -79,7 +79,7 @@ public class ImageSimilarityScorer {
                 public void run() {
                     BinaryDocValues similarityFeaturesValues = null;
                     try {
-                        similarityFeaturesValues = atomicReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+                        similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -101,7 +101,7 @@ public class ImageSimilarityScorer {
                                 String refHash = refItem.getHash();
                                 if (refHash != null) {
                                     try {
-                                        Document doc = atomicReader.document(luceneId);
+                                        Document doc = leafReader.document(luceneId);
                                         String currHash = doc.get(BasicProps.HASH);
                                         if (refHash.equals(currHash)) {
                                             score = identicalScore;
@@ -146,14 +146,15 @@ public class ImageSimilarityScorer {
                 break;
             }
         }
-        if (topResults.size() - start <= 2) return;
+        if (topResults.size() - start <= 2)
+            return;
         float maxScore = result.getScore(topResults.get(start));
         float minScore = result.getScore(topResults.get(topResults.size() - 1));
 
         BinaryDocValues similarityFeaturesValues = null;
-        AtomicReader atomicReader = App.get().appCase.getAtomicReader();
+        LeafReader leafReader = App.get().appCase.getLeafReader();
         try {
-            similarityFeaturesValues = atomicReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+            similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;

@@ -52,15 +52,15 @@ public class ImageThumbTask extends ThumbTask {
     public boolean logGalleryRendering = false;
 
     private boolean taskEnabled = false;
-    
+
     private GraphicsMagicConverter graphicsMagicConverter;
-    
-    private static final Map<String,long[]> performanceStatsPerType = new HashMap<String,long[]>(); 
+
+    private static final Map<String, long[]> performanceStatsPerType = new HashMap<String, long[]>();
     private static final AtomicBoolean logInit = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
     private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
     private static final int numStats = 22;
-    
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
@@ -110,7 +110,7 @@ public class ImageThumbTask extends ThumbTask {
             logGalleryRendering = Boolean.valueOf(value.trim());
         }
         graphicsMagicConverter = new GraphicsMagicConverter(executor);
-        
+
         synchronized (logInit) {
             if (taskEnabled && !logInit.get()) {
                 logInit.set(true);
@@ -153,7 +153,8 @@ public class ImageThumbTask extends ThumbTask {
                         long[] s = performanceStatsPerType.get(type);
                         for (int i = 0; i < s.length; i++) {
                             maxCol[i] = Math.max(maxCol[i], s[i]);
-                            if (i % 2 == 0 && s[i] > 0) s[i + 1] = (int) Math.round(s[i + 1] / (double) s[i]);
+                            if (i % 2 == 0 && s[i] > 0)
+                                s[i + 1] = (int) Math.round(s[i + 1] / (double) s[i]);
                         }
                     }
                     int[] w = new int[numStats];
@@ -201,11 +202,11 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase() 
+        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHash() == null || evidence.getThumb() != null) {
             return;
         }
-        
+
         File thumbFile = getThumbFile(evidence);
         if (hasThumb(evidence, thumbFile)) {
             return;
@@ -249,11 +250,11 @@ public class ImageThumbTask extends ThumbTask {
         }
 
     }
-    
+
     public static boolean isJpeg(IItem item) {
         return item.getMediaType().getSubtype().startsWith("jpeg");
     }
-    
+
     private void createImageThumb(IItem evidence, File thumbFile) {
         long[] performanceStats = new long[numStats];
         File tmp = null;
@@ -263,12 +264,12 @@ public class ImageThumbTask extends ThumbTask {
             try (BufferedInputStream stream = evidence.getBufferedStream()) {
                 dimension = ImageUtil.getImageFileDimension(stream);
             }
-            if(extractThumb && isJpeg(evidence)) { //$NON-NLS-1$
+            if (extractThumb && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
                 }
-                performanceStats[img == null ? 2 : 0]++; 
+                performanceStats[img == null ? 2 : 0]++;
                 performanceStats[img == null ? 3 : 1] += System.currentTimeMillis() - t;
             }
             if (img == null) {
@@ -280,7 +281,7 @@ public class ImageThumbTask extends ThumbTask {
                     if (img != null && renderException.value)
                         evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
-                performanceStats[img == null ? 6 : 4]++; 
+                performanceStats[img == null ? 6 : 4]++;
                 performanceStats[img == null ? 7 : 5] += System.currentTimeMillis() - t;
             }
             if (img == null) {
@@ -295,38 +296,38 @@ public class ImageThumbTask extends ThumbTask {
                     evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
                     logger.warn("Timeout creating thumb: " + evidence); //$NON-NLS-1$
                 }
-                performanceStats[img == null ? 10 : 8]++; 
+                performanceStats[img == null ? 10 : 8]++;
                 performanceStats[img == null ? 11 : 9] += System.currentTimeMillis() - t;
             }
-            
+
             if (img != null) {
                 if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize)
                         && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
                     long t = System.currentTimeMillis();
                     img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
-                    performanceStats[12]++; 
+                    performanceStats[12]++;
                     performanceStats[13] += System.currentTimeMillis() - t;
                 }
                 long t = System.currentTimeMillis();
                 img = ImageUtil.getOpaqueImage(img);
-                performanceStats[14]++; 
+                performanceStats[14]++;
                 performanceStats[15] += System.currentTimeMillis() - t;
 
-                if(isJpeg(evidence)) {
+                if (isJpeg(evidence)) {
                     // Ajusta rotacao da miniatura a partir do metadado orientacao
                     try (BufferedInputStream stream = evidence.getBufferedStream()) {
                         int orientation = ImageUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();
                             img = ImageUtil.rotate(img, orientation);
-                            performanceStats[16]++; 
+                            performanceStats[16]++;
                             performanceStats[17] += System.currentTimeMillis() - t;
                         }
                     }
                 }
 
                 t = System.currentTimeMillis();
-                performanceStats[18]++; 
+                performanceStats[18]++;
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 ImageIO.write(img, "jpg", baos); //$NON-NLS-1$
                 evidence.setThumb(baos.toByteArray());
@@ -335,7 +336,7 @@ public class ImageThumbTask extends ThumbTask {
 
             long t = System.currentTimeMillis();
             saveThumb(evidence, thumbFile);
-            performanceStats[20]++; 
+            performanceStats[20]++;
             performanceStats[21] += System.currentTimeMillis() - t;
 
             String type = evidence.getMediaType().toString();
@@ -349,7 +350,7 @@ public class ImageThumbTask extends ThumbTask {
                     }
                 }
             }
-            
+
         } catch (Throwable e) {
             logger.warn(evidence.toString(), e);
 
@@ -357,10 +358,10 @@ public class ImageThumbTask extends ThumbTask {
             if (tmp != null && !tmp.renameTo(thumbFile)) {
                 tmp.delete();
             }
-            
-            if(evidence.getThumb() != null && evidence.getThumb().length > 0) {
+
+            if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
                 evidence.setExtraAttribute(HAS_THUMB, true);
-            }else {
+            } else {
                 evidence.setExtraAttribute(HAS_THUMB, false);
             }
         }

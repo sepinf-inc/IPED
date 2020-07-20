@@ -21,55 +21,49 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
 public class IndentityHtmlParser {
-    
+
     /**
      * HTML schema singleton used to amortise the heavy instantiation time.
      */
     public static final Schema HTML_SCHEMA = new HTMLSchema();
-    
+
     public void parse(InputStream is, ParseContext context, ContentHandler handler) throws IOException, SAXException {
-        
+
         // this part of the code was adapted from org.apache.tika.parser.html.HtmlParser
         // Get the HTML mapper from the parse context
         // Parse the HTML document
-        org.ccil.cowan.tagsoup.Parser parser =
-                new org.ccil.cowan.tagsoup.Parser();
+        org.ccil.cowan.tagsoup.Parser parser = new org.ccil.cowan.tagsoup.Parser();
 
         // Use schema from context or default
         Schema schema = context.get(Schema.class, HTML_SCHEMA);
         // TIKA-528: Reuse share schema to avoid heavy instantiation
-        parser.setProperty(
-                org.ccil.cowan.tagsoup.Parser.schemaProperty, schema);
+        parser.setProperty(org.ccil.cowan.tagsoup.Parser.schemaProperty, schema);
         // TIKA-599: Shared schema is thread-safe only if bogons are ignored
-        parser.setFeature(
-                org.ccil.cowan.tagsoup.Parser.ignoreBogonsFeature, true);
+        parser.setFeature(org.ccil.cowan.tagsoup.Parser.ignoreBogonsFeature, true);
         // Ignore extra Whitespaces
-        parser.setFeature(
-                org.ccil.cowan.tagsoup.Parser.ignorableWhitespaceFeature, true);
+        parser.setFeature(org.ccil.cowan.tagsoup.Parser.ignorableWhitespaceFeature, true);
 
         parser.setContentHandler(new XHTMLDowngradeHandler(handler));
-        
+
         InputSource source = new InputSource(is);
         source.setEncoding(StandardCharsets.UTF_8.toString());
         parser.parse(source);
-        
+
     }
-    
+
     /**
-     * Content handler decorator that downgrades XHTML elements to
-     * old-style HTML elements before passing them on to the decorated
-     * content handler. This downgrading consists of dropping all namespaces
-     * (and namespaced attributes) and uppercasing all element names.
-     * Used by the {@link HtmlParser} to make all incoming HTML look the same.
+     * Content handler decorator that downgrades XHTML elements to old-style HTML
+     * elements before passing them on to the decorated content handler. This
+     * downgrading consists of dropping all namespaces (and namespaced attributes)
+     * and uppercasing all element names. Used by the {@link HtmlParser} to make all
+     * incoming HTML look the same.
      * 
-     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler with some adjusts:
-     *  - drop HTML elements
-     *  - drop BODY elements
-     *  - drop HEAD elements
-     */ 
+     * Copied from org.apache.tika.parser.html.XHTMLDowngradeHandler with some
+     * adjusts: - drop HTML elements - drop BODY elements - drop HEAD elements
+     */
     public static class XHTMLDowngradeHandler extends ContentHandlerDecorator {
         private static Set<String> IGNORE_ELEMENTS = new HashSet<>();
-        
+
         static {
             IGNORE_ELEMENTS.add("HTML");
             IGNORE_ELEMENTS.add("HEAD");
@@ -81,9 +75,7 @@ public class IndentityHtmlParser {
         }
 
         @Override
-        public void startElement(
-                String uri, String localName, String name, Attributes atts)
-                throws SAXException {
+        public void startElement(String uri, String localName, String name, Attributes atts) throws SAXException {
             String upper = localName.toUpperCase(Locale.ENGLISH);
             if (IGNORE_ELEMENTS.contains(upper)) {
                 return;
@@ -94,11 +86,9 @@ public class IndentityHtmlParser {
                 String auri = atts.getURI(i);
                 String local = atts.getLocalName(i);
                 String qname = atts.getQName(i);
-                if (XMLConstants.NULL_NS_URI.equals(auri)
-                        && !local.equals(XMLConstants.XMLNS_ATTRIBUTE)
+                if (XMLConstants.NULL_NS_URI.equals(auri) && !local.equals(XMLConstants.XMLNS_ATTRIBUTE)
                         && !qname.startsWith(XMLConstants.XMLNS_ATTRIBUTE + ":")) {
-                    attributes.addAttribute(
-                            auri, local, qname, atts.getType(i), atts.getValue(i));
+                    attributes.addAttribute(auri, local, qname, atts.getType(i), atts.getValue(i));
                 }
             }
 
@@ -106,8 +96,7 @@ public class IndentityHtmlParser {
         }
 
         @Override
-        public void endElement(String uri, String localName, String name)
-                throws SAXException {
+        public void endElement(String uri, String localName, String name) throws SAXException {
             String upper = localName.toUpperCase(Locale.ENGLISH);
             if (IGNORE_ELEMENTS.contains(upper)) {
                 return;

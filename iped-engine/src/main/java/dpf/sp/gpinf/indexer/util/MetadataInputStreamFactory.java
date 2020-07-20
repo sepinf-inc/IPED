@@ -22,22 +22,21 @@ public class MetadataInputStreamFactory extends SeekableInputStreamFactory {
         super(null);
         this.metadata = metadata;
     }
-    
+
     public MetadataInputStreamFactory(Metadata metadata, boolean fromMetadataPreview) {
         super(null);
         this.metadata = metadata;
         this.fromMetadataPreview = fromMetadataPreview;
     }
-    
+
     private boolean includeMeta(String meta) {
-        if(fromMetadataPreview) {
+        if (fromMetadataPreview) {
             return !MetadataUtil.ignorePreviewMetas.contains(meta);
-            
-        }else {
-            return meta.startsWith(ExtraProperties.UFED_META_PREFIX) ||
-                   meta.startsWith(ExtraProperties.MESSAGE_PREFIX);
+
+        } else {
+            return meta.startsWith(ExtraProperties.UFED_META_PREFIX) || meta.startsWith(ExtraProperties.MESSAGE_PREFIX);
         }
-        
+
     }
 
     @Override

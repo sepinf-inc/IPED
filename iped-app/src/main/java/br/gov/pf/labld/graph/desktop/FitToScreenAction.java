@@ -6,18 +6,18 @@ import javax.swing.AbstractAction;
 
 public class FitToScreenAction extends AbstractAction {
 
-  private static final long serialVersionUID = 4159693274203606454L;
+    private static final long serialVersionUID = 4159693274203606454L;
 
-  private AppGraphAnalytics app;
+    private AppGraphAnalytics app;
 
-  public FitToScreenAction(AppGraphAnalytics app) {
-    super();
-    this.app = app;
-  }
+    public FitToScreenAction(AppGraphAnalytics app) {
+        super();
+        this.app = app;
+    }
 
-  @Override
-  public void actionPerformed(ActionEvent e) {
-    app.fitToScreen();
-  }
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        app.fitToScreen();
+    }
 
 }

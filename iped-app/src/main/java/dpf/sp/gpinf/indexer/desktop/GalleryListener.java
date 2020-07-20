@@ -36,6 +36,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     private GalleryCellEditor cellEditor;
     private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
 
@@ -97,7 +98,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
     @Override
     public void keyReleased(KeyEvent evt) {
         cellEditor.stopCellEditing();
-        for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class)) {
+        for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class)) {
             kl.keyReleased(evt);
         }
     }

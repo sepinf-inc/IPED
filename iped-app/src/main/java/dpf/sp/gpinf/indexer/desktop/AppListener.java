@@ -34,7 +34,7 @@ import javax.swing.JOptionPane;
 import org.apache.lucene.search.Query;
 
 public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
-    
+
     private String texto = ""; //$NON-NLS-1$
     private boolean clearAllFilters = false;
     private boolean clearSearchBox = false;
@@ -92,10 +92,10 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
     @Override
     public void actionPerformed(ActionEvent evt) {
-        
+
         boolean updateFileList = false;
 
-        if (evt.getSource() == App.get().filtro && !App.get().filterManager.isUpdatingFilter() ) {
+        if (evt.getSource() == App.get().filtro && !App.get().filterManager.isUpdatingFilter()) {
 
             int filterIndex = App.get().filtro.getSelectedIndex();
             if (filterIndex == 0 || filterIndex == -1) {
@@ -106,8 +106,9 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
             updateFileList = true;
         }
-        
-        if(evt.getSource() == App.get().termo && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged") && !MarcadoresController.get().isUpdatingHistory()) {
+
+        if (evt.getSource() == App.get().termo && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
+                && !MarcadoresController.get().isUpdatingHistory()) {
             if (App.get().termo.getSelectedItem() != null) {
                 texto = App.get().termo.getSelectedItem().toString();
                 if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
@@ -123,7 +124,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
                 App.get().termo.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
             else
                 App.get().termo.setBorder(null);
-            
+
             updateFileList = true;
         }
 
@@ -135,8 +136,8 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
             updateFileList = true;
         }
-        
-        if(!clearAllFilters && updateFileList) {
+
+        if (!clearAllFilters && updateFileList) {
             updateFileListing();
         }
 
@@ -217,7 +218,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         clearAllFilters = true;
         App.get().filtro.setSelectedIndex(0);
         App.get().termo.setSelectedItem(""); //$NON-NLS-1$
-        if(App.get().filterDuplicates.isSelected())
+        if (App.get().filterDuplicates.isSelected())
             App.get().filterDuplicates.doClick();
         clearAllFilters = false;
     }

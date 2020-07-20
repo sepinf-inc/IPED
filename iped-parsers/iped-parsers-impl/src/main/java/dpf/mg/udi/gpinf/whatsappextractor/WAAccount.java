@@ -18,80 +18,90 @@ import com.dd.plist.NSDictionary;
 import com.dd.plist.NSObject;
 import com.dd.plist.PropertyListParser;
 
-public class WAAccount extends WAContact{
+public class WAAccount extends WAContact {
+
+    private static final String idSuffix = "@s.whatsapp.net"; //$NON-NLS-1$
 
     public WAAccount(String id) {
         super(id);
     }
-    
+
     public String getTitle() {
         return "WhatsApp Account: " + getName(); //$NON-NLS-1$
     }
-    
+
     public static WAAccount getFromAndroidXml(InputStream is) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(is);
-            
+
             XPath xpath = XPathFactory.newInstance().newXPath();
             XPathExpression expr = xpath.compile("/map/string[@name=\"registration_jid\"]");
             String value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if(value == null) {
+            if (value == null) {
                 expr = xpath.compile("/map/string[@name=\"ph\"]");
                 value = (String) expr.evaluate(doc, XPathConstants.STRING);
-                if(value == null)
+                if (value == null)
                     return null;
             }
+            if (!value.endsWith(idSuffix))
+                value += idSuffix;
+
             WAAccount account = new WAAccount(value);
-            
+
             expr = xpath.compile("/map/string[@name=\"push_name\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if(value != null)
+            if (value != null)
                 account.setWaName(value);
-            
+
             expr = xpath.compile("/map/string[@name=\"my_current_status\"]");
             value = (String) expr.evaluate(doc, XPathConstants.STRING);
-            if(value != null)
+            if (value != null)
                 account.setStatus(value);
-            
+
             return account;
-            
-        }catch(Exception e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
-    
+
     public static WAAccount getFromIOSPlist(InputStream is) {
         try {
             NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
             NSObject value = rootDict.get("OwnJabberID");
-            if(value == null) {
+            if (value == null) {
                 value = rootDict.get("LastOwnJabberID");
-                if(value == null)
+                if (value == null)
                     return null;
             }
-            WAAccount account = new WAAccount(value.toString());
-            
+            String strVal = value.toString();
+            if (!strVal.endsWith(idSuffix))
+                strVal += idSuffix;
+
+            WAAccount account = new WAAccount(strVal);
+
             value = rootDict.get("FullUserName");
-            if(value != null)
+            if (value != null)
                 account.setWaName(value.toString());
-            
+
             value = rootDict.get("CurrentStatusText");
-            if(value != null)
+            if (value != null)
                 account.setStatus(value.toString());
-            
+
             return account;
-            
-        }catch(Exception e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
     }
-    
+
     public static void main(String[] args) {
-        try(FileInputStream fis = new FileInputStream("c:/users/nassif/downloads/group.net.whatsapp.WhatsApp.shared.plist")){
+        try (FileInputStream fis = new FileInputStream(
+                "c:/users/nassif/downloads/group.net.whatsapp.WhatsApp.shared.plist")) {
             WAAccount a = getFromIOSPlist(fis);
             System.out.println(a.getId());
             System.out.println(a.getWaName());

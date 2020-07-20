@@ -112,7 +112,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
     public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
-    
+
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
@@ -157,11 +157,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static void setExpandContainers(boolean enabled) {
         expandContainers = enabled;
     }
-    
+
     public ParseContext getTikaContext() {
         return getTikaContext(this.output, null);
     }
-    
+
     public ParseContext getTikaContext(IPEDSource ipedsource) {
         return getTikaContext(ipedsource.getModuleDir(), ipedsource);
     }
@@ -188,10 +188,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
-        if(ipedsource != null) {
+        if (ipedsource != null) {
             context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
-        }else {
-            context.set(IItemSearcher.class, (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName()));
+        } else {
+            context.set(IItemSearcher.class, (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
         extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
@@ -237,10 +237,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
         reader.close();
     }
-    
+
     private static boolean isToAlwaysExpand(IItem item) {
-        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType()) ||
-                WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
+        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
+                || WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {
@@ -339,7 +339,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         try {
             AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                     .findObjects(AdvancedIPEDConfig.class).iterator().next();
-            
+
             TextCache textCache = new TextCache();
             textCache.setEnableDiskCache(advancedConfig.isStoreTextCacheOnDisk());
             char[] cbuf = new char[128 * 1024];
@@ -354,17 +354,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setParsed(true);
             totalText.addAndGet(textCache.getSize());
 
-        } catch(IOException e) {
-            if(e.toString().contains("Write end dead"))
+        } catch (IOException e) {
+            if (e.toString().contains("Write end dead"))
                 LOGGER.error("{} Parsing thread ended without closing pipedWriter {} ({} bytes)", //$NON-NLS-1$
                         Thread.currentThread().getName(), evidence.getPath(), evidence.getLength());
             else
                 throw e;
-        
+
         } finally {
             // IOUtil.closeQuietly(tis);
             reader.close();
-            if(numSubitems > 0) {
+            if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
             metadataToExtraAttribute(evidence);
@@ -389,9 +389,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
         }
-        
+
         String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
-        if(base64Thumb != null) {
+        if (base64Thumb != null) {
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             metadata.remove(ExtraProperties.USER_THUMB);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
@@ -466,10 +466,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setPath(subitemPath);
             subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
-            
+
             Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
             subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
-            
+
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
             handler.characters(nameChars, 0, nameChars.length);
@@ -477,11 +477,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (!extractEmbedded) {
                 return;
             }
-            
-            Integer depth = (Integer)evidence.getExtraAttribute(SUBITEM_DEPTH);
-            if(depth == null) depth = 0;
-            if(++depth > MAX_SUBITEM_DEPTH) {
-                throw new IOException("Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+
+            Integer depth = (Integer) evidence.getExtraAttribute(SUBITEM_DEPTH);
+            if (depth == null)
+                depth = 0;
+            if (++depth > MAX_SUBITEM_DEPTH) {
+                throw new IOException(
+                        "Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
             }
             subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
@@ -512,7 +514,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(BasicProps.HASCHILD);
                 subItem.setHasChildren(true);
             }
-            
+
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
 
@@ -561,8 +563,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    //When external parsing is on, items MUST be sent to queue, or errors will occur
-                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO; 
+                    // When external parsing is on, items MUST be sent to queue, or errors will
+                    // occur
+                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO;
                     worker.processNewItem(subItem, time);
                     subitensDiscovered.incrementAndGet();
                     numSubitems++;

@@ -16,41 +16,41 @@ import org.kharon.renderers.ShapeNodeRenderer;
  */
 public class DocumentNodeRenderer extends ShapeNodeRenderer {
 
-  @Override
-  public Shape drawShape(Node node, RenderContext context) {
-    GeneralPath shape = new GeneralPath();
-    shape.moveTo(0.0, 0.0);
-    shape.lineTo(0.0, 8.0);
-    shape.lineTo(7.0, 8.0);
-    shape.lineTo(7.0, 4.0);
-    shape.lineTo(3.0, 4.0);
-    shape.lineTo(3.0, 0.0);
-    shape.lineTo(0.0, 0.0);
-    shape.closePath();
-    shape.moveTo(4.0, 0.0);
-    shape.lineTo(4.0, 3.0);
-    shape.lineTo(7.0, 3.0);
-    shape.lineTo(4.0, 0.0);
-    shape.closePath();
-    shape.moveTo(1.0, 2.0);
-    shape.lineTo(2.0, 2.0);
-    shape.lineTo(2.0, 3.0);
-    shape.lineTo(1.0, 3.0);
-    shape.lineTo(1.0, 2.0);
-    shape.closePath();
-    shape.moveTo(1.0, 4.0);
-    shape.lineTo(2.0, 4.0);
-    shape.lineTo(2.0, 5.0);
-    shape.lineTo(1.0, 5.0);
-    shape.lineTo(1.0, 4.0);
-    shape.closePath();
-    shape.moveTo(1.0, 6.0);
-    shape.lineTo(5.0, 6.0);
-    shape.lineTo(5.0, 7.0);
-    shape.lineTo(1.0, 7.0);
-    shape.lineTo(1.0, 6.0);
-    shape.closePath();
-    return shape;
-  }
+    @Override
+    public Shape drawShape(Node node, RenderContext context) {
+        GeneralPath shape = new GeneralPath();
+        shape.moveTo(0.0, 0.0);
+        shape.lineTo(0.0, 8.0);
+        shape.lineTo(7.0, 8.0);
+        shape.lineTo(7.0, 4.0);
+        shape.lineTo(3.0, 4.0);
+        shape.lineTo(3.0, 0.0);
+        shape.lineTo(0.0, 0.0);
+        shape.closePath();
+        shape.moveTo(4.0, 0.0);
+        shape.lineTo(4.0, 3.0);
+        shape.lineTo(7.0, 3.0);
+        shape.lineTo(4.0, 0.0);
+        shape.closePath();
+        shape.moveTo(1.0, 2.0);
+        shape.lineTo(2.0, 2.0);
+        shape.lineTo(2.0, 3.0);
+        shape.lineTo(1.0, 3.0);
+        shape.lineTo(1.0, 2.0);
+        shape.closePath();
+        shape.moveTo(1.0, 4.0);
+        shape.lineTo(2.0, 4.0);
+        shape.lineTo(2.0, 5.0);
+        shape.lineTo(1.0, 5.0);
+        shape.lineTo(1.0, 4.0);
+        shape.closePath();
+        shape.moveTo(1.0, 6.0);
+        shape.lineTo(5.0, 6.0);
+        shape.lineTo(5.0, 7.0);
+        shape.lineTo(1.0, 7.0);
+        shape.lineTo(1.0, 6.0);
+        shape.closePath();
+        return shape;
+    }
 
 }

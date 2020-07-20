@@ -264,7 +264,7 @@ public class Message {
     public void setMessageStatus(MessageStatus messageStatus) {
         this.messageStatus = messageStatus;
     }
-    
+
     public boolean isSystemMessage() {
         switch (messageType) {
             case MESSAGES_NOW_ENCRYPTED:
@@ -285,12 +285,10 @@ public class Message {
         }
         return false;
     }
-    
+
     public boolean isCall() {
-        return  messageType == MessageType.VIDEO_CALL || 
-                messageType == MessageType.VOICE_CALL ||
-                messageType == MessageType.MISSED_VIDEO_CALL || 
-                messageType == MessageType.MISSED_VOICE_CALL;
+        return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
+                || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL;
     }
 
     public static enum MessageType {

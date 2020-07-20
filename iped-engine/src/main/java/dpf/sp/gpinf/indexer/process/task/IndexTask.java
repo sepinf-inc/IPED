@@ -13,7 +13,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.util.IOUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -78,8 +77,8 @@ public class IndexTask extends AbstractTask {
         if (evidence.isQueueEnd()) {
             return;
         }
-        
-        if(SkipCommitedTask.isAlreadyCommited(evidence)) {
+
+        if (SkipCommitedTask.isAlreadyCommited(evidence)) {
             evidence.setToIgnore(true);
             return;
         }
@@ -103,7 +102,8 @@ public class IndexTask extends AbstractTask {
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexFileContents && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexFileContents
+                    && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
                     LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
@@ -129,7 +129,7 @@ public class IndexTask extends AbstractTask {
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
         int fragments = fragReader.estimateNumberOfFrags();
-        if(fragments == -1) {
+        if (fragments == -1) {
             fragments = 1;
         }
         String origPersistentId = Util.getPersistentId(evidence);
@@ -138,13 +138,14 @@ public class IndexTask extends AbstractTask {
              * breaks very large texts in separate documents to be indexed
              */
             do {
-                //use fragName = 1 for all frags, except last, to check if last frag was indexed
-                //and to reuse same frag id when continuing an aborted processing
+                // use fragName = 1 for all frags, except last, to check if last frag was
+                // indexed
+                // and to reuse same frag id when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
-                
+
                 String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
                 evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
-                
+
                 if (fragments != 0) {
                     stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
@@ -153,7 +154,7 @@ public class IndexTask extends AbstractTask {
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
                 worker.writer.addDocument(doc);
-                
+
                 while (worker.state != STATE.RUNNING) {
                     try {
                         Thread.sleep(1000);
@@ -162,7 +163,7 @@ public class IndexTask extends AbstractTask {
                         e.printStackTrace();
                     }
                 }
-                
+
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } catch (IOException e) {
@@ -243,10 +244,10 @@ public class IndexTask extends AbstractTask {
                 in.close();
                 fileIn.close();
             }
-            
+
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            if(args.isAppendIndex() || args.isContinue() || args.isRestart()) {
-                try(IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)){
+            if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+                try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
                     stats.setLastId(ipedSrc.getLastId());
                     Item.setStartID(ipedSrc.getLastId() + 1);
                 }
@@ -278,7 +279,7 @@ public class IndexTask extends AbstractTask {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
         Set<String> extraAttr = Item.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
-        IOUtils.fsync(extraAttributtesFile, false);
+        Util.fsync(extraAttributtesFile.toPath());
     }
 
     private void loadExtraAttributes() throws ClassNotFoundException, IOException {

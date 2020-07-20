@@ -38,7 +38,7 @@ public class GenericOLEParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-tika-msoffice");
-    
+
     private static final int MAX_SIZE_TO_LOAD = 1 << 27;
 
     private final RawStringParser rawParser = new RawStringParser();
@@ -62,11 +62,11 @@ public class GenericOLEParser extends AbstractParser {
         File file = tis.getFile();
         POIFSFileSystem poiFS = null;
         FileInputStream fis = null;
-        if(file.length() <= MAX_SIZE_TO_LOAD) {
+        if (file.length() <= MAX_SIZE_TO_LOAD) {
             fis = new FileInputStream(file);
-            //50x faster than loading from file, see POI-64322
+            // 50x faster than loading from file, see POI-64322
             poiFS = new POIFSFileSystem(fis);
-        }else {
+        } else {
             poiFS = new POIFSFileSystem(file);
         }
         try {

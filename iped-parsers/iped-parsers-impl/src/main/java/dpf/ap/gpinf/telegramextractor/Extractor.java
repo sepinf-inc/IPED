@@ -27,6 +27,7 @@ import java.util.List;
 import dpf.ap.gpinf.telegram.tgnet.*;
 import dpf.ap.gpinf.telegram.tgnet.TLRPC.DocumentAttribute;
 import dpf.ap.gpinf.telegram.tgnet.TLRPC.PhotoSize;
+
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;

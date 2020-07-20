@@ -24,7 +24,7 @@ public class ItemSearcher implements IItemSearcher {
     public ItemSearcher(IPEDSource iSource) {
         this.iSource = iSource;
     }
-    
+
     public ItemSearcher(File caseFolder, IndexWriter iw) {
         this.caseFolder = caseFolder;
         this.iw = iw;
@@ -35,22 +35,22 @@ public class ItemSearcher implements IItemSearcher {
     public List<IItemBase> search(String luceneQuery) {
 
         List<IItemBase> items = new ArrayList<IItemBase>();
-        for(IItemBase item : searchIterable(luceneQuery)) {
+        for (IItemBase item : searchIterable(luceneQuery)) {
             items.add(item);
         }
         return items;
     }
-    
+
     @Override
     public Iterable<IItemBase> searchIterable(String luceneQuery) {
-        
+
         SearchResult result = getResult(luceneQuery);
-        
+
         return new Iterable<IItemBase>() {
             @Override
             public Iterator<IItemBase> iterator() {
                 return new Iterator<IItemBase>() {
-                    
+
                     int pos = 0;
 
                     @Override
@@ -62,19 +62,19 @@ public class ItemSearcher implements IItemSearcher {
                     public IItemBase next() {
                         return iSource.getItemByID(result.getId(pos++));
                     }
-                    
+
                 };
             }
         };
     }
-    
+
     private SearchResult getResult(String luceneQuery) {
         IPEDSearcher searcher = new IPEDSearcher(iSource, luceneQuery);
         searcher.setTreeQuery(true);
         searcher.setNoScoring(true);
         try {
             return searcher.search();
-            
+
         } catch (Exception e) {
             e.printStackTrace();
             return new SearchResult(new int[0], new float[0]);

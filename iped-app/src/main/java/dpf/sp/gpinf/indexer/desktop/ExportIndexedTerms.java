@@ -9,8 +9,8 @@ import java.io.OutputStreamWriter;
 
 import javax.swing.JFileChooser;
 
-import org.apache.lucene.index.AtomicReader;
 import org.apache.lucene.index.Fields;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 
@@ -21,11 +21,11 @@ import iped3.desktop.ProgressDialog;
 public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> implements PropertyChangeListener {
 
     ProgressDialog progressMonitor;
-    AtomicReader atomicReader;
+    LeafReader atomicReader;
     File file;
     volatile long total = 0;
 
-    public ExportIndexedTerms(AtomicReader atomicReader) {
+    public ExportIndexedTerms(LeafReader atomicReader) {
         this.atomicReader = atomicReader;
         this.addPropertyChangeListener(this);
     }
@@ -77,7 +77,7 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
             Fields fields = atomicReader.fields();
             for (String f : field) {
                 Terms terms = fields.terms(f);
-                TermsEnum termsEnum = terms.iterator(null);
+                TermsEnum termsEnum = terms.iterator();
 
                 while (termsEnum.next() != null) {
                     writer.write(termsEnum.term().utf8ToString());

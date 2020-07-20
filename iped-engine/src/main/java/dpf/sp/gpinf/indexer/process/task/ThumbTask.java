@@ -22,7 +22,8 @@ public abstract class ThumbTask extends AbstractTask {
     protected File getThumbFile(IItem evidence) throws Exception {
         File thumbFile = null;
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
+                .next();
         boolean storeThumbsInDb = !caseData.containsReport() || !ipedConfig.isHtmlReportEnabled();
         if (storeThumbsInDb) {
             return null;
@@ -55,7 +56,7 @@ public abstract class ThumbTask extends AbstractTask {
                 ps.close();
             }
         } else {
-            //if exists, do not need to compute again
+            // if exists, do not need to compute again
             if (thumbFile.exists()) {
                 evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
                 if (thumbFile.length() != 0) {
@@ -73,7 +74,7 @@ public abstract class ThumbTask extends AbstractTask {
         File tmp = null;
         try {
             if (evidence.getThumb() == null) {
-                evidence.setThumb(new byte[0]); //zero size thumb means thumb error
+                evidence.setThumb(new byte[0]); // zero size thumb means thumb error
             }
             if (thumbFile == null) {
                 Connection con = ExportFileTask.getSQLiteStorageCon(output, evidence.getHashValue().getBytes());

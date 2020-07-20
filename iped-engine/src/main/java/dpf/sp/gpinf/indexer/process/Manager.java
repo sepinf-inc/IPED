@@ -19,25 +19,20 @@
 package dpf.sp.gpinf.indexer.process;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectOutputStream;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.lucene.document.Document;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexCommit;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
-import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -46,7 +41,6 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
-import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +48,6 @@ import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -76,7 +69,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
@@ -111,7 +103,7 @@ import iped3.search.LuceneSearchResult;
  *
  */
 public class Manager {
-    
+
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static int QUEUE_SIZE = 100000;
     private static Logger LOGGER = LoggerFactory.getLogger(Manager.class);
@@ -131,26 +123,28 @@ public class Manager {
 
     private boolean isSearchAppOpen = false;
     private boolean isProcessingFinished = false;
-    
+
     private LocalConfig localConfig;
     private AdvancedIPEDConfig advancedConfig;
     private CmdLineArgs args;
-    
+
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
 
     public static Manager getInstance() {
         return instance;
     }
-    
+
     public ICaseData getCaseData() {
         return caseData;
     }
 
     public Manager(List<File> sources, File output, File palavras) {
-        
-        this.localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator().next();
-        this.advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
+
+        this.localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator()
+                .next();
+        this.advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
+                .findObjects(AdvancedIPEDConfig.class).iterator().next();
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;
@@ -173,7 +167,7 @@ public class Manager {
 
         commitIntervalMillis = advancedConfig.getCommitIntervalSeconds() * 1000;
     }
-    
+
     public File getIndexTemp() {
         return indexDir;
     }
@@ -191,15 +185,15 @@ public class Manager {
         stats.printSystemInfo();
 
         output = output.getCanonicalFile();
-        
+
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        
+
         prepareOutputFolder();
-        
-        if(args.isContinue() && indexDir != finalIndexDir) {
+
+        if (args.isContinue() && indexDir != finalIndexDir) {
             changeTempDir();
         }
-        
+
         saveCurrentTempDir();
 
         int i = 1;
@@ -225,8 +219,6 @@ public class Manager {
             interromperIndexacao();
             throw e;
         }
-
-        saveViewToOriginalFileMap();
 
         filtrarPalavrasChave();
 
@@ -276,17 +268,17 @@ public class Manager {
         LOGGER.info("Closing Sleuthkit Servers."); //$NON-NLS-1$
         SleuthkitClient.shutDownServers();
     }
-    
+
     private void saveCurrentTempDir() throws UnsupportedEncodingException, IOException {
         File temp = localConfig.getIndexerTemp();
         File prevTempInfoFile = IPEDSource.getTempDirInfoFile(output);
         prevTempInfoFile.getParentFile().mkdirs();
         Files.write(prevTempInfoFile.toPath(), temp.getAbsolutePath().getBytes("UTF-8"));
     }
-    
+
     private void changeTempDir() throws UnsupportedEncodingException, IOException {
         File prevIndexTemp = IPEDSource.getTempIndexDir(output);
-        if(!prevIndexTemp.exists()) {
+        if (!prevIndexTemp.exists()) {
             return;
         }
         localConfig.setIndexerTemp(prevIndexTemp.getParentFile());
@@ -295,7 +287,7 @@ public class Manager {
 
     private void loadExistingData() throws Exception {
 
-        try(IndexReader reader = DirectoryReader.open(writer, true)){
+        try (IndexReader reader = DirectoryReader.open(writer, true)) {
             stats.previousIndexedFiles = reader.numDocs();
         }
 
@@ -306,12 +298,13 @@ public class Manager {
     }
 
     private IndexWriterConfig getIndexWriterConfig() {
-        IndexWriterConfig conf = new IndexWriterConfig(Versao.current, AppAnalyzer.get());
+        IndexWriterConfig conf = new IndexWriterConfig(AppAnalyzer.get());
         conf.setOpenMode(IndexWriterConfig.OpenMode.CREATE_OR_APPEND);
 
-        conf.setMaxThreadStates(localConfig.getNumThreads());
+        conf.setCommitOnClose(true);
         conf.setSimilarity(new IndexerSimilarity());
         ConcurrentMergeScheduler mergeScheduler = new ConcurrentMergeScheduler();
+        mergeScheduler.disableAutoIOThrottle();
         if ((localConfig.isIndexTempOnSSD() && indexDir != finalIndexDir) || localConfig.isOutputOnSSD()) {
             mergeScheduler.setMaxMergesAndThreads(8, 4);
         }
@@ -326,7 +319,7 @@ public class Manager {
          */
         tieredPolicy.setMaxMergedSegmentMB(4000);
         conf.setMergePolicy(tieredPolicy);
-        
+
         conf.setIndexDeletionPolicy(new CustomIndexDeletionPolicy(args));
 
         return conf;
@@ -335,21 +328,21 @@ public class Manager {
     private void iniciarIndexacao() throws Exception {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
-        
+
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
-        if(args.isRestart()) {
+        if (args.isRestart()) {
             List<IndexCommit> commits = DirectoryReader.listCommits(directory);
             config.setIndexCommit(commits.get(0));
         }
-        
+
         boolean newIndex = !indexDir.exists();
         writer = new IndexWriter(directory, config);
-        if(newIndex) {
-            //first empty commit to be used by --restart
+        if (newIndex) {
+            // first empty commit to be used by --restart
             writer.commit();
         }
-        
+
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
             loadExistingData();
         }
@@ -383,7 +376,7 @@ public class Manager {
             } catch (InterruptedException e) {
                 exception = new IPEDException("Processing canceled!"); //$NON-NLS-1$
             }
-            
+
             String currentDir = contador.currentDirectory();
             if (contador.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
@@ -409,23 +402,25 @@ public class Manager {
             }
 
             if (!someWorkerAlive) {
-                IItemSearcher searcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
-                if(searcher != null) searcher.close();
-                
+                IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
+                if (searcher != null)
+                    searcher.close();
+
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
-                    
-                    caseData.putCaseObject(IItemSearcher.class.getName(), new ItemSearcher(output.getParentFile(), writer));
-                    
+
+                    caseData.putCaseObject(IItemSearcher.class.getName(),
+                            new ItemSearcher(output.getParentFile(), writer));
+
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();
                 }
             }
-            
+
             long t = System.currentTimeMillis();
-            if(t - start >= commitIntervalMillis) {
-                if(commitThread == null || !commitThread.isAlive()) {
+            if (t - start >= commitIntervalMillis) {
+                if (commitThread == null || !commitThread.isAlive()) {
                     commitThread = commit();
                 }
                 start = t;
@@ -438,9 +433,9 @@ public class Manager {
         }
 
     }
-    
+
     private Thread commit() {
-        //commit could be costly, do in another thread
+        // commit could be costly, do in another thread
         Thread t = new Thread() {
             @Override
             public void run() {
@@ -448,31 +443,31 @@ public class Manager {
                     long start = System.currentTimeMillis() / 1000;
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
-                    
-                    //commit other control data
+
+                    // commit other control data
                     IndexTask.saveExtraAttributes(output);
                     IndexItem.saveMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
                     stats.commit();
-                    
+
                     LOGGER.info("Commiting sqlite storages...");
                     ExportFileTask.commitStorage(output);
-                    
+
                     GraphTask.commit();
-                    
+
                     ExportCSVTask.commit(output);
-                    
+
                     writer.commit();
                     long end = System.currentTimeMillis() / 1000;
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
-                    
+
                 } catch (Exception e) {
                     exception = e;
                     try {
                         LOGGER.error("Error commiting. Rollback commit started...");
                         writer.rollback();
                         LOGGER.error("Rollback commit finished.");
-                        
+
                     } catch (IOException e1) {
                         e1.printStackTrace();
                     }
@@ -492,8 +487,8 @@ public class Manager {
     }
 
     private void finalizarIndexacao() throws Exception {
-        
-        if(commitThread != null && commitThread.isAlive()) {
+
+        if (commitThread != null && commitThread.isAlive()) {
             commitThread.join();
             if (exception != null) {
                 throw exception;
@@ -514,7 +509,7 @@ public class Manager {
             }
 
         }
-        
+
         stats.commit();
 
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.ClosingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -574,16 +569,16 @@ public class Manager {
                         ipedCase.close();
                         throw new InterruptedException("Processing canceled!"); //$NON-NLS-1$
                     }
-                    
+
                     try {
                         IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, palavra);
                         if (pesquisa.searchAll().getLength() > 0) {
                             palavrasFinais.add(palavra);
                         }
-                    }catch(Exception e) {
+                    } catch (Exception e) {
                         LOGGER.error("Erro filtering by {} {}", palavra, e.toString());
                     }
-                    
+
                 }
                 ipedCase.close();
 
@@ -600,72 +595,14 @@ public class Manager {
 
     }
 
-    private void saveViewToOriginalFileMap() throws Exception {
-
-        VersionsMap viewToRaw = new VersionsMap(0);
-
-        if (FTK3ReportReader.wasExecuted) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingViewMap")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            LOGGER.info("Creating preview to original file map..."); //$NON-NLS-1$
-
-            IPEDSource ipedCase = new IPEDSource(output.getParentFile());
-            String query = IndexItem.EXPORT + ":(files && (\"AD html\" \"AD rtf\"))"; //$NON-NLS-1$
-            IPEDSearcher pesquisa = new IPEDSearcher(ipedCase, query);
-            LuceneSearchResult alternatives = pesquisa.filtrarFragmentos(pesquisa.searchAll());
-
-            HashMap<String, Integer> viewMap = new HashMap<String, Integer>();
-            for (int i = 0; i < alternatives.getLength(); i++) {
-                if (Thread.interrupted()) {
-                    ipedCase.close();
-                    throw new InterruptedException("Processing Canceled!"); //$NON-NLS-1$
-                }
-                Document doc = ipedCase.getSearcher().doc(alternatives.getLuceneIds()[i]);
-                String ftkId = doc.get(IndexItem.FTKID);
-                int id = Integer.valueOf(doc.get(IndexItem.ID));
-                viewMap.put(ftkId, id);
-            }
-            alternatives = null;
-            ipedCase.close();
-
-            IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(new File(output, "index"))); //$NON-NLS-1$
-            Bits liveDocs = MultiFields.getLiveDocs(reader);
-            viewToRaw = new VersionsMap(stats.getLastId() + 1);
-
-            for (int i = 0; i < reader.maxDoc(); i++) {
-                if (liveDocs != null && !liveDocs.get(i)) {
-                    continue;
-                }
-
-                Document doc = reader.document(i);
-                String ftkId = doc.get(IndexItem.FTKID);
-                int id = Integer.valueOf(doc.get(IndexItem.ID));
-                // String export = doc.get(IndexItem.EXPORT);
-
-                Integer viewId = viewMap.get(ftkId);
-                if (viewId != null && viewId != id /* && !viewToRaw.isView(viewId) && !export.contains(".[AD].") */) {
-                    viewToRaw.put(viewId, id);
-                }
-
-            }
-            reader.close();
-
-            LOGGER.info("Created {} preview mappings.", viewToRaw.getMappings()); //$NON-NLS-1$
-        }
-
-        FileOutputStream fileOut = new FileOutputStream(new File(output, "data/alternativeToOriginals.ids")); //$NON-NLS-1$
-        ObjectOutputStream out = new ObjectOutputStream(fileOut);
-        out.writeObject(viewToRaw);
-        out.close();
-        fileOut.close();
-    }
-
     private void removeEmptyTreeNodes() {
 
         if (!caseData.containsReport() || caseData.isIpedReport()) {
             return;
         }
 
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                Messages.getString("Manager.DeletingTreeNodes")); //$NON-NLS-1$
         LOGGER.info("Deleting empty tree nodes"); //$NON-NLS-1$
 
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
@@ -754,7 +691,8 @@ public class Manager {
                     IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
             }
             // copia arquivo de assinaturas customizadas
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
+            IOUtil.copiaArquivo(
+                    new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
                     new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$
             IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + IndexItem.attrTypesFilename), //$NON-NLS-1$
                     new File(output, "conf/" + IndexItem.attrTypesFilename)); //$NON-NLS-1$

@@ -40,7 +40,7 @@ public class RegexTask extends AbstractTask {
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
 
     private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
-    
+
     private static final int MAX_RESULTS = 50000; // OOME protection for files with tons of hits
 
     private static List<Regex> regexList;
@@ -52,7 +52,7 @@ public class RegexTask extends AbstractTask {
     private static boolean formatRegexMatches = false;
 
     private boolean enabled = true;
-    
+
     private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
@@ -219,7 +219,7 @@ public class RegexTask extends AbstractTask {
         }
         processRegex(evidence, new StringReader(evidence.getName()));
     }
-    
+
     @SuppressWarnings("unchecked")
     private void processRegex(IItem evidence, Reader reader) throws IOException {
 
@@ -247,7 +247,7 @@ public class RegexTask extends AbstractTask {
                 for (Regex regex : regexList) {
                     if (regex.pattern.run(hit)) {
                         hit = hit.substring(regex.prefix, hit.length() - regex.sufix);
-                        if(regex.ignoreCases)
+                        if (regex.ignoreCases)
                             hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {
                             if (formatRegexMatches) {
@@ -255,7 +255,7 @@ public class RegexTask extends AbstractTask {
                             }
                             Map<String, RegexHits> hitMap = hitList.get(i);
                             RegexHits hits = hitMap.get(hit);
-                            if(hits == null) {
+                            if (hits == null) {
                                 hits = new RegexHits(hit);
                                 hitMap.put(hit, hits);
                             }
@@ -270,24 +270,24 @@ public class RegexTask extends AbstractTask {
                     String key = REGEX_PREFIX + regexList.get(i).name;
                     Collection<RegexHits> prevHits = (Collection<RegexHits>) evidence.getExtraAttribute(key);
                     Map<String, RegexHits> hitsMap = hitList.get(i);
-                    if(prevHits == null) {
+                    if (prevHits == null) {
                         evidence.setExtraAttribute(key, hitsMap.values());
-                    }else {
-                        if(prevHits.size() >= MAX_RESULTS) {
+                    } else {
+                        if (prevHits.size() >= MAX_RESULTS) {
                             evidence.setExtraAttribute("maxHitsReached" + key, "true");
-                        }else {
-                            for(RegexHits hits : prevHits) {
+                        } else {
+                            for (RegexHits hits : prevHits) {
                                 RegexHits prev = hitsMap.get(hits.getHit());
-                                if(prev != null) {
+                                if (prev != null) {
                                     prev.addAll(hits.getOffsets());
-                                }else {
+                                } else {
                                     hitsMap.put(hits.getHit(), hits);
                                 }
                             }
                             evidence.setExtraAttribute(key, hitsMap.values());
                         }
                     }
-                    
+
                     if (regexList.get(i).name.equals(KEYWORDS_NAME))
                         evidence.setToExtract(true);
                 }

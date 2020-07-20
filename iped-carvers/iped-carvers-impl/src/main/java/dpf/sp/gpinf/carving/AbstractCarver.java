@@ -91,7 +91,8 @@ public abstract class AbstractCarver implements Carver {
             offsetFile.setFileOffset(prevOff == -1 ? header.getOffset() : prevOff + header.getOffset());
 
             offsetFile.getMetadata().add(ExtraProperties.CARVEDBY_METADATA_NAME, this.getClass().getName());
-            offsetFile.getMetadata().add(ExtraProperties.CARVEDOFFSET_METADATA_NAME, Long.toString(offsetFile.getFileOffset()));
+            offsetFile.getMetadata().add(ExtraProperties.CARVEDOFFSET_METADATA_NAME,
+                    Long.toString(offsetFile.getFileOffset()));
 
             for (Iterator<CarvedItemListener> iterator = carvedItemListeners.iterator(); iterator.hasNext();) {
                 CarvedItemListener carvedItemListener = iterator.next();

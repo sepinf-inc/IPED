@@ -60,14 +60,16 @@ public class TorrentFileParser extends AbstractParser {
             throw new TikaException("Error parsing torrent file", e); //$NON-NLS-1$
         }
 
-        
         List<FileInTorrent> files = extractFileList(dict);
-        
-        boolean [] include = { true, true, false, false, false };
+
+        boolean[] include = { true, true, false, false, false };
         for (FileInTorrent file : files) {
-            if (! file.md5.isEmpty() ) include[2] = true;
-            if (! file.sha1.isEmpty() ) include[3] = true;
-            if (! file.ed2k.isEmpty() ) include[4] = true;
+            if (!file.md5.isEmpty())
+                include[2] = true;
+            if (!file.sha1.isEmpty())
+                include[3] = true;
+            if (!file.ed2k.isEmpty())
+                include[4] = true;
         }
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -97,7 +99,8 @@ public class TorrentFileParser extends AbstractParser {
         boolean a = true;
         for (FileInTorrent file : files) {
             xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$
-            String[] rowElements = new String[] { file.fullPath, Long.toString(file.length), file.md5, file.sha1, file.ed2k };
+            String[] rowElements = new String[] { file.fullPath, Long.toString(file.length), file.md5, file.sha1,
+                    file.ed2k };
             for (int i = 0; i < rowElements.length; i++) {
                 if (include[i]) {
                     xhtml.startElement("div", "class", "a"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$

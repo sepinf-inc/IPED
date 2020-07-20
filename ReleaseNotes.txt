@@ -1,3 +1,21 @@
+07/16/2020: IPED-3.18.1
+News:
+#175 Synchronize chat view checkboxes of medias with table tab checkboxes (Luis Nassif)
+#201 Merge decoded whatsapp accounts with wa accounts extracted from ufed xml in graph (Luis Nassif)
+#197 Categorize HFS DECOMP streams when using fastmode (Luis Nassif)
+#188 Support pure negative queries like -field1:xxx -field2:yyy (Luis Nassif)
+#200 User and password parameters to connect to ElasticSearch (Luis Nassif)
+#181 Unzip Libreoffice files to AppData\Local directory (Luis Nassif)
+#193 Optimize whatsapp chat html (Fabio Pfeifer)
+#179 Migrate to Lucene-5.5.5 (Luis Nassif)
+Fixes:
+#191 Checking media files in whatsapp chats works just when chat loading finishes (Luis Nassif)
+#182 Pure negative queries like -field:xxx being inverted (Luis Nassif)
+#187 Error generating graph when there is space in iped path (Luis Nassif)
+#199 Error generating graph database on windows if output folder has accents (Luis Nassif)
+#196 Error creating report from command line with graph generation enabled (Luis Nassif)
+#189 Some iped gui processes left behind if errors occur opening cases (Luis Nassif)
+
 07/02/2020: IPED-3.18-beta
 News:
 #15 Graph analysis for communications (Filipe Simões and Luis Nassif)

@@ -135,14 +135,15 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         }
 
         if (App.get().similarImagesQueryRefItem != null) {
-            Query similarImagesQuery = new SimilarImagesSearch().getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
+            Query similarImagesQuery = new SimilarImagesSearch()
+                    .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
                 BooleanQuery boolQuery = new BooleanQuery();
                 boolQuery.add(result, Occur.MUST);
                 boolQuery.add(similarImagesQuery, Occur.MUST);
                 result = boolQuery;
                 searcher.setNoScoring(true);
-                numFilters++;        
+                numFilters++;
             }
         }
 
@@ -206,8 +207,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                                     .filtrarSemEComMarcadores(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
-                                .filtrarMarcadores(result, bookmarkSelection);
+                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarMarcadores(result,
+                                bookmarkSelection);
 
                 }
 
@@ -227,7 +228,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
-                
+
                 Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
                 if (selectedEdges != null && !selectedEdges.isEmpty()) {
                     numFilters++;
@@ -292,7 +293,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
     public void done() {
 
         App.get().clearAllFilters.setNumberOfFilters(numFilters);
-            
+
         if (!this.isCancelled())
             try {
                 App.get().ipedResult = this.get();

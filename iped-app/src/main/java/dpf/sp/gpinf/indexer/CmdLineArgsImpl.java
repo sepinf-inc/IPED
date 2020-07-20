@@ -89,10 +89,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = "--append", description = "add data to be processed to an existent case")
     private boolean appendIndex;
-    
+
     @Parameter(names = "--continue", description = "continue a stopped or aborted processing")
     private boolean isContinue;
-    
+
     @Parameter(names = "--restart", description = "discard last aborted processing and start from beginning")
     private boolean restart;
 
@@ -119,7 +119,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private Map<String, String> extraParams = new HashMap<>();
 
     private List<String> allArgs;
-    
+
     private HashSet<String> evidenceNames = new HashSet<>();
 
     @Override
@@ -201,12 +201,12 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     public boolean isAppendIndex() {
         return appendIndex;
     }
-    
+
     @Override
     public boolean isContinue() {
         return isContinue;
     }
-    
+
     @Override
     public boolean isRestart() {
         return restart;
@@ -320,11 +320,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             printUsageAndExit(jc, e);
         }
     }
-    
+
     private void checkDuplicateDataSources() {
-        for(File source : datasources) {
+        for (File source : datasources) {
             String name = getDataSourceName(source);
-            if(!evidenceNames.add(name)) {
+            if (!evidenceNames.add(name)) {
                 throw new ParameterException("Duplicate evidence names not allowed: " + name);
             }
         }
@@ -371,7 +371,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         if (this.ocr != null) {
             String list = "";
-            for(String o : ocr)
+            for (String o : ocr)
                 list += (o + OCRParser.SUBSET_SEPARATOR);
             System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
