@@ -2,8 +2,8 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.ArrayList;
 
-import dpf.ap.gpinf.InterfaceTelegram.ChatInterface;
-import dpf.ap.gpinf.InterfaceTelegram.ContactInterface;
+import dpf.ap.gpinf.interfacetelegram.ChatInterface;
+import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 
 public class Chat implements ChatInterface {
 	ArrayList<Message> messages  =new ArrayList<>();

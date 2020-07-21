@@ -1,7 +1,7 @@
 package dpf.ap.gpinf.telegramextractor;
 
 
-import dpf.ap.gpinf.InterfaceTelegram.ContactInterface;
+import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 
 public class Contact implements ContactInterface {
 	private long id;

@@ -2,7 +2,7 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.Date;
 
-import dpf.ap.gpinf.InterfaceTelegram.MessageInterface;
+import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 
 public class Message implements MessageInterface {
 	private long id;
