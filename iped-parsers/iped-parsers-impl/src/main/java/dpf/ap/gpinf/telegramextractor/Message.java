@@ -2,7 +2,9 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.Date;
 
-public class Message {
+import dpf.ap.gpinf.InterfaceTelegram.MessageInterface;
+
+public class Message implements MessageInterface {
 	private long id;
 	private String mediaHash=null;
 	private String mediaFile=null;

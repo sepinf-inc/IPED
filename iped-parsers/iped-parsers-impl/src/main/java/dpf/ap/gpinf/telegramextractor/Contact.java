@@ -1,6 +1,9 @@
 package dpf.ap.gpinf.telegramextractor;
 
-public class Contact {
+
+import dpf.ap.gpinf.InterfaceTelegram.ContactInterface;
+
+public class Contact implements ContactInterface {
 	private long id;
 	private String name=null;
 	private String lastName=null;
@@ -45,6 +48,16 @@ public class Contact {
 	}
 	public void setLastName(String lastName) {
 		this.lastName = lastName;
+	}
+	@Override
+	public void setBigName(String bigname) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void setSmallName(String smallname) {
+		// TODO Auto-generated method stub
+		
 	}
 
 }

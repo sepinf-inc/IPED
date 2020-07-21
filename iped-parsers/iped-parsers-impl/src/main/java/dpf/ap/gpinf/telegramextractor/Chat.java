@@ -2,7 +2,10 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.ArrayList;
 
-public class Chat {
+import dpf.ap.gpinf.InterfaceTelegram.ChatInterface;
+import dpf.ap.gpinf.InterfaceTelegram.ContactInterface;
+
+public class Chat implements ChatInterface {
 	ArrayList<Message> messages  =new ArrayList<>();
 	private  Contact c;
 	private String name;
@@ -20,6 +23,9 @@ public class Chat {
 	}
 	public void setC(Contact c) {
 		this.c = c;
+	}
+	public void setC(ContactInterface c) {
+		this.c = (Contact)c;
 	}
 	public String getName() {
 		return name;

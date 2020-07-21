@@ -1,18 +1,12 @@
 package dpf.ap.gpinf.telegramextractor;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.channels.FileChannel;
+
 import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
 
-import dpf.ap.gpinf.telegram.tgnet.SerializedData;
-import dpf.ap.gpinf.telegram.tgnet.TLRPC;
-
-import java.nio.ByteBuffer;
 public class Util {
 	 private static String byteArrayToHex(byte[] a ) {
 		 StringBuilder sb = new StringBuilder(a.length * 2);

@@ -12,8 +12,8 @@ import java.util.ArrayList;
  * @author ADMHauck
  */
 public interface ChatInterface {
-    public ArrayList<MessageInterface> getMessages();
-    public void setMessages(ArrayList<MessageInterface> messages);
+    
+   
     public ContactInterface getC();
     public void setC(ContactInterface c);
     public String getName();

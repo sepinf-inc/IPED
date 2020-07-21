@@ -20,7 +20,7 @@ public interface DecoderTelegramInterface {
     public void getUserData(ContactInterface user);
     public void getMessageData(MessageInterface message);
     public void getChatData(ContactInterface chat);
-    
+    public int getRemetenteId();
     public List<String> getDocumentNames();
     public List<PhotoData> getPhotoData();
     public int getDocumentSize();

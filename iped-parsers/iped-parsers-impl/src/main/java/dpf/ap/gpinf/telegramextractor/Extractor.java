@@ -1,34 +1,23 @@
 package dpf.ap.gpinf.telegramextractor;
-
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
+
 import java.io.IOException;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang.builder.ReflectionToStringBuilder;
-import org.apache.commons.lang.builder.ToStringStyle;
-import org.bouncycastle.crypto.engines.ISAACEngine;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
-
-import dpf.ap.gpinf.telegram.tgnet.*;
-import dpf.ap.gpinf.telegram.tgnet.TLRPC.DocumentAttribute;
-import dpf.ap.gpinf.telegram.tgnet.TLRPC.PhotoSize;
-
+import dpf.ap.gpinf.InterfaceTelegram.DecoderTelegramInterface;
+import dpf.ap.gpinf.InterfaceTelegram.PhotoData;
 import iped3.io.IItemBase;
+
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 public class Extractor {
@@ -67,8 +56,69 @@ public class Extractor {
     	}
     	
     }
-    
-    protected ArrayList<Chat> extractChatList(){
+    protected  ArrayList<Chat> extractChatList(){
+    	 ArrayList<Chat> l=new ArrayList<>();
+    	 System.out.println("parser telegram!!!!!");
+     	try {
+     		DecoderTelegramInterface d=(DecoderTelegramInterface)Class.forName(DECODER_CLASS).newInstance();
+             PreparedStatement stmt = conn.prepareStatement(CHATS_SQL);
+             ResultSet rs = stmt.executeQuery();
+             while (rs.next()) {
+            	 long chatId = rs.getLong("chatId");
+            	 byte[] dados;
+                 Chat cg=null;
+                 String chatName = null;
+                 if ((chatName=rs.getString("nomeChat")) != null) {
+                	 dados = rs.getBytes("dadosChat");
+                	 Contact user=new Contact(0);
+                	 d.setDecoderData(dados, DecoderTelegramInterface.USER);
+                	 d.getUserData(user);
+                     
+                     
+                     
+                     if (user.getId()>0) {
+                     	Contact cont=getContact(user.getId());
+                     	if(cont.getAvatar()==null && d.getPhotoData().size()>0) {
+                     		searchAvatarFileName(cont,d.getPhotoData());
+                     	}
+                          cg=new Chat(chatId,cont, cont.getName()+" "+cont.getLastName());
+                         
+
+                     }
+                 } else if ((chatName=rs.getString("groupName")) != null) {
+                     dados = rs.getBytes("dadosGrupo");
+                     
+                	 d.setDecoderData(dados, DecoderTelegramInterface.CHAT);
+                     Contact cont=getContact(chatId);
+                     d.getChatData(cont);
+                     
+                     
+                     searchAvatarFileName(cont,d.getPhotoData());
+                     
+                     cg = new ChatGroup(chatId,cont , chatName);
+                     
+
+                 }
+                 if(cg!=null) {
+                 	System.out.println("Nome do chat "+cg.getId());
+                     /*
+                 	ArrayList<Message> messages=extractMessages(conn, cg);
+                     if(messages == null || messages.isEmpty())
+                         continue;
+                    */
+                     //cg.messages.addAll(messages);
+                     l.add(cg);
+                 }
+            	 
+             }
+     	}catch (Exception e) {
+			// TODO: handle exception
+     		e.printStackTrace();
+		}
+     	return l;
+    }
+    /*
+    protected ArrayList<Chat> extractChatList_old(){
     	ArrayList<Chat> l =new ArrayList<>();
     	System.out.println("parser telegram!!!!!");
     	try {
@@ -107,11 +157,7 @@ public class Extractor {
                 }
                 if(cg!=null) {
                 	System.out.println("Nome do chat "+cg.getId());
-                    /*
-                	ArrayList<Message> messages=extractMessages(conn, cg);
-                    if(messages == null || messages.isEmpty())
-                        continue;
-                   */
+                   
                     //cg.messages.addAll(messages);
                     l.add(cg);
                 }
@@ -124,6 +170,7 @@ public class Extractor {
 
         return l;
     }
+    
     protected void extractLink(Message message,TLRPC.WebPage webpage) {
     	message.setLink(true);
         message.setMediaMime("link");
@@ -144,8 +191,82 @@ public class Extractor {
             
         }
     }
-    
+    */
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception{
+    	ArrayList<Message> msgs=new ArrayList<Message>();
+        PreparedStatement stmt=conn.prepareStatement(EXTRACT_MESSAGES_SQL);
+        DecoderTelegramInterface d=(DecoderTelegramInterface)Class.forName(DECODER_CLASS).newInstance();
+        if(stmt!=null) {
+            stmt.setLong(1,chat.getId());
+            ResultSet rs=stmt.executeQuery();
+            if(rs!=null) {
+                while (rs.next()) {
+                	 byte[] data = rs.getBytes ("data");
+                	 long mid=rs.getLong("mid");
+                	 Message message= new Message(mid,chat);
+                	 d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
+                	 d.getMessageData(message);
+                	 message.setRemetente(getContact(d.getRemetenteId()));
+                	 
+                	 if(message.getMediaMime()!=null) {
+	                	 if(message.getMediaMime().startsWith("image")) {
+	                		 List<PhotoData> list=d.getPhotoData();
+	                		 loadImage(message, list);
+	                	 }else if(message.getMediaMime().startsWith("link")) {
+	                		 loadLink(message, d.getPhotoData());
+	                	 }else if(message.getMediaMime().length()>0) {
+	                		 loadDocument(message,d.getDocumentNames(),d.getDocumentSize());
+	                	 }
+                	 }
+                	 msgs.add(message);
+                }
+            }
+        }
+        return msgs;
+    }
+    private void loadDocument(Message message,List<String> names,int size) {
+    	List<IItemBase> result = null;
+    	for(String name:names) {
+        	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":"+ "\""+name+"\"",searcher);
+            String path=getPathFromResult(result, size);
+            if(path!=null){
+            	message.setMediaFile(path);
+            	message.setMediaHash(getHash(result, size));
+            	message.setThumb(getThumb(result, size));
+                break;
+            }
+            
+    	}
+    }
+    private void loadLink(Message message,List<PhotoData> list) {
+    	
+    	for(PhotoData p:list) {
+    		IItemBase r=getFileFrom(p.getName(), p.getSize());
+    		if(r!=null) {
+    			message.setType("link/image");
+    			try {
+					message.setLinkImage(FileUtils.readFileToByteArray(r.getTempFile()));
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+    		}
+    	}
+    	
+    }
+    private void loadImage(Message message,List<PhotoData> list) {
+    	for(PhotoData p:list) {
+    		IItemBase r=getFileFrom(p.getName(), p.getSize());
+    		if(r!=null) {
+    			message.setThumb(r.getThumb());
+    			message.setMediaHash(r.getHash());
+    			message.setMediaFile(r.getPath());
+    			message.setMediaName(r.getName());
+    		}
+    	}
+    }
+    /*
+    protected ArrayList<Message> extractMessages_old(Chat chat) throws Exception{
     	ArrayList<Message> msgs=new ArrayList<Message>();
     	        PreparedStatement stmt=conn.prepareStatement(EXTRACT_MESSAGES_SQL);
     	        if(stmt!=null) {
@@ -275,6 +396,8 @@ public class Extractor {
     	        return msgs;
     }
     
+   
+   
     protected void extractDocument(Message message,TLRPC.Document document) throws IOException {
     	message.setMediaMime(document.mime_type);
     	message.setMediaName(document.id+"");
@@ -326,10 +449,12 @@ public class Extractor {
             
         }
     }
+    */
     private IItemSearcher searcher;
     public void setSearcher(IItemSearcher s) {
     	searcher=s;
     }
+    
     
     protected String getPathFromResult(List<IItemBase> result,int size) {
     	if(result==null) {
@@ -380,7 +505,15 @@ public class Extractor {
     	return null;
 	}
     
-    
+    private IItemBase  getFileFrom(String name,int size) {
+    	List<IItemBase> result = null;
+    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\" && size:"+size,searcher);
+    	if(result!=null && !result.isEmpty()) {
+    		return result.get(0);
+    	}
+    	return null;
+    }
+    /*
     private String getFileFromPhoto(ArrayList<PhotoSize> sizes) {
     	List<IItemBase> result = null;
     	
@@ -403,14 +536,18 @@ public class Extractor {
         return null;
 		
 	}
+	*/
 
 	protected void extractContacts() throws SQLException {
+		DecoderTelegramInterface d=null;
 		try {
-			Object o=Class.forName("telegramdecoder.DecoderTelegram").newInstance();
+			Object o=Class.forName(DECODER_CLASS).newInstance();
+			d=(DecoderTelegramInterface)o;
 			System.out.println(ReflectionToStringBuilder.toString(o));
 		}catch (Exception e) {
 			System.out.println("erro ao carregar");
 			// TODO: handle exception
+			return;
 			
 		}
 		if(conn!=null) {
@@ -421,21 +558,29 @@ public class Extractor {
                 	return;
                 int nphones=0;
                 while (rs.next()){
-                	SerializedData s= new SerializedData(rs.getBytes("data"));
-                	TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
-                    if(user!=null){
-                        Contact cont=getContact(user.id);
+                	d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER);
+                	Contact c=new Contact(0);
+                	d.getUserData(c);
+                	//SerializedData s= new SerializedData();
+                	//TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
+                    //Contact cont=
+                	if(c.getId()>0){
+                        Contact cont=getContact(c.getId());
+                        if(cont.getName()==null) {
+                        	cont.setName(c.getName());
+                        	cont.setLastName(c.getLastName());
+                        	cont.setUsername(c.getUsername());
+                        	cont.setPhone(c.getPhone());
+                        }
                         
-                        cont.setName(user.first_name);
-                        cont.setUsername(user.username);
-                        cont.setPhone(user.phone);
-                        if(user.phone!=null) {
+                        if(cont.getPhone()!=null) {
                         	nphones++;
                         }
-                        if(cont.getAvatar()!=null &&  user.photo!=null){
+                        List<PhotoData> photo=d.getPhotoData();
+                        if(cont.getAvatar()!=null &&  photo.size()>0){
                         	try {
-                        		if(user.phone!=null)
-                        			searchAvatarFileName(cont,user.photo.photo_big,user.photo.photo_small);
+                        		if(cont.getPhone()!=null)
+                        			searchAvatarFileName(cont,photo);
                         	}catch (IOException e) {
                         		// TODO: handle exception
                         		e.printStackTrace();
@@ -450,7 +595,27 @@ public class Extractor {
     	
     }
     
+	protected void searchAvatarFileName(Contact contact,List<PhotoData> photos) throws IOException {
+		 List<IItemBase> result=null;
+		 String name=null;
+		for(PhotoData photo:photos ) {
+			if(photo.getName()!=null) {
+				name=photo.getName()+".jpg";
+		    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"  - "+BasicProps.LENGTH+":0",searcher);
+		    	if(result!=null && !result.isEmpty()) {
+		    		break;
+		    	}
+			}
+		}
+		if(result!=null && !result.isEmpty()) {
+        	File f=result.get(0).getTempFile().getAbsoluteFile();
+        	System.out.println("avatar " +name);
+        	System.out.println("arq "+f.getName());
+            contact.setAvatar(FileUtils.readFileToByteArray(f));
+        }
+	}
     
+	/*
     protected void searchAvatarFileName(Contact contact,TLRPC.FileLocation big,TLRPC.FileLocation small) throws IOException {
         List<IItemBase> result=null;
         int size=0;
@@ -459,21 +624,12 @@ public class Extractor {
         	name=""+ big.volume_id + "_" + big.local_id+".jpg";
 	    	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"  - "+BasicProps.LENGTH+":0",searcher);
             
-           /* if(result==null || result.isEmpty()) {
-            	name="" + big.volume_id + "_" + big.local_id;
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"",searcher);
-            }
-            */
+           
         }
         if((result==null || result.isEmpty()) && small!=null){
         	name=""+ small.volume_id + "_" + small.local_id+".jpg";
         	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\" - "+BasicProps.LENGTH+":0",searcher);
-            /*
-            if(result==null || result.isEmpty()) {
-            	name="" + small.volume_id + "_" + small.local_id;
-            	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\""+ name+"\"",searcher);;
-            }
-            */
+           
         }
         if(result!=null && !result.isEmpty()) {
         	File f=result.get(0).getTempFile().getAbsoluteFile();
@@ -483,7 +639,7 @@ public class Extractor {
         }
         
     }
-    
+    */
     
     protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
@@ -508,6 +664,7 @@ public class Extractor {
 
     private static final String EXTRACT_CONTACTS_SQL="SELECT * FROM users";
    
+    private static final String DECODER_CLASS="telegramdecoder.DecoderTelegram";
     
     
 

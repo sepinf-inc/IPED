@@ -22,10 +22,9 @@ public interface MessageInterface {
 	public void setFromMe(boolean fromMe);
 	
 	
-	public ContactInterface getRemetente();
-	public void setRemetente(ContactInterface remetente);
-	public ChatInterface getChat();
-	public void setChat(ChatInterface chat);
+	
+	
+	
 	public String getData();
 	public void setData(String data);
 	public Date getTimeStamp();

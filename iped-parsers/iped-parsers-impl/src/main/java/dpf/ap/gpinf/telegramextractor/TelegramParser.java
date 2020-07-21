@@ -97,30 +97,33 @@ public class TelegramParser extends SQLite3DBParser {
 		}
 		
 		for(Chat c:e.getChatList()) {
-			//System.out.println("teste telegram");
+			System.out.println("teste telegram "+ e.getChatList().size());
 			try {
 				c.getMessages().addAll( e.extractMessages(c));
+			
+				System.out.println("teste 2 telegram "+ e.getChatList().size());
+				for(int i=0;i*MAXMSGS<c.messages.size();i++) {
+					byte[] bytes=r.generateChatHtml(c,i*MAXMSGS,(i+1)*MAXMSGS);
+					Metadata chatMetadata = new Metadata();
+					String title="Telegram_";
+					if(c.isGroup()) {
+						title+="Group";
+					}else {
+						title+="Chat";
+					}
+					title+="_"+c.getName()+"_"+(i+1);
+					chatMetadata.set(TikaCoreProperties.TITLE, title);
+			        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
+			        chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+			         
+			        ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+			        extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+		         
+				}
+				
 			}catch (Exception ex) {
 				// TODO: handle exception
 				ex.printStackTrace();
-			}
-			for(int i=0;i*MAXMSGS<c.messages.size();i++) {
-				byte[] bytes=r.generateChatHtml(c,i*MAXMSGS,(i+1)*MAXMSGS);
-				Metadata chatMetadata = new Metadata();
-				String title="Telegram_";
-				if(c.isGroup()) {
-					title+="Group";
-				}else {
-					title+="Chat";
-				}
-				title+="_"+c.getName()+"_"+(i+1);
-				chatMetadata.set(TikaCoreProperties.TITLE, title);
-		        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
-		        chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-		         
-		        ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-		        extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-	         
 			}
 			
 		}
