@@ -110,11 +110,11 @@ public class ReportGenerator {
 			
 			TagHtml link=new TagHtml("a");
 			link.setAtribute("onclick","app.open(\"hash:" + message.getMediaHash() + "\")");
-			System.out.println("abc1234: "+message.getMediaHash());
+			
 			link.setAtribute("href", message.getMediaFile());
 			
 			byte thumb[] = message.getThumb();
-            System.out.println("chegou aqui 1!!");
+            
 			if (thumb == null) {
             	List<IItemBase> result = null;
             	result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:"+ message.getMediaHash(),searcher);
@@ -125,7 +125,7 @@ public class ReportGenerator {
             	
             	
             }
-			System.out.println("chegou aqui 2!!");
+			
             
             TagHtml img=new TagHtml("img");
         	img.setAtribute("class", "iped-show");
@@ -138,9 +138,8 @@ public class ReportGenerator {
         	img.setAtribute("height", "102");
         	img.setAtribute("title","Video");
         	link.getInner().add(img);
-        	link.getInner().add(" teste ");
-        	System.out.println("chegou aqui 3!!");
-        	System.out.println(link.toString());
+        	//link.getInner().add(" teste ");
+        	
         	out.println(link.toString());
         	out.println("<br/>");
 			
@@ -192,9 +191,8 @@ public class ReportGenerator {
 			           
 			img.setAtribute("class", "iped-show");
         	link.getInner().add(img);
-        	link.getInner().add(" teste ");
-        	System.out.println("chegou aqui 3!!");
-        	System.out.println(link.toString());
+        	//link.getInner().add(" teste ");
+        	
         	out.println(link.toString());
         	out.println("<br/>");
 			
@@ -243,9 +241,9 @@ public class ReportGenerator {
 	    	img.setAtribute("height", "102");
 	    	img.setAtribute("title","Image");
 	    	link.getInner().add(img);
-	    	link.getInner().add(" teste ");
+	    	//link.getInner().add(" teste ");
 	    	
-	    	System.out.println(link.toString());
+	    	
 	    	out.println(link.toString());
 	    			
 		}else {
@@ -261,6 +259,7 @@ public class ReportGenerator {
 	}
 	
 	private void printLink(PrintWriter out, Message message) {
+		out.print("link<br/>");
 		if(message.getLinkImage()!=null) {
 					
 			byte thumb[] = message.getLinkImage();
@@ -275,8 +274,8 @@ public class ReportGenerator {
 	    	img.setAtribute("height", "102");
 	    	img.setAtribute("title","Link image");
 	    		    	    	
-	    	System.out.println("imagem de link");
-	    	out.println(img);
+	    	
+	    	out.println(img.toString());
 	    	out.println("<br/>");
 	    			
 		}
@@ -381,7 +380,7 @@ public class ReportGenerator {
         if (avatar != null) {
             out.println("<img src=\"data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(avatar) //$NON-NLS-1$
                     + "\" width=\"40\" height=\"40\"/>"); //$NON-NLS-1$
-            System.out.println("avatar");
+            
         }
         out.println(title + "</span>\n" //$NON-NLS-1$
                 + "</div>\n" //$NON-NLS-1$

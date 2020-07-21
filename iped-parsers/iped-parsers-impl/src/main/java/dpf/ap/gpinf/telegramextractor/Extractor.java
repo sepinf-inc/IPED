@@ -59,7 +59,7 @@ public class Extractor {
     }
     protected  ArrayList<Chat> extractChatList(){
     	 ArrayList<Chat> l=new ArrayList<>();
-    	 System.out.println("parser telegram!!!!!");
+    	 //System.out.println("parser telegram!!!!!");
      	try {
      		DecoderTelegramInterface d=(DecoderTelegramInterface)Class.forName(DECODER_CLASS).newInstance();
              PreparedStatement stmt = conn.prepareStatement(CHATS_SQL);
@@ -101,7 +101,7 @@ public class Extractor {
 
                  }
                  if(cg!=null) {
-                 	System.out.println("Nome do chat "+cg.getId());
+                 	//System.out.println("Nome do chat "+cg.getId());
                      /*
                  	ArrayList<Message> messages=extractMessages(conn, cg);
                      if(messages == null || messages.isEmpty())
@@ -262,9 +262,9 @@ public class Extractor {
 		try {
 			Object o=Class.forName(DECODER_CLASS).newInstance();
 			d=(DecoderTelegramInterface)o;
-			System.out.println(ReflectionToStringBuilder.toString(o));
+			//System.out.println(ReflectionToStringBuilder.toString(o));
 		}catch (Exception e) {
-			System.out.println("erro ao carregar");
+			System.out.println("erro ao carregar o jar do decoder");
 			// TODO: handle exception
 			return;
 			
@@ -307,7 +307,7 @@ public class Extractor {
                         }
                     }
                 }
-                System.out.println("tot_phones "+nphones);
+                System.out.println("Number of telegram phones "+nphones);
                 
             }
         }
@@ -328,8 +328,6 @@ public class Extractor {
 		}
 		if(result!=null && !result.isEmpty()) {
         	File f=result.get(0).getTempFile().getAbsoluteFile();
-        	System.out.println("avatar " +name);
-        	System.out.println("arq "+f.getName());
             contact.setAvatar(FileUtils.readFileToByteArray(f));
         }
 	}
