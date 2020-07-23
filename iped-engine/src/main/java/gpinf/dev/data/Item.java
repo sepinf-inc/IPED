@@ -36,7 +36,6 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
-import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -47,9 +46,9 @@ import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
 import iped3.IEvidenceFileType;
 import iped3.IHashValue;
+import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
@@ -635,6 +634,9 @@ public class Item implements ISleuthKitItem {
             }
         }
 
+        if (stream == null && inputStreamFactory != null)
+            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
+
         if (stream == null && sleuthFile != null) {
             SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
             SleuthKitConfig tskConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
@@ -646,9 +648,6 @@ public class Item implements ISleuthKitItem {
                 stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
             }
         }
-
-        if (stream == null && inputStreamFactory != null)
-            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
 
         if (stream != null && startOffset != -1) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
