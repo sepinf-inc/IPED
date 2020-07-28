@@ -30,7 +30,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
      */
     private static final long serialVersionUID = 1L;
 
-    private List<SelectionListener> selectionListeners = new ArrayList<>();
+    private transient List<SelectionListener> selectionListeners = new ArrayList<>();
 
     Map<Integer, IMarcadores> map = new HashMap<Integer, IMarcadores>();
 
