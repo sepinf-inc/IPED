@@ -46,6 +46,23 @@ public class Contact implements ContactInterface {
 	public String getLastName() {
 		return lastName;
 	}
+	public String getFullname() {
+		String fn="";
+		if(name!=null) {
+			fn+=name;
+		}
+		if(lastName!=null) {
+			if(!fn.equals("")) {
+				fn+=" ";
+			}
+			fn+=lastName;
+		}
+		if(fn.equals("") && username!=null ) {
+			fn=username;
+		}
+		
+		return fn;
+	}
 	public void setLastName(String lastName) {
 		this.lastName = lastName;
 	}

@@ -22,7 +22,7 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 public class Extractor {
-	Connection conn;
+	private Connection conn;
 	public Extractor(Connection conn) {
 		this.conn=conn;
 	}
@@ -71,21 +71,17 @@ public class Extractor {
                  String chatName = null;
                  if ((chatName=rs.getString("nomeChat")) != null) {
                 	 dados = rs.getBytes("dadosChat");
-                	 Contact user=new Contact(0);
-                	 d.setDecoderData(dados, DecoderTelegramInterface.USER);
-                	 d.getUserData(user);
-                     
-                     
-                     
-                     if (user.getId()>0) {
-                     	Contact cont=getContact(user.getId());
-                     	if(cont.getAvatar()==null && d.getPhotoData().size()>0) {
+                	 Contact cont=getContact(chatId);
+                	 if(cont.getName()==null) {
+                		d.setDecoderData(dados, DecoderTelegramInterface.USER);
+                	 	d.getUserData(cont);
+                	 	if(cont.getAvatar()==null && d.getPhotoData().size()>0) {
                      		searchAvatarFileName(cont,d.getPhotoData());
                      	}
-                          cg=new Chat(chatId,cont, cont.getName()+" "+cont.getLastName());
-                         
-
-                     }
+                	 }
+                     cg=new Chat(chatId,cont, cont.getFullname());
+                     
+                     
                  } else if ((chatName=rs.getString("groupName")) != null) {
                      dados = rs.getBytes("dadosGrupo");
                      

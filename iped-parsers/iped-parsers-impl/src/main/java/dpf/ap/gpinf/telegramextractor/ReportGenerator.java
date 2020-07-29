@@ -21,7 +21,7 @@ import iped3.search.IItemSearcher;
 public class ReportGenerator {
 	
 	private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
     private IItemSearcher searcher;
     public void setSearcher(IItemSearcher s) {
     	searcher=s;
@@ -290,17 +290,21 @@ public class ReportGenerator {
             out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
         } else {
             out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
-            if (group) {
+            Contact contact = message.getRemetente();
+            if(contact!=null) {
                 
                 
                 
-                Contact contact = message.getRemetente();
+                
+               
                 String number = contact.getPhone();
                 String name = contact.getName();
                 if (name == null)
-                    name = "ID-"+contact.getId();
-                else if(number!=null && number.length()>0) {
+                    name = "";
+                if(number!=null && number.length()>0) {
                 	name += " (phone: " + number + ")";
+                }else {
+                	name+= " (ID:"+contact.getId()+" )";
                 }
                      
                 out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$

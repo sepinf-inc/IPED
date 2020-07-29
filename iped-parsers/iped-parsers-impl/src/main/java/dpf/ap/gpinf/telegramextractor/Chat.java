@@ -6,7 +6,7 @@ import dpf.ap.gpinf.interfacetelegram.ChatInterface;
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
 
 public class Chat implements ChatInterface {
-	ArrayList<Message> messages  =new ArrayList<>();
+	private ArrayList<Message> messages  =new ArrayList<>();
 	private  Contact c;
 	private String name;
 	private boolean group;
