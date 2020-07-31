@@ -129,25 +129,33 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void mouseReleased(MouseEvent evt) {
 
-        IItemId itemId = null;
-        int viewIndex = App.get().resultsTable.getSelectedRow();
-        if (viewIndex != -1) {
-            int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
-            itemId = App.get().ipedResult.getItem(modelIdx);
-        }
+        IItemId itemId = getSelectedItemId();
         if (evt.getClickCount() == 2) {
             int docId = App.get().appCase.getLuceneId(itemId);
             ExternalFileOpen.open(docId);
 
         } else if (evt.isPopupTrigger()) {
-            IItem item = itemId == null ? null : App.get().appCase.getItemByItemId(itemId);
-            new MenuClass(item).show((Component) evt.getSource(), evt.getX(), evt.getY());
+            showContextMenu(itemId, evt);
 
         } else {
             processSelectedFile();
 
         }
 
+    }
+
+    private IItemId getSelectedItemId() {
+        int viewIndex = App.get().resultsTable.getSelectedRow();
+        if (viewIndex != -1) {
+            int modelIdx = App.get().resultsTable.convertRowIndexToModel(viewIndex);
+            return App.get().ipedResult.getItem(modelIdx);
+        }
+        return null;
+    }
+
+    private void showContextMenu(IItemId itemId, MouseEvent evt) {
+        IItem item = itemId == null ? null : App.get().appCase.getItemByItemId(itemId);
+        new MenuClass(item).show((Component) evt.getSource(), evt.getX(), evt.getY());
     }
 
     @Override
@@ -164,6 +172,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void mousePressed(MouseEvent evt) {
+        // needed for Linux
+        if (evt.isPopupTrigger()) {
+            IItemId itemId = getSelectedItemId();
+            showContextMenu(itemId, evt);
+        }
     }
 
     @Override
