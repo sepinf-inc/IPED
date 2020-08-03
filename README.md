@@ -18,9 +18,9 @@ Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthk
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
 
-To build from source, you need git, maven and java8 (Oracle or OpenJDK+JFX) installed. Run:
+To build from source, you need git, maven and java 8 (Oracle or OpenJDK+JFX) installed. Run:
 ```
-git clone https://github.com/lfcnassif/IPED.git
+git clone https://github.com/sepinf-inc/IPED.git
 cd IPED
 mvn install
 ```
@@ -39,7 +39,7 @@ Some of IPED several features are listed below:
 - Recursive container expansion of dozens of file formats
 - Image and video gallery for hundreds of formats
 - Georeferencing of GPS data (needs Google Maps Javascript API key)
-- Regex searches with optional script validation for credit cards, emails, urls, money values, bitcoin wallets...
+- Regex searches with optional script validation for credit cards, emails, urls, money values, bitcoin, ethereum, ripple wallets...
 - Embedded hex, unicode text, metadata and native viewers
 - File content and metadata indexing and fast searching, including unknown files and unallocated space
 - Efficient data carving engine (takes < 10% processing time) that scans much more than unallocated, with support for +40 file formats, including videos, extensible by scripting
@@ -50,15 +50,19 @@ Some of IPED several features are listed below:
 - Named Entity Recognition (needs Stanford CoreNLP models to be downloaded)
 - Customizable filters based on any file metadata
 - Similar document search with configurable threshold
+- Similar image search, using internal or external image
 - Powerful file grouping (clustering) based on ANY metadata
 - Support for multicases up to 135 million items
 - Extensible with javascript and python (including cpython extensions) scripts
 - External command line tools integration for file decoding
 - Browser history for Edge, Firefox, Chrome and Safari
-- Custom parsers for LNK, Emule, Shareaza, Ares, WhatsApp, Skype artifacts.
+- Custom parsers for Emule, Shareaza, Ares, WhatsApp, Skype, Bittorrent and more...
 - Fast nudity detection using random forests algorithm (thanks to its author Wladimir Leite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and jep)
-- Stable processing with out-of-process file system reading and file parsing
+- Audio Transcription, implementations with Azure and Google Cloud services
+- Graph analysis for communications (calls, emails, instant messages...)
+- Stable processing with out-of-process file system decoding and file parsing
+- Resuming of stopped or aborted processing (--continue option)
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
 - Creation of bookmarks/tags for interesting data
 - HTML, CSV reports and portable cases with tagged data
