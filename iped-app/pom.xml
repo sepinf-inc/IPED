@@ -454,7 +454,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0-SNAPSHOT</version>
+    								<version>1.0.1-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${optional.dir}</outputDirectory>
