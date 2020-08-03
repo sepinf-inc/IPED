@@ -571,10 +571,11 @@ public class ExportFileTask extends AbstractTask {
         }
 
         @Override
-        protected void checkIfDataSourceExists() {
+        public boolean checkIfDataSourceExists() {
             // do nothing, it will always be into case folder
             // and files which content was not exported to report will not trigger a dialog
             // asking for datasource path
+            return false;
         }
 
         @Override
