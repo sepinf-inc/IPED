@@ -420,9 +420,9 @@ public class GraphTask extends AbstractTask {
         if (SkypeParser.SKYPE.equals(accountType))
             nv1 = getAccountNodeValues(value, metadata);
         if (nv1 == null)
-            nv1 = getPhoneNodeValues(value);
-        if (nv1 == null)
             nv1 = getEmailNodeValues(value);
+        if (nv1 == null)
+            nv1 = getPhoneNodeValues(value);
         if (nv1 == null)
             nv1 = getAccountNodeValues(value, metadata);
         if (nv1 == null)
