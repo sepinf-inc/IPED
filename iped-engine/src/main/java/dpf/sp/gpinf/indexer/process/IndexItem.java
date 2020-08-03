@@ -109,6 +109,8 @@ public class IndexItem extends BasicProps {
 
     public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
 
+    private static final String NEW_DATASOURCE_PATH_FILE = "data/newDataSourceLocations.txt";
+
     private static final int MAX_DOCVALUE_SIZE = 4096;
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
@@ -737,7 +739,7 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
                 File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                localFile = checkIfEvidenceFolderExists(evidence, localFile);
+                localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 evidence.setFile(localFile);
                 hasFile = true;
 
@@ -761,6 +763,9 @@ public class IndexItem extends BasicProps {
                         Class<?> clazz = Class.forName(className);
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                         sisf = c.newInstance(absPath);
+                        if (sisf.checkIfDataSourceExists()) {
+                            checkIfExistsAndAsk(sisf, outputBase);
+                        }
                         inputStreamFactories.put(absPath, sisf);
                     }
                     evidence.setInputStreamFactory(sisf);
@@ -893,7 +898,50 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile) {
+    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+        Path path = sisf.getDataSourcePath();
+        if (path != null && !Files.exists(path)) {
+            Path newPath = loadDataSourcePath(caseModuleDir, path);
+            if (newPath != null && Files.exists(newPath)) {
+                sisf.setDataSourcePath(newPath);
+                return;
+            }
+            SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(path.toFile());
+            File newDataSource = siwd.askImagePathInGUI();
+            if (newDataSource != null) {
+                sisf.setDataSourcePath(newDataSource.toPath());
+                saveDataSourcePath(caseModuleDir, path, newDataSource.toPath());
+            }
+        }
+    }
+
+    private static void saveDataSourcePath(File caseModuleDir, Path oldPath, Path newPath) throws IOException {
+        File file = new File(caseModuleDir, NEW_DATASOURCE_PATH_FILE);
+        UTF8Properties props = new UTF8Properties();
+        if (file.exists())
+            props.load(file);
+        String newPathStr = Util.getRelativePath(caseModuleDir, newPath.toFile());
+        props.setProperty(oldPath.toString(), newPathStr);
+        try {
+            props.store(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Path loadDataSourcePath(File caseModuleDir, Path oldPath) throws IOException {
+        File file = new File(caseModuleDir, NEW_DATASOURCE_PATH_FILE);
+        UTF8Properties props = new UTF8Properties();
+        if (file.exists())
+            props.load(file);
+        String path = props.getProperty(oldPath.toString());
+        if (path == null)
+            return null;
+        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
+    }
+
+    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
+            throws IOException {
         if (evidence.getPath().contains(">>"))
             return localFile;
         Path path;
@@ -914,8 +962,16 @@ public class IndexItem extends BasicProps {
                 if (evidenceFolder.exists()) {
                     mappedFolder = evidenceFolder;
                 } else {
-                    SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
-                    mappedFolder = siwd.askImagePathInGUI();
+                    Path newPath = loadDataSourcePath(caseModuleDir, evidenceFolder.toPath());
+                    if (newPath != null && Files.exists(newPath)) {
+                        mappedFolder = newPath.toFile();
+                    } else {
+                        SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
+                        mappedFolder = siwd.askImagePathInGUI();
+                        if (mappedFolder != null) {
+                            saveDataSourcePath(caseModuleDir, evidenceFolder.toPath(), mappedFolder.toPath());
+                        }
+                    }
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }
