@@ -28,7 +28,6 @@ import javax.swing.KeyStroke;
 
 import org.apache.tika.metadata.Metadata;
 
-import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -250,7 +249,9 @@ public class MenuClass extends JPopupMenu {
 
         this.addSeparator();
         addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
-        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled());
+        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null
+                && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
+                && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
         addToGraph.addActionListener(menuListener);
         this.add(addToGraph);
 
