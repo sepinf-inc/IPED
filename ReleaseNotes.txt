@@ -8,6 +8,7 @@ News:
 #217 Disable addToGraph menu option for items not related to communications (Luis Nassif)
 Fixes:
 #209 Error creating report in version 3.18.1 (Luís Nassif)
+#218 Error generating graph in reports (Luís Nassif)
 #212 Sorting results by some single valued columns never ends in 3.18.1 (Luís Nassif)
 #213 Phones incorrectly decoded from email addresses and user accounts (Luís Nassif)
 #210 Case remains image dependent when using blind profile w/ enableHtmlReport off in 3.18 (Luís Nassif)
