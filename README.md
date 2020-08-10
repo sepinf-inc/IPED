@@ -2,7 +2,7 @@
 
 IPED is an open source software that can be used to process and analyze digital evidence, often seized at crime scenes by law enforcement or in a corporate investigation by private examiners.
 
-## INTRODUCTION
+## Introduction
 
 IPED - Digital Evidence Processor and Indexer (translated from Portuguese) is a tool implemented in java and originally and still developed by digital forensic experts from Brazilian Federal Police since 2012. Although it was always open source, only in 2019 its code was officially published.
 
@@ -17,6 +17,8 @@ Since the beginning, the goal of the tool was efficient data processing and stab
 Currently IPED uses the [Sleuthkit Library](https://github.com/sleuthkit/sleuthkit) only to decode disk images and file systems, so the same image formats are supported: RAW/DD, E01, ISO9660, AFF, VHD, VMDK. Also there is support for UDF(ISO), AD1 (AccessData) and UFDR (Cellebrite) formats. Recently support for APFS was added, thanks to BlackBag implementation for Sleuthkit.
 
 If you are new to the tool, please refer to the [Beginner's Start Guide](https://github.com/lfcnassif/IPED/wiki/Beginner's-Start-Guide).
+
+## Building
 
 To build from source, you need git, maven and java 8 (Oracle or OpenJDK+JFX) installed. Run:
 ```
