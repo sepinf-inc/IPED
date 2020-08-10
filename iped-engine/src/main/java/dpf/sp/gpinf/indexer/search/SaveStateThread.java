@@ -6,7 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.search.IMarcadores;
+import iped3.search.IBookmarks;
 
 public class SaveStateThread extends Thread {
 
@@ -17,7 +17,7 @@ public class SaveStateThread extends Thread {
     public static int MAX_BACKUPS = 10;
     public static long BKP_INTERVAL = 60; // seconds
 
-    private static Map<IMarcadores, File> stateMap = new ConcurrentHashMap<>();
+    private static Map<IBookmarks, File> stateMap = new ConcurrentHashMap<>();
 
     private SaveStateThread() {
     }
@@ -31,13 +31,13 @@ public class SaveStateThread extends Thread {
         return instance;
     }
 
-    public synchronized void saveState(IMarcadores state, File file) {
+    public synchronized void saveState(IBookmarks state, File file) {
         stateMap.put(state, file);
     }
 
     public void run() {
         while (!Thread.interrupted()) {
-            for (IMarcadores state : stateMap.keySet()) {
+            for (IBookmarks state : stateMap.keySet()) {
                 File file = stateMap.remove(state);
                 if (file == null)
                     continue;

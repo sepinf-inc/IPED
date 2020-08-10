@@ -9,7 +9,7 @@ import org.apache.lucene.util.BytesRef;
 import com.zaxxer.sparsebits.SparseBitSet;
 
 import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.desktop.MarcadoresController;
+import dpf.sp.gpinf.indexer.desktop.StateController;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -65,7 +65,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             for (IItemId item : result.getIterator()) {
                 App.get().appCase.getMultiMarcadores().setSelected(checked, item);
             }
-            MarcadoresController.get().atualizarGUI();
+            StateController.get().updateGUI();
 
         } catch (Exception e) {
             e.printStackTrace();

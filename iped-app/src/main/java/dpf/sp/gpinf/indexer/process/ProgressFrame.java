@@ -44,7 +44,7 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -84,7 +84,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     }
 
     public ProgressFrame(SwingWorker task) {
-        super(Versao.APP_NAME);
+        super(IpedVersion.APP_NAME);
 
         this.setBounds(0, 0, 800, 400);
         this.setLocationRelativeTo(null);

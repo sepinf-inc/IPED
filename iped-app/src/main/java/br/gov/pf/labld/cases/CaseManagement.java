@@ -11,7 +11,7 @@ import java.awt.Insets;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 
 public class CaseManagement extends JFrame {
 
@@ -26,7 +26,7 @@ public class CaseManagement extends JFrame {
     private String profile;
 
     public CaseManagement() throws HeadlessException {
-        super(Versao.APP_NAME);
+        super(IpedVersion.APP_NAME);
         createGUI();
     }
 

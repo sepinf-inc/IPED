@@ -22,7 +22,7 @@ import javax.swing.border.TitledBorder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 
 public class NewCasePanel extends JPanel {
@@ -174,7 +174,7 @@ public class NewCasePanel extends JPanel {
         IpedCase ipedCase = new IpedCase();
         ipedCase.setName(nameField.getText().trim());
         ipedCase.setOutput(outputField.getText().trim());
-        ipedCase.setVersion(Versao.APP_VERSION);
+        ipedCase.setVersion(IpedVersion.APP_VERSION);
 
         for (DatasourcePanel panel : datasources) {
             IpedCase.IpedDatasource datasource = new IpedCase.IpedDatasource();

@@ -14,8 +14,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
@@ -331,7 +329,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     private void printUsageAndExit(JCommander jc, Exception e) {
-        System.out.println(Versao.APP_NAME);
+        System.out.println(IpedVersion.APP_NAME);
         jc.usage();
         if (e != null) {
             System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -348,10 +346,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      */
     private void handleSpecificArgs() {
 
-        IndexFiles.getInstance().dataSource = new ArrayList<File>();
+        IpedMain.getInstance().dataSource = new ArrayList<File>();
 
         if (this.importkff != null) {
-            IndexFiles.getInstance().importKFF(this.importkff);
+            IpedMain.getInstance().importKFF(this.importkff);
             System.exit(0);
         }
 
@@ -360,11 +358,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
 
         if (this.reportDir != null) {
-            IndexFiles.getInstance().dataSource.add(this.reportDir);
+            IpedMain.getInstance().dataSource.add(this.reportDir);
         }
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
-                IndexFiles.getInstance().dataSource.add(dataSource);
+                IpedMain.getInstance().dataSource.add(dataSource);
             }
             checkDuplicateDataSources();
         }
@@ -376,10 +374,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
         if (this.palavrasChave != null) {
-            IndexFiles.getInstance().palavrasChave = this.palavrasChave;
+            IpedMain.getInstance().palavrasChave = this.palavrasChave;
         }
         if (this.logFile != null) {
-            IndexFiles.getInstance().logFile = this.logFile;
+            IpedMain.getInstance().logFile = this.logFile;
         }
 
         if (outputDir != null && reportDir != null) {
@@ -387,22 +385,22 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
 
         if (new File(reportDir, "Report_files/files").exists()) { //$NON-NLS-1$
-            IndexFiles.getInstance().dataSource.remove(reportDir);
-            IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
+            IpedMain.getInstance().dataSource.remove(reportDir);
+            IpedMain.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
+            IpedMain.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
         }
 
         if (outputDir != null) {
-            IndexFiles.getInstance().output = new File(outputDir, "indexador"); //$NON-NLS-1$
+            IpedMain.getInstance().output = new File(outputDir, "indexador"); //$NON-NLS-1$
         } else if (reportDir != null) {
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
+            IpedMain.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
         } else {
-            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador"); //$NON-NLS-1$
+            IpedMain.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador"); //$NON-NLS-1$
         }
 
         File file = outputDir;
         while (file != null) {
-            for (File source : IndexFiles.getInstance().dataSource) {
+            for (File source : IpedMain.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
                     throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
                 }
@@ -410,7 +408,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
+        System.setProperty("IPED_OUTPUT_DIR", IpedMain.getInstance().output.getPath().toString()); //$NON-NLS-1$
         System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 

@@ -186,7 +186,7 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
 
         if (selection.size() == 1 && selection.iterator().next().getPathCount() > 2) {
             int luceneId = ((Node) selection.iterator().next().getLastPathComponent()).docId;
-            FileProcessor parsingTask = new FileProcessor(luceneId, false);
+            ItemSelectionAction parsingTask = new ItemSelectionAction(luceneId, false);
             parsingTask.execute();
         }
 

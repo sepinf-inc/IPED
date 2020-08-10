@@ -24,12 +24,12 @@ public class ReferencedFileViewer extends Viewer {
 
     private JLabel typeNotSupported;
 
-    private ViewersRepository multiViewer;
+    private MultiViewer multiViewer;
     private AttachmentSearcher attachSearcher;
     private IItem lastItem;
     private Tika tika;
 
-    public ReferencedFileViewer(ViewersRepository multiViewer, AttachmentSearcher attachSearcher) {
+    public ReferencedFileViewer(MultiViewer multiViewer, AttachmentSearcher attachSearcher) {
         super();
         this.multiViewer = multiViewer;
         this.attachSearcher = attachSearcher;

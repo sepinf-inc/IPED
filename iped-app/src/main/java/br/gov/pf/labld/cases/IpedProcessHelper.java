@@ -3,7 +3,7 @@ package br.gov.pf.labld.cases;
 import java.util.ArrayList;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.IpedMain;
 
 public class IpedProcessHelper {
 
@@ -21,7 +21,7 @@ public class IpedProcessHelper {
     public void process() {
 
         String[] args = buildArgs();
-        IndexFiles.main(args);
+        IpedMain.main(args);
 
     }
 

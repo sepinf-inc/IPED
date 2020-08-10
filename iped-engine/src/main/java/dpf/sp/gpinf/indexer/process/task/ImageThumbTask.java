@@ -25,7 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -53,7 +53,7 @@ public class ImageThumbTask extends ThumbTask {
 
     private boolean taskEnabled = false;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ImageMagicConverter graphicsMagicConverter;
 
     private static final Map<String, long[]> performanceStatsPerType = new HashMap<String, long[]>();
     private static final AtomicBoolean logInit = new AtomicBoolean(false);
@@ -73,19 +73,19 @@ public class ImageThumbTask extends ThumbTask {
         String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             if (!value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
-                GraphicsMagicConverter.USE_GM = false;
+                ImageMagicConverter.USE_GM = false;
             }
         } else {
-            GraphicsMagicConverter.enabled = false;
+            ImageMagicConverter.enabled = false;
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-            GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
+            ImageMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
         }
 
         value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
+            ImageMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
         }
 
         value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
@@ -109,7 +109,7 @@ public class ImageThumbTask extends ThumbTask {
         if (value != null && !value.trim().isEmpty()) {
             logGalleryRendering = Boolean.valueOf(value.trim());
         }
-        graphicsMagicConverter = new GraphicsMagicConverter(executor);
+        graphicsMagicConverter = new ImageMagicConverter(executor);
 
         synchronized (logInit) {
             if (taskEnabled && !logInit.get()) {
@@ -214,7 +214,7 @@ public class ImageThumbTask extends ThumbTask {
 
         Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
         try {
-            future.get(GraphicsMagicConverter.TIMEOUT + 10, TimeUnit.SECONDS);
+            future.get(ImageMagicConverter.TIMEOUT + 10, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
             future.cancel(true);

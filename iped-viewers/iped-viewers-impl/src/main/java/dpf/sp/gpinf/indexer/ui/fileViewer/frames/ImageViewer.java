@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -45,7 +45,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     protected JToolBar toolBar;
     private JSlider sliderBrightness;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ImageMagicConverter graphicsMagicConverter;
 
     private static final String actionRotLeft = "rotate-left";
     private static final String actionRotRight = "rotate-right";
@@ -154,7 +154,7 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public void init() {
-        graphicsMagicConverter = new GraphicsMagicConverter();
+        graphicsMagicConverter = new ImageMagicConverter();
     }
 
     @Override

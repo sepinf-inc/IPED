@@ -13,12 +13,10 @@ import java.util.concurrent.Future;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
-import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -142,7 +140,7 @@ public class IPEDMultiSource extends IPEDSource {
                     keywords.add(keyword);
 
         // marcadores = new Marcadores(this, this.getCaseDir());
-        this.globalMarcadores = new MultiMarcadores(cases);
+        this.globalMarcadores = new MultiBookmarks(cases);
 
         analyzer = AppAnalyzer.get();
 
@@ -187,7 +185,7 @@ public class IPEDMultiSource extends IPEDSource {
     }
 
     @Override
-    public void checkImagePaths() throws IPEDException, TskCoreException {
+    public void checkImagePaths() throws IOException {
         for (IPEDSource iCase : cases)
             iCase.checkImagePaths();
     }

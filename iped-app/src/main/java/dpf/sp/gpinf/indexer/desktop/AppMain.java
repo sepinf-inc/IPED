@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -154,7 +154,7 @@ public class AppMain {
 
                 Logger LOGGER = LoggerFactory.getLogger(AppMain.class);
                 if (!fromCustomLoader)
-                    LOGGER.info(Versao.APP_NAME);
+                    LOGGER.info(IpedVersion.APP_NAME);
             }
 
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
@@ -180,7 +180,7 @@ public class AppMain {
                 App.get().getSearchParams().codePath = libDir.getAbsolutePath();
                 App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
 
-                InicializarBusca init = new InicializarBusca(processingManager);
+                CaseLoader init = new CaseLoader(processingManager);
                 init.execute();
             }
 

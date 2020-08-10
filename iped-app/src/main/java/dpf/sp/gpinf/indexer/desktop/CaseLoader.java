@@ -37,20 +37,20 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 
-public class InicializarBusca extends SwingWorker<Void, Integer> {
+public class CaseLoader extends SwingWorker<Void, Integer> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(CaseLoader.class);
 
     private boolean updateItems;
 
     private TreeViewModel treeModel;
     private Manager manager;
 
-    public InicializarBusca(Manager manager) {
+    public CaseLoader(Manager manager) {
         this(manager, false);
     }
 
-    public InicializarBusca(Manager manager, boolean updateItems) {
+    public CaseLoader(Manager manager, boolean updateItems) {
         this.manager = manager;
         this.updateItems = updateItems;
     }
@@ -107,11 +107,11 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
                 App.get().setAutoParser(autoParser);
 
-                FileProcessor exibirAjuda = new FileProcessor(-1, false);
+                ItemSelectionAction exibirAjuda = new ItemSelectionAction(-1, false);
                 exibirAjuda.execute();
 
                 LOGGER.info("Listing all items"); //$NON-NLS-1$
-                PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
+                SearchAndFilterAction pesquisa = new SearchAndFilterAction(new MatchAllDocsQuery());
                 pesquisa.execute();
                 LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
             }
@@ -148,7 +148,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     public void done() {
         CategoryTreeModel.install();
         App.get().filterManager.loadFilters();
-        MarcadoresController.get().atualizarGUIandHistory();
+        StateController.get().updateGUIandHistory();
 
         if (!App.get().appCase.isFTKReport()) {
             App.get().tree.setModel(treeModel);

@@ -49,9 +49,9 @@ import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
-public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
+public class SearchAndFilterAction extends CancelableWorker<MultiSearchResult, Object> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(SearchAndFilterAction.class);
 
     private static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
@@ -63,12 +63,12 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
     Query query;
     IPEDSearcher searcher;
 
-    public PesquisarIndice(String queryText) {
+    public SearchAndFilterAction(String queryText) {
         this.queryText = queryText;
         searcher = new IPEDSearcher(App.get().appCase, queryText);
     }
 
-    public PesquisarIndice(Query query) {
+    public SearchAndFilterAction(Query query) {
         this.query = query;
         searcher = new IPEDSearcher(App.get().appCase, query);
     }
@@ -181,7 +181,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     filtro = App.get().filtro.getSelectedItem().toString();
 
                 if (filtro.equals(App.FILTRO_SELECTED)) {
-                    result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarSelecionados(result);
+                    result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filterSelected(result);
                     numFilters++;
                     LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
@@ -197,14 +197,14 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                         if (bookmarkSelection.size() == 1)
                             result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
-                                    .filtrarSemMarcadores(result);
+                                    .filterNoBookmarks(result);
                         else {
                             bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
                             result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
-                                    .filtrarSemEComMarcadores(result, bookmarkSelection);
+                                    .filterBookmarksOrNoBookmarks(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarMarcadores(result,
+                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filterBookmarks(result,
                                 bookmarkSelection);
 
                 }

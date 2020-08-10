@@ -20,7 +20,7 @@ import iped3.IItemId;
  *
  * @author WERNECK
  */
-public interface IMultiMarcadores extends Serializable {
+public interface IMultiBookmarks extends Serializable {
 
     void addLabel(List<IItemId> ids, String labelName);
 
@@ -34,19 +34,19 @@ public interface IMultiMarcadores extends Serializable {
 
     void delLabel(String labelName);
 
-    IMultiSearchResult filtrarMarcadores(IMultiSearchResult result, Set<String> labelNames) throws Exception;
+    IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> labelNames) throws Exception;
 
-    IMultiSearchResult filtrarSelecionados(IMultiSearchResult result) throws Exception;
+    IMultiSearchResult filterSelected(IMultiSearchResult result) throws Exception;
 
-    IMultiSearchResult filtrarSemEComMarcadores(IMultiSearchResult result, Set<String> labelNames) throws Exception;
+    IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> labelNames) throws Exception;
 
-    IMultiSearchResult filtrarSemMarcadores(IMultiSearchResult result);
+    IMultiSearchResult filterNoBookmarks(IMultiSearchResult result);
 
     TreeSet<String> getLabelMap();
 
     List<String> getLabelList(IItemId item);
 
-    Collection<IMarcadores> getSingleBookmarks();
+    Collection<IBookmarks> getSingleBookmarks();
 
     int getTotalSelected();
 

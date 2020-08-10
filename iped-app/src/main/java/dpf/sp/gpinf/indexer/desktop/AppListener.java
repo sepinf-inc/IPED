@@ -76,11 +76,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().parentItemModel.fireTableDataChanged();
 
         try {
-            PesquisarIndice task;
+            SearchAndFilterAction task;
             if (query == null)
-                task = new PesquisarIndice(texto);
+                task = new SearchAndFilterAction(texto);
             else
-                task = new PesquisarIndice(query);
+                task = new SearchAndFilterAction(query);
 
             task.applyUIQueryFilters();
             task.execute();
@@ -108,16 +108,16 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         }
 
         if (evt.getSource() == App.get().termo && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
-                && !MarcadoresController.get().isUpdatingHistory()) {
+                && !StateController.get().isUpdatingHistory()) {
             if (App.get().termo.getSelectedItem() != null) {
                 texto = App.get().termo.getSelectedItem().toString();
-                if (texto.equals(MarcadoresController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
+                if (texto.equals(StateController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
                     texto = ""; //$NON-NLS-1$
                     clearSearchBox = true;
                     App.get().termo.setSelectedItem(""); //$NON-NLS-1$
                 }
                 texto = texto.trim();
-                MarcadoresController.get().addToRecentSearches(texto);
+                StateController.get().addToRecentSearches(texto);
             }
 
             if (!texto.isEmpty())
@@ -142,7 +142,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         }
 
         if (evt.getSource() == App.get().ajuda) {
-            FileProcessor exibirAjuda = new FileProcessor(-1, false);
+            ItemSelectionAction exibirAjuda = new ItemSelectionAction(-1, false);
             exibirAjuda.execute();
         }
 
@@ -163,11 +163,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUI();
+            StateController.get().updateGUI();
         }
 
         if (evt.getSource() == App.get().atualizar) {
-            InicializarBusca init = new InicializarBusca(App.get().getProcessingManager(), true);
+            CaseLoader init = new CaseLoader(App.get().getProcessingManager(), true);
             init.execute();
         }
 

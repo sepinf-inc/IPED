@@ -31,18 +31,17 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.sleuthkit.ISleuthKitItem;
 
-public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
-    private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
+public class ItemSelectionAction extends CancelableWorker<Void, Void> {
+    private static Logger LOGGER = LoggerFactory.getLogger(ItemSelectionAction.class);
 
     private static int STATUS_LENGTH = 200;
-    private volatile static FileProcessor parsingTask;
+    private volatile static ItemSelectionAction parsingTask;
     private static Object lock = new Object(), lock2 = new Object();
     private static HashSet<String> tskDataSourceInited = new HashSet<String>();
 
@@ -51,7 +50,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     private boolean listRelated;
     private static volatile IItem lastItem;
 
-    public FileProcessor(int docId, boolean listRelated) {
+    public ItemSelectionAction(int docId, boolean listRelated) {
         this.listRelated = listRelated;
         this.docId = docId;
 

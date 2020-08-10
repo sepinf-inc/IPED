@@ -115,24 +115,24 @@ public class MenuListener implements ActionListener {
             App.get().refazLayout(true);
 
         } else if (e.getSource() == menu.marcarSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            StateController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(true, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
+            StateController.get().setMultiSetting(false);
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            StateController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.desmarcarSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            StateController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(false, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
+            StateController.get().setMultiSetting(false);
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            StateController.get().atualizarGUISelection();
 
         }
 
@@ -149,24 +149,24 @@ public class MenuListener implements ActionListener {
                 kl.keyReleased(keyCTRL_R_Pressed);
         }
         if (e.getSource() == menu.lerSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            StateController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(true, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
+            StateController.get().setMultiSetting(false);
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            StateController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.deslerSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            StateController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(false, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
+            StateController.get().setMultiSetting(false);
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            StateController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.exportarSelecionados) {
             setupFileChooser();
@@ -186,7 +186,7 @@ public class MenuListener implements ActionListener {
                      */
                 }
 
-                (new CopiarArquivos(dir, selectedIds)).execute();
+                (new ExportFiles(dir, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copiarSelecionados) {
@@ -204,7 +204,7 @@ public class MenuListener implements ActionListener {
                 if (!file.getName().endsWith(CSV)) {
                     file = new File(file.getAbsolutePath() + CSV);
                 }
-                (new CopiarPropriedades(file, selectedIds)).execute();
+                (new ExportProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copiarMarcados) {
@@ -224,7 +224,7 @@ public class MenuListener implements ActionListener {
                 if (!file.getName().endsWith(CSV)) {
                     file = new File(file.getAbsolutePath() + CSV);
                 }
-                (new CopiarPropriedades(file, uniqueSelectedIds)).execute();
+                (new ExportProperties(file, uniqueSelectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.exportarMarcados) {
@@ -241,7 +241,7 @@ public class MenuListener implements ActionListener {
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
                 File dir = fileChooser.getSelectedFile();
-                (new CopiarArquivos(dir, uniqueSelectedIds)).execute();
+                (new ExportFiles(dir, uniqueSelectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.exportCheckedToZip) {
@@ -281,13 +281,13 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.limparBuscas) {
             App.get().appCase.getMultiMarcadores().clearTypedWords();
             App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUIHistory();
+            StateController.get().updateGUIHistory();
 
         } else if (e.getSource() == menu.carregarMarcadores) {
-            MarcadoresController.get().askAndLoadState();
+            StateController.get().askAndLoadState();
 
         } else if (e.getSource() == menu.salvarMarcadores) {
-            MarcadoresController.get().askAndSaveState();
+            StateController.get().askAndSaveState();
 
         } else if (e.getSource() == menu.copiarPreview) {
             Viewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
@@ -302,7 +302,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.gerenciarMarcadores) {
 
-            GerenciadorMarcadores.setVisible();
+            BookmarksManager.setVisible();
 
         } else if (e.getSource() == menu.gerenciarColunas) {
 
@@ -401,7 +401,7 @@ public class MenuListener implements ActionListener {
                 HtmlViewer.setPositionToScroll(position);
                 ItemId chatItemId = new ItemId(itemId.getSourceId(), chatId);
                 int luceneId = App.get().appCase.getLuceneId(chatItemId);
-                new FileProcessor(luceneId, false).execute();
+                new ItemSelectionAction(luceneId, false).execute();
             } else {
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("MenuListener.ChatNotFound")); //$NON-NLS-1$
             }

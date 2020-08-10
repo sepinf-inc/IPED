@@ -7,13 +7,13 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 
-public class MarcadoresController {
+public class StateController {
 
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 
-    private static MarcadoresController instance;
+    private static StateController instance;
 
     private static JFileChooser fileChooser;
     private static SearchStateFilter filtro;
@@ -22,7 +22,7 @@ public class MarcadoresController {
 
     private boolean updatingHistory = false;
 
-    private MarcadoresController() {
+    private StateController() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 fileChooser = new JFileChooser();
@@ -36,9 +36,9 @@ public class MarcadoresController {
         return updatingHistory;
     }
 
-    public static MarcadoresController get() {
+    public static StateController get() {
         if (instance == null)
-            instance = new MarcadoresController();
+            instance = new StateController();
         return instance;
     }
 
@@ -64,17 +64,17 @@ public class MarcadoresController {
         }
     }
 
-    public void atualizarGUIandHistory() {
-        atualizarGUIHistory();
-        atualizarGUI();
+    public void updateGUIandHistory() {
+        updateGUIHistory();
+        updateGUI();
     }
 
     public void atualizarGUISelection() {
         // MapaModelUpdateListener.updatingSelection = true;
-        atualizarGUI();
+        updateGUI();
     }
 
-    public void atualizarGUI() {
+    public void updateGUI() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -83,7 +83,7 @@ public class MarcadoresController {
                 App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();
-                GerenciadorMarcadores.updateCounters();
+                BookmarksManager.updateCounters();
             }
         });
 
@@ -96,8 +96,8 @@ public class MarcadoresController {
             File file = fileChooser.getSelectedFile();
             try {
                 App.get().appCase.getMultiMarcadores().loadState(file);
-                atualizarGUIandHistory();
-                GerenciadorMarcadores.get().updateList();
+                updateGUIandHistory();
+                BookmarksManager.get().updateList();
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.LoadSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
 
@@ -109,7 +109,7 @@ public class MarcadoresController {
         }
     }
 
-    public void atualizarGUIHistory() {
+    public void updateGUIHistory() {
         updatingHistory = true;
         Object prevText = App.get().termo.getSelectedItem();
         App.get().termo.removeAllItems();
@@ -131,8 +131,8 @@ public class MarcadoresController {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            if (!file.getName().endsWith(Marcadores.EXT))
-                file = new File(file.getPath() + Marcadores.EXT);
+            if (!file.getName().endsWith(Bookmarks.EXT))
+                file = new File(file.getPath() + Bookmarks.EXT);
 
             try {
                 App.get().appCase.getMultiMarcadores().saveState(file);

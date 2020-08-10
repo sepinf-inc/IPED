@@ -21,7 +21,7 @@ package dpf.sp.gpinf.indexer;
 /**
  * Classe que contém as constantes da aplicação.
  */
-public class Versao {
+public class IpedVersion {
 
     public static String APP_VERSION = "3.18.2"; //$NON-NLS-1$
     public static String APP_NAME = "Indexador e Processador de Evidências Digitais " + APP_VERSION; //$NON-NLS-1$

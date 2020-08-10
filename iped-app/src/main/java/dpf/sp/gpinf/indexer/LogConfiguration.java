@@ -25,7 +25,7 @@ public class LogConfiguration {
         logFile = log;
     }
 
-    public LogConfiguration(IndexFiles indexador, String logPath) {
+    public LogConfiguration(IpedMain indexador, String logPath) {
         configPath = indexador.configPath;
         if (logPath != null) {
             logFile = new File(logPath);

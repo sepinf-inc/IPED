@@ -33,12 +33,9 @@ import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.Versao;
+import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
-import ag.ion.bion.officelayer.application.IOfficeApplication;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
@@ -51,12 +48,11 @@ import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
- * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
- * compatibilidade com o AsAP. TODO Manter apenas métodos utilizados pelo AsAP e
- * separar demais funções em outra classe de entrada com nome mais intuitivo
- * para execuções via linha de comando.
+ * Ponto de entrada do programa ao processar evidências. TODO Manter apenas
+ * métodos utilizados pelo AsAP e separar demais funções em outra classe de
+ * entrada com nome mais intuitivo para execuções via linha de comando.
  */
-public class IndexFiles extends SwingWorker<Boolean, Integer> {
+public class IpedMain extends SwingWorker<Boolean, Integer> {
 
     private static Logger LOGGER = null;
 
@@ -78,19 +74,19 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     /**
      * Última instância criada deta classe.
      */
-    private static IndexFiles lastInstance;
+    private static IpedMain lastInstance;
 
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList) {
+    public IpedMain(List<File> reports, File output, String configPath, File logFile, File keywordList) {
         this(reports, output, configPath, logFile, keywordList, null, null);
     }
 
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList,
+    public IpedMain(List<File> reports, File output, String configPath, File logFile, File keywordList,
             List<String> bookmarksToOCR) {
         this(reports, output, configPath, logFile, keywordList, null, bookmarksToOCR);
     }
@@ -98,7 +94,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList,
+    public IpedMain(List<File> reports, File output, String configPath, File logFile, File keywordList,
             Boolean ignore, List<String> bookmarksToOCR) {
         super();
         lastInstance = this;
@@ -117,7 +113,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     /**
      * Contrutor utilizado pela execução via linha de comando
      */
-    public IndexFiles(String[] args) {
+    public IpedMain(String[] args) {
         super();
         lastInstance = this;
         cmdLineParams = new CmdLineArgsImpl();
@@ -127,7 +123,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     /**
      * Obtém a última instância criada
      */
-    public static IndexFiles getInstance() {
+    public static IpedMain getInstance() {
         return lastInstance;
     }
 
@@ -135,7 +131,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
     private void setConfigPath() throws Exception {
-        URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = IpedMain.class.getProtectionDomain().getCodeSource().getLocation();
 
         boolean isReportFromCaseFolder = false;
 
@@ -215,8 +211,8 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
 
-            this.firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            LOGGER.info("{} finished.", Versao.APP_EXT); //$NON-NLS-1$
+            this.firePropertyChange("mensagem", "", Messages.getString("IpedMain.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            LOGGER.info("{} finished.", IpedVersion.APP_EXT); //$NON-NLS-1$
             success = true;
 
         } catch (Throwable e) {
@@ -298,7 +294,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             args = CustomLoader.clearCustomLoaderArgs(args);
         }
 
-        IndexFiles indexador = new IndexFiles(args);
+        IpedMain indexador = new IpedMain(args);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
@@ -307,9 +303,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             indexador.logConfiguration = new LogConfiguration(indexador, logPath);
             indexador.logConfiguration.configureLogParameters(indexador.cmdLineParams.isNologfile(), fromCustomLoader);
 
-            LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+            LOGGER = LoggerFactory.getLogger(IpedMain.class);
             if (!fromCustomLoader)
-                LOGGER.info(Versao.APP_NAME);
+                LOGGER.info(IpedVersion.APP_NAME);
 
             Configuration.getInstance().loadConfigurables(indexador.configPath);
 
@@ -330,7 +326,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                         UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
                 }
 
-                String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args,
+                String[] customArgs = CustomLoader.getCustomLoaderArgs(IpedMain.class.getName(), args,
                         indexador.logFile);
                 CustomLoader.run(customArgs, jars);
                 return;
@@ -346,7 +342,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         if (!success) {
             SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
         } else {
-            SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
+            SystemOut.println("\n" + IpedVersion.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         if (indexador.logFile != null) {
@@ -357,7 +353,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             System.exit((success) ? 0 : 1);
 
         // PARA ASAP:
-        // IndexFiles indexador = new IndexFiles(List<File> reports, File
+        // IpedMain indexador = new IpedMain(List<File> reports, File
         // output, String configPath, File logFile, File keywordList);
         // keywordList e logFile podem ser null. Nesse caso, o último é criado
         // na pasta log dentro de configPath

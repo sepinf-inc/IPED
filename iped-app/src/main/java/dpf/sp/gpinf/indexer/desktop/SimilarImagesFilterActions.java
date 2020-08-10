@@ -19,7 +19,7 @@ import javax.swing.filechooser.FileFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.Item;
@@ -28,7 +28,7 @@ import iped3.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
-    private static final GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static final ImageMagicConverter graphicsMagicConverter = new ImageMagicConverter();
 
     public static void clear() {
         clear(true);

@@ -16,17 +16,17 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.XMLUtil;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
-import iped3.exception.IPEDException;
 
 public class XMLResultSetViewerConfiguration implements ResultSetViewerConfiguration {
 
     Document doc;
     List<ResultSetViewer> viewers = null;
 
-    public XMLResultSetViewerConfiguration(File xmlFile) throws IPEDException {
+    public XMLResultSetViewerConfiguration(File xmlFile) throws Exception {
         try {
             loadViewers(xmlFile);
         } catch (Exception e) {

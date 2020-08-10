@@ -42,7 +42,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MultiViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
@@ -58,7 +58,7 @@ public class ViewerController {
     private final List<Viewer> viewers = new ArrayList<Viewer>();
     private final ATextViewer textViewer;
     private final HtmlLinkViewer linkViewer;
-    private final ViewersRepository viewersRepository;
+    private final MultiViewer viewersRepository;
     private final Map<Viewer, DefaultSingleCDockable> dockPerViewer = new HashMap<Viewer, DefaultSingleCDockable>();
     private final Set<Viewer> updatedViewers = new HashSet<Viewer>();
     private LibreOfficeViewer officeViewer;
@@ -82,7 +82,7 @@ public class ViewerController {
                 return isFixed;
             }
         });
-        viewers.add(viewersRepository = new ViewersRepository());
+        viewers.add(viewersRepository = new MultiViewer());
 
         boolean javaFX = new JarLoader().loadJavaFX();
 
@@ -158,7 +158,7 @@ public class ViewerController {
         return textViewer;
     }
 
-    public ViewersRepository getMultiViewer() {
+    public MultiViewer getMultiViewer() {
         return viewersRepository;
     }
 

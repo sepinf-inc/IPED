@@ -26,8 +26,8 @@ import java.util.List;
 
 import javax.swing.text.JTextComponent;
 
-public class AutoCompletarColunas {
-    public AutoCompletarColunas(final JTextComponent editor) {
+public class AutoCompleteColumns {
+    public AutoCompleteColumns(final JTextComponent editor) {
         editor.setFocusTraversalKeysEnabled(false);
         editor.addKeyListener(new KeyAdapter() {
             private String last = null;

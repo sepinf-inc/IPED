@@ -18,12 +18,12 @@ import org.apache.commons.lang.ArrayUtils;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItemId;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 import iped3.search.IMultiSearchResult;
 import iped3.search.SelectionListener;
 
-public class MultiMarcadores implements Serializable, IMultiMarcadores {
+public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     /**
      * 
@@ -32,40 +32,40 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
 
     private transient List<SelectionListener> selectionListeners = new ArrayList<>();
 
-    Map<Integer, IMarcadores> map = new HashMap<Integer, IMarcadores>();
+    Map<Integer, IBookmarks> map = new HashMap<Integer, IBookmarks>();
 
-    public MultiMarcadores(List<IPEDSource> cases) {
+    public MultiBookmarks(List<IPEDSource> cases) {
         for (IIPEDSource s : cases)
             map.put(s.getSourceId(), s.getMarcadores());
     }
 
-    public Collection<IMarcadores> getSingleBookmarks() {
+    public Collection<IBookmarks> getSingleBookmarks() {
         return map.values();
     }
 
     public int getTotalSelected() {
         int sum = 0;
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             sum += m.getTotalSelected();
         return sum;
     }
 
     public int getTotalItens() {
         int sum = 0;
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             sum += m.getTotalItens();
         return sum;
     }
 
     public void clearSelected() {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.clearSelected();
         for (SelectionListener l : selectionListeners)
             l.clearAll();
     }
 
     public void selectAll() {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.selectAll();
         for (SelectionListener l : selectionListeners)
             l.selectAll();
@@ -89,7 +89,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return map.get(item.getSourceId()).hasLabel(item.getId());
     }
 
-    private static final int[] getLabelIds(IMarcadores m, Set<String> labelNames) {
+    private static final int[] getLabelIds(IBookmarks m, Set<String> labelNames) {
         int[] labelIds = new int[labelNames.size()];
         int i = 0;
         boolean hasLabel = false;
@@ -104,13 +104,13 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     }
 
     public boolean hasLabel(IItemId item, Set<String> labelNames) {
-        IMarcadores m = map.get(item.getSourceId());
+        IBookmarks m = map.get(item.getSourceId());
         int[] labelIds = getLabelIds(m, labelNames);
         return m.hasLabel(item.getId(), m.getLabelBits(labelIds));
     }
 
     public final boolean hasLabel(ItemId item, String labelName) {
-        IMarcadores m = map.get(item.getSourceId());
+        IBookmarks m = map.get(item.getSourceId());
         int labelId = m.getLabelId(labelName);
         if (labelId == -1)
             return false;
@@ -120,7 +120,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     public void addLabel(List<IItemId> ids, String labelName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
-            IMarcadores m = map.get(sourceId);
+            IBookmarks m = map.get(sourceId);
             int labelId = m.getLabelId(labelName);
             if (labelId == -1)
                 labelId = m.newLabel(labelName);
@@ -144,7 +144,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     public void removeLabel(List<IItemId> ids, String labelName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
-            IMarcadores m = map.get(sourceId);
+            IBookmarks m = map.get(sourceId);
             int labelId = m.getLabelId(labelName);
             if (labelId != -1)
                 m.removeLabel(itemsPerSource.get(sourceId), labelId);
@@ -153,29 +153,29 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     }
 
     public void newLabel(String labelName) {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.newLabel(labelName);
     }
 
     public void delLabel(String labelName) {
-        for (IMarcadores m : map.values()) {
+        for (IBookmarks m : map.values()) {
             int labelId = m.getLabelId(labelName);
             m.delLabel(labelId);
         }
     }
 
     public void changeLabel(String oldLabel, String newLabel) {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.changeLabel(m.getLabelId(oldLabel), newLabel);
     }
 
     public void setLabelComment(String labelName, String comment) {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.setLabelComment(m.getLabelId(labelName), comment);
     }
 
     public String getLabelComment(String labelName) {
-        for (IMarcadores m : map.values()) {
+        for (IBookmarks m : map.values()) {
             String comm = m.getLabelComment(m.getLabelId(labelName));
             if (comm != null)
                 return comm;
@@ -184,14 +184,14 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     }
 
     public void setInReport(String labelName, boolean inReport) {
-        for (IMarcadores m : map.values()) {
+        for (IBookmarks m : map.values()) {
             int labelId = m.getLabelId(labelName);
             m.setInReport(labelId, inReport);
         }
     }
 
     public boolean isInReport(String labelName) {
-        for (IMarcadores m : map.values()) {
+        for (IBookmarks m : map.values()) {
             int labelId = m.getLabelId(labelName);
             if (m.isInReport(labelId))
                 return true;
@@ -201,18 +201,18 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
 
     public TreeSet<String> getLabelMap() {
         TreeSet<String> labels = new TreeSet<String>();
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             labels.addAll(m.getLabelMap().values());
         return labels;
     }
 
-    public IMultiSearchResult filtrarMarcadores(IMultiSearchResult result, Set<String> labelNames) throws Exception {
+    public IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> labelNames) throws Exception {
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IMarcadores m = map.get(item.getSourceId());
+            IBookmarks m = map.get(item.getSourceId());
             byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
             if (labelbits == null) {
                 int[] labelIds = getLabelIds(m, labelNames);
@@ -234,14 +234,14 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return r;
     }
 
-    public IMultiSearchResult filtrarSemEComMarcadores(IMultiSearchResult result, Set<String> labelNames)
+    public IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> labelNames)
             throws Exception {
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         HashMap<Integer, byte[]> labelBitsPerSource = new HashMap<Integer, byte[]>();
         for (IItemId item : result.getIterator()) {
-            IMarcadores m = map.get(item.getSourceId());
+            IBookmarks m = map.get(item.getSourceId());
             byte[] labelbits = labelBitsPerSource.get(item.getSourceId());
             if (labelbits == null) {
                 int[] labelIds = getLabelIds(m, labelNames);
@@ -263,7 +263,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return r;
     }
 
-    public IMultiSearchResult filtrarSemMarcadores(IMultiSearchResult result) {
+    public IMultiSearchResult filterNoBookmarks(IMultiSearchResult result) {
 
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
@@ -281,7 +281,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return r;
     }
 
-    public IMultiSearchResult filtrarSelecionados(IMultiSearchResult result) throws Exception {
+    public IMultiSearchResult filterSelected(IMultiSearchResult result) throws Exception {
 
         ArrayList<IItemId> selectedItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
@@ -300,29 +300,29 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     }
 
     public void loadState() {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.loadState();
     }
 
     public void loadState(File file) throws ClassNotFoundException, IOException {
         Object obj = Util.readObject(file.getAbsolutePath());
-        if (obj instanceof IMultiMarcadores) {
-            MultiMarcadores state = (MultiMarcadores) obj;
+        if (obj instanceof IMultiBookmarks) {
+            MultiBookmarks state = (MultiBookmarks) obj;
             if (state.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file! It has different number of items."); //$NON-NLS-1$
             map = state.map;
         } else {
-            IMarcadores m = (IMarcadores) obj;
+            IBookmarks m = (IBookmarks) obj;
             if (map.size() > 1 || m.getTotalItens() != this.getTotalItens())
                 throw new IllegalArgumentException("Incompatible state file!"); //$NON-NLS-1$
             map.put(map.keySet().iterator().next(), m);
         }
-        for (IMarcadores marcador : this.map.values())
+        for (IBookmarks marcador : this.map.values())
             marcador.updateCookie();
     }
 
     public void saveState() {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.saveState();
     }
 
@@ -332,7 +332,7 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
 
     public LinkedHashSet<String> getTypedWords() {
         LinkedHashSet<String> searches = new LinkedHashSet<String>();
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             for (String s : m.getTypedWords())
                 if (!searches.contains(s))
                     searches.add(s);
@@ -340,12 +340,12 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
     }
 
     public void clearTypedWords() {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.getTypedWords().clear();
     }
 
     public void addToTypedWords(String texto) {
-        for (IMarcadores m : map.values())
+        for (IBookmarks m : map.values())
             m.addToTypedWords(texto);
     }
 

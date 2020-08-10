@@ -1,18 +1,18 @@
 package br.gov.pf.iped.webapi;
 
-import org.glassfish.grizzly.http.server.HttpServer;
-import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
-import org.glassfish.jersey.server.ResourceConfig;
-import org.json.simple.parser.ParseException;
-
-import dpf.sp.gpinf.indexer.Versao;
-import io.swagger.jaxrs.config.BeanConfig;
-
 import java.io.IOException;
 import java.net.URI;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import org.glassfish.grizzly.http.server.HttpServer;
+import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
+import org.glassfish.jersey.server.ResourceConfig;
+import org.json.simple.parser.ParseException;
+
+import dpf.sp.gpinf.indexer.IpedVersion;
+import io.swagger.jaxrs.config.BeanConfig;
 
 /**
  * Main class.
@@ -33,7 +33,7 @@ public class Main {
         // in gpinf.api package
         String resources = "br.gov.pf.iped.webapi";
         BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setVersion(Versao.APP_VERSION);
+        beanConfig.setVersion(IpedVersion.APP_VERSION);
         beanConfig.setSchemes(new String[] { "http" });
         beanConfig.setBasePath("/");
         beanConfig.setResourcePackage(resources);

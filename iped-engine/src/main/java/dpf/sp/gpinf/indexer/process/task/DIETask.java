@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -107,7 +107,7 @@ public class DIETask extends AbstractTask {
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
-    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static ImageMagicConverter graphicsMagicConverter = new ImageMagicConverter();
 
     @Override
     public boolean isEnabled() {

@@ -88,7 +88,7 @@ public class ParentTableModel extends AbstractTableModel
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        MarcadoresController.get().atualizarGUI();
+        StateController.get().updateGUI();
     }
 
     @Override
@@ -153,7 +153,7 @@ public class ParentTableModel extends AbstractTableModel
         selectedIndex = lsm.getMinSelectionIndex();
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
-        FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
+        ItemSelectionAction parsingTask = new ItemSelectionAction(results.getLuceneIds()[selectedIndex], false);
         parsingTask.execute();
 
         App.get().subItemModel.fireTableDataChanged();

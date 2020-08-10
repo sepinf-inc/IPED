@@ -565,7 +565,7 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>dpf.sp.gpinf.indexer.IndexFiles</mainClass>
+                                    <mainClass>dpf.sp.gpinf.indexer.IpedMain</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>

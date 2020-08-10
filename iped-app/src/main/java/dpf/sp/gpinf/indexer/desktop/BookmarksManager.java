@@ -65,9 +65,9 @@ import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
 import iped3.util.BasicProps;
 
-public class GerenciadorMarcadores implements ActionListener, ListSelectionListener, KeyListener {
+public class BookmarksManager implements ActionListener, ListSelectionListener, KeyListener {
 
-    private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
+    private static BookmarksManager instance = new BookmarksManager();
 
     JDialog dialog = new JDialog();
     JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
@@ -117,7 +117,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
     }
 
-    public static GerenciadorMarcadores get() {
+    public static BookmarksManager get() {
         return instance;
     }
 
@@ -136,7 +136,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                 + App.get().appCase.getMultiMarcadores().getTotalSelected() + ")"); //$NON-NLS-1$
     }
 
-    private GerenciadorMarcadores() {
+    private BookmarksManager() {
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
@@ -390,7 +390,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                 }
                 updateList();
                 App.get().appCase.getMultiMarcadores().saveState();
-                MarcadoresController.get().atualizarGUI();
+                StateController.get().updateGUI();
 
             }
 
@@ -405,7 +405,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                     App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel.trim());
                     updateList(label, newLabel.trim());
                     App.get().appCase.getMultiMarcadores().saveState();
-                    MarcadoresController.get().atualizarGUI();
+                    StateController.get().updateGUI();
                 }
             }
         }
@@ -450,7 +450,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                     }
                 }
                 App.get().appCase.getMultiMarcadores().saveState();
-                MarcadoresController.get().atualizarGUI();
+                StateController.get().updateGUI();
             }
         }.start();
     }

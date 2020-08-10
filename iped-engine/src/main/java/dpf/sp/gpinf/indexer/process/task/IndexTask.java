@@ -73,7 +73,7 @@ public class IndexTask extends AbstractTask {
         }
     }
 
-    public void process(IItem evidence) throws IOException {
+    public void process(IItem evidence) throws Exception {
         if (evidence.isQueueEnd()) {
             return;
         }

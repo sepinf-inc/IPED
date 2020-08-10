@@ -8,7 +8,7 @@ import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.NodeQueryListener;
 import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.desktop.FileProcessor;
+import dpf.sp.gpinf.indexer.desktop.ItemSelectionAction;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.ItemId;
 
@@ -49,7 +49,7 @@ class ShowEvidenceNodeWorker extends SwingWorker<Void, Void> implements NodeQuer
     private void showEvidence(int evidenceId) {
         ItemId itemId = new ItemId(0, evidenceId);
         int luceneId = App.get().appCase.getLuceneId(itemId);
-        FileProcessor parsingTask = new FileProcessor(luceneId, false);
+        ItemSelectionAction parsingTask = new ItemSelectionAction(luceneId, false);
         parsingTask.execute();
     }
 

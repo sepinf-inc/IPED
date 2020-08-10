@@ -68,7 +68,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -222,7 +222,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
-    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static ImageMagicConverter graphicsMagicConverter = new ImageMagicConverter();
 
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).

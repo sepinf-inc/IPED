@@ -16,11 +16,9 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.IndexSearcher;
 import org.sleuthkit.datamodel.SleuthkitCase;
-import org.sleuthkit.datamodel.TskCoreException;
 
-import iped3.exception.IPEDException;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 
 /**
  *
@@ -32,7 +30,7 @@ public interface IIPEDSource extends Closeable {
     String MODULE_DIR = "indexador"; //$NON-NLS-1$
     String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
 
-    void checkImagePaths() throws IPEDException, TskCoreException;
+    void checkImagePaths() throws IOException;
 
     @Override
     void close();
@@ -67,11 +65,11 @@ public interface IIPEDSource extends Closeable {
 
     int getLuceneId(int id);
 
-    IMarcadores getMarcadores();
+    IBookmarks getMarcadores();
 
     File getModuleDir();
 
-    IMultiMarcadores getMultiMarcadores();
+    IMultiBookmarks getMultiMarcadores();
 
     IndexReader getReader();
 

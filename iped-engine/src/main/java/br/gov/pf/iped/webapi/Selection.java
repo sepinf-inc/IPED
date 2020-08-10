@@ -20,7 +20,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import iped3.IItemId;
 import iped3.search.IIPEDSearcher;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IMultiBookmarks;
 import iped3.search.IMultiSearchResult;
 
 @Api(value = "Selection")
@@ -34,7 +34,7 @@ public class Selection {
 
         IIPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         IMultiSearchResult result = searcher.multiSearch();
-        result = Sources.multiSource.getMultiMarcadores().filtrarSelecionados(result);
+        result = Sources.multiSource.getMultiMarcadores().filterSelected(result);
 
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (IItemId id : result.getIterator()) {
@@ -49,7 +49,7 @@ public class Selection {
     @Path("add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(@ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d : docs) {
             mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
@@ -62,7 +62,7 @@ public class Selection {
     @Path("remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response remove(@ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d : docs) {
             mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }

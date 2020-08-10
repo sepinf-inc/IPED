@@ -63,7 +63,6 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
@@ -72,8 +71,8 @@ import gpinf.dev.data.Item;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 import iped3.util.BasicProps;
 
 public class IPEDSource implements Closeable, IIPEDSource {
@@ -106,8 +105,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     protected ArrayList<String> categories = new ArrayList<String>();
 
-    private IMarcadores marcadores;
-    IMultiMarcadores globalMarcadores;
+    private IBookmarks marcadores;
+    IMultiBookmarks globalMarcadores;
 
     private int[] ids, docs;
     private long[] textSizes;
@@ -231,9 +230,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            marcadores = new Marcadores(this, moduleDir);
+            marcadores = new Bookmarks(this, moduleDir);
             marcadores.loadState();
-            globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
+            globalMarcadores = new MultiBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -398,15 +397,21 @@ public class IPEDSource implements Closeable, IIPEDSource {
         openIndex(index, iw);
     }
 
-    public void checkImagePaths() throws IPEDException, TskCoreException {
+    @Override
+    public void checkImagePaths() throws IOException {
         if (sleuthCase == null || isReport)
             return;
-        Map<Long, List<String>> imgPaths = sleuthCase.getImagePaths();
+        Map<Long, List<String>> imgPaths;
+        try {
+            imgPaths = sleuthCase.getImagePaths();
+        } catch (TskCoreException e) {
+            throw new IOException(e);
+        }
         for (Long id : imgPaths.keySet()) {
             List<String> paths = imgPaths.get(id);
             for (String path : paths) {
                 if (!new File(path).exists() && !path.toLowerCase().contains("physicaldrive")) //$NON-NLS-1$
-                    throw new IPEDException(
+                    throw new IOException(
                             Messages.getString("IPEDSource.ImageNotFound") + new File(path).getAbsolutePath()); //$NON-NLS-1$
             }
         }
@@ -619,11 +624,11 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return searcher;
     }
 
-    public IMarcadores getMarcadores() {
+    public IBookmarks getMarcadores() {
         return marcadores;
     }
 
-    public IMultiMarcadores getMultiMarcadores() {
+    public IMultiBookmarks getMultiMarcadores() {
         return this.globalMarcadores;
     }
 

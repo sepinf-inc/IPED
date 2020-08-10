@@ -36,7 +36,7 @@ import javax.imageio.ImageIO;
 
 import dpf.sp.gpinf.indexer.ConstantsViewer;
 
-public class GraphicsMagicConverter implements Closeable {
+public class ImageMagicConverter implements Closeable {
 
     private static final String RESOLUTION = "resolution"; //$NON-NLS-1$
     private static final String THREADS = "threads"; //$NON-NLS-1$
@@ -78,13 +78,13 @@ public class GraphicsMagicConverter implements Closeable {
         }
     }
 
-    public GraphicsMagicConverter(ExecutorService executorService) {
+    public ImageMagicConverter(ExecutorService executorService) {
         super();
         this.executorService = executorService;
         this.ownsExecutor = false;
     }
 
-    public GraphicsMagicConverter() {
+    public ImageMagicConverter() {
         super();
         this.executorService = Executors.newCachedThreadPool();
         this.ownsExecutor = true;

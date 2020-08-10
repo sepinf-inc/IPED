@@ -20,7 +20,7 @@ import iped3.IIPEDSource;
  *
  * @author WERNECK
  */
-public interface IMarcadores extends Serializable {
+public interface IBookmarks extends Serializable {
 
     void addLabel(List<Integer> ids, int label);
 
@@ -32,15 +32,15 @@ public interface IMarcadores extends Serializable {
 
     void delLabel(int label);
 
-    LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
+    LuceneSearchResult filterBookmarks(LuceneSearchResult result, Set<String> bookmarks, IIPEDSource ipedCase)
             throws Exception;
 
-    LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception;
+    LuceneSearchResult filterSelected(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception;
 
-    LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
+    LuceneSearchResult filterBookmarksOrNoBookmarks(LuceneSearchResult result, Set<String> bookmarks, IIPEDSource ipedCase)
             throws Exception;
 
-    LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IIPEDSource ipedCase);
+    LuceneSearchResult filterNoBookmarks(LuceneSearchResult result, IIPEDSource ipedCase);
 
     File getIndexDir();
 

@@ -32,23 +32,23 @@ import java.util.TreeSet;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
-import iped3.search.IMarcadores;
+import iped3.search.IBookmarks;
 import iped3.search.LuceneSearchResult;
 
-public class Marcadores implements Serializable, IMarcadores {
+public class Bookmarks implements Serializable, IBookmarks {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Bookmarks.class);
 
-    public static String EXT = "." + Versao.APP_EXT.toLowerCase(); //$NON-NLS-1$
+    public static String EXT = "." + IpedVersion.APP_EXT.toLowerCase(); //$NON-NLS-1$
     public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
 
     static int labelBits = Byte.SIZE;
@@ -67,12 +67,12 @@ public class Marcadores implements Serializable, IMarcadores {
 
     private transient IIPEDSource ipedCase;
 
-    public Marcadores(IIPEDSource ipedCase, File modulePath) {
+    public Bookmarks(IIPEDSource ipedCase, File modulePath) {
         this(ipedCase.getTotalItens(), ipedCase.getLastId(), modulePath);
         this.ipedCase = ipedCase;
     }
 
-    public Marcadores(int totalItens, int lastId, final File modulePath) {
+    public Bookmarks(int totalItens, int lastId, final File modulePath) {
         this.totalItems = totalItens;
         this.lastId = lastId;
         selected = new boolean[lastId + 1];
@@ -288,7 +288,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return reportLabels.contains(labelId);
     }
 
-    public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
+    public LuceneSearchResult filterBookmarks(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
             throws Exception {
         result = result.clone();
 
@@ -307,7 +307,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return result;
     }
 
-    public LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames,
+    public LuceneSearchResult filterBookmarksOrNoBookmarks(LuceneSearchResult result, Set<String> labelNames,
             IIPEDSource ipedCase) throws Exception {
         result = result.clone();
 
@@ -327,7 +327,7 @@ public class Marcadores implements Serializable, IMarcadores {
         return result;
     }
 
-    public LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IIPEDSource ipedCase) {
+    public LuceneSearchResult filterNoBookmarks(LuceneSearchResult result, IIPEDSource ipedCase) {
         result = result.clone();
         for (int i = 0; i < result.getLength(); i++)
             if (hasLabel(ipedCase.getId(result.getLuceneIds()[i]))) {
@@ -338,7 +338,8 @@ public class Marcadores implements Serializable, IMarcadores {
         return result;
     }
 
-    public LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception {
+    @Override
+    public LuceneSearchResult filterSelected(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception {
         result = result.clone();
         for (int i = 0; i < result.getLength(); i++)
             if (!selected[ipedCase.getId(result.getLuceneIds()[i])]) {
@@ -407,7 +408,7 @@ public class Marcadores implements Serializable, IMarcadores {
     }
 
     public void loadState(File file) throws IOException, ClassNotFoundException {
-        Marcadores state = load(file);
+        Bookmarks state = load(file);
 
         if (state.selected != null /* && state.read != null */) {
             int len = Math.min(state.selected.length, this.selected.length);
@@ -429,9 +430,9 @@ public class Marcadores implements Serializable, IMarcadores {
         this.reportLabels = state.reportLabels;
     }
 
-    public static Marcadores load(File file) throws ClassNotFoundException, IOException {
+    public static Bookmarks load(File file) throws ClassNotFoundException, IOException {
         LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
-        return (Marcadores) Util.readObject(file.getAbsolutePath());
+        return (Bookmarks) Util.readObject(file.getAbsolutePath());
     }
 
     public void setSelected(boolean value, int id) {

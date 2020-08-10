@@ -49,7 +49,7 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
@@ -70,7 +70,7 @@ public class GalleryModel extends AbstractTableModel {
     private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
     private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
     private ExecutorService executor;
-    private GraphicsMagicConverter magickConverter;
+    private ImageMagicConverter magickConverter;
 
     @Override
     public int getColumnCount() {
@@ -143,7 +143,7 @@ public class GalleryModel extends AbstractTableModel {
 
         if (executor == null) {
             executor = Executors.newFixedThreadPool(galleryThreads);
-            magickConverter = new GraphicsMagicConverter(executor);
+            magickConverter = new ImageMagicConverter(executor);
         }
 
         executor.execute(new Runnable() {

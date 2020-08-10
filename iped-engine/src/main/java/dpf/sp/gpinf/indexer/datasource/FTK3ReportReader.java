@@ -114,7 +114,7 @@ public class FTK3ReportReader extends DataSourceReader {
                      * ); } }else if(listOnly){
                      */
                     caseData.incDiscoveredEvidences(1);
-                    // IndexFiles.getInstance().firePropertyChange("discovered", 0,
+                    // IpedMain.getInstance().firePropertyChange("discovered", 0,
                     // caseData.getDiscoveredEvidences());
                     caseData.incDiscoveredVolume(subFile.length());
                     // }

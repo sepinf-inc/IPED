@@ -21,11 +21,8 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;

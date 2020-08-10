@@ -12,14 +12,13 @@ import javax.swing.SwingUtilities;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
-//TODO: Perhaps renaming this class to MultiViewer (or CompositeViewer or something more meaningful) would be a good idea 
-public class ViewersRepository extends Viewer {
+public class MultiViewer extends Viewer {
 
     private JPanel cardViewer = new JPanel(new CardLayout());
     private ArrayList<Viewer> viewerList = new ArrayList<Viewer>();
     private Viewer currentViewer;
 
-    public ViewersRepository() {
+    public MultiViewer() {
         super(new GridLayout());
         this.getPanel().add(cardViewer);
     }

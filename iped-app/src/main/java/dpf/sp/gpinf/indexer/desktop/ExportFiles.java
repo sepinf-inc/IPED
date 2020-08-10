@@ -39,15 +39,15 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.IItemId;
 
-public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
+public class ExportFiles extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(CopiarArquivos.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(ExportFiles.class);
 
     ArrayList<IItemId> uniqueIds;
     File dir, subdir;
     ProgressMonitor progressMonitor;
 
-    public CopiarArquivos(File dir, ArrayList<IItemId> uniqueIds) {
+    public ExportFiles(File dir, ArrayList<IItemId> uniqueIds) {
         this.dir = dir;
         this.subdir = dir;
         this.uniqueIds = uniqueIds;
@@ -147,7 +147,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
                 File dir = fileChooser.getSelectedFile();
-                (new CopiarArquivos(dir, uniqueDoc)).execute();
+                (new ExportFiles(dir, uniqueDoc)).execute();
             }
         } catch (Exception e) {
             e.printStackTrace();

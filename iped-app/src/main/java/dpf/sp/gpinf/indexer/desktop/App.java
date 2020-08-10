@@ -107,7 +107,7 @@ import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.IpedVersion;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -115,8 +115,8 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
@@ -371,7 +371,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void createGUI() {
 
         String tab = "     "; //$NON-NLS-1$
-        this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        this.setTitle(IpedVersion.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
         this.addWindowListener(this);
@@ -731,7 +731,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
-        new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        new AutoCompleteColumns((JTextComponent) termo.getEditor().getEditorComponent());
     }
 
     private void createAllDockables() {
