@@ -2,16 +2,16 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 
+import org.apache.lucene.analysis.CharArraySet;
 import org.apache.lucene.analysis.br.BrazilianAnalyzer;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.pt.PortugueseAnalyzer;
-import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queries.mlt.MoreLikeThis;
+import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.BooleanClause.Occur;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IIPEDSource;
@@ -59,7 +59,7 @@ public class SimilarDocumentSearch {
             // Funciona apenas com term vectors
             String[] keyTerms = mlt.retrieveInterestingTerms(docId);
 
-            BooleanQuery query = new BooleanQuery();
+            BooleanQuery.Builder query = new BooleanQuery.Builder();
             System.out.print(keyTerms.length + ": "); //$NON-NLS-1$
 
             for (String s : keyTerms) {
@@ -70,7 +70,7 @@ public class SimilarDocumentSearch {
 
             query.setMinimumNumberShouldMatch(keyTerms.length * matchPercent / 100);
 
-            return query;
+            return query.build();
 
         } catch (IOException e1) {
             e1.printStackTrace();
