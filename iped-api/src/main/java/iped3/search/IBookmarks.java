@@ -14,47 +14,70 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import iped3.IIPEDSource;
-
 /**
  *
  * @author WERNECK
  */
 public interface IBookmarks extends Serializable {
 
+    @Deprecated
     void addLabel(List<Integer> ids, int label);
+
+    void addToBookmark(List<Integer> itemIds, int bookmarkId);
 
     void addToTypedWords(String texto);
 
+    @Deprecated
     void changeLabel(int labelId, String newLabel);
+
+    void renameBookmark(int bookmarkId, String bookmarkName);
 
     void clearSelected();
 
+    @Deprecated
     void delLabel(int label);
 
-    LuceneSearchResult filterBookmarks(LuceneSearchResult result, Set<String> bookmarks, IIPEDSource ipedCase)
-            throws Exception;
+    void delBookmark(int bookmarkId);
 
-    LuceneSearchResult filterSelected(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception;
+    SearchResult filterBookmarks(SearchResult result, Set<String> bookmarks);
 
-    LuceneSearchResult filterBookmarksOrNoBookmarks(LuceneSearchResult result, Set<String> bookmarks, IIPEDSource ipedCase)
-            throws Exception;
+    SearchResult filterNoBookmarks(SearchResult result);
 
-    LuceneSearchResult filterNoBookmarks(LuceneSearchResult result, IIPEDSource ipedCase);
+    SearchResult filterSelected(SearchResult result);
+
+    SearchResult filterInReport(SearchResult result);
 
     File getIndexDir();
 
+    @Deprecated
     byte[] getLabelBits(int[] labelids);
 
+    byte[] getBookmarkBits(int[] bookmarkIds);
+
+    @Deprecated
     int getLabelId(String labelName);
 
+    int getBookmarkId(String bookmarkName);
+
+    @Deprecated
     ArrayList<Integer> getLabelIds(int id);
 
+    ArrayList<Integer> getBookmarkIds(int itemId);
+
+    @Deprecated
     Map<Integer, String> getLabelMap();
 
+    Map<Integer, String> getBookmarkMap();
+
+    @Deprecated
     String getLabelName(int labelId);
 
+    String getBookmarkName(int bookmarkId);
+
+    @Deprecated
     public List<String> getLabelList(int itemId);
+
+    public List<String> getBookmarkNames(int itemId);
 
     int getLastId();
 
@@ -64,21 +87,36 @@ public interface IBookmarks extends Serializable {
 
     LinkedHashSet<String> getTypedWords();
 
+    @Deprecated
     boolean hasLabel(int id);
 
+    boolean hasBookmark(int id);
+
+    @Deprecated
     boolean hasLabel(int id, byte[] labelbits);
 
+    boolean hasBookmarkBits(int itemId, byte[] bookmarkBits);
+
+    @Deprecated
     boolean hasLabel(int id, int label);
 
-    boolean isSelected(int id);
+    boolean hasBookmark(int itemId, int bookmarkId);
+
+    boolean isSelected(int itemId);
 
     void loadState();
 
     void loadState(File file) throws IOException, ClassNotFoundException;
 
+    @Deprecated
     int newLabel(String labelName);
 
+    int newBookmark(String bookmarkName);
+
+    @Deprecated
     void removeLabel(List<Integer> ids, int label);
+
+    void removeFromBookmark(List<Integer> itemIds, int bookmarkId);
 
     void saveState();
 
@@ -90,14 +128,18 @@ public interface IBookmarks extends Serializable {
 
     void updateCookie();
 
+    @Deprecated
     void setLabelComment(int labelId, String comment);
 
+    void setComment(int bookmarkId, String comment);
+
+    @Deprecated
     String getLabelComment(int labelId);
 
-    void setInReport(int labelId, boolean inReport);
+    String getComment(int bookmarkId);
 
-    boolean isInReport(int labelId);
+    void setInReport(int bookmarkId, boolean inReport);
 
-    LuceneSearchResult filterInReport(LuceneSearchResult luceneSearch, IIPEDSource ipedCase) throws Exception;
+    boolean isInReport(int bookmarkId);
 
 }

@@ -56,9 +56,9 @@ import dpf.sp.gpinf.indexer.process.task.KFFCarveTask;
 import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.process.task.LedKFFTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -70,8 +70,8 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IIPEDSource;
 import iped3.datasource.IDataSource;
-import iped3.search.IIPEDSearcher;
 import iped3.search.IBookmarks;
+import iped3.search.IIPEDSearcher;
 import iped3.search.IMultiBookmarks;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
@@ -186,9 +186,9 @@ public class IPEDReader extends DataSourceReader {
             oldToNewIdMap[i] = -1;
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-        LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
+        LuceneSearchResult result = SearchResult.get(state.filterInReport(pesquisa.search()), ipedCase);
         if (result.getLength() == 0) {
-            result = state.filterSelected(pesquisa.luceneSearch(), ipedCase);
+            result = SearchResult.get(state.filterSelected(pesquisa.search()), ipedCase);
             extractCheckedItems = true;
         }
 
@@ -223,15 +223,15 @@ public class IPEDReader extends DataSourceReader {
         reportState.loadState();
 
         for (int oldLabelId : selectedLabels) {
-            String labelName = state.getLabelName(oldLabelId);
-            String labelComment = state.getLabelComment(oldLabelId);
-            int newLabelId = reportState.newLabel(labelName);
-            reportState.setLabelComment(newLabelId, labelComment);
+            String labelName = state.getBookmarkName(oldLabelId);
+            String labelComment = state.getComment(oldLabelId);
+            int newLabelId = reportState.newBookmark(labelName);
+            reportState.setComment(newLabelId, labelComment);
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
-                if (state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
+                if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
-            reportState.addLabel(newIds, newLabelId);
+            reportState.addToBookmark(newIds, newLabelId);
         }
         reportState.saveState();
     }
@@ -413,13 +413,13 @@ public class IPEDReader extends DataSourceReader {
 
             if (!treeNode && caseData.isIpedReport()) {
                 if (extractCheckedItems) {
-                    selectedLabels.addAll(state.getLabelIds(prevId));
-                    evidence.setLabels(state.getLabelList(prevId));
+                    selectedLabels.addAll(state.getBookmarkIds(prevId));
+                    evidence.setLabels(state.getBookmarkNames(prevId));
                 } else
-                    for (int labelId : state.getLabelIds(prevId)) {
+                    for (int labelId : state.getBookmarkIds(prevId)) {
                         if (state.isInReport(labelId)) {
                             selectedLabels.add(labelId);
-                            evidence.getLabels().add(state.getLabelName(labelId));
+                            evidence.getLabels().add(state.getBookmarkName(labelId));
                         }
                     }
             }

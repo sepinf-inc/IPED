@@ -36,7 +36,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     public MultiBookmarks(List<IPEDSource> cases) {
         for (IIPEDSource s : cases)
-            map.put(s.getSourceId(), s.getMarcadores());
+            map.put(s.getSourceId(), s.getBookmarks());
     }
 
     public Collection<IBookmarks> getSingleBookmarks() {
@@ -82,11 +82,11 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     }
 
     public List<String> getLabelList(IItemId item) {
-        return map.get(item.getSourceId()).getLabelList(item.getId());
+        return map.get(item.getSourceId()).getBookmarkNames(item.getId());
     }
 
     public final boolean hasLabel(IItemId item) {
-        return map.get(item.getSourceId()).hasLabel(item.getId());
+        return map.get(item.getSourceId()).hasBookmark(item.getId());
     }
 
     private static final int[] getLabelIds(IBookmarks m, Set<String> labelNames) {
@@ -94,7 +94,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         int i = 0;
         boolean hasLabel = false;
         for (String labelName : labelNames) {
-            labelIds[i] = m.getLabelId(labelName);
+            labelIds[i] = m.getBookmarkId(labelName);
             if (labelIds[i++] != -1)
                 hasLabel = true;
         }
@@ -106,25 +106,25 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     public boolean hasLabel(IItemId item, Set<String> labelNames) {
         IBookmarks m = map.get(item.getSourceId());
         int[] labelIds = getLabelIds(m, labelNames);
-        return m.hasLabel(item.getId(), m.getLabelBits(labelIds));
+        return m.hasBookmarkBits(item.getId(), m.getBookmarkBits(labelIds));
     }
 
     public final boolean hasLabel(ItemId item, String labelName) {
         IBookmarks m = map.get(item.getSourceId());
-        int labelId = m.getLabelId(labelName);
+        int labelId = m.getBookmarkId(labelName);
         if (labelId == -1)
             return false;
-        return m.hasLabel(item.getId(), labelId);
+        return m.hasBookmark(item.getId(), labelId);
     }
 
     public void addLabel(List<IItemId> ids, String labelName) {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
-            int labelId = m.getLabelId(labelName);
+            int labelId = m.getBookmarkId(labelName);
             if (labelId == -1)
-                labelId = m.newLabel(labelName);
-            m.addLabel(itemsPerSource.get(sourceId), labelId);
+                labelId = m.newBookmark(labelName);
+            m.addToBookmark(itemsPerSource.get(sourceId), labelId);
         }
     }
 
@@ -145,38 +145,38 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
         HashMap<Integer, List<Integer>> itemsPerSource = getIdsPerSource(ids);
         for (Integer sourceId : itemsPerSource.keySet()) {
             IBookmarks m = map.get(sourceId);
-            int labelId = m.getLabelId(labelName);
+            int labelId = m.getBookmarkId(labelName);
             if (labelId != -1)
-                m.removeLabel(itemsPerSource.get(sourceId), labelId);
+                m.removeFromBookmark(itemsPerSource.get(sourceId), labelId);
         }
 
     }
 
     public void newLabel(String labelName) {
         for (IBookmarks m : map.values())
-            m.newLabel(labelName);
+            m.newBookmark(labelName);
     }
 
     public void delLabel(String labelName) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getLabelId(labelName);
-            m.delLabel(labelId);
+            int labelId = m.getBookmarkId(labelName);
+            m.delBookmark(labelId);
         }
     }
 
     public void changeLabel(String oldLabel, String newLabel) {
         for (IBookmarks m : map.values())
-            m.changeLabel(m.getLabelId(oldLabel), newLabel);
+            m.renameBookmark(m.getBookmarkId(oldLabel), newLabel);
     }
 
     public void setLabelComment(String labelName, String comment) {
         for (IBookmarks m : map.values())
-            m.setLabelComment(m.getLabelId(labelName), comment);
+            m.setComment(m.getBookmarkId(labelName), comment);
     }
 
     public String getLabelComment(String labelName) {
         for (IBookmarks m : map.values()) {
-            String comm = m.getLabelComment(m.getLabelId(labelName));
+            String comm = m.getComment(m.getBookmarkId(labelName));
             if (comm != null)
                 return comm;
         }
@@ -185,14 +185,14 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
 
     public void setInReport(String labelName, boolean inReport) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getLabelId(labelName);
+            int labelId = m.getBookmarkId(labelName);
             m.setInReport(labelId, inReport);
         }
     }
 
     public boolean isInReport(String labelName) {
         for (IBookmarks m : map.values()) {
-            int labelId = m.getLabelId(labelName);
+            int labelId = m.getBookmarkId(labelName);
             if (m.isInReport(labelId))
                 return true;
         }
@@ -202,7 +202,7 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
     public TreeSet<String> getLabelMap() {
         TreeSet<String> labels = new TreeSet<String>();
         for (IBookmarks m : map.values())
-            labels.addAll(m.getLabelMap().values());
+            labels.addAll(m.getBookmarkMap().values());
         return labels;
     }
 
@@ -217,12 +217,12 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             if (labelbits == null) {
                 int[] labelIds = getLabelIds(m, labelNames);
                 if (labelIds != null)
-                    labelbits = m.getLabelBits(labelIds);
+                    labelbits = m.getBookmarkBits(labelIds);
                 else
                     labelbits = new byte[0];
                 labelBitsPerSource.put(item.getSourceId(), labelbits);
             }
-            if (labelbits.length != 0 && m.hasLabel(item.getId(), labelbits)) {
+            if (labelbits.length != 0 && m.hasBookmarkBits(item.getId(), labelbits)) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }
@@ -246,12 +246,12 @@ public class MultiBookmarks implements Serializable, IMultiBookmarks {
             if (labelbits == null) {
                 int[] labelIds = getLabelIds(m, labelNames);
                 if (labelIds != null)
-                    labelbits = m.getLabelBits(labelIds);
+                    labelbits = m.getBookmarkBits(labelIds);
                 else
                     labelbits = new byte[0];
                 labelBitsPerSource.put(item.getSourceId(), labelbits);
             }
-            if (!m.hasLabel(item.getId()) || (labelbits.length != 0 && m.hasLabel(item.getId(), labelbits))) {
+            if (!m.hasBookmark(item.getId()) || (labelbits.length != 0 && m.hasBookmarkBits(item.getId(), labelbits))) {
                 selectedItems.add(item);
                 scores.add(result.getScore(i));
             }

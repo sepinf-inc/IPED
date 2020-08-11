@@ -410,9 +410,9 @@ public class HTMLReportTask extends AbstractTask {
             long t = System.currentTimeMillis();
 
             try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
-                for (int labelId : ipedCase.getMarcadores().getLabelMap().keySet()) {
-                    String labelName = ipedCase.getMarcadores().getLabelName(labelId);
-                    String comments = ipedCase.getMarcadores().getLabelComment(labelId);
+                for (int labelId : ipedCase.getBookmarks().getBookmarkMap().keySet()) {
+                    String labelName = ipedCase.getBookmarks().getBookmarkName(labelId);
+                    String comments = ipedCase.getBookmarks().getComment(labelId);
                     labelcomments.put(labelName, comments);
                 }
             }
