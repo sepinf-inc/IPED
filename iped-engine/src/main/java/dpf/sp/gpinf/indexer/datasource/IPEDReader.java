@@ -132,7 +132,7 @@ public class IPEDReader extends DataSourceReader {
         Object obj = Util.readObject(file.getAbsolutePath());
         if (obj instanceof IMultiBookmarks) {
             IMultiBookmarks mm = (IMultiBookmarks) obj;
-            for (IBookmarks m : mm.getSingleBookmarks())
+            for (IBookmarks m : mm.getCasesBookmarks())
                 processBookmark(m);
         } else
             processBookmark((IBookmarks) obj);

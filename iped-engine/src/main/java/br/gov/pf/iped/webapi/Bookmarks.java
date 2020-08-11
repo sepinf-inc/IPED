@@ -36,7 +36,7 @@ public class Bookmarks {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public DataListJSON<String> getAll() {
-        Set<String> bookmarks = Sources.multiSource.getMultiBookmarks().getLabelMap();
+        Set<String> bookmarks = Sources.multiSource.getMultiBookmarks().getAllBookmarks();
         String[] IDs = bookmarks.toArray(new String[0]);
         return new DataListJSON<String>(IDs);
     }
@@ -69,7 +69,7 @@ public class Bookmarks {
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
-        mm.addLabel(itemIds, bookmark);
+        mm.addToBookmark(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -84,7 +84,7 @@ public class Bookmarks {
         for (DocIDJSON d : docs) {
             itemIds.add(new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
-        mm.removeLabel(itemIds, bookmark);
+        mm.removeFromBookmark(itemIds, bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -94,7 +94,7 @@ public class Bookmarks {
     @Path("{bookmark}")
     public Response addLabel(@PathParam("bookmark") String bookmark) {
         IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
-        mm.newLabel(bookmark);
+        mm.newBookmark(bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -104,7 +104,7 @@ public class Bookmarks {
     @Path("{bookmark}")
     public Response delLabel(@PathParam("bookmark") String bookmark) {
         IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
-        mm.delLabel(bookmark);
+        mm.delBookmark(bookmark);
         mm.saveState();
         return Response.ok().build();
     }
@@ -114,7 +114,7 @@ public class Bookmarks {
     @Path("{old}/rename/{new}")
     public Response changeLabel(@PathParam("old") String oldLabel, @PathParam("new") String newLabel) {
         IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
-        mm.changeLabel(oldLabel, newLabel);
+        mm.renameBookmark(oldLabel, newLabel);
         mm.saveState();
         return Response.ok().build();
     }

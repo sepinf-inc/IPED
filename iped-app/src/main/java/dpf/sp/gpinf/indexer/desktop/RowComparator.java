@@ -246,8 +246,8 @@ public class RowComparator implements Comparator<Integer> {
                 return 1;
 
         } else if (bookmarkCol)
-            return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemA))
-                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemB)));
+            return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarks(itemA))
+                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarks(itemB)));
 
         else if (sdv != null) {
             SortedDocValues sdv = localSDV.get();

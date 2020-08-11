@@ -4,9 +4,7 @@ import java.text.Collator;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.Vector;
 
 import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
@@ -54,7 +52,8 @@ public class BookmarksTreeModel implements TreeModel {
         }
 
         if (labels == null) {
-            labels = (TreeSet<String>) App.get().appCase.getMultiBookmarks().getLabelMap().clone();
+            labels = new TreeSet<>();
+            labels.addAll(App.get().appCase.getMultiBookmarks().getAllBookmarks());
         }
 
         if (index == 0) {
@@ -76,7 +75,7 @@ public class BookmarksTreeModel implements TreeModel {
             if (App.get().appCase == null) {
                 return 0;
             } else {
-                return App.get().appCase.getMultiBookmarks().getLabelMap().size() + 1;
+                return App.get().appCase.getMultiBookmarks().getAllBookmarks().size() + 1;
             }
         }
     }

@@ -131,7 +131,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
 
     public void updateList() {
 
-        String[] labels = App.get().appCase.getMultiBookmarks().getLabelMap().toArray(new String[0]);
+        String[] labels = App.get().appCase.getMultiBookmarks().getAllBookmarks().toArray(new String[0]);
         Arrays.sort(labels, Collator.getInstance());
 
         Object[][] data = new Object[labels.length][];

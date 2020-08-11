@@ -233,7 +233,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarks(app.ipedResult.getItem(row)));
             }
 
             SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);

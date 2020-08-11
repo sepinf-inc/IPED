@@ -12,7 +12,6 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 
 import iped3.IItemId;
 
@@ -22,41 +21,39 @@ import iped3.IItemId;
  */
 public interface IMultiBookmarks extends Serializable {
 
-    void addLabel(List<IItemId> ids, String labelName);
+    void addToBookmark(List<IItemId> items, String bookmarkName);
 
     void addToTypedWords(String texto);
 
-    void changeLabel(String oldLabel, String newLabel);
+    void renameBookmark(String oldName, String newName);
 
     void clearSelected();
 
     void clearTypedWords();
 
-    void delLabel(String labelName);
+    void delBookmark(String bookmarkName);
 
-    IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> labelNames) throws Exception;
-
-    IMultiSearchResult filterSelected(IMultiSearchResult result) throws Exception;
-
-    IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> labelNames) throws Exception;
+    IMultiSearchResult filterBookmarks(IMultiSearchResult result, Set<String> bookmarkNames);
 
     IMultiSearchResult filterNoBookmarks(IMultiSearchResult result);
 
-    TreeSet<String> getLabelMap();
+    IMultiSearchResult filterSelected(IMultiSearchResult result);
 
-    List<String> getLabelList(IItemId item);
+    IMultiSearchResult filterBookmarksOrNoBookmarks(IMultiSearchResult result, Set<String> bookmarkNames);
 
-    Collection<IBookmarks> getSingleBookmarks();
+    Set<String> getAllBookmarks();
+
+    List<String> getBookmarks(IItemId item);
+
+    Collection<IBookmarks> getCasesBookmarks();
 
     int getTotalSelected();
 
     LinkedHashSet<String> getTypedWords();
 
-    boolean hasLabel(IItemId item);
+    boolean hasBookmark(IItemId item);
 
-    boolean hasLabel(IItemId item, Set<String> labelNames);
-
-    boolean hasLabel(IItemId item, String labelName);
+    boolean hasBookmarks(IItemId item, Set<String> bookmarkNames);
 
     boolean isSelected(IItemId item);
 
@@ -64,9 +61,9 @@ public interface IMultiBookmarks extends Serializable {
 
     void loadState(File file) throws ClassNotFoundException, IOException;
 
-    void newLabel(String labelName);
+    void newBookmark(String bookmarkName);
 
-    void removeLabel(List<IItemId> ids, String labelName);
+    void removeFromBookmark(List<IItemId> ids, String labelName);
 
     void saveState();
 
@@ -74,15 +71,15 @@ public interface IMultiBookmarks extends Serializable {
 
     void selectAll();
 
-    void setSelected(boolean value, IItemId item);
+    void setSelected(boolean selected, IItemId item);
 
-    public String getLabelComment(String labelName);
+    public String getComment(String bookmark);
 
-    void setLabelComment(String texto, String comment);
+    void setComment(String bookmark, String comment);
 
-    boolean isInReport(String label);
+    boolean isInReport(String bookmark);
 
-    void setInReport(String label, boolean checked);
+    void setInReport(String bookmark, boolean inReport);
 
     void addSelectionListener(SelectionListener listener);
 
