@@ -77,7 +77,7 @@ public class ZIPCarver extends FromFarthestHeaderCarver {
 
         SeekableInputStream is = null;
         try {
-            is = parentEvidence.getStream();
+            is = parentEvidence.getSeekableInputStream();
             is.seek(hit.getOffset() + 4 + 2 + 2);
             byte[] data = new byte[2];
             /* total number of entries in the central directory on this disk */

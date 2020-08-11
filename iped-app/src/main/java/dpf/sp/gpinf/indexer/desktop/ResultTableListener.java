@@ -282,7 +282,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
                             rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem);
+                        App.get().appCase.getMultiBookmarks().setSelected((Boolean) state, subItem);
                     }
                 }
             }

@@ -39,6 +39,7 @@ public interface IIPEDSource extends Closeable {
 
     LeafReader getLeafReader();
 
+    @Deprecated
     LeafReader getAtomicReader();
 
     File getCaseDir();
@@ -65,11 +66,17 @@ public interface IIPEDSource extends Closeable {
 
     int getLuceneId(int id);
 
+    @Deprecated
     IBookmarks getMarcadores();
+
+    IBookmarks getBookmarks();
 
     File getModuleDir();
 
+    @Deprecated
     IMultiBookmarks getMultiMarcadores();
+
+    IMultiBookmarks getMultiBookmarks();
 
     IndexReader getReader();
 
@@ -85,6 +92,7 @@ public interface IIPEDSource extends Closeable {
 
     Set<String> getEvidenceUUIDs();
 
+    @Deprecated
     boolean isFTKReport();
 
     void populateLuceneIdToIdMap() throws IOException;

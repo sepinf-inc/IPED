@@ -505,7 +505,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
             try {
 
                 data.clear();
-                data.setData(content.getStream());
+                data.setData(content.getSeekableInputStream());
 
                 codeArea.setLineNumberType(CodeAreaLineNumberLength.LineNumberType.AUTO);
 
@@ -2549,7 +2549,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                     try {
 
                         dialogPesquisar.setVisible(false);
-                        hexSearcher.doSearch(codeArea, painter, hits, contentAux.getStream(), charsetParam, palavras,
+                        hexSearcher.doSearch(codeArea, painter, hits, contentAux.getSeekableInputStream(), charsetParam,
+                                palavras,
                                 off, jrbTexto.isSelected(), !jcbCase.isSelected(), resultSearch, max_hits);
 
                     } catch (Exception ex) {

@@ -30,9 +30,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
 import iped3.io.IStreamSource;
@@ -95,28 +95,28 @@ public class ImageViewer extends Viewer implements ActionListener {
         if (content != null) {
             InputStream in = null;
             try {
-                in = new BufferedInputStream(content.getStream());
+                in = new BufferedInputStream(content.getSeekableInputStream());
                 image = ImageUtil.getSubSampledImage(in, 2000, 2000);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
+                    in = new BufferedInputStream(content.getSeekableInputStream());
                     image = ImageUtil.getThumb(in);
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
+                    in = new BufferedInputStream(content.getSeekableInputStream());
                     image = graphicsMagicConverter.getImage(in, 1000);
                 }
 
                 if (image != null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
+                    in = new BufferedInputStream(content.getSeekableInputStream());
                     int orientation = ImageUtil.getOrientation(in);
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
                     } else {
-                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
+                        String videoComment = ImageUtil.readJpegMetaDataComment(content.getSeekableInputStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());

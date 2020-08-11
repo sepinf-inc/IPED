@@ -1,10 +1,10 @@
 package dpf.sp.gpinf.carving;
 
+import java.io.IOException;
+
 import dpf.sp.gpinf.carver.api.Hit;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
-
-import java.io.IOException;
 
 public class DefaultCarver extends AbstractCarver {
 
@@ -24,7 +24,7 @@ public class DefaultCarver extends AbstractCarver {
             return header.getSignature().getCarverType().getMaxLength();
         }
 
-        try (SeekableInputStream is = parentEvidence.getStream()) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset() + header.getSignature().getCarverType().getSizePos());
             byte buf[] = new byte[header.getSignature().getCarverType().getSizeBytes()];
             int i = 0, off = 0;

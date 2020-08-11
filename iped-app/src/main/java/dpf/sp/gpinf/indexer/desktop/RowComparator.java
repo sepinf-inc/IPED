@@ -237,17 +237,17 @@ public class RowComparator implements Comparator<Integer> {
         b = app.appCase.getLuceneId(itemB);
 
         if (col == 1) {
-            if (app.appCase.getMultiMarcadores().isSelected(itemA) == app.appCase.getMultiMarcadores()
+            if (app.appCase.getMultiBookmarks().isSelected(itemA) == app.appCase.getMultiBookmarks()
                     .isSelected(itemB))
                 return 0;
-            else if (app.appCase.getMultiMarcadores().isSelected(itemA) == true)
+            else if (app.appCase.getMultiBookmarks().isSelected(itemA) == true)
                 return -1;
             else
                 return 1;
 
         } else if (bookmarkCol)
-            return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemA))
-                    .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
+            return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemA))
+                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemB)));
 
         else if (sdv != null) {
             SortedDocValues sdv = localSDV.get();

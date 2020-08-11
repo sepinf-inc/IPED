@@ -69,9 +69,9 @@ public class KeywordListImporter extends CancelableWorker {
         progress.close();
 
         for (String word : result)
-            App.get().appCase.getMultiMarcadores().addToTypedWords(word);
+            App.get().appCase.getMultiBookmarks().addToTypedWords(word);
 
-        App.get().appCase.getMultiMarcadores().saveState();
+        App.get().appCase.getMultiBookmarks().saveState();
 
         StateController.get().updateGUIHistory();
 

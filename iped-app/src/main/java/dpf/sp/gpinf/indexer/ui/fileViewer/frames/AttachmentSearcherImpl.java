@@ -63,7 +63,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             if (result.getLength() == 0)
                 return;
             for (IItemId item : result.getIterator()) {
-                App.get().appCase.getMultiMarcadores().setSelected(checked, item);
+                App.get().appCase.getMultiBookmarks().setSelected(checked, item);
             }
             StateController.get().updateGUI();
 
@@ -104,7 +104,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         selectedHashOrds.clear();
         for (IPEDSource source : App.get().appCase.getAtomicSources()) {
             for (int id = 0; id <= source.getLastId(); id++) {
-                if (source.getMarcadores().isSelected(id)) {
+                if (source.getBookmarks().isSelected(id)) {
                     ItemId itemId = new ItemId(source.getSourceId(), id);
                     int luceneId = App.get().appCase.getLuceneId(itemId);
                     int ord = sdv.getOrd(luceneId);

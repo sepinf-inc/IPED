@@ -31,7 +31,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 
@@ -109,7 +108,7 @@ public class HashTask extends AbstractTask {
 
         InputStream in = null;
         try {
-            in = evidence.getBufferedStream();
+            in = evidence.getBufferedInputStream();
             byte[] buf = new byte[1024 * 1024];
             int len;
             while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {

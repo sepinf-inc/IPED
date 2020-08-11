@@ -5,9 +5,10 @@
  */
 package iped3.process;
 
-import iped3.IItem;
 import java.io.File;
 import java.util.Properties;
+
+import iped3.IItem;
 
 /**
  *
@@ -52,24 +53,6 @@ public interface ITask {
      * se a tarefa possuir esse controle.
      */
     boolean isEnabled();
-
-    /**
-     * Realiza o processamento do item na tarefa e o envia para a próxima tarefa.
-     *
-     * @param evidence
-     *            Item a ser processado.
-     * @throws Exception
-     *             Caso ocorra erro inesperado.
-     */
-    // void processAndSendToNextTask(EvidenceFile evidence) throws Exception;
-
-    /**
-     * Define a próxima tarefa no pipeline.
-     *
-     * @param nextTask
-     *            próxima tarefa
-     */
-    // void setNextTask(Task nextTask);
 
     void addSubitemProcessingTime(long time);
 

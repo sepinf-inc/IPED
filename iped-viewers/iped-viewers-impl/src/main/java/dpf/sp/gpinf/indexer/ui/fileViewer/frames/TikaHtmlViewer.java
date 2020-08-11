@@ -46,7 +46,7 @@ public class TikaHtmlViewer extends HtmlViewer {
 
         if (content != null) {
             try {
-                content = new FileContentSource(getHtmlVersion(content.getStream(), contentType));
+                content = new FileContentSource(getHtmlVersion(content.getSeekableInputStream(), contentType));
             } catch (IOException e) {
                 e.printStackTrace();
                 content = null;

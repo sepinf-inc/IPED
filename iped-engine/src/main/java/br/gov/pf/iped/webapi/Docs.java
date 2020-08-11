@@ -43,8 +43,8 @@ public class Docs {
         }
         result.setProperties(properties);
 
-        result.setBookmarks(source.getMarcadores().getLabelList(id));
-        result.setSelected(source.getMarcadores().isSelected(id));
+        result.setBookmarks(source.getBookmarks().getLabelList(id));
+        result.setSelected(source.getBookmarks().isSelected(id));
 
         return result;
     }

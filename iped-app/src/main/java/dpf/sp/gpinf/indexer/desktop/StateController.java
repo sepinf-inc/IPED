@@ -53,14 +53,14 @@ public class StateController {
     public void addToRecentSearches(String texto) {
 
         if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty()
-                && !App.get().appCase.getMultiMarcadores().getTypedWords().contains(texto)
+                && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto)
                 && !App.get().appCase.getKeywords().contains(texto)) {
 
-            if (App.get().appCase.getMultiMarcadores().getTypedWords().size() == 0)
+            if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
                 App.get().termo.addItem(HISTORY_DIV);
 
             App.get().termo.addItem(texto);
-            App.get().appCase.getMultiMarcadores().addToTypedWords(texto);
+            App.get().appCase.getMultiBookmarks().addToTypedWords(texto);
         }
     }
 
@@ -78,9 +78,9 @@ public class StateController {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " //$NON-NLS-1$
+                App.get().checkBox.setText(App.get().appCase.getMultiBookmarks().getTotalSelected() + " / " //$NON-NLS-1$
                         + App.get().appCase.getTotalItens());
-                App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
+                App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalSelected() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();
                 BookmarksManager.updateCounters();
@@ -95,7 +95,7 @@ public class StateController {
         if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try {
-                App.get().appCase.getMultiMarcadores().loadState(file);
+                App.get().appCase.getMultiBookmarks().loadState(file);
                 updateGUIandHistory();
                 BookmarksManager.get().updateList();
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), //$NON-NLS-1$
@@ -116,10 +116,10 @@ public class StateController {
         for (String word : App.get().appCase.getKeywords())
             App.get().termo.addItem(word);
 
-        if (App.get().appCase.getMultiMarcadores().getTypedWords().size() != 0)
+        if (App.get().appCase.getMultiBookmarks().getTypedWords().size() != 0)
             App.get().termo.addItem(HISTORY_DIV);
 
-        for (String text : App.get().appCase.getMultiMarcadores().getTypedWords()) {
+        for (String text : App.get().appCase.getMultiBookmarks().getTypedWords()) {
             App.get().termo.addItem(text);
         }
         App.get().termo.setSelectedItem(prevText);
@@ -135,7 +135,7 @@ public class StateController {
                 file = new File(file.getPath() + Bookmarks.EXT);
 
             try {
-                App.get().appCase.getMultiMarcadores().saveState(file);
+                App.get().appCase.getMultiBookmarks().saveState(file);
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.SaveSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.SaveSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
 

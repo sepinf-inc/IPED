@@ -4,11 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped3.IItem;
 
@@ -54,7 +52,7 @@ public class EntropyTask extends AbstractTask {
                 || Boolean.TRUE.equals(evidence.getExtraAttribute(ThumbTask.HAS_THUMB)))
             return;
 
-        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedStream())) {
+        try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedInputStream())) {
 
             while (rfis.read(buf) != -1)
                 ;

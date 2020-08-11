@@ -155,7 +155,7 @@ public class ItemSelectionAction extends CancelableWorker<Void, Void> {
         if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
             tskDataSourceInited.add(item.getDataSource().getUUID());
             setWaitVisible(true);
-            try (InputStream is = item.getStream()) {
+            try (InputStream is = item.getSeekableInputStream()) {
                 is.read();
             } catch (IOException e) {
                 e.printStackTrace();

@@ -293,7 +293,7 @@ public class IndexerDefaultParser extends CompositeParser {
                     if (errorParser != null)
                         try {
                             if (evidence != null) {
-                                is = evidence.getStream();
+                                is = evidence.getSeekableInputStream();
                             } else {
                                 is = TikaInputStream.get(file);
                             }

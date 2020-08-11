@@ -88,7 +88,7 @@ public class CaseLoader extends SwingWorker<Void, Integer> {
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
 
             App.get().appCase.checkImagePaths();
-            App.get().appCase.getMultiMarcadores()
+            App.get().appCase.getMultiBookmarks()
                     .addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
 
             if (!updateItems) {

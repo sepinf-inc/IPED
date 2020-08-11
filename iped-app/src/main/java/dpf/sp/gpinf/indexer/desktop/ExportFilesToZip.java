@@ -102,7 +102,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
 
                 LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
-                try (InputStream in = e.getBufferedStream()) {
+                try (InputStream in = e.getBufferedInputStream()) {
                     int len = 0;
                     while ((len = in.read(buf)) != -1 && !this.isCancelled())
                         try {

@@ -35,9 +35,9 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
@@ -263,7 +263,7 @@ public class DIETask extends AbstractTask {
         BufferedImage img = null;
         try {
             if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getThumb(stream);
                 } finally {
@@ -271,7 +271,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, die.getExpectedImageSize(), die.getExpectedImageSize());
                 } finally {
@@ -279,7 +279,7 @@ public class DIETask extends AbstractTask {
                 }
             }
             if (img == null) {
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize());
                 } finally {

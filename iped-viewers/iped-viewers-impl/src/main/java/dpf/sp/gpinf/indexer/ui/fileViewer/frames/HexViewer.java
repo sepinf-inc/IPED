@@ -8,7 +8,6 @@ import java.util.Set;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-
 import gpinf.led.HexViewPanel;
 import iped3.io.IStreamSource;
 
@@ -53,7 +52,7 @@ public class HexViewer extends Viewer {
                     hexPanel.setFile(null);
                     hexPanel.scrollRectToVisible(new Rectangle());
                     if (content != null) {
-                        hexPanel.setFile(content.getStream());
+                        hexPanel.setFile(content.getSeekableInputStream());
                     }
                     hexPanel.repaint();
 

@@ -301,11 +301,16 @@ public class Item implements ISleuthKitItem {
         return accessDate;
     }
 
+    @Deprecated
+    public BufferedInputStream getBufferedStream() throws IOException {
+        return this.getBufferedInputStream();
+    }
+
     /**
      * @return um BufferedInputStream com o conteúdo do item
      * @throws IOException
      */
-    public BufferedInputStream getBufferedStream() throws IOException {
+    public BufferedInputStream getBufferedInputStream() throws IOException {
 
         int len = 8192;
         if (length != null && length > len) {
@@ -316,7 +321,7 @@ public class Item implements ISleuthKitItem {
             }
         }
 
-        return new BufferedInputStream(getStream(), len);
+        return new BufferedInputStream(getSeekableInputStream(), len);
     }
 
     /**
@@ -595,7 +600,12 @@ public class Item implements ISleuthKitItem {
     /**
      * @return InputStream com o conteúdo do arquivo.
      */
+    @Deprecated
     public SeekableInputStream getStream() throws IOException {
+        return getSeekableInputStream();
+    }
+
+    public SeekableInputStream getSeekableInputStream() throws IOException {
         if (startOffset == -1 && file != null && file.isFile()) {
             return new SeekableFileInputStream(file);
         }
@@ -661,7 +671,7 @@ public class Item implements ISleuthKitItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
-        return new SeekableByteChannelImpl(this.getStream());
+        return new SeekableByteChannelImpl(this.getSeekableInputStream());
     }
 
     /**
@@ -690,7 +700,7 @@ public class Item implements ISleuthKitItem {
                     }
                 });
 
-                try (InputStream in = getBufferedStream()) {
+                try (InputStream in = getBufferedInputStream()) {
                     Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
                 }
                 tmpFile = path.toFile();
@@ -733,7 +743,7 @@ public class Item implements ISleuthKitItem {
                 }
             }
             if (tmpFile == null) {
-                tis = TikaInputStream.get(getBufferedStream());
+                tis = TikaInputStream.get(getBufferedInputStream());
             }
         }
 

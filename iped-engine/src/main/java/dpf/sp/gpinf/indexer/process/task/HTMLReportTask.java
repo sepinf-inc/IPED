@@ -68,8 +68,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ImageMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -932,7 +932,7 @@ public class HTMLReportTask extends AbstractTask {
             }
             BufferedImage img = null;
             if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getThumb(stream);
                 } finally {
@@ -941,14 +941,14 @@ public class HTMLReportTask extends AbstractTask {
             }
             if (img == null) {
                 final int sampleFactor = 3;
-                BufferedInputStream stream = evidence.getBufferedStream();
+                BufferedInputStream stream = evidence.getBufferedInputStream();
                 try {
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * sampleFactor, thumbSize * sampleFactor);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
                 if (img == null) {
-                    stream = evidence.getBufferedStream();
+                    stream = evidence.getBufferedInputStream();
                     try {
                         img = graphicsMagicConverter.getImage(stream, thumbSize * sampleFactor);
                     } finally {

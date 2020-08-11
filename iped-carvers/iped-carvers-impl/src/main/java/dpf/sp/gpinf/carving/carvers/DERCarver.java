@@ -11,10 +11,10 @@ import java.security.cert.X509Certificate;
 import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
 import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
+import dpf.sp.gpinf.carving.AbstractCarver;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
@@ -35,7 +35,7 @@ public class DERCarver extends AbstractCarver {
 
     @Override
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
-        try (SeekableInputStream is = parentEvidence.getStream()) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             is.seek(header.getOffset() + 1);
             byte lenlenb[] = new byte[1];
             is.read(lenlenb);
@@ -60,7 +60,7 @@ public class DERCarver extends AbstractCarver {
             throws InvalidCarvedObjectException {
         Certificate cert = null;
 
-        try (SeekableInputStream is = parentEvidence.getStream()) {
+        try (SeekableInputStream is = parentEvidence.getSeekableInputStream()) {
             byte[] buf = new byte[(int) length];
             is.seek(header.getOffset());
             is.read(buf);

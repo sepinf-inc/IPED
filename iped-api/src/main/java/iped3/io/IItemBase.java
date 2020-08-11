@@ -114,7 +114,8 @@ public interface IItemBase extends IStreamSource {
      *
      * @return o arquivo com o conteúdo do item. Retorna não nulo apenas em
      *         processamentos de pastas, reports e no caso de subitens de
-     *         containers. Consulte {@link #getTempFile()}} e {@link #getStream()}
+     *         containers. Consulte {@link #getTempFile()}} e
+     *         {@link #getSeekableInputStream()}
      */
     public File getTempFile() throws IOException;
 
@@ -142,7 +143,10 @@ public interface IItemBase extends IStreamSource {
 
     public byte[] getImageSimilarityFeatures();
 
+    @Deprecated
     public BufferedInputStream getBufferedStream() throws IOException;
+
+    public BufferedInputStream getBufferedInputStream() throws IOException;
 
     /**
      * @return data da última modificação do arquivo

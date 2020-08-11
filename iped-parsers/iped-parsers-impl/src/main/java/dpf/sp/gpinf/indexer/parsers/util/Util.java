@@ -198,7 +198,7 @@ public class Util {
         try {
             String mime = item.getMediaType().toString();
             if (mime.startsWith("image")) //$NON-NLS-1$
-                thumb = IOUtil.loadInputStream(is = item.getBufferedStream());
+                thumb = IOUtil.loadInputStream(is = item.getBufferedInputStream());
             else if (mime.startsWith("video") && item.getViewFile() != null) //$NON-NLS-1$
                 thumb = Files.readAllBytes(item.getViewFile().toPath());
 

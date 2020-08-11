@@ -45,7 +45,7 @@ public interface IStatistics {
 
     void incTimeouts();
 
-    void logarEstatisticas(IManager manager) throws Exception;
+    void logStatistics(IManager manager) throws Exception;
 
     void printSystemInfo() throws Exception;
 

@@ -1,14 +1,8 @@
 package iped3;
 
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.IItemBase;
-import iped3.datasource.IDataSource;
-import iped3.io.SeekableInputStream;
-import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.channels.SeekableByteChannel;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -17,6 +11,10 @@ import java.util.Map;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+
+import iped3.datasource.IDataSource;
+import iped3.io.IItemBase;
+import iped3.io.ISeekableInputStreamFactory;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -68,13 +66,6 @@ public interface IItem extends IItemBase {
      */
     @Override
     Date getAccessDate();
-
-    /**
-     * @return um BufferedInputStream com o conteúdo do item
-     * @throws IOException
-     */
-    @Override
-    BufferedInputStream getBufferedStream() throws IOException;
 
     /**
      *
@@ -142,10 +133,7 @@ public interface IItem extends IItemBase {
      */
     String getFileToIndex();
 
-    /**
-     *
-     * @return o id do item no FTK3+ no caso de reports
-     */
+    @Deprecated
     Integer getFtkID();
 
     IHashValue getHashValue();
@@ -166,6 +154,7 @@ public interface IItem extends IItemBase {
      *
      * @return ids dos itens pai concatenados com espaço
      */
+    @Deprecated
     String getParentIdsString();
 
     /**
@@ -179,25 +168,6 @@ public interface IItem extends IItemBase {
     Reader getTextReader() throws IOException;
 
     Date getRecordDate();
-
-    @Override
-    SeekableByteChannel getSeekableByteChannel() throws IOException;
-
-    /**
-     * @return InputStream com o conteúdo do arquivo.
-     */
-    @Override
-    SeekableInputStream getStream() throws IOException;
-
-    /**
-     * Usado em módulos que só possam processar um File e não um InputStream. Pode
-     * impactar performance pois gera arquivo temporário.
-     *
-     * @return um arquivo temporário com o conteúdo do item.
-     * @throws IOException
-     */
-    @Override
-    File getTempFile() throws IOException;
 
     /**
      *
@@ -365,6 +335,7 @@ public interface IItem extends IItemBase {
      * @param ftkID
      *            id do FTK
      */
+    @Deprecated
     void setFtkID(Integer ftkID);
 
     /**

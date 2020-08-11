@@ -169,14 +169,14 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
+        app.appCase.getMultiBookmarks().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
         // app.appCase.getMarcadores().setSelected((Boolean)value,
         // app.appCase.getIds()[app.results.getLuceneIds()[row]], app.appCase);
         if (!StateController.get().isMultiSetting()) {
-            app.appCase.getMultiMarcadores().saveState();
+            app.appCase.getMultiBookmarks().saveState();
             StateController.get().atualizarGUISelection();
         }
     }
@@ -207,7 +207,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
-            return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));
+            return app.appCase.getMultiBookmarks().isSelected(app.ipedResult.getItem(row));
 
         String value = ""; //$NON-NLS-1$
 
@@ -233,7 +233,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(app.ipedResult.getItem(row)));
             }
 
             SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);

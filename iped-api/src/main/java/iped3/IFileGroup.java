@@ -13,25 +13,6 @@ import java.io.Serializable;
 public interface IFileGroup extends Serializable {
 
     /**
-     * Adiciona um arquivo de evidência.
-     *
-     * @param evidenceFile
-     *            arquivo a ser adicionado
-     */
-    /*
-     * public void addEvidenceFile(EvidenceFile evidenceFile) {
-     * evidenceFiles.add(evidenceFile); }
-     */
-    /**
-     * Obtém lista de arquivos de evidência associados a este agrupamento.
-     *
-     * @return lista não modificável de arquivos.
-     */
-    /*
-     * public List<EvidenceFile> getEvidenceFiles() { return
-     * Collections.unmodifiableList(evidenceFiles); }
-     */
-    /**
      * @return descrição do agrupamento
      */
     String getDescr();

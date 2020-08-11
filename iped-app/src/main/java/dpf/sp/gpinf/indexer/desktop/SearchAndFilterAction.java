@@ -181,7 +181,7 @@ public class SearchAndFilterAction extends CancelableWorker<MultiSearchResult, O
                     filtro = App.get().filtro.getSelectedItem().toString();
 
                 if (filtro.equals(App.FILTRO_SELECTED)) {
-                    result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filterSelected(result);
+                    result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterSelected(result);
                     numFilters++;
                     LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
@@ -196,15 +196,15 @@ public class SearchAndFilterAction extends CancelableWorker<MultiSearchResult, O
 
                     if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                         if (bookmarkSelection.size() == 1)
-                            result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
+                            result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
                                     .filterNoBookmarks(result);
                         else {
                             bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
-                            result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
+                            result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
                                     .filterBookmarksOrNoBookmarks(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filterBookmarks(result,
+                        result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(result,
                                 bookmarkSelection);
 
                 }

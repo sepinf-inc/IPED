@@ -961,7 +961,7 @@ public class UfedXmlReader extends DataSourceReader {
             File file = null;
             try {
                 file = File.createTempFile("CellularUsage", "db");
-                try (InputStream is = item.getStream()) {
+                try (InputStream is = item.getSeekableInputStream()) {
                     Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
                 try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());

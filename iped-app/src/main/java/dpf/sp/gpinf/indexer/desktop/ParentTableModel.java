@@ -86,7 +86,7 @@ public class ParentTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiMarcadores().setSelected((Boolean) value,
+        App.get().appCase.getMultiBookmarks().setSelected((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
         StateController.get().updateGUI();
     }
@@ -97,7 +97,7 @@ public class ParentTableModel extends AbstractTableModel
             return row + 1;
 
         } else if (col == 1) {
-            return App.get().appCase.getMultiMarcadores()
+            return App.get().appCase.getMultiBookmarks()
                     .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
         } else {

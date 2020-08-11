@@ -205,7 +205,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     if (image == null && stream == null && isSupportedImage(mediaType)) {
-                        stream = App.get().appCase.getItemByLuceneID(docId).getBufferedStream();
+                        stream = App.get().appCase.getItemByLuceneID(docId).getBufferedInputStream();
                     }
 
                     if (stream != null) {

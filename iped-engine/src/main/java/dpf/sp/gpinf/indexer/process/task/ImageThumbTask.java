@@ -261,12 +261,12 @@ public class ImageThumbTask extends ThumbTask {
         try {
             BufferedImage img = null;
             Dimension dimension = null;
-            try (BufferedInputStream stream = evidence.getBufferedStream()) {
+            try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                 dimension = ImageUtil.getImageFileDimension(stream);
             }
             if (extractThumb && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     img = ImageUtil.getThumb(stream);
                 }
                 performanceStats[img == null ? 2 : 0]++;
@@ -274,7 +274,7 @@ public class ImageThumbTask extends ThumbTask {
             }
             if (img == null) {
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     BooleanWrapper renderException = new BooleanWrapper();
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
                             renderException);
@@ -286,7 +286,7 @@ public class ImageThumbTask extends ThumbTask {
             }
             if (img == null) {
                 long t = System.currentTimeMillis();
-                try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                     img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -315,7 +315,7 @@ public class ImageThumbTask extends ThumbTask {
 
                 if (isJpeg(evidence)) {
                     // Ajusta rotacao da miniatura a partir do metadado orientacao
-                    try (BufferedInputStream stream = evidence.getBufferedStream()) {
+                    try (BufferedInputStream stream = evidence.getBufferedInputStream()) {
                         int orientation = ImageUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();

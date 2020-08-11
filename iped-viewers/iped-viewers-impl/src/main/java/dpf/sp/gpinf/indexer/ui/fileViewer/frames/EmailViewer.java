@@ -104,7 +104,7 @@ public class EmailViewer extends HtmlViewer {
 
         TikaInputStream tagged = null;
         try {
-            tagged = TikaInputStream.get(content.getStream());
+            tagged = TikaInputStream.get(content.getSeekableInputStream());
             parser.parse(tagged);
 
         } catch (Exception e) {

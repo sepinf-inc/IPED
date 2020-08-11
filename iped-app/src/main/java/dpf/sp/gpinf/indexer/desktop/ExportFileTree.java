@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -44,9 +43,9 @@ import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -54,7 +53,6 @@ import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
 import iped3.search.LuceneSearchResult;
-import iped3.search.IMultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 
@@ -115,7 +113,7 @@ public class ExportFileTree extends CancelableWorker {
 
             if (onlyChecked) {
                 MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
-                ir = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filterSelected(ir);
+                ir = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterSelected(ir);
                 result = MultiSearchResult.get(ir, App.get().appCase);
             }
 
@@ -210,7 +208,7 @@ public class ExportFileTree extends CancelableWorker {
             } else {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
 
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     dst = getNonExistingFile(dst);
                     Files.copy(in, dst.toPath());
                 }
@@ -270,7 +268,7 @@ public class ExportFileTree extends CancelableWorker {
 
             if (!item.isDir() && !isParent) {
                 LOGGER.info("Exporting file " + item.getPath()); //$NON-NLS-1$
-                try (InputStream in = item.getBufferedStream()) {
+                try (InputStream in = item.getBufferedInputStream()) {
                     int len = 0;
                     while ((len = in.read(buf)) != -1 && !this.isCancelled())
                         try {

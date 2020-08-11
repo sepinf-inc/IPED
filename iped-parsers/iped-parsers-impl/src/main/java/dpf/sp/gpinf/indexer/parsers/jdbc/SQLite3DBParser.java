@@ -124,7 +124,7 @@ public class SQLite3DBParser extends AbstractDBParser {
                     if (items.size() > 0) {
                         IItemBase wal = items.get(0);
                         File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                        try (InputStream in = wal.getBufferedStream()) {
+                        try (InputStream in = wal.getBufferedInputStream()) {
                             Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         } catch (IOException e) {
                             e.printStackTrace();

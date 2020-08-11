@@ -87,7 +87,7 @@ public class ExportFiles extends SwingWorker<Boolean, Integer> implements Proper
 
                 IItem e = App.get().appCase.getItemByItemId(item);
                 String dstName = Util.getValidFilename(Util.getNameWithTrueExt(e));
-                InputStream in = e.getBufferedStream();
+                InputStream in = e.getBufferedInputStream();
 
                 File dst = new File(subdir, dstName);
                 int num = 1;

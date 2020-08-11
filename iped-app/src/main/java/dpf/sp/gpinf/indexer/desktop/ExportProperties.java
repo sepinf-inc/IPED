@@ -88,7 +88,7 @@ public class ExportProperties extends SwingWorker<Boolean, Integer> implements P
                         values = doc.getValues(fields.get(col));
                     } else {
                         IItemId item = App.get().appCase.getItemId(docId);
-                        values[0] = Util.concatStrings(App.get().appCase.getMultiMarcadores().getLabelList(item));
+                        values[0] = Util.concatStrings(App.get().appCase.getMultiBookmarks().getLabelList(item));
                     }
                     if (values.length > 0 && values[0] == null)
                         values[0] = ""; //$NON-NLS-1$

@@ -1,15 +1,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.awt.Graphics;
-import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
@@ -122,7 +117,7 @@ public class PhotoDNATask extends AbstractTask {
 
         byte[] hash;
         try (InputStream is = useThumbnail ? new ByteArrayInputStream(evidence.getThumb())
-                : evidence.getBufferedStream()) {
+                : evidence.getBufferedInputStream()) {
 
             photodna.reset();
             hash = photodna.computePhotoDNA(is);

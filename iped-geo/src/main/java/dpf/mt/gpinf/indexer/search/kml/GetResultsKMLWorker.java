@@ -229,7 +229,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
                 kml.append("<Data name=\"" + BasicProps.ID + "\"><value>" + gid + "</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
-        boolean checked = app.getIPEDSource().getMultiMarcadores().isSelected(item);
+        boolean checked = app.getIPEDSource().getMultiBookmarks().isSelected(item);
         kml.append("<Data name=\"checked\"><value>" + checked + "</value></Data>"); //$NON-NLS-1$ //$NON-NLS-2$
 
         boolean selected = app.getResultsTable().isRowSelected(row);

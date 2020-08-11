@@ -17,7 +17,6 @@ import java.util.Properties;
 import org.apache.commons.codec.binary.Hex;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
-import dpf.sp.gpinf.indexer.process.Worker;
 import iped3.IItem;
 
 /**
@@ -46,7 +45,7 @@ public class RemoteKFFTask extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        InputStream in = evidence.getStream();
+        InputStream in = evidence.getSeekableInputStream();
         try {
             String[] partialHashes = partialMd5Digest(in);
             evidence.setExtraAttribute("MD5_512", partialHashes[0]); //$NON-NLS-1$

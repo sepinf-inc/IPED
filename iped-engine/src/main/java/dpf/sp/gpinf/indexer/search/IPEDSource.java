@@ -105,8 +105,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     protected ArrayList<String> categories = new ArrayList<String>();
 
-    private IBookmarks marcadores;
-    IMultiBookmarks globalMarcadores;
+    private IBookmarks bookmarks;
+    IMultiBookmarks globalBookmarks;
 
     private int[] ids, docs;
     private long[] textSizes;
@@ -230,9 +230,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            marcadores = new Bookmarks(this, moduleDir);
-            marcadores.loadState();
-            globalMarcadores = new MultiBookmarks(Collections.singletonList(this));
+            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks.loadState();
+            globalBookmarks = new MultiBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -624,12 +624,24 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return searcher;
     }
 
+    @Deprecated
     public IBookmarks getMarcadores() {
-        return marcadores;
+        return getBookmarks();
     }
 
+    @Override
+    public IBookmarks getBookmarks() {
+        return bookmarks;
+    }
+
+    @Override
+    public IMultiBookmarks getMultiBookmarks() {
+        return this.globalBookmarks;
+    }
+
+    @Deprecated
     public IMultiBookmarks getMultiMarcadores() {
-        return this.globalMarcadores;
+        return getMultiBookmarks();
     }
 
     public int getTotalItens() {

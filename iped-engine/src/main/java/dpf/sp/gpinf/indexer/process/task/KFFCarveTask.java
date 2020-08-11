@@ -20,8 +20,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IItem;
 import iped3.IHashValue;
+import iped3.IItem;
 
 public class KFFCarveTask extends BaseCarveTask {
 
@@ -142,7 +142,7 @@ public class KFFCarveTask extends BaseCarveTask {
         try {
             long offset = 0;
             int read512 = 0;
-            is = evidence.getBufferedStream();
+            is = evidence.getBufferedInputStream();
             while ((read512 = is.read(buf512)) > 0) {
                 if (read512 != buf512.length)
                     break;

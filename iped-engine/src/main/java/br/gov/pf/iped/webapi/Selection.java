@@ -34,7 +34,7 @@ public class Selection {
 
         IIPEDSearcher searcher = new IPEDSearcher(Sources.multiSource, "");
         IMultiSearchResult result = searcher.multiSearch();
-        result = Sources.multiSource.getMultiMarcadores().filterSelected(result);
+        result = Sources.multiSource.getMultiBookmarks().filterSelected(result);
 
         List<DocIDJSON> docs = new ArrayList<DocIDJSON>();
         for (IItemId id : result.getIterator()) {
@@ -49,7 +49,7 @@ public class Selection {
     @Path("add")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response add(@ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiBookmarks mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
         for (DocIDJSON d : docs) {
             mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
@@ -62,7 +62,7 @@ public class Selection {
     @Path("remove")
     @Consumes(MediaType.APPLICATION_JSON)
     public Response remove(@ApiParam(required = true) DocIDJSON[] docs) {
-        IMultiBookmarks mm = Sources.multiSource.getMultiMarcadores();
+        IMultiBookmarks mm = Sources.multiSource.getMultiBookmarks();
         for (DocIDJSON d : docs) {
             mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }

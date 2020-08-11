@@ -133,7 +133,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         instance.highlighted.setText(Messages.getString("BookmarksManager.Highlighted") + " (" //$NON-NLS-1$ //$NON-NLS-2$
                 + App.get().resultsTable.getSelectedRowCount() + ")"); //$NON-NLS-1$
         instance.checked.setText(Messages.getString("BookmarksManager.Checked") + " (" //$NON-NLS-1$ //$NON-NLS-2$
-                + App.get().appCase.getMultiMarcadores().getTotalSelected() + ")"); //$NON-NLS-1$
+                + App.get().appCase.getMultiBookmarks().getTotalSelected() + ")"); //$NON-NLS-1$
     }
 
     private BookmarksManager() {
@@ -242,7 +242,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
             }
         }
-        TreeSet<String> labels = App.get().appCase.getMultiMarcadores().getLabelMap();
+        TreeSet<String> labels = App.get().appCase.getMultiBookmarks().getLabelMap();
         for (String label : labels) {
             BookmarkAndKey bk = new BookmarkAndKey(label);
             if (!bookmarks.contains(bk)) {
@@ -349,8 +349,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             String texto = newLabel.getText().trim();
             String comment = comments.getText().trim();
             if (!texto.isEmpty() && !listModel.contains(new BookmarkAndKey(texto))) {
-                App.get().appCase.getMultiMarcadores().newLabel(texto);
-                App.get().appCase.getMultiMarcadores().setLabelComment(texto, comment);
+                App.get().appCase.getMultiBookmarks().newLabel(texto);
+                App.get().appCase.getMultiBookmarks().setLabelComment(texto, comment);
                 updateList();
             }
             for (int i = 0; i < listModel.size(); i++) {
@@ -364,8 +364,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             int idx = list.getSelectedIndex();
             if (idx != -1) {
                 String labelName = list.getModel().getElementAt(idx).bookmark;
-                App.get().appCase.getMultiMarcadores().setLabelComment(labelName, comments.getText());
-                App.get().appCase.getMultiMarcadores().saveState();
+                App.get().appCase.getMultiBookmarks().setLabelComment(labelName, comments.getText());
+                App.get().appCase.getMultiBookmarks().saveState();
             }
         }
 
@@ -386,10 +386,10 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (result == JOptionPane.YES_OPTION) {
                 for (int index : list.getSelectedIndices()) {
                     String label = list.getModel().getElementAt(index).bookmark;
-                    App.get().appCase.getMultiMarcadores().delLabel(label);
+                    App.get().appCase.getMultiBookmarks().delLabel(label);
                 }
                 updateList();
-                App.get().appCase.getMultiMarcadores().saveState();
+                App.get().appCase.getMultiBookmarks().saveState();
                 StateController.get().updateGUI();
 
             }
@@ -402,9 +402,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 int selIdx = list.getSelectedIndex();
                 if (selIdx != -1) {
                     String label = list.getModel().getElementAt(selIdx).bookmark;
-                    App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel.trim());
+                    App.get().appCase.getMultiBookmarks().changeLabel(label, newLabel.trim());
                     updateList(label, newLabel.trim());
-                    App.get().appCase.getMultiMarcadores().saveState();
+                    App.get().appCase.getMultiBookmarks().saveState();
                     StateController.get().updateGUI();
                 }
             }
@@ -418,7 +418,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         if (checked.isSelected()) {
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getMarcadores().isSelected(id)) {
+                    if (source.getBookmarks().isSelected(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
@@ -444,12 +444,12 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
                 for (String label : labels) {
                     if (insert) {
-                        App.get().appCase.getMultiMarcadores().addLabel(uniqueSelectedIds, label);
+                        App.get().appCase.getMultiBookmarks().addLabel(uniqueSelectedIds, label);
                     } else {
-                        App.get().appCase.getMultiMarcadores().removeLabel(uniqueSelectedIds, label);
+                        App.get().appCase.getMultiBookmarks().removeLabel(uniqueSelectedIds, label);
                     }
                 }
-                App.get().appCase.getMultiMarcadores().saveState();
+                App.get().appCase.getMultiBookmarks().saveState();
                 StateController.get().updateGUI();
             }
         }.start();
@@ -464,7 +464,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             return;
         }
         String labelName = list.getModel().getElementAt(idx).bookmark;
-        String comment = App.get().appCase.getMultiMarcadores().getLabelComment(labelName);
+        String comment = App.get().appCase.getMultiBookmarks().getLabelComment(labelName);
         newLabel.setText(labelName);
         comments.setText(comment);
     }

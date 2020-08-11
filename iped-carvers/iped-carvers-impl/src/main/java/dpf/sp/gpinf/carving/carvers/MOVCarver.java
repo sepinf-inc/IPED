@@ -7,9 +7,9 @@ import java.util.HashSet;
 import org.apache.commons.codec.DecoderException;
 import org.apache.tika.mime.MediaType;
 
-import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.carver.api.CarverType;
 import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carving.AbstractCarver;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
@@ -81,7 +81,7 @@ public class MOVCarver extends AbstractCarver {
         long atomStart = header.getOffset();
         SeekableInputStream is = null;
         try {
-            is = parentEvidence.getStream();
+            is = parentEvidence.getSeekableInputStream();
             byte[] data = new byte[4];
             while (true) {
                 is.seek(atomStart + 4);
