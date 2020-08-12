@@ -4,12 +4,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
-
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
-
-import com.drew.metadata.Tag;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.io.IItemBase;
@@ -101,6 +97,8 @@ public class ReportGenerator {
     private void printVideo(PrintWriter out, Message message) {
         if (message.getMediaHash() != null) {
 
+            printCheckbox(out, message.getMediaHash());
+
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
 
@@ -176,6 +174,8 @@ public class ReportGenerator {
 
         if (message.getMediaHash() != null) {
 
+            printCheckbox(out, message.getMediaHash());
+
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
             link.setAtribute("href", message.getMediaFile());
@@ -202,6 +202,9 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message) {
         if (message.getMediaHash() != null) {
+            
+            printCheckbox(out, message.getMediaHash());
+
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
             link.setAtribute("href", message.getMediaFile());
@@ -242,6 +245,11 @@ public class ReportGenerator {
         }
         out.println("<br/>");
 
+    }
+
+    private void printCheckbox(PrintWriter out, String hash) {
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + hash
+                + "\", this.checked) name=\"" + hash + "\" />");
     }
 
     private void printLink(PrintWriter out, Message message) {
