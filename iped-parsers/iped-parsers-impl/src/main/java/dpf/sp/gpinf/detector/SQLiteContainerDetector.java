@@ -20,6 +20,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sqlite.SQLiteConfig;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.SafariSqliteParser;
@@ -159,6 +160,10 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
                 && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
+
+        if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
+                && tableNames.contains("messages") && tableNames.contains("media_v2"))
+            return TelegramParser.TELEGRAM_DB;
 
         return SQLITE_MIME;
 
