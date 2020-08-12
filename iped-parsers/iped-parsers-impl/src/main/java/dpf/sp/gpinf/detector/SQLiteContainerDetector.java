@@ -19,6 +19,7 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
@@ -54,6 +55,7 @@ public class SQLiteContainerDetector implements Detector {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
+            config.setOpenMode(SQLiteOpenMode.MAIN_DB);
             sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
