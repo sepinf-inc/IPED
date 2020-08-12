@@ -92,11 +92,9 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             for (Chat c : e.getChatList()) {
-                System.out.println("teste telegram " + e.getChatList().size());
                 try {
                     c.getMessages().addAll(e.extractMessages(c));
 
-                    System.out.println("teste 2 telegram " + e.getChatList().size());
                     for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
                         byte[] bytes = r.generateChatHtml(c, i * MAXMSGS, (i + 1) * MAXMSGS);
                         Metadata chatMetadata = new Metadata();

@@ -308,8 +308,6 @@ public class Extractor {
                         }
                     }
                 }
-                System.out.println("Number of telegram phones " + nphones);
-
             }
         }
 
