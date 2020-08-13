@@ -110,67 +110,55 @@ public class ReportGenerator {
                 List<IItemBase> result = null;
                 result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
                 if (result != null && !result.isEmpty()) {
-
                     thumb = result.get(0).getThumb();
                 }
-
             }
 
-            TagHtml img = new TagHtml("img");
-            img.setAtribute("class", "iped-show");
+            TagHtml img;
             if (thumb != null) {
+                img = new TagHtml("img");
+                img.setAtribute("class", "thumb iped-show");
                 img.setAtribute("src",
                         "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
             } else {
-                img.setAtribute("src",
-                        dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
+                img = new TagHtml("div");
+                img.setAtribute("class", "videoImg iped-show");
             }
-            img.setAtribute("width", "100");
-            img.setAtribute("height", "102");
+
             img.setAtribute("title", "Video");
             link.getInner().add(img);
-            // link.getInner().add(" teste ");
 
             out.println(link.toString());
             out.println("<br/>");
 
             TagHtml video = new TagHtml("video");
-            video.setAtribute("class", "iped-hide");
+            video.setAtribute("class", "thumb iped-hide");
             video.setAtribute("controls", null);
             video.getInner().add("<source src=\"" + message.getMediaFile() + "\"/>");
             out.println(video.toString());
             out.println("<br/>");
 
         } else {
-            TagHtml img = new TagHtml("img");
-
-            String msg = "";
             if (message.getThumb() != null) {
-                msg = "thumb";
+                TagHtml img = new TagHtml("img");
                 img.setAtribute("src", "data:image/jpg;base64,"
                         + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(message.getThumb()));
+                img.setAtribute("class", "thumb");
+                img.setAtribute("title", "Video");
+                out.println(img.toString());
 
             } else {
-                img.setAtribute("src",
-                        dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/video.png"));
+                out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
             }
-            img.setAtribute("width", "100");
-            img.setAtribute("height", "102");
-            img.setAtribute("title", "Video");
-            out.println(img.toString());
-            out.println(msg);
         }
 
     }
 
     private void printAudio(PrintWriter out, Message message) {
-        TagHtml img = new TagHtml("img");
+        TagHtml img = new TagHtml("div");
 
-        img.setAtribute("src", dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/audio.png"));
-
-        img.setAtribute("width", "100");
-        img.setAtribute("height", "102");
-        img.setAtribute("title", "Video");
+        img.setAtribute("class", "audioImg");
+        img.setAtribute("title", "Audio");
 
         if (message.getMediaHash() != null) {
 
@@ -180,9 +168,8 @@ public class ReportGenerator {
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             link.setAtribute("href", message.getMediaFile());
 
-            img.setAtribute("class", "iped-show");
+            img.setAtribute("class", "audioImg iped-show");
             link.getInner().add(img);
-            // link.getInner().add(" teste ");
 
             out.println(link.toString());
             out.println("<br/>");
@@ -215,40 +202,35 @@ public class ReportGenerator {
                 List<IItemBase> result = null;
                 result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
                 if (result != null && !result.isEmpty()) {
-
                     thumb = result.get(0).getThumb();
                 }
-
             }
 
-            TagHtml img = new TagHtml("img");
-            // img.setAtribute("class", "iped-show");
+            TagHtml img;
             if (thumb != null) {
+                img = new TagHtml("img");
+                img.setAtribute("class", "thumb");
                 img.setAtribute("src",
                         "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+            } else {
+                img = new TagHtml("div");
+                img.setAtribute("class", "imageImg");
             }
-            img.setAtribute("width", "100");
-            img.setAtribute("height", "102");
+
             img.setAtribute("title", "Image");
             link.getInner().add(img);
-            // link.getInner().add(" teste ");
 
             out.println(link.toString());
 
         } else {
-            TagHtml img = new TagHtml("img");
-            img.setAtribute("src", dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/image.png"));
-            img.setAtribute("width", "100");
-            img.setAtribute("height", "102");
-            img.setAtribute("title", "Image");
-            out.println(img.toString());
+            out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
         }
         out.println("<br/>");
 
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
-        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
+        out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
                 + "', this.checked)\" name=\"" + hash + "\" />");
     }
 
