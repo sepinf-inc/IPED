@@ -50,6 +50,8 @@ public class MimeTypesProcessingOrder {
         
         //must be processed after all files to link the attachments
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
+        
+        mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
