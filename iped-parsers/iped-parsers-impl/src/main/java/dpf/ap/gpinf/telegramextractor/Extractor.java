@@ -1,15 +1,7 @@
 package dpf.ap.gpinf.telegramextractor;
 
 import java.io.File;
-
 import java.io.IOException;
-
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
-
-import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
-import dpf.ap.gpinf.interfacetelegram.PhotoData;
-
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -19,12 +11,18 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
+
+import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
+import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
 public class Extractor {
+
     private Connection conn;
+    private IItemSearcher searcher;
 
     public Extractor(Connection conn) {
         this.conn = conn;
@@ -150,8 +148,8 @@ public class Extractor {
     private void loadDocument(Message message, List<String> names, int size) {
         List<IItemBase> result = null;
         for (String name : names) {
-            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME + ":" + "\"" + name + "\"",
-                    searcher);
+            String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
+            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
             String path = getPathFromResult(result, size);
             if (path != null) {
                 message.setMediaFile(path);
@@ -191,8 +189,6 @@ public class Extractor {
             }
         }
     }
-
-    private IItemSearcher searcher;
 
     public void setSearcher(IItemSearcher s) {
         searcher = s;
@@ -250,8 +246,8 @@ public class Extractor {
 
     private IItemBase getFileFrom(String name, int size) {
         List<IItemBase> result = null;
-        result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME + ":\"" + name + "\" && size:" + size,
-                searcher);
+        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\" && " + BasicProps.LENGTH + ":" + size;
+        result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         if (result != null && !result.isEmpty()) {
             return result.get(0);
         }
@@ -319,8 +315,9 @@ public class Extractor {
         for (PhotoData photo : photos) {
             if (photo.getName() != null) {
                 name = photo.getName() + ".jpg";
-                result = dpf.sp.gpinf.indexer.parsers.util.Util
-                        .getItems(BasicProps.NAME + ":\"" + name + "\"  - " + BasicProps.LENGTH + ":0", searcher);
+                String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"  -" + BasicProps.LENGTH
+                        + ":0";
+                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
                 if (result != null && !result.isEmpty()) {
                     break;
                 }
