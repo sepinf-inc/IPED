@@ -57,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -240,7 +241,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     private static boolean isToAlwaysExpand(IItem item) {
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
-                || WhatsAppParser.WA_USER_XML.equals(item.getMediaType());
+                || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
+                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {

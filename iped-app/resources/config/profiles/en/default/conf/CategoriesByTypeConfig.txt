@@ -96,7 +96,7 @@ Calendar = application/x-ufed-html-calendar; application/x-ufed-calendarentry
 
 Logs = application/x-ufed-html-logs; application/x-ufed-logentry
 
-User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account
+User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account; application/x-telegram-account
 
 Searches = application/x-ufed-html-searches; application/x-ufed-searcheditem
 

@@ -274,13 +274,14 @@ public class Extractor {
                     return;
                 int nphones = 0;
                 while (rs.next()) {
-                    d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER);
-                    Contact c = new Contact(0);
-                    d.getUserData(c);
-                    // SerializedData s= new SerializedData();
-                    // TLRPC.User user=TLRPC.User.TLdeserialize(s,s.readInt32(false),false);
-                    // Contact cont=
-                    if (c.getId() > 0) {
+                	Contact c=Contact.getContactFromBytes(rs.getBytes("data"));
+                    /*
+                     * d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER);
+                       Contact c = new Contact(0);
+                       d.getUserData(c);
+                    */
+                    
+                    if (c!=null && c.getId() > 0) {
                         Contact cont = getContact(c.getId());
                         if (cont.getName() == null) {
                             cont.setName(c.getName());
@@ -292,11 +293,11 @@ public class Extractor {
                         if (cont.getPhone() != null) {
                             nphones++;
                         }
-                        List<PhotoData> photo = d.getPhotoData();
-                        if (cont.getAvatar() != null && photo.size() > 0) {
+                        //List<PhotoData> photo = d.getPhotoData();
+                        if (cont.getAvatar() != null && cont.getPhotos().size() > 0) {
                             try {
                                 if (cont.getPhone() != null)
-                                    searchAvatarFileName(cont, photo);
+                                    searchAvatarFileName(cont, cont.getPhotos());
                             } catch (IOException e) {
                                 // TODO: handle exception
                                 e.printStackTrace();
@@ -351,6 +352,6 @@ public class Extractor {
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
 
-    private static final String DECODER_CLASS = "telegramdecoder.DecoderTelegram";
+    protected static final String DECODER_CLASS = "telegramdecoder.DecoderTelegram";
 
 }

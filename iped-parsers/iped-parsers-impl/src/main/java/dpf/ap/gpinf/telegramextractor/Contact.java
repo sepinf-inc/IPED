@@ -1,6 +1,10 @@
 package dpf.ap.gpinf.telegramextractor;
 
+import java.util.List;
+
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
+import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
+import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 public class Contact implements ContactInterface {
     private long id;
@@ -9,6 +13,7 @@ public class Contact implements ContactInterface {
     private String username = null;
     private String phone = null;
     private byte[] avatar = null;
+    private List<PhotoData> photos=null;
 
     public Contact(long id) {
         this.id = id;
@@ -75,6 +80,30 @@ public class Contact implements ContactInterface {
 
         return fn;
     }
+    private static DecoderTelegramInterface d=null;
+    public static Contact getContactFromBytes(byte[] bytes) {
+    	  if(d==null) {
+	          try {
+	              Object o = Class.forName(Extractor.DECODER_CLASS).newInstance();
+	              d = (DecoderTelegramInterface) o;
+	              // System.out.println(ReflectionToStringBuilder.toString(o));
+	          } catch (Exception e) {
+	              System.out.println("erro ao carregar o jar do decoder");
+	              // TODO: handle exception
+	              return null;
+	
+	          }
+    	  }
+    	  if(d!=null) {
+    		  d.setDecoderData(bytes, d.USER);
+    		  Contact c=new Contact(0);
+    		  d.getUserData(c);
+    		  c.setPhotos(d.getPhotoData());
+    		  return c;
+    	  }
+    	  return null;
+    	  
+    }
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
@@ -91,5 +120,13 @@ public class Contact implements ContactInterface {
         // TODO Auto-generated method stub
 
     }
+
+	public List<PhotoData> getPhotos() {
+		return photos;
+	}
+
+	public void setPhotos(List<PhotoData> photos) {
+		this.photos = photos;
+	}
 
 }

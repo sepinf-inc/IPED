@@ -241,10 +241,19 @@
         <glob pattern="cache4.db"/>
     </mime-type>
 	
+	<mime-type type="application/x-telegram-user-conf">
+        <sub-class-of type="application/dita+xml"/>
+        <glob pattern="userconfing.xml"/>
+    </mime-type>
+	
      <mime-type type="application/x-telegram-chat">
         <sub-class-of type="text/html"/>
     </mime-type>
 	<mime-type type="contact/x-telegram-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	
+	<mime-type type="application/x-telegram-account">
         <sub-class-of type="text/html"/>
     </mime-type>
 	
