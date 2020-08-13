@@ -1,36 +1,26 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import java.io.File;
-
-import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter;
-import org.exbin.deltahex.highlight.swing.HighlightNonAsciiCodeAreaPainter;
-import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter.SearchMatch;
-import java.util.*;
 import java.nio.charset.Charset;
-import org.exbin.utils.binary_data.BinaryData;
-import iped3.desktop.ProgressDialog;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewerPlus.HexSearcher;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Hits;
-import org.exbin.deltahex.swing.CodeArea;
-import iped3.desktop.CancelableWorker;
-import java.util.concurrent.ExecutionException;
-import java.awt.Dialog.ModalityType;
-import javax.swing.SwingUtilities;
-import org.apache.commons.lang.StringUtils;
-import iped3.io.SeekableInputStream;
-import java.io.ByteArrayOutputStream;
-import java.nio.CharBuffer;
-import java.nio.charset.CharsetEncoder;
-import java.nio.charset.CodingErrorAction;
-import java.nio.ByteBuffer;
 import javax.swing.JLabel;
 
+import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter;
+import org.exbin.deltahex.highlight.swing.HighlightCodeAreaPainter.SearchMatch;
+import org.exbin.deltahex.swing.CodeArea;
+
+import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HexViewerPlus.HexSearcher;
+import iped3.desktop.CancelableWorker;
+import iped3.desktop.ProgressDialog;
+import iped3.io.SeekableInputStream;
 
 /**
  *
@@ -189,8 +179,10 @@ public class HexSearcherImpl implements HexSearcher {
                 bytesInOneSecond += bufferLength;
                 if (seconds >= 1000) {
                     timePassed += seconds;
-                    bytesInOneSecond = (long) ((double) bytesInOneSecond / (double) ((double) seconds / 1000));
-                    timeLeft = (bytesInOneSecond != 0) ? ((dataSize - posicao) / (bytesInOneSecond / 1000)) : 0;
+                    timeLeft = (bytesInOneSecond != 0)
+                            ? (long) (((double) dataSize - (double) posicao)
+                                    / (((double) bytesInOneSecond / 1000) / ((double) seconds / 1000)))
+                            : 359999000;
                     timeLeftString = Messages.getString("HexSearcherImpl.timeLeft") + ": " + formatarTempo(timeLeft);
                     bytesInOneSecond = 0;
                     start = System.currentTimeMillis();
