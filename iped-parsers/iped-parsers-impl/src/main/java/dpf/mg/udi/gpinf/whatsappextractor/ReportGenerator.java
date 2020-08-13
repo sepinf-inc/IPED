@@ -38,7 +38,7 @@ public class ReportGenerator {
     private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss XXX"); //$NON-NLS-1$
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
     private static final String template = Util.readResourceAsString("wachat-html-template.txt");
     private static final String css = Util.readResourceAsString("css/whatsapp.css");
     private static final String js = Util.readResourceAsString("js/whatsapp.js");

@@ -44,13 +44,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.DoubleDocValuesField;
-import org.apache.lucene.document.DoubleField;
+import org.apache.lucene.document.DoublePoint;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
-import org.apache.lucene.document.FloatField;
-import org.apache.lucene.document.IntField;
-import org.apache.lucene.document.LongField;
+import org.apache.lucene.document.FloatPoint;
+import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
 import org.apache.lucene.document.SortedNumericDocValuesField;
@@ -108,6 +108,8 @@ public class IndexItem extends BasicProps {
     public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
 
     public static final String attrTypesFilename = "metadataTypes.txt"; //$NON-NLS-1$
+
+    private static final String NEW_DATASOURCE_PATH_FILE = "data/newDataSourceLocations.txt";
 
     private static final int MAX_DOCVALUE_SIZE = 4096;
 
@@ -211,7 +213,8 @@ public class IndexItem extends BasicProps {
     public static Document Document(IItem evidence, Reader reader, File output) {
         Document doc = new Document();
 
-        doc.add(new IntField(ID, evidence.getId(), Field.Store.YES));
+        doc.add(new IntPoint(ID, evidence.getId()));
+        doc.add(new StoredField(ID, evidence.getId()));
         doc.add(new NumericDocValuesField(ID, evidence.getId()));
 
         doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
@@ -219,7 +222,8 @@ public class IndexItem extends BasicProps {
 
         Integer intVal = evidence.getFtkID();
         if (intVal != null) {
-            doc.add(new IntField(FTKID, intVal, Field.Store.YES));
+            doc.add(new IntPoint(FTKID, intVal));
+            doc.add(new StoredField(FTKID, intVal));
             doc.add(new NumericDocValuesField(FTKID, intVal));
         }
 
@@ -227,7 +231,8 @@ public class IndexItem extends BasicProps {
             ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
             intVal = sevidence.getSleuthId();
             if (intVal != null) {
-                doc.add(new IntField(SLEUTHID, intVal, Field.Store.YES));
+                doc.add(new IntPoint(SLEUTHID, intVal));
+                doc.add(new StoredField(SLEUTHID, intVal));
                 doc.add(new NumericDocValuesField(SLEUTHID, intVal));
             }
         }
@@ -250,13 +255,15 @@ public class IndexItem extends BasicProps {
 
         intVal = evidence.getSubitemId();
         if (intVal != null) {
-            doc.add(new IntField(SUBITEMID, intVal, Field.Store.YES));
+            doc.add(new IntPoint(SUBITEMID, intVal));
+            doc.add(new StoredField(SUBITEMID, intVal));
             doc.add(new NumericDocValuesField(SUBITEMID, intVal));
         }
 
         intVal = evidence.getParentId();
         if (intVal != null) {
-            doc.add(new IntField(PARENTID, intVal, Field.Store.YES));
+            doc.add(new IntPoint(PARENTID, intVal));
+            doc.add(new StoredField(PARENTID, intVal));
             doc.add(new NumericDocValuesField(PARENTID, intVal));
         }
 
@@ -283,7 +290,8 @@ public class IndexItem extends BasicProps {
 
         Long length = evidence.getLength();
         if (length != null) {
-            doc.add(new LongField(LENGTH, length, Field.Store.YES));
+            doc.add(new LongPoint(LENGTH, length));
+            doc.add(new StoredField(LENGTH, length));
             doc.add(new NumericDocValuesField(LENGTH, length));
         }
 
@@ -397,9 +405,8 @@ public class IndexItem extends BasicProps {
         if (similarityFeatures != null) {
             doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
             doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
-            for (int i = 0; i < 4; i++) {
-                doc.add(new IntField(SIMILARITY_FEATURES + i, similarityFeatures[i], Field.Store.NO));
-            }
+            doc.add(new IntPoint(SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+                    similarityFeatures[2], similarityFeatures[3]));
         }
 
         long off = evidence.getFileOffset();
@@ -464,35 +471,40 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedSetDocValuesField(key, new BytesRef(value)));
 
         } else if (oValue instanceof Byte) {
-            doc.add(new IntField(key, (Byte) oValue, Field.Store.YES));
+            doc.add(new IntPoint(key, (Byte) oValue));
+            doc.add(new StoredField(key, (Byte) oValue));
             if (!isMultiValued)
                 doc.add(new NumericDocValuesField(key, (Byte) oValue));
             else
                 doc.add(new SortedNumericDocValuesField(key, (Byte) oValue));
 
         } else if (oValue instanceof Integer) {
-            doc.add(new IntField(key, (Integer) oValue, Field.Store.YES));
+            doc.add(new IntPoint(key, (Integer) oValue));
+            doc.add(new StoredField(key, (Integer) oValue));
             if (!isMultiValued)
                 doc.add(new NumericDocValuesField(key, (Integer) oValue));
             else
                 doc.add(new SortedNumericDocValuesField(key, (Integer) oValue));
 
         } else if (oValue instanceof Long) {
-            doc.add(new LongField(key, (Long) oValue, Field.Store.YES));
+            doc.add(new LongPoint(key, (Long) oValue));
+            doc.add(new StoredField(key, (Long) oValue));
             if (!isMultiValued)
                 doc.add(new NumericDocValuesField(key, (Long) oValue));
             else
                 doc.add(new SortedNumericDocValuesField(key, (Long) oValue));
 
         } else if (oValue instanceof Float) {
-            doc.add(new FloatField(key, (Float) oValue, Field.Store.YES));
+            doc.add(new FloatPoint(key, (Float) oValue));
+            doc.add(new StoredField(key, (Float) oValue));
             if (!isMultiValued)
                 doc.add(new FloatDocValuesField(key, (Float) oValue));
             else
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.floatToSortableInt((Float) oValue)));
 
         } else if (oValue instanceof Double) {
-            doc.add(new DoubleField(key, (Double) oValue, Field.Store.YES));
+            doc.add(new DoublePoint(key, (Double) oValue));
+            doc.add(new StoredField(key, (Double) oValue));
             if (!isMultiValued)
                 doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
             else
@@ -737,7 +749,7 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
                 File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                localFile = checkIfEvidenceFolderExists(evidence, localFile);
+                localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 evidence.setFile(localFile);
                 hasFile = true;
 
@@ -761,6 +773,9 @@ public class IndexItem extends BasicProps {
                         Class<?> clazz = Class.forName(className);
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                         sisf = c.newInstance(absPath);
+                        if (sisf.checkIfDataSourceExists()) {
+                            checkIfExistsAndAsk(sisf, outputBase);
+                        }
                         inputStreamFactories.put(absPath, sisf);
                     }
                     evidence.setInputStreamFactory(sisf);
@@ -893,7 +908,50 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile) {
+    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+        Path path = sisf.getDataSourcePath();
+        if (path != null && !Files.exists(path)) {
+            Path newPath = loadDataSourcePath(caseModuleDir, path);
+            if (newPath != null && Files.exists(newPath)) {
+                sisf.setDataSourcePath(newPath);
+                return;
+            }
+            SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(path.toFile());
+            File newDataSource = siwd.askImagePathInGUI();
+            if (newDataSource != null) {
+                sisf.setDataSourcePath(newDataSource.toPath());
+                saveDataSourcePath(caseModuleDir, path, newDataSource.toPath());
+            }
+        }
+    }
+
+    private static void saveDataSourcePath(File caseModuleDir, Path oldPath, Path newPath) throws IOException {
+        File file = new File(caseModuleDir, NEW_DATASOURCE_PATH_FILE);
+        UTF8Properties props = new UTF8Properties();
+        if (file.exists())
+            props.load(file);
+        String newPathStr = Util.getRelativePath(caseModuleDir, newPath.toFile());
+        props.setProperty(oldPath.toString(), newPathStr);
+        try {
+            props.store(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static Path loadDataSourcePath(File caseModuleDir, Path oldPath) throws IOException {
+        File file = new File(caseModuleDir, NEW_DATASOURCE_PATH_FILE);
+        UTF8Properties props = new UTF8Properties();
+        if (file.exists())
+            props.load(file);
+        String path = props.getProperty(oldPath.toString());
+        if (path == null)
+            return null;
+        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
+    }
+
+    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
+            throws IOException {
         if (evidence.getPath().contains(">>"))
             return localFile;
         Path path;
@@ -914,8 +972,16 @@ public class IndexItem extends BasicProps {
                 if (evidenceFolder.exists()) {
                     mappedFolder = evidenceFolder;
                 } else {
-                    SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
-                    mappedFolder = siwd.askImagePathInGUI();
+                    Path newPath = loadDataSourcePath(caseModuleDir, evidenceFolder.toPath());
+                    if (newPath != null && Files.exists(newPath)) {
+                        mappedFolder = newPath.toFile();
+                    } else {
+                        SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
+                        mappedFolder = siwd.askImagePathInGUI();
+                        if (mappedFolder != null) {
+                            saveDataSourcePath(caseModuleDir, evidenceFolder.toPath(), mappedFolder.toPath());
+                        }
+                    }
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }

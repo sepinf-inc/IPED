@@ -7,8 +7,6 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 
-import dpf.sp.gpinf.indexer.util.Messages;
-
 public class SelectImagePathWithDialog implements Runnable {
 
     private File origImage;
@@ -25,16 +23,12 @@ public class SelectImagePathWithDialog implements Runnable {
     }
 
     public File askImagePathInGUI() {
-        int i = 0;
-        do {
-            try {
-                SwingUtilities.invokeAndWait(this);
+        try {
+            SwingUtilities.invokeAndWait(this);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } while (++i < 2 && (newImage == null || !newImage.exists()));
-
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return newImage;
     }
 

@@ -23,7 +23,7 @@ public class ReportGenerator {
     private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
     private boolean firstHtml = true;
     private int currentMsg = 0;

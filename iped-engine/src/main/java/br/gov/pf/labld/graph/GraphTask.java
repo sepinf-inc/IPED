@@ -176,7 +176,7 @@ public class GraphTask extends AbstractTask {
                 for (File file : prevCSVRoot.listFiles()) {
                     File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
                     if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
-                            || file.getName().equals(GraphFileWriter.REPLACE_NAME)) {
+                            || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
                         IOUtil.copiaArquivo(file, target);
                     }
                 }
@@ -420,11 +420,11 @@ public class GraphTask extends AbstractTask {
         if (SkypeParser.SKYPE.equals(accountType))
             nv1 = getAccountNodeValues(value, metadata);
         if (nv1 == null)
-            nv1 = getPhoneNodeValues(value);
-        if (nv1 == null)
             nv1 = getEmailNodeValues(value);
         if (nv1 == null)
             nv1 = getAccountNodeValues(value, metadata);
+        if (nv1 == null)
+            nv1 = getPhoneNodeValues(value);
         if (nv1 == null)
             nv1 = getGenericNodeValues(value);
         return nv1;
