@@ -3,7 +3,6 @@ package dpf.ap.gpinf.telegramextractor;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-
 import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
@@ -57,7 +56,7 @@ public class Util {
                 digest.update(buffer);
             }
             hash = byteArrayToHex(digest.digest());
-            is.close();
+
         } catch (Exception ex) {
             // log erros
         }
