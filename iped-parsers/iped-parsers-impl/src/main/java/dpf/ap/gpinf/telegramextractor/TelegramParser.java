@@ -104,7 +104,10 @@ public class TelegramParser extends SQLite3DBParser {
                         } else {
                             title += "Chat";
                         }
-                        title += "_" + c.getName() + "_" + (i + 1);
+                        title += "_" + c.getName();
+                        if (c.getMessages().size() > MAXMSGS) {
+                            title += "_" + i;
+                        }
                         chatMetadata.set(TikaCoreProperties.TITLE, title);
                         chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
                         chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
