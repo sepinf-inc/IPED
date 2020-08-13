@@ -32,7 +32,7 @@ public class TagHtml {
             sb.append(" " + atr);
             if (atributes.get(atr) != null) {
                 sb.append("=");
-                sb.append("'" + atributes.get(atr) + "'");
+                sb.append("\"" + atributes.get(atr) + "\"");
             }
         }
         sb.append(">");

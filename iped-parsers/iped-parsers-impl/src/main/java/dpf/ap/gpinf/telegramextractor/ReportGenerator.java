@@ -100,7 +100,7 @@ public class ReportGenerator {
             printCheckbox(out, message.getMediaHash());
 
             TagHtml link = new TagHtml("a");
-            link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
+            link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
             link.setAtribute("href", message.getMediaFile());
 
@@ -177,7 +177,7 @@ public class ReportGenerator {
             printCheckbox(out, message.getMediaHash());
 
             TagHtml link = new TagHtml("a");
-            link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
+            link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             link.setAtribute("href", message.getMediaFile());
 
             img.setAtribute("class", "iped-show");
@@ -206,7 +206,7 @@ public class ReportGenerator {
             printCheckbox(out, message.getMediaHash());
 
             TagHtml link = new TagHtml("a");
-            link.setAtribute("onclick", "app.open(\"hash:" + message.getMediaHash() + "\")");
+            link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             link.setAtribute("href", message.getMediaFile());
 
             byte thumb[] = message.getThumb();
@@ -248,8 +248,8 @@ public class ReportGenerator {
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
-        out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:" + hash
-                + "\", this.checked) name=\"" + hash + "\" />");
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
+                + "', this.checked)\" name=\"" + hash + "\" />");
     }
 
     private void printLink(PrintWriter out, Message message) {
