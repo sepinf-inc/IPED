@@ -8,6 +8,7 @@ import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 public class Contact implements ContactInterface {
     private long id;
+    private int groupid;
     private String name = null;
     private String lastName = null;
     private String username = null;
@@ -127,6 +128,14 @@ public class Contact implements ContactInterface {
 
 	public void setPhotos(List<PhotoData> photos) {
 		this.photos = photos;
+	}
+
+	public int getGroupid() {
+		return groupid;
+	}
+
+	public void setGroupid(int groupid) {
+		this.groupid = groupid;
 	}
 
 }

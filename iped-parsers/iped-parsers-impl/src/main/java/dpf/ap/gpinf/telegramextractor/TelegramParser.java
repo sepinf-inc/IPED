@@ -65,14 +65,15 @@ public class TelegramParser extends SQLite3DBParser {
     public static final MediaType TELEGRAM_ACCOUNT = MediaType.parse("application/x-telegram-account");
     public static final MediaType TELEGRAM_USER_CONF = MediaType.parse("application/x-telegram-user-conf");
     public static final MediaType TELEGRAM_DB = MediaType.parse("application/x-telegram-db");
+    public static final MediaType TELEGRAM_DB_IOS = MediaType.parse("application/x-telegram-db-ios");
     public static final MediaType TELEGRAM_CHAT = MediaType.parse("application/x-telegram-chat");
     public static final MediaType TELEGRAM_CONTACT = MediaType.parse("contact/x-telegram-contact");
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        return MediaType.set(TELEGRAM_DB,TELEGRAM_USER_CONF);
+        return MediaType.set(TELEGRAM_DB,TELEGRAM_USER_CONF,TELEGRAM_DB_IOS);
     }
     
-    public void parseTelegramDB(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+    public void parseTelegramDBAndroid(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
     	try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -145,6 +146,81 @@ public class TelegramParser extends SQLite3DBParser {
         }
     	
     }
+    
+    public void parseTelegramDBIOS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+    	try (Connection conn = getConnection(stream, metadata, context)) {
+    		System.out.print("ola telegram");
+            IItemSearcher searcher = context.get(IItemSearcher.class);
+            Extractor e = new Extractor(conn);
+            e.setSearcher(searcher);
+            e.extractContactsIOS();
+            ReportGenerator r = new ReportGenerator();
+            r.setSearcher(searcher);
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+
+            if (e.getContacts() != null) {
+                for (Contact c : e.getContacts().values()) {
+                    if (c.getPhone() == null) {
+                        continue;
+                    }
+                    byte[] bytes = r.genarateContactHtml(c);
+                    Metadata cMetadata = new Metadata();
+                    cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
+                    cMetadata.set(ExtraProperties.USER_NAME, c.getName());
+                    cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
+                    cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
+                    cMetadata.set(ExtraProperties.USER_NOTES, c.getUsername());
+                    if (c.getAvatar() != null) {
+                        cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
+                    }
+                    ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
+                    extractor.parseEmbedded(contactStream, handler, cMetadata, false);
+                }
+                System.out.println("teste 22");
+                e.extractChatListIOS();
+                System.out.println("total de chats "+e.getChatList().size());
+                for (Chat c : e.getChatList()) {
+                    try {
+                        c.getMessages().addAll(e.extractMessagesIOS(c));
+
+                        for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
+                            byte[] bytes = r.generateChatHtml(c, i * MAXMSGS, (i + 1) * MAXMSGS);
+                            Metadata chatMetadata = new Metadata();
+                            String title = "Telegram_";
+                            if (c.isGroup()) {
+                                title += "Group";
+                            } else {
+                                title += "Chat";
+                            }
+                            title += "_" + c.getName();
+                            if (c.getMessages().size() > MAXMSGS) {
+                                title += "_" + i;
+                            }
+                            chatMetadata.set(TikaCoreProperties.TITLE, title);
+                            chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
+                            chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+
+                            ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+                            extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+
+                        }
+
+                    } catch (Exception ex) {
+                        // TODO: handle exception
+                        ex.printStackTrace();
+                    }
+                }
+            }
+    	}catch (Exception e) {
+    		e.printStackTrace();
+			// TODO: handle exception
+		}
+    }
+    
     public void parseTelegramAccount(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)throws SAXException, IOException {
     	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     	DocumentBuilder builder;
@@ -207,7 +283,10 @@ public class TelegramParser extends SQLite3DBParser {
     	
     	String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
     	if(mimetype.equals(TELEGRAM_DB.toString())) {
-    		parseTelegramDB(stream, handler, metadata, context);
+    		parseTelegramDBAndroid(stream, handler, metadata, context);
+    	}
+    	if(mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+    		parseTelegramDBIOS(stream, handler, metadata, context);
     	}
     	if(mimetype.equals(TELEGRAM_USER_CONF.toString())) {
     		parseTelegramAccount(stream, handler, metadata, context);

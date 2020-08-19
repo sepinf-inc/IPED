@@ -166,6 +166,10 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
                 && tableNames.contains("messages") && tableNames.contains("media_v2"))
             return TelegramParser.TELEGRAM_DB;
+        
+        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
+                && tableNames.contains("ft41") && tableNames.contains("t18"))
+            return TelegramParser.TELEGRAM_DB_IOS;
 
         return SQLITE_MIME;
 

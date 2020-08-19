@@ -242,7 +242,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private static boolean isToAlwaysExpand(IItem item) {
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
                 || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
-                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType());
+                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType())
+                || TelegramParser.TELEGRAM_DB_IOS.equals(item.getMediaType());
     }
 
     private static boolean isToBeExpanded(Collection<String> categories) {

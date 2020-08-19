@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
@@ -18,6 +20,7 @@ import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
+
 
 public class Extractor {
 
@@ -111,6 +114,50 @@ public class Extractor {
         }
         return l;
     }
+    
+    
+    protected ArrayList<Chat> extractChatListIOS() {
+        ArrayList<Chat> l = new ArrayList<>();
+        // System.out.println("parser telegram!!!!!");
+        try {
+        	System.out.println(CHATS_SQL_IOS);
+            PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                
+                Contact c=getContact(rs.getLong("chatid"));
+                Chat cg = null;
+                
+                if (c.getName()!=null && c.getName().startsWith("gp_name:")) {
+                   
+                   
+                   cg = new ChatGroup(c.getId(),c,c.getName());
+
+                } else{
+                                        
+                    cg = new ChatGroup(c.getId(), c, c.getFullname());
+
+                }
+                if (cg != null) {
+                    // System.out.println("Nome do chat "+cg.getId());
+                    /*
+                     * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
+                     * messages.isEmpty()) continue;
+                     */
+                    // cg.messages.addAll(messages);
+                    l.add(cg);
+                }
+
+            }
+        } catch (Exception e) {
+            // TODO: handle exception
+            e.printStackTrace();
+        }
+        chatList=l;
+        return l;
+    }
+
+    
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
@@ -142,8 +189,50 @@ public class Extractor {
                 }
             }
         }
+        
+        Collections.sort(msgs, new Comparator<Message>() {
+      	  public int compare(Message o1, Message o2) {
+      		  if(o1==null || o2==null)
+      			  return 0;
+      	      return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+      	  }
+      	});
+        
         return msgs;
     }
+    
+    protected ArrayList<Message> extractMessagesIOS(Chat chat) throws Exception {
+        ArrayList<Message> msgs = new ArrayList<Message>();
+        PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS);
+        if (stmt != null) {
+            stmt.setLong(1, chat.getId());
+            ResultSet rs = stmt.executeQuery();
+            if (rs != null) {
+                while (rs.next()) {
+                	PostBoxCoding p=new PostBoxCoding();
+                	
+                	Message message = new Message(0,chat);
+                	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
+                    
+                    
+                    
+                    message.setRemetente(getContact(message.getRemetente().getId()));
+
+                    msgs.add(message);
+                }
+            }
+        }
+        Collections.sort(msgs, new Comparator<Message>() {
+      	  public int compare(Message o1, Message o2) {
+      		  if(o1==null || o2==null)
+      			  return 0;
+      	      return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+      	  }
+      	});
+        return msgs;
+    }
+    
+    
 
     private void loadDocument(Message message, List<String> names, int size) {
         List<IItemBase> result = null;
@@ -309,6 +398,53 @@ public class Extractor {
         }
 
     }
+    
+    protected void extractContactsIOS() throws SQLException {
+        if (conn != null) {
+        	System.out.println(EXTRACT_CONTACTS_SQL_IOS);
+            PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS);
+            if (stmt != null) {
+                ResultSet rs = stmt.executeQuery();
+                if (rs == null)
+                    return;
+                int nphones = 0;
+                while (rs.next()) {
+                	
+                	long id=rs.getLong("key");
+                    
+                    
+                    	
+                    Contact cont = getContact(id);
+                    if (cont.getName() == null) {
+                    	System.out.println("entrou2");
+                    	PostBoxCoding p=new PostBoxCoding();
+            			p.setData(rs.getBytes("value"));
+            			p.readUser(cont);
+                        
+                    }
+
+                    if (cont.getPhone() != null) {
+                        nphones++;
+                    }
+                    //List<PhotoData> photo = d.getPhotoData();
+                    if (cont.getAvatar() != null && cont.getPhotos().size() > 0) {
+                        try {
+                            if (cont.getPhone() != null)
+                                searchAvatarFileName(cont, cont.getPhotos());
+                        } catch (IOException e) {
+                            // TODO: handle exception
+                            e.printStackTrace();
+                        }
+                    }
+                    
+                }
+            }
+        }
+
+    }
+
+    
+    
 
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
         List<IItemBase> result = null;
@@ -333,7 +469,7 @@ public class Extractor {
     protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
-
+    
     public ArrayList<Chat> getChatList() {
         return chatList;
     }
@@ -341,16 +477,24 @@ public class Extractor {
     public HashMap<Long, Contact> getContacts() {
         return contacts;
     }
+    
 
     private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as nomeChat,u.data as dadosChat,"
             + "c.name as groupName, c.data as dadosGrupo "
             + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
             + "order by d.date desc";
+    
+    private static final String CHATS_SQL_IOS = "select hex(substr(t7.key,1,8)) as chatblob, t2.key as chatid from t7 " + 
+    		"left join t2 on printf('%016X',t2.key)=chatblob" + 
+    		" group by chatid";
 
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t2.key as chatid,t7.* FROM t7 inner join t2 on printf('%016X',t2.key)=hex(substr(t7.key,1,8)) " + 
+    		"where chatid=?";
     private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
             + "left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
+    private static final String EXTRACT_CONTACTS_SQL_IOS = "SELECT * FROM t2";
 
     protected static final String DECODER_CLASS = "telegramdecoder.DecoderTelegram";
 
