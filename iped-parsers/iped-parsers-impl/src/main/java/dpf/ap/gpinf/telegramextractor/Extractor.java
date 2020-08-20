@@ -126,6 +126,9 @@ public class Extractor {
             while (rs.next()) {
                 
                 Contact c=getContact(rs.getLong("chatid"));
+                if(c.getId()==330512753) {
+                	System.out.println("teste do chat");
+                }
                 Chat cg = null;
                 
                 if (c.getName()!=null && c.getName().startsWith("gp_name:")) {
@@ -204,6 +207,9 @@ public class Extractor {
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
         PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS);
+        if(chat.getId()==330512753) {
+        	System.out.println("teste2");
+        }
         if (stmt != null) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
@@ -240,11 +246,12 @@ public class Extractor {
         List<IItemBase> result = null;
         for (String name : names) {
         	System.out.println("nomes "+name);
-        	System.out.println("nomes "+searcher);
             String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
             result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
             String path = getPathFromResult(result, size);
             if (path != null) {
+            	message.setMediaMime(result.get(0).getMediaType().toString());
+            	System.out.println("tipo "+message.getMediaMime());
                 message.setMediaFile(path);
                 message.setMediaHash(getHash(result, size));
                 message.setThumb(getThumb(result, size));
@@ -426,7 +433,6 @@ public class Extractor {
                     	
                     Contact cont = getContact(id);
                     if (cont.getName() == null) {
-                    	System.out.println("entrou2");
                     	PostBoxCoding p=new PostBoxCoding();
             			p.setData(rs.getBytes("value"));
             			p.readUser(cont);

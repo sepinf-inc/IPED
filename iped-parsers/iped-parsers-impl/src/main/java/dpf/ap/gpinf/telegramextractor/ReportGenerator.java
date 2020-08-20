@@ -15,7 +15,7 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
-    private IItemSearcher searcher;
+    private IItemSearcher searcher; 
 
     public void setSearcher(IItemSearcher s) {
         searcher = s;

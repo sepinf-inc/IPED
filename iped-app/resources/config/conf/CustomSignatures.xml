@@ -240,6 +240,10 @@
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="cache4.db"/>
     </mime-type>
+    <mime-type type="application/x-telegram-db-ios">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="db_sqlite"/>
+    </mime-type>
 	
 	<mime-type type="application/x-telegram-user-conf">
         <sub-class-of type="application/dita+xml"/>

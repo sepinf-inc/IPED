@@ -53,7 +53,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped3.search.IItemSearcher;
-import iped3.util.ExtraProperties;
+import iped3.util.ExtraProperties; 
 
 public class TelegramParser extends SQLite3DBParser {
 
@@ -152,6 +152,7 @@ public class TelegramParser extends SQLite3DBParser {
     	try (Connection conn = getConnection(stream, metadata, context)) {
     		System.out.print("ola telegram");
             IItemSearcher searcher = context.get(IItemSearcher.class);
+            System.out.println("seacher "+searcher);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
             e.extractContactsIOS();

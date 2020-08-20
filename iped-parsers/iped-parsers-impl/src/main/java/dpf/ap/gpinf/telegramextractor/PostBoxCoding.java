@@ -85,12 +85,12 @@ public class PostBoxCoding {
             long i = 0;
             byte len=8;
             for (int j = 0; j < len; j++) {
-                int a=data[start+j];
+                long a=data[start+j];
                 a=a&0xFF;
                 if(bigEndian){
-                    i |= (a << (j * 8));
+                    i |= (a << (j * 8L));
                 }else{
-                    i |= (a << ((len-j-1) * 8));
+                    i |= (a << ((len-j-1) * 8L));
                 }
             }
             return i;
@@ -177,8 +177,12 @@ public class PostBoxCoding {
         }
         return 0;
     }
+    boolean debug=false;
     public long decodeInt64ForKey(String key){
         if(findOfset(key,Int64)){
+        	if(debug) {
+        		System.out.println("offset"+offset);
+        	}
             long val=readInt64(offset);
             offset+=8;
             return val;
@@ -320,13 +324,18 @@ public class PostBoxCoding {
            decodeObjectArrayForKey("entities");
            ArrayList<String> names=new ArrayList<>();
            
-        	
+        	debug=true;
         	long id=decodeInt64ForKey("i");
+        	debug=false;
         	long volume=decodeInt64ForKey("v");
         	int local=decodeInt32ForKey("l");
         	System.out.println("i: "+id);
         	System.out.println("v: "+volume);
         	System.out.println("l: "+local);
+        	
+        	if(id!=0) {
+        		names.add(id+"");
+        	}
         	
         	if(volume!=0 && local!=0) {
         		names.add(volume+"_"+local);
@@ -366,8 +375,10 @@ public class PostBoxCoding {
             PostBoxCoding p2=new PostBoxCoding();
             p2.setData(ph.content);
             Photo p=new Photo();
+            
             p.setName(p2.decodeInt64ForKey("v")+"_"+p2.decodeInt32ForKey("l"));
             photos.add(p);
+            System.out.println("photo:"+p.getName());
             c.setPhotos(photos);
         }
         
