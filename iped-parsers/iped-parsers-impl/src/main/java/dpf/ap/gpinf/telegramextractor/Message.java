@@ -1,6 +1,7 @@
 package dpf.ap.gpinf.telegramextractor;
 
 import java.util.Date;
+import java.util.List;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 
@@ -20,6 +21,7 @@ public class Message implements MessageInterface {
     private byte[] linkImage = null;
     private byte[] thumb = null;
     private String hashThumb = null;
+    private List<String> names=null;
 
     public long getId() {
         return id;
@@ -145,4 +147,12 @@ public class Message implements MessageInterface {
     public void setType(String type) {
         this.type = type;
     }
+
+	public List<String> getNames() {
+		return names;
+	}
+
+	public void setNames(List<String> names) {
+		this.names = names;
+	}
 }

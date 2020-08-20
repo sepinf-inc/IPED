@@ -6,21 +6,14 @@
 package dpf.ap.gpinf.telegramextractor;
 
 
-import dpf.ap.gpinf.interfacetelegram.ContactInterface;
-import dpf.ap.gpinf.interfacetelegram.MessageInterface;
+
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import java.nio.charset.StandardCharsets;
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Formatter;
 import java.util.List;
-import javafx.scene.input.KeyCode;
 
 
 
@@ -324,7 +317,22 @@ public class PostBoxCoding {
             offset+=4;
             String txt=readString(offset, msglen);
             
-            
+           decodeObjectArrayForKey("entities");
+           ArrayList<String> names=new ArrayList<>();
+           
+        	
+        	long id=decodeInt64ForKey("i");
+        	long volume=decodeInt64ForKey("v");
+        	int local=decodeInt32ForKey("l");
+        	System.out.println("i: "+id);
+        	System.out.println("v: "+volume);
+        	System.out.println("l: "+local);
+        	
+        	if(volume!=0 && local!=0) {
+        		names.add(volume+"_"+local);
+        	}
+           
+            m.setNames(names);
             
             if(m!=null){
                 m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));

@@ -214,7 +214,9 @@ public class Extractor {
                 	Message message = new Message(0,chat);
                 	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
                     
-                    
+                    if(message.getNames()!=null && message.getNames().size()>0) {
+                    	loadDocument(message, message.getNames(), 0);
+                    }
                     
                     message.setRemetente(getContact(message.getRemetente().getId()));
 
@@ -237,6 +239,8 @@ public class Extractor {
     private void loadDocument(Message message, List<String> names, int size) {
         List<IItemBase> result = null;
         for (String name : names) {
+        	System.out.println("nomes "+name);
+        	System.out.println("nomes "+searcher);
             String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
             result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
             String path = getPathFromResult(result, size);
@@ -284,8 +288,24 @@ public class Extractor {
     }
 
     protected String getPathFromResult(List<IItemBase> result, int size) {
-        if (result == null) {
+        if (result == null || result.size()==0) {
             return null;
+        }
+        if(size==0) {
+        	IItemBase f=result.get(0);
+        	try {
+                if (f.getTempFile() != null) {
+                    if (f.getFile() != null) {
+                        return f.getFile().getAbsolutePath();
+                    } else {
+                        return f.getTempFile().getAbsolutePath();
+                    }
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        	
         }
         for (IItemBase f : result) {
             try {
@@ -344,17 +364,7 @@ public class Extractor {
     }
 
     protected void extractContacts() throws SQLException {
-        DecoderTelegramInterface d = null;
-        try {
-            Object o = Class.forName(DECODER_CLASS).newInstance();
-            d = (DecoderTelegramInterface) o;
-            // System.out.println(ReflectionToStringBuilder.toString(o));
-        } catch (Exception e) {
-            System.out.println("erro ao carregar o jar do decoder");
-            // TODO: handle exception
-            return;
-
-        }
+       
         if (conn != null) {
             PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL);
             if (stmt != null) {
