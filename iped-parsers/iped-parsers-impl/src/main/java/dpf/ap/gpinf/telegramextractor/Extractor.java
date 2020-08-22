@@ -248,13 +248,15 @@ public class Extractor {
     private void loadDocument(Message message, List<String> names, int size) {
         List<IItemBase> result = null;
         for (String name : names) {
-        	System.out.println("nomes "+name);
+        	
             String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
             result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
             String path = getPathFromResult(result, size);
             if (path != null) {
-            	message.setMediaMime(result.get(0).getMediaType().toString());
-            	System.out.println("tipo "+message.getMediaMime());
+            	if(message.getMediaMime()==null) {
+            		message.setMediaMime(result.get(0).getMediaType().toString());
+            	}
+            	//System.out.println("tipo "+message.getMediaMime());
                 message.setMediaFile(path);
                 message.setMediaHash(getHash(result, size));
                 message.setThumb(getThumb(result, size));
