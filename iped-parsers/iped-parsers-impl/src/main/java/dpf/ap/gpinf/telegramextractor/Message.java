@@ -22,6 +22,7 @@ public class Message implements MessageInterface {
     private byte[] thumb = null;
     private String hashThumb = null;
     private List<String> names=null;
+    private int mediasize=0;
 
     public long getId() {
         return id;
@@ -154,5 +155,13 @@ public class Message implements MessageInterface {
 
 	public void setNames(List<String> names) {
 		this.names = names;
+	}
+
+	public int getMediasize() {
+		return mediasize;
+	}
+
+	public void setMediasize(int mediasize) {
+		this.mediasize = mediasize;
 	}
 }

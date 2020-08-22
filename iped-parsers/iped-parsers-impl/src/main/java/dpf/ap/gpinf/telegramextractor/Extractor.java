@@ -138,7 +138,7 @@ public class Extractor {
 
                 } else{
                                         
-                    cg = new ChatGroup(c.getId(), c, c.getFullname());
+                    cg = new Chat(c.getId(), c, c.getFullname());
 
                 }
                 if (cg != null) {
@@ -221,7 +221,10 @@ public class Extractor {
                 	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
                     
                     if(message.getNames()!=null && message.getNames().size()>0) {
-                    	loadDocument(message, message.getNames(), 0);
+                    	loadDocument(message, message.getNames(), message.getMediasize());
+                    	if(message.getMediaMime()==null) {
+                    		message.setMediaMime("attach");
+                    	}
                     }
                     
                     message.setRemetente(getContact(message.getRemetente().getId()));
@@ -334,6 +337,18 @@ public class Extractor {
     protected String getHash(List<IItemBase> result, int size) {
         if (result == null)
             return null;
+        if(size==0) {
+        	IItemBase f=result.get(0);
+        	try {
+                if (f.getTempFile() != null) {
+                    return f.getHash();
+                }
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        	
+        }
         for (IItemBase f : result) {
             try {
                 if (f.getTempFile() != null) {

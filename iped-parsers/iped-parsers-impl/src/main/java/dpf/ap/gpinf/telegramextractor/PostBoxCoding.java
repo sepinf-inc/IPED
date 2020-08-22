@@ -102,7 +102,7 @@ public class PostBoxCoding {
     }
     
     public String readString(int start, int tam){
-        if(start+tam>=data.length)
+        if(start+tam>=data.length ||tam==0)
             return null;
         return new String(Arrays.copyOfRange(data, start,start+tam ),StandardCharsets.UTF_8);
     }
@@ -250,8 +250,80 @@ public class PostBoxCoding {
 
     }
     
+    void setMessageType(int action, Message m) {
+    	//reference telegramMediaAction.swift
+    	System.out.println("entrou a:"+action);
+    	switch (action) {
+		case 1:
+			m.setType("Group created");
+			break;
+		case 2:
+			m.setType("Add members");
+			break;
+		case 3:
+			m.setType("Remove members");
+			break;
+		case 4:
+			m.setType("Photo Updated");
+			break;
+		case 5:
+			m.setType("Title Updated");
+			break;
+		case 6:
+			m.setType("pinned Message Updated");
+			break;
+		case 7:
+			m.setType("User joined by Link");
+			break;
+		case 8:
+			m.setType("Change channel to group");
+			break;
+        case 9:
+        	m.setType("Change group to channel");
+        	break;
+        case 10:
+        	m.setType("history Cleared");
+        	break;
+        case 11:
+        	m.setType("history Screenshot");
+        	break;
+        case 12:
+        	m.setType("message Autoremove");
+        	break;
+        case 13:
+        	m.setType("game Score");
+        	break;
+        case 14:
+        	m.setType("phone Call");
+        	//toDo set call duration
+        	break;
+        case 15:
+        	m.setType("payment Sent");
+        	break;
+        case 16:
+        	m.setType("custom Text");
+        	break;
+        case 17:
+        	m.setType("bot Domain Access Granted");
+        	break;
+        case 18:
+        	m.setType("peer Joined");
+        	break;
+        case 19:
+        	m.setType("phone Number Request");
+        	break;
+        case 20:
+        	m.setType("history Screenshot");
+        	break;
+
+		default:
+			break;
+		}
+    	System.out.println("type:"+m.getType());
+    }
+    
     void  readMessage(byte[] key, byte[] data,Message m){
-        
+        //reference MessageHistoryTable.swift
         this.data=data;
         PostBoxCoding pk=new PostBoxCoding();
         pk.setData(key);
@@ -329,10 +401,16 @@ public class PostBoxCoding {
         	debug=false;
         	long volume=decodeInt64ForKey("v");
         	int local=decodeInt32ForKey("l");
-        	System.out.println("i: "+id);
+        	int size=decodeInt32ForKey("n");
+        	int action=decodeInt32ForKey("_rawValue");
+        	
+        	/*
+        	 
         	System.out.println("v: "+volume);
         	System.out.println("l: "+local);
-        	
+        	System.out.println("n: "+size);
+        	System.out.println("action: "+action);
+        	*/
         	if(id!=0) {
         		names.add(id+"");
         	}
@@ -344,9 +422,14 @@ public class PostBoxCoding {
             m.setNames(names);
             
             if(m!=null){
+            	setMessageType(action, m);
                 m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));
                 m.setData(txt);
                 m.setId(stableId);
+                m.setMediasize(size);
+                boolean incoming=testbit(flags, 2) || testbit(flags, 7);
+                m.setFromMe(!incoming);
+                
             }
             if(m.getRemetente()==null) {
             	m.setRemetente(new Contact(authorId));
@@ -378,7 +461,7 @@ public class PostBoxCoding {
             
             p.setName(p2.decodeInt64ForKey("v")+"_"+p2.decodeInt32ForKey("l"));
             photos.add(p);
-            System.out.println("photo:"+p.getName());
+            //System.out.println("photo:"+p.getName());
             c.setPhotos(photos);
         }
         

@@ -228,6 +228,49 @@ public class ReportGenerator {
         out.println("<br/>");
 
     }
+    
+    private void printAttachment(PrintWriter out, Message message) {
+        if (message.getMediaHash() != null) {
+            
+            printCheckbox(out, message.getMediaHash());
+
+            TagHtml link = new TagHtml("a");
+            link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
+            link.setAtribute("href", message.getMediaFile());
+
+            byte thumb[] = message.getThumb();
+
+            if (thumb == null) {
+                List<IItemBase> result = null;
+                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
+                if (result != null && !result.isEmpty()) {
+                    thumb = result.get(0).getThumb();
+                }
+            }
+
+            TagHtml img;
+            if (thumb != null) {
+                img = new TagHtml("img");
+                img.setAtribute("class", "thumb");
+                img.setAtribute("src",
+                        "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+            } else {
+                img = new TagHtml("div");
+                img.setAtribute("class", "attachImg");
+            }
+
+            img.setAtribute("title", "Attachment");
+            link.getInner().add(img);
+
+            out.println(link.toString());
+
+        } else {
+            out.println("<div class=\"attachImg\" title=\"Attachment\"></div>"); //$NON-NLS-1$
+        }
+        out.println("<br/>");
+
+    }
+    
 
     private void printCheckbox(PrintWriter out, String hash) {
         out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
@@ -284,16 +327,15 @@ public class ReportGenerator {
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().toLowerCase().startsWith("video")) {
                 printVideo(out, message);
-            }
-            if (message.getMediaMime().toLowerCase().startsWith("image")) {
+            }else if (message.getMediaMime().toLowerCase().startsWith("image")) {
                 printImage(out, message);
 
-            }
-            if (message.getMediaMime().toLowerCase().startsWith("audio")) {
+            }else if (message.getMediaMime().toLowerCase().startsWith("audio")) {
                 printAudio(out, message);
-            }
-            if (message.getMediaMime().toLowerCase().startsWith("link")) {
+            }else if (message.getMediaMime().toLowerCase().startsWith("link")) {
                 printLink(out, message);
+            }else{
+                printAttachment(out, message);
             }
 
         }
