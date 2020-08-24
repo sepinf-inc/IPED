@@ -207,9 +207,7 @@ public class Extractor {
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
         PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS);
-        if(chat.getId()==330512753) {
-        	System.out.println("teste2");
-        }
+        
         if (stmt != null) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
