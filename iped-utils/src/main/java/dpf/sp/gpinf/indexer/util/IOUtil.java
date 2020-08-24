@@ -123,7 +123,9 @@ public class IOUtil {
         }
         try {
             Files.delete(file.toPath());
-        } catch (IOException e) {
+
+        } catch (Exception e) {
+            // also catch InvalidPathException and others
             if (logError) {
                 LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
             } else
