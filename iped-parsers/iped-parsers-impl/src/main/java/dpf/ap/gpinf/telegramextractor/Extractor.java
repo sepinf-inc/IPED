@@ -120,15 +120,13 @@ public class Extractor {
         ArrayList<Chat> l = new ArrayList<>();
         // System.out.println("parser telegram!!!!!");
         try {
-        	System.out.println(CHATS_SQL_IOS);
+        	//System.out.println(CHATS_SQL_IOS);
             PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 
                 Contact c=getContact(rs.getLong("chatid"));
-                if(c.getId()==330512753) {
-                	System.out.println("teste do chat");
-                }
+                
                 Chat cg = null;
                 
                 if (c.getName()!=null && c.getName().startsWith("gp_name:")) {
@@ -337,23 +335,16 @@ public class Extractor {
     protected String getHash(List<IItemBase> result, int size) {
         if (result == null)
             return null;
+        IItemBase file=null;
         if(size==0) {
-        	IItemBase f=result.get(0);
-        	try {
-                if (f.getTempFile() != null) {
-                    return f.getHash();
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        	
+        	file=result.get(0);
+        	        	
         }
         for (IItemBase f : result) {
-            try {
+        	try {
                 if (f.getTempFile() != null) {
                     if (f.getTempFile().getAbsoluteFile().length() == size) {
-                        return f.getHash();
+                        file=f;
                     }
                 }
             } catch (IOException e) {
@@ -361,6 +352,10 @@ public class Extractor {
                 e.printStackTrace();
             }
         }
+        if(file!=null) {
+        	return file.getHash();
+        }
+        
         return null;
     }
 
@@ -433,7 +428,7 @@ public class Extractor {
     
     protected void extractContactsIOS() throws SQLException {
         if (conn != null) {
-        	System.out.println(EXTRACT_CONTACTS_SQL_IOS);
+        	//System.out.println(EXTRACT_CONTACTS_SQL_IOS);
             PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS);
             if (stmt != null) {
                 ResultSet rs = stmt.executeQuery();

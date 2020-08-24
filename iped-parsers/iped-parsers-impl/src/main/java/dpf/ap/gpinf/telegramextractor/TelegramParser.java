@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.List;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
@@ -53,6 +54,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties; 
 
 public class TelegramParser extends SQLite3DBParser {
@@ -71,6 +73,17 @@ public class TelegramParser extends SQLite3DBParser {
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return MediaType.set(TELEGRAM_DB,TELEGRAM_USER_CONF,TELEGRAM_DB_IOS);
+    }
+    
+    private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
+        for (Message m : messages) {
+            if (m.getMediaHash() != null) {
+                metadata.add(ExtraProperties.LINKED_ITEMS, "hash:" + m.getMediaHash()); //$NON-NLS-1$
+                if (m.isFromMe())
+                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
+
+            }
+        }
     }
     
     public void parseTelegramDBAndroid(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -113,7 +126,12 @@ public class TelegramParser extends SQLite3DBParser {
                     c.getMessages().addAll(e.extractMessages(c));
 
                     for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
-                        byte[] bytes = r.generateChatHtml(c, i * MAXMSGS, (i + 1) * MAXMSGS);
+                    	int start=i * MAXMSGS;
+                    	int end=start+MAXMSGS;
+                    	if(end>=c.getMessages().size()) {
+                    		end=c.getMessages().size();
+                    	}
+                        byte[] bytes = r.generateChatHtml(c, start, end);
                         Metadata chatMetadata = new Metadata();
                         String title = "Telegram_";
                         if (c.isGroup()) {
@@ -131,6 +149,8 @@ public class TelegramParser extends SQLite3DBParser {
 
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                         extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                        
+                        storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
 
                     }
 
@@ -189,7 +209,12 @@ public class TelegramParser extends SQLite3DBParser {
                         c.getMessages().addAll(e.extractMessagesIOS(c));
 
                         for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
-                            byte[] bytes = r.generateChatHtml(c, i * MAXMSGS, (i + 1) * MAXMSGS);
+                        	int start=i * MAXMSGS;
+                        	int end=start+MAXMSGS;
+                        	if(end>=c.getMessages().size()) {
+                        		end=c.getMessages().size();
+                        	}
+                            byte[] bytes = r.generateChatHtml(c, start, end);
                             Metadata chatMetadata = new Metadata();
                             String title = "Telegram_";
                             if (c.isGroup()) {
@@ -207,6 +232,7 @@ public class TelegramParser extends SQLite3DBParser {
 
                             ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                             extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                            storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
 
                         }
 
