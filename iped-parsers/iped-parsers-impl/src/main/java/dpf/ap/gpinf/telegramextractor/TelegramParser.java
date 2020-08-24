@@ -146,11 +146,12 @@ public class TelegramParser extends SQLite3DBParser {
                         chatMetadata.set(TikaCoreProperties.TITLE, title);
                         chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
                         chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+                        storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
 
                         ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                         extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
                         
-                        storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
+                        
 
                     }
 
@@ -229,10 +230,10 @@ public class TelegramParser extends SQLite3DBParser {
                             chatMetadata.set(TikaCoreProperties.TITLE, title);
                             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
                             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-
+                            storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
                             ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                             extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                            storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
+                            
 
                         }
 
