@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.IOException;
 import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -201,24 +200,18 @@ public class QueryBuilder implements IQueryBuilder {
         pointsConfigMap.put(IndexItem.PARENTID, configInt);
         pointsConfigMap.put(IndexItem.FTKID, configInt);
 
-        try {
-            for (String field : ipedCase.getAtomicReader().fields()) {
-                Class<?> type = IndexItem.getMetadataTypes().get(field);
-                if (type == null)
-                    continue;
-                if (type.equals(Integer.class) || type.equals(Byte.class))
-                    pointsConfigMap.put(field, configInt);
-                else if (type.equals(Long.class))
-                    pointsConfigMap.put(field, configLong);
-                else if (type.equals(Float.class))
-                    pointsConfigMap.put(field, configFloat);
-                else if (type.equals(Double.class))
-                    pointsConfigMap.put(field, configDouble);
-            }
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        for (String field : LoadIndexFields.getFields(Arrays.asList(ipedCase))) {
+            Class<?> type = IndexItem.getMetadataTypes().get(field);
+            if (type == null)
+                continue;
+            if (type.equals(Integer.class) || type.equals(Byte.class))
+                pointsConfigMap.put(field, configInt);
+            else if (type.equals(Long.class))
+                pointsConfigMap.put(field, configLong);
+            else if (type.equals(Float.class))
+                pointsConfigMap.put(field, configFloat);
+            else if (type.equals(Double.class))
+                pointsConfigMap.put(field, configDouble);
         }
 
         synchronized (lock) {
