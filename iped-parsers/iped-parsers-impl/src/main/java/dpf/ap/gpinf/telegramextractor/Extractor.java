@@ -185,6 +185,19 @@ public class Extractor {
                         } else if (message.getMediaMime().length() > 0) {
                             loadDocument(message, d.getDocumentNames(), d.getDocumentSize());
                         }
+                       
+                    }
+                    if(message.getType()!=null) {
+                    	String type=message.getType();
+                    	String msg_decoded;
+                    	
+                    	if(type.contains(":")) {
+                    		String[] aux=type.split(":");
+                    		msg_decoded=mapTypeMSG.decodeMsg(aux[0])+":"+aux[1];
+                    	}else {
+                    		msg_decoded=mapTypeMSG.decodeMsg(type);
+                    	}
+                    	message.setType(msg_decoded);
                     }
                     msgs.add(message);
                 }
