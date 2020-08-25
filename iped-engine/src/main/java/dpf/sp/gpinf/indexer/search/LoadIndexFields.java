@@ -1,33 +1,24 @@
 package dpf.sp.gpinf.indexer.search;
 
-import java.io.IOException;
-import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 
-import org.apache.lucene.index.Fields;
-import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.IndexReader;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import iped3.IIPEDSource;
 
 public class LoadIndexFields {
 
-    public static String[] addExtraFields(LeafReader atomicReader, String[] defaultFields) {
+    public static String[] getFields(List<? extends IIPEDSource> sources) {
 
-        ArrayList<String> names = new ArrayList<String>();
-        for (String f : defaultFields) {
-            names.add(f);
-        }
-        try {
-            Fields fields = atomicReader.fields();
-            // Arrays.sort(fields);
-            for (String f : fields) {
-                if (!IndexItem.CONTENT.equals(f) && !names.contains(f)) {
-                    names.add(f);
-                }
-            }
-
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+        HashSet<String> names = new HashSet<String>();
+        for (IIPEDSource source : sources) {
+            IndexReader leafReader = source.getReader();
+            leafReader.leaves().forEach(ctx -> ctx.reader().getFieldInfos().forEach(info -> {
+                if (!IndexItem.CONTENT.equals(info.name))
+                    names.add(info.name);
+            }));
         }
 
         return names.toArray(new String[0]);
