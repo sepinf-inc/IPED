@@ -555,7 +555,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         if (indexFields == null || lastCase != App.get().appCase) {
             lastCase = App.get().appCase;
-            indexFields = LoadIndexFields.addExtraFields(App.get().appCase.getLeafReader(), new String[0]);
+            indexFields = LoadIndexFields.getFields(App.get().appCase.getAtomicSources());
         }
 
         TreeSet<String> extraAttrs = new TreeSet<String>();
