@@ -435,7 +435,7 @@
                                 <artifactItem>
                                     <groupId>net.sf</groupId>
     								<artifactId>java-dbx</artifactId>
-    								<version>1.1-p3</version>
+    								<version>1.1-p4</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${optional.dir}</outputDirectory>
