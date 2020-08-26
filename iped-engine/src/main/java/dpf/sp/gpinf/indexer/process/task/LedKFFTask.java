@@ -173,6 +173,15 @@ public class LedKFFTask extends AbstractTask {
     }
 
     private void writeCache(File ledWkffCache, String cacheKey) {
+        File folder = ledWkffCache.getParentFile();
+        if (folder != null && !folder.exists()) {
+            try {
+                folder.mkdirs();
+            } catch (Exception e) {
+                logger.warn("Error creating cache folder: " + folder.getAbsolutePath(), e);
+                return;
+            }
+        }
         boolean ok = false;
         BufferedOutputStream os = null;
         try {
