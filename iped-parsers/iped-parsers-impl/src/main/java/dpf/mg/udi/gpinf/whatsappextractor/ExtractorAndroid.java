@@ -28,6 +28,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSA
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VOICE_CALL;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.WAITING_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -42,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
+import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 
 /**
  *
@@ -278,10 +280,12 @@ public class ExtractorAndroid extends Extractor {
                 } else {
                     result = DELETED_FROM_SENDER;
                 }
-                break;
+                break; 
             case 16:
                 result = SHARE_LOCATION_MESSAGE;
                 break;
+            case 20:
+            	result=STICKER_MESSAGE;
             default:
                 break;
         }

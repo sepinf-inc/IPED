@@ -431,6 +431,7 @@ public class ReportGenerator {
                         break;
                     case IMAGE_MESSAGE:
                     case APP_MESSAGE:
+                    case STICKER_MESSAGE:
                         String linkParam = null;
                         String exportPath = null;
                         String quote = "";
