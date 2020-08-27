@@ -23,6 +23,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_G
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -232,6 +233,9 @@ public class ExtractorIOS extends Extractor {
             case 14:
                 result = DELETED_FROM_SENDER;
                 break;
+            case 15:
+            	result= STICKER_MESSAGE;
+            	break;
         }
         return result;
     }
