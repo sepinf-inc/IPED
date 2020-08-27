@@ -234,8 +234,8 @@ public class ExtractorIOS extends Extractor {
                 result = DELETED_FROM_SENDER;
                 break;
             case 15:
-            	result= STICKER_MESSAGE;
-            	break;
+                result = STICKER_MESSAGE;
+                break;
         }
         return result;
     }
