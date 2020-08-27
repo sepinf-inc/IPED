@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -176,7 +177,7 @@ public class LedKFFTask extends AbstractTask {
         File folder = ledWkffCache.getParentFile();
         if (folder != null && !folder.exists()) {
             try {
-                folder.mkdirs();
+                Files.createDirectories(folder.toPath());
             } catch (Exception e) {
                 logger.warn("Error creating cache folder: " + folder.getAbsolutePath(), e);
                 return;
