@@ -173,11 +173,13 @@ public class GraphTask extends AbstractTask {
             if (caseData.isIpedReport()) {
                 File prevCaseModuleDir = (File) caseData.getCaseObject(IPEDReader.ORIG_CASE_MODULE_DIR);
                 File prevCSVRoot = new File(prevCaseModuleDir, GraphTask.GENERATED_PATH);
-                for (File file : prevCSVRoot.listFiles()) {
-                    File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
-                    if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
-                            || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
-                        IOUtil.copiaArquivo(file, target);
+                if (prevCSVRoot.exists() && prevCSVRoot.isDirectory()) {
+                    for (File file : prevCSVRoot.listFiles()) {
+                        File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
+                        if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
+                                || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
+                            IOUtil.copiaArquivo(file, target);
+                        }
                     }
                 }
                 graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
