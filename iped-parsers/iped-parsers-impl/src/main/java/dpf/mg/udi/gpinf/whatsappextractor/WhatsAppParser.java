@@ -206,11 +206,15 @@ public class WhatsAppParser extends SQLite3DBParser {
     public IItemBase findMainDB(List<IItemBase> result) {
     	
     	for(IItemBase it:result) {
-    		System.out.println(it.getPath());
+    		
     		String path=it.getPath();
-    		if(path.contains("com.whatsapp") && path.contains("db")&& path.contains("msgstore.db") && !path.contains("wall") && !path.contains("shm") ) {
-    			result.remove(it);
-    			return it;
+    		
+    		if(path.contains("com.whatsapp") &&  path.contains("msgstore.db")) {
+    			System.out.println(it.getExt());
+    			if(it.getExt().endsWith("sqlite")) {
+	    			result.remove(it);
+	    			return it;
+    			}
     		}
     	}
     	IItemBase it=result.get(0);
