@@ -39,7 +39,7 @@ public class Message {
     private String thumbpath;
     private int mediaDuration;
     private MessageStatus messageStatus;
-    private String recoveredFrom=null;
+    private String recoveredFrom = null;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -291,14 +291,14 @@ public class Message {
     }
 
     public String getRecoveredFrom() {
-		return recoveredFrom;
-	}
+        return recoveredFrom;
+    }
 
-	public void setRecoveredFrom(String recoveredFrom) {
-		this.recoveredFrom = recoveredFrom;
-	}
+    public void setRecoveredFrom(String recoveredFrom) {
+        this.recoveredFrom = recoveredFrom;
+    }
 
-	public static enum MessageType {
+    public static enum MessageType {
         TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, STICKER_MESSAGE, UNKNOWN_MESSAGE
     }
 

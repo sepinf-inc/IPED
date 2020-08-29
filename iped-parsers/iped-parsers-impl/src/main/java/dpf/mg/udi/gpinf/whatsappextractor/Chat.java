@@ -14,8 +14,8 @@ public class Chat {
     private List<Message> messages;
     private String title = null;
     private boolean groupChat = false;
-    
-    private String recoveredFrom=null;
+
+    private String recoveredFrom = null;
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -100,11 +100,11 @@ public class Chat {
         return remote;
     }
 
-	public String getRecoveredFrom() {
-		return recoveredFrom;
-	}
+    public String getRecoveredFrom() {
+        return recoveredFrom;
+    }
 
-	public void setRecoveredFrom(String recoveredFrom) {
-		this.recoveredFrom = recoveredFrom;
-	}
+    public void setRecoveredFrom(String recoveredFrom) {
+        this.recoveredFrom = recoveredFrom;
+    }
 }

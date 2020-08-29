@@ -73,7 +73,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     /**
      * 
      */
-	private static boolean processed=false;
+    private static boolean processed = false;
     private static final long serialVersionUID = 1L;
 
     public static final String WHATSAPP = "WhatsApp";
@@ -105,14 +105,13 @@ public class WhatsAppParser extends SQLite3DBParser {
     // ugly workaround to show message type before caption (values are shown in sort
     // order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
-    
-    
+
     private static synchronized boolean processMSGSTORE() {
-    	if(processed==false) {
-    		processed=true;
-    		return true;
-    	}
-    	return false;
+        if (processed == false) {
+            processed = true;
+            return true;
+        }
+        return false;
     }
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
@@ -141,7 +140,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-    	
+
         String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         if (mimetype == null)
             mimetype = metadata.get(Metadata.CONTENT_TYPE);
@@ -160,145 +159,136 @@ public class WhatsAppParser extends SQLite3DBParser {
             parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
         }
     }
-    private void createReport(List<Chat> chatList,IItemSearcher searcher, WAContactsDirectory contacts,ContentHandler handler,EmbeddedDocumentExtractor extractor,WAAccount account)
-    throws Exception
-    {
-    	 int chatVirtualId = 0;
-         for (Chat c : chatList) {
-             getAvatar(searcher, c.getRemote());
-             int frag = 0;
-             int firstMsg = 0;
-             ReportGenerator reportGenerator = new ReportGenerator(searcher);
-             byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
-             while (bytes != null) {
-                 Metadata chatMetadata = new Metadata();
-                 int nextMsg = reportGenerator.getNextMsgNum();
 
-                 List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
-                 storeLinkedHashes(msgSubset, chatMetadata, searcher);
-                 storeLocations(msgSubset, chatMetadata);
+    private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,
+            ContentHandler handler, EmbeddedDocumentExtractor extractor, WAAccount account) throws Exception {
+        int chatVirtualId = 0;
+        for (Chat c : chatList) {
+            getAvatar(searcher, c.getRemote());
+            int frag = 0;
+            int firstMsg = 0;
+            ReportGenerator reportGenerator = new ReportGenerator(searcher);
+            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
+            while (bytes != null) {
+                Metadata chatMetadata = new Metadata();
+                int nextMsg = reportGenerator.getNextMsgNum();
 
-                 firstMsg = nextMsg;
-                 byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts);
+                List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
+                storeLinkedHashes(msgSubset, chatMetadata, searcher);
+                storeLocations(msgSubset, chatMetadata);
 
-                 String chatName = c.getTitle();
-                 if (frag > 0 || nextBytes != null)
-                     chatName += "_" + frag++; //$NON-NLS-1$
+                firstMsg = nextMsg;
+                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts);
 
-                 chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                 chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
-                 chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
-                 if (extractMessages && msgSubset.size() > 0) {
-                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
-                 }
+                String chatName = c.getTitle();
+                if (frag > 0 || nextBytes != null)
+                    chatName += "_" + frag++; //$NON-NLS-1$
 
-                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                 bytes = nextBytes;
+                chatMetadata.set(TikaCoreProperties.TITLE, chatName);
+                chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
+                chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                if (extractMessages && msgSubset.size() > 0) {
+                    chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                }
 
-                 if (extractMessages) {
-                     extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler,
-                             extractor);
-                 }
-             }
-         }
+                ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+                extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                bytes = nextBytes;
+
+                if (extractMessages) {
+                    extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
+                }
+            }
+        }
     }
+
     public IItemBase findMainDB(List<IItemBase> result) {
-    	
-    	for(IItemBase it:result) {
-    		
-    		String path=it.getPath();
-    		
-    		if(path.contains("com.whatsapp") &&  path.contains("msgstore.db")) {
+
+        for (IItemBase it : result) {
+
+            String path = it.getPath();
+
+            if (path.contains("com.whatsapp") && path.contains("msgstore.db")) {
                 System.out.println(it.getExt());
-    			if(it.getExt().endsWith("sqlite")) {
+                if (it.getExt().endsWith("sqlite")) {
                     result.remove(it);
                     return it;
-    			}
-    		}
-    	}
-    	IItemBase it=result.get(0);
-    	result.remove(0);
-		return it;
+                }
+            }
+        }
+        IItemBase it = result.get(0);
+        result.remove(0);
+        return it;
     }
 
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
-    	
-    	if(!processMSGSTORE()) {
-    		return;
-    	}
-    	System.out.println("passou1");
-    	
-    	EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-    	if (!extractor.shouldParseEmbedded(metadata)) {
-    		return;
-    	}
-    	System.out.println("passou2");
-    	
-    	IItemSearcher searcher = context.get(IItemSearcher.class);
-    	System.out.println("passou3 "+searcher.getClass().getSimpleName());
-    	List<IItemBase> result=dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME+":\"msgstore\"",searcher);
-    	System.out.println("passou4 r:"+BasicProps.CONTENTTYPE+":\""+ MSG_STORE.toString()+"\"");
-    	List<Chat> chatlist=new ArrayList<>();
-    	System.out.println("passou5");
-    	IItemBase mainDB=findMainDB(result);
-    	System.out.println("passou6 " +mainDB.getName());
-	     String filePath = null;
-	     if (mainDB != null) {
-	         filePath = mainDB.getPath();
-	     }
-         
-         TemporaryResources tmp = new TemporaryResources();
-         try {
-		     WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, extFactory.getClass());
-		     System.out.println("passou7");
-		     String dbPath = mainDB.getPath();
-		     WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
-		     System.out.println("passou8");
-		     extFactory.setConnectionParams(mainDB.getStream(), metadata, context, this);
-		     chatlist.addAll(getChatList(extFactory, contacts, account,mainDB.getStream(),tmp));
-		     System.out.println("Chegou aqui "+mainDB.getName());
-			for(IItemBase it:result) {
-				
-				System.out.println("it "+it.getName());
-				extFactory.setConnectionParams(it.getStream(), metadata, context, this);
-		        
-		        List<Chat> temp=getChatList(extFactory, contacts, account,it.getStream(),tmp);
-		        ChatMerge cm=new ChatMerge(chatlist,it.getName());
-		        cm.mergeChatList(temp);
-		       
-			}
-			createReport(chatlist, searcher, contacts, handler, extractor, account);
-         } catch (Exception e) {
-             //sqliteParser.parse(tis, handler, metadata, context);
-             throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
 
-         } finally {
-             tmp.dispose();
-         }
+        if (!processMSGSTORE()) {
+            return;
+        }
+        System.out.println("passou1");
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        if (!extractor.shouldParseEmbedded(metadata)) {
+            return;
+        }
+        System.out.println("passou2");
+
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        System.out.println("passou3 " + searcher.getClass().getSimpleName());
+        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME + ":\"msgstore\"",
+                searcher);
+        System.out.println("passou4 r:" + BasicProps.CONTENTTYPE + ":\"" + MSG_STORE.toString() + "\"");
+        List<Chat> chatlist = new ArrayList<>();
+        System.out.println("passou5");
+        IItemBase mainDB = findMainDB(result);
+        System.out.println("passou6 " + mainDB.getName());
+        String filePath = null;
+        if (mainDB != null) {
+            filePath = mainDB.getPath();
+        }
+
+        TemporaryResources tmp = new TemporaryResources();
+        try {
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, extFactory.getClass());
+            System.out.println("passou7");
+            String dbPath = mainDB.getPath();
+            WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
+            System.out.println("passou8");
+            extFactory.setConnectionParams(mainDB.getStream(), metadata, context, this);
+            chatlist.addAll(getChatList(extFactory, contacts, account, mainDB.getStream(), tmp));
+            System.out.println("Chegou aqui " + mainDB.getName());
+            for (IItemBase it : result) {
+
+                System.out.println("it " + it.getName());
+                extFactory.setConnectionParams(it.getStream(), metadata, context, this);
+
+                List<Chat> temp = getChatList(extFactory, contacts, account, it.getStream(), tmp);
+                ChatMerge cm = new ChatMerge(chatlist, it.getName());
+                cm.mergeChatList(temp);
+
+            }
+            createReport(chatlist, searcher, contacts, handler, extractor, account);
+        } catch (Exception e) {
+            // sqliteParser.parse(tis, handler, metadata, context);
+            throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
+
+        } finally {
+            tmp.dispose();
+        }
 
     }
-    
-   
-    
-    
-    
-    private  List<Chat> getChatList(ExtractorFactory extFactory,WAContactsDirectory contacts, WAAccount account,InputStream is,TemporaryResources tmp )throws Exception {
-    	 
-    		
-	        
+
+    private List<Chat> getChatList(ExtractorFactory extFactory, WAContactsDirectory contacts, WAAccount account,
+            InputStream is, TemporaryResources tmp) throws Exception {
+
         TikaInputStream tis = TikaInputStream.get(is, tmp);
-      
-           
 
         Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
         return waExtractor.getChatList();
 
-           
-
-    
     }
 
     private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid)
