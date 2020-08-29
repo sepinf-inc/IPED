@@ -520,7 +520,7 @@ public class ReportGenerator {
                     break;
             }
         }
-
+        out.println("</span>"); //$NON-NLS-1$
 
         if (message.getRecoveredFrom() != null) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
