@@ -210,10 +210,10 @@ public class WhatsAppParser extends SQLite3DBParser {
     		String path=it.getPath();
     		
     		if(path.contains("com.whatsapp") &&  path.contains("msgstore.db")) {
-    			System.out.println(it.getExt());
+                System.out.println(it.getExt());
     			if(it.getExt().endsWith("sqlite")) {
-	    			result.remove(it);
-	    			return it;
+                    result.remove(it);
+                    return it;
     			}
     		}
     	}
