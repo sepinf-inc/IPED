@@ -86,6 +86,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType MSG_STORE = MediaType.application("x-whatsapp-db"); //$NON-NLS-1$
 
+    public static final MediaType MSG_STORE_2 = MediaType.application("x-whatsapp-db-f"); //$NON-NLS-1$
+
     public static final MediaType WA_DB = MediaType.application("x-whatsapp-wadb"); //$NON-NLS-1$
 
     public static final MediaType CHAT_STORAGE = MediaType.application("x-whatsapp-chatstorage"); //$NON-NLS-1$
@@ -115,7 +117,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
-            WA_USER_XML, WA_USER_PLIST);
+            WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
 
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
@@ -157,7 +159,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
         } else if (mimetype.equals(CONTACTS_V2.toString())) {
             parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
+        }else if(mimetype.equals(MSG_STORE_2.toString())) {
+            parseAllDBS(stream, handler, metadata, context, new ExtractorAndroidFactory());
         }
+        
     }
 
     private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,
@@ -227,6 +232,21 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (!processMSGSTORE()) {
             return;
         }
+        System.out.println("messages1");
+        Metadata chatMetadata = new Metadata();
+        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
+        chatMetadata.set(TikaCoreProperties.TITLE, "Temp_file");
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+
+        ByteArrayInputStream bs = new ByteArrayInputStream(new byte[10]);
+        extractor.parseEmbedded(bs, handler, chatMetadata, false);
+        System.out.println("messages2");
+    }
+
+    private void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
+            ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
+
         System.out.println("passou1");
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -238,7 +258,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
         System.out.println("passou3 " + searcher.getClass().getSimpleName());
-        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(BasicProps.NAME + ":\"msgstore\"",
+        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util
+                .getItems(BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\"",
                 searcher);
         System.out.println("passou4 r:" + BasicProps.CONTENTTYPE + ":\"" + MSG_STORE.toString() + "\"");
         List<Chat> chatlist = new ArrayList<>();
@@ -266,8 +287,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 extFactory.setConnectionParams(it.getStream(), metadata, context, this);
 
                 List<Chat> temp = getChatList(extFactory, contacts, account, it.getStream(), tmp);
+                System.out.println("tam " + temp.size());
                 ChatMerge cm = new ChatMerge(chatlist, it.getName());
-                cm.mergeChatList(temp);
+                System.out.println("recovered messages" + cm.mergeChatList(temp));
 
             }
             createReport(chatlist, searcher, contacts, handler, extractor, account);

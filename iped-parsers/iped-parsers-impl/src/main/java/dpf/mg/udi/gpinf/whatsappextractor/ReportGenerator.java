@@ -502,6 +502,7 @@ public class ReportGenerator {
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
+
         out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         if (message.isFromMe() && message.getMessageStatus() != null) {
             switch (message.getMessageStatus()) {
@@ -519,7 +520,15 @@ public class ReportGenerator {
                     break;
             }
         }
-        out.println("</span>"); //$NON-NLS-1$
+
+
+        if (message.getRecoveredFrom() != null) {
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.print("Recovered from " + message.getRecoveredFrom());
+            out.println("</span>"); //$NON-NLS-1$
+
+        }
+
         out.println("</div></div>"); //$NON-NLS-1$
     }
 

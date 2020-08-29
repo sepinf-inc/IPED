@@ -239,6 +239,13 @@ div.viewed {
 	padding-left: 12px;
 	font-size: small;
 }
+#conversation .recovered
+{
+	color: #FF0000;
+	float: left;
+	padding-right: 12px;
+	font-size: small;
+}
 
 #conversation .incoming
 {
