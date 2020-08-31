@@ -133,6 +133,11 @@ public class ReportGenerator {
         printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
+            if(c.getRecoveredFrom()!=null) {
+                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                        + Messages.getString("WhatsAppReport.RecoveredFrom") + " " + c.getRecoveredFrom()
+                        + "</div></div>");
+            }
             if (currentMsg > 0)
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -524,7 +529,7 @@ public class ReportGenerator {
 
         if (message.getRecoveredFrom() != null) {
             out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
-            out.print("Recovered from " + message.getRecoveredFrom());
+            out.print(Messages.getString("WhatsAppReport.RecoveredFrom") + " " + message.getRecoveredFrom());
             out.println("</span>"); //$NON-NLS-1$
 
         }
