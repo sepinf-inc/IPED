@@ -216,10 +216,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         for (IItemBase it : result) {
 
             String path = it.getPath();
-
+            System.out.println(path);
             if (path.contains("com.whatsapp") && path.contains("msgstore.db")) {
                 System.out.println(it.getExt());
-                if (it.getExt().endsWith("sqlite")) {
+                if (it.getExt().equals("sqlite") || it.getExt().equals("db")) {
+                    System.out.println("Chegou !!!!");
                     result.remove(it);
                     return it;
                 }
@@ -280,7 +281,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
-        ByteArrayInputStream bs = new ByteArrayInputStream(new byte[10]);
+        // ugly workaround for zip bomb
+        byte[] b = new byte[10 << 20];
+        ByteArrayInputStream bs = new ByteArrayInputStream(b);
+
         extractor.parseEmbedded(bs, handler, chatMetadata, false);
 
     }
@@ -295,7 +299,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (!extractor.shouldParseEmbedded(metadata)) {
             return;
         }
-        
+
+        // ugly workaround for zip bomb
+        byte[] b=new byte[512];
+        while (stream.read(b) > 0)
+            ;
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
        
@@ -330,8 +338,14 @@ public class WhatsAppParser extends SQLite3DBParser {
                 List<Chat> temp = getChatList(extFactory, contacts, account, it.getStream(), tmp);
                 
                 ChatMerge cm = new ChatMerge(chatlist, it.getName());
-                System.out.println("recovered messages " + cm.mergeChatList(temp) + " from " + it.getName());
-
+                if (cm.isBackup(temp)) {// merge in the main chat
+                    System.out.println("recovered messages " + cm.mergeChatList(temp) + " from " + it.getName());
+                } else {// create a separate report
+                    createReport(temp, searcher,
+                            getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
+                            extractor,
+                            getUserAccount(searcher, it.getPath(), true));
+                }
             }
             createReport(chatlist, searcher, contacts, handler, extractor, account);
         } catch (Exception e) {
