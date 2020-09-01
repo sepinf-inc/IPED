@@ -46,7 +46,7 @@ public class Extractor {
             extractContacts();
             chatList = extractChatList();
         } catch (Exception e) {
-            // log de erro
+            e.printStackTrace();
         }
     }
 
