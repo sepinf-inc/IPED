@@ -199,6 +199,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
+                
+                if(c.isGroupChat()) {
+                    for(WAContact member:c.getGroupmembers()) {
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member));
+                    }
+                }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(chatStream, handler, chatMetadata, false);

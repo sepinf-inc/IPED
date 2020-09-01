@@ -1,5 +1,6 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -16,6 +17,8 @@ public class Chat {
     private boolean groupChat = false;
 
     private String recoveredFrom = null;
+
+    private List<WAContact> groupmembers = new ArrayList<>();
 
     public Chat(WAContact remote) {
         this.remote = remote;
@@ -106,5 +109,13 @@ public class Chat {
 
     public void setRecoveredFrom(String recoveredFrom) {
         this.recoveredFrom = recoveredFrom;
+    }
+
+    public List<WAContact> getGroupmembers() {
+        return groupmembers;
+    }
+
+    public void setGroupmembers(List<WAContact> groupmembers) {
+        this.groupmembers = groupmembers;
     }
 }
