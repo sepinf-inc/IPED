@@ -82,13 +82,38 @@ public class ExtractorAndroid extends Extractor {
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat()));
+                    if (c.isGroupChat()) {
+                        setGroupMembers(c, conn);
+                    }
                 }
+
             }
         } catch (SQLException ex) {
             throw new WAExtractorException(ex);
         }
 
         return list;
+    }
+
+    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
+
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
+            stmt.setString(1, c.getRemote().getFullId());
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String memberId = rs.getString("member");
+                    if (!memberId.trim().isEmpty()) {
+                        c.getGroupmembers().add(contacts.getContact(memberId));
+                    }
+                }
+
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            throw new WAExtractorException(ex);
+        }
+
     }
 
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {
@@ -342,4 +367,8 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
+
+    private static final String SELECT_GROUP_MEMBERS = "select gjid as `group`,jid as member from chat_list cl "
+            + " inner join group_participants gp on cl.key_remote_jid=gp.gjid where `group`=?";
+
 }

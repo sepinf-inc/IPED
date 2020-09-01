@@ -35,8 +35,6 @@ public class ExtraProperties {
 
     public static final String PARTICIPANTS = "Participants";
 
-    public static final String CHAT_RECOVERED = "ChatRecovered";
-
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
     public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
