@@ -327,20 +327,8 @@ public class ReportGenerator {
             out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
             Contact contact = message.getRemetente();
             if (contact != null) {
-
-                String number = contact.getPhone();
-                String name = contact.getName();
-                if (name == null)
-                    name = "";
-                if (number != null && number.length() > 0) {
-                    name += " (phone: " + number + ")";
-                } else {
-                    name += " (ID:" + contact.getId() + " )";
-                }
-
                 out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                        + name + "</span><br/>"); //$NON-NLS-1$
-
+                        + contact + "</span><br/>"); //$NON-NLS-1$
             }
         }
         if (message.getMediaMime() != null) {

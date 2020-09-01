@@ -138,4 +138,18 @@ public class Contact implements ContactInterface {
 		this.groupid = groupid;
 	}
 
+    @Override
+    public String toString() {
+        String number = getPhone();
+        String name = getFullname();
+        if (name == null)
+            name = "";
+        if (number != null && number.length() > 0) {
+            name += " (phone: " + number + ")";
+        } else {
+            name += " (ID:" + getId() + " )";
+        }
+        return name;
+    }
+
 }

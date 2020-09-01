@@ -33,7 +33,12 @@ public class Chat implements ChatInterface {
     }
 
     public String getName() {
-        return name;
+        if (name != null && !name.trim().isEmpty())
+            return name;
+        else if (c != null)
+            return c.toString();
+        else
+            return null;
     }
 
     public void setName(String name) {
