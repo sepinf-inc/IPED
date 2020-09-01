@@ -209,6 +209,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public SimilarImagesFilterPanel similarImageFilterPanel;
     public IItem similarImagesQueryRefItem;
+    public List<? extends SortKey> similarImagesPrevSortKeys;
 
     public File casesPathFile;
     boolean isMultiCase;

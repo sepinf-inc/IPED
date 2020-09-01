@@ -36,10 +36,16 @@ public class SimilarImagesFilterActions {
 
     public static void clear(boolean updateResults) {
         App app = App.get();
-        app.similarImagesQueryRefItem = null;
-        app.similarImageFilterPanel.setVisible(false);
-        if (updateResults)
-            app.appletListener.updateFileListing();
+        if (app.similarImagesQueryRefItem != null) {
+            app.similarImagesQueryRefItem = null;
+            app.similarImageFilterPanel.setVisible(false);
+            List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
+            if (sortKeys != null && !sortKeys.isEmpty() && sortKeys.get(0).getColumn() == 2 && app.similarImagesPrevSortKeys != null)
+                ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(app.similarImagesPrevSortKeys);
+            app.similarImagesPrevSortKeys = null;
+            if (updateResults)
+                app.appletListener.updateFileListing();
+        }
     }
 
     public static void searchSimilarImages(boolean external) {
@@ -118,6 +124,7 @@ public class SimilarImagesFilterActions {
         if (app.similarImagesQueryRefItem != null) {
             List<? extends SortKey> sortKeys = app.resultsTable.getRowSorter().getSortKeys();
             if (sortKeys == null || sortKeys.isEmpty() || sortKeys.get(0).getColumn() != 2) {
+                app.similarImagesPrevSortKeys = sortKeys;
                 ArrayList<RowSorter.SortKey> sortScore = new ArrayList<RowSorter.SortKey>();
                 sortScore.add(new RowSorter.SortKey(2, SortOrder.DESCENDING));
                 ((ResultTableRowSorter) app.resultsTable.getRowSorter()).setSortKeysSuper(sortScore);
