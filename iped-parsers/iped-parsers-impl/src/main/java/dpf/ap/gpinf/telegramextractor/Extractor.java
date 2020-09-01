@@ -37,6 +37,10 @@ public class Extractor {
 
     private HashMap<Long, Contact> contacts = new HashMap<>();
 
+    public void setSearcher(IItemSearcher s) {
+        searcher = s;
+    }
+
     void performExtraction() {
         try {
 
@@ -63,18 +67,16 @@ public class Extractor {
 
     protected ArrayList<Chat> extractChatList() {
         ArrayList<Chat> l = new ArrayList<>();
-        // System.out.println("parser telegram!!!!!");
-        try {
+        try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
             DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
-            PreparedStatement stmt = conn.prepareStatement(CHATS_SQL);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 long chatId = rs.getLong("chatId");
                 byte[] dados;
                 Chat cg = null;
                 String chatName = null;
-                if ((chatName = rs.getString("nomeChat")) != null) {
-                    dados = rs.getBytes("dadosChat");
+                if ((chatName = rs.getString("chatName")) != null) {
+                    dados = rs.getBytes("chatData");
                     Contact cont = getContact(chatId);
                     if (cont.getName() == null) {
                         d.setDecoderData(dados, DecoderTelegramInterface.USER);
@@ -86,7 +88,7 @@ public class Extractor {
                     cg = new Chat(chatId, cont, cont.getFullname());
 
                 } else if ((chatName = rs.getString("groupName")) != null) {
-                    dados = rs.getBytes("dadosGrupo");
+                    dados = rs.getBytes("groupData");
 
                     d.setDecoderData(dados, DecoderTelegramInterface.CHAT);
                     Contact cont = getContact(chatId);
@@ -119,9 +121,7 @@ public class Extractor {
     protected ArrayList<Chat> extractChatListIOS() {
         ArrayList<Chat> l = new ArrayList<>();
         // System.out.println("parser telegram!!!!!");
-        try {
-        	//System.out.println(CHATS_SQL_IOS);
-            PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS);
+        try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 
@@ -162,9 +162,8 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL);
         DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
-        if (stmt != null) {
+        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
@@ -188,16 +187,16 @@ public class Extractor {
                        
                     }
                     if(message.getType()!=null) {
-                    	String type=message.getType();
-                    	String msg_decoded;
-                    	
-                    	if(type.contains(":")) {
-                    		String[] aux=type.split(":");
-                    		msg_decoded=mapTypeMSG.decodeMsg(aux[0])+":"+aux[1];
-                    	}else {
-                    		msg_decoded=mapTypeMSG.decodeMsg(type);
-                    	}
-                    	message.setType(msg_decoded);
+                        String type = message.getType();
+                        String msg_decoded;
+
+                        if (type.contains(":")) {
+                            String[] aux = type.split(":");
+                            msg_decoded = mapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
+                        } else {
+                            msg_decoded = mapTypeMSG.decodeMsg(type);
+                        }
+                        message.setType(msg_decoded);
                     }
                     msgs.add(message);
                 }
@@ -217,9 +216,7 @@ public class Extractor {
     
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS);
-        
-        if (stmt != null) {
+        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
@@ -302,10 +299,6 @@ public class Extractor {
                 message.setMediaName(r.getName());
             }
         }
-    }
-
-    public void setSearcher(IItemSearcher s) {
-        searcher = s;
     }
 
     protected String getPathFromResult(List<IItemBase> result, int size) {
@@ -396,8 +389,7 @@ public class Extractor {
     protected void extractContacts() throws SQLException {
        
         if (conn != null) {
-            PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL);
-            if (stmt != null) {
+            try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
                     return;
@@ -441,9 +433,7 @@ public class Extractor {
     
     protected void extractContactsIOS() throws SQLException {
         if (conn != null) {
-        	//System.out.println(EXTRACT_CONTACTS_SQL_IOS);
-            PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS);
-            if (stmt != null) {
+            try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS)) {
                 ResultSet rs = stmt.executeQuery();
                 if (rs == null)
                     return;
@@ -482,9 +472,6 @@ public class Extractor {
 
     }
 
-    
-    
-
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
         List<IItemBase> result = null;
         String name = null;
@@ -518,8 +505,8 @@ public class Extractor {
     }
     
 
-    private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as nomeChat,u.data as dadosChat,"
-            + "c.name as groupName, c.data as dadosGrupo "
+    private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
+            + "c.name as groupName, c.data as groupData "
             + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
             + "order by d.date desc";
     
