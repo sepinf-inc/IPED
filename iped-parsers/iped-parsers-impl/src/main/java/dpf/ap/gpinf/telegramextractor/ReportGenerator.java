@@ -4,6 +4,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
@@ -13,12 +14,20 @@ import iped3.search.IItemSearcher;
 
 public class ReportGenerator {
 
+    private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
+
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
     private IItemSearcher searcher; 
+    private boolean firstFragment = true;
+    private int currentMsg = 0;
 
-    public void setSearcher(IItemSearcher s) {
-        searcher = s;
+    ReportGenerator(IItemSearcher s) {
+        this.searcher = s;
+    }
+
+    public int getNextMsgNum() {
+        return currentMsg;
     }
 
     private String format(String s) {
@@ -56,10 +65,15 @@ public class ReportGenerator {
         return bout.toByteArray();
     }
 
-    public byte[] generateChatHtml(Chat c, int start, int end) throws UnsupportedEncodingException {
+    public byte[] generateNextChatHtml(Chat c) {
+
+        if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
+            return null;
+
+        firstFragment = false;
 
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
         String title = c.getName();
         if (!c.isGroup()) {
             if (c.getC().getPhone() != null)
@@ -70,12 +84,12 @@ public class ReportGenerator {
 
         printMessageFileHeader(out, title, c.getId() + "", c.getC().getAvatar());
 
-        int currentMsg = start;
+        if (currentMsg > 0)
+            out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                    + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+
         String lastDate = null;
-        if (end > c.getMessages().size()) {
-            end = c.getMessages().size();
-        }
-        while (currentMsg < end) {
+        while (currentMsg < c.getMessages().size()) {
             Message m = c.getMessages().get(currentMsg++);
             String thisDate = dateFormat.format(m.getTimeStamp());
             if (lastDate == null || !lastDate.equals(thisDate)) {
@@ -86,6 +100,11 @@ public class ReportGenerator {
 
             printMessage(out, m, c.isGroup());
 
+            if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
+                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                        + Messages.getString("WhatsAppReport.ChatContinues") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
+                break;
+            }
         }
 
         printMessageFileFooter(out);

@@ -50,11 +50,9 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
 import iped3.util.ExtraProperties; 
 
 public class TelegramParser extends SQLite3DBParser {
@@ -63,7 +61,7 @@ public class TelegramParser extends SQLite3DBParser {
      * 
      */
     private static final long serialVersionUID = -2981296547291818873L;
-    private static final int MAXMSGS = 5000;
+
     public static final MediaType TELEGRAM_ACCOUNT = MediaType.parse("application/x-telegram-account");
     public static final MediaType TELEGRAM_USER_CONF = MediaType.parse("application/x-telegram-user-conf");
     public static final MediaType TELEGRAM_DB = MediaType.parse("application/x-telegram-db");
@@ -93,8 +91,7 @@ public class TelegramParser extends SQLite3DBParser {
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
             e.extractContacts();
-            ReportGenerator r = new ReportGenerator();
-            r.setSearcher(searcher);
+            ReportGenerator r = new ReportGenerator(searcher);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
@@ -124,36 +121,7 @@ public class TelegramParser extends SQLite3DBParser {
             for (Chat c : e.getChatList()) {
                 try {
                     c.getMessages().addAll(e.extractMessages(c));
-
-                    for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
-                    	int start=i * MAXMSGS;
-                    	int end=start+MAXMSGS;
-                    	if(end>=c.getMessages().size()) {
-                    		end=c.getMessages().size();
-                    	}
-                        byte[] bytes = r.generateChatHtml(c, start, end);
-                        Metadata chatMetadata = new Metadata();
-                        String title = "Telegram_";
-                        if (c.isGroup()) {
-                            title += "Group";
-                        } else {
-                            title += "Chat";
-                        }
-                        title += "_" + c.getName();
-                        if (c.getMessages().size() > MAXMSGS) {
-                            title += "_" + i;
-                        }
-                        chatMetadata.set(TikaCoreProperties.TITLE, title);
-                        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
-                        chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-                        storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
-
-                        ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                        extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                        
-                        
-
-                    }
+                    generateChat(c, searcher, handler, extractor);
 
                 } catch (Exception ex) {
                     // TODO: handle exception
@@ -168,6 +136,43 @@ public class TelegramParser extends SQLite3DBParser {
     	
     }
     
+    private void generateChat(Chat c, IItemSearcher searcher, ContentHandler handler,
+            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+        int frag = 0;
+        int firstMsg = 0;
+        byte[] bytes;
+        ReportGenerator r = new ReportGenerator(searcher);
+        while ((bytes = r.generateNextChatHtml(c)) != null) {
+            int nextMsg = r.getNextMsgNum();
+
+            String title = getChatNamePrefix(c);
+            if (frag > 0 || nextMsg < c.getMessages().size())
+                title += "_" + frag++; //$NON-NLS-1$
+
+            Metadata chatMetadata = new Metadata();
+            chatMetadata.set(TikaCoreProperties.TITLE, title);
+            chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
+            chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+            storeLinkedHashes(c.getMessages().subList(firstMsg, nextMsg), chatMetadata);
+
+            ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+            extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+
+            firstMsg = nextMsg;
+        }
+    }
+
+    private String getChatNamePrefix(Chat c) {
+        String title = "Telegram_";
+        if (c.isGroup()) {
+            title += "Group";
+        } else {
+            title += "Chat";
+        }
+        title += "_" + c.getName();
+        return title;
+    }
+
     public void parseTelegramDBIOS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
     	try (Connection conn = getConnection(stream, metadata, context)) {
@@ -177,8 +182,7 @@ public class TelegramParser extends SQLite3DBParser {
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
             e.extractContactsIOS();
-            ReportGenerator r = new ReportGenerator();
-            r.setSearcher(searcher);
+            ReportGenerator r = new ReportGenerator(searcher);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
@@ -208,34 +212,7 @@ public class TelegramParser extends SQLite3DBParser {
                 for (Chat c : e.getChatList()) {
                     try {
                         c.getMessages().addAll(e.extractMessagesIOS(c));
-
-                        for (int i = 0; i * MAXMSGS < c.getMessages().size(); i++) {
-                        	int start=i * MAXMSGS;
-                        	int end=start+MAXMSGS;
-                        	if(end>=c.getMessages().size()) {
-                        		end=c.getMessages().size();
-                        	}
-                            byte[] bytes = r.generateChatHtml(c, start, end);
-                            Metadata chatMetadata = new Metadata();
-                            String title = "Telegram_";
-                            if (c.isGroup()) {
-                                title += "Group";
-                            } else {
-                                title += "Chat";
-                            }
-                            title += "_" + c.getName();
-                            if (c.getMessages().size() > MAXMSGS) {
-                                title += "_" + i;
-                            }
-                            chatMetadata.set(TikaCoreProperties.TITLE, title);
-                            chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
-                            chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-                            storeLinkedHashes(c.getMessages().subList(start, end),chatMetadata);
-                            ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                            extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                            
-
-                        }
+                        generateChat(c, searcher, handler, extractor);
 
                     } catch (Exception ex) {
                         // TODO: handle exception
@@ -285,7 +262,7 @@ public class TelegramParser extends SQLite3DBParser {
     	       
     	        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
     	                new ParsingEmbeddedDocumentExtractor(context));
-    	        ReportGenerator reportGenerator = new ReportGenerator();
+                ReportGenerator reportGenerator = new ReportGenerator(searcher);
     	        byte[] bytes=reportGenerator.genarateContactHtml(user);
     	        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(contactStream, handler, meta, false);
