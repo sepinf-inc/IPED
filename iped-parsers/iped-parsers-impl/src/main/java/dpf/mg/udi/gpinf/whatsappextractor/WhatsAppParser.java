@@ -211,7 +211,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 bytes = nextBytes;
 
                 if (extractMessages) {
-                    extractMessages(chatName, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
+                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
                 }
             }
         }
@@ -460,7 +460,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             return contact.getName().trim() + " (" + contact.getFullId() + ")"; //$NON-NLS-1$ //$NON-NLS-2$
     }
 
-    private void extractMessages(String chatName, List<Message> messages, WAAccount account,
+    private void extractMessages(String chatName, Chat c, List<Message> messages, WAAccount account,
             WAContactsDirectory contacts, int parentVirtualId, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
@@ -483,10 +483,29 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 if (m.isFromMe()) {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, local);
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
+                    if (c.isGroupChat()) {
+                        for (WAContact member : c.getGroupmembers()) {
+                            String gmb = formatContact(member);
+                            if (!gmb.equals(local)) {
+                                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);
+                            }
+                        }
+                    } else {
+                        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, remote);
+                    }
                 } else {
                     meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, remote);
-                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, local);
+
+                    if (c.isGroupChat()) {
+                        for (WAContact member : c.getGroupmembers()) {
+                            String gmb = formatContact(member);
+                            if (!gmb.equals(remote)) {
+                                meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, gmb);
+                            }
+                        }
+                    } else {
+                        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, local);
+                    }
                 }
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
