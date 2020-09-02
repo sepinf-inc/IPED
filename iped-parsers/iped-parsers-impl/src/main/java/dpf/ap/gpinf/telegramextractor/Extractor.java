@@ -366,7 +366,7 @@ public class Extractor {
         if (result == null)
             return null;
         for (IItemBase f : result) {
-            if (f.getLength() == size) {
+            if (f.getLength() != null && f.getLength() == size) {
                 return f.getThumb();
             }
         }
