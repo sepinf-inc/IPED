@@ -58,7 +58,7 @@ public class Util {
             hash = byteArrayToHex(digest.digest());
 
         } catch (Exception ex) {
-            // log erros
+            ex.printStackTrace();
         }
 
         return hash;

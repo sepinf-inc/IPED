@@ -3,7 +3,6 @@ package dpf.ap.gpinf.telegramextractor;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
@@ -37,9 +36,9 @@ public class ReportGenerator {
         return s;
     }
 
-    public byte[] genarateContactHtml(Contact contact) throws UnsupportedEncodingException {
+    public byte[] genarateContactHtml(Contact contact) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, "UTF-8")); //$NON-NLS-1$
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
         out.println("<!DOCTYPE html>\n" //$NON-NLS-1$
                 + "<html>\n" //$NON-NLS-1$

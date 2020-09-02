@@ -81,7 +81,7 @@ public class PostBoxCoding {
             }
             return i;
         } catch (Exception e) {
-            
+            e.printStackTrace();
         }
         
         return 0;
@@ -102,7 +102,7 @@ public class PostBoxCoding {
             }
             return i;
         } catch (Exception e) {
-            
+            e.printStackTrace();
         }
         
         return 0;
@@ -167,6 +167,7 @@ public class PostBoxCoding {
         offset+=btam;
         return obj;
         }catch(Exception e){
+            e.printStackTrace();
             return null;
         }
     }
@@ -330,9 +331,7 @@ public class PostBoxCoding {
            decodeObjectArrayForKey("entities");
            ArrayList<String> names=new ArrayList<>();
            
-        	debug=true;
         	long id=decodeInt64ForKey("i");
-        	debug=false;
         	long volume=decodeInt64ForKey("v");
         	int local=decodeInt32ForKey("l");
         	int size=decodeInt32ForKey("n");

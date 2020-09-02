@@ -82,28 +82,17 @@ public class Contact implements ContactInterface {
         return fn;
     }
     private static DecoderTelegramInterface d=null;
-    public static Contact getContactFromBytes(byte[] bytes) {
-    	  if(d==null) {
-	          try {
-	              Object o = Class.forName(Extractor.DECODER_CLASS).newInstance();
-	              d = (DecoderTelegramInterface) o;
-	              // System.out.println(ReflectionToStringBuilder.toString(o));
-	          } catch (Exception e) {
-	              System.out.println("erro ao carregar o jar do decoder");
-	              // TODO: handle exception
-	              return null;
-	
-	          }
-    	  }
-    	  if(d!=null) {
-    		  d.setDecoderData(bytes, d.USER);
-    		  Contact c=new Contact(0);
-    		  d.getUserData(c);
-    		  c.setPhotos(d.getPhotoData());
-    		  return c;
-    	  }
-    	  return null;
-    	  
+
+    public static Contact getContactFromBytes(byte[] bytes) throws Exception {
+        if (d == null) {
+            Object o = Class.forName(Extractor.DECODER_CLASS).newInstance();
+            d = (DecoderTelegramInterface) o;
+        }
+        d.setDecoderData(bytes, d.USER);
+        Contact c = new Contact(0);
+        d.getUserData(c);
+        c.setPhotos(d.getPhotoData());
+        return c;
     }
 
     public void setLastName(String lastName) {

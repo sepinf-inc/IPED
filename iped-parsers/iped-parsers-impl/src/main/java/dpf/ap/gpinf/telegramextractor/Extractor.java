@@ -28,12 +28,10 @@ public class Extractor {
 
     private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
+    protected static final String DECODER_CLASS = "telegramdecoder.DecoderTelegram";
+
     private Connection conn;
     private IItemSearcher searcher;
-
-    public Extractor(Connection conn) {
-        this.conn = conn;
-    }
 
     private File databaseFile;
 
@@ -41,21 +39,20 @@ public class Extractor {
 
     private HashMap<Long, Contact> contacts = new HashMap<>();
 
-    public void setSearcher(IItemSearcher s) {
-        searcher = s;
+    public Extractor() {
     }
 
-    void performExtraction() {
-        try {
+    public Extractor(Connection conn) {
+        this.conn = conn;
+    }
 
-            if (conn == null) {
-                conn = getConnection();
-            }
-            extractContacts();
-            chatList = extractChatList();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+    public Extractor(File databaseFile) throws SQLException {
+        this.databaseFile = databaseFile;
+        this.conn = getConnection();
+    }
+
+    public void setSearcher(IItemSearcher s) {
+        searcher = s;
     }
 
     protected Contact getContact(long id) {
@@ -69,7 +66,7 @@ public class Extractor {
 
     }
 
-    protected ArrayList<Chat> extractChatList() {
+    protected ArrayList<Chat> extractChatList() throws Exception {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
@@ -115,15 +112,13 @@ public class Extractor {
                 }
 
             }
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
         }
+        chatList = l;
         return l;
     }
     
     
-    protected ArrayList<Chat> extractChatListIOS() {
+    protected ArrayList<Chat> extractChatListIOS() throws SQLException {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list iOS");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
@@ -155,9 +150,6 @@ public class Extractor {
                 }
 
             }
-        } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
         }
         chatList=l;
         return l;
@@ -219,7 +211,7 @@ public class Extractor {
         return msgs;
     }
     
-    protected ArrayList<Message> extractMessagesIOS(Chat chat) throws Exception {
+    protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
             stmt.setLong(1, chat.getId());
@@ -391,7 +383,7 @@ public class Extractor {
         return null;
     }
 
-    protected void extractContacts() throws SQLException {
+    protected void extractContacts() throws Exception {
        
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL)) {
@@ -526,7 +518,5 @@ public class Extractor {
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
     private static final String EXTRACT_CONTACTS_SQL_IOS = "SELECT * FROM t2";
-
-    protected static final String DECODER_CLASS = "telegramdecoder.DecoderTelegram";
 
 }

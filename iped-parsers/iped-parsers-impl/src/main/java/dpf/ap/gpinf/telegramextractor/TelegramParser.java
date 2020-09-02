@@ -117,20 +117,14 @@ public class TelegramParser extends SQLite3DBParser {
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
                 }
             }
-            e.performExtraction();
 
+            e.extractChatList();
             for (Chat c : e.getChatList()) {
-                try {
-                    c.getMessages().addAll(e.extractMessages(c));
-                    generateChat(c, searcher, handler, extractor);
-
-                } catch (Exception ex) {
-                    // TODO: handle exception
-                    ex.printStackTrace();
-                }
-
+                c.getMessages().addAll(e.extractMessages(c));
+                generateChat(c, searcher, handler, extractor);
             }
-        } catch (SQLException e1) {
+
+        } catch (Exception e1) {
             e1.printStackTrace();
             throw new TikaException("Error parsing telegram database", e1);
         }
@@ -205,28 +199,24 @@ public class TelegramParser extends SQLite3DBParser {
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
                 }
-                e.extractChatListIOS();
-                for (Chat c : e.getChatList()) {
-                    try {
-                        c.getMessages().addAll(e.extractMessagesIOS(c));
-                        generateChat(c, searcher, handler, extractor);
-
-                    } catch (Exception ex) {
-                        // TODO: handle exception
-                        ex.printStackTrace();
-                    }
-                }
             }
-    	}catch (Exception e) {
+            e.extractChatListIOS();
+            for (Chat c : e.getChatList()) {
+                c.getMessages().addAll(e.extractMessagesIOS(c));
+                generateChat(c, searcher, handler, extractor);
+            }
+
+        } catch (SQLException e) {
     		e.printStackTrace();
-			// TODO: handle exception
+            throw new TikaException("Error parsing telegram ios database", e);
 		}
     }
     
-    public void parseTelegramAccount(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)throws SAXException, IOException {
+    public void parseTelegramAccount(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context) throws SAXException, IOException, TikaException {
+
     	DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
     	DocumentBuilder builder;
-    	
 		try {
 			builder = factory.newDocumentBuilder();
 		
@@ -248,7 +238,7 @@ public class TelegramParser extends SQLite3DBParser {
     	        meta.set(ExtraProperties.USER_PHONE, user.getPhone());
     	        meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
     	        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
-    	        Extractor ex = new Extractor(null);
+                Extractor ex = new Extractor();
     	        IItemSearcher searcher = context.get(IItemSearcher.class);
                 ex.setSearcher(searcher);
                 ex.searchAvatarFileName(user, user.getPhotos());
@@ -264,17 +254,10 @@ public class TelegramParser extends SQLite3DBParser {
     	        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                 extractor.parseEmbedded(contactStream, handler, meta, false);
                 
-	  
-    	        
-	    		
 	    	}
 	    	
-		} catch (ParserConfigurationException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (XPathExpressionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+        } catch (ParserConfigurationException | XPathExpressionException e) {
+            throw new TikaException("Error parsing telegram account", e);
 		}
     	
     }
