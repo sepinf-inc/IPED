@@ -96,9 +96,6 @@ public class TelegramParser extends SQLite3DBParser {
 
             if (e.getContacts() != null) {
                 for (Contact c : e.getContacts().values()) {
-                    if (c.getPhone() == null) {
-                        continue;
-                    }
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
@@ -179,9 +176,6 @@ public class TelegramParser extends SQLite3DBParser {
 
             if (e.getContacts() != null) {
                 for (Contact c : e.getContacts().values()) {
-                    if (c.getPhone() == null) {
-                        continue;
-                    }
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
