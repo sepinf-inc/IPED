@@ -2,6 +2,8 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.HashMap;
 
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
+
 public class MapTypeMSG {
 	
 	private static final HashMap<Integer,String> msg=initMsg();
@@ -11,34 +13,34 @@ public class MapTypeMSG {
 	private static HashMap<Integer,String> initMsg(){
 		//reference telegramMediaAction.swift
 		HashMap<Integer,String> msg=new HashMap<>();
-		msg.put(1, "Group/chat/channel created");
-		msg.put(2, "Add members");
-		msg.put(3, "Remove members");
-		msg.put(4, "Photo Updated");
-		msg.put(5, "Title Updated");
+        msg.put(1, Messages.getString("TelegramReport.GroupCreate"));
+        msg.put(2, Messages.getString("TelegramReport.AddMember"));
+        msg.put(3, Messages.getString("TelegramReport.RemoveMember"));
+        msg.put(4, Messages.getString("TelegramReport.PhotoUpdated"));
+        msg.put(5, Messages.getString("TelegramReport.TitleUpdated"));
 		
-		msg.put(6, "pinned Message Updated");
-		msg.put(7, "User joined by Link");
-		msg.put(8, "Change channel to group");
-		msg.put(9, "Change group to channel");
-		msg.put(10, "history Cleared");
+        msg.put(6, Messages.getString("TelegramReport.pinnMessage"));
+        msg.put(7, Messages.getString("TelegramReport.UserJoinLink"));
+        msg.put(8, Messages.getString("TelegramReport.ChangeToGroup"));
+        msg.put(9, Messages.getString("TelegramReport.ChangeToChannel"));
+        msg.put(10, Messages.getString("TelegramReport.HistoryCleared"));
 		
-		msg.put(11, "history Screenshot");
-		msg.put(12, "message Autoremove");
-		msg.put(13, "game Score");
-		msg.put(14, "phone Call");
-		msg.put(15, "payment Sent");
+        msg.put(11, Messages.getString("TelegramReport.HistoryScreenshot"));
+        msg.put(12, Messages.getString("TelegramReport.MessageAutoRemove"));
+        msg.put(13, Messages.getString("TelegramReport.GameScore"));
+        msg.put(14, Messages.getString("TelegramReport.PhoneCall"));
+        msg.put(15, Messages.getString("TelegramReport.PaymentSent"));
 		
-		msg.put(16, "custom Text");
-		msg.put(17, "bot Domain Access Granted");
-		msg.put(18, "bot SentSecure Values");
-		msg.put(19, "peer Joined");
-		msg.put(20, "phone Number Request");
+        msg.put(16, Messages.getString("TelegramReport.CustomText"));
+        msg.put(17, Messages.getString("TelegramReport.BotAcess"));
+        msg.put(18, Messages.getString("TelegramReport.BotSent"));
+        msg.put(19, Messages.getString("TelegramReport.PeerJoin"));
+        msg.put(20, Messages.getString("TelegramReport.PhoneNumberRequest"));
 		
 		//extra from android
 		
-		msg.put(30, "Contact sign up");
-		msg.put(31, "Chat delete photo");
+        msg.put(30, Messages.getString("TelegramReport.ContactSignUp"));
+        msg.put(31, Messages.getString("TelegramReport.ChatDeletePhoto"));
         
         		
 		return msg;

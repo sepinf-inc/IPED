@@ -30,11 +30,9 @@ import java.util.Set;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
-import javax.xml.xpath.XPathExpressionException;
 import javax.xml.xpath.XPathFactory;
 
 import org.apache.tika.exception.TikaException;
@@ -256,7 +254,7 @@ public class TelegramParser extends SQLite3DBParser {
                 
 	    	}
 	    	
-        } catch (ParserConfigurationException | XPathExpressionException e) {
+        } catch (Exception e) {
             throw new TikaException("Error parsing telegram account", e);
 		}
     	
