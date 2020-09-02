@@ -14,6 +14,8 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -23,6 +25,8 @@ import iped3.util.BasicProps;
 
 
 public class Extractor {
+
+    private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
 
     private Connection conn;
     private IItemSearcher searcher;
@@ -67,6 +71,7 @@ public class Extractor {
 
     protected ArrayList<Chat> extractChatList() {
         ArrayList<Chat> l = new ArrayList<>();
+        logger.debug("Extracting chat list Android");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
             DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
             ResultSet rs = stmt.executeQuery();
@@ -100,7 +105,7 @@ public class Extractor {
 
                 }
                 if (cg != null) {
-                    // System.out.println("Nome do chat "+cg.getId());
+                    logger.debug("Telegram chat id ", cg.getId());
                     /*
                      * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
                      * messages.isEmpty()) continue;
@@ -120,7 +125,7 @@ public class Extractor {
     
     protected ArrayList<Chat> extractChatListIOS() {
         ArrayList<Chat> l = new ArrayList<>();
-        // System.out.println("parser telegram!!!!!");
+        logger.debug("Extracting chat list iOS");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
@@ -140,7 +145,7 @@ public class Extractor {
 
                 }
                 if (cg != null) {
-                    // System.out.println("Nome do chat "+cg.getId());
+                    logger.debug("Telegram chat id ", cg.getId());
                     /*
                      * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
                      * messages.isEmpty()) continue;
@@ -192,9 +197,9 @@ public class Extractor {
 
                         if (type.contains(":")) {
                             String[] aux = type.split(":");
-                            msg_decoded = mapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
+                            msg_decoded = MapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
                         } else {
-                            msg_decoded = mapTypeMSG.decodeMsg(type);
+                            msg_decoded = MapTypeMSG.decodeMsg(type);
                         }
                         message.setType(msg_decoded);
                     }
@@ -262,7 +267,7 @@ public class Extractor {
             	if(message.getMediaMime()==null) {
             		message.setMediaMime(result.get(0).getMediaType().toString());
             	}
-            	//System.out.println("tipo "+message.getMediaMime());
+            	logger.debug("Document mediaType: {}", message.getMediaMime());
                 message.setMediaFile(path);
                 message.setMediaHash(getHash(result, size));
                 message.setThumb(getThumb(result, size));

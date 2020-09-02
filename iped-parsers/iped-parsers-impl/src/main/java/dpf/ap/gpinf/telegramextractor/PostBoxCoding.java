@@ -7,13 +7,17 @@ package dpf.ap.gpinf.telegramextractor;
 
 
 
-import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 
 
@@ -22,6 +26,9 @@ import java.util.List;
  * @author ADMHauck
  */
 public class PostBoxCoding {
+
+    private static final Logger logger = LoggerFactory.getLogger(PostBoxCoding.class);
+
     public static int int32 = 0;
     public static int Int64 = 1;
     public static int Bool = 2;
@@ -149,9 +156,9 @@ public class PostBoxCoding {
         return null;
         
     }
-    public genericObj readObj(){
+    public GenericObj readObj(){
         try{
-        genericObj obj=new genericObj();
+        GenericObj obj=new GenericObj();
         obj.hash=readInt32(offset);
         offset+=4;
         int btam=readInt32(offset);
@@ -163,7 +170,7 @@ public class PostBoxCoding {
             return null;
         }
     }
-    public genericObj decodeObjectForKey(String key){
+    public GenericObj decodeObjectForKey(String key){
         if(findOfset(key, OBJECT)){
             return readObj();
         }
@@ -177,12 +184,10 @@ public class PostBoxCoding {
         }
         return 0;
     }
-    boolean debug=false;
+    
     public long decodeInt64ForKey(String key){
         if(findOfset(key,Int64)){
-        	if(debug) {
-        		System.out.println("offset"+offset);
-        	}
+            logger.debug("offset {}", offset);
             long val=readInt64(offset);
             offset+=8;
             return val;
@@ -190,13 +195,13 @@ public class PostBoxCoding {
         return 0;
     }
     
-    public List<genericObj> decodeObjectArrayForKey(String key){
-        ArrayList<genericObj> l=new ArrayList<>();
+    public List<GenericObj> decodeObjectArrayForKey(String key){
+        ArrayList<GenericObj> l=new ArrayList<>();
         if(findOfset(key, ObjectArray)){
             int tam=readInt32(offset);
             offset+=4;
             for(int i=0;i<tam;i++){
-                genericObj o=readObj();
+                GenericObj o=readObj();
                 if(o!=null){
                     l.add(o);
                 }
@@ -333,13 +338,11 @@ public class PostBoxCoding {
         	int size=decodeInt32ForKey("n");
         	int action=decodeInt32ForKey("_rawValue");
         	
-        	/*
-        	 
-        	System.out.println("v: "+volume);
-        	System.out.println("l: "+local);
-        	System.out.println("n: "+size);
-        	System.out.println("action: "+action);
-        	*/
+            logger.debug("v: {}", volume);
+            logger.debug("l: {}", local);
+            logger.debug("n: {}", size);
+            logger.debug("action: {}", action);
+
         	if(id!=0) {
         		names.add(id+"");
         	}
@@ -351,7 +354,7 @@ public class PostBoxCoding {
             m.setNames(names);
             
             if(m!=null){
-            	m.setType(mapTypeMSG.decodeMsg(action));
+            	m.setType(MapTypeMSG.decodeMsg(action));
             	
                 m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));
                 m.setData(txt);
@@ -372,26 +375,26 @@ public class PostBoxCoding {
         
     }
     void readUser(Contact c){
-        genericObj user=decodeObjectForKey("_");
+        GenericObj user=decodeObjectForKey("_");
         setData(user.content);
         c.setName(decodeStringForKey("fn"));
         c.setLastName(decodeStringForKey("ln"));
         c.setUsername(decodeStringForKey("un"));
         c.setPhone(decodeStringForKey("p"));
-        List<genericObj> l= decodeObjectArrayForKey("ph");
+        List<GenericObj> l= decodeObjectArrayForKey("ph");
         ArrayList<PhotoData> photos=new ArrayList<>();
         String title=decodeStringForKey("t");
         if(title!=null) {
         	c.setName("gp_name:"+title);
         }
-        for(genericObj ph:l){
+        for(GenericObj ph:l){
             PostBoxCoding p2=new PostBoxCoding();
             p2.setData(ph.content);
             Photo p=new Photo();
             
             p.setName(p2.decodeInt64ForKey("v")+"_"+p2.decodeInt32ForKey("l"));
             photos.add(p);
-            //System.out.println("photo:"+p.getName());
+            logger.debug("photo: {}", p.getName());
             c.setPhotos(photos);
         }
         

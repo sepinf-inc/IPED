@@ -2,7 +2,7 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.util.HashMap;
 
-public class mapTypeMSG {
+public class MapTypeMSG {
 	
 	private static final HashMap<Integer,String> msg=initMsg();
 	

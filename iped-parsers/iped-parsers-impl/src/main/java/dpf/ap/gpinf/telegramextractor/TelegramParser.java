@@ -53,6 +53,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties; 
 
 public class TelegramParser extends SQLite3DBParser {
@@ -76,7 +77,7 @@ public class TelegramParser extends SQLite3DBParser {
     private void storeLinkedHashes(List<Message> messages, Metadata metadata) {
         for (Message m : messages) {
             if (m.getMediaHash() != null) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, "hash:" + m.getMediaHash()); //$NON-NLS-1$
+                metadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
 
@@ -176,9 +177,7 @@ public class TelegramParser extends SQLite3DBParser {
     public void parseTelegramDBIOS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
     	try (Connection conn = getConnection(stream, metadata, context)) {
-    		System.out.print("ola telegram");
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            System.out.println("seacher "+searcher);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
             e.extractContactsIOS();
@@ -206,9 +205,7 @@ public class TelegramParser extends SQLite3DBParser {
                     ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
                 }
-                System.out.println("teste 22");
                 e.extractChatListIOS();
-                System.out.println("total de chats "+e.getChatList().size());
                 for (Chat c : e.getChatList()) {
                     try {
                         c.getMessages().addAll(e.extractMessagesIOS(c));
