@@ -83,7 +83,8 @@ public class Contact implements ContactInterface {
     }
     private static DecoderTelegramInterface d=null;
 
-    public static Contact getContactFromBytes(byte[] bytes) throws Exception {
+    public static Contact getContactFromBytes(byte[] bytes)
+            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
         if (d == null) {
             Object o = Class.forName(Extractor.DECODER_CLASS).newInstance();
             d = (DecoderTelegramInterface) o;
