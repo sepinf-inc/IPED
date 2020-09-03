@@ -10,6 +10,7 @@ public class Message implements MessageInterface {
     private String mediaHash = null;
     private String mediaFile = null;
     private String mediaName = null;
+    private String extension = null;
     boolean fromMe = false;
     private String type = null;
     private Contact remetente = null;
@@ -139,6 +140,14 @@ public class Message implements MessageInterface {
 
     public void setMediaName(String mediaName) {
         this.mediaName = mediaName;
+    }
+
+    public void setMediaExtension(String trueExtension) {
+        this.extension = trueExtension;
+    }
+
+    public String getMediaExtension() {
+        return this.extension;
     }
 
     public String getType() {

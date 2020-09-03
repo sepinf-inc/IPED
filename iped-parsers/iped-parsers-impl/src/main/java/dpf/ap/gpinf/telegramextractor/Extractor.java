@@ -260,11 +260,12 @@ public class Extractor {
                     message.setMediaMime(item.getMediaType().toString());
             	}
             	logger.debug("Document mediaType: {}", message.getMediaMime());
+                message.setMediaHash(item.getHash());
+                message.setThumb(item.getThumb());
+                message.setMediaExtension(item.getTypeExt());
                 if (item.hasFile()) {
                     message.setMediaFile(item.getFile().getAbsolutePath());
                 }
-                message.setMediaHash(item.getHash());
-                message.setThumb(item.getThumb());
                 break;
             }
 
@@ -289,10 +290,11 @@ public class Extractor {
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
+                message.setMediaName(r.getName());
+                message.setMediaExtension(r.getTypeExt());
                 if (r.hasFile()) {
                     message.setMediaFile(r.getFile().getAbsolutePath());
                 }
-                message.setMediaName(r.getName());
             }
         }
     }
@@ -307,14 +309,6 @@ public class Extractor {
 
         for (IItemBase item : result) {
             if (item.getLength() != null && item.getLength() == size) {
-                // try (InputStream is = item.getStream()) {
-                // // check if item content is not empty
-                // if (is.read() != -1) {
-                // return item;
-                // }
-                // } catch (IOException e) {
-                // // ignore
-                // }
                 return item;
             }
         }

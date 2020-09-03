@@ -152,7 +152,14 @@ public class ReportGenerator {
             TagHtml video = new TagHtml("video");
             video.setAtribute("class", "thumb iped-hide");
             video.setAtribute("controls", null);
-            video.getInner().add("<source src=\"" + message.getMediaFile() + "\"/>");
+            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
+                    message.getMediaExtension());
+            video.getInner().add("<source src=\"" + reportSource + "\"/>");
+            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
+                    .getSourceFileIfExists(message.getMediaFile());
+            if (originalSource != null) {
+                video.getInner().add("<source src=\"" + originalSource + "\"/>");
+            }
             out.println(video.toString());
             out.println("<br/>");
 
@@ -195,7 +202,14 @@ public class ReportGenerator {
             TagHtml audio = new TagHtml("audio");
             audio.setAtribute("class", "iped-hide");
             audio.setAtribute("controls", null);
-            audio.getInner().add("<source src=\"" + message.getMediaFile() + "\"/>");
+            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
+                    message.getMediaExtension());
+            audio.getInner().add("<source src=\"" + reportSource + "\"/>");
+            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
+                    .getSourceFileIfExists(message.getMediaFile());
+            if (originalSource != null) {
+                audio.getInner().add("<source src=\"" + originalSource + "\"/>");
+            }
             out.println(audio.toString());
 
         } else {
@@ -212,7 +226,9 @@ public class ReportGenerator {
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            link.setAtribute("href", message.getMediaFile());
+            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
+                    message.getMediaExtension(), message.getMediaFile());
+            link.setAtribute("href", ref);
 
             byte thumb[] = message.getThumb();
 
@@ -254,7 +270,9 @@ public class ReportGenerator {
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            link.setAtribute("href", message.getMediaFile());
+            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
+                    message.getMediaExtension(), message.getMediaFile());
+            link.setAtribute("href", ref);
 
             byte thumb[] = message.getThumb();
 
