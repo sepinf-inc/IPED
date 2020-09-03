@@ -254,15 +254,17 @@ public class Extractor {
         	
             String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
             result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
-            String path = getPathFromResult(result, size);
-            if (path != null) {
+            IItemBase item = getItemWithSize(result, size);
+            if (item != null) {
             	if(message.getMediaMime()==null) {
-            		message.setMediaMime(result.get(0).getMediaType().toString());
+                    message.setMediaMime(item.getMediaType().toString());
             	}
             	logger.debug("Document mediaType: {}", message.getMediaMime());
-                message.setMediaFile(path);
-                message.setMediaHash(getHash(result, size));
-                message.setThumb(getThumb(result, size));
+                if (item.hasFile()) {
+                    message.setMediaFile(item.getFile().getAbsolutePath());
+                }
+                message.setMediaHash(item.getHash());
+                message.setThumb(item.getThumb());
                 break;
             }
 
@@ -275,12 +277,7 @@ public class Extractor {
             IItemBase r = getFileFrom(p.getName(), p.getSize());
             if (r != null) {
                 message.setType("link/image");
-                try {
-                    message.setLinkImage(FileUtils.readFileToByteArray(r.getTempFile()));
-                } catch (IOException e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
+                message.setLinkImage(r.getThumb());
             }
         }
 
@@ -292,82 +289,33 @@ public class Extractor {
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
-                message.setMediaFile(r.getPath());
+                if (r.hasFile()) {
+                    message.setMediaFile(r.getFile().getAbsolutePath());
+                }
                 message.setMediaName(r.getName());
             }
         }
     }
 
-    protected String getPathFromResult(List<IItemBase> result, int size) {
-        if (result == null || result.size()==0) {
+    private IItemBase getItemWithSize(List<IItemBase> result, int size) {
+        if (result == null || result.isEmpty())
             return null;
-        }
-        if(size==0) {
-        	IItemBase f=result.get(0);
-        	try {
-                if (f.getTempFile() != null) {
-                    if (f.getFile() != null) {
-                        return f.getFile().getAbsolutePath();
-                    } else {
-                        return f.getTempFile().getAbsolutePath();
-                    }
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        	
-        }
-        for (IItemBase f : result) {
-            try {
-                if (f.getTempFile() != null && f.getTempFile().getAbsoluteFile().length() == size) {
-                    if (f.getFile() != null) {
-                        return f.getFile().getAbsolutePath();
-                    } else {
-                        return f.getTempFile().getAbsolutePath();
-                    }
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        return null;
-    }
 
-    protected String getHash(List<IItemBase> result, int size) {
-        if (result == null)
-            return null;
-        IItemBase file=null;
-        if(size==0) {
-        	file=result.get(0);
-        	        	
-        }
-        for (IItemBase f : result) {
-        	try {
-                if (f.getTempFile() != null) {
-                    if (f.getTempFile().getAbsoluteFile().length() == size) {
-                        file=f;
-                    }
-                }
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
-                e.printStackTrace();
-            }
-        }
-        if(file!=null) {
-        	return file.getHash();
-        }
-        
-        return null;
-    }
+        // TODO warn user about size not being checked
+        if (size == 0)
+            return result.get(0);
 
-    protected byte[] getThumb(List<IItemBase> result, int size) {
-        if (result == null)
-            return null;
-        for (IItemBase f : result) {
-            if (f.getLength() != null && f.getLength() == size) {
-                return f.getThumb();
+        for (IItemBase item : result) {
+            if (item.getLength() != null && item.getLength() == size) {
+                // try (InputStream is = item.getStream()) {
+                // // check if item content is not empty
+                // if (is.read() != -1) {
+                // return item;
+                // }
+                // } catch (IOException e) {
+                // // ignore
+                // }
+                return item;
             }
         }
         return null;
