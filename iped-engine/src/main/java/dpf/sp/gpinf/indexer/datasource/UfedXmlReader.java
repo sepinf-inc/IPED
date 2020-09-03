@@ -1042,14 +1042,6 @@ public class UfedXmlReader extends DataSourceReader {
                 ufedId = ufdrPathToUfedId.get(extracted_path);
             }
             setContent(item, extracted_path);
-            if (item.getFile() == null)
-                try {
-                    String ufedSize = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Size"); //$NON-NLS-1$
-                    if (ufedSize != null)
-                        item.setLength(Long.parseLong(ufedSize.trim()));
-                } catch (NumberFormatException e) {
-                    // ignore
-                }
             return ufedId;
         }
 
