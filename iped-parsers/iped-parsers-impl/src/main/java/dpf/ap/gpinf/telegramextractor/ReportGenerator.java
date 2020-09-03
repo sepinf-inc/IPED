@@ -220,6 +220,13 @@ public class ReportGenerator {
     }
 
     private void printImage(PrintWriter out, Message message) {
+        printImage(out, message, false);
+    }
+
+    private void printImage(PrintWriter out, Message message, boolean isLink) {
+        if (isLink) {
+            out.print("link<br/>");
+        }
         if (message.getMediaHash() != null) {
             
             printCheckbox(out, message.getMediaHash());
@@ -230,7 +237,7 @@ public class ReportGenerator {
                     message.getMediaExtension(), message.getMediaFile());
             link.setAtribute("href", ref);
 
-            byte thumb[] = message.getThumb();
+            byte thumb[] = isLink ? message.getLinkImage() : message.getThumb();
 
             if (thumb == null) {
                 List<IItemBase> result = null;
@@ -251,12 +258,13 @@ public class ReportGenerator {
                 img.setAtribute("class", "imageImg");
             }
 
-            img.setAtribute("title", "Image");
+            String title = isLink ? "Link" : "Image";
+            img.setAtribute("title", title);
             link.getInner().add(img);
 
             out.println(link.toString());
 
-        } else {
+        } else if (!isLink) {
             out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
         }
         out.println("<br/>");
@@ -314,26 +322,7 @@ public class ReportGenerator {
     }
 
     private void printLink(PrintWriter out, Message message) {
-        out.print("link<br/>");
-        if (message.getLinkImage() != null) {
-
-            byte thumb[] = message.getLinkImage();
-
-            TagHtml img = new TagHtml("img");
-
-            if (thumb != null) {
-                img.setAtribute("src",
-                        "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
-            }
-            img.setAtribute("width", "100");
-            img.setAtribute("height", "102");
-            img.setAtribute("title", "Link image");
-
-            out.println(img.toString());
-            out.println("<br/>");
-
-        }
-
+        printImage(out, message, true);
     }
 
     private void printMessage(PrintWriter out, Message message, boolean group) {

@@ -279,6 +279,12 @@ public class Extractor {
             if (r != null) {
                 message.setType("link/image");
                 message.setLinkImage(r.getThumb());
+                message.setMediaHash(r.getHash());
+                message.setMediaName(r.getName());
+                message.setMediaExtension(r.getTypeExt());
+                if (r.hasFile()) {
+                    message.setMediaFile(r.getFile().getAbsolutePath());
+                }
             }
         }
 
