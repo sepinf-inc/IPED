@@ -347,6 +347,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (cm.isBackup(temp)) {// merge in the main chat
                     System.out.println("recovered messages " + cm.mergeChatList(temp) + " from " + it.getName());
                 } else {// create a separate report
+                    System.out.println("Separeted report for " + it.getName());
                     createReport(temp, searcher,
                             getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
                             extractor,

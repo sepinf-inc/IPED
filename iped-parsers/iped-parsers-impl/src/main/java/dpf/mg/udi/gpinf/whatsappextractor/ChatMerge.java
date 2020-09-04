@@ -34,6 +34,7 @@ public class ChatMerge {
             if (indexmain >= 0) {// verify if the chats are compatible
                 if (!c.getRemote().getId().equals(main.get(indexmain).getRemote().getId())) {
                     // if there is a chat incompatible the msgstore is not a backup
+                    System.out.println("incompatible");
                     return false;
                 }
                 totchats++;
@@ -54,6 +55,7 @@ public class ChatMerge {
             indexmain = findChat(main, c);
             if (indexmain == -1) {// chat was removed
                 main.add(c);
+                c.setRecoveredFrom(dbname);
                 tot_rec += c.getMessages().size();
             } else {
                 tot_rec += mergeMessageList(main.get(indexmain).getMessages(), c.getMessages());
