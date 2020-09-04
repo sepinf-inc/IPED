@@ -392,7 +392,8 @@ public class ReportGenerator {
                 + "}\n" //$NON-NLS-1$
                 + "css.innerHTML = inHtml;\n" //$NON-NLS-1$
                 + "document.head.appendChild(css);\n" //$NON-NLS-1$
-                + "function openIfExists(url1, url2){\r\n" + "    var img1 = new Image();\r\n"
+                + "function openIfExists(url2, url1){\r\n"
+                + "    if (navigator.userAgent.search(\"JavaFX\") >= 0) return;\r\n" + "    var img1 = new Image();\r\n"
                 + "    img1.onload = () => window.location = url1;\r\n"
                 + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
                 + "</script>\n" //$NON-NLS-1$

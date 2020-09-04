@@ -201,19 +201,13 @@ public class Util {
     public static String getReportHref(String hash, String ext, String originalPath) {
         String exportPath = getExportPath(hash, ext);
         String path = getSourceFileIfExists(originalPath);
-        if (path != null) {
-            return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-        }
-        return exportPath;
+        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
     }
 
     public static String getReportHref(IItemBase item) {
         String exportPath = getExportPath(item);
-        Optional<String> originalPath = getSourceFileIfExists(item);
-        if (originalPath.isPresent()) {
-            return "javascript:openIfExists('" + exportPath + "','" + originalPath.get() + "')";
-        }
-        return exportPath;
+        String originalPath = getSourceFileIfExists(item).orElse("");
+        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
     }
 
     public static String getSourceFileIfExists(String originalPath) {
