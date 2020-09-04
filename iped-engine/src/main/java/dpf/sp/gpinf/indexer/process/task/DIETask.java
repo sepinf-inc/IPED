@@ -1,27 +1,12 @@
-/*
- * Copyright 2015-2016, Wladimir Leite
- * 
- * This file is part of Indexador e Processador de Evidencias Digitais (IPED).
- *
- * IPED is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
- *
- * IPED is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with IPED.  If not, see <http://www.gnu.org/licenses/>.
- */
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,12 +24,13 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
 
 /**
- * Tarefa de Detecção de Imagens Explícitas (DIE).
+ * Explicit Image Detection (DIE) Task .
  *
  * @author Wladimir Leite
  */
@@ -53,23 +39,23 @@ public class DIETask extends AbstractTask {
     private static Logger logger = LoggerFactory.getLogger(DIETask.class);
 
     /**
-     * Instância da classe reponsável pelo processo de detecção.
+     * Object responsible for predicting if an image is explicit (i.e. contains nudity). 
+     * It uses a binary classifier that returns a double value from 0 (normal image) to 1 (explicit).
      */
     private static RandomForestPredictor predictor;
 
     /**
-     * Instância da classe reponsável pela extração de features.
+     * Object responsible for extracting features from images.
      */
     private static AbstractDie die;
 
     /**
-     * Nome do atributo incluído com o resultado (score de 1 a 1000) da detecção.
+     * Field name used to store the detection result (a score from 1 to 1000, inclusive).
      */
     public static String DIE_SCORE = "scoreNudez"; //$NON-NLS-1$
 
     /**
-     * Nome do atributo incluído com a classificação (de 1 a 5) do resultado da
-     * detecção.
+     * Field name used to store a detection "class" (a value from 1 to 5, derived from the score).
      */
     public static String DIE_CLASS = "classeNudez"; //$NON-NLS-1$
 
@@ -79,31 +65,27 @@ public class DIETask extends AbstractTask {
     private static boolean taskEnabled = false;
 
     /**
-     * Objeto estático de inicialização. Necessário para garantir que seja feita
-     * apenas uma vez.
+     * Static object to control (synchronize) initialization process (it should run only once for all threads).
      */
     private static final AtomicBoolean init = new AtomicBoolean(false);
 
     /**
-     * Objeto estático para sincronizar finalização.
+     * Static object to control (synchronize) the termination of the task.
      */
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
     /**
-     * Objeto estático com total de imagens processadas.
+     * Map to store videos scores, to avoid processing duplicated videos. 
      */
-    private static final AtomicLong totalProcessed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de imagens que falharam.
-     */
-    private static final AtomicLong totalFailed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de tempo gasto no processamento de imagens, em
-     * milisegundos.
-     */
-    private static final AtomicLong totalTime = new AtomicLong();
+    private static final HashMap<String, Short> videoResults = new HashMap<String, Short>();
+    
+    // Static counters for the number of images/videos successfully processed/failed, and the total processing time.
+    private static final AtomicLong totalImagesProcessed = new AtomicLong();
+    private static final AtomicLong totalVideosProcessed = new AtomicLong();
+    private static final AtomicLong totalImagesFailed = new AtomicLong();
+    private static final AtomicLong totalVideosFailed = new AtomicLong();
+    private static final AtomicLong totalImagesTime = new AtomicLong();
+    private static final AtomicLong totalVideosTime = new AtomicLong();
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
@@ -119,14 +101,12 @@ public class DIETask extends AbstractTask {
     }
 
     /**
-     * Inicializa a tarefa de detecção de nudez.
+     * Initialize the task.
      */
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        // Inicialização sincronizada
         synchronized (init) {
             if (!init.get()) {
-                // Verifica se tarefa está habilitada
                 String enableParam = confParams.getProperty(ENABLE_PARAM);
                 if (enableParam != null)
                     taskEnabled = Boolean.valueOf(enableParam.trim());
@@ -161,12 +141,12 @@ public class DIETask extends AbstractTask {
                     throw new IPEDException(msg);
                 }
 
-                // Cria objeto responsável pela detecção
+                // Instantiate detection object
                 predictor = RandomForestPredictor.load(dieDat, -1);
                 if (predictor == null)
                     throw new IPEDException("Error loading DIE database file: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
 
-                // Cria objeto responsável pela extração de features
+                // Instantiate feature extraction object
                 die = AbstractDie.loadImplementation(dieDat);
                 if (die == null)
                     throw new IPEDException("Error loading DIE implementation: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
@@ -179,8 +159,7 @@ public class DIETask extends AbstractTask {
     }
 
     /**
-     * Finalização da tarefa. Apenas grava algumas informações sobre o processamento
-     * no Log.
+     * Finalize the task, logging some statistics.
      */
     public void finish() throws Exception {
         synchronized (finished) {
@@ -188,11 +167,17 @@ public class DIETask extends AbstractTask {
             if (taskEnabled && !finished.get()) {
                 die = null;
                 predictor = null;
-                logger.info("Total images processed: " + totalProcessed); //$NON-NLS-1$
-                logger.info("Total images not processed: " + totalFailed); //$NON-NLS-1$
-                long total = totalProcessed.longValue() + totalFailed.longValue();
-                if (total != 0) {
-                    logger.info("Average processing time (milliseconds/image): " + (totalTime.longValue() / total)); //$NON-NLS-1$
+                long totalImages = totalImagesProcessed.longValue() + totalImagesFailed.longValue();
+                if (totalImages != 0) {
+                    logger.info("Total images processed: " + totalImagesProcessed); //$NON-NLS-1$
+                    logger.info("Total images not processed: " + totalImagesFailed); //$NON-NLS-1$
+                    logger.info("Average image processing time (ms/image): " + (totalImagesTime.longValue() / totalImages)); //$NON-NLS-1$
+                }
+                long totalVideos = totalVideosProcessed.longValue() + totalVideosFailed.longValue();
+                if (totalVideos != 0) {
+                    logger.info("Total videos processed: " + totalVideosProcessed); //$NON-NLS-1$
+                    logger.info("Total videos not processed: " + totalVideosFailed); //$NON-NLS-1$
+                    logger.info("Average video processing time (ms/video): " + (totalVideosTime.longValue() / totalVideos)); //$NON-NLS-1$
                 }
                 finished.set(true);
             }
@@ -200,64 +185,141 @@ public class DIETask extends AbstractTask {
     }
 
     /**
-     * Método principal do processamento. Primeiramente verifica se o tipo de
-     * arquivo é imagem. Depois chama método de detecção.
+     * Main task processing method. Check if the evidence should be processed (image or video) and then calls detection method itself (DIE). 
      */
     @Override
     protected void process(IItem evidence) throws Exception {
-        // Verifica se está habilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null) {
+        if (!taskEnabled  || !evidence.isToAddToCase() || evidence.getHash() == null 
+                || !(isImageType(evidence.getMediaType()) || isVideoType(evidence.getMediaType()))) {
             return;
         }
-        if (evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null)
-            return;
 
-        // Chama o método de detecção
         try {
             long t = System.currentTimeMillis();
-            BufferedImage img;
-            if (evidence.getThumb() != null) {
-                img = ImageIO.read(new ByteArrayInputStream(evidence.getThumb()));
-            } else {
-                img = getBufferedImage(evidence);
-            }
-            List<Float> features = die.extractFeatures(img);
-            if (features != null) {
-                double p = predictor.predict(features);
-                int score = (int) Math.round(p * 1000);
-                if (score < 1) {
-                    score = 1;
+            if (isImageType(evidence.getMediaType())) {
+                if (evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null) return;
+
+                //For images call the detection method passing the thumb image
+                BufferedImage img = null;
+                byte[] thumb = evidence.getThumb();
+                if (thumb != null) {
+                    if (thumb.length == 0) return;
+                    img = ImageIO.read(new ByteArrayInputStream(evidence.getThumb()));
+                } else {
+                    img = getBufferedImage(evidence);
                 }
-                evidence.setExtraAttribute(DIE_SCORE, score);
-                int classe = score / 200 + 1;
-                if (classe > 5) {
-                    classe = 5;
-                } else if (classe < 1) {
-                    classe = 1;
+                List<Float> features = die.extractFeatures(img);
+                if (features != null) {
+                    double p = predictor.predict(features);
+                    update(evidence, predictionToScore(p));
+                    totalImagesProcessed.incrementAndGet();
+                } else {
+                    totalImagesFailed.incrementAndGet();
                 }
-                evidence.setExtraAttribute(DIE_CLASS, classe);
-                totalProcessed.incrementAndGet();
-            } else {
-                totalFailed.incrementAndGet();
+                t = System.currentTimeMillis() - t;
+                totalImagesTime.addAndGet(t);
+
+            } else if (isVideoType(evidence.getMediaType())) {
+                Short prevResult = null;
+                synchronized (videoResults) {
+                    prevResult = videoResults.get(evidence.getHash());
+                }
+                if (prevResult != null) {
+                    update(evidence, prevResult.intValue());
+                    return;
+                }
+                //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
+                File viewFile = Util.getFileFromHash(new File(output, "view"), evidence.getHash(), "jpg");
+                if (viewFile != null && viewFile.exists()) {
+                    Object[] read = ImageUtil.readJpegWithMetaData(viewFile);
+                    if (read != null && read.length == 2) {
+                        String videoComment = (String) read[1];
+                        if (videoComment != null && videoComment.startsWith("Frames=")) {
+                            List<BufferedImage> frames = ImageUtil.getFrames((BufferedImage) read[0], videoComment);
+                            List<Double> pvideo = new ArrayList<Double>();
+                            for (BufferedImage frame : frames) {
+                                List<Float> features = die.extractFeatures(frame);
+                                if (features != null) {
+                                    double p = predictor.predict(features);
+                                    pvideo.add(p);
+                                }
+                            }
+                            if (!pvideo.isEmpty()) {
+                                double p = videoScore(pvideo);
+                                int score = predictionToScore(p);
+                                update(evidence, score);
+                                totalVideosProcessed.incrementAndGet();
+                                synchronized (videoResults) {
+                                    videoResults.put(evidence.getHash(), (short) score);
+                                }
+                            } else {
+                                totalVideosFailed.incrementAndGet();
+                            }
+                            t = System.currentTimeMillis() - t;
+                            totalVideosTime.addAndGet(t);
+                        }
+                    }
+                }
             }
-            t = System.currentTimeMillis() - t;
-            totalTime.addAndGet(t);
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
         }
     }
 
     /**
-     * Verifica se é imagem.
+     * Combine the score of each video frame into a single score. 
+     * It uses a weighted average, with higher weights for higher scores.
+     */
+    private double videoScore(List<Double> p) {
+        Collections.sort(p);
+        Collections.reverse(p);
+        double weight = 1;
+        double mult = 0.7;
+        double div = 0;
+        double sum = 0;
+        for (double v : p) {
+            div += weight;
+            sum += v * weight;
+            weight *= mult;
+        }
+        if (div > 0) sum /= div;
+        return sum;
+    }
+
+    /**
+     * Convert a raw prediction (double in [0,1]) into a score (integer in [1,1000]).
+     */
+    private static int predictionToScore(double p) {
+        return Math.max(1, (int) Math.round(p * 1000));
+    }
+
+    /**
+     * Update DIE attributes of a evidence.
+     */
+    private void update(IItem evidence, int score) throws Exception {
+        evidence.setExtraAttribute(DIE_SCORE, score);
+        int classe = Math.min(5, Math.max(1, score / 200 + 1));
+        evidence.setExtraAttribute(DIE_CLASS, classe);
+    }
+    
+    /**
+     * Check if the evidence is an image.
      */
     public static boolean isImageType(MediaType mediaType) {
         return mediaType.getType().equals("image"); //$NON-NLS-1$
     }
+    
+    /**
+     * Check if the evidence is a video.
+     */
+    public static boolean isVideoType(MediaType mediaType) {
+        return mediaType.getType().equals("video") //$NON-NLS-1$
+                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+    }
+    
 
     /**
-     * Obtém a imagem do arquivo. Se tiver miniatura utiliza, senão pega versão
-     * redimensionada.
+     * Get an image from the evidence, possibly reusing its thumb.
      */
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
