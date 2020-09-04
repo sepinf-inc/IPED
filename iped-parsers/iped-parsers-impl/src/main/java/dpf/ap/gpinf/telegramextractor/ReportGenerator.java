@@ -126,7 +126,6 @@ public class ReportGenerator {
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            link.setAtribute("href", message.getMediaFile());
 
             byte thumb[] = message.getThumb();
 
@@ -403,9 +402,9 @@ public class ReportGenerator {
                 + "var inHtml = \"\";\n" //$NON-NLS-1$
                 + "if (navigator.userAgent.search(\"JavaFX\") >= 0) {\n" //$NON-NLS-1$
                 + "  inHtml = \".iped-hide { display: none; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: block; }\";\n" //$NON-NLS-1$
+                + "  inHtml += \".iped-show { display: inline-block; }\";\n" //$NON-NLS-1$
                 + "} else {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: block; }\";\n" //$NON-NLS-1$
+                + "  inHtml = \".iped-hide { display: inline-block; }\";\n" //$NON-NLS-1$
                 + "  inHtml += \".iped-show { display: none; }\";\n" //$NON-NLS-1$
                 + "}\n" //$NON-NLS-1$
                 + "css.innerHTML = inHtml;\n" //$NON-NLS-1$
