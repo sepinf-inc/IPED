@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
 
@@ -21,8 +22,10 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.datasource.IPEDReader;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
@@ -63,6 +66,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static boolean ffmpegTested = false;
 
     private static boolean ffmpegDetected = false;
+
+    /**
+     * Used to get transcriptions from original cases when creating report
+     */
+    private static HashMap<File, Connection> prevCasesConnectionCache = new HashMap<>();
 
     protected UTF8Properties props = new UTF8Properties();
 
@@ -125,17 +133,23 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private void createConnection() {
+        this.conn = createConnection(output);
+    }
+
+    private Connection createConnection(File output) {
         File db = new File(output, TEXT_STORAGE);
         db.getParentFile().mkdirs();
         try {
             SQLiteConfig config = new SQLiteConfig();
             config.setSynchronous(SynchronousMode.OFF);
             config.setBusyTimeout(3600000);
-            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+            Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
 
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(CREATE_TABLE);
             }
+
+            return conn;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -148,6 +162,33 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private TextAndScore getTextFromDb(String id) throws IOException {
+        TextAndScore result = getTextFromDb(this.conn, id);
+        // check if it is report and copy previous result
+        if(result == null && caseData.isIpedReport()) {
+            List<File> reportingCases = (List<File>) caseData.getCaseObject(IPEDReader.REPORTING_CASES);
+            for (File source : reportingCases) {
+                File moduleDir = new File(source, IPEDSource.MODULE_DIR);
+                if (!new File(moduleDir, TEXT_STORAGE).exists())
+                    continue;
+                Connection conn;
+                synchronized (prevCasesConnectionCache) {
+                    conn = prevCasesConnectionCache.get(source);
+                    if (conn == null) {
+                        conn = createConnection(moduleDir);
+                        prevCasesConnectionCache.put(source, conn);
+                    }
+                }
+                result = getTextFromDb(conn, id);
+                if (result != null) {
+                    storeTextInDb(id, result.text, result.score);
+                    return result;
+                }
+            }
+        }
+        return result;
+    }
+
+    private TextAndScore getTextFromDb(Connection conn, String id) throws IOException {
         try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
@@ -245,6 +286,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (conn != null) {
             conn.close();
             conn = null;
+
+            for (Connection conn : prevCasesConnectionCache.values()) {
+                conn.close();
+            }
+            prevCasesConnectionCache.clear();
         }
     }
 
