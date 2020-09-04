@@ -249,12 +249,10 @@ public class Extractor {
     
 
     private void loadDocument(Message message, List<String> names, int size) {
-        List<IItemBase> result = null;
         for (String name : names) {
-        	
             String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
-            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
-            IItemBase item = getItemWithSize(result, size);
+            query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+            IItemBase item = getFileFromQuery(query);
             if (item != null) {
             	if(message.getMediaMime()==null) {
                     message.setMediaMime(item.getMediaType().toString());
@@ -266,6 +264,7 @@ public class Extractor {
                 if (item.hasFile()) {
                     message.setMediaFile(item.getFile().getAbsolutePath());
                 }
+                message.setMediaComment(query);
                 break;
             }
 
@@ -275,7 +274,8 @@ public class Extractor {
     private void loadLink(Message message, List<PhotoData> list) {
 
         for (PhotoData p : list) {
-            IItemBase r = getFileFrom(p.getName(), p.getSize());
+            String query = getQuery(p.getName(), p.getSize());
+            IItemBase r = getFileFromQuery(query);
             if (r != null) {
                 message.setType("link/image");
                 message.setLinkImage(r.getThumb());
@@ -285,6 +285,7 @@ public class Extractor {
                 if (r.hasFile()) {
                     message.setMediaFile(r.getFile().getAbsolutePath());
                 }
+                message.setMediaComment(query);
             }
         }
 
@@ -292,7 +293,8 @@ public class Extractor {
 
     private void loadImage(Message message, List<PhotoData> list) {
         for (PhotoData p : list) {
-            IItemBase r = getFileFrom(p.getName(), p.getSize());
+            String query = getQuery(p.getName(), p.getSize());
+            IItemBase r = getFileFromQuery(query);
             if (r != null) {
                 message.setThumb(r.getThumb());
                 message.setMediaHash(r.getHash());
@@ -301,30 +303,17 @@ public class Extractor {
                 if (r.hasFile()) {
                     message.setMediaFile(r.getFile().getAbsolutePath());
                 }
+                message.setMediaComment(query);
             }
         }
     }
 
-    private IItemBase getItemWithSize(List<IItemBase> result, int size) {
-        if (result == null || result.isEmpty())
-            return null;
-
-        // TODO warn user about size not being checked
-        if (size == 0)
-            return result.get(0);
-
-        for (IItemBase item : result) {
-            if (item.getLength() != null && item.getLength() == size) {
-                return item;
-            }
-        }
-        return null;
+    private String getQuery(String name, int size) {
+        return BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\" && " + BasicProps.LENGTH + ":" + size;
     }
 
-    private IItemBase getFileFrom(String name, int size) {
-        List<IItemBase> result = null;
-        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\" && " + BasicProps.LENGTH + ":" + size;
-        result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
+    private IItemBase getFileFromQuery(String query) {
+        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         if (result != null && !result.isEmpty()) {
             return result.get(0);
         }

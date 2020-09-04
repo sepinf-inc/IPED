@@ -1,13 +1,18 @@
 package dpf.ap.gpinf.telegramextractor;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
 import javax.xml.bind.DatatypeConverter;
 
+import dpf.sp.gpinf.indexer.util.IOUtil;
+
 public class Util {
+
     private static String byteArrayToHex(byte[] a) {
         StringBuilder sb = new StringBuilder(a.length * 2);
         for (byte b : a) {
@@ -62,6 +67,17 @@ public class Util {
         }
 
         return hash;
+    }
+
+    public static String readResourceAsString(String resource) {
+        try {
+            byte[] bytes = IOUtil.loadInputStream(Util.class.getResourceAsStream(resource));
+            return new String(bytes, StandardCharsets.UTF_8);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
 }

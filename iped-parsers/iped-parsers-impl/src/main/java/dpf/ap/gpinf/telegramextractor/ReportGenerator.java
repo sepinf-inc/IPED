@@ -113,13 +113,19 @@ public class ReportGenerator {
     }
 
     private void printVideo(PrintWriter out, Message message) {
+
         if (message.getMediaHash() != null) {
 
             printCheckbox(out, message.getMediaHash());
 
+            TagHtml div = new TagHtml("div");
+            if (message.getMediaComment() != null) {
+                div.setAtribute("class", "tooltip");
+                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+            }
+
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-
             link.setAtribute("href", message.getMediaFile());
 
             byte thumb[] = message.getThumb();
@@ -146,8 +152,7 @@ public class ReportGenerator {
             img.setAtribute("title", "Video");
             link.getInner().add(img);
 
-            out.println(link.toString());
-            out.println("<br/>");
+            div.getInner().add(link);
 
             TagHtml video = new TagHtml("video");
             video.setAtribute("class", "thumb iped-hide");
@@ -160,28 +165,20 @@ public class ReportGenerator {
             if (originalSource != null) {
                 video.getInner().add("<source src=\"" + originalSource + "\"/>");
             }
-            out.println(video.toString());
+            div.getInner().add(video);
+
+            out.println(div.toString());
             out.println("<br/>");
 
         } else {
-            if (message.getThumb() != null) {
-                TagHtml img = new TagHtml("img");
-                img.setAtribute("src", "data:image/jpg;base64,"
-                        + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(message.getThumb()));
-                img.setAtribute("class", "thumb");
-                img.setAtribute("title", "Video");
-                out.println(img.toString());
-
-            } else {
-                out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
-            }
+            out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
         }
 
     }
 
     private void printAudio(PrintWriter out, Message message) {
-        TagHtml img = new TagHtml("div");
 
+        TagHtml img = new TagHtml("div");
         img.setAtribute("class", "audioImg");
         img.setAtribute("title", "Audio");
 
@@ -189,15 +186,19 @@ public class ReportGenerator {
 
             printCheckbox(out, message.getMediaHash());
 
+            TagHtml div = new TagHtml("div");
+            if (message.getMediaComment() != null) {
+                div.setAtribute("class", "tooltip");
+                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+            }
+
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            link.setAtribute("href", message.getMediaFile());
 
             img.setAtribute("class", "audioImg iped-show");
-            link.getInner().add(img);
 
-            out.println(link.toString());
-            out.println("<br/>");
+            link.getInner().add(img);
+            div.getInner().add(link);
 
             TagHtml audio = new TagHtml("audio");
             audio.setAtribute("class", "iped-hide");
@@ -210,12 +211,14 @@ public class ReportGenerator {
             if (originalSource != null) {
                 audio.getInner().add("<source src=\"" + originalSource + "\"/>");
             }
-            out.println(audio.toString());
+            div.getInner().add(audio);
+            out.println(div.toString());
 
         } else {
-
             out.println(img.toString());
         }
+
+        out.println("<br/>");
 
     }
 
@@ -225,11 +228,17 @@ public class ReportGenerator {
 
     private void printImage(PrintWriter out, Message message, boolean isLink) {
         if (isLink) {
-            out.print("link<br/>");
+            out.print("Link:<br/>");
         }
         if (message.getMediaHash() != null) {
             
             printCheckbox(out, message.getMediaHash());
+
+            TagHtml div = new TagHtml("div");
+            if (message.getMediaComment() != null) {
+                div.setAtribute("class", "tooltip");
+                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+            }
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
@@ -261,8 +270,9 @@ public class ReportGenerator {
             String title = isLink ? "Link" : "Image";
             img.setAtribute("title", title);
             link.getInner().add(img);
+            div.getInner().add(link);
 
-            out.println(link.toString());
+            out.println(div.toString());
 
         } else if (!isLink) {
             out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
@@ -275,6 +285,12 @@ public class ReportGenerator {
         if (message.getMediaHash() != null) {
             
             printCheckbox(out, message.getMediaHash());
+
+            TagHtml div = new TagHtml("div");
+            if (message.getMediaComment() != null) {
+                div.setAtribute("class", "tooltip");
+                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+            }
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
@@ -305,8 +321,9 @@ public class ReportGenerator {
 
             img.setAtribute("title", "Attachment");
             link.getInner().add(img);
+            div.getInner().add(link);
 
-            out.println(link.toString());
+            out.println(div.toString());
 
         } else {
             out.println("<div class=\"attachImg\" title=\"Attachment\"></div>"); //$NON-NLS-1$
@@ -379,6 +396,7 @@ public class ReportGenerator {
                 + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "<style>\n" + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
+                + Util.readResourceAsString("css/tooltip.css")
                 + "\n</style>\n" + "<script>\n" //$NON-NLS-2$
                 + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
                 + "css.type = \"text/css\";\n" //$NON-NLS-1$
