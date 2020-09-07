@@ -339,6 +339,9 @@ public class ReportGenerator {
                         + contact + "</span><br/>"); //$NON-NLS-1$
             }
         }
+        if (message.getType() != null) {
+            out.print(message.getType());
+        }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().toLowerCase().startsWith("video")) {
                 printVideo(out, message);
@@ -356,10 +359,9 @@ public class ReportGenerator {
         }
         if (message.getData() != null) {
             out.print(message.getData()); // $NON-NLS-1$
-        } else {
-            if (message.getType() != null)
-                out.print(message.getType());
         }
+
+
         out.println("<br/>");
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$

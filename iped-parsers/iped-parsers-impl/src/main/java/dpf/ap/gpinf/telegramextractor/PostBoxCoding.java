@@ -355,10 +355,14 @@ public class PostBoxCoding {
             } else {
                 // other documents
                 long id = decodeInt64ForKey("i");
+                if (id == 0) {
+                    // case id=fileid
+                    id = decodeInt64ForKey("f");
+                }
                 long volume = decodeInt64ForKey("v");
                 int local = decodeInt32ForKey("l");
                 size = decodeInt32ForKey("n");
-
+                String fname = decodeStringForKey("fn");
                 action = decodeInt32ForKey("_rawValue");
 
                 mimetype = decodeStringForKey("mt");
@@ -369,8 +373,17 @@ public class PostBoxCoding {
                 logger.debug("l: {}", local);
                 logger.debug("n: {}", size);
                 logger.debug("action: {}", action);
+
+                if (fname != null) {
+                    Photo f = new Photo();
+                    logger.debug("name: {}", fname);
+                    f.setName(fname);
+                    f.setSize(size);
+                    files.add(f);
+                }
                 if (id != 0) {
                     Photo f = new Photo();
+                    logger.debug("name: {}", id);
                     f.setName(id + "");
                     f.setSize(size);
                     files.add(f);
@@ -380,6 +393,7 @@ public class PostBoxCoding {
                 if (volume != 0 && local != 0) {
                     Photo f = new Photo();
                     f.setName(volume + "_" + local);
+                    logger.debug("name: {}", f.getName());
                     f.setSize(size);
                     files.add(f);
                 }
