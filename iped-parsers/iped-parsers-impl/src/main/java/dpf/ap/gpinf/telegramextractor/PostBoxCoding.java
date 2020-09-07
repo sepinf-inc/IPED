@@ -14,6 +14,8 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.bind.DatatypeConverter;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -144,7 +146,21 @@ public class PostBoxCoding {
         }
         return false;
     }
+
     
+
+    public byte[] decodeBytesForKey(String key) {
+        if (findOfset(key, Bytes)) {
+            int tam = readInt32(offset);
+            offset += 4;
+            if (offset + tam >= data.length || tam == 0)
+                return null;
+            return Arrays.copyOfRange(data, offset, offset + tam);
+
+        }
+        return null;
+    }
+
     public String decodeStringForKey(String key){
         if(findOfset(key, STRING)){
             int tam=readInt32(offset);
@@ -256,6 +272,97 @@ public class PostBoxCoding {
 
     }
     
+    List<byte[]> readArray() {
+        int nel = readInt32(offset);
+        offset += 4;
+        ArrayList<byte[]> els = new ArrayList<>();
+        for (int i = 0; i < nel; i++) {
+            int size = readInt32(offset);
+            offset += 4;
+            if (offset + size < data.length) {
+                els.add(Arrays.copyOfRange(data, offset, offset + size));
+                offset += size;
+            }
+        }
+        return els;
+    }
+
+    void readMedia(Message m) {
+        
+        ArrayList<String> names = new ArrayList<>();
+        String mimetype = null;
+        String url = decodeStringForKey("u");
+        GenericObj im = decodeObjectForKey("im");
+        int size=0;
+        int action=0;
+        if (im != null && url != null) {
+            // link with image
+            this.data = im.content;
+            this.offset = 0;
+            List<GenericObj> sizes = decodeObjectArrayForKey("r");
+            mimetype = "link/image";
+            logger.debug("url: {}", url);
+            for (GenericObj photo : sizes) {
+                this.data = photo.content;
+                this.offset = 0;
+                long id = decodeInt64ForKey("i");
+                long volume = decodeInt64ForKey("v");
+                int local = decodeInt32ForKey("l");
+
+                if (id != 0) {
+                    names.add(id + "");
+                }
+
+                if (volume != 0 && local != 0) {
+                    names.add(volume + "_" + local);
+                }
+            }
+
+
+        } else {
+            System.out.print("tamanho " + this.data.length);
+            System.out.println(DatatypeConverter.printHexBinary(this.data));
+            long id = decodeInt64ForKey("i");
+            long volume = decodeInt64ForKey("v");
+            int local = decodeInt32ForKey("l");
+            size = decodeInt32ForKey("n");
+
+            action = decodeInt32ForKey("_rawValue");
+
+            mimetype = decodeStringForKey("mt");
+            byte[] thumb = null;
+            thumb = decodeBytesForKey("itd");
+
+
+
+            logger.debug("v: {}", volume);
+            logger.debug("l: {}", local);
+            logger.debug("n: {}", size);
+            logger.debug("action: {}", action);
+
+            if (id != 0) {
+                names.add(id + "");
+            }
+
+            if (volume != 0 && local != 0) {
+                names.add(volume + "_" + local);
+            }
+        }
+        if (m != null) {
+            // m.setThumb(thumb);
+            logger.info("mimetype: {}", mimetype);
+            m.setMediaMime(mimetype);
+            if (url != null) {
+                m.setLink(true);
+                m.setMediaMime("link");
+            }
+
+            m.setNames(names);
+            m.setType(MapTypeMSG.decodeMsg(action));
+            m.setMediasize(size);
+        }
+
+    }
       
     void  readMessage(byte[] key, byte[] data,Message m){
         //reference MessageHistoryTable.swift
@@ -327,38 +434,33 @@ public class PostBoxCoding {
             int msglen=readInt32(offset);
             offset+=4;
             String txt=readString(offset, msglen);
-            
-           decodeObjectArrayForKey("entities");
-           ArrayList<String> names=new ArrayList<>();
-           
-        	long id=decodeInt64ForKey("i");
-        	long volume=decodeInt64ForKey("v");
-        	int local=decodeInt32ForKey("l");
-        	int size=decodeInt32ForKey("n");
-        	int action=decodeInt32ForKey("_rawValue");
-        	
-            logger.debug("v: {}", volume);
-            logger.debug("l: {}", local);
-            logger.debug("n: {}", size);
-            logger.debug("action: {}", action);
+            offset += msglen;
+            // atributos
+            List<byte[]> atrs = readArray();
+            List<byte[]> embededmedia = readArray();
+            List<byte[]> referencemedia = readArray();
 
-        	if(id!=0) {
-        		names.add(id+"");
-        	}
-        	
-        	if(volume!=0 && local!=0) {
-        		names.add(volume+"_"+local);
-        	}
+
+            for (byte[] b : embededmedia) {
+                logger.info("embededmedia: {}", b.length);
+                PostBoxCoding media = new PostBoxCoding();
+                media.setData(b);
+                media.readMedia(m);
+            }
+            
+
+
+
            
-            m.setNames(names);
+
             
             if(m!=null){
-            	m.setType(MapTypeMSG.decodeMsg(action));
+
             	
                 m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));
                 m.setData(txt);
                 m.setId(stableId);
-                m.setMediasize(size);
+
                 boolean incoming=testbit(flags, 2) || testbit(flags, 7);
                 m.setFromMe(!incoming);
                 
