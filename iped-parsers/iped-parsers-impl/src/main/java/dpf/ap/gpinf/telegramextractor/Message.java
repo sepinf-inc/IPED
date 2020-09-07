@@ -4,6 +4,7 @@ import java.util.Date;
 import java.util.List;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
+import dpf.ap.gpinf.interfacetelegram.PhotoData;
 
 public class Message implements MessageInterface {
     private long id;
@@ -23,7 +24,7 @@ public class Message implements MessageInterface {
     private byte[] linkImage = null;
     private byte[] thumb = null;
     private String hashThumb = null;
-    private List<String> names=null;
+    private List<PhotoData> names = null;
     private int mediasize=0;
 
     public long getId() {
@@ -159,11 +160,11 @@ public class Message implements MessageInterface {
         this.type = type;
     }
 
-	public List<String> getNames() {
+    public List<PhotoData> getNames() {
 		return names;
 	}
 
-	public void setNames(List<String> names) {
+    public void setNames(List<PhotoData> names) {
 		this.names = names;
 	}
 

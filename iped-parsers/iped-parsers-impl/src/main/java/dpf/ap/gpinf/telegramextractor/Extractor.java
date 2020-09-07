@@ -224,7 +224,11 @@ public class Extractor {
                 	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
                     
                     if(message.getNames()!=null && message.getNames().size()>0) {
-                    	loadDocument(message, message.getNames(), message.getMediasize());
+                        for (PhotoData f : message.getNames()) {
+                            ArrayList<String> name = new ArrayList<>();
+                            name.add(f.getName());
+                            loadDocument(message, name, f.getSize());
+                        }
                     	if(message.getMediaMime()==null) {
                     		message.setMediaMime("attach");
                     	}

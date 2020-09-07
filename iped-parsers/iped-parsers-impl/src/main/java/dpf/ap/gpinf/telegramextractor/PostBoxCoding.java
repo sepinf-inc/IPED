@@ -14,8 +14,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
-import javax.xml.bind.DatatypeConverter;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -287,9 +285,37 @@ public class PostBoxCoding {
         return els;
     }
 
+    List<PhotoData> getPhotos(List<GenericObj> sizes) {
+        ArrayList<PhotoData> photos = new ArrayList<>();
+
+        for (GenericObj photo : sizes) {
+            this.data = photo.content;
+            this.offset = 0;
+            long id = decodeInt64ForKey("i");
+            long volume = decodeInt64ForKey("v");
+            int local = decodeInt32ForKey("l");
+            int size = decodeInt32ForKey("n");
+
+            if (id != 0) {
+                Photo f = new Photo();
+                f.setName(id + "");
+                f.setSize(size);
+                photos.add(f);
+            }
+
+            if (volume != 0 && local != 0) {
+                Photo f = new Photo();
+                f.setName(volume + "_" + local);
+                f.setSize(size);
+                photos.add(f);
+            }
+        }
+
+        return photos;
+    }
     void readMedia(Message m) {
         
-        ArrayList<String> names = new ArrayList<>();
+        List<PhotoData> files = new ArrayList<>();
         String mimetype = null;
         String url = decodeStringForKey("u");
         GenericObj im = decodeObjectForKey("im");
@@ -302,62 +328,65 @@ public class PostBoxCoding {
             List<GenericObj> sizes = decodeObjectArrayForKey("r");
             mimetype = "link/image";
             logger.debug("url: {}", url);
-            for (GenericObj photo : sizes) {
-                this.data = photo.content;
-                this.offset = 0;
-                long id = decodeInt64ForKey("i");
-                long volume = decodeInt64ForKey("v");
-                int local = decodeInt32ForKey("l");
-
-                if (id != 0) {
-                    names.add(id + "");
-                }
-
-                if (volume != 0 && local != 0) {
-                    names.add(volume + "_" + local);
-                }
-            }
+            files = getPhotos(sizes);
 
 
         } else {
-            System.out.print("tamanho " + this.data.length);
-            System.out.println(DatatypeConverter.printHexBinary(this.data));
-            long id = decodeInt64ForKey("i");
-            long volume = decodeInt64ForKey("v");
-            int local = decodeInt32ForKey("l");
-            size = decodeInt32ForKey("n");
+            List<GenericObj> sizes = decodeObjectArrayForKey("r");
+            if (sizes.size() == 3) {
+                // image
+                mimetype = "image";
+                logger.debug("url: {}", url);
+                files = getPhotos(sizes);
 
-            action = decodeInt32ForKey("_rawValue");
+            } else {
+                // other documents
+                long id = decodeInt64ForKey("i");
+                long volume = decodeInt64ForKey("v");
+                int local = decodeInt32ForKey("l");
+                size = decodeInt32ForKey("n");
 
-            mimetype = decodeStringForKey("mt");
-            byte[] thumb = null;
-            thumb = decodeBytesForKey("itd");
+                action = decodeInt32ForKey("_rawValue");
 
+                mimetype = decodeStringForKey("mt");
+                byte[] thumb = null;
+                thumb = decodeBytesForKey("itd");
 
+                logger.debug("v: {}", volume);
+                logger.debug("l: {}", local);
+                logger.debug("n: {}", size);
+                logger.debug("action: {}", action);
+                if (id != 0) {
+                    Photo f = new Photo();
+                    f.setName(id + "");
+                    f.setSize(size);
+                    files.add(f);
+                  
+                }
 
-            logger.debug("v: {}", volume);
-            logger.debug("l: {}", local);
-            logger.debug("n: {}", size);
-            logger.debug("action: {}", action);
-
-            if (id != 0) {
-                names.add(id + "");
+                if (volume != 0 && local != 0) {
+                    Photo f = new Photo();
+                    f.setName(volume + "_" + local);
+                    f.setSize(size);
+                    files.add(f);
+                }
             }
-
-            if (volume != 0 && local != 0) {
-                names.add(volume + "_" + local);
-            }
+           
         }
         if (m != null) {
             // m.setThumb(thumb);
-            logger.info("mimetype: {}", mimetype);
+            logger.debug("mimetype: {}", mimetype);
             m.setMediaMime(mimetype);
+            if (files.size() == 1) {
+                m.setMediasize(files.get(0).getSize());
+            }
+            m.setNames(files);
             if (url != null) {
                 m.setLink(true);
                 m.setMediaMime("link");
             }
 
-            m.setNames(names);
+            
             m.setType(MapTypeMSG.decodeMsg(action));
             m.setMediasize(size);
         }
@@ -442,7 +471,7 @@ public class PostBoxCoding {
 
 
             for (byte[] b : embededmedia) {
-                logger.info("embededmedia: {}", b.length);
+                logger.debug("embededmedia: {}", b.length);
                 PostBoxCoding media = new PostBoxCoding();
                 media.setData(b);
                 media.readMedia(m);
