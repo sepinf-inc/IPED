@@ -338,6 +338,32 @@ public class PostBoxCoding {
 
         return photos;
     }
+
+    void readPeersIds(Message m, byte[] d) {
+        if (m == null || d == null)
+            return;
+        PostBoxCoding peersDec = new PostBoxCoding();
+        peersDec.setData(d);
+        long peers[] = peersDec.readInt64Array();
+
+        String message = m.getData();
+        if (message == null) {
+            message = "Id ";
+        }
+        boolean first = true;
+        for (long peer : peers) {
+            if (!first) {
+                message += ", ";
+            } else {
+                first = false;
+            }
+            message += peer;
+        }
+
+        m.setData(message);
+
+    }
+
     void readMedia(Message m) {
         
         List<PhotoData> files = new ArrayList<>();
@@ -409,31 +435,10 @@ public class PostBoxCoding {
                     f.setSize(size);
                     files.add(f);
                 }
-                if (action == 2) {
+                if (action == 2 || action == 3) {
 
                     byte d[] = decodeBytesForKey("peerIds");
-                    if (d != null) {
-                        PostBoxCoding peersDec = new PostBoxCoding();
-                        peersDec.setData(d);
-                        long peers[] = peersDec.readInt64Array();
-                        if (m != null) {
-                            String message = m.getData();
-                            if (message == null) {
-                                message = "Id ";
-                            }
-                            boolean first = true;
-                            for (long peer : peers) {
-                                if (!first) {
-                                    message += ", ";
-                                } else {
-                                    first = false;
-                                }
-                                message += peer;
-                            }
-
-                            m.setData(message);
-                        }
-                    }
+                    readPeersIds(m, d);
                     
                 }
 
