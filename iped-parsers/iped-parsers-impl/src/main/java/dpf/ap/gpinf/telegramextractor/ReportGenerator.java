@@ -339,8 +339,8 @@ public class ReportGenerator {
                         + contact + "</span><br/>"); //$NON-NLS-1$
             }
         }
-        if (message.getType() != null) {
-            out.print(message.getType());
+        if (message.getType() != null && !message.getType().isEmpty()) {
+            out.print(message.getType() + "<br>");
         }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().toLowerCase().startsWith("video")) {

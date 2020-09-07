@@ -122,7 +122,7 @@ public class PostBoxCoding {
     }
     
     public String readString(int start, int tam){
-        if(start+tam>=data.length ||tam==0)
+        if (start + tam > data.length || tam == 0)
             return null;
         return new String(Arrays.copyOfRange(data, start,start+tam ),StandardCharsets.UTF_8);
     }
@@ -164,7 +164,7 @@ public class PostBoxCoding {
         if (findOfset(key, Bytes)) {
             int tam = readInt32(offset);
             offset += 4;
-            if (offset + tam >= data.length || tam == 0)
+            if (offset + tam > data.length || tam == 0)
                 return null;
             return Arrays.copyOfRange(data, offset, offset + tam);
 
@@ -298,6 +298,18 @@ public class PostBoxCoding {
         return els;
     }
 
+    long[] readInt64Array() {
+        int nel = readInt32(offset);
+        offset += 4;
+        long els[] = new long[nel];
+        for (int i = 0; i < nel; i++) {
+            long val = readInt64(offset);
+            offset += 8;
+            els[i] = val;
+        }
+        return els;
+    }
+
     List<PhotoData> getPhotos(List<GenericObj> sizes) {
         ArrayList<PhotoData> photos = new ArrayList<>();
 
@@ -397,6 +409,34 @@ public class PostBoxCoding {
                     f.setSize(size);
                     files.add(f);
                 }
+                if (action == 2) {
+
+                    byte d[] = decodeBytesForKey("peerIds");
+                    if (d != null) {
+                        PostBoxCoding peersDec = new PostBoxCoding();
+                        peersDec.setData(d);
+                        long peers[] = peersDec.readInt64Array();
+                        if (m != null) {
+                            String message = m.getData();
+                            if (message == null) {
+                                message = "Id ";
+                            }
+                            boolean first = true;
+                            for (long peer : peers) {
+                                if (!first) {
+                                    message += ", ";
+                                } else {
+                                    first = false;
+                                }
+                                message += peer;
+                            }
+
+                            m.setData(message);
+                        }
+                    }
+                    
+                }
+
             }
            
         }
@@ -496,14 +536,6 @@ public class PostBoxCoding {
             List<byte[]> embededmedia = readArray();
             List<byte[]> referencemedia = readArray();
 
-
-            for (byte[] b : embededmedia) {
-                logger.debug("embededmedia: {}", b.length);
-                PostBoxCoding media = new PostBoxCoding();
-                media.setData(b);
-                media.readMedia(m);
-            }
-            
             if(m!=null){
                 m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));
                 m.setData(txt);
@@ -518,7 +550,14 @@ public class PostBoxCoding {
             }else {            	
                 m.getRemetente().setId(authorId);
             }
-           
+
+
+            for (byte[] b : embededmedia) {
+                logger.debug("embededmedia: {}", b.length);
+                PostBoxCoding media = new PostBoxCoding();
+                media.setData(b);
+                media.readMedia(m);
+            }
             
         }
         
