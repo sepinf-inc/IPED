@@ -112,6 +112,29 @@ public class ReportGenerator {
         return bout.toByteArray();
     }
 
+    private TagHtml getThumbTag(Message m, String classnotfound) {
+        byte thumb[] = m.getThumb();
+
+        if (thumb == null && m.getMediaHash() != null) {
+            List<IItemBase> result = null;
+            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + m.getMediaHash(), searcher);
+            if (result != null && !result.isEmpty()) {
+                thumb = result.get(0).getThumb();
+            }
+        }
+
+        TagHtml img;
+        if (thumb != null) {
+            img = new TagHtml("img");
+            img.setAtribute("class", "thumb iped-show");
+            img.setAtribute("src",
+                    "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
+        } else {
+            img = new TagHtml("div");
+            img.setAtribute("class", classnotfound);
+        }
+        return img;
+    }
     private void printVideo(PrintWriter out, Message message) {
 
         if (message.getMediaHash() != null) {
@@ -127,26 +150,7 @@ public class ReportGenerator {
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
-            byte thumb[] = message.getThumb();
-
-            if (thumb == null) {
-                List<IItemBase> result = null;
-                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
-                if (result != null && !result.isEmpty()) {
-                    thumb = result.get(0).getThumb();
-                }
-            }
-
-            TagHtml img;
-            if (thumb != null) {
-                img = new TagHtml("img");
-                img.setAtribute("class", "thumb iped-show");
-                img.setAtribute("src",
-                        "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
-            } else {
-                img = new TagHtml("div");
-                img.setAtribute("class", "videoImg iped-show");
-            }
+            TagHtml img = getThumbTag(message, "videoImg iped-show");
 
             img.setAtribute("title", "Video");
             link.getInner().add(img);
@@ -170,7 +174,7 @@ public class ReportGenerator {
             out.println("<br/>");
 
         } else {
-            out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
+            out.println(getThumbTag(message, "videoImg iped-show").toString()); //$NON-NLS-1$
         }
 
     }
@@ -244,27 +248,8 @@ public class ReportGenerator {
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
             link.setAtribute("href", ref);
-
-            byte thumb[] = isLink ? message.getLinkImage() : message.getThumb();
-
-            if (thumb == null) {
-                List<IItemBase> result = null;
-                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
-                if (result != null && !result.isEmpty()) {
-                    thumb = result.get(0).getThumb();
-                }
-            }
-
-            TagHtml img;
-            if (thumb != null) {
-                img = new TagHtml("img");
-                img.setAtribute("class", "thumb");
-                img.setAtribute("src",
-                        "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
-            } else {
-                img = new TagHtml("div");
-                img.setAtribute("class", "imageImg");
-            }
+            
+            TagHtml img = getThumbTag(message, "imageImg");
 
             String title = isLink ? "Link" : "Image";
             img.setAtribute("title", title);
@@ -274,7 +259,7 @@ public class ReportGenerator {
             out.println(div.toString());
 
         } else if (!isLink) {
-            out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
+            out.println(getThumbTag(message, "imageImg").toString()); //$NON-NLS-1$
         }
         out.println("<br/>");
 
@@ -297,26 +282,9 @@ public class ReportGenerator {
                     message.getMediaExtension(), message.getMediaFile());
             link.setAtribute("href", ref);
 
-            byte thumb[] = message.getThumb();
 
-            if (thumb == null) {
-                List<IItemBase> result = null;
-                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems("hash:" + message.getMediaHash(), searcher);
-                if (result != null && !result.isEmpty()) {
-                    thumb = result.get(0).getThumb();
-                }
-            }
 
-            TagHtml img;
-            if (thumb != null) {
-                img = new TagHtml("img");
-                img.setAtribute("class", "thumb");
-                img.setAtribute("src",
-                        "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
-            } else {
-                img = new TagHtml("div");
-                img.setAtribute("class", "attachImg");
-            }
+            TagHtml img = getThumbTag(message, "attachImg");
 
             img.setAtribute("title", "Attachment");
             link.getInner().add(img);
@@ -325,7 +293,7 @@ public class ReportGenerator {
             out.println(div.toString());
 
         } else {
-            out.println("<div class=\"attachImg\" title=\"Attachment\"></div>"); //$NON-NLS-1$
+            out.println(getThumbTag(message, "attachImg").toString()); //$NON-NLS-1$
         }
         out.println("<br/>");
 
