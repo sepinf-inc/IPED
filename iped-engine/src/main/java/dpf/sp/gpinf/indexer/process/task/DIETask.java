@@ -152,6 +152,7 @@ public class DIETask extends AbstractTask {
                     throw new IPEDException("Error loading DIE implementation: " + dieDat.getAbsolutePath()); //$NON-NLS-1$
 
                 logger.info("Task enabled."); //$NON-NLS-1$
+                logger.info("Model version: " + predictor.getVersion()); //$NON-NLS-1$
                 logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
                 init.set(true);
             }
