@@ -44,6 +44,7 @@ public class Message implements MessageInterface {
     private String hashThumb = null;
     private List<PhotoData> names = null;
     private int mediasize=0;
+    private long toId = 0;
 
     public long getId() {
         return id;
@@ -200,5 +201,13 @@ public class Message implements MessageInterface {
 
     public void setMediaComment(String mediaComment) {
         this.mediaComment = mediaComment;
+    }
+
+    public long getToId() {
+        return toId;
+    }
+
+    public void setToId(long toId) {
+        this.toId = toId;
     }
 }
