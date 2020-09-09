@@ -57,6 +57,8 @@ public class Extractor {
 
     private HashMap<Long, Contact> contacts = new HashMap<>();
 
+    private Contact owner;
+
     public Extractor() {
     }
 
@@ -213,6 +215,9 @@ public class Extractor {
                         }
                         message.setType(msg_decoded);
                     }
+                    if (owner == null && message.isFromMe()) {
+                        owner = message.getRemetente();
+                    }
                     msgs.add(message);
                 }
             }
@@ -253,7 +258,9 @@ public class Extractor {
                     }
                     
                     message.setRemetente(getContact(message.getRemetente().getId()));
-
+                    if (owner == null && message.isFromMe()) {
+                        owner = message.getRemetente();
+                    }
                     msgs.add(message);
                 }
             }
@@ -460,6 +467,14 @@ public class Extractor {
         return contacts;
     }
     
+
+    public Contact getOwner() {
+        return owner;
+    }
+
+    public void setOwner(Contact owner) {
+        this.owner = owner;
+    }
 
     private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
             + "c.name as groupName, c.data as groupData "

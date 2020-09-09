@@ -41,7 +41,6 @@ Compressed Archives = application/x-tika-ooxml; application/zlib; application/ap
 
 Contacts = text/x-vcard; application/x-vcard-html; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact; contact/x-telegram-contact;
 
-
 Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-whatsapp-chat; application/x-skype-conversation; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview;application/x-telegram-chat
 
 Windows Registry = application/x-windows-registry; application/x-windows-registry-report
@@ -86,7 +85,7 @@ SMS Messages = application/x-ufed-html-sms; application/x-ufed-sms
 
 MMS Messages = application/x-ufed-html-mms; application/x-ufed-mms
 
-Instant Messages = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer
+Instant Messages = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer; message/x-telegram-message;
 
 Bluetooth Devices = application/x-ufed-html-bluetooth; application/x-ufed-bluetoothdevice
 
