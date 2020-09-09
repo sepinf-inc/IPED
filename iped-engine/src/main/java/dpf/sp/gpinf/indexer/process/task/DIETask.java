@@ -238,11 +238,13 @@ public class DIETask extends AbstractTask {
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
                             List<BufferedImage> frames = ImageUtil.getFrames((BufferedImage) read[0], videoComment);
                             List<Double> pvideo = new ArrayList<Double>();
-                            for (BufferedImage frame : frames) {
-                                List<Float> features = die.extractFeatures(frame);
-                                if (features != null) {
-                                    double p = predictor.predict(features);
-                                    pvideo.add(p);
+                            if (frames != null) {
+                                for (BufferedImage frame : frames) {
+                                    List<Float> features = die.extractFeatures(frame);
+                                    if (features != null) {
+                                        double p = predictor.predict(features);
+                                        pvideo.add(p);
+                                    }
                                 }
                             }
                             if (!pvideo.isEmpty()) {
