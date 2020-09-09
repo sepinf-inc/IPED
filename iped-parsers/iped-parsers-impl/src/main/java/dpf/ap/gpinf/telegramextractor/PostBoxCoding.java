@@ -567,6 +567,10 @@ public class PostBoxCoding {
         }
         
     }
+
+    long getAccountId() {
+        return decodeInt64ForKey("peerId");
+    }
     void readUser(Contact c){
         GenericObj user=decodeObjectForKey("_");
         setData(user.content);
@@ -597,6 +601,7 @@ public class PostBoxCoding {
         
     
 }
+
 
 class Photo implements PhotoData{
 

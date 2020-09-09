@@ -169,7 +169,14 @@ public class TelegramParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
+
             e.extractContactsIOS();
+
+            // extract user account after contacts to link the account id with the contact
+            Contact useraccount = e.extractUserAccountIOS();
+            if (useraccount != null) {
+                createAccountHTML(useraccount, handler, context);
+            }
             ReportGenerator r = new ReportGenerator(searcher);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -221,30 +228,9 @@ public class TelegramParser extends SQLite3DBParser {
 	    		Element e=(Element) nl.item(0);
 	    		byte[] b=DatatypeConverter.parseBase64Binary(e.getTextContent());
 	    		Contact user=Contact.getContactFromBytes(b);
-	    		
-	    		
-	    		Metadata meta = new Metadata();
-    	        meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ACCOUNT.toString());
-    	        meta.set(TikaCoreProperties.TITLE,"Telegram - "+ user.getFullname());
-    	        meta.set(ExtraProperties.USER_NAME, user.getName());
-    	        meta.set(ExtraProperties.USER_PHONE, user.getPhone());
-    	        meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
-    	        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
-                Extractor ex = new Extractor();
-    	        IItemSearcher searcher = context.get(IItemSearcher.class);
-                ex.setSearcher(searcher);
-                ex.searchAvatarFileName(user, user.getPhotos());
-    	        if (user.getAvatar() != null) {
-    	            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
-    	        }
+                createAccountHTML(user, handler, context);
 
-    	       
-    	        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-    	                new ParsingEmbeddedDocumentExtractor(context));
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
-    	        byte[] bytes=reportGenerator.genarateContactHtml(user);
-    	        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
-                extractor.parseEmbedded(contactStream, handler, meta, false);
+
                 
 	    	}
 	    	
@@ -254,6 +240,30 @@ public class TelegramParser extends SQLite3DBParser {
     	
     }
     
+    private void createAccountHTML(Contact user, ContentHandler handler, ParseContext context)
+            throws IOException, SAXException {
+        Metadata meta = new Metadata();
+        meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ACCOUNT.toString());
+        meta.set(TikaCoreProperties.TITLE, "Telegram - " + user.getFullname());
+        meta.set(ExtraProperties.USER_NAME, user.getName());
+        meta.set(ExtraProperties.USER_PHONE, user.getPhone());
+        meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
+        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
+        Extractor ex = new Extractor();
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        ex.setSearcher(searcher);
+        ex.searchAvatarFileName(user, user.getPhotos());
+        if (user.getAvatar() != null) {
+            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
+        }
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        ReportGenerator reportGenerator = new ReportGenerator(searcher);
+        byte[] bytes = reportGenerator.genarateContactHtml(user);
+        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
+        extractor.parseEmbedded(contactStream, handler, meta, false);
+    }
 
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
          throws IOException, SAXException, TikaException {

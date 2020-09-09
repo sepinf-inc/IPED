@@ -57,6 +57,8 @@ public class Extractor {
 
     private HashMap<Long, Contact> contacts = new HashMap<>();
 
+    private Contact userAccount = null;
+
     public Extractor() {
     }
 
@@ -82,6 +84,23 @@ public class Extractor {
             return c;
         }
 
+    }
+
+    protected Contact extractUserAccountIOS() throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_USERACCOUNT_SQL_IOS)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs != null) {
+                PostBoxCoding p = new PostBoxCoding();
+                p.setData(rs.getBytes("value"));
+                long id = p.getAccountId();
+                if (id != 0) {
+                    this.userAccount = getContact(id);
+                }
+
+            }
+
+        }
+        return this.userAccount;
     }
 
     protected ArrayList<Chat> extractChatList() throws Exception {
@@ -240,7 +259,15 @@ public class Extractor {
                 	
                 	Message message = new Message(0,chat);
                 	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
-                    
+                    if (!chat.isGroup()) {
+
+                        if (message.isFromMe()) {
+                            message.setToId(chat.getId());
+                        } else if (this.userAccount != null) {
+                            message.setToId(this.userAccount.getId());
+                        }
+                    }
+
                     if(message.getNames()!=null && message.getNames().size()>0) {
                         for (PhotoData f : message.getNames()) {
                             ArrayList<String> name = new ArrayList<>();
@@ -460,6 +487,8 @@ public class Extractor {
         return contacts;
     }
     
+
+    private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
     private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
             + "c.name as groupName, c.data as groupData "
