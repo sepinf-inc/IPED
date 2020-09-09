@@ -232,6 +232,9 @@ public class Extractor {
                         }
                         message.setType(msg_decoded);
                     }
+                    if (userAccount == null && message.isFromMe()) {
+                        userAccount = message.getRemetente();
+                    }
                     msgs.add(message);
                 }
             }
@@ -268,7 +271,6 @@ public class Extractor {
                 	Message message = new Message(0,chat);
                     p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
                     if (!chat.isGroup()) {
-
                         if (message.isFromMe()) {
                             message.setToId(chat.getId());
                         } else if (this.userAccount != null) {
@@ -288,7 +290,9 @@ public class Extractor {
                     }
                     
                     message.setRemetente(getContact(message.getRemetente().getId()));
-
+                    if (userAccount == null && message.isFromMe()) {
+                        userAccount = message.getRemetente();
+                    }
                     msgs.add(message);
                 }
             }
@@ -487,6 +491,10 @@ public class Extractor {
 
     public HashMap<Long, Contact> getContacts() {
         return contacts;
+    }
+
+    public Contact getUserAccount() {
+        return userAccount;
     }
     
     private static final Comparator<Message> MSG_TIME_COMPARATOR=new Comparator<Message>() {

@@ -333,11 +333,11 @@ public class ReportGenerator {
             out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
         } else {
             out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
-            Contact contact = message.getRemetente();
-            if (contact != null) {
-                out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                        + contact + "</span><br/>"); //$NON-NLS-1$
-            }
+        }
+        Contact contact = message.getRemetente();
+        if (contact != null) {
+            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+                    + contact + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
             out.print(message.getType() + "<br>");

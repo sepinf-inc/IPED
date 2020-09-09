@@ -154,9 +154,11 @@ public class Contact implements ContactInterface {
             name = "";
         if (number != null && number.length() > 0) {
             name += " (phone: " + number + ")";
-        } else {
+        } else if (getId() > 0) {
             name += " (ID:" + getId() + " )";
         }
+        if (name == null || name.trim().isEmpty())
+            name = "unknown";
         return name;
     }
 

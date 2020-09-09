@@ -36,6 +36,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -81,7 +82,8 @@ public class GraphTask extends AbstractTask {
     // TODO externalize to config file
     private static String[] contactMimes = { VCardParser.VCARD_MIME.toString(), OutlookPSTParser.OUTLOOK_CONTACT_MIME,
             SkypeParser.CONTACT_MIME_TYPE, WhatsAppParser.WHATSAPP_CONTACT.toString(),
-            "application/windows-adress-book", "application/x-ufed-contact" };
+            TelegramParser.TELEGRAM_CONTACT.toString(), "application/windows-adress-book",
+            "application/x-ufed-contact" };
 
     private static final int MAX_PHONE_CACHE_KEY = 50 * 1024;
 
@@ -244,6 +246,8 @@ public class GraphTask extends AbstractTask {
     private static String getRelationType(String mediaType) {
         if (WhatsAppParser.WHATSAPP_MESSAGE.toString().equals(mediaType)
                 || WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_MESSAGE.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(mediaType)
                 || SkypeParser.MESSAGE_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
@@ -260,6 +264,7 @@ public class GraphTask extends AbstractTask {
         }
         if (SkypeParser.ACCOUNT_MIME_TYPE.toString().equals(mediaType)
                 || WhatsAppParser.WHATSAPP_ACCOUNT.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_ACCOUNT.toString().equals(mediaType)
                 || mediaType.equals("application/x-ufed-user") || mediaType.equals("application/x-ufed-useraccount")) {
             return "useraccount";
         }
