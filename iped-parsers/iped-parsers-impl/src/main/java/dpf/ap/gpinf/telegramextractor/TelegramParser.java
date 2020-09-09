@@ -137,7 +137,7 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
-            Contact account = searchUserAccount(searcher, dbPath);
+            Contact account = searchAndroidAccount(searcher, dbPath);
 
             e.extractChatList();
             for (Chat c : e.getChatList()) {
@@ -217,6 +217,7 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
 
+            // TODO handle group messages
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getRemetente().toString());
             if (m.getToId() != 0)
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, contacts.get(m.getToId()).toString());
@@ -279,13 +280,11 @@ public class TelegramParser extends SQLite3DBParser {
                     extractor.parseEmbedded(contactStream, handler, cMetadata, false);
                 }
             }
-            String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
-            Contact account = searchUserAccount(searcher, dbPath);
 
             e.extractChatListIOS();
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessagesIOS(c));
-                generateChat(c, account, e.getContacts(), searcher, handler, extractor);
+                generateChat(c, useraccount, e.getContacts(), searcher, handler, extractor);
             }
 
         } catch (SQLException e) {
@@ -294,13 +293,13 @@ public class TelegramParser extends SQLite3DBParser {
 		}
     }
 
-    private Contact searchUserAccount(IItemSearcher searcher, String dbPath) {
+    private Contact searchAndroidAccount(IItemSearcher searcher, String dbPath) {
         String query = BasicProps.CONTENTTYPE + ":\"" + TELEGRAM_USER_CONF.toString() + "\"";
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
             try (InputStream is = item.getBufferedStream()) {
-                Contact account = decodeTelegramAccount(is);
+                Contact account = decodeAndroidAccount(is);
                 if (account != null)
                     return account;
 
@@ -330,7 +329,7 @@ public class TelegramParser extends SQLite3DBParser {
         return null;
     }
 
-    private Contact decodeTelegramAccount(InputStream stream) throws Exception {
+    private Contact decodeAndroidAccount(InputStream stream) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         DocumentBuilder builder = factory.newDocumentBuilder();
         Document doc = builder.parse(stream);
@@ -347,11 +346,11 @@ public class TelegramParser extends SQLite3DBParser {
         return null;
     }
 
-    public void parseTelegramAccount(InputStream stream, ContentHandler handler, Metadata metadata,
+    public void parseAndroidAccount(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context) throws SAXException, IOException, TikaException {
 
 		try {
-            Contact user = decodeTelegramAccount(stream);
+            Contact user = decodeAndroidAccount(stream);
             if (user != null) {
                 createAccountHTML(user, handler, context);
 	    	}
@@ -398,7 +397,7 @@ public class TelegramParser extends SQLite3DBParser {
     		parseTelegramDBIOS(stream, handler, metadata, context);
     	}
     	if(mimetype.equals(TELEGRAM_USER_CONF.toString())) {
-    		parseTelegramAccount(stream, handler, metadata, context);
+    		parseAndroidAccount(stream, handler, metadata, context);
     	}
         
     }
