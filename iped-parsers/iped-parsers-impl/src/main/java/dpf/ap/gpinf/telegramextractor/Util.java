@@ -31,7 +31,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class Util {
 
-    private static String byteArrayToHex(byte[] a) {
+    protected static String byteArrayToHex(byte[] a) {
         StringBuilder sb = new StringBuilder(a.length * 2);
         for (byte b : a) {
             sb.append(String.format("%02x", b));
@@ -51,6 +51,18 @@ public class Util {
         Field f = obj.getClass().getField(atr);
         return f.get(obj);
 
+    }
+
+    public static void invertByteArray(byte[] array) {
+        invertByteArray(array, 0, array.length);
+    }
+
+    public static void invertByteArray(byte[] array, int start, int len) {
+        for (int i = 0; i < len / 2; i++) {
+            byte aux = array[start + i];
+            array[start + i] = array[start + len - i - 1];
+            array[start + len - i - 1] = aux;
+        }
     }
 
     public static Object deserialize(String classe, byte[] dados) {

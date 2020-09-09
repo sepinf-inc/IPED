@@ -25,6 +25,7 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -79,13 +80,17 @@ public class PostBoxCoding {
      public long readInt64(int start) {
         return readInt64(start,true);
     }
+
+
     public int readInt32(int start, boolean bigEndian) {
         try {
             int i = 0;
             byte len=4;
             for (int j = 0; j < len; j++) {
                 int a=data[start+j];
-                a=a&0xFF;
+
+                a = a & 0xFF;
+
                 if(bigEndian){
                     i |= (a << (j * 8));
                 }else{
@@ -290,7 +295,21 @@ public class PostBoxCoding {
         for (int i = 0; i < nel; i++) {
             int size = readInt32(offset);
             offset += 4;
-            if (offset + size < data.length) {
+            if (offset + size <= data.length) {
+                els.add(Arrays.copyOfRange(data, offset, offset + size));
+                offset += size;
+            }
+        }
+        return els;
+    }
+
+    List<byte[]> readArray(int size) {
+        int nel = readInt32(offset);
+        offset += 4;
+        ArrayList<byte[]> els = new ArrayList<>();
+
+        for (int i = 0; i < nel; i++) {
+            if (offset + size <= data.length) {
                 els.add(Arrays.copyOfRange(data, offset, offset + size));
                 offset += size;
             }
@@ -310,11 +329,13 @@ public class PostBoxCoding {
         return els;
     }
 
+
     List<PhotoData> getPhotos(List<GenericObj> sizes) {
         ArrayList<PhotoData> photos = new ArrayList<>();
-
+        System.out.println("iola");
         for (GenericObj photo : sizes) {
             this.data = photo.content;
+            System.out.println("img: " + Util.byteArrayToHex(this.data));
             this.offset = 0;
             long id = decodeInt64ForKey("i");
             long volume = decodeInt64ForKey("v");
@@ -387,7 +408,7 @@ public class PostBoxCoding {
             if (sizes.size() == 3) {
                 // image
                 mimetype = "image";
-                logger.debug("url: {}", url);
+
                 files = getPhotos(sizes);
 
             } else {
@@ -404,6 +425,7 @@ public class PostBoxCoding {
                 action = decodeInt32ForKey("_rawValue");
 
                 mimetype = decodeStringForKey("mt");
+
                 byte[] thumb = null;
                 thumb = decodeBytesForKey("itd");
 
@@ -435,6 +457,7 @@ public class PostBoxCoding {
                     f.setSize(size);
                     files.add(f);
                 }
+
                 if (action == 2 || action == 3) {
 
                     byte d[] = decodeBytesForKey("peerIds");
@@ -465,7 +488,7 @@ public class PostBoxCoding {
 
     }
       
-    void  readMessage(byte[] key, byte[] data,Message m){
+    void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
         //reference MessageHistoryTable.swift
         this.data=data;
         PostBoxCoding pk=new PostBoxCoding();
@@ -473,7 +496,11 @@ public class PostBoxCoding {
         long peerKey=pk.readInt64(0, false);
         
         int namespacekey=pk.readInt32(8,false);
+
         int timestampkey=pk.readInt32(12,false);
+
+        if(timestampkey==0)
+            timestampkey = namespacekey;
         
         byte type=data[offset++];      
         if(type==int32){
@@ -539,10 +566,10 @@ public class PostBoxCoding {
             // atributos
             List<byte[]> atrs = readArray();
             List<byte[]> embededmedia = readArray();
-            List<byte[]> referencemedia = readArray();
+            List<byte[]> referencemedia = readArray(12);
 
             if(m!=null){
-                m.setTimeStamp(Date.from(Instant.ofEpochSecond(pk.readInt32(12,false))));
+                m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
                 m.setData(txt);
                 m.setId(stableId);
 
@@ -556,9 +583,20 @@ public class PostBoxCoding {
                 m.getRemetente().setId(authorId);
             }
 
+            for (byte[] b : referencemedia) {
+                // convert from bigendian to littleendian
+                Util.invertByteArray(b, 0, 4);
+                Util.invertByteArray(b, 4, 8);
+
+                byte[] mediabytes = mediaKey.get(Util.byteArrayToHex(b));
+                if (mediabytes != null) {
+                    PostBoxCoding media = new PostBoxCoding();
+                    media.setData(mediabytes);
+                    media.readMedia(m);
+                }
+            }
 
             for (byte[] b : embededmedia) {
-                logger.debug("embededmedia: {}", b.length);
                 PostBoxCoding media = new PostBoxCoding();
                 media.setData(b);
                 media.readMedia(m);
