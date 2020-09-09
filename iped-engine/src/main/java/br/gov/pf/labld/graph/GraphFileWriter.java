@@ -340,7 +340,10 @@ public class GraphFileWriter implements Closeable, Flushable {
         csvParents.parallelStream().forEach(parent -> {
             int num = subDir.incrementAndGet();
             try {
-                for (File input : parent.listFiles()) {
+                File[] subFiles = parent.listFiles();
+                if (subFiles == null)
+                    return;
+                for (File input : subFiles) {
                     File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
                     dest.getParentFile().mkdirs();
                     if (input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR)
