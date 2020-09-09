@@ -142,8 +142,8 @@ public class TelegramParser extends SQLite3DBParser {
             e.extractChatList();
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessages(c));
-                if (e.getOwner() != null) {
-                    account = e.getOwner();
+                if (e.getUserAccount() != null) {
+                    account = e.getUserAccount();
                 }
                 generateChat(c, account, e.getContacts(), searcher, handler, extractor);
             }
@@ -218,9 +218,11 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
 
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getRemetente().toString());
-            if (m.isFromMe()) {
+            if (m.getToId() != 0)
+                meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, contacts.get(m.getToId()).toString());
+            else if (m.isFromMe()) {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, m.getChat().getC().toString());
-            } else {
+            } else if (account != null) {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
@@ -247,7 +249,14 @@ public class TelegramParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
+
             e.extractContactsIOS();
+
+            // extract user account after contacts to link the account id with the contact
+            Contact useraccount = e.extractUserAccountIOS();
+            if (useraccount != null) {
+                createAccountHTML(useraccount, handler, context);
+            }
             ReportGenerator r = new ReportGenerator(searcher);
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -343,30 +352,8 @@ public class TelegramParser extends SQLite3DBParser {
 
 		try {
             Contact user = decodeTelegramAccount(stream);
-
             if (user != null) {
-	    		Metadata meta = new Metadata();
-    	        meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ACCOUNT.toString());
-    	        meta.set(TikaCoreProperties.TITLE,"Telegram - "+ user.getFullname());
-    	        meta.set(ExtraProperties.USER_NAME, user.getName());
-    	        meta.set(ExtraProperties.USER_PHONE, user.getPhone());
-    	        meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
-                meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
-                Extractor ex = new Extractor();
-    	        IItemSearcher searcher = context.get(IItemSearcher.class);
-                ex.setSearcher(searcher);
-                ex.searchAvatarFileName(user, user.getPhotos());
-    	        if (user.getAvatar() != null) {
-    	            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
-    	        }
-    	       
-    	        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-    	                new ParsingEmbeddedDocumentExtractor(context));
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
-    	        byte[] bytes=reportGenerator.genarateContactHtml(user);
-    	        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
-                extractor.parseEmbedded(contactStream, handler, meta, false);
-                
+                createAccountHTML(user, handler, context);
 	    	}
 	    	
         } catch (Exception e) {
@@ -375,6 +362,30 @@ public class TelegramParser extends SQLite3DBParser {
     	
     }
     
+    private void createAccountHTML(Contact user, ContentHandler handler, ParseContext context)
+            throws IOException, SAXException {
+        Metadata meta = new Metadata();
+        meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ACCOUNT.toString());
+        meta.set(TikaCoreProperties.TITLE, "Telegram - " + user.getFullname());
+        meta.set(ExtraProperties.USER_NAME, user.getName());
+        meta.set(ExtraProperties.USER_PHONE, user.getPhone());
+        meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
+        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
+        Extractor ex = new Extractor();
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        ex.setSearcher(searcher);
+        ex.searchAvatarFileName(user, user.getPhotos());
+        if (user.getAvatar() != null) {
+            meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(user.getAvatar()));
+        }
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        ReportGenerator reportGenerator = new ReportGenerator(searcher);
+        byte[] bytes = reportGenerator.genarateContactHtml(user);
+        ByteArrayInputStream contactStream = new ByteArrayInputStream(bytes);
+        extractor.parseEmbedded(contactStream, handler, meta, false);
+    }
 
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
          throws IOException, SAXException, TikaException {
