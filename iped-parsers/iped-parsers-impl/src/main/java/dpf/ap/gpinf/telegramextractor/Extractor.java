@@ -240,19 +240,27 @@ public class Extractor {
             }
         }
         
-        Collections.sort(msgs, new Comparator<Message>() {
-      	  public int compare(Message o1, Message o2) {
-      		  if(o1==null || o2==null)
-      			  return 0;
-      	      return o1.getTimeStamp().compareTo(o2.getTimeStamp());
-      	  }
-      	});
+        Collections.sort(msgs, MSG_TIME_COMPARATOR);
         
         return msgs;
+    }
+
+    private HashMap<String, byte[]> mediakey = new HashMap<>();
+
+    private void extractMediaIOS() throws SQLException {
+        try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
+            ResultSet rs = stmt.executeQuery();
+            if (rs != null) {
+                while (rs.next()) {
+                    mediakey.put(Util.byteArrayToHex(rs.getBytes("key")), rs.getBytes("value"));
+                }
+            }
+        }
     }
     
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
+        extractMediaIOS();
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
@@ -261,7 +269,7 @@ public class Extractor {
                 	PostBoxCoding p=new PostBoxCoding();
                 	
                 	Message message = new Message(0,chat);
-                	p.readMessage(rs.getBytes("key"),rs.getBytes("value"), message);
+                    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
                     if (!chat.isGroup()) {
                         if (message.isFromMe()) {
                             message.setToId(chat.getId());
@@ -289,13 +297,7 @@ public class Extractor {
                 }
             }
         }
-        Collections.sort(msgs, new Comparator<Message>() {
-      	  public int compare(Message o1, Message o2) {
-      		  if(o1==null || o2==null)
-      			  return 0;
-      	      return o1.getTimeStamp().compareTo(o2.getTimeStamp());
-      	  }
-      	});
+        Collections.sort(msgs, MSG_TIME_COMPARATOR);
         return msgs;
     }
     
@@ -495,6 +497,14 @@ public class Extractor {
         return userAccount;
     }
     
+    private static final Comparator<Message> MSG_TIME_COMPARATOR=new Comparator<Message>() {
+        public int compare(Message o1, Message o2) {
+            if(o1==null || o2==null)
+                return 0;
+            return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+        }
+    };
+
     private static final String EXTRACT_USERACCOUNT_SQL_IOS = "SELECT t0.value FROM T0 where key=2";
 
     private static final String CHATS_SQL = "SELECT d.did as chatId,u.name as chatName,u.data as chatData,"
@@ -506,8 +516,10 @@ public class Extractor {
     		"left join t2 on printf('%016X',t2.key)=chatblob" + 
     		" group by chatid";
 
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t2.key as chatid,t7.* FROM t7 inner join t2 on printf('%016X',t2.key)=hex(substr(t7.key,1,8)) " + 
-    		"where chatid=?";
+    private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
+
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t2.key as chatid,t7.key,t7.value FROM t7 inner join t2 on printf('%016X',t2.key)=hex(substr(t7.key,1,8)) "
+            + "where chatid=?";
     private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
             + "left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
 
