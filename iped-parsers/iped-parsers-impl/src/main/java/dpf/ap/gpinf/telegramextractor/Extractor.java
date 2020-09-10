@@ -207,7 +207,7 @@ public class Extractor {
                     Message message = new Message(mid, chat);
                     d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
                     d.getMessageData(message);
-                    message.setRemetente(getContact(d.getRemetenteId()));
+                    message.setFrom(getContact(d.getRemetenteId()));
 
                     if (message.getMediaMime() != null) {
                         if (message.getMediaMime().startsWith("image")) {
@@ -233,7 +233,7 @@ public class Extractor {
                         message.setType(msg_decoded);
                     }
                     if (userAccount == null && message.isFromMe()) {
-                        userAccount = message.getRemetente();
+                        userAccount = message.getFrom();
                     }
                     msgs.add(message);
                 }
@@ -281,9 +281,9 @@ public class Extractor {
                     	}
                     }
                     
-                    message.setRemetente(getContact(message.getRemetente().getId()));
+                    message.setFrom(getContact(message.getFrom().getId()));
                     if (userAccount == null && message.isFromMe()) {
-                        userAccount = message.getRemetente();
+                        userAccount = message.getFrom();
                     }
                     msgs.add(message);
                 }

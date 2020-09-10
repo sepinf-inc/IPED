@@ -550,10 +550,10 @@ public class PostBoxCoding {
                 m.setFromMe(!incoming);
                 
             }
-            if(m.getRemetente()==null) {
-            	m.setRemetente(new Contact(authorId));
+            if(m.getFrom()==null) {
+            	m.setFrom(new Contact(authorId));
             }else {            	
-                m.getRemetente().setId(authorId);
+                m.getFrom().setId(authorId);
             }
 
 

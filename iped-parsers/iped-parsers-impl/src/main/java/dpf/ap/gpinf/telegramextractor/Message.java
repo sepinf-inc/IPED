@@ -33,7 +33,7 @@ public class Message implements MessageInterface {
     private String mediaComment = null;
     boolean fromMe = false;
     private String type = null;
-    private Contact remetente = null;
+    private Contact from = null;
     private Chat chat = null;
     private String data = null;
     private Date timeStamp = null;
@@ -83,12 +83,12 @@ public class Message implements MessageInterface {
         setChat(c);
     }
 
-    public Contact getRemetente() {
-        return remetente;
+    public Contact getFrom() {
+        return from;
     }
 
-    public void setRemetente(Contact remetente) {
-        this.remetente = remetente;
+    public void setFrom(Contact from) {
+        this.from = from;
     }
 
     public Chat getChat() {

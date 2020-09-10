@@ -334,7 +334,7 @@ public class ReportGenerator {
         } else {
             out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
         }
-        Contact contact = message.getRemetente();
+        Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
                     + contact + "</span><br/>"); //$NON-NLS-1$

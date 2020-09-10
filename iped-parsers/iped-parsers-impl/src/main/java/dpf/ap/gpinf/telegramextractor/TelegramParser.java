@@ -218,10 +218,10 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
 
             // TODO handle group messages
-            meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getRemetente().toString());
-            if (m.getToId() != 0)
+            meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
+            if (m.getToId() != 0){
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, contacts.get(m.getToId()).toString());
-            else if (m.isFromMe()) {
+            } else if (m.isFromMe()) {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, m.getChat().getC().toString());
             } else if (account != null) {
                 meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
@@ -369,7 +369,7 @@ public class TelegramParser extends SQLite3DBParser {
         meta.set(ExtraProperties.USER_NAME, user.getName());
         meta.set(ExtraProperties.USER_PHONE, user.getPhone());
         meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());
-        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, "Telegram");
+        meta.set(ExtraProperties.USER_ACCOUNT_TYPE, TELEGRAM);
         Extractor ex = new Extractor();
         IItemSearcher searcher = context.get(IItemSearcher.class);
         ex.setSearcher(searcher);
