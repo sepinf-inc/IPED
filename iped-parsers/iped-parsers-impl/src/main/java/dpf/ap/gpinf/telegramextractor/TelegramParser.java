@@ -228,15 +228,22 @@ public class TelegramParser extends SQLite3DBParser {
             }
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
+            // system messages
+            if (m.getType() != null && !m.getType().isEmpty()) {
+                meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
+            }
+
             meta.set("mediaName", m.getMediaName());
-            meta.set("mediaMime", m.getMediaMime());
+
+            if (m.getMediaMime() != null) {
+                meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
+            }
             if (m.getMediasize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediasize()));
             }
             if (m.getMediaHash() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
-                meta.add(ExtraProperties.MESSAGE_BODY, ATTACHMENT_MESSAGE + m.getMediaMime());
                 // TODO store thumb in metadata?
             }
             meta.set(BasicProps.HASH, "");
