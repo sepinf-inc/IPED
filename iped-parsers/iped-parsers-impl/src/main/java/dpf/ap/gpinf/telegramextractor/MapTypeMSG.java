@@ -23,6 +23,8 @@ import java.util.HashMap;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 
 public class MapTypeMSG {
+
+    public static final String PHONE_CALL_STRING = Messages.getString("TelegramReport.PhoneCall");
 	
 	private static final HashMap<Integer,String> msg=initMsg();
 	
@@ -46,7 +48,7 @@ public class MapTypeMSG {
         msg.put(11, Messages.getString("TelegramReport.HistoryScreenshot"));
         msg.put(12, Messages.getString("TelegramReport.MessageAutoRemove"));
         msg.put(13, Messages.getString("TelegramReport.GameScore"));
-        msg.put(14, Messages.getString("TelegramReport.PhoneCall"));
+        msg.put(14, PHONE_CALL_STRING);
         msg.put(15, Messages.getString("TelegramReport.PaymentSent"));
 		
         msg.put(16, Messages.getString("TelegramReport.CustomText"));
@@ -75,9 +77,6 @@ public class MapTypeMSG {
 		msg.put("TL_messageActionChatAddUser", 2);
 		msg.put("TL_messageActionChatAddUser_old", 2);
 		
-		
-		
-		
 		msg.put("TL_messageActionChatDeleteUser", 3);
 		
 		msg.put("TL_messageActionChatEditPhoto", 4);
@@ -86,7 +85,6 @@ public class MapTypeMSG {
 		msg.put("TL_messageActionChatEditTitle", 5);
 		
 		msg.put("TL_messageActionPinMessage", 6);
-		
 		
 		msg.put("TL_messageActionChatJoinedByLink",7);
 		
@@ -115,17 +113,14 @@ public class MapTypeMSG {
 		
 		msg.put("TL_messageActionChatDeletePhoto", 31);
 		
-		
-		
-		
-		
-		
 		return msg;
 	}
 	
-	
 	public static String decodeMsg(int tipo) {
-		return msg.get(tipo);
+		String result = msg.get(tipo);
+        if (result != null)
+            return result;
+        return "Unknown message type: " + String.valueOf(tipo);
 	}
 	
 	public static String decodeMsg(String classname) {
@@ -135,7 +130,7 @@ public class MapTypeMSG {
 		if(a!=null)
 			return decodeMsg(a);
 		
-		return null;
+        return "Unknown message class: " + classname;
 	}
 	
 
