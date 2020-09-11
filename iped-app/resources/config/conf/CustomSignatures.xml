@@ -1004,6 +1004,10 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type> 
     
+    <mime-type type="call/x-telegram-call">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
     <mime-type type="application/x-whatsapp-user-xml">
         <sub-class-of type="application/dita+xml"/>
         <glob pattern="com.whatsapp_preferences.xml"/>

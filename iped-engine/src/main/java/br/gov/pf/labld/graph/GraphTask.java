@@ -269,7 +269,9 @@ public class GraphTask extends AbstractTask {
             return "useraccount";
         }
 
-        if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType) || MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
+        if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_CALL.toString().equals(mediaType)
+                || MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
             return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);

@@ -76,6 +76,7 @@ public class TelegramParser extends SQLite3DBParser {
     public static final MediaType TELEGRAM_CONTACT = MediaType.parse("contact/x-telegram-contact");
     public static final MediaType TELEGRAM_MESSAGE = MediaType.parse("message/x-telegram-message");
     public static final MediaType TELEGRAM_ATTACHMENT = MediaType.parse("message/x-telegram-attachment");
+    public static final MediaType TELEGRAM_CALL = MediaType.parse("call/x-telegram-call");
 
     // TODO improve this: prefix to show 'attachment' before body text (values
     // are sorted)
@@ -246,6 +247,10 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 // TODO store thumb in metadata?
             }
+            if (m.isPhoneCall()) {
+                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CALL.toString());
+            }
+
             meta.set(BasicProps.HASH, "");
             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
         }

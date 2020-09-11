@@ -210,4 +210,8 @@ public class Message implements MessageInterface {
     public void setToId(long toId) {
         this.toId = toId;
     }
+
+    public boolean isPhoneCall() {
+        return MapTypeMSG.PHONE_CALL_STRING.equals(type);
+    }
 }

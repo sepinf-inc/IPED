@@ -79,7 +79,7 @@ Other disks = application/x-disk-image;
 
 Extraction Summary = application/x-ufed-html-summary
 
-Calls = application/x-ufed-html-calls; application/x-ufed-call; call/x-whatsapp-call
+Calls = application/x-ufed-html-calls; application/x-ufed-call; call/x-whatsapp-call; call/x-telegram-call
 
 SMS Messages = application/x-ufed-html-sms; application/x-ufed-sms
 
