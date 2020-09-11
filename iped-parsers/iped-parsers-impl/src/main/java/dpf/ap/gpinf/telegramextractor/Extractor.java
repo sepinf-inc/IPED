@@ -462,6 +462,8 @@ public class Extractor {
     }
 
     protected void searchAvatarFileName(Contact contact, List<PhotoData> photos) throws IOException {
+        if (photos == null)
+            return;
         List<IItemBase> result = null;
         String name = null;
         for (PhotoData photo : photos) {
