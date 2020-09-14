@@ -120,7 +120,8 @@ public class MapTypeMSG {
 		String result = msg.get(tipo);
         if (result != null)
             return result;
-        return "Unknown message type: " + String.valueOf(tipo);
+
+        return Messages.getString("TelegramReport.UnknownMessage") + tipo;
 	}
 	
 	public static String decodeMsg(String classname) {
@@ -130,7 +131,7 @@ public class MapTypeMSG {
 		if(a!=null)
 			return decodeMsg(a);
 		
-        return "Unknown message class: " + classname;
+        return Messages.getString("TelegramReport.UnknownMessage") + classname;
 	}
 	
 
