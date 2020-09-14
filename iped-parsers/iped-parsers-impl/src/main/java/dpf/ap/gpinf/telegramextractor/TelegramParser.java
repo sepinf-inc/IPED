@@ -175,6 +175,16 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
 
+            if (c.isGroup()) {
+                ChatGroup cg = (ChatGroup) c;
+                if (cg.getMembers() != null && !cg.getMembers().isEmpty()) {
+                    for (Long id : cg.getMembers()) {
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, id.toString());
+
+                    }
+                }
+            }
+
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
             if (extractMessages && msgSubset.size() > 0) {
