@@ -251,11 +251,6 @@ public class TelegramParser extends SQLite3DBParser {
 
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
-            // system messages
-            if (m.getType() != null && !m.getType().isEmpty()) {
-                meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
-            }
-
             meta.set("mediaName", m.getMediaName());
 
             if (m.getMediaMime() != null) {
@@ -271,6 +266,10 @@ public class TelegramParser extends SQLite3DBParser {
             }
             if (m.isPhoneCall()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CALL.toString());
+            }
+            // system messages
+            if (meta.get(ExtraProperties.MESSAGE_BODY) == null && m.getType() != null && !m.getType().isEmpty()) {
+                meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
             }
 
             meta.set(BasicProps.HASH, "");
