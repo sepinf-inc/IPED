@@ -18,21 +18,28 @@
  */
 package dpf.ap.gpinf.telegramextractor;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ChatGroup extends Chat {
 
-    public class memberData {
 
-    }
 
-    HashMap<String, memberData> members;
+    private List<Long> members;
 
     public ChatGroup(long id, Contact c, String name) {
         super(id, c, name);
         this.setGroup(true);
-        members = new HashMap<>();
+        setMembers(new ArrayList<>());
 
+    }
+
+    public List<Long> getMembers() {
+        return members;
+    }
+
+    public void setMembers(List<Long> members) {
+        this.members = members;
     }
 
 }
