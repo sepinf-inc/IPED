@@ -42,4 +42,10 @@ public class ChatGroup extends Chat {
         this.members = members;
     }
 
+    public void addMember(long id) {
+        if (!members.contains(id)) {
+            members.add(id);
+        }
+    }
+
 }

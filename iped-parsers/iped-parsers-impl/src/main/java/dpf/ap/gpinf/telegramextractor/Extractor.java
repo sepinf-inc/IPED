@@ -218,6 +218,10 @@ public class Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
+            ChatGroup cg = null;
+            if (chat.isGroup()) {
+                cg = (ChatGroup) chat;
+            }
             if (rs != null) {
                 while (rs.next()) {
                     byte[] data = rs.getBytes("data");
@@ -226,6 +230,10 @@ public class Extractor {
                     d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
                     d.getMessageData(message);
                     message.setFrom(getContact(d.getRemetenteId()));
+
+                    if (cg != null && message.getFrom().getId() != 0) {
+                        cg.addMember(message.getFrom().getId());
+                    }
 
                     if (message.getMediaMime() != null) {
                         if (message.getMediaMime().startsWith("image")) {
@@ -283,6 +291,10 @@ public class Extractor {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
+                ChatGroup cg = null;
+                if (chat.isGroup()) {
+                    cg = (ChatGroup) chat;
+                }
                 while (rs.next()) {
                 	PostBoxCoding p=new PostBoxCoding();
                 	
@@ -294,6 +306,9 @@ public class Extractor {
                         } else if (this.userAccount != null) {
                             message.setToId(this.userAccount.getId());
                         }
+                    }
+                    if (cg != null && message.getFrom().getId() != 0) {
+                        cg.addMember(message.getFrom().getId());
                     }
 
                     if(message.getNames()!=null && message.getNames().size()>0) {
