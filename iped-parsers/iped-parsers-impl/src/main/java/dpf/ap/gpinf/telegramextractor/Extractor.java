@@ -305,8 +305,7 @@ public class Extractor {
 
     private void loadDocument(Message message, List<String> names, int size) {
         for (String name : names) {
-            String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
-            query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+            String query = getQuery(name, size);
             IItemBase item = getFileFromQuery(query);
             if (item != null) {
             	if(message.getMediaMime()==null) {
@@ -364,7 +363,9 @@ public class Extractor {
     }
 
     private String getQuery(String name, int size) {
-        return BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\" && " + BasicProps.LENGTH + ":" + size;
+        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
+        query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
+        return query;
     }
 
     private IItemBase getFileFromQuery(String query) {
