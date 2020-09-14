@@ -177,8 +177,7 @@ public class TelegramParser extends SQLite3DBParser {
                 ChatGroup cg = (ChatGroup) c;
                 if (cg.getMembers() != null && !cg.getMembers().isEmpty()) {
                     for (Long id : cg.getMembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, id.toString());
-
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, e.getContact(id).toString());
                     }
                 }
             }
