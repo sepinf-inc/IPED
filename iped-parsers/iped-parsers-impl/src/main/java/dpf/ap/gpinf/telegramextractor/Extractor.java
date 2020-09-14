@@ -103,6 +103,18 @@ public class Extractor {
         return this.userAccount;
     }
 
+    private List<Long> getParticipants(Connection conn,ChatGroup cg) throws SQLException {
+        List<Long> l = new ArrayList<>();
+        try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
+            stmt.setLong(1, cg.getId());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                l.add(rs.getLong("uid"));
+            }
+        }
+        return l;
+    }
+
     protected ArrayList<Chat> extractChatList() throws Exception {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
@@ -133,9 +145,15 @@ public class Extractor {
                     Contact cont = getContact(chatId);
                     d.getChatData(cont);
 
+
                     searchAvatarFileName(cont, d.getPhotoData());
 
-                    cg = new ChatGroup(chatId, cont, chatName);
+                    ChatGroup group = new ChatGroup(chatId, cont, chatName);
+                    cg = group;
+                    List<Long> members = getParticipants(conn, group);
+                    if (members != null) {
+                        group.getMembers().addAll(members);
+                    }
 
                 }
                 if (cg != null) {
@@ -515,6 +533,8 @@ public class Extractor {
             + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
             + "order by d.date desc";
     
+    private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
+
     private static final String CHATS_SQL_IOS = "select hex(substr(t7.key,1,8)) as chatblob, t2.key as chatid from t7 " + 
     		"left join t2 on printf('%016X',t2.key)=chatblob" + 
     		" group by chatid";
