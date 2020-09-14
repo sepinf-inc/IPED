@@ -364,7 +364,6 @@ public class Extractor {
             String query = getQuery(p.getName(), p.getSize());
             IItemBase r = getFileFromQuery(query);
             if (r != null) {
-                message.setType("link/image");
                 message.setLinkImage(r.getThumb());
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());

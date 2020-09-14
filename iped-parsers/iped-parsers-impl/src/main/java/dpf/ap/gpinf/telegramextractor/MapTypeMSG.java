@@ -120,6 +120,8 @@ public class MapTypeMSG {
 		String result = msg.get(tipo);
         if (result != null)
             return result;
+        if (tipo == 0)
+            return null;
 
         return Messages.getString("TelegramReport.UnknownMessage") + tipo;
 	}
