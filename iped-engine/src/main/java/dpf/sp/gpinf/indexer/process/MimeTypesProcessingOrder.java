@@ -62,7 +62,6 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_WA_MIME, 1);
 
         return mediaTypes;
     }

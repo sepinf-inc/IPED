@@ -48,6 +48,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -95,7 +96,7 @@ public class UfedXmlReader extends DataSourceReader {
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
-    boolean ignoreWAChats = false;
+    boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
@@ -214,10 +215,12 @@ public class UfedXmlReader extends DataSourceReader {
 
         if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
-            ignoreWAChats = true;
+            ignoreSupportedChats = true;
 
-        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
+        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) { //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+        }
     }
 
     private void addRootItem(IItem parent) throws InterruptedException {
@@ -667,8 +670,9 @@ public class UfedXmlReader extends DataSourceReader {
                             }
                         else if (item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
-                            if (inChat && ignoreWAChats && parentNameAttr.equals("Source")
-                                    && value.equals("WhatsApp")) {
+                            if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
+                                    && (value.equals(WhatsAppParser.WHATSAPP)
+                                            || value.equals(TelegramParser.TELEGRAM))) {
                                 ignoreItems = true;
                             }
                         }
@@ -720,8 +724,11 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-                    if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
+                    if (WhatsAppParser.WHATSAPP.equalsIgnoreCase(source)) // $NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                    if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
+                        item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$

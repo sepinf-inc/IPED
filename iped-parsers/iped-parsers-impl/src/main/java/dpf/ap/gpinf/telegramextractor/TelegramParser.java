@@ -77,6 +77,8 @@ public class TelegramParser extends SQLite3DBParser {
     public static final MediaType TELEGRAM_ATTACHMENT = MediaType.parse("message/x-telegram-attachment");
     public static final MediaType TELEGRAM_CALL = MediaType.parse("call/x-telegram-call");
 
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(TELEGRAM_DB, TELEGRAM_USER_CONF, TELEGRAM_DB_IOS);
+
     // TODO improve this: prefix to show 'attachment' before body text (values
     // are sorted)
     private static final String ATTACHMENT_PREFIX = "! ";
@@ -87,7 +89,11 @@ public class TelegramParser extends SQLite3DBParser {
     private boolean extractMessages = true;
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        return MediaType.set(TELEGRAM_DB,TELEGRAM_USER_CONF,TELEGRAM_DB_IOS);
+        return SUPPORTED_TYPES;
+    }
+
+    public static void setSupportedTypes(Set<MediaType> supportedTypes) {
+        SUPPORTED_TYPES = supportedTypes;
     }
     
     @Field
