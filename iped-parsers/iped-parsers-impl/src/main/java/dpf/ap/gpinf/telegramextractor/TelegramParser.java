@@ -26,7 +26,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.xml.bind.DatatypeConverter;
@@ -146,7 +145,7 @@ public class TelegramParser extends SQLite3DBParser {
                 if (e.getUserAccount() != null) {
                     account = e.getUserAccount();
                 }
-                generateChat(c, account, e.getContacts(), searcher, handler, extractor);
+                generateChat(c, account, e, searcher, handler, extractor);
             }
 
         } catch (Exception e1) {
@@ -156,8 +155,7 @@ public class TelegramParser extends SQLite3DBParser {
     	
     }
     
-    private void generateChat(Chat c, Contact account, Map<Long, Contact> contacts, IItemSearcher searcher,
-            ContentHandler handler,
+    private void generateChat(Chat c, Contact account, Extractor e, IItemSearcher searcher, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int frag = 0;
         int firstMsg = 0;
@@ -186,7 +184,7 @@ public class TelegramParser extends SQLite3DBParser {
             extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
 
             if (extractMessages) {
-                extractMessages(chatName, msgSubset, account, contacts, c.getId(), handler, extractor);
+                extractMessages(chatName, msgSubset, account, e, c.getId(), handler, extractor);
             }
 
             firstMsg = nextMsg;
@@ -205,7 +203,7 @@ public class TelegramParser extends SQLite3DBParser {
     }
 
     private void extractMessages(String chatName, List<Message> messages, Contact account,
-            Map<Long, Contact> contacts, long parentId, ContentHandler handler,
+            Extractor e, long parentId, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
         for (Message m : messages) {
@@ -218,15 +216,24 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
 
-            // TODO handle group messages
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
-            if (m.getToId() != 0){
-                meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, contacts.get(m.getToId()).toString());
-            } else if (m.isFromMe()) {
-                meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, m.getChat().getC().toString());
-            } else if (account != null) {
-                meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
+            if (m.getChat().isGroup()) {
+                ChatGroup groupChat = (ChatGroup) m.getChat();
+                for (Long id : groupChat.getMembers()) {
+                    if (id != m.getFrom().getId())
+                        meta.add(org.apache.tika.metadata.Message.MESSAGE_TO, e.getContact(id).toString());
+                }
             }
+            if (meta.get(org.apache.tika.metadata.Message.MESSAGE_TO) == null) {
+                if (m.getToId() != 0) {
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, e.getContact(m.getToId()).toString());
+                } else if (m.isFromMe()) {
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, m.getChat().getC().toString());
+                } else if (account != null) {
+                    meta.set(org.apache.tika.metadata.Message.MESSAGE_TO, account.toString());
+                }
+            }
+
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
 
             // system messages
@@ -296,7 +303,7 @@ public class TelegramParser extends SQLite3DBParser {
             e.extractChatListIOS();
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessagesIOS(c));
-                generateChat(c, useraccount, e.getContacts(), searcher, handler, extractor);
+                generateChat(c, useraccount, e, searcher, handler, extractor);
             }
 
         } catch (SQLException e) {
