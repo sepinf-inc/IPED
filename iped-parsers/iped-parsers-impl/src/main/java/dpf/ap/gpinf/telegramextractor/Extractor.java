@@ -179,8 +179,12 @@ public class Extractor {
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL_IOS)) {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                
-                Contact c=getContact(rs.getLong("chatid"));
+
+                PostBoxCoding key = new PostBoxCoding();
+                key.setData(rs.getBytes("key"));
+                long chatid = key.readInt64(4 + 2 + 4 + 1 + 4, false);
+
+                Contact c = getContact(chatid);
                 
                 Chat cg = null;
                 
@@ -549,9 +553,7 @@ public class Extractor {
     
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
 
-    private static final String CHATS_SQL_IOS = "select hex(substr(t7.key,1,8)) as chatblob, t2.key as chatid from t7 " + 
-    		"left join t2 on printf('%016X',t2.key)=chatblob" + 
-    		" group by chatid";
+    private static final String CHATS_SQL_IOS = "select * from t9";
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
 
