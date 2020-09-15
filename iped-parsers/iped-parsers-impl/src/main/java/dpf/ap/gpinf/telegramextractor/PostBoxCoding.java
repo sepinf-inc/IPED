@@ -332,10 +332,10 @@ public class PostBoxCoding {
 
     List<PhotoData> getPhotos(List<GenericObj> sizes) {
         ArrayList<PhotoData> photos = new ArrayList<>();
-        System.out.println("iola");
+
         for (GenericObj photo : sizes) {
             this.data = photo.content;
-            System.out.println("img: " + Util.byteArrayToHex(this.data));
+
             this.offset = 0;
             long id = decodeInt64ForKey("i");
             long volume = decodeInt64ForKey("v");
@@ -393,6 +393,9 @@ public class PostBoxCoding {
         GenericObj im = decodeObjectForKey("im");
         int size=0;
         int action=0;
+
+
+
         if (im != null && url != null) {
             // link with image
             this.data = im.content;
@@ -463,6 +466,23 @@ public class PostBoxCoding {
                     byte d[] = decodeBytesForKey("peerIds");
                     readPeersIds(m, d);
                     
+                }
+                if (files.isEmpty()) {
+                    offset = 0;
+                    List<GenericObj> options = decodeObjectArrayForKey("os");
+                    if (options != null && !options.isEmpty()) {// telegram pool
+                        offset = 0;
+                        String text = "pool: " + decodeStringForKey("t");
+                        for (GenericObj o : options) {
+                            PostBoxCoding opt = new PostBoxCoding();
+                            opt.setData(o.content);
+                            text += "<br/>" + opt.decodeStringForKey("t");
+                        }
+                        if (m.getData() != null) {
+                            text = m.getData() + "<br/>" + text;
+                        }
+                        m.setData(text);
+                    }
                 }
 
             }
