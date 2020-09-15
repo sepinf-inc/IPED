@@ -118,6 +118,10 @@ public class ImageThumbTask extends ThumbTask {
                 logger.info("Extract Thumb: " + extractThumb); //$NON-NLS-1$
             }
         }
+
+        // use memory instead of files to cache image streams
+        // tests have shown up to 3x thumb creation speed up
+        ImageIO.setUseCache(false);
     }
 
     @Override
