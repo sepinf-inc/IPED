@@ -170,7 +170,9 @@ public class UFEDChatParser extends AbstractParser {
             m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
         }
         if (attach != null) {
-            m.setMediaHash(attach.getHash(), false);
+            if (attach.getLength() != null && attach.getLength() > 0) {
+                m.setMediaHash(attach.getHash(), false);
+            }
             m.setMediaName(attach.getName());
             m.setMediaTrueExt(attach.getTypeExt());
             m.setMediaUrl(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "URL")); //$NON-NLS-1$
