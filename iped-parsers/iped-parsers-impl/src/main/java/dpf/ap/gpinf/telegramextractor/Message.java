@@ -45,6 +45,8 @@ public class Message implements MessageInterface {
     private List<PhotoData> names = null;
     private int mediasize=0;
     private long toId = 0;
+    private Double latitude = null;
+    private Double longitude = null;
 
     public long getId() {
         return id;
@@ -213,5 +215,21 @@ public class Message implements MessageInterface {
 
     public boolean isPhoneCall() {
         return MapTypeMSG.PHONE_CALL_STRING.equals(type);
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 }

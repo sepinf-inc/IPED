@@ -46,7 +46,7 @@ public class PostBoxCoding {
     public static int int32 = 0;
     public static int Int64 = 1;
     public static int Bool = 2;
-    public static int Double = 3;
+    public static int DOUBLE = 3;
     public static int STRING = 4;
     public static int OBJECT = 5;
     public static int Int32Array = 6;
@@ -164,6 +164,14 @@ public class PostBoxCoding {
     }
 
     
+    public double decodeDoubleForKey(String key) {
+        if (findOfset(key, this.DOUBLE)) {
+            // todo verify if it is little or big endian
+            long bits = readInt64(offset, false);
+            return Double.longBitsToDouble(bits);
+        }
+        return 0;
+    }
 
     public byte[] decodeBytesForKey(String key) {
         if (findOfset(key, Bytes)) {
@@ -394,14 +402,22 @@ public class PostBoxCoding {
 
     void readMedia(Message m) {
         
+
+        double lat=decodeDoubleForKey("la");
+        if (lat != 0) {
+            double lon = decodeDoubleForKey("lo");
+            m.setLatitude(lat);
+            m.setLongitude(lon);
+            m.setMediaMime("geo");
+            return;
+        }
+        offset = 0;
         List<PhotoData> files = new ArrayList<>();
         String mimetype = null;
         String url = decodeStringForKey("u");
         GenericObj im = decodeObjectForKey("im");
-        int size=0;
-        int action=0;
-
-
+        int size = 0;
+        int action = 0;
 
         if (im != null && url != null) {
             // link with image
