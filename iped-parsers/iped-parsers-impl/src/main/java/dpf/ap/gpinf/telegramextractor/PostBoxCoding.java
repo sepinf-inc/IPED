@@ -385,6 +385,13 @@ public class PostBoxCoding {
 
     }
 
+    public byte readNextByte() {
+        if (offset < data.length) {
+            return data[offset++];
+        }
+        return 0;
+    }
+
     void readMedia(Message m) {
         
         List<PhotoData> files = new ArrayList<>();
@@ -474,9 +481,11 @@ public class PostBoxCoding {
                         offset = 0;
                         String text = "pool: " + decodeStringForKey("t");
                         for (GenericObj o : options) {
-                            PostBoxCoding opt = new PostBoxCoding();
-                            opt.setData(o.content);
-                            text += "<br/>" + opt.decodeStringForKey("t");
+                            if (o != null && o.content != null) {
+                                PostBoxCoding opt = new PostBoxCoding();
+                                opt.setData(o.content);
+                                text += "<br/>" + opt.decodeStringForKey("t");
+                            }
                         }
                         if (m.getData() != null) {
                             text = m.getData() + "<br/>" + text;
@@ -508,7 +517,7 @@ public class PostBoxCoding {
 
     }
       
-    void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
+    void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) throws NullPointerException {
         //reference MessageHistoryTable.swift
         this.data=data;
         PostBoxCoding pk=new PostBoxCoding();
@@ -522,7 +531,7 @@ public class PostBoxCoding {
         if(timestampkey==0)
             timestampkey = namespacekey;
         
-        byte type=data[offset++];      
+        byte type = readNextByte();
         if(type==int32){
             
             int stableId = readInt32(offset);
@@ -532,7 +541,7 @@ public class PostBoxCoding {
             int stableVersion=readInt32(offset);
             offset+=4;
             
-            byte dataFlagsValue= data[offset++];
+            byte dataFlagsValue = readNextByte();
             long globalID=0;
             if(testbit(dataFlagsValue, 0)){
                 globalID=readInt64(offset);
@@ -566,11 +575,11 @@ public class PostBoxCoding {
             int tagsValue = readInt32(offset);
             offset+=4;
             
-            byte forwardInfoFlags=data[offset++];
+            byte forwardInfoFlags = readNextByte();
             if(forwardInfoFlags!=0){
                 readForward(forwardInfoFlags);
             }
-            byte hasautor=data[offset++];
+            byte hasautor = readNextByte();
             long authorId=0;
             
             if(hasautor==1){
@@ -617,9 +626,11 @@ public class PostBoxCoding {
             }
 
             for (byte[] b : embededmedia) {
-                PostBoxCoding media = new PostBoxCoding();
-                media.setData(b);
-                media.readMedia(m);
+                if (b != null) {
+                    PostBoxCoding media = new PostBoxCoding();
+                    media.setData(b);
+                    media.readMedia(m);
+                }
             }
             
         }
@@ -631,26 +642,31 @@ public class PostBoxCoding {
     }
     void readUser(Contact c){
         GenericObj user=decodeObjectForKey("_");
-        setData(user.content);
-        c.setName(decodeStringForKey("fn"));
-        c.setLastName(decodeStringForKey("ln"));
-        c.setUsername(decodeStringForKey("un"));
-        c.setPhone(decodeStringForKey("p"));
-        List<GenericObj> l= decodeObjectArrayForKey("ph");
-        ArrayList<PhotoData> photos=new ArrayList<>();
-        String title=decodeStringForKey("t");
-        if(title!=null) {
-        	c.setName("gp_name:"+title);
-        }
-        for(GenericObj ph:l){
-            PostBoxCoding p2=new PostBoxCoding();
-            p2.setData(ph.content);
-            Photo p=new Photo();
-            
-            p.setName(p2.decodeInt64ForKey("v")+"_"+p2.decodeInt32ForKey("l"));
-            photos.add(p);
-            logger.debug("photo: {}", p.getName());
-            c.setPhotos(photos);
+        if (user != null && user.content != null) {
+            setData(user.content);
+            c.setName(decodeStringForKey("fn"));
+            c.setLastName(decodeStringForKey("ln"));
+            c.setUsername(decodeStringForKey("un"));
+            c.setPhone(decodeStringForKey("p"));
+            List<GenericObj> l = decodeObjectArrayForKey("ph");
+            ArrayList<PhotoData> photos = new ArrayList<>();
+            String title = decodeStringForKey("t");
+            if (title != null) {
+                c.setName("gp_name:" + title);
+            }
+            for (GenericObj ph : l) {
+                if (ph == null || ph.content == null) {
+                    continue;
+                }
+                PostBoxCoding p2 = new PostBoxCoding();
+                p2.setData(ph.content);
+                Photo p = new Photo();
+
+                p.setName(p2.decodeInt64ForKey("v") + "_" + p2.decodeInt32ForKey("l"));
+                photos.add(p);
+                logger.debug("photo: {}", p.getName());
+                c.setPhotos(photos);
+            }
         }
         
     }

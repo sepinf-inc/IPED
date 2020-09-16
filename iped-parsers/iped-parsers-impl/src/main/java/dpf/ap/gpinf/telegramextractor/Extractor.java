@@ -303,7 +303,12 @@ public class Extractor {
                 	PostBoxCoding p=new PostBoxCoding();
                 	
                 	Message message = new Message(0,chat);
-                    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
+                	try {
+                	    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
+                    } catch (NullPointerException e) {
+                        // TODO: handle exception
+                        logger.error("null pointer decoding database");
+                    }
                     if (!chat.isGroup()) {
                         if (message.isFromMe()) {
                             message.setToId(chat.getId());
