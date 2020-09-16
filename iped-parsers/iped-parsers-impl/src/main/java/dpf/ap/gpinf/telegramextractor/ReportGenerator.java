@@ -317,7 +317,11 @@ public class ReportGenerator {
 
     }
     
-
+    private void printGeoLocation(PrintWriter out, Message message) {
+        // toDo better handling Geo locations
+        out.println("Latitude: " + message.getLatitude() + "<br/>");
+        out.println("Longitude: " + message.getLongitude());
+    }
     private void printCheckbox(PrintWriter out, String hash) {
         out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
                 + "', this.checked)\" name=\"" + hash + "\" />");
@@ -343,7 +347,9 @@ public class ReportGenerator {
             out.print(message.getType() + "<br>");
         }
         if (message.getMediaMime() != null) {
-            if (message.getMediaMime().toLowerCase().startsWith("video")) {
+            if (message.getMediaMime().equals("geo")) {
+                printGeoLocation(out, message);
+            } else if (message.getMediaMime().toLowerCase().startsWith("video")) {
                 printVideo(out, message);
             }else if (message.getMediaMime().toLowerCase().startsWith("image")) {
                 printImage(out, message);
