@@ -429,7 +429,12 @@ public class TelegramParser extends SQLite3DBParser {
     		parseTelegramDBAndroid(stream, handler, metadata, context);
     	}
     	if(mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            try {
     		parseTelegramDBIOS(stream, handler, metadata, context);
+            } catch (Exception e) {
+                // TODO: handle exception
+                e.printStackTrace(System.out);
+            }
     	}
     	if(mimetype.equals(TELEGRAM_USER_CONF.toString())) {
     		parseAndroidAccount(stream, handler, metadata, context);

@@ -288,6 +288,25 @@ public class Extractor {
         }
     }
     
+    protected void setFrom(Message message, Chat chat) {
+        if (userAccount != null && message.isFromMe()) {
+            message.setFrom(userAccount);
+        }
+        if (userAccount == null && message.isFromMe() && message.getFrom() != null) {
+            userAccount = message.getFrom();
+        }
+        if (message.getFrom() == null && !message.isFromMe() && !chat.isGroup()) {
+            message.setFrom(getContact(chat.getId()));
+        }
+
+        if (message.getFrom() == null) {
+            // impossible to determine from
+            message.setFrom(getContact(0));
+        }
+
+        
+    }
+
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
         extractMediaIOS();
@@ -303,12 +322,14 @@ public class Extractor {
                 	PostBoxCoding p=new PostBoxCoding();
                 	
                 	Message message = new Message(0,chat);
-                	try {
-                	    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
-                    } catch (NullPointerException e) {
-                        // TODO: handle exception
-                        logger.error("null pointer decoding database");
-                    }
+
+                    p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
+                    /*
+                     * if (message.getTimeStamp() == null) { continue; }
+                     */
+
+                    setFrom(message, chat);
+
                     if (!chat.isGroup()) {
                         if (message.isFromMe()) {
                             message.setToId(chat.getId());
@@ -316,6 +337,7 @@ public class Extractor {
                             message.setToId(this.userAccount.getId());
                         }
                     }
+
                     if (cg != null && message.getFrom().getId() != 0) {
                         cg.addMember(message.getFrom().getId());
                     }
@@ -332,9 +354,7 @@ public class Extractor {
                     }
                     
                     message.setFrom(getContact(message.getFrom().getId()));
-                    if (userAccount == null && message.isFromMe()) {
-                        userAccount = message.getFrom();
-                    }
+
                     msgs.add(message);
                 }
             }

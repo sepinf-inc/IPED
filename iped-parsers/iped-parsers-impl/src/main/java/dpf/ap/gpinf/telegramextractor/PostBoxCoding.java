@@ -132,13 +132,13 @@ public class PostBoxCoding {
         return new String(Arrays.copyOfRange(data, start,start+tam ),StandardCharsets.UTF_8);
     }
     
-    private boolean findOfset(String key,int type){
+    private boolean findOfset_old(String key, int type) {
         int start=offset;
         while(offset<data.length){
             int offant=offset;
-            int keylength = data[offset];
+            int keylength = readNextByte();
             keylength=keylength & 0xFF;
-            String readk=readString(++offset, keylength);
+            String readk = readString(offset, keylength);
             offset+=keylength;
             
             if(offset>=data.length){
@@ -158,9 +158,29 @@ public class PostBoxCoding {
         }
         if(start>0){
             offset=0;
-            return findOfset(key, type);
+            return findOfset_old(key, type);
         }
         return false;
+    }
+
+    private boolean findOfset(String key, int type) {
+        byte[] ofsetkey = new byte[key.length() + 2];
+        ofsetkey[0] = (byte) key.length();
+        byte[] bkey = key.getBytes(StandardCharsets.UTF_8);
+        for (int i = 0; i < bkey.length; i++) {
+            ofsetkey[i + 1] = bkey[i];
+        }
+        ofsetkey[key.length() + 1] = (byte) type;
+        int a = KPM.indexOf(data, ofsetkey, offset);
+        if (a == -1) {
+            a = KPM.indexOf(data, ofsetkey);
+        }
+        if (a == -1) {
+            return false;
+        } else {
+            offset = a + ofsetkey.length;
+            return true;
+        }
     }
 
     
@@ -203,13 +223,18 @@ public class PostBoxCoding {
         offset+=4;
         int btam=readInt32(offset);
         offset+=4;
-        obj.content=Arrays.copyOfRange(data, offset, offset+btam);
-        offset+=btam;
-        return obj;
+        if (offset + btam <= data.length) {
+            obj.content = Arrays.copyOfRange(data, offset, offset + btam);
+            offset += btam;
+            return obj;
+        } else {
+            offset = data.length - 1;
+        }
         }catch(Exception e){
             e.printStackTrace();
-            return null;
+
         }
+        return null;
     }
     public GenericObj decodeObjectForKey(String key){
         if(findOfset(key, OBJECT)){
@@ -241,6 +266,8 @@ public class PostBoxCoding {
         if(findOfset(key, ObjectArray)){
             int tam=readInt32(offset);
             offset+=4;
+            if (tam > data.length)
+                return l;
             for(int i=0;i<tam;i++){
                 GenericObj o=readObj();
                 if(o!=null){
@@ -418,7 +445,7 @@ public class PostBoxCoding {
         GenericObj im = decodeObjectForKey("im");
         int size = 0;
         int action = 0;
-
+        offset = 0;
         if (im != null && url != null) {
             // link with image
             this.data = im.content;
@@ -431,7 +458,7 @@ public class PostBoxCoding {
 
         } else {
             List<GenericObj> sizes = decodeObjectArrayForKey("r");
-            if (sizes.size() == 3) {
+            if (sizes.size() > 0) {
                 // image
                 mimetype = "image";
 
@@ -533,8 +560,12 @@ public class PostBoxCoding {
 
     }
       
-    void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) throws NullPointerException {
+    public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey)
+            throws NullPointerException {
         //reference MessageHistoryTable.swift
+        if (m == null) {
+            return;
+        }
         this.data=data;
         PostBoxCoding pk=new PostBoxCoding();
         pk.setData(key);
@@ -551,7 +582,7 @@ public class PostBoxCoding {
         if(type==int32){
             
             int stableId = readInt32(offset);
-            
+            m.setId(stableId);
             
             offset+=4;
             int stableVersion=readInt32(offset);
@@ -607,21 +638,21 @@ public class PostBoxCoding {
             int msglen=readInt32(offset);
             offset+=4;
             String txt=readString(offset, msglen);
+            m.setData(txt);
+
             offset += msglen;
             // atributos
             List<byte[]> atrs = readArray();
             List<byte[]> embededmedia = readArray();
             List<byte[]> referencemedia = readArray(12);
 
-            if(m!=null){
-                m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
-                m.setData(txt);
-                m.setId(stableId);
 
-                boolean incoming=testbit(flags, 2) || testbit(flags, 7);
-                m.setFromMe(!incoming);
+
+
+            boolean incoming = testbit(flags, 2) || testbit(flags, 7);
+            m.setFromMe(!incoming);
                 
-            }
+
             if(m.getFrom()==null) {
             	m.setFrom(new Contact(authorId));
             }else {            	
@@ -650,6 +681,7 @@ public class PostBoxCoding {
             }
             
         }
+        m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
         
     }
 
