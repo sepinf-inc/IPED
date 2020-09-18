@@ -560,8 +560,7 @@ public class PostBoxCoding {
 
     }
       
-    public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey)
-            throws NullPointerException {
+    public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
         //reference MessageHistoryTable.swift
         if (m == null) {
             return;

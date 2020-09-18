@@ -20,6 +20,7 @@ package dpf.ap.gpinf.telegramextractor;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
@@ -181,8 +182,8 @@ public class Extractor {
             while (rs.next()) {
 
                 PostBoxCoding key = new PostBoxCoding();
-                key.setData(rs.getBytes("key"));
-                long chatid = key.readInt64(4 + 2 + 4 + 1 + 4, false);
+                key.setData(rs.getBytes("chatid"));
+                long chatid = key.readInt64(0, false);
 
                 Contact c = getContact(chatid);
                 
@@ -311,7 +312,9 @@ public class Extractor {
         ArrayList<Message> msgs = new ArrayList<Message>();
         extractMediaIOS();
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
-            stmt.setLong(1, chat.getId());
+            ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
+            buffer.putLong(chat.getId());
+            stmt.setBytes(1, buffer.array());
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
                 ChatGroup cg = null;
@@ -578,12 +581,14 @@ public class Extractor {
     
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
 
-    private static final String CHATS_SQL_IOS = "select * from t9";
+    private static final String CHATS_SQL_IOS = "SELECT DISTINCT substr(t7.key,1,8) as chatid from t7 where hex(substr(t7.value,1,1))='00' "
+            + "UNION " + "select substr(key,16,8) as chatid from t9";
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
+    
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and hex(substr(t7.value,1,1))='00'";
 
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t2.key as chatid,t7.key,t7.value FROM t7 inner join t2 on printf('%016X',t2.key)=hex(substr(t7.key,1,8)) "
-            + "where chatid=?";
+
     private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
             + "left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
 
