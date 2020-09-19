@@ -429,7 +429,13 @@ public class PostBoxCoding {
 
     void readMedia(Message m) {
         
-
+        String phone = decodeStringForKey("pn");
+        if (phone != null) {
+            String aux = m.getData();
+            aux += "Phone: " + phone;
+            aux += decodeStringForKey("vc");
+            m.setData(aux);
+        }
         double lat=decodeDoubleForKey("la");
         if (lat != 0) {
             double lon = decodeDoubleForKey("lo");
@@ -574,7 +580,7 @@ public class PostBoxCoding {
 
         int timestampkey=pk.readInt32(12,false);
 
-        if(timestampkey==0)
+        if (timestampkey < 631152000 && namespacekey > 631152000)
             timestampkey = namespacekey;
         
         byte type = readNextByte();
