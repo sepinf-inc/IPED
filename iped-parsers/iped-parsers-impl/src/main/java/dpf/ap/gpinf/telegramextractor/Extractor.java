@@ -327,9 +327,7 @@ public class Extractor {
                 	Message message = new Message(0,chat);
 
                     p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
-                    /*
-                     * if (message.getTimeStamp() == null) { continue; }
-                     */
+
 
                     setFrom(message, chat);
 
@@ -357,7 +355,6 @@ public class Extractor {
                     }
                     
                     message.setFrom(getContact(message.getFrom().getId()));
-
                     msgs.add(message);
                 }
             }
