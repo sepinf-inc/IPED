@@ -13,13 +13,16 @@ public class HashValue implements IHashValue, Comparable<IHashValue>, Serializab
 
     private byte[] bytes;
 
+    public HashValue() {
+    }
+
     public HashValue(byte[] bytes) {
         this.bytes = bytes;
     }
 
     public HashValue(String hash) {
         try {
-            bytes = Hex.decodeHex(hash.toCharArray());
+            setHash(hash);
 
         } catch (DecoderException e) {
             e.printStackTrace();
@@ -28,6 +31,10 @@ public class HashValue implements IHashValue, Comparable<IHashValue>, Serializab
 
     public byte[] getBytes() {
         return bytes;
+    }
+
+    public void setHash(String hash) throws DecoderException {
+        this.bytes = Hex.decodeHex(hash.toCharArray());
     }
 
     public String toString() {
