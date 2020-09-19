@@ -19,6 +19,10 @@ enableKff = true
 # Necessário utilizar hash md5 ou sha-1.
 enableLedWkff = true
  
+# Habilita consulta à base de hashes do ProjectVic. Necessita md5 ou sha-1 habilitado.
+# Arquivos com hits são anotados com atributos extas como projectvic_category, projectvic_victimIdentified, etc. 
+enableProjectVicHashLookup = true
+ 
 # Habilita detecção de nudez. Para cada imagem cria os atributos "scoreNudez" (1 a 1000)
 # e classeNudez (1 a 5) para ordenação e/ou filtro.
 enableLedDie = true
