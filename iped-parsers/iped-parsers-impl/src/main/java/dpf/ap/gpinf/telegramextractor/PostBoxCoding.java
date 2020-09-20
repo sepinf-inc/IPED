@@ -464,7 +464,7 @@ public class PostBoxCoding {
 
         } else {
             List<GenericObj> sizes = decodeObjectArrayForKey("r");
-            if (sizes.size() > 0) {
+            if (!sizes.isEmpty()) {
                 // image
                 mimetype = "image";
 
@@ -518,11 +518,11 @@ public class PostBoxCoding {
                 }
 
                 if (action == 2 || action == 3) {
-
+                    // add or remove users from group
                     byte d[] = decodeBytesForKey("peerIds");
                     readPeersIds(m, d);
-                    
                 }
+
                 if (files.isEmpty()) {
                     offset = 0;
                     List<GenericObj> options = decodeObjectArrayForKey("os");

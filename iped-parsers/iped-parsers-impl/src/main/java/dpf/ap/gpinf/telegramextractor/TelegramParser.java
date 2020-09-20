@@ -28,7 +28,6 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 
-import javax.swing.text.StyledEditorKit.BoldAction;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -147,6 +146,8 @@ public class TelegramParser extends SQLite3DBParser {
             Contact account = searchAndroidAccount(searcher, dbPath);
 
             e.extractChatList();
+            // extract medias from media table, used when messages has only media reference
+            e.extractMediaIOS();
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessages(c));
                 if (e.getUserAccount() != null) {
@@ -192,7 +193,7 @@ public class TelegramParser extends SQLite3DBParser {
 
             List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
 
-            if (extractMessages && msgSubset.size() > 0) {
+            if (extractMessages && !msgSubset.isEmpty()) {
                 chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
             }
             storeLinkedHashes(msgSubset, chatMetadata);

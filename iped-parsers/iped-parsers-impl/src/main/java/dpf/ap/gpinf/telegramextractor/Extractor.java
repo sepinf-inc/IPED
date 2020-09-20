@@ -57,6 +57,7 @@ public class Extractor {
     private ArrayList<Chat> chatList = null;
 
     private HashMap<Long, Contact> contacts = new HashMap<>();
+    private HashMap<String, byte[]> mediakey = new HashMap<>();
 
     private Contact userAccount = null;
 
@@ -133,7 +134,7 @@ public class Extractor {
                     if (cont.getName() == null) {
                         d.setDecoderData(dados, DecoderTelegramInterface.USER);
                         d.getUserData(cont);
-                        if (cont.getAvatar() == null && d.getPhotoData().size() > 0) {
+                        if (cont.getAvatar() == null && !d.getPhotoData().isEmpty()) {
                             searchAvatarFileName(cont, d.getPhotoData());
                         }
                     }
@@ -278,9 +279,9 @@ public class Extractor {
         return msgs;
     }
 
-    private HashMap<String, byte[]> mediakey = new HashMap<>();
 
-    private void extractMediaIOS() throws SQLException {
+
+    public void extractMediaIOS() throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
             ResultSet rs = stmt.executeQuery();
             if (rs != null) {
@@ -312,7 +313,6 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        extractMediaIOS();
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL_IOS)) {
             ByteBuffer buffer = ByteBuffer.allocate(Long.BYTES);
             buffer.putLong(chat.getId());
@@ -345,13 +345,13 @@ public class Extractor {
                         cg.addMember(message.getFrom().getId());
                     }
 
-                    if(message.getNames()!=null && message.getNames().size()>0) {
+                    if (message.getNames() != null && !message.getNames().isEmpty()) {
                         for (PhotoData f : message.getNames()) {
                             ArrayList<String> name = new ArrayList<>();
                             name.add(f.getName());
                             loadDocument(message, name, f.getSize());
                         }
-                    	if(message.getMediaMime()==null) {
+                        if (message.getMediaMime() == null && message.getType() == null) {
                     		message.setMediaMime("attach");
                     	}
                     }
@@ -468,7 +468,7 @@ public class Extractor {
                             nphones++;
                         }
                         //List<PhotoData> photo = d.getPhotoData();
-                        if (cont.getAvatar() != null && cont.getPhotos().size() > 0) {
+                        if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                             try {
                                 if (cont.getPhone() != null)
                                     searchAvatarFileName(cont, cont.getPhotos());
@@ -509,7 +509,7 @@ public class Extractor {
                         nphones++;
                     }
                     //List<PhotoData> photo = d.getPhotoData();
-                    if (cont.getAvatar() != null && cont.getPhotos().size() > 0) {
+                    if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                         try {
                             if (cont.getPhone() != null)
                                 searchAvatarFileName(cont, cont.getPhotos());
@@ -582,12 +582,13 @@ public class Extractor {
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
             + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "
-            + "where hex(substr(t7.value,1,1))='00' and chatid not in (select substr(key,16,8) as chatid from t9) "
+            + "where substr(t7.value,1,1)=x'00' and chatid not in (select substr(key,16,8) as chatid from t9) "
             + "group by chatid";
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
     
-    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and hex(substr(t7.value,1,1))='00'";
+    private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
+            + "substr(t7.value,1,1)=x'00'";
 
 
     private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
