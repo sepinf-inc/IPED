@@ -636,6 +636,7 @@ public class PostBoxCoding {
             
             if(hasautor==1){
                 authorId=readInt64(offset);
+                m.setFrom(new Contact(authorId));
                 offset+=8;
             }
             
@@ -656,13 +657,6 @@ public class PostBoxCoding {
 
             boolean incoming = testbit(flags, 2) || testbit(flags, 7);
             m.setFromMe(!incoming);
-                
-
-            if(m.getFrom()==null) {
-            	m.setFrom(new Contact(authorId));
-            }else {            	
-                m.getFrom().setId(authorId);
-            }
 
             for (byte[] b : referencemedia) {
                 // convert from bigendian to littleendian

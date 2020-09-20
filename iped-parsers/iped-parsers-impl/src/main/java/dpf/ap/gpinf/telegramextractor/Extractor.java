@@ -237,7 +237,11 @@ public class Extractor {
                     Message message = new Message(mid, chat);
                     d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
                     d.getMessageData(message);
-                    message.setFrom(getContact(d.getRemetenteId()));
+                    long fromid = d.getRemetenteId();
+                    if (fromid != 0) {
+                        message.setFrom(getContact(fromid));
+                    }
+                    setFrom(message, chat);
 
                     if (cg != null && message.getFrom().getId() != 0) {
                         cg.addMember(message.getFrom().getId());
@@ -266,9 +270,7 @@ public class Extractor {
                         }
                         message.setType(msg_decoded);
                     }
-                    if (userAccount == null && message.isFromMe()) {
-                        userAccount = message.getFrom();
-                    }
+
                     msgs.add(message);
                 }
             }
@@ -293,19 +295,29 @@ public class Extractor {
     }
     
     protected void setFrom(Message message, Chat chat) {
-        if (userAccount != null && message.isFromMe()) {
-            message.setFrom(userAccount);
-        }
-        if (userAccount == null && message.isFromMe() && message.getFrom() != null) {
-            userAccount = message.getFrom();
-        }
-        if (message.getFrom() == null && !message.isFromMe() && !chat.isGroup()) {
-            message.setFrom(getContact(chat.getId()));
-        }
+
+
+
 
         if (message.getFrom() == null) {
-            // impossible to determine from
-            message.setFrom(getContact(0));
+            if (userAccount != null && message.isFromMe()) {
+                message.setFrom(userAccount);
+            } else if (!message.isFromMe() && !chat.isGroup()) {
+                message.setFrom(getContact(chat.getId()));
+            } else {
+                // impossible to determine from
+                message.setFrom(getContact(0));
+            }
+        } else {
+            if (message.getFrom().getId() != 0) {
+                // use the contact already saved in the contact database
+                message.setFrom(getContact(message.getFrom().getId()));
+            }
+            if (userAccount == null && message.isFromMe() && message.getFrom().getId() != 0) {
+                // set the userAccount based on the author info
+                userAccount = message.getFrom();
+            }
+
         }
 
         
