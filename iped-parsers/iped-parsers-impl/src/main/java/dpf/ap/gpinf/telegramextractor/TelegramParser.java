@@ -146,8 +146,7 @@ public class TelegramParser extends SQLite3DBParser {
             Contact account = searchAndroidAccount(searcher, dbPath);
 
             e.extractChatList();
-            // extract medias from media table, used when messages has only media reference
-            e.extractMediaIOS();
+
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessages(c));
                 if (e.getUserAccount() != null) {
@@ -320,6 +319,8 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
             e.extractChatListIOS();
+            // extract medias from table, used when the message has only a media reference
+            e.extractMediaIOS();
             for (Chat c : e.getChatList()) {
                 c.getMessages().addAll(e.extractMessagesIOS(c));
                 generateChat(c, useraccount, e, searcher, handler, extractor);
