@@ -28,6 +28,7 @@ public class Chat implements ChatInterface {
     private Contact c;
     private String name;
     private boolean group;
+    private boolean deleted = false;
     private long id;
 
     public ArrayList<Message> getMessages() {
@@ -84,6 +85,14 @@ public class Chat implements ChatInterface {
         this.c = c;
         this.name = name;
         this.group = false;
+    }
+
+    public boolean isDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        this.deleted = deleted;
     }
 
 }

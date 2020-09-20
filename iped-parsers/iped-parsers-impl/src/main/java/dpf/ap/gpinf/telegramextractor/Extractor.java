@@ -200,6 +200,8 @@ public class Extractor {
 
                 }
                 if (cg != null) {
+                    cg.setDeleted(rs.getBoolean("deleted"));
+
                     logger.debug("Telegram chat id ", cg.getId());
                     /*
                      * ArrayList<Message> messages=extractMessages(conn, cg); if(messages == null ||
@@ -578,8 +580,10 @@ public class Extractor {
     
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
 
-    private static final String CHATS_SQL_IOS = "SELECT DISTINCT substr(t7.key,1,8) as chatid from t7 where hex(substr(t7.value,1,1))='00' "
-            + "UNION " + "select substr(key,16,8) as chatid from t9";
+    private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
+            + "UNION SELECT  substr(t7.key,1,8) as chatid, true as deleted from t7  "
+            + "where hex(substr(t7.value,1,1))='00' and chatid not in (select substr(key,16,8) as chatid from t9) "
+            + "group by chatid";
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
     

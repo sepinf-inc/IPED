@@ -178,6 +178,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(TikaCoreProperties.TITLE, chatName);
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
+            chatMetadata.set(ExtraProperties.CHAT_RECOVERED, c.isDeleted());
 
             if (c.isGroup()) {
                 ChatGroup cg = (ChatGroup) c;
@@ -434,6 +435,7 @@ public class TelegramParser extends SQLite3DBParser {
             } catch (Exception e) {
                 // TODO: handle exception
                 e.printStackTrace(System.out);
+                throw e;
             }
     	}
     	if(mimetype.equals(TELEGRAM_USER_CONF.toString())) {
