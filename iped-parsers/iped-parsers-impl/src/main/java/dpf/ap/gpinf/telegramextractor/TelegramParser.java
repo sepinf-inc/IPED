@@ -28,6 +28,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.text.StyledEditorKit.BoldAction;
 import javax.xml.bind.DatatypeConverter;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -178,7 +179,7 @@ public class TelegramParser extends SQLite3DBParser {
             chatMetadata.set(TikaCoreProperties.TITLE, chatName);
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
-            chatMetadata.set(ExtraProperties.CHAT_RECOVERED, c.isDeleted());
+            chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
 
             if (c.isGroup()) {
                 ChatGroup cg = (ChatGroup) c;
