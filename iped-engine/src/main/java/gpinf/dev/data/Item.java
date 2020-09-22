@@ -281,6 +281,8 @@ public class Item implements ISleuthKitItem {
         } catch (Exception e) {
             // LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
         }
+        tmpFile = null;
+        tis = null;
         try {
             if (textCache != null)
                 textCache.close();
