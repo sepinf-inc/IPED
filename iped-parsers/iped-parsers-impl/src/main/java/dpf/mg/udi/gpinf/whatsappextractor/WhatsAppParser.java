@@ -74,7 +74,8 @@ public class WhatsAppParser extends SQLite3DBParser {
      * 
      */
     private static boolean processed = false;
-    private static boolean merge_dbs = true;
+    private boolean mergeDbs = false;
+
     private static final long serialVersionUID = 1L;
 
     public static final String WHATSAPP = "WhatsApp";
@@ -140,6 +141,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         this.extractMessages = extractMessages;
     }
 
+    @Field
+    public void setMergeDbs(boolean mergeDbs) {
+        this.mergeDbs = mergeDbs;
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -153,7 +159,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         } else if (mimetype.equals(WA_USER_PLIST.toString())) {
             parseWhatsAppAccount(stream, context, handler, false);
         } else if (mimetype.equals(MSG_STORE.toString())) {
-            if (merge_dbs)
+            if (mergeDbs)
                 parseWhatsappMessagesMerging(stream, handler, metadata, context, new ExtractorAndroidFactory());
             else
                 parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());

@@ -109,7 +109,11 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
+			<params>
+				<param name="mergeDbs" type="bool">true</param>
+			</params>
+		</parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
         	<!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
