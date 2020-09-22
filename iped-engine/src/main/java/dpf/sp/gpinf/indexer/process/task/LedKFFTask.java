@@ -42,7 +42,8 @@ public class LedKFFTask extends AbstractTask {
     private static Object lock = new Object();
     private static HashMap<String, IHashValue[]> hashArrays;
     public static KffItem[] kffItems;
-    private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null, null, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            "sha-256" };
     private static final int idxMd5 = 0;
     private static final int idxMd5_64K = 1;
     private static final int idxLength = 5;

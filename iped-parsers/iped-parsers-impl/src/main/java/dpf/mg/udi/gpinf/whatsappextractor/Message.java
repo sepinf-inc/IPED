@@ -40,6 +40,7 @@ public class Message {
     private int mediaDuration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
+    private boolean childporn = false;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -296,6 +297,14 @@ public class Message {
 
     public void setRecoveredFrom(String recoveredFrom) {
         this.recoveredFrom = recoveredFrom;
+    }
+
+    public boolean isChildporn() {
+        return childporn;
+    }
+
+    public void setChildporn(boolean childporn) {
+        this.childporn = childporn;
     }
 
     public static enum MessageType {
