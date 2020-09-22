@@ -39,6 +39,7 @@ public class Message {
     private String thumbpath;
     private int mediaDuration;
     private MessageStatus messageStatus;
+    private boolean childporn = false;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -287,6 +288,14 @@ public class Message {
     public boolean isCall() {
         return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
                 || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL;
+    }
+
+    public boolean isChildporn() {
+        return childporn;
+    }
+
+    public void setChildporn(boolean childporn) {
+        this.childporn = childporn;
     }
 
     public static enum MessageType {

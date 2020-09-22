@@ -351,6 +351,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMediaHash() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
+                if (m.isChildporn()) {
+                    meta.set("kffstatus", "pedo");
+                }
             }
 
             // TODO store thumb in metadata?
