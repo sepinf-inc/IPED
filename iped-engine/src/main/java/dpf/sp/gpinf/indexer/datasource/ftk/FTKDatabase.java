@@ -204,8 +204,8 @@ public abstract class FTKDatabase {
 
     }
 
-    private void lerListaDeArquivos(ICaseData caseData, String path, File file, Map<Integer, ArrayList<String>> fileList,
-            Set<Integer> ADList) throws Exception {
+    private void lerListaDeArquivos(ICaseData caseData, String path, File file,
+            Map<Integer, ArrayList<String>> fileList, Set<Integer> ADList) throws Exception {
         String[] names = file.list();
         if (names != null) {
             for (int k = 0; k < names.length; k++) {

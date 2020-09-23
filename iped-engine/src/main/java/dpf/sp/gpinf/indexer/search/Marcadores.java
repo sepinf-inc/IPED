@@ -36,8 +36,8 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
-import iped3.search.LuceneSearchResult;
 import iped3.search.IMarcadores;
+import iped3.search.LuceneSearchResult;
 
 public class Marcadores implements Serializable, IMarcadores {
 
@@ -434,12 +434,8 @@ public class Marcadores implements Serializable, IMarcadores {
         return (Marcadores) Util.readObject(file.getAbsolutePath());
     }
 
-    public void setSelected(boolean value, int id, IIPEDSource ipedCase) {
-        setSelected(value, id, true, ipedCase);
-    }
-
-    private void setSelected(boolean value, int id, boolean changeCount, IIPEDSource ipedCase) {
-        if (value != selected[id] && changeCount) {
+    public void setSelected(boolean value, int id) {
+        if (value != selected[id]) {
             if (value)
                 selectedItens++;
             else
@@ -447,17 +443,6 @@ public class Marcadores implements Serializable, IMarcadores {
         }
         // seta valor na versão de visualização ou vice-versa
         selected[id] = value;
-        setValueAtOtherVersion(value, id, selected, ipedCase);
-    }
-
-    // seta valor na outra versao
-    private void setValueAtOtherVersion(boolean value, int doc, boolean[] array, IIPEDSource ipedCase) {
-        Integer id2 = ipedCase.getViewToRawMap().getRaw(doc);
-        if (id2 != null && array[id2] != (Boolean) value)
-            setSelected(value, id2, false, ipedCase);
-        id2 = ipedCase.getViewToRawMap().getView(doc);
-        if (id2 != null && array[id2] != (Boolean) value)
-            setSelected(value, id2, false, ipedCase);
     }
 
 }

@@ -28,7 +28,8 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     KMLResult kmlResult;
 
-    GetResultsKMLWorker(IMultiSearchResultProvider app, KMLResult kmlResult, String[] colunas, ProgressDialog progress) {
+    GetResultsKMLWorker(IMultiSearchResultProvider app, KMLResult kmlResult, String[] colunas,
+            ProgressDialog progress) {
         this.app = app;
         this.colunas = colunas;
         this.progress = progress;

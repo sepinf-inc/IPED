@@ -138,7 +138,7 @@ class ForkServer2 implements Runnable {
         try {
             while (true) {
                 synchronized (lock) {
-                    if(updateSince) {
+                    if (updateSince) {
                         since = System.currentTimeMillis();
                         updateSince = false;
                     }
@@ -257,7 +257,7 @@ class ForkServer2 implements Runnable {
                 if (args[i] instanceof ParseContext)
                     updateParsingTimeout((ParseContext) args[i]);
                 if (args[i] instanceof ContentHandler)
-                    args[i] = new UpdateProgressContentHandler((ContentHandler)args[i]);
+                    args[i] = new UpdateProgressContentHandler((ContentHandler) args[i]);
             }
             try {
                 method.invoke(object, args);
@@ -335,9 +335,9 @@ class ForkServer2 implements Runnable {
 
         return object;
     }
-    
-    private class UpdateProgressContentHandler extends ContentHandlerDecorator{
-        
+
+    private class UpdateProgressContentHandler extends ContentHandlerDecorator {
+
         public UpdateProgressContentHandler(ContentHandler contentHandler) {
             super(contentHandler);
         }
@@ -349,6 +349,6 @@ class ForkServer2 implements Runnable {
                 updateSince = true;
             }
         }
-        
+
     }
 }

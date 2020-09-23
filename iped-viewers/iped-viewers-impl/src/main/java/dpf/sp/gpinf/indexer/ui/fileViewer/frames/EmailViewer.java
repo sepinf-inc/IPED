@@ -67,7 +67,7 @@ public class EmailViewer extends HtmlViewer {
     MimeStreamParser parser;
 
     public EmailViewer() {
-        this.fileOpenApp = new AttachmentOpen();
+        this.fileHandler = new AttachmentOpen();
         this.enableJavascript = true;
     }
 
@@ -117,7 +117,7 @@ public class EmailViewer extends HtmlViewer {
 
     }
 
-    public class AttachmentOpen extends FileOpen {
+    public class AttachmentOpen extends FileHandler {
 
         public void open(int attNum) {
             Object[] att = mch.attachs.get(attNum);

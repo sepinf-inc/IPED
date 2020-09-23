@@ -40,9 +40,9 @@ Bases de dados = application/x-edb; application/x-edb-table; application/irpf; a
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli; application/zstd; application/deflate64; image/x-emf-compressed 
 
-Contatos = text/x-vcard; application/x-vcard-html; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; contact/x-skype-account; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact;
+Contatos = text/x-vcard; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact;
 
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; message/x-whatsapp-msg; message/x-skype-conversation; message/x-skype-message; message/x-skype-filetransfer; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-whatsapp-chat; application/x-skype-conversation; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
 
@@ -72,7 +72,7 @@ Favoritos Web = application/x-ufed-html-bookmarks; application/x-ufed-webbookmar
 
 Discos ISO = application/x-iso9660-image; application/x-udf-image;
 
-Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi
+Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx
 
 Outros Espelhos = application/x-disk-image;
 
@@ -80,13 +80,13 @@ Outros Espelhos = application/x-disk-image;
 
 Resumo da Extração = application/x-ufed-html-summary
 
-Chamadas = application/x-ufed-html-calls; application/x-ufed-call
+Chamadas = application/x-ufed-html-calls; application/x-ufed-call; call/x-whatsapp-call
 
 Mensagens SMS = application/x-ufed-html-sms; application/x-ufed-sms
 
 Mensagens MMS = application/x-ufed-html-mms; application/x-ufed-mms
 
-Mensagens Instantâneas = application/x-ufed-instantmessage
+Mensagens Instantâneas = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer
 
 Dispositivos Bluetooth = application/x-ufed-html-bluetooth; application/x-ufed-bluetoothdevice
 
@@ -96,7 +96,7 @@ Calendário = application/x-ufed-html-calendar; application/x-ufed-calendarentry
 
 Logs = application/x-ufed-html-logs; application/x-ufed-logentry
 
-Usuários = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user
+Usuários = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account
 
 Pesquisas = application/x-ufed-html-searches; application/x-ufed-searcheditem
 

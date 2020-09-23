@@ -20,7 +20,7 @@ public class MarcadoresController {
 
     private boolean multiSetting = false;
 
-    boolean updatingHistory = false;
+    private boolean updatingHistory = false;
 
     private MarcadoresController() {
         SwingUtilities.invokeLater(new Runnable() {
@@ -30,6 +30,10 @@ public class MarcadoresController {
                 filtro = new SearchStateFilter();
             }
         });
+    }
+
+    public boolean isUpdatingHistory() {
+        return updatingHistory;
     }
 
     public static MarcadoresController get() {

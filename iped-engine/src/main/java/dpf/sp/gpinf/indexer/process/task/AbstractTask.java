@@ -4,7 +4,6 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -201,6 +200,7 @@ public abstract class AbstractTask {
             if (priority <= caseData.getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {
+                evidence.dispose();
                 caseData.addItemToQueue(evidence, priority);
                 worker.itensBeingProcessed--;
             }
@@ -230,10 +230,7 @@ public abstract class AbstractTask {
         } catch (Throwable t) {
             // Ignora arquivos recuperados e corrompidos
             if (t.getCause() instanceof CorruptedCarvedException) {
-                stats.incCorruptCarveIgnored();
-                // System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " +
-                // "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" +
-                // length + "bytes)\t" + t.getCause());
+                stats.incCarvedIgnored(evidence);
                 evidence.setToIgnore(true, false);
                 evidence.setAddToCase(false);
             } else {

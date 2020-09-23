@@ -3,26 +3,19 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 import java.util.Date;
-import java.util.Locale;
 
-import org.apache.commons.logging.LogFactory;
-import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ConstantsViewer;
-import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
-    
+
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
-    
+
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -115,6 +108,12 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         if (outputOnSSD || !indexTempOnSSD || Boolean.valueOf(System.getProperty(SYS_PROP_APPEND)))
             indexTemp = null;
+    }
+
+    public void setIndexerTemp(File temp) {
+        indexerTemp = temp;
+        indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
+        ConstantsViewer.indexerTemp = indexerTemp;
     }
 
     public File getIndexerTemp() {

@@ -1,4 +1,4 @@
-package org.apache.tika.parser.rtf; 
+package org.apache.tika.parser.rtf;
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements.  See the NOTICE file distributed with
@@ -43,19 +43,19 @@ import org.xml.sax.SAXException;
  * <p/>
  * <p/>
  * When the parser has finished an object or picture and called
- * {@link #handleCompletedObject()}, this will write the object
- * to the {@link #handler}.
+ * {@link #handleCompletedObject()}, this will write the object to the
+ * {@link #handler}.
  * <p/>
  * <p/>
  * <p/>
- * This (in combination with TextExtractor) expects basically a flat parse.  It will pull out
- * all pict whether they are tied to objdata or are intended
- * to be standalone.
+ * This (in combination with TextExtractor) expects basically a flat parse. It
+ * will pull out all pict whether they are tied to objdata or are intended to be
+ * standalone.
  * <p/>
  * <p/>
- * This tries to pull metadata around a pict that is encoded
- * with {sp {sn} {sv}} types of data.  This information
- * sometimes contains the name and even full file path of the original file.
+ * This tries to pull metadata around a pict that is encoded with {sp {sn} {sv}}
+ * types of data. This information sometimes contains the name and even full
+ * file path of the original file.
  */
 class RTFEmbObjHandler {
 
@@ -63,10 +63,10 @@ class RTFEmbObjHandler {
     private final ContentHandler handler;
     private final EmbeddedDocumentUtil embeddedDocumentUtil;
     private final ByteArrayOutputStream os;
-    //high hex cached for writing hexpair chars (data)
+    // high hex cached for writing hexpair chars (data)
     private int hi = -1;
     private int thumbCount = 0;
-    //don't need atomic, do need mutable
+    // don't need atomic, do need mutable
     private AtomicInteger unknownFilenameCount = new AtomicInteger();
     private boolean inObject = false;
     private String sv = EMPTY_STRING;
@@ -110,7 +110,7 @@ class RTFEmbObjHandler {
         sv = sb.toString();
     }
 
-    //end metadata pair
+    // end metadata pair
     protected void endSP() {
         metadata.add(sn, sv);
     }
@@ -128,8 +128,8 @@ class RTFEmbObjHandler {
     }
 
     protected void writeHexChar(int b) throws IOException, TikaException {
-        //if not hexchar, ignore
-        //white space is common
+        // if not hexchar, ignore
+        // white space is common
         if (TextExtractor2.isHexChar(b)) {
             if (hi == -1) {
                 hi = 16 * TextExtractor2.hexValue(b);
@@ -154,10 +154,10 @@ class RTFEmbObjHandler {
         if (len < 0) {
             throw new TikaException("Requesting I read < 0 bytes ?!");
         }
-        if (len > memoryLimitInKb*1024) {
-            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len +
-                    ") bytes), but maximum allowed is ("+(memoryLimitInKb*1024)+")."+
-                    "If this is a valid RTF file, consider increasing the memory limit via TikaConfig.");
+        if (len > memoryLimitInKb * 1024) {
+            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len
+                    + ") bytes), but maximum allowed is (" + (memoryLimitInKb * 1024) + ")."
+                    + "If this is a valid RTF file, consider increasing the memory limit via TikaConfig.");
         }
 
         byte[] bytes = new byte[len];
@@ -194,7 +194,7 @@ class RTFEmbObjHandler {
             extractObj(bytes, handler, metadata);
 
         } else if (state == EMB_STATE.NADA) {
-            //swallow...no start for pict or embed?!
+            // swallow...no start for pict or embed?!
         }
         reset();
     }
@@ -216,15 +216,12 @@ class RTFEmbObjHandler {
                     metadata.set(Metadata.RESOURCE_NAME_KEY, "thumbnail_" + thumbCount++ + extension);
                     metadata.set(RTFMetadata.THUMBNAIL, "true");
                 } else {
-                    metadata.set(Metadata.RESOURCE_NAME_KEY, "file_" + unknownFilenameCount.getAndIncrement() +
-                            extension);
+                    metadata.set(Metadata.RESOURCE_NAME_KEY,
+                            "file_" + unknownFilenameCount.getAndIncrement() + extension);
                 }
             }
             try {
-                embeddedDocumentUtil.parseEmbedded(
-                        stream,
-                        new EmbeddedContentHandler(handler),
-                        metadata, false);
+                embeddedDocumentUtil.parseEmbedded(stream, new EmbeddedContentHandler(handler), metadata, false);
             } catch (IOException e) {
                 EmbeddedDocumentUtil.recordEmbeddedStreamException(e, metadata);
             } finally {
@@ -234,8 +231,7 @@ class RTFEmbObjHandler {
     }
 
     /**
-     * reset state after each object.
-     * Do not reset unknown file number.
+     * reset state after each object. Do not reset unknown file number.
      */
     protected void reset() {
         state = EMB_STATE.NADA;
@@ -248,8 +244,8 @@ class RTFEmbObjHandler {
     }
 
     private enum EMB_STATE {
-        PICT, //recording pict data
-        OBJDATA, //recording objdata
+        PICT, // recording pict data
+        OBJDATA, // recording objdata
         NADA
     }
 }

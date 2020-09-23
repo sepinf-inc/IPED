@@ -20,8 +20,7 @@ public class WAContactsExtractorIOS extends WAContactsExtractor {
 
     @Override
     public void extractContactList() throws WAExtractorException {
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
 
             ResultSet rs;
             try {

@@ -4,12 +4,10 @@ import java.io.IOException;
 
 import javax.swing.SwingUtilities;
 
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 
@@ -34,7 +32,7 @@ public class ResultTotalSizeCounter {
                 });
                 long volume = 0;
                 try {
-                    AtomicReader atomicReader = App.get().appCase.getAtomicReader();
+                    LeafReader atomicReader = App.get().appCase.getAtomicReader();
                     NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.LENGTH);
                     for (IItemId item : result.getIterator()) {
                         int doc = App.get().appCase.getLuceneId(item);

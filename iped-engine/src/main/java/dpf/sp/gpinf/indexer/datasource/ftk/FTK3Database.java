@@ -157,7 +157,8 @@ public class FTK3Database extends FTKDatabase {
     }
 
     @Override
-    protected void addFileListToCaseData(ICaseData caseData, Map<Integer, ArrayList<String>> fileList) throws Exception {
+    protected void addFileListToCaseData(ICaseData caseData, Map<Integer, ArrayList<String>> fileList)
+            throws Exception {
         StringBuffer fileIds = new StringBuffer();
         int i = 1;
         for (Integer ID : fileList.keySet()) {

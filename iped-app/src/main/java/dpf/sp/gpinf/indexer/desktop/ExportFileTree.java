@@ -199,7 +199,7 @@ public class ExportFileTree extends CancelableWorker {
         try {
             item = App.get().appCase.getItemByLuceneID(docId);
 
-            String dstName = Util.getValidFilename(item.getName());
+            String dstName = Util.getValidFilename(Util.getNameWithTrueExt(item));
             dst = new File((File) subdir, dstName);
 
             if (item.isDir() || isParent) {
@@ -378,7 +378,7 @@ public class ExportFileTree extends CancelableWorker {
                 @Override
                 public void approveSelection() {
                     File f = getSelectedFile();
-                    if (f.exists() && getDialogType() == SAVE_DIALOG) {
+                    if (f.exists() && f.isFile() && getDialogType() == SAVE_DIALOG) {
                         int result = JOptionPane.showConfirmDialog(this,
                                 Messages.getString("ExportToZIP.FileAlreadyExistsMessageText"),
                                 Messages.getString("ExportToZIP.FileAlreadyExistsMessageTitle"),

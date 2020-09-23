@@ -1,0 +1,124 @@
+﻿########################################################################
+# Processing Settings
+########################################################################
+
+# Enables file hashes calculation. To calculate multiple hashes use ; as separator
+# Possible values: md5, sha-1, sha-256, sha-512 and edonkey
+hash = md5; sha-256
+
+# Enables photoDNA hash calculation. If you have rights to use it (law enforcement that fight against child exploitation)
+# and have received the library, you must put it into plugin/optional_jars folder
+enablePhotoDNA = false
+
+# Enables hash lookup on IPED database. Programs with status "Alert" can be modified in "conf/KFFTaskConfig.txt".
+# Need to enable hash md5 or sha-1.
+enableKff = false
+
+# Enables hash lookup on LED database. Files with hashes 
+# on the database can be queried with filter "Hash Alert (Child Porn)"
+# Need to use hash md5 or sha-1.
+enableLedWkff = false
+
+# Enables ProjectVIC hashset lookup. Needs md5 or sha-1 to be computed. Files found will be tagged
+# with ProjectVic categories and other extra properties prefixed with "projectvic".
+enableProjectVicHashLookup = false
+
+# Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
+# and classeNudez (1 to 5) for ranking and/or filtering.
+enableLedDie = false
+
+# Excludes from the rest of processing (and from the case) ignorable files according hashes database.
+excludeKffIgnorable = false
+
+# Ignores/discards duplicated files from the rest of processing (and from the case)
+# It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
+ignoreDuplicates = false
+
+# Exports the properties of all files in the case to file "Lista de Arquivos.csv"
+exportFileProps = true
+
+# Processes the signatures of files
+processFileSignatures = true
+
+# Enables parsing of files contents. It's necessary for several functions like
+# containers expansion, detection of encrypted content, metadata indexing, previews generation, etc.
+enableFileParsing = true
+
+# Expands containers, like compressed files, e-mail boxes, emails e MS-Office documents.
+# File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
+expandContainers = true
+
+# Searches texts extracted from items by regular expressions 
+# like social numbers, emails, URLs, credit cards, money values, etc. 
+# New expressions can be configured in file "conf/RegexConfig.txt"
+enableRegexSearch = true
+
+# Enables detection of more than 70 idioms in document files.
+enableLanguageDetect = true
+
+# Feature to recognize named entities: people, organizations or places.
+# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in optional_jars folder.
+# This feature is CPU heavy, it can increase processing time by 4x.
+# Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
+enableNamedEntityRecogniton = false
+
+# Feature to create link graphs of communications (calls, messages, emails...)
+# Optionally it can create entities and links based on nearby regex hits (experimental). It could be enabled in conf/GraphConfig.json
+enableGraphGeneration = true
+
+# Indexes files contents. If disabled, indexes only the properties of files.
+indexFileContents = true
+
+# Indexes files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc
+# In this option, raw strings are extracted from the files and indexed
+indexUnknownFiles = true
+
+# Index corrupted files with strings. For example, deleted and partially overwritten images
+# can have searchable plain text into them.
+indexCorruptedFiles = true
+
+# Enables OCR in scanned images and PDFs. It can strongly increase processing time.
+# Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
+# Advanced OCR options, such as the Tesseract path on Linux, can be modified in "conf/AdvancedConfig.txt"
+enableOCR = false
+
+# Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
+# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
+enableAudioTranscription = false
+
+# Adds and processes files fileSlacks
+addFileSlacks = false
+
+# Adds and processes unallocated areas of images, via sleuthkit
+addUnallocated = false
+
+# Added unallocated space will be indexed. "addUnallocated" and "indexUnknownFiles" must be enabled.
+indexUnallocated = false
+
+# Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
+# By default carving runs on almost every item in the case. 
+# File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
+enableCarving = false
+
+# Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
+# It's necessary to enable "addUnallocated" and to configure "ledWkffPath".
+enableKFFCarving = false
+
+# Enables specific carving of e-Mule "known.met" files. "addUnallocated" must be enabled.
+enableKnownMetCarving = false
+
+# Enables the generation of images thumbnails during processing.
+# It can slow down processing, but strongly speeds up image preview in the gallery
+enableImageThumbs = true
+
+# [Experimental] Enables the generation of images features during processing, allowing the search
+# for visually similar images. "enableImageThumbs" must be enabled.
+enableImageSimilarity = false
+
+# Enables extraction of image frames from video files
+# Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"
+enableVideoThumbs = true
+
+# Enables HTML report generation on automatic extractions or from selected items.
+# Generation settings can be modified in file "conf/HTMLReportConfig.txt"
+enableHTMLReport = true

@@ -1,28 +1,10 @@
 package dpf.sp.gpinf.indexer.analysis;
 
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
- * agreements. See the NOTICE file distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License. You may obtain a
- * copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
-import java.io.IOException;
-import java.io.Reader;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
-import org.apache.lucene.util.Version;
-
 /* [Triage] The following libraries are used to process tokens in a non-standard way */
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
@@ -42,7 +24,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
      * {@linkplain https://issues.apache.org/jira/browse/LUCENE-1068}
      */
     // private final boolean replaceInvalidAcronym,enableStopPositionIncrements;
-    private final Version matchVersion;
+
     private final boolean pipeTokenizer;
 
     /**
@@ -51,8 +33,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
      * @param matchVersion
      *            Lucene version to match
      */
-    public StandardASCIIAnalyzer(Version matchVersion, boolean pipeTokenizer) {
-        this.matchVersion = matchVersion;
+    public StandardASCIIAnalyzer(boolean pipeTokenizer) {
         this.pipeTokenizer = pipeTokenizer;
     }
 
@@ -92,13 +73,13 @@ public class StandardASCIIAnalyzer extends Analyzer {
     }
 
     @Override
-    protected TokenStreamComponents createComponents(final String fieldName, final Reader reader) {
+    protected TokenStreamComponents createComponents(final String fieldName) {
 
         Tokenizer tokenizer;
         if (pipeTokenizer) {
-            tokenizer = new CategoryTokenizer(matchVersion, reader);
+            tokenizer = new CategoryTokenizer();
         } else {
-            tokenizer = new LetterDigitTokenizer(matchVersion, reader);
+            tokenizer = new LetterDigitTokenizer();
         }
 
         // src.setMaxTokenLength(maxTokenLength);
@@ -115,18 +96,12 @@ public class StandardASCIIAnalyzer extends Analyzer {
          * Category's description, which is checked by the following "if"
          */
         if (!(pipeTokenizer)) {
-            tok = new LengthFilter(matchVersion, tok, 1, maxTokenLength);
+            tok = new LengthFilter(tok, 1, maxTokenLength);
             if (filterNonLatinChars)
-                tok = new Latin1CharacterFilter(matchVersion, tok);
+                tok = new Latin1CharacterFilter(tok);
         }
 
-        return new TokenStreamComponents(tokenizer, tok) {
-            @Override
-            protected void setReader(final Reader reader) throws IOException {
-                // src.setMaxTokenLength(StandardAnalyzer.this.maxTokenLength);
-                super.setReader(reader);
-            }
-        };
+        return new TokenStreamComponents(tokenizer, tok);
     }
 
     /*
@@ -137,8 +112,8 @@ public class StandardASCIIAnalyzer extends Analyzer {
 
         private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
 
-        public Latin1CharacterFilter(Version matchVersion, TokenStream tokenStream) {
-            super(matchVersion, tokenStream);
+        public Latin1CharacterFilter(TokenStream tokenStream) {
+            super(tokenStream);
         }
 
         @Override

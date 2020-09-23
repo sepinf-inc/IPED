@@ -19,6 +19,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -33,16 +34,17 @@ public class MetadataUtil {
     private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
-    
+
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
-    
-    private static Set<String> getIgnorePreviewMetas(){
+
+    private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
         ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
         ignorePreviewMetas.add(Metadata.CONTENT_LENGTH);
         ignorePreviewMetas.add(Metadata.CONTENT_TYPE);
         ignorePreviewMetas.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         ignorePreviewMetas.add(ExtraProperties.TIKA_PARSER_USED);
+        ignorePreviewMetas.add(UFEDChatParser.CHILD_MSG_IDS);
         return ignorePreviewMetas;
     }
 
@@ -82,6 +84,18 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.TIKA_PARSER_USED);
         generalKeys.add(ExtraProperties.CARVEDBY_METADATA_NAME);
         generalKeys.add(ExtraProperties.CARVEDOFFSET_METADATA_NAME.getName());
+        generalKeys.add(ExtraProperties.CONTACT_OF_ACCOUNT);
+        generalKeys.add(ExtraProperties.USER_ACCOUNT);
+        generalKeys.add(ExtraProperties.USER_ACCOUNT_TYPE);
+        generalKeys.add(ExtraProperties.USER_EMAIL);
+        generalKeys.add(ExtraProperties.USER_NAME);
+        generalKeys.add(ExtraProperties.USER_BIRTH.getName());
+        generalKeys.add(ExtraProperties.USER_PHONE);
+        generalKeys.add(ExtraProperties.USER_ADDRESS);
+        generalKeys.add(ExtraProperties.USER_ORGANIZATION);
+        generalKeys.add(ExtraProperties.USER_URLS);
+        generalKeys.add(ExtraProperties.USER_NOTES);
+        generalKeys.add(ExtraProperties.USER_THUMB);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 
@@ -148,6 +162,7 @@ public class MetadataUtil {
         prefixVideoMetadata(metadata);
         prefixPDFMetadata(metadata);
         prefixDocMetadata(metadata);
+        prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
     }
 
@@ -168,7 +183,7 @@ public class MetadataUtil {
             ArrayList<String> unique = new ArrayList<>();
             String prev = null;
             for (String val : values) {
-                if (!val.equals(prev))
+                if (!val.isEmpty() && !val.equals(prev))
                     unique.add(val);
                 prev = val;
             }
@@ -292,6 +307,18 @@ public class MetadataUtil {
         }
     }
 
+    private static void prefixBasicMetadata(Metadata metadata) {
+        for (String key : metadata.names()) {
+            if (BasicProps.SET.contains(key)) {
+                String[] values = metadata.getValues(key);
+                metadata.remove(key);
+                for (String val : values) {
+                    metadata.add(ExtraProperties.GENERIC_META_PREFIX + key, val);
+                }
+            }
+        }
+    }
+
     private static void includePrefix(Metadata metadata, String prefix) {
         String[] keys = metadata.names();
         for (String key : keys) {
@@ -383,6 +410,18 @@ public class MetadataUtil {
         } while (mediaType != null);
 
         return false;
+    }
+
+    public static final Metadata clone(Metadata metadata) {
+        Metadata clone = new Metadata();
+        String[] keys = metadata.names();
+        for (String key : keys) {
+            String[] values = metadata.getValues(key);
+            for (String val : values) {
+                clone.add(key, val);
+            }
+        }
+        return clone;
     }
 
 }

@@ -4,10 +4,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 
+import dpf.sp.gpinf.indexer.util.TextCache.KnownSizeReader;
+
 public class FragmentingReader extends Reader {
 
     // Tamanho mínimo dos fragmentos de divisão do texto de arquivos grandes
-    private static long textSplitSize = 10000000;
+    private static long textSplitSize = 10485760;
 
     // Tamanho de sobreposição de texto nas bordas dos fragmentos
     private static int textOverlapSize = 10000;
@@ -19,6 +21,8 @@ public class FragmentingReader extends Reader {
     private long fragReadMark = 0;
     private int lastRead = 0;
 
+    private long knownSize = -1;
+
     public static void setTextSplitSize(long textSplitSize) {
         FragmentingReader.textSplitSize = textSplitSize;
     }
@@ -28,10 +32,25 @@ public class FragmentingReader extends Reader {
     }
 
     public FragmentingReader(Reader reader) {
+        if (reader instanceof KnownSizeReader) {
+            knownSize = ((KnownSizeReader) reader).getSize();
+        }
         if (reader.markSupported())
             this.reader = reader;
         else
             this.reader = new BufferedReader(reader);
+    }
+
+    public int estimateNumberOfFrags() {
+        if (knownSize > -1) {
+            long size = knownSize;
+            if (size <= textSplitSize + textOverlapSize) {
+                return 1;
+            } else {
+                return (int) Math.ceil(((double) size - textOverlapSize) / textSplitSize);
+            }
+        }
+        return -1;
     }
 
     @Override

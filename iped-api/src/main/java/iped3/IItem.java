@@ -100,6 +100,8 @@ public interface IItem extends IItemBase {
 
     ISeekableInputStreamFactory getInputStreamFactory();
 
+    String getParentIdInDataSource();
+
     /**
      * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
      *         foi exportado
@@ -115,6 +117,8 @@ public interface IItem extends IItemBase {
      * @return o valor do atributo extra
      */
     Object getExtraAttribute(String key);
+
+    Object getTempAttribute(String key);
 
     /**
      *
@@ -337,6 +341,8 @@ public interface IItem extends IItemBase {
      */
     void setExtraAttribute(String key, Object value);
 
+    void setTempAttribute(String key, Object value);
+
     /**
      * Define o arquivo referente ao item, caso existente
      *
@@ -521,8 +527,12 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
-    
+
+    void setParentIdInDataSource(String string);
+
     void setThumb(byte[] thumb);
+
+    void setImageSimilarityFeatures(byte[] imageSimilarityFeatures);
 
     /**
      * @return returns the created evidenceFile.

@@ -32,18 +32,19 @@ public class MimeTypesProcessingOrder {
 
     /** Mapa do mimeType para sua prioridade de processamento */
     private static Map<MediaType, Integer> mediaTypes = installTypesToPostProcess();
-    
+
     private static MediaTypeRegistry mediaRegistry;
 
     /** Definie as prioridades de processamento dos mimeTypes */
     private static Map<MediaType, Integer> installTypesToPostProcess() {
 
         Map<MediaType, Integer> mediaTypes = new HashMap<MediaType, Integer>();
-        
-        //handle wal logs
+
+        // handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 1);
 
-        mediaTypes.put(SkypeParser.SKYPE_MIME, 1);
+        // must be after sqlite processing to find storage_db.db
+        mediaTypes.put(SkypeParser.SKYPE_MIME, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
@@ -59,17 +60,17 @@ public class MimeTypesProcessingOrder {
 
         return mediaTypes;
     }
-    
+
     private static synchronized void setMediaRegistry() {
-        if(mediaRegistry == null) {
+        if (mediaRegistry == null) {
             mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
         }
     }
 
     /** Obtém a prioridade de processamento do mimeType */
     public static int getProcessingPriority(MediaType mediaType) {
-        
-        if(mediaRegistry == null) {
+
+        if (mediaRegistry == null) {
             setMediaRegistry();
         }
 
@@ -79,8 +80,8 @@ public class MimeTypesProcessingOrder {
                 return priority;
             }
             mediaType = mediaRegistry.getSupertype(mediaType);
-                    
-        }while(mediaType != null && !MediaType.OCTET_STREAM.equals(mediaType));
+
+        } while (mediaType != null && !MediaType.OCTET_STREAM.equals(mediaType));
 
         return 0;
     }

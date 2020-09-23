@@ -25,6 +25,11 @@ public interface IItemBase extends IStreamSource {
     public Integer getParentId();
 
     /**
+     * @return the subitem order into its parent, null if this is not a subitem.
+     */
+    public Integer getSubitemId();
+
+    /**
      * @return nome do arquivo
      */
     public String getName();
@@ -135,6 +140,8 @@ public interface IItemBase extends IStreamSource {
 
     public byte[] getThumb();
 
+    public byte[] getImageSimilarityFeatures();
+
     public BufferedInputStream getBufferedStream() throws IOException;
 
     /**
@@ -145,7 +152,7 @@ public interface IItemBase extends IStreamSource {
     public Date getCreationDate();
 
     public Date getAccessDate();
-    
+
     public Date getRecordDate();
 
     public Object getExtraAttribute(String key);

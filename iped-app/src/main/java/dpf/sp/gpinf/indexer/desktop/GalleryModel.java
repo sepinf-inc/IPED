@@ -36,6 +36,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -167,11 +168,12 @@ public class GalleryModel extends AbstractTableModel {
                         LOGGER.info("Gallery rendering " + path); //$NON-NLS-1$
                     }
 
-                    if (doc.getBinaryValue(IndexItem.THUMB) != null) {
-                        byte[] thumb = doc.getBinaryValue(IndexItem.THUMB).bytes;
-                        if(thumb.length > 0) {
+                    BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
+                    if (bytesRef != null && (!isSupportedVideo(mediaType) || App.get().useVideoThumbsInGallery)) {
+                        byte[] thumb = bytesRef.bytes;
+                        if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
-                        }else {
+                        } else {
                             image = errorImg;
                         }
                     }
@@ -278,6 +280,24 @@ public class GalleryModel extends AbstractTableModel {
         });
 
         return new GalleryValue(doc.get(IndexItem.NAME), null, id);
+    }
+
+    public void clearVideoThumbsInCache() {
+        synchronized (cache) {
+            Iterator<IItemId> it = cache.keySet().iterator();
+            while (it.hasNext()) {
+                IItemId id = it.next();
+                int docId = App.get().appCase.getLuceneId(id);
+                try {
+                    Document doc = App.get().appCase.getSearcher().doc(docId);
+                    String mediaType = doc.get(IndexItem.CONTENTTYPE);
+                    if (isSupportedVideo(mediaType)) {
+                        it.remove();
+                    }
+                } catch (Exception e) {
+                }
+            }
+        }
     }
 
     private BufferedImage getViewImage(int docID, String hash, boolean isVideo) throws IOException {

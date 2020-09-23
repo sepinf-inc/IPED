@@ -86,7 +86,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
                 }
 
                 IItem e = App.get().appCase.getItemByItemId(item);
-                String dstName = Util.getValidFilename(e.getName());
+                String dstName = Util.getValidFilename(Util.getNameWithTrueExt(e));
                 InputStream in = e.getBufferedStream();
 
                 File dst = new File(subdir, dstName);

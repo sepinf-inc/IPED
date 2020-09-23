@@ -68,9 +68,9 @@ public class SafariPlistParser extends AbstractParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(SAFARI_PLIST);
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariPlistParser.class);
-    
+
     protected boolean extractEntries = true;
-    
+
     @Field
     public void setExtractEntries(boolean extractEntries) {
         this.extractEntries = extractEntries;
@@ -123,8 +123,8 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (SafariResumedVisit v : resumedHistory) {
-                        
-                        if(!extractEntries)
+
+                        if (!extractEntries)
                             break;
 
                         i++;
@@ -167,8 +167,8 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (Download d : downloads) {
-                        
-                        if(!extractEntries)
+
+                        if (!extractEntries)
                             break;
 
                         i++;
@@ -179,12 +179,13 @@ public class SafariPlistParser extends AbstractParser {
                         metadataDownload.add(Metadata.RESOURCE_NAME_KEY, "Safari Plist Download Entry " + i); //$NON-NLS-1$
                         metadataDownload.add(ExtraProperties.URL, d.getUrlFromDownload());
                         metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
-                        if(d.getDownloadedDate() != null)
+                        if (d.getDownloadedDate() != null)
                             metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
-                        if(d.getTotalBytes() != null)
+                        if (d.getTotalBytes() != null)
                             metadataDownload.set(ExtraProperties.DOWNLOAD_TOTAL_BYTES, d.getTotalBytes().toString());
-                        if(d.getReceivedBytes() != null)
-                            metadataDownload.set(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
+                        if (d.getReceivedBytes() != null)
+                            metadataDownload.set(ExtraProperties.DOWNLOAD_RECEIVED_BYTES,
+                                    d.getReceivedBytes().toString());
                         metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                         metadataDownload.add((BasicProps.HASH), "");
 
@@ -216,8 +217,8 @@ public class SafariPlistParser extends AbstractParser {
                     int i = 0;
 
                     for (SafariBookmark b : bookmarks) {
-                        
-                        if(!extractEntries)
+
+                        if (!extractEntries)
                             break;
 
                         i++;
@@ -346,7 +347,7 @@ public class SafariPlistParser extends AbstractParser {
             // d.objectForKey("DownloadEntryIdentifier")).getContent();
             String url = getString(d.objectForKey(""));
             String title = getString(d.objectForKey("title"));
-            
+
             NSObject nso = d.objectForKey("visitCount");
             long visitCount = nso != null ? ((NSNumber) nso).longValue() : -1;
             String dateStr = getString(d.objectForKey("lastVisitedDate"));
@@ -403,15 +404,15 @@ public class SafariPlistParser extends AbstractParser {
             String path = getString(d.objectForKey("DownloadEntryPath"));
             NSDate nsDate = (NSDate) d.objectForKey("DownloadEntryDateAddedKey");
             Long time = null;
-            if(nsDate != null)
+            if (nsDate != null)
                 time = nsDate.getDate().getTime();
             NSNumber number = (NSNumber) d.objectForKey("DownloadEntryProgressTotalToLoad");
             Long totalBytes = null;
-            if(number != null)
+            if (number != null)
                 totalBytes = number.longValue();
             number = (NSNumber) d.objectForKey("DownloadEntryProgressBytesSoFar");
             Long bytesDownloaded = null;
-            if(number != null)
+            if (number != null)
                 bytesDownloaded = number.longValue();
 
             downloads.add(new Download(uid, time, url, path, totalBytes, bytesDownloaded));
@@ -452,19 +453,19 @@ public class SafariPlistParser extends AbstractParser {
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("DOWNLOADED FILE"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("RECEIVED BYTES"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("TOTAL BYTES"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
@@ -479,7 +480,7 @@ public class SafariPlistParser extends AbstractParser {
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(Integer.toString(i));
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getDownloadedDate() != null ? d.getDownloadedDateAsString() : "-");
                 xHandler.endElement("td"); //$NON-NLS-1$
@@ -487,15 +488,15 @@ public class SafariPlistParser extends AbstractParser {
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getDownloadedLocalPath());
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getReceivedBytes() != null ? d.getReceivedBytes().toString() : "-"); //$NON-NLS-1$
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getTotalBytes() != null ? d.getTotalBytes().toString() : "-"); //$NON-NLS-1$
                 xHandler.endElement("td"); //$NON-NLS-1$
-                
+
                 xHandler.startElement("td"); //$NON-NLS-1$
                 xHandler.characters(d.getUrlFromDownload());
                 xHandler.endElement("td"); //$NON-NLS-1$
@@ -514,34 +515,34 @@ public class SafariPlistParser extends AbstractParser {
                 xHandler.endDocument();
         }
     }
-    
+
     private String getString(NSObject nsObj) {
-        if(nsObj == null)
+        if (nsObj == null)
             return "";
         else
             return ((NSString) nsObj).getContent();
     }
 
     private void parseChildren(List<SafariBookmark> bookmarks, NSDictionary dict) {
-        
+
         NSArray children = (NSArray) dict.objectForKey("Children");
-        if(children != null) {
+        if (children != null) {
             NSObject[] array = children.getArray();
-            if(array != null)
+            if (array != null)
                 for (NSObject child : array)
-                    parseChildren(bookmarks, (NSDictionary)child);
+                    parseChildren(bookmarks, (NSDictionary) child);
         }
-        
-        if(dict.containsKey("URLString") || dict.containsKey("URIDictionary")) {
+
+        if (dict.containsKey("URLString") || dict.containsKey("URIDictionary")) {
             NSDictionary d = dict;
-            //String bookmarkType = getString(d.objectForKey("WebBookmarkType"));
+            // String bookmarkType = getString(d.objectForKey("WebBookmarkType"));
             String uuid = getString(d.objectForKey("WebBookmarkUUID"));
 
             NSDictionary uriDictionary = ((NSDictionary) d.objectForKey("URIDictionary"));
             String urlTitle = uriDictionary == null ? "" : getString(uriDictionary.objectForKey("title"));
             String urlString = getString(d.objectForKey("URLString"));
 
-            if(!urlTitle.isEmpty() || !urlString.isEmpty())
+            if (!urlTitle.isEmpty() || !urlString.isEmpty())
                 bookmarks.add(new SafariBookmark(bookmarks.size(), uuid, urlTitle, urlString));
         }
     }
@@ -550,7 +551,7 @@ public class SafariPlistParser extends AbstractParser {
         List<SafariBookmark> bookmarks = new LinkedList<SafariBookmark>();
 
         NSDictionary rootDict = (NSDictionary) PropertyListParser.parse(is);
-        
+
         parseChildren(bookmarks, rootDict);
 
         return bookmarks;

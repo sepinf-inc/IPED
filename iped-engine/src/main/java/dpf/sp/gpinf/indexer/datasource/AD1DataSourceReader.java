@@ -59,8 +59,6 @@ public class AD1DataSourceReader extends DataSourceReader {
         }
 
         String evidenceName = getEvidenceName(root);
-        if (evidenceName == null)
-            evidenceName = root.getName();
         dataSource = new DataSource(root);
         dataSource.setName(evidenceName);
 

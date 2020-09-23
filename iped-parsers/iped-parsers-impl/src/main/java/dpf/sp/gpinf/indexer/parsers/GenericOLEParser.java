@@ -1,5 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -27,6 +29,8 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.util.IOUtil;
+
 public class GenericOLEParser extends AbstractParser {
 
     /**
@@ -34,6 +38,8 @@ public class GenericOLEParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
     private static Set<MediaType> SUPPORTED_MIMES = MediaType.set("application/x-tika-msoffice");
+
+    private static final int MAX_SIZE_TO_LOAD = 1 << 27;
 
     private final RawStringParser rawParser = new RawStringParser();
 
@@ -53,13 +59,24 @@ public class GenericOLEParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         TikaInputStream tis = TikaInputStream.get(stream, tmp);
-
-        try (POIFSFileSystem poiFS = new POIFSFileSystem(tis.getFile())) {
+        File file = tis.getFile();
+        POIFSFileSystem poiFS = null;
+        FileInputStream fis = null;
+        if (file.length() <= MAX_SIZE_TO_LOAD) {
+            fis = new FileInputStream(file);
+            // 50x faster than loading from file, see POI-64322
+            poiFS = new POIFSFileSystem(fis);
+        } else {
+            poiFS = new POIFSFileSystem(file);
+        }
+        try {
             recurseDir(poiFS.getRoot(), extractor, xhtml);
 
             rawParser.parse(tis, handler, metadata, context);
 
         } finally {
+            IOUtil.closeQuietly(poiFS);
+            IOUtil.closeQuietly(fis);
             xhtml.endDocument();
             tmp.close();
         }

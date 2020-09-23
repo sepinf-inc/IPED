@@ -38,6 +38,10 @@ public interface CmdLineArgs {
 
     boolean isAppendIndex();
 
+    boolean isContinue();
+
+    boolean isRestart();
+
     boolean isNogui();
 
     boolean isNologfile();

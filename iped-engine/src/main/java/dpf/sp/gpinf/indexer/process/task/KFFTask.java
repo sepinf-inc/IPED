@@ -68,7 +68,7 @@ public class KFFTask extends AbstractTask {
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
     }
-    
+
     public void init(Properties confParams, File confDir, boolean importing) throws Exception {
         this.importing = importing;
         init(confParams, confDir);
@@ -96,11 +96,11 @@ public class KFFTask extends AbstractTask {
         String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
         if (kffDbPath == null) {
             String msg = "Configure hash database path (kffDb) on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
-            if(importing) {
-            	throw new IPEDException(msg);
+            if (importing) {
+                throw new IPEDException(msg);
             }
-            if(taskEnabled) {
-            	LOGGER.error(msg);
+            if (taskEnabled) {
+                LOGGER.error(msg);
                 taskEnabled = false;
                 return;
             }
@@ -117,9 +117,9 @@ public class KFFTask extends AbstractTask {
             excluded = 0;
 
             File kffDb = new File(kffDbPath.trim());
-            if(importing)
+            if (importing)
                 kffDb.getParentFile().mkdirs();
-            
+
             if (!kffDb.exists() && !importing) {
                 String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
                 LOGGER.error(msg);
@@ -128,12 +128,17 @@ public class KFFTask extends AbstractTask {
             }
 
             try {
-                db = DBMaker.newFileDB(kffDb).transactionDisable().mmapFileEnableIfSupported().asyncWriteEnable()
-                        .asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000).make();
+                DBMaker dbMaker = DBMaker.newFileDB(kffDb).transactionDisable().mmapFileEnableIfSupported();
+                if (importing) {
+                    dbMaker.asyncWriteEnable().asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000);
+                } else {
+                    dbMaker.readOnly();
+                }
+                db = dbMaker.make();
 
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new Exception("Hash database seems corrupted. Import or copy again BOTH files " //$NON-NLS-1$
-                        + "kff.db and kff.db.p to database folder " + kffDb.getParent()); //$NON-NLS-1$
+            } catch (java.io.IOError | ArrayIndexOutOfBoundsException e) {
+                throw new Exception("Hash database " + kffDb.getParent() + " seems corrupted."
+                        + " Point kffDb to a clean database or delete it and import the hashes again.", e);
             }
 
             md5Map = db.getHashMap("md5Map"); //$NON-NLS-1$
@@ -148,8 +153,8 @@ public class KFFTask extends AbstractTask {
 
             if (confDir != null) {
                 alertProducts = new HashSet<String>();
-                File confFile = new File(kffDb.getParentFile(), CONF_FILE); 
-                if(!confFile.exists())
+                File confFile = new File(kffDb.getParentFile(), CONF_FILE);
+                if (!confFile.exists())
                     confFile = new File(confDir, CONF_FILE);
                 BufferedReader reader = new BufferedReader(new FileReader(confFile));
                 String line = reader.readLine();
@@ -171,6 +176,14 @@ public class KFFTask extends AbstractTask {
             LOGGER.info("Items ignored by hash database lookup: {}", excluded); //$NON-NLS-1$
         }
         excluded = -1;
+
+        if (db != null) {
+            db.close();
+            db = null;
+        }
+        md5Map = null;
+        sha1Map = null;
+        map = null;
     }
 
     public void importKFF(File kffDir) throws IOException {
@@ -230,6 +243,7 @@ public class KFFTask extends AbstractTask {
             }
             reader.close();
             db.commit();
+            db.close();
             monitor.close();
         }
     }

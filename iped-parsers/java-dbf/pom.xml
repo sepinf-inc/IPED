@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>3.17.2</version>
+        <version>3.18.2</version>
     </parent>
     <artifactId>java-dbf</artifactId>
     <version>1.0-patched</version>

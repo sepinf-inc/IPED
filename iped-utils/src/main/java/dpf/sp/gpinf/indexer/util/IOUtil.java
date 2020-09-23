@@ -29,6 +29,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import org.slf4j.LoggerFactory;
@@ -103,18 +105,31 @@ public class IOUtil {
     }
 
     public static void deletarDiretorio(File file) {
+        try {
+            deleteDirectory(file, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteDirectory(File file, boolean logError) throws IOException {
         if (file.isDirectory()) {
             String[] names = file.list();
             if (names != null)
                 for (int i = 0; i < names.length; i++) {
                     File subFile = new File(file, names[i]);
-                    deletarDiretorio(subFile);
+                    deleteDirectory(subFile, logError);
                 }
         }
         try {
             Files.delete(file.toPath());
+
         } catch (Exception e) {
-            LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            // also catch InvalidPathException and others
+            if (logError) {
+                LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            } else
+                throw e;
         }
 
     }
@@ -177,6 +192,16 @@ public class IOUtil {
             bos.write(buf, 0, len);
 
         return bos.toByteArray();
+    }
+
+    private static Path tmpDir = null;
+
+    public static boolean isTemporaryFile(File file) {
+        if (tmpDir == null) {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        }
+        Path filePath = Paths.get(file.getAbsolutePath()).getParent();
+        return tmpDir.compareTo(filePath) == 0;
     }
 
 }

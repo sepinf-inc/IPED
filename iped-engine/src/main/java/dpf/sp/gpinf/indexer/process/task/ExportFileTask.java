@@ -26,6 +26,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.sql.Connection;
@@ -39,17 +40,20 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.compressors.CompressorException;
-import org.apache.commons.compress.compressors.CompressorOutputStream;
-import org.apache.commons.compress.compressors.CompressorStreamFactory;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
+import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
@@ -78,20 +82,18 @@ public class ExportFileTask extends AbstractTask {
     public static final String EXTRACT_CONFIG = "CategoriesToExport.txt"; //$NON-NLS-1$
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
     private static final String SUBITEM_DIR = "subitens"; //$NON-NLS-1$
-    
+
     private static final String STORAGE_PREFIX = "storage";
     public static final String STORAGE_CON_PREFIX = "storageConnection";
     private static final int MAX_BUFFER_SIZE = 1 << 24;
     private static final int SQLITE_CACHE_SIZE = 1 << 24;
-    
+
     private static final byte DB_SUFFIX_BITS = 4; // current impl maximum is 8
-    
-    private static final String CREATE_TABLE = 
-    		"CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
-    
-    private static final String INSERT_DATA = 
-    		"INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
-    
+
+    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
+
+    private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
+
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
 
     private static final int MAX_SUBITEM_COMPRESSION = 100;
@@ -105,9 +107,9 @@ public class ExportFileTask extends AbstractTask {
     private File extractDir;
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
-    
-    private static HashMap<Integer, File> storage = new HashMap<>();
-    private static HashMap<Integer, Connection> storageCon;
+
+    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
+    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -129,60 +131,70 @@ public class ExportFileTask extends AbstractTask {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        IPEDConfig ipedConfig = (IPEDConfig)ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
-        if(!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
-            if(storageCon == null) {
+        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
+                .next();
+        if (!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
+            if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
         }
     }
-    
+
     public static Connection getSQLiteStorageCon(File output, byte[] hash) {
-        if(storageCon == null) {
+        if (storageCon.get(output) == null) {
             configureSQLiteStorage(output);
         }
         int dbSuffix = getStorageSuffix(hash);
-        return storageCon.get(dbSuffix);
+        return storageCon.get(output).get(dbSuffix);
     }
-    
+
     private static int getStorageSuffix(byte[] hash) {
         return (hash[0] & 0xFF) >> (8 - DB_SUFFIX_BITS);
     }
-    
+
+    private static Connection getSQLiteStorageCon(File db) {
+        File output = db.getParentFile().getParentFile();
+        if (storageCon.get(output) == null) {
+            configureSQLiteStorage(output);
+        }
+        int dbSuffix = Integer
+                .valueOf(db.getName().substring(STORAGE_PREFIX.length() + 1, db.getName().indexOf(".db")));
+        return storageCon.get(output).get(dbSuffix);
+    }
+
     private static synchronized void configureSQLiteStorage(File output) {
-        if(storageCon != null) {
+        if (storageCon.get(output) != null) {
             return;
         }
         HashMap<Integer, Connection> tempStorageCon = new HashMap<>();
-        
-        for(int i = 0; i < Math.pow(2, DB_SUFFIX_BITS); i++) {
+        HashMap<Integer, File> tempStorage = new HashMap<>();
+        for (int i = 0; i < Math.pow(2, DB_SUFFIX_BITS); i++) {
             String storageName = STORAGE_PREFIX + "-" + i + ".db";
             File db = new File(output, STORAGE_PREFIX + File.separator + storageName);
             db.getParentFile().mkdir();
-            storage.put(i, db);
+            tempStorage.put(i, db);
             try {
                 Connection con = getSQLiteConnection(db);
-                try(Statement stmt = con.createStatement()){
+                try (Statement stmt = con.createStatement()) {
                     stmt.executeUpdate(CREATE_TABLE);
                 }
-                
+
                 tempStorageCon.put(i, con);
-                
+
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
         }
-        storageCon = tempStorageCon;
+        storage.put(output, tempStorage);
+        storageCon.put(output, tempStorageCon);
     }
-    
+
     private static Connection getSQLiteConnection(File storage) throws SQLException {
         SQLiteConfig config = new SQLiteConfig();
-        config.setPragma(Pragma.SYNCHRONOUS, "0");
+        config.setSynchronous(SynchronousMode.NORMAL);
         config.setPragma(Pragma.JOURNAL_MODE, "TRUNCATE");
         config.setPragma(Pragma.CACHE_SIZE, "-" + SQLITE_CACHE_SIZE / 1024);
         config.setBusyTimeout(3600000);
-        config.setSharedCache(true);
-        config.setReadUncommited(true);
         Connection conn = config.createConnection("jdbc:sqlite:" + storage.getAbsolutePath());
         conn.setAutoCommit(false);
         return conn;
@@ -244,18 +256,18 @@ public class ExportFileTask extends AbstractTask {
             incItensExtracted();
             copyViewFile(evidence);
         }
-        
-        boolean isAutomaticFileExtractionOn = hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn(); 
+
+        boolean isAutomaticFileExtractionOn = hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn();
 
         // Renomeia subitem caso deva ser exportado
-        if (!caseData.isIpedReport() && evidence.isSubItem() && (evidence.isToExtract() || isToBeExtracted(evidence)
-                || !isAutomaticFileExtractionOn)) {
+        if (!caseData.isIpedReport() && evidence.isSubItem()
+                && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticFileExtractionOn)) {
 
             evidence.setToExtract(true);
             if (!doNotExport(evidence)) {
                 renameToHash(evidence);
             } else {
-                //just clear path to be indexed, continues to point to file for processing
+                // just clear path to be indexed, continues to point to file for processing
                 evidence.setExportedFile(null);
                 evidence.setDeleteFile(true);
             }
@@ -344,7 +356,7 @@ public class ExportFileTask extends AbstractTask {
             ext = Util.removeNonLatin1Chars(ext);
 
             File hashFile = getHashFile(hash, ext);
-            if(!hashFile.getParentFile().exists()) {
+            if (!hashFile.getParentFile().exists()) {
                 hashFile.getParentFile().mkdirs();
             }
             IHashValue hashVal = new HashValue(hash);
@@ -429,35 +441,35 @@ public class ExportFileTask extends AbstractTask {
         }
 
         boolean fileExists = false;
-        
+
         synchronized (hashLock) {
             if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
                 try {
                     long total = 0;
                     int i = 0;
-                    while(i != -1 && !Thread.currentThread().isInterrupted()) {
-                    	ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                    	IOException exception = null;
-                    	try {
-                    	    byte[] buf = new byte[8 * 1024];
-                    	    while (baos.size() <= MAX_BUFFER_SIZE - buf.length && (i = inputStream.read(buf)) != -1) {
+                    while (i != -1 && !Thread.currentThread().isInterrupted()) {
+                        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                        Exception exception = null;
+                        try {
+                            byte[] buf = new byte[8 * 1024];
+                            while (baos.size() <= MAX_BUFFER_SIZE - buf.length && (i = inputStream.read(buf)) != -1) {
                                 baos.write(buf, 0, i);
                             }
-                    	}catch(IOException e) {
-                    	    //catch ioexceptions here to extract some content
-                    	    exception = e;
-                    	}
-                        if((i == -1 || exception != null) && total == 0) {
-                        	if(baos.size() == 0) {
-                        		evidence.setLength(0L);
-                        	}else {
-                        	    byte[] buf = baos.toByteArray();
+                        } catch (Exception e) {
+                            // catch exceptions here to extract some content, even runtime exceptions
+                            exception = e;
+                        }
+                        if ((i == -1 || exception != null) && storageCon.get(output) != null && total == 0) {
+                            if (baos.size() == 0) {
+                                evidence.setLength(0L);
+                            } else {
+                                byte[] buf = baos.toByteArray();
                                 baos = null;
                                 insertIntoStorage(evidence, buf, buf.length);
-                        	}
-                        }else {
-                            if(bos == null) {
+                            }
+                        } else {
+                            if (bos == null) {
                                 if (!outputFile.getParentFile().exists()) {
                                     outputFile.getParentFile().mkdirs();
                                 }
@@ -467,22 +479,25 @@ public class ExportFileTask extends AbstractTask {
                             bos.write(baos.toByteArray());
                             total += baos.size();
                         }
-                        
-                        if(exception != null)
+
+                        if (exception != null)
                             throw exception;
-                        
+
                         if (parentSize != null && total >= ZIPBOMB_MIN_SIZE
                                 && total > parentSize * MAX_SUBITEM_COMPRESSION)
                             throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
                     }
 
-                //must catch generic Exception because of Runtime exceptions while extracting corrupted subitems
+                    // must catch generic Exception because of Runtime exceptions while extracting
+                    // corrupted subitems
                 } catch (Exception e) {
-                    if (e instanceof IOException && IOUtil.isDiskFull((IOException)e))
+                    if (e instanceof IOException && IOUtil.isDiskFull((IOException) e))
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else
                         LOGGER.warn("Error exporting {}\t{}", evidence.getPath(), e.toString()); //$NON-NLS-1$
-                    
+
+                    LOGGER.debug("", e);
+
                 } finally {
                     if (bos != null) {
                         bos.close();
@@ -491,7 +506,7 @@ public class ExportFileTask extends AbstractTask {
             }
         }
 
-        if(fileExists) {
+        if (fileExists) {
             changeTargetFile(evidence, outputFile);
             if (evidence.isSubItem()) {
                 evidence.setLength(outputFile.length());
@@ -499,25 +514,26 @@ public class ExportFileTask extends AbstractTask {
         }
 
     }
-    
-    private void insertIntoStorage(IItem evidence, byte[] buf, int len) throws InterruptedException, IOException, SQLException, CompressorException {
+
+    private void insertIntoStorage(IItem evidence, byte[] buf, int len)
+            throws InterruptedException, IOException, SQLException, CompressorException {
         byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         int k = getStorageSuffix(hash);
         HashValue md5 = new HashValue(hash);
         boolean alreadyInDB = false;
-        try(PreparedStatement ps = storageCon.get(k).prepareStatement(CHECK_HASH)){
+        try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
             ps.setString(1, md5.toString());
             ResultSet rs = ps.executeQuery();
-            if(rs.next()) {
+            if (rs.next()) {
                 alreadyInDB = true;
             }
         }
-        if(!alreadyInDB) {
-            try(PreparedStatement ps = storageCon.get(k).prepareStatement(INSERT_DATA)){
+        if (!alreadyInDB) {
+            try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(INSERT_DATA)) {
                 ps.setString(1, md5.toString());
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                CompressorOutputStream gzippedOut = new CompressorStreamFactory()
-                        .createCompressorOutputStream(CompressorStreamFactory.GZIP, baos);
+                OutputStream gzippedOut = new GzipCompressorOutputStream(baos, getGzipParams());
+                // OutputStream gzippedOut = new LZ4BlockOutputStream(baos);
                 gzippedOut.write(buf, 0, len);
                 gzippedOut.close();
                 byte[] bytes = baos.toByteArray();
@@ -528,58 +544,67 @@ public class ExportFileTask extends AbstractTask {
             }
         }
         evidence.setIdInDataSource(md5.toString());
-        evidence.setInputStreamFactory(new SQLiteInputStreamFactory(storage.get(k).toPath(), storageCon.get(k)));
-        evidence.setLength((long)len);
+        evidence.setInputStreamFactory(
+                new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setLength((long) len);
     }
-    
-    public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory{
-    	
-    	private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
-    	
-    	private Connection conn;
-    	
-    	public SQLiteInputStreamFactory(Path datasource) {
-    		super(datasource);
-    	}
-    	
-    	public SQLiteInputStreamFactory(Path datasource, Connection conn) {
-    		super(datasource);
-    		this.conn = conn;
-    	}
-    	
-    	@Override
-    	protected void checkIfDataSourceExists() {
-    	    //do nothing, it will always be into case folder
-    	    //and files which content was not exported to report will not trigger a dialog asking for datasource path
-    	}
 
-		@Override
-		public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-			try{
-				byte[] bytes = null;
-				if(conn == null) {
-                    conn = getSQLiteConnection(getDataSourcePath().toFile());
+    private GzipParameters getGzipParams() {
+        GzipParameters compression = new GzipParameters();
+        compression.setCompressionLevel(Deflater.BEST_SPEED);
+        return compression;
+    }
+
+    public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory {
+
+        private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
+
+        private Connection conn;
+
+        public SQLiteInputStreamFactory(Path datasource) {
+            super(datasource);
+        }
+
+        public SQLiteInputStreamFactory(Path datasource, Connection conn) {
+            super(datasource);
+            this.conn = conn;
+        }
+
+        @Override
+        public boolean checkIfDataSourceExists() {
+            // do nothing, it will always be into case folder
+            // and files which content was not exported to report will not trigger a dialog
+            // asking for datasource path
+            return false;
+        }
+
+        @Override
+        public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
+            try {
+                byte[] bytes = null;
+                if (conn == null || conn.isClosed()) {
+                    conn = getSQLiteStorageCon(getDataSourcePath().toFile());
                 }
-				try(PreparedStatement ps = conn.prepareStatement(SELECT_DATA)){
-				    ps.setString(1, identifier);
-	                try(ResultSet rs = ps.executeQuery()){
-	                    if(rs.next()) {
-	                        bytes = rs.getBytes(1);
-	                    }
-	                }
-				}
-				InputStream gzippedIn = new CompressorStreamFactory()
-            		    .createCompressorInputStream(CompressorStreamFactory.GZIP, new ByteArrayInputStream(bytes));
-				bytes = IOUtils.toByteArray(gzippedIn);
-				gzippedIn.close();
-				return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
-				
-			} catch (Exception e) {
-			    e.printStackTrace();
-				throw new IOException(e);
-			}
-		}
-    	
+                try (PreparedStatement ps = conn.prepareStatement(SELECT_DATA)) {
+                    ps.setString(1, identifier);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            bytes = rs.getBytes(1);
+                        }
+                    }
+                }
+                InputStream gzippedIn = new GzipCompressorInputStream(new ByteArrayInputStream(bytes));
+                // gzippedIn = new LZ4BlockInputStream(new ByteArrayInputStream(bytes));
+                bytes = IOUtils.toByteArray(gzippedIn);
+                gzippedIn.close();
+                return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
+
+            } catch (Exception e) {
+                e.printStackTrace();
+                throw new IOException(e);
+            }
+        }
+
     }
 
     @Override
@@ -602,16 +627,31 @@ public class ExportFileTask extends AbstractTask {
         subDirCounter = 0;
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(DuplicateTask.HASH_MAP);
-        
+
     }
-    
+
     @Override
     public void finish() throws Exception {
-        if(storageCon != null) {
-            for(Connection con : storageCon.values()) {
-                if(con != null && !con.isClosed()) {
+        hashMap.clear();
+        if (storageCon.get(output) != null) {
+            int i = 0;
+            for (Connection con : storageCon.get(output).values()) {
+                if (con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                     con.close();
+                    LOGGER.info("Closed connection to storage " + i);
+                }
+                i++;
+            }
+            storageCon.remove(output);
+        }
+    }
+
+    public static void commitStorage(File output) throws SQLException {
+        if (storageCon.get(output) != null) {
+            for (Connection con : storageCon.get(output).values()) {
+                if (con != null && !con.isClosed() && !con.getAutoCommit()) {
+                    con.commit();
                 }
             }
         }

@@ -51,7 +51,7 @@ public class EntropyTask extends AbstractTask {
         }
 
         if (evidence.getMediaType().equals(BaseCarveTask.UNALLOCATED_MIMETYPE)
-                || Boolean.TRUE.equals(evidence.getExtraAttribute(ImageThumbTask.HAS_THUMB)))
+                || Boolean.TRUE.equals(evidence.getExtraAttribute(ThumbTask.HAS_THUMB)))
             return;
 
         try (RandomFilterInputStream rfis = new RandomFilterInputStream(evidence.getBufferedStream())) {

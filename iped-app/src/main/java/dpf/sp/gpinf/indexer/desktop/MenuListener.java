@@ -18,59 +18,70 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Dialog;
+import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JSpinner;
-import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.tree.TreePath;
 
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
+import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import dpf.sp.gpinf.indexer.util.SpinnerDialog;
+import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
+import iped3.search.SearchResult;
+import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class MenuListener implements ActionListener {
 
     private static Logger LOGGER = LoggerFactory.getLogger(MenuListener.class);
 
-    JFileChooser fileChooser = new JFileChooser();
-    FileFilter defaultFilter = fileChooser.getFileFilter(), csvFilter = new Filtro();
-    MenuClass menu;
     static String CSV = ".csv"; //$NON-NLS-1$
+    static JFileChooser fileChooser;
+
+    FileFilter defaultFilter, csvFilter = new Filtro();
+    MenuClass menu;
 
     public MenuListener(MenuClass menu) {
         this.menu = menu;
+    }
+
+    private void setupFileChooser() {
+        if (fileChooser != null)
+            return;
+        fileChooser = new JFileChooser();
+        defaultFilter = fileChooser.getFileFilter();
         File moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir();
         fileChooser.setCurrentDirectory(moduleDir.getParentFile());
 
-        /*
-         * [Triage] Se existe o diretório padrão de dados exportados, como o
-         * /home/caine/DADOS_EXPORTADOS, abre como padrão nesse diretório
-         */
         File dirDadosExportados = new File(Messages.getString("ExportToZIP.DefaultPath"));
         if (dirDadosExportados.exists()) {
             fileChooser.setCurrentDirectory(dirDadosExportados);
         }
-
     }
 
     private class Filtro extends FileFilter {
@@ -96,12 +107,13 @@ public class MenuListener implements ActionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-
+        LOGGER.debug("MenuListener Aktion Event Performed " + e.toString() + " " + e.getSource());
         if (e.getSource() == menu.disposicao) {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
             App.get().refazLayout(true);
+
         } else if (e.getSource() == menu.marcarSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -122,6 +134,19 @@ public class MenuListener implements ActionListener {
             App.get().appCase.getMultiMarcadores().saveState();
             MarcadoresController.get().atualizarGUISelection();
 
+        }
+
+        if (e.getSource() == menu.marcarRecursivamenteSelecionados) {
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
+                    System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
+                kl.keyReleased(keyCTRL_R_Pressed);
+
+        } else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
+            KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
+                    System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
+            for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
+                kl.keyReleased(keyCTRL_R_Pressed);
         }
         if (e.getSource() == menu.lerSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
@@ -144,6 +169,7 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.exportarSelecionados) {
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -170,7 +196,7 @@ public class MenuListener implements ActionListener {
                 int luceneId = App.get().appCase.getLuceneId(item);
                 selectedIds.add(luceneId);
             }
-
+            setupFileChooser();
             fileChooser.setFileFilter(csvFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -185,12 +211,12 @@ public class MenuListener implements ActionListener {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
             for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
                 IItemId item = App.get().appCase.getItemId(docId);
-                if (App.get().appCase.getMultiMarcadores().isSelected(item)
-                        && !App.get().appCase.getAtomicSource(docId).getViewToRawMap().isView(item.getId())) {
+                if (App.get().appCase.getMultiMarcadores().isSelected(item)) {
                     uniqueSelectedIds.add(docId);
                 }
 
             }
+            setupFileChooser();
             fileChooser.setFileFilter(csvFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -210,6 +236,7 @@ public class MenuListener implements ActionListener {
                     }
                 }
             }
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -226,7 +253,7 @@ public class MenuListener implements ActionListener {
                     }
                 }
             }
-
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             fileChooser.setSelectedFile(new File(Messages.getString("ExportToZIP.DefaultName")));
@@ -236,6 +263,7 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.importarPalavras) {
+            setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
             if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
@@ -262,37 +290,14 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().askAndSaveState();
 
         } else if (e.getSource() == menu.copiarPreview) {
-            Viewer viewer = App.get().getParams().compositeViewer.getCurrentViewer();
+            Viewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
             viewer.copyScreen();
 
         } else if (e.getSource() == menu.aumentarGaleria) {
 
-            int MAX_GALLERY_COLS = 40;
-
-            JDialog dialog = new JDialog();
-            dialog.setModal(true);
-            dialog.setTitle(Messages.getString("MenuListener.Gallery")); //$NON-NLS-1$
-            dialog.setBounds(0, 0, 180, 140);
-            SpinnerNumberModel model = new SpinnerNumberModel(App.get().galleryModel.colCount, 1, MAX_GALLERY_COLS, 1);
-            model.setValue(App.get().galleryModel.colCount);
-
-            JLabel msg = new JLabel(Messages.getString("MenuListener.Cols")); //$NON-NLS-1$
-            JSpinner spinner = new JSpinner(model);
-            JButton button = new JButton(Messages.getString("MenuListener.OK")); //$NON-NLS-1$
-
-            msg.setBounds(20, 15, 50, 20);
-            spinner.setBounds(80, 10, 50, 30);
-            button.setBounds(80, 50, 50, 30);
-
-            dialog.getContentPane().add(msg);
-            dialog.getContentPane().add(spinner);
-            dialog.getContentPane().add(button);
-            dialog.getContentPane().add(new JLabel());
-
-            spinner.addChangeListener(new SpinnerListener(model, dialog));
-            button.addActionListener(new SpinnerListener(model, dialog));
-
-            dialog.setLocationRelativeTo(App.get());
+            SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"),
+                    Messages.getString("MenuListener.Cols"), App.get().galleryModel.colCount, 1, 40);
+            dialog.addChangeListener(new SpinnerListener());
             dialog.setVisible(true);
 
         } else if (e.getSource() == menu.gerenciarMarcadores) {
@@ -302,6 +307,14 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.gerenciarColunas) {
 
             ColumnsManager.getInstance().setVisible();
+
+        } else if (e.getSource() == menu.pinFirstColumns) {
+
+            int pinned = ColumnsManager.getInstance().getPinnedColumns();
+            String msg = Messages.getString("MenuListener.PinFirstCols");
+            SpinnerDialog dialog = new SpinnerDialog(App.get(), msg, msg + ":", pinned, 2, 12);
+            dialog.setVisible(true);
+            ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
         } else if (e.getSource() == menu.gerenciarFiltros) {
 
@@ -317,7 +330,13 @@ public class MenuListener implements ActionListener {
             }
 
         } else if (e.getSource() == menu.exportTerms) {
-            new ExportIndexedTerms(App.get().appCase.getAtomicReader()).export();
+            new ExportIndexedTerms(App.get().appCase.getLeafReader()).export();
+
+        } else if (e.getSource() == menu.similarImagesCurrent) {
+            SimilarImagesFilterActions.searchSimilarImages(false);
+
+        } else if (e.getSource() == menu.similarImagesExternal) {
+            SimilarImagesFilterActions.searchSimilarImages(true);
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
@@ -348,8 +367,45 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.resetColLayout) {
             ColumnsManager.getInstance().resetToDefaultLayout();
+        } else if (e.getSource() == menu.addToGraph) {
+            int[] rows = App.get().resultsTable.getSelectedRows();
+            List<ItemId> items = new ArrayList<>(rows.length);
+            for (int selIdx : rows) {
+                ItemId itemId = (ItemId) App.get().ipedResult
+                        .getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+                items.add(itemId);
+            }
+            App.get().appGraphAnalytics.addEvidenceFilesToGraph(items);
+        } else if (e.getSource() == menu.navigateToParentChat) {
+            int selIdx = App.get().resultsTable.getSelectedRow();
+            IItemId itemId = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(selIdx));
+            IIPEDSource atomicSource = App.get().appCase.getAtomicSourceBySourceId(itemId.getSourceId());
+            IItem item = App.get().appCase.getItemByItemId(itemId);
+            int chatId = -1;
+            if (!MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+                chatId = atomicSource.getParentId(itemId.getId());
+            } else {
+                IPEDSearcher searcher = new IPEDSearcher((IPEDSource) atomicSource);
+                searcher.setQuery(QueryParserUtil.escape(UFEDChatParser.CHILD_MSG_IDS) + ":" + itemId.getId());
+                try {
+                    SearchResult r = searcher.search();
+                    if (r.getLength() == 1)
+                        chatId = r.getId(0);
+                } catch (Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+            if (chatId != -1) {
+                String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
+                // TODO change viewer api to pass this
+                HtmlViewer.setPositionToScroll(position);
+                ItemId chatItemId = new ItemId(itemId.getSourceId(), chatId);
+                int luceneId = App.get().appCase.getLuceneId(chatItemId);
+                new FileProcessor(luceneId, false).execute();
+            } else {
+                JOptionPane.showMessageDialog(App.get(), Messages.getString("MenuListener.ChatNotFound")); //$NON-NLS-1$
+            }
         }
-
     }
 
     public void exportFileTree(boolean onlyChecked, boolean toZip) {
@@ -366,19 +422,12 @@ public class MenuListener implements ActionListener {
         }
     }
 
-    static class SpinnerListener implements ChangeListener, ActionListener {
-
-        private SpinnerNumberModel model;
-        private Dialog dialog;
-
-        public SpinnerListener(SpinnerNumberModel model, Dialog dialog) {
-            this.model = model;
-            this.dialog = dialog;
-        }
+    private static class SpinnerListener implements ChangeListener {
 
         @Override
         public void stateChanged(ChangeEvent evt) {
-            App.get().galleryModel.colCount = model.getNumber().intValue();
+
+            App.get().galleryModel.colCount = (Integer) ((JSpinner) evt.getSource()).getValue();
             int colWidth = (int) App.get().gallery.getWidth() / App.get().galleryModel.colCount;
             App.get().gallery.setRowHeight(colWidth);
             int selRow = App.get().resultsTable.getSelectedRow();
@@ -390,11 +439,6 @@ public class MenuListener implements ActionListener {
                 App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
             }
 
-        }
-
-        @Override
-        public void actionPerformed(ActionEvent arg0) {
-            dialog.dispose();
         }
 
     }

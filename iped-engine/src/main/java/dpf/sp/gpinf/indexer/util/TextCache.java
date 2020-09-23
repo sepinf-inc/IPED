@@ -18,7 +18,7 @@ public class TextCache implements Closeable {
     private Writer writer;
     private long size = 0;
     private boolean diskCacheEnabled = true;
-    
+
     public void setEnableDiskCache(boolean diskCacheEnabled) {
         this.diskCacheEnabled = diskCacheEnabled;
     }
@@ -36,11 +36,10 @@ public class TextCache implements Closeable {
         }
 
         if (sb != null && sb.length() < MAX_MEMORY_CHARS) {
-            if(sb.length() + len > MAX_MEMORY_CHARS)
+            if (sb.length() + len > MAX_MEMORY_CHARS)
                 len = MAX_MEMORY_CHARS - sb.length();
             sb.append(buf, off, len);
         }
-            
 
         if (writer != null)
             try {
@@ -67,11 +66,15 @@ public class TextCache implements Closeable {
             writer = null;
         }
 
+        Reader reader = null;
         if (sb != null)
-            return new StringReader(sb.toString());
+            reader = new StringReader(sb.toString());
 
         if (tmp != null)
-            return Files.newBufferedReader(tmp.toPath());
+            reader = Files.newBufferedReader(tmp.toPath());
+
+        if (reader != null)
+            return new KnownSizeReader(reader);
 
         return null;
     }
@@ -82,6 +85,30 @@ public class TextCache implements Closeable {
             writer.close();
         if (tmp != null)
             tmp.delete();
+    }
+
+    public class KnownSizeReader extends Reader {
+
+        private Reader delegate;
+
+        public KnownSizeReader(Reader delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public int read(char[] cbuf, int off, int len) throws IOException {
+            return delegate.read(cbuf, off, len);
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
+
+        public long getSize() {
+            return size;
+        }
+
     }
 
 }

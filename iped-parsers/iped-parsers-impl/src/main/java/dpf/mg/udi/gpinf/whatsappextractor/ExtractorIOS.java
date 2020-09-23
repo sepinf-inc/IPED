@@ -1,6 +1,29 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.APP_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.CONTACT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_FROM_SENDER;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GIF_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_CREATED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_DELETED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.URL_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USERS_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 
 import java.io.File;
 import java.sql.Connection;
@@ -30,8 +53,8 @@ public class ExtractorIOS extends Extractor {
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts) {
-        super(databaseFile, contacts);
+    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
+        super(databaseFile, contacts, account);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
 
@@ -39,8 +62,7 @@ public class ExtractorIOS extends Extractor {
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_LIST)) {
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
@@ -75,8 +97,14 @@ public class ExtractorIOS extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
+                if (account != null)
+                    m.setLocalResource(account.getId());
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
-                m.setRemoteResource(rs.getString("remoteResource")); //$NON-NLS-1$
+                String remoteResource = rs.getString("remoteResource");
+                if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
+                    remoteResource = chat.getRemote().getFullId();
+                }
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(rs.getInt("status")); //$NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
@@ -204,6 +232,9 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 14:
                 result = DELETED_FROM_SENDER;
+                break;
+            case 15:
+                result = STICKER_MESSAGE;
                 break;
         }
         return result;

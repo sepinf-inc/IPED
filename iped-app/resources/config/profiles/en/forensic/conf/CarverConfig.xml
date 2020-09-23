@@ -3,7 +3,7 @@
     <typesToProcess>application/x-unallocated;</typesToProcess>
     <typesToProcess>application/x-pagefile; application/vnd.tcpdump.pcap; application/x-volume-shadow</typesToProcess>
 	<typesToProcess>application/octet-stream</typesToProcess>
-	<typesToProcess>application/x-disk-image; application/x-vmdk; application/x-vhd; application/x-vdi</typesToProcess>
+	<typesToProcess>application/x-disk-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx</typesToProcess>
 	<typesToProcess>application/x-thumbs; application/x-thumbcache</typesToProcess>
 -->
     <typesToNotProcess>application/x-tika-msoffice; video; text/html; application/pdf; image; application/x-iso9660-image; application/x-udf-image;</typesToNotProcess>

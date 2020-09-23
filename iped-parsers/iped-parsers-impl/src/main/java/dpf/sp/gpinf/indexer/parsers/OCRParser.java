@@ -94,17 +94,17 @@ public class OCRParser extends AbstractParser {
     public static final String OCR_CHAR_COUNT = "ocrCharCount"; //$NON-NLS-1$
 
     private static final String TOOL_NAME = "tesseract"; //$NON-NLS-1$
-    
+
     private static final String CHILD_PREFIX = "-child-"; //$NON-NLS-1$
-    
+
     private static final String OCR_STORAGE = "ocr-results.db"; //$NON-NLS-1$
-    
+
     private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS ocr(id TEXT PRIMARY KEY, text TEXT);"; //$NON-NLS-1$
-    
+
     private static final String INSERT_DATA = "INSERT INTO ocr(id, text) VALUES(?,?) ON CONFLICT(id) DO NOTHING"; //$NON-NLS-1$
-    
+
     private static final String SELECT_EXACT = "SELECT text FROM ocr WHERE id=?;"; //$NON-NLS-1$
-    
+
     private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id LIKE ?;"; //$NON-NLS-1$
 
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
@@ -123,11 +123,12 @@ public class OCRParser extends AbstractParser {
     private String PAGESEGMODE = System.getProperty(PAGE_SEGMODE_PROP, "1"); //$NON-NLS-1$
     private int MIN_SIZE = Integer.valueOf(System.getProperty(MIN_SIZE_PROP, "10000")); //$NON-NLS-1$
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
-    private List<String> bookmarksToOCR = Arrays.asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); //$NON-NLS-1$;
+    private List<String> bookmarksToOCR = Arrays
+            .asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); // $NON-NLS-1$;
 
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
-    
+
     private static HashMap<File, Connection> connMap = new HashMap<>();
 
     // Root folder to store ocr results
@@ -210,7 +211,7 @@ public class OCRParser extends AbstractParser {
     private String filePath = "";
 
     private boolean isFromBookmarkToOCR(ItemInfo ocrContext) {
-        
+
         if (bookmarksToOCR.size() == 0)
             return true;
 
@@ -222,14 +223,14 @@ public class OCRParser extends AbstractParser {
                 if (group.equalsIgnoreCase(category))
                     return true;
         }
-            
+
         return false;
     }
-    
+
     private static synchronized Connection getConnection(File outputBase) {
         File db = new File(outputBase, OCR_STORAGE);
         Connection conn = connMap.get(db);
-        if(conn != null) {
+        if (conn != null) {
             return conn;
         }
         db.getParentFile().mkdirs();
@@ -239,11 +240,11 @@ public class OCRParser extends AbstractParser {
             config.setBusyTimeout(3600000);
             conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
             connMap.put(db, conn);
-            
-            try(Statement stmt = conn.createStatement()){
+
+            try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(CREATE_TABLE);
             }
-            
+
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -285,11 +286,11 @@ public class OCRParser extends AbstractParser {
                     String hash = itemInfo.getHash();
                     outFileName = hash;
                     if (itemInfo.getChild() > -1) {
-                        outFileName += CHILD_PREFIX + itemInfo.getChild(); //$NON-NLS-1$
+                        outFileName += CHILD_PREFIX + itemInfo.getChild(); // $NON-NLS-1$
                     }
-                    
+
                     String ocrText = getOcrTextFromDb(outFileName, outputBase);
-                    if(ocrText != null) {
+                    if (ocrText != null) {
                         extractOutput(new ByteArrayInputStream(ocrText.getBytes("UTF-8")), xhtml); //$NON-NLS-1$
                         return;
                     }
@@ -315,10 +316,10 @@ public class OCRParser extends AbstractParser {
                     byte[] bytes;
                     if (tmpOutput.exists()) {
                         bytes = Files.readAllBytes(tmpOutput.toPath());
-                    }else {
+                    } else {
                         bytes = new byte[0];
                     }
-                    
+
                     String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
                     storeOcrTextInDb(outFileName, ocrText, outputBase);
 
@@ -334,12 +335,12 @@ public class OCRParser extends AbstractParser {
             tmp.dispose();
         }
     }
-    
+
     private static String getOcrTextFromDb(String id, File outputBase) throws IOException {
-        try(PreparedStatement ps = getConnection(outputBase).prepareStatement(SELECT_EXACT)){
+        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(SELECT_EXACT)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
-            if(rs.next()) {
+            if (rs.next()) {
                 return rs.getString(1);
             }
         } catch (SQLException e) {
@@ -347,9 +348,9 @@ public class OCRParser extends AbstractParser {
         }
         return null;
     }
-    
+
     private static void storeOcrTextInDb(String id, String ocrText, File outputBase) throws IOException {
-        try(PreparedStatement ps = getConnection(outputBase).prepareStatement(INSERT_DATA)){
+        try (PreparedStatement ps = getConnection(outputBase).prepareStatement(INSERT_DATA)) {
             ps.setString(1, id);
             ps.setString(2, ocrText);
             ps.executeUpdate();
@@ -357,16 +358,16 @@ public class OCRParser extends AbstractParser {
             throw new IOException(e);
         }
     }
-    
+
     public static void copyOcrResults(String hash, File inputBase, File outputBase) throws IOException {
         File sourceDb = new File(inputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
         File targetDb = new File(outputBase, OCRParser.TEXT_DIR + File.separator + OCRParser.OCR_STORAGE);
-        if(!sourceDb.exists())
+        if (!sourceDb.exists())
             return;
-        try(PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)){
+        try (PreparedStatement ps = getConnection(sourceDb.getParentFile()).prepareStatement(SELECT_ALL)) {
             ps.setString(1, hash + "%"); //$NON-NLS-1$
             ResultSet rs = ps.executeQuery();
-            while(rs.next()) {
+            while (rs.next()) {
                 String id = rs.getString(1);
                 String ocrText = rs.getString(2);
                 storeOcrTextInDb(id, ocrText, targetDb.getParentFile());
