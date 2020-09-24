@@ -156,7 +156,7 @@ public class UfedXmlReader extends DataSourceReader {
                 return ufdr.getInputStream(xml);
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Invalid UFDR file " + file.getAbsolutePath(), e);
             }
         }
         return null;
