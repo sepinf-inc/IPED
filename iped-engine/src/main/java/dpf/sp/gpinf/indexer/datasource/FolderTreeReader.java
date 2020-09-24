@@ -84,6 +84,9 @@ public class FolderTreeReader extends DataSourceReader {
         if (evidenceName == null) {
             evidenceName = file.getName();
         }
+        if (evidenceName.isEmpty()) {
+            evidenceName = "[root]";
+        }
         String arg;
         if ((arg = args.getExtraParams().get(EXCLUDE_KEY)) != null) {
             excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
@@ -135,9 +138,6 @@ public class FolderTreeReader extends DataSourceReader {
                 LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
             }
 
-            String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-            item.setPath(path1);
-
             if (args.isAddowner())
                 try {
                     UserPrincipal owner = Files.getOwner(path);
@@ -187,9 +187,9 @@ public class FolderTreeReader extends DataSourceReader {
                     item.setRoot(true);
                 }
 
-                String fileName = path.getFileName().toString();
-                String evidencePath = paths.stream().collect(Collectors.joining(File.separator)) + File.separator
-                        + fileName;
+                String fileName = item.getName();
+                String evidencePath = paths.isEmpty() ? fileName
+                        : paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
                 item.setPath(evidencePath);
 
                 if (attr.isDirectory()) {
