@@ -18,11 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -36,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringTokenizer;
@@ -44,12 +40,22 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 public class FolderTreeReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
+
+    private static final String EXCLUDE_KEY = "excludefolders"; //$NON-NLS-1$
+    private static final String INCLUDE_KEY = "includefolders"; //$NON-NLS-1$
+
+    private Pattern excludePattern;
+    private Pattern includePattern;
 
     private File rootFile;
     private String evidenceName;
@@ -77,6 +83,13 @@ public class FolderTreeReader extends DataSourceReader {
         evidenceName = getEvidenceName(file);
         if (evidenceName == null) {
             evidenceName = file.getName();
+        }
+        String arg;
+        if ((arg = args.getExtraParams().get(EXCLUDE_KEY)) != null) {
+            excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
+        }
+        if ((arg = args.getExtraParams().get(INCLUDE_KEY)) != null) {
+            includePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
         }
 
         rootFile = file;
@@ -209,6 +222,12 @@ public class FolderTreeReader extends DataSourceReader {
         @Override
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
+            if (excludePattern != null && excludePattern.matcher(path.toString()).find()) {
+                if (includePattern == null || !includePattern.matcher(path.toString()).find()) {
+                    return FileVisitResult.SKIP_SUBTREE;
+                }
+            }
+
             if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
                 return FileVisitResult.TERMINATE;
             }
@@ -217,7 +236,6 @@ public class FolderTreeReader extends DataSourceReader {
                 parentIds.pollLast();
                 paths.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
-
             }
 
             return FileVisitResult.CONTINUE;
