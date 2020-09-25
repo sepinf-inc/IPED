@@ -18,17 +18,13 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.util.HashSet;
 import java.util.LinkedList;
 
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.JPopupMenu;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
 import javax.swing.event.TreeSelectionEvent;
@@ -47,12 +43,12 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
-import dpf.sp.gpinf.indexer.util.SwingUtil;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
-public class TreeListener implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
+public class TreeListener extends MouseAdapter
+        implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
 
     Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
@@ -201,6 +197,25 @@ public class TreeListener implements TreeSelectionListener, ActionListener, Tree
     public void treeCollapsed(TreeExpansionEvent event) {
         collapsedTime = System.currentTimeMillis();
 
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+            showTreeMenu(e);
+        }
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+        if (e.isPopupTrigger()) {
+            showTreeMenu(e);
+        }
+    }
+
+    private void showTreeMenu(MouseEvent e) {
+        MenuClass menu = new MenuClass(true);
+        menu.show(e.getComponent(), e.getX(), e.getY());
     }
 
     @Override
