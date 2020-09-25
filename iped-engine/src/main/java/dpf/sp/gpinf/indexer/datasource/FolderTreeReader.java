@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -51,11 +52,9 @@ public class FolderTreeReader extends DataSourceReader {
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
 
-    private static final String EXCLUDE_KEY = "excludefolders"; //$NON-NLS-1$
-    private static final String INCLUDE_KEY = "includefolders"; //$NON-NLS-1$
+    private static final String EXCLUDE_KEY = "skipFolderRegex"; //$NON-NLS-1$
 
     private Pattern excludePattern;
-    private Pattern includePattern;
 
     private File rootFile;
     private String evidenceName;
@@ -95,12 +94,10 @@ public class FolderTreeReader extends DataSourceReader {
         if (evidenceName.isEmpty() && isRoot(file)) {
             evidenceName = file.getAbsolutePath().substring(0, 2);
         }
+
         String arg;
-        if ((arg = args.getExtraParams().get(EXCLUDE_KEY)) != null) {
+        if ((arg = Configuration.getInstance().properties.getProperty(EXCLUDE_KEY)) != null) {
             excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
-        }
-        if ((arg = args.getExtraParams().get(INCLUDE_KEY)) != null) {
-            includePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
         }
 
         rootFile = file;
@@ -231,9 +228,7 @@ public class FolderTreeReader extends DataSourceReader {
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
             if (excludePattern != null && excludePattern.matcher(path.toString()).find()) {
-                if (includePattern == null || !includePattern.matcher(path.toString()).find()) {
-                    return FileVisitResult.SKIP_SUBTREE;
-                }
+                return FileVisitResult.SKIP_SUBTREE;
             }
 
             if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
