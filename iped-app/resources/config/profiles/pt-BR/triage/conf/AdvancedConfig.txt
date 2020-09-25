@@ -112,6 +112,9 @@ useNIOFSDirectory = false
 # Commits parciais podem ser muito custosos, cuidado ao alterar o padrão.
 commitIntervalSeconds = 1800
 
+# Regex para ignorar pastas inteiras durante o processamento. Atualmente funciona apenas ao processar pastas montadas.
+#skipFolderRegex =
+
 ########################################################################
 # Configurações OCR
 ########################################################################
