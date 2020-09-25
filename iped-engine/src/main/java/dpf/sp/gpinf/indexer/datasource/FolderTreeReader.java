@@ -77,6 +77,14 @@ public class FolderTreeReader extends DataSourceReader {
 
     }
 
+    private boolean isRoot(File file) {
+        for (File f : File.listRoots()) {
+            if (f.equals(file))
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public void read(File file, Item parent) throws Exception {
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -84,8 +92,8 @@ public class FolderTreeReader extends DataSourceReader {
         if (evidenceName == null) {
             evidenceName = file.getName();
         }
-        if (evidenceName.isEmpty()) {
-            evidenceName = "[root]";
+        if (evidenceName.isEmpty() && isRoot(file)) {
+            evidenceName = file.getAbsolutePath().substring(0, 2);
         }
         String arg;
         if ((arg = args.getExtraParams().get(EXCLUDE_KEY)) != null) {
