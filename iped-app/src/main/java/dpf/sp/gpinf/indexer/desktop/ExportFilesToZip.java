@@ -174,6 +174,7 @@ public class ExportFilesToZip extends SwingWorker<Boolean, Integer> implements P
         if (hos != null && !error) {
             String hash = hos.hash().toString().toUpperCase();
             LOGGER.info("MD5 of " + file.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
+            ExportFileTree.appendHashSuffixIfTriageMode(hash, file);
             HashDialog dialog = new HashDialog(hash);
             dialog.setVisible(true);
         }
