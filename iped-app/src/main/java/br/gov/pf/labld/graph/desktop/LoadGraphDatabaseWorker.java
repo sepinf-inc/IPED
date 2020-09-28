@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -73,17 +72,14 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 importer.execute();
                 if (importer.get()) {
                     Files.move(tempDir.toPath(), graphDir.toPath());
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
+                    return;
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
-                    }
-                });
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphError"), "Error",
-                        JOptionPane.ERROR_MESSAGE);
             }
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphError"), "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
