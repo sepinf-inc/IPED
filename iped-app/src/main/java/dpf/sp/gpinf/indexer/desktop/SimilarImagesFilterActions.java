@@ -12,8 +12,8 @@ import javax.imageio.ImageIO;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.RowSorter;
-import javax.swing.SortOrder;
 import javax.swing.RowSorter.SortKey;
+import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -83,7 +83,7 @@ public class SimilarImagesFilterActions {
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
-                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim * sampleFactor);
+                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim * sampleFactor, file.length());
                     } catch (Exception e) {
                     } finally {
                         IOUtil.closeQuietly(is);
