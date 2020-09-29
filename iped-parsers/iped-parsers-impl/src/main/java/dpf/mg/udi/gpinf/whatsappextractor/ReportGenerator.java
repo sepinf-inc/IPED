@@ -517,7 +517,7 @@ public class ReportGenerator {
                 break;
         }
         if (message.isChildporn()) {
-            out.print("pedo");
+            out.print(Messages.getString("WhatsAppReport.LEDKFF"));
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
