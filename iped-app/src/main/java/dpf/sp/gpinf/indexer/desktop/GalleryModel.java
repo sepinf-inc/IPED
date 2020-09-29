@@ -233,7 +233,9 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     if (image == null && stream != null) {
-                        image = magickConverter.getImage(stream, thumbSize);
+                        String sizeStr = doc.get(IndexItem.LENGTH);
+                        Long size = sizeStr == null ? null : Long.parseLong(sizeStr);
+                        image = magickConverter.getImage(stream, thumbSize, size);
                     }
 
                     if (image == null || image == errorImg) {
