@@ -110,19 +110,20 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.startsWith("application/vnd.oasis.opendocument") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.sun.xml") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.stardivision") //$NON-NLS-1$
-                // || contentType.startsWith("image/")
                 // contentType.startsWith("application/vnd.ms-works") ||
                 // contentType.startsWith("application/x-tika-msoffice") ||
                 // || contentType.startsWith("application/x-tika-ooxml")
+                // types commented below are rendered by ImageViewer:
+                // || contentType.startsWith("image/")
+                // || contentType.equals("image/emf") //$NON-NLS-1$
+                // || contentType.equals("image/vnd.adobe.photoshop") //$NON-NLS-1$
                 || contentType.startsWith("application/x-tika-ooxml-protected") //$NON-NLS-1$
                 || contentType.equals("application/vnd.visio") //$NON-NLS-1$
                 || contentType.equals("application/x-mspublisher") //$NON-NLS-1$
                 || contentType.equals("application/postscript") //$NON-NLS-1$
                 || contentType.equals("application/x-dbf") //$NON-NLS-1$
                 || contentType.equals("text/csv") //$NON-NLS-1$
-                || contentType.equals("image/emf") //$NON-NLS-1$
                 || contentType.equals("image/wmf") //$NON-NLS-1$
-                || contentType.equals("image/vnd.adobe.photoshop") //$NON-NLS-1$
                 || contentType.equals("image/x-portable-bitmap") //$NON-NLS-1$
                 || contentType.equals("image/svg+xml") //$NON-NLS-1$
                 || contentType.equals("image/x-pcx") //$NON-NLS-1$
