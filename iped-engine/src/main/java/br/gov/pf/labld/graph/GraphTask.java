@@ -113,6 +113,11 @@ public class GraphTask extends AbstractTask {
             if (graphFileWriter == null) {
                 graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
                         configuration.getDefaultEntity());
+
+                if (configuration.getProcessProximityRelationships() && caseData.isIpedReport()) {
+                    logger.warn(
+                            "process-proximity-relationships not supported in reports yet, it will be ignored, resulting in different graphs!");
+                }
             }
 
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -221,7 +226,7 @@ public class GraphTask extends AbstractTask {
             processContacts(evidence);
             processWifi(evidence);
             processUserAccount(evidence);
-            if (configuration.getProcessProximityRelationships()) {
+            if (configuration.getProcessProximityRelationships() && !caseData.isIpedReport()) {
                 processExtraAttributes(evidence);
             }
         }
