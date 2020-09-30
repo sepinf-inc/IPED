@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -395,6 +395,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             metadata.remove(ExtraProperties.USER_THUMB);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
+        }
+
+        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
+        if (hashSetStatus != null) {
+            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
+            metadata.remove(KFFTask.KFF_STATUS);
         }
 
     }
