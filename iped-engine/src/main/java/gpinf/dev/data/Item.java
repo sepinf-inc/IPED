@@ -458,9 +458,12 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
-            id = getNextId();
+            synchronized (Counter.class) {
+                if (id == -1) {
+                    id = getNextId();
+                }
+            }
         }
-
         return id;
     }
 
