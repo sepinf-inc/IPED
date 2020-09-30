@@ -145,7 +145,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        if (LedHashes.lookupHashDatabase(mediaHash)) {
+        if (LedHashes.lookupHashDatabase(this.mediaHash)) {
             this.setChildporn(true);
         }
     }
