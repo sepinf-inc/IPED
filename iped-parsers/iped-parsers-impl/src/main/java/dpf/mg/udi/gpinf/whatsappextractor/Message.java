@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -142,6 +144,9 @@ public class Message {
             this.mediaHash = new String(Hex.encodeHex(hash, false));
         } else {
             this.mediaHash = mediaHash;
+        }
+        if (LedHashes.lookupHashDatabase(mediaHash)) {
+            this.setChildporn(true);
         }
     }
 

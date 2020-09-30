@@ -12,7 +12,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -23,9 +22,7 @@ import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -172,14 +169,6 @@ public class ReportGenerator {
 
     private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory) {
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
-        if (LedHashes.hashMap != null && LedHashes.hashMap.get("sha-256") != null && message.getMediaHash() != null) {
-            HashValue hash=new HashValue(message.getMediaHash());
-            if (hash != null && Arrays.binarySearch(LedHashes.hashMap.get("sha-256"), hash) >= 0) {
-                message.setChildporn(true);
-            }
-        }
-        
-        
 
         switch (message.getMessageType()) {
             case UNKNOWN_MESSAGE:
