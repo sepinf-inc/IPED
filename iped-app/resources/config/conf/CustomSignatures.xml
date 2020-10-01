@@ -955,6 +955,30 @@
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
     
+    <mime-type type="application/x-gdrive-cloud-graph">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="cloud_graph.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-cloud-graph-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-snapshot">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="snapshot.db"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-snapshot-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-account-info">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="sync_config.db"/>
+        <glob pattern="global.db"/>
+    </mime-type>
+    
     <mime-type type="message/x-chat-message">
         <sub-class-of type="application/x-metadata-entry"/>
     </mime-type>

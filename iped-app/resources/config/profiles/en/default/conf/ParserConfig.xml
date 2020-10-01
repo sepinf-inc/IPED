@@ -140,6 +140,7 @@
         </parser>
         <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 		
     </parsers>
 
