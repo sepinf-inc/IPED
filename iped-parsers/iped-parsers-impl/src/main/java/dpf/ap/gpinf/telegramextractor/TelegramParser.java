@@ -86,6 +86,8 @@ public class TelegramParser extends SQLite3DBParser {
     // TODO externalize to locale properties
     private static final String ATTACHMENT_MESSAGE = ATTACHMENT_PREFIX + "Attachment: ";
 
+    private static boolean enabledForUfdr = false;
+
     private boolean extractMessages = true;
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -96,6 +98,15 @@ public class TelegramParser extends SQLite3DBParser {
         SUPPORTED_TYPES = supportedTypes;
     }
     
+    public static boolean isEnabledForUfdr() {
+        return enabledForUfdr;
+    }
+
+    @Field
+    public void setEnabledForUfdr(boolean enable) {
+        enabledForUfdr = enable;
+    }
+
     @Field
     public void setExtractMessages(boolean extractMessages) {
         this.extractMessages = extractMessages;

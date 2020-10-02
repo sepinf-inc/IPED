@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
@@ -89,6 +90,9 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String MSISDN_PROP = "MSISDN";
 
     private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+
+    private static final Set<String> SUPPORTED_APPS = new HashSet<String>(
+            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
 
     File root, ufdrFile;
     ZipFile4j ufdr;
@@ -212,6 +216,12 @@ public class UfedXmlReader extends DataSourceReader {
 
         UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
                 .findObjects(UFEDReaderConfig.class).iterator().next();
+
+        // TODO enable TelegramParser for UFDR in next major release
+        if (!TelegramParser.isEnabledForUfdr()) {
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+            SUPPORTED_APPS.remove(TelegramParser.TELEGRAM);
+        }
 
         if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
@@ -671,8 +681,7 @@ public class UfedXmlReader extends DataSourceReader {
                         else if (item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
                             if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
-                                    && (value.equals(WhatsAppParser.WHATSAPP)
-                                            || value.equals(TelegramParser.TELEGRAM))) {
+                                    && SUPPORTED_APPS.contains(value)) {
                                 ignoreItems = true;
                             }
                         }
