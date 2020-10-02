@@ -42,7 +42,6 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
-
 public class Extractor {
 
     private static final Logger logger = LoggerFactory.getLogger(Extractor.class);
@@ -105,7 +104,7 @@ public class Extractor {
         return this.userAccount;
     }
 
-    private List<Long> getParticipants(Connection conn,ChatGroup cg) throws SQLException {
+    private List<Long> getParticipants(Connection conn, ChatGroup cg) throws SQLException {
         List<Long> l = new ArrayList<>();
         try (PreparedStatement stmt = conn.prepareStatement(MEMBERS_CHATS_SQL)) {
             stmt.setLong(1, cg.getId());
@@ -147,7 +146,6 @@ public class Extractor {
                     Contact cont = getContact(chatId);
                     d.getChatData(cont);
 
-
                     searchAvatarFileName(cont, d.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
@@ -173,8 +171,7 @@ public class Extractor {
         chatList = l;
         return l;
     }
-    
-    
+
     protected ArrayList<Chat> extractChatListIOS() throws SQLException {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list iOS");
@@ -187,16 +184,15 @@ public class Extractor {
                 long chatid = key.readInt64(0, false);
 
                 Contact c = getContact(chatid);
-                
-                Chat cg = null;
-                
-                if (c.getName()!=null && c.getName().startsWith("gp_name:")) {
-                   
-                   
-                   cg = new ChatGroup(c.getId(),c,c.getName());
 
-                } else{
-                                        
+                Chat cg = null;
+
+                if (c.getName() != null && c.getName().startsWith("gp_name:")) {
+
+                    cg = new ChatGroup(c.getId(), c, c.getName());
+
+                } else {
+
                     cg = new Chat(c.getId(), c, c.getFullname());
 
                 }
@@ -214,11 +210,9 @@ public class Extractor {
 
             }
         }
-        chatList=l;
+        chatList = l;
         return l;
     }
-
-    
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
@@ -256,9 +250,9 @@ public class Extractor {
                         } else if (message.getMediaMime().length() > 0) {
                             loadDocument(message, d.getDocumentNames(), d.getDocumentSize());
                         }
-                       
+
                     }
-                    if(message.getType()!=null) {
+                    if (message.getType() != null) {
                         String type = message.getType();
                         String msg_decoded;
 
@@ -275,13 +269,11 @@ public class Extractor {
                 }
             }
         }
-        
+
         Collections.sort(msgs, MSG_TIME_COMPARATOR);
-        
+
         return msgs;
     }
-
-
 
     public void extractMediaIOS() throws SQLException {
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MEDIAS_SQL_IOS)) {
@@ -293,11 +285,8 @@ public class Extractor {
             }
         }
     }
-    
+
     protected void setFrom(Message message, Chat chat) {
-
-
-
 
         if (message.getFrom() == null) {
             if (userAccount != null && message.isFromMe()) {
@@ -320,7 +309,6 @@ public class Extractor {
 
         }
 
-        
     }
 
     protected ArrayList<Message> extractMessagesIOS(Chat chat) throws SQLException {
@@ -336,12 +324,11 @@ public class Extractor {
                     cg = (ChatGroup) chat;
                 }
                 while (rs.next()) {
-                	PostBoxCoding p=new PostBoxCoding();
-                	
-                	Message message = new Message(0,chat);
+                    PostBoxCoding p = new PostBoxCoding();
+
+                    Message message = new Message(0, chat);
 
                     p.readMessage(rs.getBytes("key"), rs.getBytes("value"), message, mediakey);
-
 
                     setFrom(message, chat);
 
@@ -364,10 +351,10 @@ public class Extractor {
                             loadDocument(message, name, f.getSize());
                         }
                         if (message.getMediaMime() == null && message.getType() == null) {
-                    		message.setMediaMime("attach");
-                    	}
+                            message.setMediaMime("attach");
+                        }
                     }
-                    
+
                     message.setFrom(getContact(message.getFrom().getId()));
                     msgs.add(message);
                 }
@@ -376,18 +363,16 @@ public class Extractor {
         Collections.sort(msgs, MSG_TIME_COMPARATOR);
         return msgs;
     }
-    
-    
 
     private void loadDocument(Message message, List<String> names, int size) {
         for (String name : names) {
             String query = getQuery(name, size);
             IItemBase item = getFileFromQuery(query);
             if (item != null) {
-            	if(message.getMediaMime()==null) {
+                if (message.getMediaMime() == null) {
                     message.setMediaMime(item.getMediaType().toString());
-            	}
-            	logger.debug("Document mediaType: {}", message.getMediaMime());
+                }
+                logger.debug("Document mediaType: {}", message.getMediaMime());
                 message.setMediaHash(item.getHash());
                 message.setThumb(item.getThumb());
                 message.setMediaExtension(item.getTypeExt());
@@ -452,7 +437,7 @@ public class Extractor {
     }
 
     protected void extractContacts() throws Exception {
-       
+
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL)) {
                 ResultSet rs = stmt.executeQuery();
@@ -460,14 +445,13 @@ public class Extractor {
                     return;
                 int nphones = 0;
                 while (rs.next()) {
-                	Contact c=Contact.getContactFromBytes(rs.getBytes("data"));
+                    Contact c = Contact.getContactFromBytes(rs.getBytes("data"));
                     /*
-                     * d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER);
-                       Contact c = new Contact(0);
-                       d.getUserData(c);
-                    */
-                    
-                    if (c!=null && c.getId() > 0) {
+                     * d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER); Contact
+                     * c = new Contact(0); d.getUserData(c);
+                     */
+
+                    if (c != null && c.getId() > 0) {
                         Contact cont = getContact(c.getId());
                         if (cont.getName() == null) {
                             cont.setName(c.getName());
@@ -479,7 +463,7 @@ public class Extractor {
                         if (cont.getPhone() != null) {
                             nphones++;
                         }
-                        //List<PhotoData> photo = d.getPhotoData();
+                        // List<PhotoData> photo = d.getPhotoData();
                         if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                             try {
                                 if (cont.getPhone() != null)
@@ -495,7 +479,7 @@ public class Extractor {
         }
 
     }
-    
+
     protected void extractContactsIOS() throws SQLException {
         if (conn != null) {
             try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_CONTACTS_SQL_IOS)) {
@@ -504,23 +488,21 @@ public class Extractor {
                     return;
                 int nphones = 0;
                 while (rs.next()) {
-                	
-                	long id=rs.getLong("key");
-                    
-                    
-                    	
+
+                    long id = rs.getLong("key");
+
                     Contact cont = getContact(id);
                     if (cont.getName() == null) {
-                    	PostBoxCoding p=new PostBoxCoding();
-            			p.setData(rs.getBytes("value"));
-            			p.readUser(cont);
-                        
+                        PostBoxCoding p = new PostBoxCoding();
+                        p.setData(rs.getBytes("value"));
+                        p.readUser(cont);
+
                     }
 
                     if (cont.getPhone() != null) {
                         nphones++;
                     }
-                    //List<PhotoData> photo = d.getPhotoData();
+                    // List<PhotoData> photo = d.getPhotoData();
                     if (cont.getAvatar() != null && !cont.getPhotos().isEmpty()) {
                         try {
                             if (cont.getPhone() != null)
@@ -530,7 +512,7 @@ public class Extractor {
                             e.printStackTrace();
                         }
                     }
-                    
+
                 }
             }
         }
@@ -562,7 +544,7 @@ public class Extractor {
     protected Connection getConnection() throws SQLException {
         return DriverManager.getConnection("jdbc:sqlite:" + databaseFile.getAbsolutePath());
     }
-    
+
     public ArrayList<Chat> getChatList() {
         return chatList;
     }
@@ -574,10 +556,10 @@ public class Extractor {
     public Contact getUserAccount() {
         return userAccount;
     }
-    
-    private static final Comparator<Message> MSG_TIME_COMPARATOR=new Comparator<Message>() {
+
+    private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
         public int compare(Message o1, Message o2) {
-            if(o1==null || o2==null)
+            if (o1 == null || o2 == null)
                 return 0;
             return o1.getTimeStamp().compareTo(o2.getTimeStamp());
         }
@@ -589,7 +571,7 @@ public class Extractor {
             + "c.name as groupName, c.data as groupData "
             + "from dialogs d LEFT join users u on u.uid=d.did LEFT join chats c on -c.uid=d.did "
             + "order by d.date desc";
-    
+
     private static final String MEMBERS_CHATS_SQL = "SELECT * from channel_users_v2 where did=?";
 
     private static final String CHATS_SQL_IOS = "select substr(key,16,8) as chatid, false as deleted from t9 "
@@ -598,10 +580,9 @@ public class Extractor {
             + "group by chatid";
 
     private static final String EXTRACT_MEDIAS_SQL_IOS = "SELECT key,value from t6 ";
-    
+
     private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
             + "substr(t7.value,1,1)=x'00'";
-
 
     private static final String EXTRACT_MESSAGES_SQL = "SELECT m.*,md.data as mediaData FROM messages m  "
             + "left join media_v2 md on md.mid=m.mid where m.uid=? order by date";

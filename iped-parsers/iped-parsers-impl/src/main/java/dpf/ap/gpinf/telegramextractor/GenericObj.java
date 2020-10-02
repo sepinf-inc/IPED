@@ -23,8 +23,8 @@ package dpf.ap.gpinf.telegramextractor;
  * @author ADMHauck
  */
 public class GenericObj {
-    
+
     int hash;
     byte[] content;
-    
+
 }
