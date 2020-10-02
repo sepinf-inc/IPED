@@ -57,7 +57,7 @@ import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
-import iped3.util.ExtraProperties; 
+import iped3.util.ExtraProperties;
 
 public class TelegramParser extends SQLite3DBParser {
 
@@ -97,7 +97,7 @@ public class TelegramParser extends SQLite3DBParser {
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
     }
-    
+
     public static boolean isEnabledForUfdr() {
         return enabledForUfdr;
     }
@@ -122,10 +122,10 @@ public class TelegramParser extends SQLite3DBParser {
             }
         }
     }
-    
-    public void parseTelegramDBAndroid(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
-    	try (Connection conn = getConnection(stream, metadata, context)) {
+
+    public void parseTelegramDBAndroid(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context) throws IOException, SAXException, TikaException {
+        try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
@@ -170,9 +170,9 @@ public class TelegramParser extends SQLite3DBParser {
             e1.printStackTrace();
             throw new TikaException("Error parsing telegram database", e1);
         }
-    	
+
     }
-    
+
     private void generateChat(Chat c, Contact account, Extractor e, IItemSearcher searcher, ContentHandler handler,
             EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int frag = 0;
@@ -230,9 +230,8 @@ public class TelegramParser extends SQLite3DBParser {
         return title;
     }
 
-    private void extractMessages(String chatName, List<Message> messages, Contact account,
-            Extractor e, long parentId, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+    private void extractMessages(String chatName, List<Message> messages, Contact account, Extractor e, long parentId,
+            ContentHandler handler, EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
         int msgCount = 0;
         for (Message m : messages) {
             Metadata meta = new Metadata();
@@ -294,7 +293,7 @@ public class TelegramParser extends SQLite3DBParser {
 
     public void parseTelegramDBIOS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-    	try (Connection conn = getConnection(stream, metadata, context)) {
+        try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             Extractor e = new Extractor(conn);
             e.setSearcher(searcher);
@@ -338,9 +337,9 @@ public class TelegramParser extends SQLite3DBParser {
             }
 
         } catch (SQLException e) {
-    		e.printStackTrace();
+            e.printStackTrace();
             throw new TikaException("Error parsing telegram ios database", e);
-		}
+        }
     }
 
     private Contact searchAndroidAccount(IItemSearcher searcher, String dbPath) {
@@ -396,21 +395,21 @@ public class TelegramParser extends SQLite3DBParser {
         return null;
     }
 
-    public void parseAndroidAccount(InputStream stream, ContentHandler handler, Metadata metadata,
-            ParseContext context) throws SAXException, IOException, TikaException {
+    public void parseAndroidAccount(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws SAXException, IOException, TikaException {
 
-		try {
+        try {
             Contact user = decodeAndroidAccount(stream);
             if (user != null) {
                 createAccountHTML(user, handler, context);
-	    	}
-	    	
+            }
+
         } catch (Exception e) {
             throw new TikaException("Error parsing telegram account", e);
-		}
-    	
+        }
+
     }
-    
+
     private void createAccountHTML(Contact user, ContentHandler handler, ParseContext context)
             throws IOException, SAXException {
         Metadata meta = new Metadata();
@@ -437,25 +436,25 @@ public class TelegramParser extends SQLite3DBParser {
     }
 
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-         throws IOException, SAXException, TikaException {
-    	
-    	String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-    	if(mimetype.equals(TELEGRAM_DB.toString())) {
-    		parseTelegramDBAndroid(stream, handler, metadata, context);
-    	}
-    	if(mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            throws IOException, SAXException, TikaException {
+
+        String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        if (mimetype.equals(TELEGRAM_DB.toString())) {
+            parseTelegramDBAndroid(stream, handler, metadata, context);
+        }
+        if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
             try {
-    		parseTelegramDBIOS(stream, handler, metadata, context);
+                parseTelegramDBIOS(stream, handler, metadata, context);
             } catch (Exception e) {
                 // TODO: handle exception
                 e.printStackTrace(System.out);
                 throw e;
             }
-    	}
-    	if(mimetype.equals(TELEGRAM_USER_CONF.toString())) {
-    		parseAndroidAccount(stream, handler, metadata, context);
-    	}
-        
+        }
+        if (mimetype.equals(TELEGRAM_USER_CONF.toString())) {
+            parseAndroidAccount(stream, handler, metadata, context);
+        }
+
     }
 
 }
