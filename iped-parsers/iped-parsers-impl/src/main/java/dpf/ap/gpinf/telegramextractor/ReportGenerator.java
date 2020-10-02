@@ -35,7 +35,7 @@ public class ReportGenerator {
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
     private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
-    private IItemSearcher searcher; 
+    private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
 
@@ -68,7 +68,8 @@ public class ReportGenerator {
 
         if (contact.getAvatar() != null)
             out.println("<img src=\"data:image/jpg;base64," //$NON-NLS-1$
-                    + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(contact.getAvatar()) + "\" width=\"112\"/><br>"); //$NON-NLS-1$
+                    + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(contact.getAvatar())
+                    + "\" width=\"112\"/><br>"); //$NON-NLS-1$
         out.println(Messages.getString("TelegramContact.ContactID") + contact.getId());
         out.println("<br>" + Messages.getString("TelegramContact.FirstName") + format(contact.getName()));
         out.println("<br>" + Messages.getString("TelegramContact.LastName") + format(contact.getLastName()));
@@ -153,6 +154,7 @@ public class ReportGenerator {
         }
         return img;
     }
+
     private void printVideo(PrintWriter out, Message message) {
 
         if (message.getMediaHash() != null) {
@@ -252,7 +254,7 @@ public class ReportGenerator {
             out.print("Link:<br/>");
         }
         if (message.getMediaHash() != null) {
-            
+
             printCheckbox(out, message.getMediaHash());
 
             TagHtml div = new TagHtml("div");
@@ -266,7 +268,7 @@ public class ReportGenerator {
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
             link.setAtribute("href", ref);
-            
+
             TagHtml img = getThumbTag(message, "imageImg");
 
             String title = isLink ? "Link" : "Image";
@@ -282,10 +284,10 @@ public class ReportGenerator {
         out.println("<br/>");
 
     }
-    
+
     private void printAttachment(PrintWriter out, Message message) {
         if (message.getMediaHash() != null) {
-            
+
             printCheckbox(out, message.getMediaHash());
 
             TagHtml div = new TagHtml("div");
@@ -299,8 +301,6 @@ public class ReportGenerator {
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
             link.setAtribute("href", ref);
-
-
 
             TagHtml img = getThumbTag(message, "attachImg");
 
@@ -316,12 +316,13 @@ public class ReportGenerator {
         out.println("<br/>");
 
     }
-    
+
     private void printGeoLocation(PrintWriter out, Message message) {
         // toDo better handling Geo locations
         out.println("Latitude: " + message.getLatitude() + "<br/>");
         out.println("Longitude: " + message.getLongitude());
     }
+
     private void printCheckbox(PrintWriter out, String hash) {
         out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
                 + "', this.checked)\" name=\"" + hash + "\" />");
@@ -351,14 +352,14 @@ public class ReportGenerator {
                 printGeoLocation(out, message);
             } else if (message.getMediaMime().toLowerCase().startsWith("video")) {
                 printVideo(out, message);
-            }else if (message.getMediaMime().toLowerCase().startsWith("image")) {
+            } else if (message.getMediaMime().toLowerCase().startsWith("image")) {
                 printImage(out, message);
 
-            }else if (message.getMediaMime().toLowerCase().startsWith("audio")) {
+            } else if (message.getMediaMime().toLowerCase().startsWith("audio")) {
                 printAudio(out, message);
-            }else if (message.getMediaMime().toLowerCase().startsWith("link")) {
+            } else if (message.getMediaMime().toLowerCase().startsWith("link")) {
                 printLink(out, message);
-            }else{
+            } else {
                 printAttachment(out, message);
             }
 
@@ -366,7 +367,6 @@ public class ReportGenerator {
         if (message.getData() != null) {
             out.print(message.getData()); // $NON-NLS-1$
         }
-
 
         out.println("<br/>");
 
@@ -389,8 +389,7 @@ public class ReportGenerator {
                 + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "<style>\n" + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
-                + Util.readResourceAsString("css/tooltip.css")
-                + "\n</style>\n" + "<script>\n" //$NON-NLS-2$
+                + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>\n" //$NON-NLS-3$
                 + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
                 + "css.type = \"text/css\";\n" //$NON-NLS-1$
                 + "var inHtml = \"\";\n" //$NON-NLS-1$

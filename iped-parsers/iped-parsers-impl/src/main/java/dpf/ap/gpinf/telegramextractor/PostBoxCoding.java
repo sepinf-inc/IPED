@@ -18,8 +18,6 @@
  */
 package dpf.ap.gpinf.telegramextractor;
 
-
-
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -32,8 +30,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-
-
 
 /**
  *
@@ -57,107 +53,104 @@ public class PostBoxCoding {
     public static int Nil = 11;
     public static int StringArray = 12;
     public static int BytesArray = 13;
-    
-    private byte[] data=null;
-    
+
+    private byte[] data = null;
+
     public byte[] getData() {
         return data;
     }
 
     public void setData(byte[] data) {
         this.data = data;
-        
-    }
-    
-    
-    
-    
-    private int offset=0;
-    
-    public int readInt32(int start) {
-        return readInt32(start,true);
-    }
-     public long readInt64(int start) {
-        return readInt64(start,true);
+
     }
 
+    private int offset = 0;
+
+    public int readInt32(int start) {
+        return readInt32(start, true);
+    }
+
+    public long readInt64(int start) {
+        return readInt64(start, true);
+    }
 
     public int readInt32(int start, boolean bigEndian) {
         try {
             int i = 0;
-            byte len=4;
+            byte len = 4;
             for (int j = 0; j < len; j++) {
-                int a=data[start+j];
+                int a = data[start + j];
 
                 a = a & 0xFF;
 
-                if(bigEndian){
+                if (bigEndian) {
                     i |= (a << (j * 8));
-                }else{
-                    i |= (a << ((len-j-1) * 8));
+                } else {
+                    i |= (a << ((len - j - 1) * 8));
                 }
             }
             return i;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return 0;
     }
-    
+
     public long readInt64(int start, boolean bigEndian) {
         try {
             long i = 0;
-            byte len=8;
+            byte len = 8;
             for (int j = 0; j < len; j++) {
-                long a=data[start+j];
-                a=a&0xFF;
-                if(bigEndian){
+                long a = data[start + j];
+                a = a & 0xFF;
+                if (bigEndian) {
                     i |= (a << (j * 8L));
-                }else{
-                    i |= (a << ((len-j-1) * 8L));
+                } else {
+                    i |= (a << ((len - j - 1) * 8L));
                 }
             }
             return i;
         } catch (Exception e) {
             e.printStackTrace();
         }
-        
+
         return 0;
     }
-    
-    public String readString(int start, int tam){
+
+    public String readString(int start, int tam) {
         if (start + tam > data.length || tam == 0)
             return null;
-        return new String(Arrays.copyOfRange(data, start,start+tam ),StandardCharsets.UTF_8);
+        return new String(Arrays.copyOfRange(data, start, start + tam), StandardCharsets.UTF_8);
     }
-    
+
     private boolean findOfset_old(String key, int type) {
-        int start=offset;
-        while(offset<data.length){
-            int offant=offset;
+        int start = offset;
+        while (offset < data.length) {
+            int offant = offset;
             int keylength = readNextByte();
-            keylength=keylength & 0xFF;
+            keylength = keylength & 0xFF;
             String readk = readString(offset, keylength);
-            offset+=keylength;
-            
-            if(offset>=data.length){
-                offset=offant+1;
+            offset += keylength;
+
+            if (offset >= data.length) {
+                offset = offant + 1;
                 continue;
             }
-            
-            int readtype=data[offset];
-            readtype=readtype & 0xFF;
-            
-            if(keylength==key.length() && key.equals(readk) && type==readtype){
+
+            int readtype = data[offset];
+            readtype = readtype & 0xFF;
+
+            if (keylength == key.length() && key.equals(readk) && type == readtype) {
                 offset++;
                 return true;
             }
-            offset=offant+1;
-            
+            offset = offant + 1;
+
         }
-        if(start>0){
-            offset=0;
+        if (start > 0) {
+            offset = 0;
             return findOfset_old(key, type);
         }
         return false;
@@ -183,7 +176,6 @@ public class PostBoxCoding {
         }
     }
 
-    
     public double decodeDoubleForKey(String key) {
         if (findOfset(key, this.DOUBLE)) {
             // todo verify if it is little or big endian
@@ -205,124 +197,130 @@ public class PostBoxCoding {
         return null;
     }
 
-    public String decodeStringForKey(String key){
-        if(findOfset(key, STRING)){
-            int tam=readInt32(offset);
-            offset+=4;
-            String aux=readString(offset, tam);
-            offset+=tam;
+    public String decodeStringForKey(String key) {
+        if (findOfset(key, STRING)) {
+            int tam = readInt32(offset);
+            offset += 4;
+            String aux = readString(offset, tam);
+            offset += tam;
             return aux;
         }
         return null;
-        
+
     }
-    public GenericObj readObj(){
-        try{
-        GenericObj obj=new GenericObj();
-        obj.hash=readInt32(offset);
-        offset+=4;
-        int btam=readInt32(offset);
-        offset+=4;
-        if (offset + btam <= data.length) {
-            obj.content = Arrays.copyOfRange(data, offset, offset + btam);
-            offset += btam;
-            return obj;
-        } else {
-            offset = data.length - 1;
-        }
-        }catch(Exception e){
+
+    public GenericObj readObj() {
+        try {
+            GenericObj obj = new GenericObj();
+            obj.hash = readInt32(offset);
+            offset += 4;
+            int btam = readInt32(offset);
+            offset += 4;
+            if (offset + btam <= data.length) {
+                obj.content = Arrays.copyOfRange(data, offset, offset + btam);
+                offset += btam;
+                return obj;
+            } else {
+                offset = data.length - 1;
+            }
+        } catch (Exception e) {
             e.printStackTrace();
 
         }
         return null;
     }
-    public GenericObj decodeObjectForKey(String key){
-        if(findOfset(key, OBJECT)){
+
+    public GenericObj decodeObjectForKey(String key) {
+        if (findOfset(key, OBJECT)) {
             return readObj();
         }
         return null;
     }
-    public int decodeInt32ForKey(String key){
-        if(findOfset(key, int32)){
-            int val=readInt32(offset);
-            offset+=4;
+
+    public int decodeInt32ForKey(String key) {
+        if (findOfset(key, int32)) {
+            int val = readInt32(offset);
+            offset += 4;
             return val;
         }
         return 0;
     }
-    
-    public long decodeInt64ForKey(String key){
-        if(findOfset(key,Int64)){
+
+    public long decodeInt64ForKey(String key) {
+        if (findOfset(key, Int64)) {
             logger.debug("offset {}", offset);
-            long val=readInt64(offset);
-            offset+=8;
+            long val = readInt64(offset);
+            offset += 8;
             return val;
         }
         return 0;
     }
-    
-    public List<GenericObj> decodeObjectArrayForKey(String key){
-        ArrayList<GenericObj> l=new ArrayList<>();
-        if(findOfset(key, ObjectArray)){
-            int tam=readInt32(offset);
-            offset+=4;
+
+    public List<GenericObj> decodeObjectArrayForKey(String key) {
+        ArrayList<GenericObj> l = new ArrayList<>();
+        if (findOfset(key, ObjectArray)) {
+            int tam = readInt32(offset);
+            offset += 4;
             if (tam > data.length)
                 return l;
-            for(int i=0;i<tam;i++){
-                GenericObj o=readObj();
-                if(o!=null){
+            for (int i = 0; i < tam; i++) {
+                GenericObj o = readObj();
+                if (o != null) {
                     l.add(o);
                 }
             }
         }
         return l;
     }
-    static boolean testbit(byte data,int bit){
-        return (data& (1<<bit))!=0;
+
+    static boolean testbit(byte data, int bit) {
+        return (data & (1 << bit)) != 0;
     }
-    static boolean testbit(int data,int bit){
-        return (data& (1<<bit))!=0;
+
+    static boolean testbit(int data, int bit) {
+        return (data & (1 << bit)) != 0;
     }
-    
-    void readForward(byte flags){
-        long forwardAuthorId=readInt64(offset);
-        offset+=8;
-        int forwardDate=readInt32(offset);
-        offset+=4;
-       
-                
+
+    void readForward(byte flags) {
+        long forwardAuthorId = readInt64(offset);
+        offset += 8;
+        int forwardDate = readInt32(offset);
+        offset += 4;
+
         if (testbit(flags, 1)) {
-            long sourceID=readInt64(offset);
-            offset+=8;
-            
+            long sourceID = readInt64(offset);
+            offset += 8;
+
         }
 
         if (testbit(flags, 2)) {
             long MessagePeerId = readInt64(offset);
-            offset+=8;;
-            int forwardSourceMessageNamespace= readInt32(offset);
-            offset+=4;
+            offset += 8;
+            ;
+            int forwardSourceMessageNamespace = readInt32(offset);
+            offset += 4;
             int forwardSourceMessageIdId = readInt32(offset);
-            offset+=4;;
-            
+            offset += 4;
+            ;
+
         }
 
         if (testbit(flags, 3)) {
             int signatureLength = readInt32(offset);
-            offset+=4;
-            String authorSignature=readString(offset, signatureLength);
-            offset+=signatureLength;
+            offset += 4;
+            String authorSignature = readString(offset, signatureLength);
+            offset += signatureLength;
         }
 
-        if (testbit(flags, 4)){
-            int psaTypeLength= readInt32(offset);
-            offset+=4;
-           String psaType=readString(offset, psaTypeLength);
-          offset+=psaTypeLength;
+        if (testbit(flags, 4)) {
+            int psaTypeLength = readInt32(offset);
+            offset += 4;
+            String psaType = readString(offset, psaTypeLength);
+            offset += psaTypeLength;
         }
 
     }
-    
+
     List<byte[]> readArray() {
         int nel = readInt32(offset);
         offset += 4;
@@ -363,7 +361,6 @@ public class PostBoxCoding {
         }
         return els;
     }
-
 
     List<PhotoData> getPhotos(List<GenericObj> sizes) {
         ArrayList<PhotoData> photos = new ArrayList<>();
@@ -428,7 +425,7 @@ public class PostBoxCoding {
     }
 
     void readMedia(Message m) {
-        
+
         String phone = decodeStringForKey("pn");
         if (phone != null) {
             String aux = m.getData();
@@ -436,7 +433,7 @@ public class PostBoxCoding {
             aux += decodeStringForKey("vc");
             m.setData(aux);
         }
-        double lat=decodeDoubleForKey("la");
+        double lat = decodeDoubleForKey("la");
         if (lat != 0) {
             double lon = decodeDoubleForKey("lo");
             m.setLatitude(lat);
@@ -460,7 +457,6 @@ public class PostBoxCoding {
             mimetype = "link/image";
             logger.debug("url: {}", url);
             files = getPhotos(sizes);
-
 
         } else {
             List<GenericObj> sizes = decodeObjectArrayForKey("r");
@@ -506,7 +502,7 @@ public class PostBoxCoding {
                     f.setName(id + "");
                     f.setSize(size);
                     files.add(f);
-                  
+
                 }
 
                 if (volume != 0 && local != 0) {
@@ -544,7 +540,7 @@ public class PostBoxCoding {
                 }
 
             }
-           
+
         }
         if (m != null) {
             // m.setThumb(thumb);
@@ -559,91 +555,89 @@ public class PostBoxCoding {
                 m.setMediaMime("link");
             }
 
-            
             m.setType(MapTypeMSG.decodeMsg(action));
             m.setMediasize(size);
         }
 
     }
-      
+
     public void readMessage(byte[] key, byte[] data, Message m, HashMap<String, byte[]> mediaKey) {
-        //reference MessageHistoryTable.swift
+        // reference MessageHistoryTable.swift
         if (m == null) {
             return;
         }
-        this.data=data;
-        PostBoxCoding pk=new PostBoxCoding();
+        this.data = data;
+        PostBoxCoding pk = new PostBoxCoding();
         pk.setData(key);
-        long peerKey=pk.readInt64(0, false);
-        
-        int namespacekey=pk.readInt32(8,false);
+        long peerKey = pk.readInt64(0, false);
 
-        int timestampkey=pk.readInt32(12,false);
+        int namespacekey = pk.readInt32(8, false);
+
+        int timestampkey = pk.readInt32(12, false);
 
         if (timestampkey < 631152000 && namespacekey > 631152000)
             timestampkey = namespacekey;
-        
+
         byte type = readNextByte();
-        if(type==int32){
-            
+        if (type == int32) {
+
             int stableId = readInt32(offset);
             m.setId(stableId);
-            
-            offset+=4;
-            int stableVersion=readInt32(offset);
-            offset+=4;
-            
+
+            offset += 4;
+            int stableVersion = readInt32(offset);
+            offset += 4;
+
             byte dataFlagsValue = readNextByte();
-            long globalID=0;
-            if(testbit(dataFlagsValue, 0)){
-                globalID=readInt64(offset);
-                offset+=8;
+            long globalID = 0;
+            if (testbit(dataFlagsValue, 0)) {
+                globalID = readInt64(offset);
+                offset += 8;
             }
-            int globtag=0; 
-            if(testbit(dataFlagsValue, 1)){
-                globtag=readInt32(offset);
-                offset+=4;
+            int globtag = 0;
+            if (testbit(dataFlagsValue, 1)) {
+                globtag = readInt32(offset);
+                offset += 4;
             }
-            long groupingKey=0;
-            if(testbit(dataFlagsValue, 2)){
-                groupingKey=readInt64(offset);
-                offset+=8;
+            long groupingKey = 0;
+            if (testbit(dataFlagsValue, 2)) {
+                groupingKey = readInt64(offset);
+                offset += 8;
             }
-            int groupInfoID=0;
-            if (testbit(dataFlagsValue,3)) {
-                groupInfoID=readInt32(offset);
-                offset+=4;
+            int groupInfoID = 0;
+            if (testbit(dataFlagsValue, 3)) {
+                groupInfoID = readInt32(offset);
+                offset += 4;
             }
-            
-            int localTagsValue=0;
-            if (testbit(dataFlagsValue,4)) {
-                localTagsValue=readInt32(offset);
-                offset+=4;
+
+            int localTagsValue = 0;
+            if (testbit(dataFlagsValue, 4)) {
+                localTagsValue = readInt32(offset);
+                offset += 4;
             }
-            
-            int flags=readInt32(offset);
-            offset+=4;
-            
+
+            int flags = readInt32(offset);
+            offset += 4;
+
             int tagsValue = readInt32(offset);
-            offset+=4;
-            
+            offset += 4;
+
             byte forwardInfoFlags = readNextByte();
-            if(forwardInfoFlags!=0){
+            if (forwardInfoFlags != 0) {
                 readForward(forwardInfoFlags);
             }
             byte hasautor = readNextByte();
-            long authorId=0;
-            
-            if(hasautor==1){
-                authorId=readInt64(offset);
+            long authorId = 0;
+
+            if (hasautor == 1) {
+                authorId = readInt64(offset);
                 m.setFrom(new Contact(authorId));
-                offset+=8;
+                offset += 8;
             }
-            
-            
-            int msglen=readInt32(offset);
-            offset+=4;
-            String txt=readString(offset, msglen);
+
+            int msglen = readInt32(offset);
+            offset += 4;
+            String txt = readString(offset, msglen);
             m.setData(txt);
 
             offset += msglen;
@@ -651,9 +645,6 @@ public class PostBoxCoding {
             List<byte[]> atrs = readArray();
             List<byte[]> embededmedia = readArray();
             List<byte[]> referencemedia = readArray(12);
-
-
-
 
             boolean incoming = testbit(flags, 2) || testbit(flags, 7);
             m.setFromMe(!incoming);
@@ -678,17 +669,18 @@ public class PostBoxCoding {
                     media.readMedia(m);
                 }
             }
-            
+
         }
         m.setTimeStamp(Date.from(Instant.ofEpochSecond(timestampkey)));
-        
+
     }
 
     long getAccountId() {
         return decodeInt64ForKey("peerId");
     }
-    void readUser(Contact c){
-        GenericObj user=decodeObjectForKey("_");
+
+    void readUser(Contact c) {
+        GenericObj user = decodeObjectForKey("_");
         if (user != null && user.content != null) {
             setData(user.content);
             c.setName(decodeStringForKey("fn"));
@@ -715,41 +707,34 @@ public class PostBoxCoding {
                 c.setPhotos(photos);
             }
         }
-        
+
     }
-    
-   
-        
-    
+
 }
 
+class Photo implements PhotoData {
 
-class Photo implements PhotoData{
+    String name = null;
+    int size = 0;
 
-   String name=null;
-   int size=0;
-   
-   
-   
-	public void setName(String name) {
-		this.name = name;
-	}
+    public void setName(String name) {
+        this.name = name;
+    }
 
-	public void setSize(int size) {
-		this.size = size;
-	}
+    public void setSize(int size) {
+        this.size = size;
+    }
 
-	@Override
-	public String getName() {
+    @Override
+    public String getName() {
 
-		return name;
-	}
+        return name;
+    }
 
-	@Override
-	public int getSize() {
-	
-		return size;
-	}
-	
+    @Override
+    public int getSize() {
+
+        return size;
+    }
+
 }
-

@@ -8,6 +8,7 @@ public class KPM {
     public static int indexOf(byte[] data, byte[] pattern) {
         return indexOf(data, pattern, 0);
     }
+
     public static int indexOf(byte[] data, byte[] pattern, int start) {
         int[] failure = computeFailure(pattern);
 

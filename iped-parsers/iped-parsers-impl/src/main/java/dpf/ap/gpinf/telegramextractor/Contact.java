@@ -32,7 +32,7 @@ public class Contact implements ContactInterface {
     private String username = null;
     private String phone = null;
     private byte[] avatar = null;
-    private List<PhotoData> photos=null;
+    private List<PhotoData> photos = null;
 
     public Contact(long id) {
         this.id = id;
@@ -99,7 +99,8 @@ public class Contact implements ContactInterface {
 
         return fn;
     }
-    private static DecoderTelegramInterface d=null;
+
+    private static DecoderTelegramInterface d = null;
 
     public static Contact getContactFromBytes(byte[] bytes)
             throws InstantiationException, IllegalAccessException, ClassNotFoundException {
@@ -130,21 +131,21 @@ public class Contact implements ContactInterface {
 
     }
 
-	public List<PhotoData> getPhotos() {
-		return photos;
-	}
+    public List<PhotoData> getPhotos() {
+        return photos;
+    }
 
-	public void setPhotos(List<PhotoData> photos) {
-		this.photos = photos;
-	}
+    public void setPhotos(List<PhotoData> photos) {
+        this.photos = photos;
+    }
 
-	public int getGroupid() {
-		return groupid;
-	}
+    public int getGroupid() {
+        return groupid;
+    }
 
-	public void setGroupid(int groupid) {
-		this.groupid = groupid;
-	}
+    public void setGroupid(int groupid) {
+        this.groupid = groupid;
+    }
 
     @Override
     public String toString() {

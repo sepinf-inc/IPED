@@ -43,7 +43,7 @@ public class Message implements MessageInterface {
     private byte[] thumb = null;
     private String hashThumb = null;
     private List<PhotoData> names = null;
-    private int mediasize=0;
+    private int mediasize = 0;
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
@@ -182,20 +182,20 @@ public class Message implements MessageInterface {
     }
 
     public List<PhotoData> getNames() {
-		return names;
-	}
+        return names;
+    }
 
     public void setNames(List<PhotoData> names) {
-		this.names = names;
-	}
+        this.names = names;
+    }
 
-	public int getMediasize() {
-		return mediasize;
-	}
+    public int getMediasize() {
+        return mediasize;
+    }
 
-	public void setMediasize(int mediasize) {
-		this.mediasize = mediasize;
-	}
+    public void setMediasize(int mediasize) {
+        this.mediasize = mediasize;
+    }
 
     public String getMediaComment() {
         return mediaComment;
