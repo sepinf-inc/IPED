@@ -42,6 +42,10 @@ function process(e){
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
 		e.setCategory("Contacts");
 	}
+	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
+		e.setMediaTypeStr("application/x-telegram-user-conf");
+		//e.setCategory("Contacts");
+	}
 
 	if(categorias.indexOf("Images") > -1){
 

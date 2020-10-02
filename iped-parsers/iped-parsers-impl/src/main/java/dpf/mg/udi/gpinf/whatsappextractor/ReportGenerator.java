@@ -4,16 +4,12 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSA
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.commons.text.StringSubstitutor;
@@ -21,7 +17,6 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
-import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
@@ -377,7 +372,8 @@ public class ReportGenerator {
                                 String source;
                                 if (message.getMessageType() == AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
-                                    source = getSourceFileIfExists(result.get(0)).orElse("");
+                                    source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(result.get(0))
+                                            .orElse("");
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
                                             + " title=\"Audio\" " + "data-src1=\"" + exportPath + "\" " + "data-src2=\"" //$NON-NLS-4$
                                             + source + "\" ></div>");
@@ -387,7 +383,8 @@ public class ReportGenerator {
                                     thumb = message.getThumbData();
                                     if (thumb == null && result != null && !result.isEmpty())
                                         thumb = result.get(0).getThumb();
-                                    source = getSourceFileIfExists(result.get(0)).orElse("");
+                                    source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(result.get(0))
+                                            .orElse("");
                                     if (thumb != null) {
                                         out.println("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.println("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -440,7 +437,7 @@ public class ReportGenerator {
                             result = dpf.sp.gpinf.indexer.parsers.util.Util
                                     .getItems("sha-256:" + message.getMediaHash(), searcher); //$NON-NLS-1$
                             if (result != null && !result.isEmpty()) {
-                                exportPath = getReportExportPath(result.get(0), message.getMessageType());
+                                exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(result.get(0));
                             }
                         } else if (message.getMediaName() != null && !message.getMediaName().isEmpty()) {
                             String mediaName = message.getMediaName();
@@ -456,7 +453,7 @@ public class ReportGenerator {
                             if (searcher != null)
                                 result = searcher.search(query);
                             if (result != null && !result.isEmpty()) {
-                                exportPath = getReportExportPath(result.get(0), message.getMessageType());
+                                exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(result.get(0));
                             }
                         }
                         if (linkParam != null) {
@@ -524,67 +521,6 @@ public class ReportGenerator {
         }
         out.println("</span>"); //$NON-NLS-1$
         out.println("</div></div>"); //$NON-NLS-1$
-    }
-
-    private static Path ipedHtmTemplateDir = null;
-
-    static {
-        String strOutDir = System.getProperty("IPED_OUTPUT_DIR");
-        if (strOutDir != null) {
-            ipedHtmTemplateDir = Paths.get(strOutDir, "htm", "whatsapp", "css").toAbsolutePath().normalize();
-        }
-    }
-
-    private Optional<String> getSourceFileIfExists(IItemBase item) {
-        if (item.hasFile()) {
-            File origFile = item.getFile();
-            String path = getRelativePath(origFile);
-            if (path != null) {
-                path = ajustPath(path);
-                return Optional.of(path);
-            }
-        }
-        return Optional.empty();
-    }
-
-    private static String ajustPath(String path) {
-        path = path.replaceAll("\\\\", "/");
-        if (path.startsWith("/")) {
-            path = path.substring(1);
-        }
-        if (path.length() > 2 && path.charAt(1) == ':') {
-            path = "file:///" + path;
-        }
-        return path;
-    }
-
-    private static String getReportExportPath(IItemBase item, MessageType type) {
-        String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
-        if (item.hasFile() && type == IMAGE_MESSAGE) {
-            File origFile = item.getFile();
-            String path = getRelativePath(origFile);
-            if (path != null) {
-                path = ajustPath(path);
-                return "javascript:openIfExists('" + exportPath + "','" + path + "')";
-            }
-        }
-        return exportPath;
-    }
-
-    private static String getRelativePath(File file) {
-        if (ipedHtmTemplateDir == null) {
-            return null;
-        }
-        if (file == null || !file.exists()) {
-            return null;
-        }
-        try {
-            Path filePath = file.toPath().toAbsolutePath().normalize();
-            return ipedHtmTemplateDir.relativize(filePath).toString();
-
-        } catch (Exception e) {
-            return null;
-        }
     }
 
     public static String formatMMSS(int duration) {

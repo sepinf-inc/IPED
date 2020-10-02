@@ -134,6 +134,11 @@
             <artifactId>commons-text</artifactId>
             <version>1.8</version>
         </dependency>
+        <dependency>
+            <groupId>dpf.ap</groupId>
+            <artifactId>telegram-decoder-api</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
     </dependencies>
     
     <build>

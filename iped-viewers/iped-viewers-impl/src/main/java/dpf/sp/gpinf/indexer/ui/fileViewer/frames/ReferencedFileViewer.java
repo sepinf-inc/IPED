@@ -8,6 +8,7 @@ import javax.swing.JLabel;
 
 import org.apache.tika.Tika;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
@@ -46,6 +47,7 @@ public class ReferencedFileViewer extends Viewer {
     @Override
     public boolean isSupportedType(String contentType) {
         return WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(contentType)
+                || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(contentType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.equals(contentType)
                 || MediaTypes.UFED_MESSAGE_ATTACH_MIME.toString().equals(contentType);
     }

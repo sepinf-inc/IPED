@@ -279,7 +279,7 @@ public class ExtractorAndroid extends Extractor {
                 } else {
                     result = DELETED_FROM_SENDER;
                 }
-                break;
+                break; 
             case 16:
                 result = SHARE_LOCATION_MESSAGE;
                 break;

@@ -50,11 +50,18 @@ import iped3.search.LuceneSearchResult;
 public class TreeListener extends MouseAdapter
         implements TreeSelectionListener, ActionListener, TreeExpansionListener, ClearFilterListener {
 
-    Query treeQuery, recursiveTreeQuery;
+    private Query treeQuery, recursiveTreeQuery;
     boolean rootSelected = false;
     HashSet<TreePath> selection = new HashSet<TreePath>();
     private long collapsedTime = 0;
     private boolean clearing = false;
+
+    public Query getQuery() {
+        if (App.get().recursiveTreeList.isSelected())
+            return recursiveTreeQuery;
+        else
+            return treeQuery;
+    }
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -86,7 +93,7 @@ public class TreeListener extends MouseAdapter
 
         } else {
             String treeQueryStr = ""; //$NON-NLS-1$
-            recursiveTreeQuery = new BooleanQuery();
+            BooleanQuery.Builder recursiveQueryBuilder = new BooleanQuery.Builder();
 
             for (TreePath path : selection) {
                 Document doc = ((Node) path.getLastPathComponent()).getDoc();
@@ -99,11 +106,12 @@ public class TreeListener extends MouseAdapter
                 treeQueryStr += "(" + IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                         + sourceUUID + ") "; //$NON-NLS-1$
 
-                BooleanQuery subQuery = new BooleanQuery();
+                BooleanQuery.Builder subQuery = new BooleanQuery.Builder();
                 subQuery.add(new TermQuery(new Term(IndexItem.PARENTIDs, parentId)), Occur.MUST);
                 subQuery.add(new TermQuery(new Term(IndexItem.EVIDENCE_UUID, sourceUUID)), Occur.MUST);
-                ((BooleanQuery) recursiveTreeQuery).add(subQuery, Occur.SHOULD);
+                recursiveQueryBuilder.add(subQuery.build(), Occur.SHOULD);
             }
+            recursiveTreeQuery = recursiveQueryBuilder.build();
 
             try {
                 treeQuery = new QueryBuilder(App.get().appCase).getQuery(treeQueryStr);
