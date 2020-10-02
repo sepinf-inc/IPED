@@ -13,13 +13,13 @@ import java.util.concurrent.Future;
 
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.MultiReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.sleuthkit.datamodel.TskCoreException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
@@ -163,7 +163,6 @@ public class IPEDMultiSource extends IPEDSource {
 
         reader = new MultiReader(readers, false);
 
-        // TODO get rid of deprecated SlowCompositeReaderWrapper
         atomicReader = SlowCompositeReaderWrapper.wrap(reader);
 
         LOGGER.info("MultiReader opened"); //$NON-NLS-1$

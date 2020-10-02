@@ -18,6 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import dpf.sp.gpinf.indexer.IFileProcessor;
+import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+
 import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,12 +29,12 @@ import java.util.HashSet;
 import javax.swing.SwingUtilities;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.StoredField;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.IntField;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
@@ -76,13 +79,15 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 e.printStackTrace();
             }
         } else {
-            String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
             doc = new Document();
-            doc.add(new StoredField(IndexItem.ID, 0));
-            doc.add(new StoredField(IndexItem.NAME, "Ajuda.htm")); //$NON-NLS-1$
-            doc.add(new StoredField(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"))); //$NON-NLS-1$
-            doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
-            doc.add(new StoredField(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"))); //$NON-NLS-1$
+            doc.add(new IntField(IndexItem.ID, 0, Field.Store.YES));
+            doc.add(new Field(IndexItem.NAME, "Ajuda.htm", Field.Store.YES, Field.Index.NO)); //$NON-NLS-1$
+            String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
+            doc.add(new Field(IndexItem.EXPORT, moduleDir + Messages.getString("FileProcessor.HelpPath"), //$NON-NLS-1$
+                    Field.Store.YES, Field.Index.NO));
+            doc.add(new Field(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString(), Field.Store.YES, Field.Index.NO));
+            doc.add(new Field(IndexItem.PATH, moduleDir + Messages.getString("FileProcessor.HelpPath"), Field.Store.YES, //$NON-NLS-1$
+                    Field.Index.NO));
         }
     }
 

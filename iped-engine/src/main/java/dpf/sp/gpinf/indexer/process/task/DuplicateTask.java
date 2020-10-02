@@ -4,17 +4,21 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.apache.lucene.document.Document;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
 import org.apache.lucene.index.IndexReader;
-import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.store.FSDirectory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
-import iped3.IHashValue;
 import iped3.IItem;
+import iped3.IHashValue;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso
@@ -67,7 +71,7 @@ public class DuplicateTask extends AbstractTask {
             hashMap = new HashMap<IHashValue, IHashValue>();
             caseData.putCaseObject(HASH_MAP, hashMap);
 
-            try (IndexReader reader = DirectoryReader.open(worker.writer, true, true)) {
+            try (IndexReader reader = DirectoryReader.open(worker.writer, true)) {
                 LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
                 SortedDocValues sdv = aReader.getSortedDocValues(IndexItem.HASH);
                 if (sdv != null) {

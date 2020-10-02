@@ -149,10 +149,10 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
 
     private Query getNonTreeQuery() {
-        BooleanQuery.Builder result = new BooleanQuery.Builder();
+        BooleanQuery result = new BooleanQuery();
         result.add(query, Occur.MUST);
         result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT); //$NON-NLS-1$
-        return result.build();
+        return result;
     }
 
     public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {

@@ -27,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexCommit;
@@ -39,6 +38,7 @@ import org.apache.lucene.index.TieredMergePolicy;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
+import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 import org.slf4j.Logger;
@@ -287,7 +287,7 @@ public class Manager {
 
     private void loadExistingData() throws Exception {
 
-        try (IndexReader reader = DirectoryReader.open(writer, true, true)) {
+        try (IndexReader reader = DirectoryReader.open(writer, true)) {
             stats.previousIndexedFiles = reader.numDocs();
         }
 
@@ -621,20 +621,20 @@ public class Manager {
 
             writer = new IndexWriter(ConfiguredFSDirectory.open(finalIndexDir), getIndexWriterConfig());
 
+            BooleanQuery query;
             int startId = 0, interval = 1000, endId = interval;
             while (startId <= stats.getLastId()) {
                 if (endId > stats.getLastId()) {
                     endId = stats.getLastId();
                 }
-                BooleanQuery.Builder builder = new BooleanQuery.Builder()
-                        .add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST) //$NON-NLS-1$
-                        .add(IntPoint.newRangeQuery(IndexItem.ID, startId, endId), Occur.MUST);
+                query = new BooleanQuery();
+                query.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST); //$NON-NLS-1$
+                query.add(NumericRangeQuery.newIntRange(IndexItem.ID, startId, endId, true, true), Occur.MUST);
                 for (int i = startId; i <= endId; i++) {
                     if (doNotDelete[i]) {
-                        builder.add(IntPoint.newExactQuery(IndexItem.ID, i), Occur.MUST_NOT);
+                        query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.MUST_NOT);
                     }
                 }
-                BooleanQuery query = builder.build();
                 writer.deleteDocuments(query);
                 startId = endId + 1;
                 endId += interval;

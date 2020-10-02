@@ -105,28 +105,31 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         if (App.get().filtro.getSelectedIndex() > 1) {
             String filter = App.get().filtro.getSelectedItem().toString();
             filter = App.get().filterManager.getFilterExpression(filter);
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+            BooleanQuery boolQuery = new BooleanQuery();
             boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
             boolQuery.add(result, Occur.MUST);
-            result = boolQuery.build();
+            result = boolQuery;
             numFilters++;
         }
 
-        if (App.get().categoryListener.getQuery() != null) {
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-            boolQuery.add(App.get().categoryListener.getQuery(), Occur.MUST);
+        if (App.get().categoryListener.query != null) {
+            BooleanQuery boolQuery = new BooleanQuery();
+            boolQuery.add(App.get().categoryListener.query, Occur.MUST);
             boolQuery.add(result, Occur.MUST);
-            result = boolQuery.build();
+            result = boolQuery;
             numFilters++;
         }
 
         if (!App.get().appCase.isFTKReport()) {
-            Query treeQuery = App.get().treeListener.getQuery();
+            Query treeQuery = App.get().treeListener.treeQuery;
+            if (App.get().recursiveTreeList.isSelected())
+                treeQuery = App.get().treeListener.recursiveTreeQuery;
+
             if (treeQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                BooleanQuery boolQuery = new BooleanQuery();
                 boolQuery.add(treeQuery, Occur.MUST);
                 boolQuery.add(result, Occur.MUST);
-                result = boolQuery.build();
+                result = boolQuery;
                 numFilters++;
             }
         }
@@ -135,10 +138,10 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             Query similarImagesQuery = new SimilarImagesSearch()
                     .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                BooleanQuery boolQuery = new BooleanQuery();
                 boolQuery.add(result, Occur.MUST);
                 boolQuery.add(similarImagesQuery, Occur.MUST);
-                result = boolQuery.build();
+                result = boolQuery;
                 searcher.setNoScoring(true);
                 numFilters++;
             }
@@ -276,10 +279,10 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 
         Query highlightQuery = App.get().metadataPanel.getHighlightQuery();
         if (highlightQuery != null) {
-            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+            BooleanQuery boolQuery = new BooleanQuery();
             boolQuery.add(highlightQuery, Occur.SHOULD);
             boolQuery.add(searcher.getQuery(), Occur.SHOULD);
-            highlightQuery = boolQuery.build();
+            highlightQuery = boolQuery;
         } else
             highlightQuery = searcher.getQuery();
 
