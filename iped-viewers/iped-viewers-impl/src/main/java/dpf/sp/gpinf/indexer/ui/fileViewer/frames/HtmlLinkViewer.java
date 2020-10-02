@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
@@ -32,6 +33,7 @@ import netscape.javascript.JSObject;
  * @author Nassif
  *
  */
+
 @SuppressWarnings("restriction")
 public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
@@ -99,7 +101,8 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         return WhatsAppParser.WHATSAPP_CHAT.toString().equals(contentType)
                 || SkypeParser.CONVERSATION_MIME_TYPE.toString().equals(contentType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(contentType)
-                || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType);
+                || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType)
+                ||TelegramParser.TELEGRAM_CHAT.toString().equals(contentType);
     }
 
     @Override

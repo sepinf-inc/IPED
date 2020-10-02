@@ -19,7 +19,9 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.SafariSqliteParser;
@@ -54,6 +56,7 @@ public class SQLiteContainerDetector implements Detector {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
+            config.setOpenMode(SQLiteOpenMode.MAIN_DB);
             sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
@@ -166,6 +169,14 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
                 && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
+
+        if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
+                && tableNames.contains("messages") && tableNames.contains("media_v2"))
+            return TelegramParser.TELEGRAM_DB;
+        
+        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
+                && tableNames.contains("ft41") && tableNames.contains("t18"))
+            return TelegramParser.TELEGRAM_DB_IOS;
 
         return SQLITE_MIME;
 

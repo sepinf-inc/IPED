@@ -444,6 +444,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-telegram-decoder</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>dpf.ap</groupId>
+    								<artifactId>telegram-decoder-impl</artifactId>
+    								<version>1.0.3-SNAPSHOT</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-nsfw-model</id>
                         <phase>package</phase>
                         <goals>

@@ -14,6 +14,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_ME
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.URL_MESSAGE;
@@ -23,7 +24,6 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_G
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 
 import java.io.File;
 import java.sql.Connection;
