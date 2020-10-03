@@ -12,7 +12,6 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 
@@ -64,7 +63,7 @@ public class SignatureTask extends AbstractTask {
                     } finally {
                         // Fecha handle p/ renomear subitem p/ hash posteriormente. Demais itens são
                         // fechados via evidence.dispose()
-                        if (evidence.isSubItem() || willEnqueue(evidence)) {
+                        if (evidence.isSubItem()) {
                             IOUtil.closeQuietly(tis);
                         }
                     }
@@ -100,11 +99,6 @@ public class SignatureTask extends AbstractTask {
             }
         }
         evidence.setMediaType(config.getMediaTypeRegistry().normalize(type));
-    }
-
-    private boolean willEnqueue(IItem evidence) {
-        int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
-        return priority > caseData.getCurrentQueuePriority();
     }
 
     @Override

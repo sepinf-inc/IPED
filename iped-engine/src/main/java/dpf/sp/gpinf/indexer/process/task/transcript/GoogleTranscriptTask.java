@@ -71,7 +71,11 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         }
 
         try {
-            Class.forName("com.google.cloud.speech.v1p1beta1.SpeechClient");
+            // TODO how to allow user enable this task when creating report from GUI?
+            // Plugin folder does not exist in case folder...
+            if (!caseData.isIpedReport())
+                Class.forName("com.google.cloud.speech.v1p1beta1.SpeechClient");
+
         } catch (ClassNotFoundException e) {
             throw new IPEDException(
                     "Coud not found required class. Do you put google-cloud-speech.jar and its dependencies in plugin dir?");

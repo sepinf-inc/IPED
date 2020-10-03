@@ -8,8 +8,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.Messages;
-
 public class RandomForestPredictor {
 
     private final int[] roots;
@@ -17,7 +15,7 @@ public class RandomForestPredictor {
     private final short[] splitFeature;
     private final float[] value;
     private int trees;
-    private static final int version = 12100;
+    private int version;
 
     private RandomForestPredictor(int trees, int nodes) {
         this.trees = trees;
@@ -31,6 +29,10 @@ public class RandomForestPredictor {
         return trees;
     }
 
+    public int getVersion() {
+        return version;
+    }
+
     public double predict(List<Float> lFeatures) {
         float[] features = toArr(lFeatures);
         double ret = 0;
@@ -40,7 +42,7 @@ public class RandomForestPredictor {
         }
         Collections.sort(l);
         int cnt = 0;
-        int border = (int) (l.size() * 0.05);
+        int border = (int) (l.size() * 0.07);
         for (int i = border; i < l.size() - border; i++) {
             ret += l.get(i);
             cnt++;
@@ -75,11 +77,6 @@ public class RandomForestPredictor {
         int skip = in.readInt();
         in.skipBytes(skip);
         int ver = in.readInt();
-        if (ver != version) {
-            in.close();
-            throw new Exception(
-                    Messages.getString("RandomForestPredictor.VersionError") + ": " + file.getAbsolutePath()); //$NON-NLS-1$ //$NON-NLS-2$
-        }
         int trees = in.readInt();
         int[] t = new int[trees];
         for (int i = 0; i < trees; i++) {
@@ -91,6 +88,7 @@ public class RandomForestPredictor {
             nodes = t[trees + 1];
         }
         RandomForestPredictor predictor = new RandomForestPredictor(trees, nodes);
+        predictor.version = ver;
         System.arraycopy(t, 0, predictor.roots, 0, trees);
         byte[] bytes = new byte[nodes * 10];
         in.read(bytes);

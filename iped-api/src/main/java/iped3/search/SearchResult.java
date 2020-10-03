@@ -57,7 +57,7 @@ public class SearchResult {
 
         int i = 0;
         for (int id : ipedResult.ids) {
-            lResult.docs[i++] = id;
+            lResult.docs[i++] = iSource.getLuceneId(id);
         }
         return lResult;
     }

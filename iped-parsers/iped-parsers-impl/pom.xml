@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>3.18.1</version>
+        <version>3.18.2</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
@@ -137,7 +137,7 @@
         <dependency>
             <groupId>dpf.ap</groupId>
             <artifactId>telegram-decoder-api</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>1.0.1-SNAPSHOT</version>
         </dependency>
     </dependencies>
     

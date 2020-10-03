@@ -14,6 +14,7 @@ import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_ME
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
 import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.URL_MESSAGE;
@@ -231,6 +232,9 @@ public class ExtractorIOS extends Extractor {
                 break;
             case 14:
                 result = DELETED_FROM_SENDER;
+                break;
+            case 15:
+                result = STICKER_MESSAGE;
                 break;
         }
         return result;

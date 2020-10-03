@@ -10,9 +10,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import javax.imageio.IIOImage;
@@ -424,6 +426,42 @@ public class ImageUtil {
         return fit;
     }
 
+    public static List<BufferedImage> getFrames(BufferedImage img, String comment) {
+        int nRows = 0;
+        int nCols = 0;
+        if (comment != null && comment.startsWith("Frames")) {
+            int p1 = comment.indexOf('=');
+            int p2 = comment.indexOf('x');
+            if (p1 > 0 && p2 > 0) {
+                nRows = Integer.parseInt(comment.substring(p1 + 1, p2));
+                nCols = Integer.parseInt(comment.substring(p2 + 1));
+            }
+        }
+        if (nRows <= 0 || nCols <= 0) return null;
+
+        int imgWidth = img.getWidth();
+        int imgHeight = img.getHeight();
+
+        final int border = 2;
+        int frameWidth = (imgWidth - 2 * border - border * nCols) / nCols;
+        int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
+        if (frameWidth <= 2 || frameHeight <= 2) return null;
+
+        List<BufferedImage> frames = new ArrayList<BufferedImage>();
+        for (int row = 0; row < nRows; row++) {
+            int y = row * (frameHeight + border) + border;
+            for (int col = 0; col < nCols; col++) {
+                int x = col * (frameWidth + border) + border;
+                BufferedImage frame = new BufferedImage(frameWidth - 2, frameHeight - 2, BufferedImage.TYPE_3BYTE_BGR);
+                Graphics2D g2 = frame.createGraphics();
+                g2.drawImage(img, 0, 0, frameWidth - 2, frameHeight - 2, x + 1, y + 1, x + frameWidth - 1, y + frameHeight - 1, null);
+                g2.dispose();
+                frames.add(frame);
+            }
+        }
+        return frames;
+    }
+    
     /**
      * Método auxiliar que percorre uma árvore buscando o valor de um nó com
      * determinado nome.

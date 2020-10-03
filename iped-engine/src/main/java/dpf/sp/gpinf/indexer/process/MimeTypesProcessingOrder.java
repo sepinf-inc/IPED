@@ -44,12 +44,13 @@ public class MimeTypesProcessingOrder {
         // handle wal logs
         mediaTypes.put(SQLite3Parser.MEDIA_TYPE, 1);
 
- 
         // must be after sqlite processing to find storage_db.db
         mediaTypes.put(SkypeParser.SKYPE_MIME, 2);
         
         //must be processed after all files to link the attachments
+        mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 1);
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
+        mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
@@ -61,7 +62,6 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_WA_MIME, 1);
 
         return mediaTypes;
     }

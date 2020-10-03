@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.process;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.text.NumberFormat;
 import java.util.Date;
 
 import org.apache.logging.log4j.Level;
@@ -9,18 +10,25 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import iped3.IItem;
 
 public class ProgressConsole implements PropertyChangeListener {
 
     private static Logger LOGGER = LogManager.getLogger(ProgressConsole.class);
 
+    private static final int LOG_ITEMS_INTERVAL_MILLIS = 60000;
+
     private final Level MSG = Level.getLevel("MSG"); //$NON-NLS-1$
 
-    int indexed = 0, discovered = 0;
-    long rate = 0, instantRate;
-    int volume, taskSize;
-    long secsToEnd;
+    private int indexed = 0, discovered = 0;
+    private long rate = 0, instantRate;
+    private int volume, taskSize;
+    private long secsToEnd;
     private Date indexStart;
+    private Worker[] workers;
+    private long lastTime = 0;
+    private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {
@@ -30,6 +38,13 @@ public class ProgressConsole implements PropertyChangeListener {
 
         if ("processed".equals(evt.getPropertyName())) { //$NON-NLS-1$
             indexed = (Integer) evt.getNewValue();
+            long now = System.currentTimeMillis();
+            if (now - lastTime >= LOG_ITEMS_INTERVAL_MILLIS) {
+                if (lastTime != 0) {
+                    logItemList();
+                }
+                lastTime = now;
+            }
 
         } else if ("taskSize".equals(evt.getPropertyName())) { //$NON-NLS-1$
             taskSize = (Integer) evt.getNewValue();
@@ -50,8 +65,10 @@ public class ProgressConsole implements PropertyChangeListener {
             long interval = (now.getTime() - indexStart.getTime()) / 1000 + 1;
             rate = (long) volume * 1000000L * 3600L / ((1 << 30) * interval);
             instantRate = (long) (volume - prevVolume) * 1000000L * 3600L / (1 << 30) + 1;
-
             updateString();
+
+        } else if ("workers".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            workers = (Worker[]) evt.getNewValue();
         }
 
     }
@@ -74,6 +91,33 @@ public class ProgressConsole implements PropertyChangeListener {
                     + "m " + secsToEnd % 60 + "s"; //$NON-NLS-1$ //$NON-NLS-2$
         }
         LOGGER.log(MSG, msg);
+    }
+
+    private void logItemList() {
+        if (workers == null)
+            return;
+        for (int i = 0; i < workers.length; i++) {
+            if (!workers[i].isAlive())
+                continue;
+            StringBuilder msg = new StringBuilder();
+            msg.append(workers[i].getName());
+            AbstractTask task = workers[i].runningTask;
+            if (task != null) {
+                msg.append(" [" + task.getName() + "]");
+            } else {
+                msg.append(" [no task]"); //$NON-NLS-1$
+            }
+            IItem evidence = workers[i].evidence;
+            if (evidence != null) {
+                msg.append(" [" + evidence.getPath() + "]");
+                if (evidence.getLength() != null) {
+                    msg.append(" [" + sizeFormat.format(evidence.getLength()) + " bytes]"); //$NON-NLS-1$ //$NON-NLS-2$
+                }
+            } else {
+                msg.append(" [no item]");
+            }
+            LOGGER.log(MSG, msg);
+        }
     }
 
 }

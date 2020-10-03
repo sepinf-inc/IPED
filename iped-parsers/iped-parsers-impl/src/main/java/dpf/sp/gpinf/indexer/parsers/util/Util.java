@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
@@ -8,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -182,14 +184,70 @@ public class Util {
 
     public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
-        String ext = "." + item.getTypeExt(); //$NON-NLS-1$
+        String ext = item.getTypeExt(); // $NON-NLS-1$
         return getExportPath(hash, ext);
     }
 
     public static String getExportPath(String hash, String ext) {
         if (hash == null || hash.length() < 2)
             return ""; //$NON-NLS-1$
-        return "../../" + hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ext; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        StringBuilder sb = new StringBuilder();
+        sb.append("../../").append(hash.charAt(0)).append("/").append(hash.charAt(1)).append("/").append(hash);
+        if (ext != null && !ext.isEmpty())
+            sb.append(".").append(ext);
+        return sb.toString();
+    }
+
+    public static String getReportHref(String hash, String ext, String originalPath) {
+        String exportPath = getExportPath(hash, ext);
+        String path = getSourceFileIfExists(originalPath);
+        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
+    }
+
+    public static String getReportHref(IItemBase item) {
+        String exportPath = getExportPath(item);
+        String originalPath = getSourceFileIfExists(item).orElse("");
+        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+    }
+
+    public static String getSourceFileIfExists(String originalPath) {
+        File file;
+        if (originalPath != null && (file = new File(originalPath)).exists()) {
+            String path = normalizePath(file);
+            if (path != null) {
+                return ajustPath(path);
+            }
+        }
+        return null;
+    }
+
+    public static Optional<String> getSourceFileIfExists(IItemBase item) {
+        if (item.hasFile()) {
+            String path = normalizePath(item.getFile());
+            if (path != null) {
+                path = ajustPath(path);
+                return Optional.of(path);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static String ajustPath(String path) {
+        path = path.replaceAll("\\\\", "/");
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        if (path.length() > 2 && path.charAt(1) == ':') {
+            path = "file:///" + path;
+        }
+        return path;
+    }
+
+    private static String normalizePath(File file) {
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        return file.toPath().toAbsolutePath().normalize().toString();
     }
 
     public static byte[] getPreview(IItemBase item) {

@@ -9,9 +9,11 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.TreePath;
 
 import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
+import org.apache.lucene.search.Query;
+import org.apache.lucene.search.TermQuery;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.desktop.CategoryTreeModel.Category;
@@ -19,11 +21,15 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 
 public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 
-    BooleanQuery query;
+    private BooleanQuery query;
     private HashSet<TreePath> selection = new HashSet<TreePath>();
     private TreePath root;
     private long collapsed = 0;
     private boolean clearing = false;
+
+    public Query getQuery() {
+        return query;
+    }
 
     @Override
     public void valueChanged(TreeSelectionEvent evt) {
@@ -52,12 +58,12 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
         } else {
             App.get().setCategoriesDefaultColor(false);
 
-            query = new BooleanQuery();
-
+            Builder builder = new Builder();
             for (TreePath path : selection) {
                 Category category = (Category) path.getLastPathComponent();
-                addCategoryToQuery(category, query);
+                addCategoryToQuery(category, builder);
             }
+            query = builder.build();
         }
 
         if (!clearing)
@@ -65,16 +71,16 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
 
     }
 
-    private void addCategoryToQuery(Category category, BooleanQuery query) {
+    private void addCategoryToQuery(Category category, Builder builder) {
         String name = category.name;
         char[] input = name.toLowerCase().toCharArray();
         char[] output = new char[input.length * 4];
         FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
         name = (new String(output)).trim();
-        query.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
+        builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
 
         for (Category subcat : category.children) {
-            addCategoryToQuery(subcat, query);
+            addCategoryToQuery(subcat, builder);
         }
     }
 

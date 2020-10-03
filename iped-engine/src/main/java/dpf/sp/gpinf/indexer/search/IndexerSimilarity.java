@@ -18,42 +18,30 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
-import org.apache.lucene.index.FieldInvertState;
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+import org.apache.lucene.search.similarities.BasicStats;
+import org.apache.lucene.search.similarities.SimilarityBase;
 
-public class IndexerSimilarity extends DefaultSimilarity {
-
-    /*
-     * @Override public float coord(int arg0, int arg1) { // TODO Auto-generated
-     * method stub return 1.0f; }
-     */
-
-    /*
-     * @Override public float idf(long arg0, long arg1) { // TODO Auto-generated
-     * method stub return 1.0f; }
-     */
-    @Override
-    public float lengthNorm(FieldInvertState state) {
-        return state.getBoost();
-    }
+/**
+ * Simple similarity that just return term frequency in docs when scoring.
+ * 
+ * @author Nassif
+ *
+ */
+public class IndexerSimilarity extends SimilarityBase {
 
     @Override
     public float queryNorm(float arg0) {
         return 1.0f;
     }
 
-    /*
-     * @Override public float scorePayload(int arg0, int arg1, int arg2, BytesRef
-     * arg3) { // TODO Auto-generated method stub return 1.0f; }
-     */
+    @Override
+    protected float score(BasicStats stats, float freq, float docLen) {
+        return freq;
+    }
 
-    /*
-     * @Override public float sloppyFreq(int arg0) { // TODO Auto-generated method
-     * stub return 1.0f; }
-     */
+    @Override
+    public String toString() {
+        return "IpedDefaultSimilarity";
+    }
 
-    /*
-     * @Override public float tf(float freq) { // TODO Auto-generated method stub
-     * return freq*freq; }
-     */
 }

@@ -7,6 +7,7 @@ indexTemp = default
 indexTempOnSSD = false
 enableKff = false
 enableLedWkff = false
+enableProjectVicHashLookup = false
 enableLedDie = false
 excludeKffIgnorable = false
 ignoreDuplicates = false

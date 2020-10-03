@@ -1,6 +1,11 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
-public class RegexHits {
+import java.io.IOException;
+
+import org.elasticsearch.common.xcontent.ToXContentFragment;
+import org.elasticsearch.common.xcontent.XContentBuilder;
+
+public class RegexHits implements ToXContentFragment {
 
     private String hit;
     private long[] offsets = new long[1];
@@ -42,5 +47,10 @@ public class RegexHits {
     @Override
     public String toString() {
         return hit;
+    }
+
+    @Override
+    public XContentBuilder toXContent(XContentBuilder builder, Params params) throws IOException {
+        return builder.value(this.toString());
     }
 }

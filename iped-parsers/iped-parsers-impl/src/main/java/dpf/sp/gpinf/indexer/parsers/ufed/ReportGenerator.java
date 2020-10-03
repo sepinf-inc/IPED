@@ -23,7 +23,7 @@ public class ReportGenerator {
     private static final int MIN_SIZE_TO_SPLIT_CHAT = 5000000;
 
     private final SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd"); //$NON-NLS-1$
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ssZ"); //$NON-NLS-1$
+    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ"); //$NON-NLS-1$
     private IItemSearcher searcher;
     private boolean firstHtml = true;
     private int currentMsg = 0;
@@ -125,7 +125,7 @@ public class ReportGenerator {
                 out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"hash:"
                         + message.getMediaHash() + "\",this.checked) name=\"" + message.getMediaHash() + "\" />");
                 out.println("<a onclick=app.open(\"hash:" + message.getMediaHash() + "\") "); //$NON-NLS-1$ //$NON-NLS-2$
-                String ext = "." + message.getMediaTrueExt();
+                String ext = message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$
                 if (!exportPath.isEmpty())
                     out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$

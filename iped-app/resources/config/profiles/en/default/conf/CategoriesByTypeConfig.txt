@@ -41,8 +41,7 @@ Compressed Archives = application/x-tika-ooxml; application/zlib; application/ap
 
 Contacts = text/x-vcard; application/x-vcard-html; application/windows-adress-book; application/outlook-contact; application/x-livecontacts; application/x-livecontacts-table; contact/x-skype-contact; application/x-whatsapp-wadb; application/x-whatsapp-contactsv2; contact/x-whatsapp-contact; application/x-ufed-html-contacts; application/x-ufed-contact; contact/x-telegram-contact;
 
-
-Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-whatsapp-chat; application/x-skype-conversation; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview;application/x-telegram-chat
+Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-whatsapp-chat; application/x-skype-conversation; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview; application/x-telegram-chat
 
 Windows Registry = application/x-windows-registry; application/x-windows-registry-report
 
@@ -80,13 +79,13 @@ Other disks = application/x-disk-image;
 
 Extraction Summary = application/x-ufed-html-summary
 
-Calls = application/x-ufed-html-calls; application/x-ufed-call; call/x-whatsapp-call
+Calls = application/x-ufed-html-calls; application/x-ufed-call; call/x-whatsapp-call; call/x-telegram-call
 
 SMS Messages = application/x-ufed-html-sms; application/x-ufed-sms
 
 MMS Messages = application/x-ufed-html-mms; application/x-ufed-mms
 
-Instant Messages = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer
+Instant Messages = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer; message/x-telegram-message;
 
 Bluetooth Devices = application/x-ufed-html-bluetooth; application/x-ufed-bluetoothdevice
 
@@ -96,7 +95,7 @@ Calendar = application/x-ufed-html-calendar; application/x-ufed-calendarentry
 
 Logs = application/x-ufed-html-logs; application/x-ufed-logentry
 
-User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account
+User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account; application/x-telegram-account
 
 Searches = application/x-ufed-html-searches; application/x-ufed-searcheditem
 

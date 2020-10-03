@@ -33,12 +33,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
-import org.apache.lucene.search.NumericRangeQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.LoggerFactory;
@@ -84,7 +84,9 @@ import iped3.util.MediaTypes;
  */
 public class IPEDReader extends DataSourceReader {
 
+    // TODO remove line below and always use REPORTING_CASES
     public static final String ORIG_CASE_MODULE_DIR = "originalCaseModuleDir";
+    public static final String REPORTING_CASES = "reporting_cases";
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
@@ -148,20 +150,20 @@ public class IPEDReader extends DataSourceReader {
             basePath = ipedCase.getCaseDir().getAbsolutePath();
             indexDir = ipedCase.getIndex();
 
-            BooleanQuery parents = new BooleanQuery();
+            BooleanQuery.Builder parents = new BooleanQuery.Builder();
             for (HashValue persistentId : parentsWithLostSubitems) {
                 TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
                 parents.add(tq, Occur.SHOULD);
             }
-            BooleanQuery subitems = new BooleanQuery();
+            BooleanQuery.Builder subitems = new BooleanQuery.Builder();
             TermQuery tq = new TermQuery(new Term(BasicProps.SUBITEM, Boolean.TRUE.toString()));
             subitems.add(tq, Occur.SHOULD);
             tq = new TermQuery(new Term(BasicProps.CARVED, Boolean.TRUE.toString()));
             subitems.add(tq, Occur.SHOULD);
-            BooleanQuery query = new BooleanQuery();
-            query.add(parents, Occur.MUST);
-            query.add(subitems, Occur.MUST);
-            IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
+            BooleanQuery.Builder query = new BooleanQuery.Builder();
+            query.add(parents.build(), Occur.MUST);
+            query.add(subitems.build(), Occur.MUST);
+            IIPEDSearcher searcher = new IPEDSearcher(ipedCase, query.build());
             LuceneSearchResult result = searcher.luceneSearch();
             insertIntoProcessQueue(result, false);
         }
@@ -171,8 +173,16 @@ public class IPEDReader extends DataSourceReader {
         this.state = state;
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
-        caseData.putCaseObject(ORIG_CASE_MODULE_DIR, indexDir.getParentFile());
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
+        caseData.putCaseObject(ORIG_CASE_MODULE_DIR, indexDir.getParentFile());
+        if(!listOnly) {
+            List<File> reportingCases = (List<File>) caseData.getCaseObject(REPORTING_CASES);
+            if (reportingCases == null) {
+                caseData.putCaseObject(REPORTING_CASES, reportingCases = new ArrayList<>());
+            }
+            reportingCases.add(new File(basePath));
+        }
+        
         ipedCase = new IPEDSource(new File(basePath));
         ipedCase.checkImagePaths();
         /*
@@ -250,18 +260,18 @@ public class IPEDReader extends DataSourceReader {
             isParentToAdd[Integer.parseInt(id)] = false;
         }
         int num = 0;
-        BooleanQuery query = new BooleanQuery();
+        BooleanQuery.Builder query = new BooleanQuery.Builder();
         for (int i = 0; i <= ipedCase.getLastId(); i++) {
             if (isParentToAdd[i]) {
-                query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
+                query.add(IntPoint.newExactQuery(IndexItem.ID, i), Occur.SHOULD);
                 num++;
             }
             if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-                IIPEDSearcher searchParents = new IPEDSearcher(ipedCase, query);
+                IIPEDSearcher searchParents = new IPEDSearcher(ipedCase, query.build());
                 searchParents.setTreeQuery(true);
                 result = searchParents.luceneSearch();
                 insertIntoProcessQueue(result, true);
-                query = new BooleanQuery();
+                query = new BooleanQuery.Builder();
                 num = 0;
             }
         }
@@ -286,18 +296,18 @@ public class IPEDReader extends DataSourceReader {
             // search attachs
             int num = 0;
             boolean[] isAttachToAdd = new boolean[ipedCase.getLastId() + 1];
-            BooleanQuery query = new BooleanQuery();
+            BooleanQuery.Builder query = new BooleanQuery.Builder();
             for (int i = 0; i <= ipedCase.getLastId(); i++) {
                 if (isSelectedEmail[i]) {
-                    query.add(NumericRangeQuery.newIntRange(IndexItem.PARENTID, i, i, true, true), Occur.SHOULD);
+                    query.add(IntPoint.newExactQuery(IndexItem.PARENTID, i), Occur.SHOULD);
                     num++;
                 }
                 if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-                    IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+                    IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query.build());
                     SearchResult attachs = searchAttachs.search();
                     for (int j = 0; j < attachs.getLength(); j++)
                         isAttachToAdd[attachs.getId(j)] = true;
-                    query = new BooleanQuery();
+                    query = new BooleanQuery.Builder();
                     num = 0;
                 }
             }
@@ -309,17 +319,17 @@ public class IPEDReader extends DataSourceReader {
             }
 
             num = 0;
-            query = new BooleanQuery();
+            query = new BooleanQuery.Builder();
             for (int i = 0; i <= ipedCase.getLastId(); i++) {
                 if (isAttachToAdd[i]) {
-                    query.add(NumericRangeQuery.newIntRange(IndexItem.ID, i, i, true, true), Occur.SHOULD);
+                    query.add(IntPoint.newExactQuery(IndexItem.ID, i), Occur.SHOULD);
                     num++;
                 }
                 if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
-                    IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query);
+                    IIPEDSearcher searchAttachs = new IPEDSearcher(ipedCase, query.build());
                     LuceneSearchResult attachs = searchAttachs.luceneSearch();
                     insertIntoProcessQueue(attachs, false);
-                    query = new BooleanQuery();
+                    query = new BooleanQuery.Builder();
                     num = 0;
                 }
             }
@@ -501,9 +511,11 @@ public class IPEDReader extends DataSourceReader {
                     value = doc.get(IndexItem.SLEUTHID);
                     if (value != null && !value.isEmpty()) {
                         evidence.setSleuthId(Integer.valueOf(value));
-                        evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-
-                    } else if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                        if (ipedCase.getSleuthCase() != null) {
+                            evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
+                        }
+                    }
+                    if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
                         evidence.setIdInDataSource(value.trim());
                     }
                     if (doc.get(IndexItem.SOURCE_PATH) != null) {

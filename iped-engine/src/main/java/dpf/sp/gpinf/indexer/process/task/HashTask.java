@@ -31,7 +31,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 
@@ -41,6 +40,8 @@ import iped3.IItem;
 public class HashTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
+
+    public static final String HASH_PROP = "hash";
 
     public enum HASH {
         MD5("md5"), //$NON-NLS-1$
@@ -70,7 +71,7 @@ public class HashTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        String value = confProps.getProperty("hash"); //$NON-NLS-1$
+        String value = confProps.getProperty(HASH_PROP);
         if (value != null) {
             value = value.trim();
         }

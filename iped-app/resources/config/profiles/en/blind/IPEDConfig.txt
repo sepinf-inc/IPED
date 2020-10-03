@@ -18,6 +18,10 @@ enableKff = true
 # on the database can be queried with filter "Hash Alert (Child Porn)"
 # Need to use hash md5 or sha-1.
 enableLedWkff = false
+
+# Enables ProjectVIC hashset lookup. Needs md5 or sha-1 to be computed. Files found will be tagged
+# with ProjectVic categories and other extra properties prefixed with "projectvic".
+enableProjectVicHashLookup = false
  
 # Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
 # and classeNudez (1 to 5) for ranking and/or filtering.
