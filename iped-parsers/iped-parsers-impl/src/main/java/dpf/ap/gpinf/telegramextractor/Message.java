@@ -23,6 +23,7 @@ import java.util.List;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 
 public class Message implements MessageInterface {
     private long id;
@@ -47,6 +48,7 @@ public class Message implements MessageInterface {
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
+    private boolean childPorn = false;
 
     public long getId() {
         return id;
@@ -62,6 +64,9 @@ public class Message implements MessageInterface {
 
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
+        if (mediaHash != null) {
+            setChildPorn(LedHashes.lookupHashDatabase(mediaHash));
+        }
     }
 
     public String getMediaFile() {
@@ -231,5 +236,13 @@ public class Message implements MessageInterface {
 
     public void setLongitude(Double longitude) {
         this.longitude = longitude;
+    }
+
+    public boolean isChildPorn() {
+        return childPorn;
+    }
+
+    public void setChildPorn(boolean childPorn) {
+        this.childPorn = childPorn;
     }
 }
