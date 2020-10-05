@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
@@ -17,6 +18,8 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped3.IItem;
 import iped3.IItemId;
 import iped3.io.IStreamSource;
 import iped3.search.SelectionListener;
@@ -127,7 +130,16 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
         public void open(final String luceneQuery) {
 
-            File file = attachSearcher.getTmpFile(luceneQuery);
+            IItem item = attachSearcher.getItem(luceneQuery);
+            if (IOUtil.isDangerousExtension(item.getTypeExt()) && !IOUtil.confirmOpenDialog(item.getName())) {
+                return;
+            }
+            File file = null;
+            try {
+                file = item.getTempFile();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
             if (file == null) {
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {
