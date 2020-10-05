@@ -7,8 +7,6 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 
-import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
-
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
