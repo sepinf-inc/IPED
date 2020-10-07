@@ -9,7 +9,7 @@
 # Acelera bastante o processamento de imagens comprimidas E01 ou armazenadas na rede.
 robustImageReading = false
 
-# Número de processos auxiliares de leitura das imagens. 'auto' utiliza metade do número de processadores lógicos.
+# Número de processos auxiliares de leitura das imagens. 'auto' utiliza 1/4 do número de processadores lógicos.
 # Pode-se diminuir esse valor caso haja pouca RAM. Aumentar normalmente é ineficaz, pois geralmente o IO não consegue
 # atender muitas requisições de leitura simultaneamente.
 numImageReaders = auto
