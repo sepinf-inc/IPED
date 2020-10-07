@@ -312,9 +312,11 @@ public class UfedXmlReader extends DataSourceReader {
 
         HashMap<String, String> extractionInfoMap = new HashMap<String, String>();
 
-        String df2Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS"; //$NON-NLS-1$
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
-        DateFormat df2 = new SimpleDateFormat(df2Pattern);
+        DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); //$NON-NLS-1$
+        DateFormat df3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"); //$NON-NLS-1$
+        DateFormat[] dfs = { df1, df2, df3 };
+
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
@@ -384,9 +386,31 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void startDocument() throws SAXException {
             // TODO remover timezone da exibição? obter da linha de comando?
-            df2.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
-            df1.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            for (DateFormat df : dfs) {
+                df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            }
             out.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+        }
+
+        private DateFormat lastDateFormat = null;
+
+        private Date parseDate(String value) throws ParseException {
+            if (lastDateFormat != null) {
+                try {
+                    return lastDateFormat.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            for (DateFormat df : dfs) {
+                try {
+                    lastDateFormat = df;
+                    return df.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            throw new ParseException("No dateformat configured for value " + value, 0);
         }
 
         @Override
@@ -646,15 +670,12 @@ public class UfedXmlReader extends DataSourceReader {
                 try {
                     String value = chars.toString().trim();
                     if (!value.isEmpty()) {
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
                         if (nameAttr.equals("CreationTime")) //$NON-NLS-1$
-                            item.setCreationDate(df.parse(value));
+                            item.setCreationDate(parseDate(value));
                         else if (nameAttr.equals("ModifyTime")) //$NON-NLS-1$
-                            item.setModificationDate(df.parse(value));
+                            item.setModificationDate(parseDate(value));
                         else if (nameAttr.equals("AccessTime")) //$NON-NLS-1$
-                            item.setAccessDate(df.parse(value));
+                            item.setAccessDate(parseDate(value));
                         else
                             item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + nameAttr, value);
                     }
@@ -669,12 +690,9 @@ public class UfedXmlReader extends DataSourceReader {
                         String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
                         String type = currentNode.atts.get("type"); //$NON-NLS-1$
                         String value = chars.toString().trim();
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
                         if (type.equals("TimeStamp") && !value.isEmpty()) //$NON-NLS-1$
                             try {
-                                item.getMetadata().add(meta, out.format(df.parse(value)));
+                                item.getMetadata().add(meta, out.format(parseDate(value)));
                             } catch (ParseException e) {
                                 throw new SAXException(e);
                             }
