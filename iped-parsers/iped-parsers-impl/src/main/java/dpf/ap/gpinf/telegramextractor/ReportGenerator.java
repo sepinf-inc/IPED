@@ -371,7 +371,7 @@ public class ReportGenerator {
         out.println("<br/>");
 
         if (message.isChildPorn()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></p>");
+            out.print("<p><i>" + Messages.getString("TelegramReport.LEDKFF") + "</i></p>");
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
