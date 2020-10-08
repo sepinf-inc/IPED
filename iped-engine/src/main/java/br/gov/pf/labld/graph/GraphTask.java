@@ -405,23 +405,25 @@ public class GraphTask extends AbstractTask {
             service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if (service == null)
             service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
-        boolean ipedAccount = false;
         if (service == null) {
             service = meta.get(ExtraProperties.USER_ACCOUNT_TYPE);
-            ipedAccount = true;
         }
-        if (service == null)
+        if (service == null || WhatsAppParser.WHATSAPP.equalsIgnoreCase(service)) // phone will be decoded from whatsapp
             return null;
+
         NodeValues nv = null;
+        value = value.trim();
         int idx = value.lastIndexOf('(');
         if (idx != -1 && value.endsWith(")")) {
             String account = value.substring(idx + 1, value.length() - 1);
             String name = value.substring(0, idx).trim();
             nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(account, service));
-            if (!name.isEmpty())
+            if (!name.isEmpty()) {
                 nv.addProp(ExtraProperties.USER_NAME, name);
-        } else if (ipedAccount) {
+            }
+        }
+        if (nv == null) {
             nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(value.trim(), service));
         }
