@@ -332,7 +332,10 @@ public class LedKFFTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        hashArrays = null;
+        if (hashArrays != null) {
+            hashArrays.clear();
+            hashArrays = null;
+        }
         kffItems = null;
     }
 
