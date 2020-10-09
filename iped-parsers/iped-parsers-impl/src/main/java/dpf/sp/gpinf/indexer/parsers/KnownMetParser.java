@@ -18,12 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import gpinf.emule.KnownMetEntry;
-import iped3.IHashValue;
-import iped3.io.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.ExtraProperties;
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -54,6 +48,11 @@ import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import gpinf.emule.KnownMetEntry;
+import iped3.IHashValue;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser para arquivos known.met do e-Mule, que armazena arquivos conhecidos,
@@ -121,6 +120,10 @@ public class KnownMetParser extends AbstractParser {
                         + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }"); //$NON-NLS-1$
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
+
+        xhtml.startElement("div");
+        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.endElement("div");
 
         xhtml.startElement("div", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         int cont = 1;

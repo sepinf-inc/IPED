@@ -8,6 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
@@ -29,10 +30,12 @@ public class ExternalFileOpen {
                         return;
                 }
                 try {
-                    File file = item.getTempFile();
-                    file.setReadOnly();
-                    LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
-                    open(file);
+                    if (!IOUtil.isDangerousExtension(item.getTypeExt()) || IOUtil.confirmOpenDialog(item.getName())) {
+                        LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
+                        File file = item.getTempFile();
+                        file.setReadOnly();
+                        open(file);
+                    }
 
                 } catch (IOException e) {
                     e.printStackTrace();

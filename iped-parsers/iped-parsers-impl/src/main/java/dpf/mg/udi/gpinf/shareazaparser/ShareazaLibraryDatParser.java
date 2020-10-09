@@ -20,9 +20,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -37,6 +35,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
@@ -91,9 +90,13 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.characters("Shareaza Library{1,2}.dat"); //$NON-NLS-1$
         xhtml.endElement("title"); //$NON-NLS-1$
         xhtml.endElement("head"); //$NON-NLS-1$
+        xhtml.startElement("body"); //$NON-NLS-1$
         xhtml.newline();
 
-        xhtml.startElement("body"); //$NON-NLS-1$
+        xhtml.startElement("div");
+        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.endElement("div");
+
         xhtml.startElement("table"); //$NON-NLS-1$
         xhtml.startElement("tr"); //$NON-NLS-1$
         printTh(xhtml, "Path", "Name", "Index", "Size", "Time", "Shared", "VirtualSize", "VirtualBase", "SHA1", "Tiger", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$

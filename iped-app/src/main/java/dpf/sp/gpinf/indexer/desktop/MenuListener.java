@@ -409,17 +409,17 @@ public class MenuListener implements ActionListener {
     }
 
     public void exportFileTree(boolean onlyChecked, boolean toZip) {
-        TreePath[] paths = App.get().tree.getSelectionPaths();
-        if (paths != null && paths.length > 1) {
-            JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
-        } else {
-            int baseDocId = -1;
-            if (paths != null) {
-                Node treeNode = (Node) paths[0].getLastPathComponent();
-                baseDocId = treeNode.docId;
+        int baseDocId = -1;
+        if (menu.isTreeMenu) {
+            TreePath[] paths = App.get().tree.getSelectionPaths();
+            if (paths == null || paths.length != 1) {
+                JOptionPane.showMessageDialog(null, Messages.getString("MenuListener.ExportTree.Warn")); //$NON-NLS-1$
+                return;
             }
-            ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
+            Node treeNode = (Node) paths[0].getLastPathComponent();
+            baseDocId = treeNode.docId;
         }
+        ExportFileTree.salvarArquivo(baseDocId, onlyChecked, toZip);
     }
 
     private static class SpinnerListener implements ChangeListener {

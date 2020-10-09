@@ -36,6 +36,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import br.gov.pf.labld.graph.GraphConfiguration.GraphEntityMetadata;
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -81,7 +82,8 @@ public class GraphTask extends AbstractTask {
     // TODO externalize to config file
     private static String[] contactMimes = { VCardParser.VCARD_MIME.toString(), OutlookPSTParser.OUTLOOK_CONTACT_MIME,
             SkypeParser.CONTACT_MIME_TYPE, WhatsAppParser.WHATSAPP_CONTACT.toString(),
-            "application/windows-adress-book", "application/x-ufed-contact" };
+            TelegramParser.TELEGRAM_CONTACT.toString(), "application/windows-adress-book",
+            "application/x-ufed-contact" };
 
     private static final int MAX_PHONE_CACHE_KEY = 50 * 1024;
 
@@ -113,6 +115,11 @@ public class GraphTask extends AbstractTask {
             if (graphFileWriter == null) {
                 graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
                         configuration.getDefaultEntity());
+
+                if (configuration.getProcessProximityRelationships() && caseData.isIpedReport()) {
+                    logger.warn(
+                            "process-proximity-relationships not supported in reports yet, it will be ignored, resulting in different graphs!");
+                }
             }
 
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -221,7 +228,7 @@ public class GraphTask extends AbstractTask {
             processContacts(evidence);
             processWifi(evidence);
             processUserAccount(evidence);
-            if (configuration.getProcessProximityRelationships()) {
+            if (configuration.getProcessProximityRelationships() && !caseData.isIpedReport()) {
                 processExtraAttributes(evidence);
             }
         }
@@ -246,6 +253,8 @@ public class GraphTask extends AbstractTask {
     private static String getRelationType(String mediaType) {
         if (WhatsAppParser.WHATSAPP_MESSAGE.toString().equals(mediaType)
                 || WhatsAppParser.WHATSAPP_ATTACHMENT.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_MESSAGE.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_ATTACHMENT.toString().equals(mediaType)
                 || SkypeParser.MESSAGE_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.ATTACHMENT_MIME_TYPE.toString().equals(mediaType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(mediaType)
@@ -262,11 +271,14 @@ public class GraphTask extends AbstractTask {
         }
         if (SkypeParser.ACCOUNT_MIME_TYPE.toString().equals(mediaType)
                 || WhatsAppParser.WHATSAPP_ACCOUNT.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_ACCOUNT.toString().equals(mediaType)
                 || mediaType.equals("application/x-ufed-user") || mediaType.equals("application/x-ufed-useraccount")) {
             return "useraccount";
         }
 
-        if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType) || MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
+        if (WhatsAppParser.WHATSAPP_CALL.toString().equals(mediaType)
+                || TelegramParser.TELEGRAM_CALL.toString().equals(mediaType)
+                || MediaTypes.UFED_CALL_MIME.equals(mediaType)) {
             return "call";
         }
         int ufedIdx = mediaType.indexOf(UfedXmlReader.UFED_MIME_PREFIX);
@@ -393,23 +405,25 @@ public class GraphTask extends AbstractTask {
             service = meta.get(ExtraProperties.UFED_META_PREFIX + "ServiceType");
         if (service == null)
             service = meta.get(ExtraProperties.UFED_META_PREFIX + "Source");
-        boolean ipedAccount = false;
         if (service == null) {
             service = meta.get(ExtraProperties.USER_ACCOUNT_TYPE);
-            ipedAccount = true;
         }
-        if (service == null)
+        if (service == null || WhatsAppParser.WHATSAPP.equalsIgnoreCase(service)) // phone will be decoded from whatsapp
             return null;
+
         NodeValues nv = null;
+        value = value.trim();
         int idx = value.lastIndexOf('(');
         if (idx != -1 && value.endsWith(")")) {
             String account = value.substring(idx + 1, value.length() - 1);
             String name = value.substring(0, idx).trim();
             nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(account, service));
-            if (!name.isEmpty())
+            if (!name.isEmpty()) {
                 nv.addProp(ExtraProperties.USER_NAME, name);
-        } else if (ipedAccount) {
+            }
+        }
+        if (nv == null) {
             nv = new NodeValues(DynLabel.label(GraphConfiguration.PERSON_LABEL), ExtraProperties.USER_ACCOUNT,
                     getServiceAccount(value.trim(), service));
         }

@@ -13,7 +13,10 @@
 externalConversionTool = imagemagick
 
 # Timeout (seconds) to wait for external image decoding.
-imgConvTimeout = 10
+imgConvTimeout = 20
+
+# Additional time (seconds) per megabyte to be added to imgConvTimeout above.
+imgConvTimeoutPerMB = 2
 
 # Pixel size of generated thumbnails.
 imgThumbSize = 160
