@@ -18,7 +18,7 @@ import net.sf.sevenzipjbinding.ExtractAskMode;
 import net.sf.sevenzipjbinding.ExtractOperationResult;
 import net.sf.sevenzipjbinding.IArchiveExtractCallback;
 import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
+import net.sf.sevenzipjbinding.IInArchive;
 import net.sf.sevenzipjbinding.SevenZip;
 import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
@@ -70,6 +70,7 @@ public class SevenZipParser extends AbstractParser {
             SevenZip.initSevenZipFromPlatformJAR();
             supportedTypes.add(MediaType.application(ISO9660));
             supportedTypes.add(MediaType.application(UDF));
+            supportedTypes.add(MediaType.application("x-rar-compressed")); // The newer  7zipbinding is capable of interpret RAR5 format and others previous rar formats
 
             /*
              * 7zipJBinding-4.65 does not work with 7z files created by 7z-16.04 or higher.
@@ -107,7 +108,7 @@ public class SevenZipParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         RandomAccessFile randomAccessFile = null;
-        ISevenZipInArchive inArchive = null;
+        IInArchive inArchive = null;
         try {
             File file = TikaInputStream.get(stream, tmp).getFile();
 
