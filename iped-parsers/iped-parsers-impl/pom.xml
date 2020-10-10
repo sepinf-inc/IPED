@@ -92,17 +92,17 @@
         	<artifactId>iped-utils</artifactId>
         	<version>${project.version}</version>
         </dependency>
-        <dependency>
-        	<groupId>net.sf</groupId>
-        	<artifactId>sevenzipjbinding</artifactId>
-        	<version>4.65-1.06-rc</version>
-        </dependency>
-        <dependency>
-        	<groupId>net.sf</groupId>
-        	<artifactId>sevenzipjbinding-allplatforms</artifactId>
-        	<version>4.65-1.06-rc</version>
-        </dependency>
-        <dependency>
+		<dependency>
+			<groupId>net.sf.sevenzipjbinding</groupId>
+			<artifactId>sevenzipjbinding</artifactId>
+			<version>16.02-2.01</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.sevenzipjbinding</groupId>
+			<artifactId>sevenzipjbinding-all-platforms</artifactId>
+			<version>16.02-2.01</version>
+		</dependency>
+		<dependency>
 	        <groupId>com.googlecode.ez-vcard</groupId>
 	        <artifactId>ez-vcard</artifactId>
 	        <version>0.10.6</version>
