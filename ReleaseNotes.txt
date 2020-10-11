@@ -1,3 +1,8 @@
+XX/XX/XXXX: IPED-3.18.4
+News:
+#282 Upgrade to 7zipJBinding-16.02-2.01 to support RAR 5 format (kraftdenker)
+
+
 10/08/2020: IPED-3.18.3
 News:
 #81 Optimize image thumb generation up to 3x (Luis Nassif & Wladimir Leite)
