@@ -79,8 +79,7 @@
         <!-- <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>-->
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
-        <parser class="dpf.sp.gpinf.indexer.parsers.RARParser"></parser>
-		<!-- <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser> currently only parses ISO files-->
+		<parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
         <!-- parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser -->
