@@ -35,7 +35,7 @@
         <libreoffice.version>5.1.4</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
         <log4j.version>2.13.3</log4j.version>
-        <junit.version>4.12</junit.version>
+        <junit.version>4.13.1</junit.version>
         <icepdf.version>6.3.2</icepdf.version>
         <xerial.sqlite.version>3.25.2</xerial.sqlite.version>
         <dockingframes.version>1.1.1</dockingframes.version>
