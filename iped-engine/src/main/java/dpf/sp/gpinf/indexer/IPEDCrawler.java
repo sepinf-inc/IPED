@@ -8,6 +8,7 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 
 public class IPEDCrawler {
@@ -16,15 +17,18 @@ public class IPEDCrawler {
 
         // String query = "name:(\"cloud_graph.db\" \"snapshot.db\") OR
         // nome:(\"cloud_graph.db\" \"snapshot.db\")";
-        String query = "name:(\"cache4.db\" \"db_sqlite\") OR nome:(\"cache4.db\" \"db_sqlite\")";
+        // String query = "name:(\"cache4.db\" \"db_sqlite\") OR nome:(\"cache4.db\"
+        // \"db_sqlite\")";
+        String query = "duplicate:false AND tipo:(jpg gif bmp png tif emf wmf heic webp pdf doc docx rtf ppt pptx xls xlsx htm html xhtml xml eml log csv db sqlite mp3 aac opus mp4 wmv avi 3gp mpg mov txt)";
 
-        File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("e:\\search-export");
+        File folderToScan = new File("Z:\\SINQ\\TrisInIdem");
+        File exportFolder = new File("Z:\\POC-DATASHARE");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
         System.out.println("Cases found: " + cases.size());
         int exported = 0;
+        File parentDir = null;
         for (File file : cases) {
             System.out.println("Searching in case " + file.getAbsolutePath());
             try (IPEDSource ipedCase = new IPEDSource(file)) {
@@ -35,7 +39,11 @@ public class IPEDCrawler {
                     System.out.println("Exporting...");
                 for (Integer id : itemIds) {
                     IItem item = ipedCase.getItemByID(id);
-                    File target = new File(exportFolder, item.getName());
+                    if (exported % 1000 == 0) {
+                        parentDir = new File(exportFolder, Integer.toString(exported / 1000));
+                        parentDir.mkdirs();
+                    }
+                    File target = new File(parentDir, Util.getValidFilename(Util.getNameWithTrueExt(item)));
                     String ext = "";
                     int idx, suffix = 0;
                     if ((idx = target.getName().lastIndexOf('.')) > -1) {
@@ -44,7 +52,7 @@ public class IPEDCrawler {
                         idx = target.getName().length();
                     }
                     while (target.exists()) {
-                        target = new File(exportFolder, target.getName().substring(0, idx) + (++suffix) + ext);
+                        target = new File(parentDir, target.getName().substring(0, idx) + (++suffix) + ext);
                     }
                     try (InputStream in = item.getBufferedStream()) {
                         Files.copy(in, target.toPath());
