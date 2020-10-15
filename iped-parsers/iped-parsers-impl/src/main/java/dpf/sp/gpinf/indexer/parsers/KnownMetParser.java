@@ -164,8 +164,8 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(" "); //$NON-NLS-1$
                 cells.add(" "); //$NON-NLS-1$
                 trClass = "rh"; //$NON-NLS-1$
-                colClass[2] = "e";
             } else {
+                colClass[2] = "e";
                 Arrays.fill(colClass, 6, 10, "c");
                 if (i % 2 == 0)
                     trClass = "ra"; //$NON-NLS-1$
