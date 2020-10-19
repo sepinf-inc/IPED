@@ -8,12 +8,9 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Set;
-import java.util.TimeZone;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -65,13 +62,6 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
     @Field
     public void setExtractEntries(boolean extractEntries) {
         this.extractEntries = extractEntries;
-    }
-
-    // Conversion from Datetime Format String to Date
-    private Date convertStringToDate(String datetime) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        format.setTimeZone(TimeZone.getTimeZone("UTC"));
-        return format.parse(datetime);
     }
 
     /**
@@ -134,7 +124,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
 
         // These properties need to get a "Date" type as parameters, so it can correctly
         // show times in UTC
-        metadataSnapshotItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getModified()));
+        metadataSnapshotItem.set(TikaCoreProperties.MODIFIED, GDriveCloudGraphParser.convertStringToDate(entry.getModified()));
         
         //.add(TikaCoreProperties.TITLE, h.getTitle());
         metadataSnapshotItem.add((BasicProps.HASH), "");

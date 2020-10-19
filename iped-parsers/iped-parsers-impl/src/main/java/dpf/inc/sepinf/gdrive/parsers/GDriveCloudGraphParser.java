@@ -68,7 +68,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
     }
 
     // Conversion from Datetime Format String to Date
-    private Date convertStringToDate(String datetime) throws ParseException {
+    static Date convertStringToDate(String datetime) throws ParseException {
         if (datetime == null) {
             return null;
         }
