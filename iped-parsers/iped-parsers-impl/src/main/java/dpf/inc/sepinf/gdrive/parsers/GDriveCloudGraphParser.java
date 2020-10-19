@@ -167,7 +167,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         return new CloudGraphEntryIterable() {
 
             Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery(GDRIVE_CLOUD_GRAPH_QUERY);
+            ResultSet rs = statement.executeQuery(getGDriveCloudGraphQuery(connection));
 
             @Override
             public Iterator<CloudGraphEntry> iterator() {
@@ -200,11 +200,11 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
                             entry.setVersion(rs.getString("version"));
                             entry.setAcl_role(rs.getString("acl_role"));
                             entry.setDownload_restricted(rs.getString("download_restricted"));
-                            entry.setPhotos_storage_policy(rs.getString("photos_storage_policy"));
                             entry.setDown_sample_status(rs.getString("down_sample_status"));
                             entry.setDoc_id(rs.getString("doc_id"));
                             entry.setParent_doc_id(rs.getString("parent_doc_id"));
-                           
+                            
+                            entry.setPhotos_storage_policy(getStringIfExists(rs, "photos_storage_policy"));
 
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
@@ -364,7 +364,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
      * https://github.com/kacos2000/Queries/blob/master/GDrive_cloudgraph.sql
      */
 
-    private String GDRIVE_CLOUD_GRAPH_QUERY = 
+    private String getGDriveCloudGraphQuery(Connection connection){
+        boolean col_exists = this.checkIfColumnExists(connection, "cloud_graph_entry", "photos_storage_policy");
+        return
     		  " Select  "
     		+ " 	case  "
     		+ " 		when doc_id = 'root' then 'root' "
@@ -399,7 +401,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
     		+ " 		when 1 then 'Yes' "
     		+ " 		else download_restricted "
     		+ " 	end as download_restricted, "
-    		+ " 	photos_storage_policy, "
+    		+ (col_exists ? " photos_storage_policy, " : "")
     		+ " 	down_sample_status, "
     		+ " 	doc_id, "
     		+ " 	cloud_relations.parent_doc_id "
@@ -407,5 +409,5 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
     		+ " From cloud_graph_entry "
     		+ " left join cloud_relations on cloud_graph_entry.doc_id = cloud_relations.child_doc_id "
     		+ " order by modified desc ";
-
+    }
 }

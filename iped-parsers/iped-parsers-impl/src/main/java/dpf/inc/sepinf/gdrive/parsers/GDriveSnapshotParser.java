@@ -173,7 +173,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         return new SnapshotEntryIterable() {
 
             Statement statement = connection.createStatement();
-            ResultSet rs = statement.executeQuery(GDRIVE_SNAPSHOT_QUERY);
+            ResultSet rs = statement.executeQuery(getGDriveSnapshotQuery(connection));
 
             @Override
             public Iterator<SnapshotEntry> iterator() {
@@ -203,7 +203,6 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
                             entry.setMd5(rs.getString("md5"));
                             entry.setModified(rs.getString("modified"));
                             entry.setCloudSize(rs.getString("cloud_size"));
-                            entry.setOriginalSize(rs.getString("original_size"));
                             entry.setRemoved(rs.getString("removed"));
                             entry.setShared(rs.getString("is_shared"));
                             entry.setIsFolder(rs.getString("is_folder"));
@@ -214,9 +213,11 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
                             entry.setLocalModified(rs.getString("local_modified"));
                             entry.setMd5Check(rs.getString("md5_check"));
                             entry.setCloudLocalDatesCheck(rs.getString("cloud_local_dates_check"));
-                            entry.setVolume(rs.getString("volume"));
-                            entry.setChildVolume(rs.getString("child_volume"));
-                            entry.setParentVolume(rs.getString("parent_volume"));
+                            
+                            entry.setOriginalSize(getStringIfExists(rs, "original_size"));
+                            entry.setVolume(getStringIfExists(rs, "volume"));
+                            entry.setChildVolume(getStringIfExists(rs, "child_volume"));
+                            entry.setParentVolume(getStringIfExists(rs, "parent_volume"));
                             
                         } catch (SQLException e) {
                             throw new RuntimeException(e);
@@ -418,9 +419,16 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
      * SQLite query from
      * https://github.com/kacos2000/Queries/blob/master/GDrive_snapshot.sql
      */
-
-    private String GDRIVE_SNAPSHOT_QUERY = 
-    		  " select  "
+    private String getGDriveSnapshotQuery(Connection connection) {
+        boolean originalSizeExists = checkIfColumnExists(connection, "cloud_entry", "original_size");
+        boolean volumeExists = checkIfColumnExists(connection, "local_entry", "volume");
+        String inode = "inode";
+        String parent_inode = "parent_inode";
+        if(!checkIfColumnExists(connection, "local_entry", "inode")) {
+            inode += "_number";
+            parent_inode += "_number";
+        }
+        return " select  "
     		+ " 	case cloud_entry.acl_role "
     		+ " 		when 2 then 'Can View' "
     		+ " 		when 1 then 'Can Contribute' "
@@ -440,7 +448,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
     		+ " 	cloud_entry.checksum as 'md5', "
     		+ " 	datetime(cloud_entry.modified, 'unixepoch') as 'modified', "
     		+ " 	cloud_entry.size as 'cloud_size', "
-    		+ " 	cloud_entry.original_size as 'original_size', "
+            + (originalSizeExists ? " cloud_entry.original_size as 'original_size', " : "")
     		+ " 	case cloud_entry.removed  "
     		+ " 		when 0 then 'No'  "
     		+ " 		when 1 then 'Yes'  "
@@ -453,7 +461,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
     		+ " 		when 0 then 'No'  "
     		+ " 		when 1 then 'Yes'  "
     		+ " 	end as 'is_folder', "
-    		+ " 	(select filename from local_entry where local_entry.inode = local_relations.parent_inode) as 'local_parent', "
+    		+ " 	(select filename from local_entry where local_entry." + inode + " = local_relations." + parent_inode + ") as 'local_parent', "
     		+ " 	local_entry.filename as 'local_filename', "
     		+ " 	local_entry.size as 'local_size', "
     		+ " 	local_entry.checksum as 'local_md5', "
@@ -471,21 +479,22 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
     		+ " 		when cloud_entry.modified = local_entry.modified  "
     		+ " 		then 'Dates Match'  "
     		+ " 		else 'No Match'  "
-    		+ " 	end as 'cloud_local_dates_check', "
-    		+ " 	case  "
+    		+ " 	end as 'cloud_local_dates_check' "
+    		+ (volumeExists ? ", case  "
     		+ " 		when local_entry.volume = volume_info.volume  "
     		+ " 		then volume_info.full_path||' - '||volume_info.device_type||' - Volume Name: ('||volume_info.label||')'  "
     		+ " 		else local_entry.volume  "
     		+ " 	end as 'volume', "
     		+ " 	local_relations.child_volume as 'child_volume', "
     		+ " 	local_relations.parent_volume as 'parent_volume' "
+    		 : "")
     		+ "  "
     		+ " from cloud_entry "
     		+ " join mapping on cloud_entry.doc_id = mapping.doc_id "
     		+ " join cloud_relations on cloud_entry.doc_id = cloud_relations.child_doc_id "
-    		+ " join local_entry on local_entry.inode = mapping.inode "
-    		+ " join local_relations on local_relations.child_inode = local_entry.inode "
-    		+ " left join volume_info on volume_info.volume = local_entry.volume "
+    		+ " join local_entry on local_entry." + inode + " = mapping." + inode
+    		+ " join local_relations on local_relations.child_" + inode + " = local_entry." + inode
+    		+ (volumeExists ? " left join volume_info on volume_info.volume = local_entry.volume " : "")
     		+ " --order by local_modified desc ";
-
+    }
 }
