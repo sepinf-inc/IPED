@@ -30,6 +30,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
 
@@ -97,14 +99,16 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
 
             int i = 0;
             for (CloudGraphEntry entry : entries) {
+                
+                boolean kffFound = LedHashes.lookupHashDatabase(entry.getMd5());
 
-                emitCloudGraphEntry(xHtmlOuput, entry);
+                emitCloudGraphEntry(xHtmlOuput, entry, kffFound);
 
                 /**
                  * Optionally extract entries as subitems
                  */
                 if (extractEntries) {
-                    Metadata metadataCloudGraphItem = getEntryMetadata(entry, i++);
+                    Metadata metadataCloudGraphItem = getEntryMetadata(entry, i++, kffFound);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataCloudGraphItem, true);
                 }
 
@@ -128,7 +132,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         }
     }
 
-    private Metadata getEntryMetadata(CloudGraphEntry entry, int i) throws ParseException {
+    private Metadata getEntryMetadata(CloudGraphEntry entry, int i, boolean kffFound) throws ParseException {
 
         Metadata metadataCloudGraphItem = new Metadata();
 
@@ -155,6 +159,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("down_sample_status", entry.getDown_sample_status());
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
+        if(kffFound) {
+            metadataCloudGraphItem.set("kffstatus", "pedo");
+        }
 
         return metadataCloudGraphItem;
     }
@@ -240,14 +247,20 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.startElement("head");
         xHandler.startElement("style");
         xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+        xHandler.characters(".ra {vertical-align: middle;}");
+        xHandler.characters(".rr {background-color:#E77770; vertical-align: middle;}");
         xHandler.endElement("style");
         xHandler.endElement("head");
 
         xHandler.startElement("h2 align=center");
         xHandler.characters("Google Drive CloudGraph registries");
         xHandler.endElement("h2");
-        xHandler.startElement("br");
-        xHandler.startElement("br");
+        xHandler.newline();
+        
+        xHandler.startElement("p");
+        xHandler.characters(Messages.getString("P2P.PedoHashHit"));
+        xHandler.endElement("p");
+        xHandler.newline();
 
         xHandler.startElement("table");
 
@@ -295,6 +308,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.startElement("th");
         xHandler.characters("Parent Doc ID");
         xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("Found in Child Porn Alert Hashset");
+        xHandler.endElement("th");
 
         xHandler.endElement("tr");
 
@@ -302,9 +318,10 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
 
     }
 
-    private void emitCloudGraphEntry(XHTMLContentHandler xHandler, CloudGraphEntry entry) throws SAXException {
+    private void emitCloudGraphEntry(XHTMLContentHandler xHandler, CloudGraphEntry entry, boolean kffFound) throws SAXException {
 
-        xHandler.startElement("tr");
+        String trClass = kffFound ? "rr" : "ra";
+        xHandler.startElement("tr", "class", trClass);
 
         xHandler.startElement("td");
         xHandler.characters(entry.getParent());
@@ -347,6 +364,11 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.endElement("td");
         xHandler.startElement("td");
         xHandler.characters(entry.getParent_doc_id());
+        xHandler.endElement("td");
+        xHandler.startElement("td");
+        if(kffFound) {
+            xHandler.characters("Yes");
+        }
         xHandler.endElement("td");
         
 
