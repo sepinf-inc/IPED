@@ -65,8 +65,12 @@ public class AresParser extends AbstractParser {
             Messages.getString("AresParser.Size"), Messages.getString("AresParser.Shared"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Corrupted"), Messages.getString("AresParser.Artist"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Album"), Messages.getString("AresParser.Category"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments") }; //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments"), //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.FoundInAlertDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
 
+    private static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
+    private static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
+    
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
@@ -96,31 +100,31 @@ public class AresParser extends AbstractParser {
 
         xhtml.startElement("style"); //$NON-NLS-1$
         xhtml.characters(
-                ".dt {display: table; border-collapse: collapse; font-family: Arial, sans-serif; width: 2200px; } " //$NON-NLS-1$
-                        + ".rh { display: table-row; font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
-                        + ".ra { display: table-row; vertical-align: middle; } " //$NON-NLS-1$
-                        + ".rb { display: table-row; background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
-                        + ".rr { display: table-row; background-color:#E77770; vertical-align: middle; } " //$NON-NLS-1$
-                        + ".s { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 80px; } " //$NON-NLS-1$
-                        + ".e { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 150px; font-family: monospace; } " //$NON-NLS-1$
-                        + ".a { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; } " //$NON-NLS-1$
-                        + ".b { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 450px; } " //$NON-NLS-1$
-                        + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } " //$NON-NLS-1$
-                        + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } " //$NON-NLS-1$
-                        + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }"); //$NON-NLS-1$
+                ".dt { border-collapse: collapse; font-family: Arial, sans-serif; width: 2400px; margin-right: 32px; margin-bottom: 32px; } " //$NON-NLS-1$
+                        + ".rh { font-weight: bold; text-align: center; background-color:#AAAAEE; } " //$NON-NLS-1$
+                        + ".ra { vertical-align: middle; } " //$NON-NLS-1$
+                        + ".rb { background-color:#E7E7F0; vertical-align: middle; } " //$NON-NLS-1$
+                        + ".rr { background-color:#E77770; vertical-align: middle; } " //$NON-NLS-1$
+                        + ".s { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 80px; } " //$NON-NLS-1$
+                        + ".e { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 150px; font-family: monospace; } " //$NON-NLS-1$
+                        + ".a { border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; } " //$NON-NLS-1$
+                        + ".b { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 450px; } " //$NON-NLS-1$
+                        + ".z { border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } " //$NON-NLS-1$
+                        + ".c { border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } "); //$NON-NLS-1$
         xhtml.endElement("style"); //$NON-NLS-1$
         xhtml.newline();
 
-        xhtml.startElement("div");
+        xhtml.startElement("p");
         xhtml.characters(Messages.getString("P2P.PedoHashHit"));
-        xhtml.endElement("div");
+        xhtml.endElement("p");
+        xhtml.newline();
 
-        xhtml.startElement("div", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        xhtml.startElement("table", "class", "dt"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         int cont = 1;
         List<String> cells = new ArrayList<String>();
 
         boolean[] present = new boolean[header.length];
-        present[0] = present[6] = present[7] = true;
+        present[0] = present[6] = present[7]  = present[13]  = present[14] =  true;
         for (int i = 1; i < header.length; i++) {
             boolean found = false;
             for (AresEntry e : l) {
@@ -151,9 +155,11 @@ public class AresParser extends AbstractParser {
                 present[i] = true;
         }
 
-        int kffHit = 0;
-        int[] align = new int[header.length];
-        String[] tdClass = new String[] { "a", "b", "c", "h", "e", "s", "z" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        int hashAlertHit = 0;
+        String[] colClass = new String[header.length];
+        Arrays.fill(colClass, "a"); //$NON-NLS-1$        
+        colClass[0] = "s"; //$NON-NLS-1$
+        
         for (int i = -1; i < l.size(); i++) {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
@@ -163,7 +169,6 @@ public class AresParser extends AbstractParser {
                     cells.add(header[j]);
                 }
                 trClass = "rh"; //$NON-NLS-1$
-                align[0] = 5;
             } else {
                 if (i % 2 == 0)
                     trClass = "ra"; //$NON-NLS-1$
@@ -177,32 +182,35 @@ public class AresParser extends AbstractParser {
                 if (e.isShared())
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 IHashValue hashVal = new HashValue(hash);
+                boolean hashAlertFound = false;
                 if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), hashVal) >= 0) { //$NON-NLS-1$
-                    kffHit++;
+                    hashAlertHit++;
                     trClass = "rr"; //$NON-NLS-1$
+                    hashAlertFound = true;
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getDate() == null ? "-" : df.format(e.getDate())); //$NON-NLS-1$
                 cells.add(e.getFileSize() == 0 ? "-" : nf.format(e.getFileSize())); //$NON-NLS-1$
-                cells.add(e.isShared() ? Messages.getString("AresParser.Yes") : Messages.getString("AresParser.No")); //$NON-NLS-1$ //$NON-NLS-2$
-                cells.add(e.isCorrupted() ? Messages.getString("AresParser.Yes") : Messages.getString("AresParser.No")); //$NON-NLS-1$ //$NON-NLS-2$
+                cells.add(e.isShared() ? strYes : strNo);
+                cells.add(e.isCorrupted() ?  strYes : strNo);
                 cells.add(e.getArtist());
                 cells.add(e.getAlbum());
                 cells.add(e.getCategory());
                 cells.add(e.getUrl());
                 cells.add(e.getComment());
+                cells.add(hashAlertFound ? strYes : " "); //$NON-NLS-1$
+                cells.add(" "); //$NON-NLS-1$
 
-                align[1] = align[2] = 1;
-                align[8] = align[9] = align[10] = align[11] = align[12] = 6;
-                align[5] = 2;
-                align[3] = 4;
-                align[0] = 5;
+                colClass[1] = colClass[2] = "b"; //$NON-NLS-1$
+                colClass[3] = "e";
+                colClass[5] = "c";
+                Arrays.fill(colClass, 8, 13, "z");
             }
 
-            xhtml.startElement("div", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
+            xhtml.startElement("tr", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
             for (int j = 0; j < cells.size(); j++) {
                 if (present[j]) {
-                    xhtml.startElement("div", "class", tdClass[align[j]]); //$NON-NLS-1$ //$NON-NLS-2$
+                    xhtml.startElement("td", "class", colClass[j]); //$NON-NLS-1$ //$NON-NLS-2$
                     if (i < 0 || i >= l.size())
                         xhtml.startElement("b"); //$NON-NLS-1$
                     String s = cells.get(j);
@@ -210,22 +218,25 @@ public class AresParser extends AbstractParser {
                         s = " "; //$NON-NLS-1$
                     if (j != 1 || e == null)
                         xhtml.characters(s);
-                    else
-                        KnownMetParser.printNameWithLink(xhtml, searcher, s, "sha-1", e.getHash()); //$NON-NLS-1$
-
+                    else {
+                        if (KnownMetParser.printNameWithLink(xhtml, searcher, s, "sha-1", e.getHash())) {; //$NON-NLS-1$
+                            cells.set(cells.size() - 1, strYes);
+                        }
+                    }
+                    
                     if (i < 0 || i >= l.size())
                         xhtml.endElement("b"); //$NON-NLS-1$
-                    xhtml.endElement("div"); //$NON-NLS-1$
+                    xhtml.endElement("td"); //$NON-NLS-1$
                 }
             }
-            xhtml.endElement("div"); //$NON-NLS-1$
+            xhtml.endElement("tr"); //$NON-NLS-1$
             xhtml.newline();
         }
 
         if (LedHashes.hashMap != null)
-            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
+            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(hashAlertHit));
 
-        xhtml.endElement("div"); //$NON-NLS-1$
+        xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
     }
 
