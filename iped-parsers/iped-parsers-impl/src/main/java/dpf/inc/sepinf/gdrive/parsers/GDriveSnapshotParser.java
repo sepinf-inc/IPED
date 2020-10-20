@@ -27,6 +27,8 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
 
@@ -85,13 +87,17 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
             int i = 0;
             for (SnapshotEntry entry : entries) {
 
-                emitSnapshotEntry(xHtmlOuput, entry);
+                String md5 = entry.getMd5();
+                if(md5 == null) md5 = entry.getLocalMd5();
+                boolean kffFound = LedHashes.lookupHashDatabase(md5);
+                
+                emitSnapshotEntry(xHtmlOuput, entry, kffFound);
 
                 /**
                  * Optionally extract entries as subitems
                  */
                 if (extractEntries) {
-                    Metadata metadataSnapshotItem = getEntryMetadata(entry, i++);
+                    Metadata metadataSnapshotItem = getEntryMetadata(entry, i++, kffFound);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataSnapshotItem, true);
                 }
 
@@ -115,7 +121,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         }
     }
 
-    private Metadata getEntryMetadata(SnapshotEntry entry, int i) throws ParseException {
+    private Metadata getEntryMetadata(SnapshotEntry entry, int i, boolean kffFound) throws ParseException {
 
         Metadata metadataSnapshotItem = new Metadata();
 
@@ -150,7 +156,9 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("volume", entry.getVolume());
         metadataSnapshotItem.add("child_volume", entry.getChildVolume());
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
-        
+        if(kffFound) {
+            metadataSnapshotItem.set("kffstatus", "pedo");
+        }
 
         return metadataSnapshotItem;
     }
@@ -243,14 +251,20 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         xHandler.startElement("head");
         xHandler.startElement("style");
         xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}");
+        xHandler.characters(".ra {vertical-align: middle;}");
+        xHandler.characters(".rr {background-color:#E77770; vertical-align: middle;}");
         xHandler.endElement("style");
         xHandler.endElement("head");
 
         xHandler.startElement("h2 align=center");
         xHandler.characters("Google Drive Snapshot registries");
         xHandler.endElement("h2");
-        xHandler.startElement("br");
-        xHandler.startElement("br");
+        xHandler.newline();
+        
+        xHandler.startElement("p");
+        xHandler.characters(Messages.getString("P2P.PedoHashHit"));
+        xHandler.endElement("p");
+        xHandler.newline();
 
         xHandler.startElement("table");
 
@@ -319,6 +333,9 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         xHandler.startElement("th");
         xHandler.characters("Parent volume");
         xHandler.endElement("th");
+        xHandler.startElement("th");
+        xHandler.characters("Found in Child Porn Alert Hashset");
+        xHandler.endElement("th");
 
         
         xHandler.endElement("tr");
@@ -327,9 +344,10 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
 
     }
 
-    private void emitSnapshotEntry(XHTMLContentHandler xHandler, SnapshotEntry entry) throws SAXException {
+    private void emitSnapshotEntry(XHTMLContentHandler xHandler, SnapshotEntry entry, boolean kffFound) throws SAXException {
 
-        xHandler.startElement("tr");
+        String trClass = kffFound ? "rr" : "ra";
+        xHandler.startElement("tr", "class", trClass);
 
         xHandler.startElement("td");
         xHandler.characters(entry.getAclRole());
@@ -394,7 +412,11 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         xHandler.startElement("td");
         xHandler.characters(entry.getParentVolume());
         xHandler.endElement("td");
-        
+        xHandler.startElement("td");
+        if(kffFound) {
+            xHandler.characters("Yes");
+        }
+        xHandler.endElement("td");
 
         xHandler.endElement("tr");
 
