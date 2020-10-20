@@ -137,6 +137,7 @@
 			<mime>application/x-sqlite3</mime> <!-- Will be parsed by RawStringParser for better performance-->
         </parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 	
     </parsers>
 
