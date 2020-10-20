@@ -13,6 +13,7 @@ Contatos
 Discos ISO
 #Histórico de Internet
 #Atividades de Usuário
+#Arquivos Sincronizados GDrive
 Arquivos OLE
 #Arquivos de Georeferenciamento
 
