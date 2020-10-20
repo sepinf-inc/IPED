@@ -34,6 +34,7 @@ import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser for cloud_graph.db Google Drive forensic artifact
@@ -161,6 +162,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if(kffFound) {
             metadataCloudGraphItem.set("kffstatus", "pedo");
+        }
+        if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
+            metadataCloudGraphItem.set(ExtraProperties.SHARED_HASHES, entry.getMd5());
         }
 
         return metadataCloudGraphItem;
