@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Parser for snapshot.db Google Drive forensic artifact
@@ -158,6 +159,12 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
         if(kffFound) {
             metadataSnapshotItem.set("kffstatus", "pedo");
+        }
+        if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
+            String md5 = entry.getMd5();
+            if(md5 == null)
+                md5 = entry.getLocalMd5();
+            metadataSnapshotItem.set(ExtraProperties.SHARED_HASHES, md5);
         }
 
         return metadataSnapshotItem;
