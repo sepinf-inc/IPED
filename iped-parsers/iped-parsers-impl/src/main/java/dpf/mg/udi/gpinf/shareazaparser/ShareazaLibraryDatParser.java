@@ -101,7 +101,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.startElement("tr"); //$NON-NLS-1$
         printTh(xhtml, "Path", "Name", "Index", "Size", "Time", "Shared", "VirtualSize", "VirtualBase", "SHA1", "Tiger", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$ //$NON-NLS-10$
                 "MD5", "ED2K", "BTH", "Verify", "URI", "MetadataAuto", "MetadataTime", "MetadataModified", "Rating", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$ //$NON-NLS-9$
-                "Comments", "ShareTags", "HitsTotal", "UploadsTotal", "CachedPreview", "Bogus"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                "Comments", "ShareTags", "HitsTotal", "UploadsTotal", "CachedPreview", "Bogus", "Found in Hash Alert Database", "Found in the Case"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
         xhtml.endElement("tr"); //$NON-NLS-1$
 
         library.printTable(xhtml, searcher);
