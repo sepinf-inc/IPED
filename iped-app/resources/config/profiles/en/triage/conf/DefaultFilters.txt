@@ -5,7 +5,7 @@
 OST Mailboxes (not processed) = type:ost
 Filter KFF Ignorable = *:* -kffstatus:ignore
 Hash Alert = kffstatus:alert
-Hash Alert (Child Porn) = kffstatus:pedo || projectvic_category:[1 TO 2]
+Hash Alert (Child Porn) = kffstatus:pedo
 Hash Alert (PhotoDNA) = photoDnaKffHit:true
 Encrypted Files = encrypted:true
 Possibly encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
