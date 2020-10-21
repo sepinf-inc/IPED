@@ -135,6 +135,9 @@ public class ProjectVICHashLookup extends AbstractTask {
         private static final long serialVersionUID = 9091381179250834450L;
 
         private HashMap<Integer, String> seriesMap = new HashMap<>();
+        /**
+         * TODO we could store and access this byte[] from a mmap file instead of heap
+         */
         private byte[] compressedHashArray;
         private Integer hashSize;
         
