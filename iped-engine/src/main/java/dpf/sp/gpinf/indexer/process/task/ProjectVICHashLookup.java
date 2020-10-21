@@ -103,7 +103,7 @@ public class ProjectVICHashLookup extends AbstractTask {
 
         @Override
         public byte[] getBytes() {
-            return getVicEntry().getBytes();
+            return photoDnaSet.getHash(index);
         }
         
         public VicEntry getVicEntry() {
@@ -141,12 +141,18 @@ public class ProjectVICHashLookup extends AbstractTask {
         private byte[] compressedHashArray;
         private Integer hashSize;
         
-        private VicEntry getEntry(int idx) {
-            int index = idx * getRecordSize();
+        private byte[] getHash(int idx) {
+            int pos = idx * getRecordSize();
             byte[] hash = new byte[hashSize];
-            System.arraycopy(compressedHashArray, index, hash, 0, hashSize);
+            System.arraycopy(compressedHashArray, pos, hash, 0, hashSize);
+            return hash;
+        }
+
+        private VicEntry getEntry(int idx) {
+            byte[] hash = getHash(idx);
             VicEntry e = new VicEntry(hash);
-            int offset = index + hashSize;
+            int pos = idx * getRecordSize();
+            int offset = pos + hashSize;
             e.category = compressedHashArray[offset];
             e.seriesId = (compressedHashArray[offset + 1] & (int) 0xFF) << 8 | (compressedHashArray[offset + 2] & (int) 0xFF);
             byte flags = compressedHashArray[offset + 3];
