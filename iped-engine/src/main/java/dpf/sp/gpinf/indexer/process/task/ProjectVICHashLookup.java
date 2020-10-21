@@ -280,6 +280,7 @@ public class ProjectVICHashLookup extends AbstractTask {
         }
         
         if (vicSet != null && (!photoDNAEnabled || photoDnaSet != null)) {
+            printStats();
             return;
         }
 
@@ -385,10 +386,8 @@ public class ProjectVICHashLookup extends AbstractTask {
             }
         }
 
-        logger.info("Number of ProjectVic hashes loaded: " + vicHashList.size());
-        logger.info("Number of ProjectVic photoDNA hashes loaded: " + photoDnaCount + " invalid: " + invalidPdna);
-        logger.info("Number of ProjectVic series loaded: " + vicSet.seriesMap.size());
-        logger.info("Number of ProjectVic null " + hashAlgorithm + " values: " + nullHashes);
+        logger.debug("Number of ProjectVic invalid photoDNA hashes: " + invalidPdna);
+        logger.debug("Number of ProjectVic null " + hashAlgorithm + " values: " + nullHashes);
 
         VicEntry[] hashArray = vicHashList.toArray(new VicEntry[vicHashList.size()]);
         vicHashList = null;
@@ -440,8 +439,17 @@ public class ProjectVICHashLookup extends AbstractTask {
             cacheFile.setLastModified(jsonDate);
         }
 
+        printStats();
+
     }
     
+    private void printStats() {
+        logger.info("Number of ProjectVic hashes loaded: " + vicSet.getNumRecords());
+        logger.info("Number of ProjectVic photoDNA hashes loaded: "
+                + (photoDnaSet != null ? photoDnaSet.getNumRecords() : 0));
+        logger.info("Number of ProjectVic series loaded: " + vicSet.seriesMap.size());
+    }
+
     private VicSet loadCache(File cacheFile) throws IOException, ClassNotFoundException {
         logger.info("Loading ProjectVic cache from " + cacheFile.getAbsolutePath());
         try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(cacheFile.toPath()));
