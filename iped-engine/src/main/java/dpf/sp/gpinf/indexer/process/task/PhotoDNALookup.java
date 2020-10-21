@@ -123,7 +123,7 @@ public class PhotoDNALookup extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         String hashStr = (String) evidence.getExtraAttribute(PhotoDNATask.PHOTO_DNA);
-        if (hashStr == null || vptree.isEmpty())
+        if (hashStr == null)
             return;
 
         HashValue photodna = new HashValue(hashStr);
