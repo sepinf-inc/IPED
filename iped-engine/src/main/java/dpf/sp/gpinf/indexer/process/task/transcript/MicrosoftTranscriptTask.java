@@ -55,7 +55,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         String speechSubscriptionKey = args.getExtraParams().get(SUBSCRIPTION_KEY);
-        if (speechSubscriptionKey == null) {
+        if (speechSubscriptionKey == null && !caseData.isIpedReport()) {
             throw new IPEDException(
                     "You must pass -X" + SUBSCRIPTION_KEY + "=XXX param to enable audio transcription.");
         }

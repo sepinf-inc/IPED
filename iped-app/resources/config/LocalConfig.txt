@@ -28,6 +28,9 @@ numThreads = default
 # Folder with child porn hash database from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
 #ledWkffPath = E:/LED/V1.21.00/pedo/wkff
 
+# Full path to ProjectVic json hashset file with child sexual abuse material hashes (ask the hashset directly to them).
+#projectVicHashSetPath = F:/ProjectVic/2020-02-08 15-52 to 2020-08-07 13-39.json
+
 # Path to photoDNA hashset file for hash lookup. It must have 1 photoDNA hash per line.
 # It can have other file info in the same line (eg: file name, other hash), * should be used as separator
 #photoDNAHashDatabase = E:/PhotoDNA-3.3/PhotoDNAChildPornHashes-1.0.txt

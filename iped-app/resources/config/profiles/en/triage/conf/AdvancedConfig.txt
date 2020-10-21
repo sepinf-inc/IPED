@@ -9,8 +9,8 @@
 # Increases a lot the processing speed of compressed E01 images or images in network.
 robustImageReading = false
 
-# Number of auxiliary image reading processes. 'auto' uses half of the number of logical CPU cores.
-# You can decrease the value if RAM memory is low. Increasing the value is not efficient, because often
+# Number of auxiliary image reading processes. 'auto' uses 1/4 of the number of logical CPU cores.
+# You can decrease the value if it uses too much RAM. Increasing the value is not efficient, because often
 # IO devices can not handle many reading requests simultaneously.
 numImageReaders = auto
 
@@ -111,6 +111,9 @@ useNIOFSDirectory = false
 # Interval to commit partial processing results, so processing can be resumed later if stopped.
 # Partial commits can be a very costly operation, be careful if you change the default.
 commitIntervalSeconds = 1800
+
+# Regex pattern to skip matched folder trees when processing. Just works if processing mounted folders currently.
+#skipFolderRegex =
 
 ########################################################################
 # OCR Settings

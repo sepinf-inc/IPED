@@ -105,17 +105,16 @@ public class ViewerController {
 
         new Thread() {
             public void run() {
+                try {
+                    for (Viewer viewer : viewers) {
+                        viewer.init();
+                    }
+                    tika = new Tika();
 
-                for (Viewer viewer : viewers) {
-                    viewer.init();
-                }
-                tika = new Tika();
-
-                // LibreOffice viewer initialization
-                LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
-                final String pathLO = loFinder.getLOPath();
-                if (pathLO != null) {
-                    try {
+                    // LibreOffice viewer initialization
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+                    final String pathLO = loFinder.getLOPath();
+                    if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
@@ -124,19 +123,19 @@ public class ViewerController {
                             }
                         });
                         officeViewer.init();
-
-                    } catch (NotSupported32BitPlatformExcepion e) {
-                        JOptionPane.showMessageDialog(null,
-                                Messages.getString("ViewerController.OfficeViewerUnSupported")); //$NON-NLS-1$
-                        viewersRepository.removeViewer(officeViewer);
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
 
-                synchronized (lock) {
-                    init = true;
-                    lock.notifyAll();
+                } catch (NotSupported32BitPlatformExcepion e) {
+                    JOptionPane.showMessageDialog(null, Messages.getString("ViewerController.OfficeViewerUnSupported")); //$NON-NLS-1$
+                    viewersRepository.removeViewer(officeViewer);
+                } catch (Throwable e) {
+                    // catches NoClassDefFoundError on Linux if libreoffice-java is not installed
+                    e.printStackTrace();
+                } finally {
+                    synchronized (lock) {
+                        init = true;
+                        lock.notifyAll();
+                    }
                 }
             }
         }.start();

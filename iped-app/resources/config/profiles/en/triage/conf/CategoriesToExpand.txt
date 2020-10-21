@@ -13,6 +13,7 @@ Contacts
 ISO disks
 #Internet History
 #User Activities
+#GDrive Synced Files
 OLE files
 #Georeferenced Files
 

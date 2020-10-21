@@ -68,6 +68,7 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -544,7 +545,7 @@ public class SleuthkitReader extends DataSourceReader {
             if (id < last)
                 where.append(",");
         }
-        where.append(");");
+        where.append(") ORDER BY obj_id;");
 
         List<AbstractFile> absFiles = findFilesWhere(where.toString());
         where = null;
@@ -618,7 +619,10 @@ public class SleuthkitReader extends DataSourceReader {
     }
 
     private Integer getTskParentId(long id) throws TskCoreException, SQLException {
-        return tskParentIds.get((int) id);
+        Integer parent = tskParentIds.get((int) id);
+        if (parent == null)
+            throw new IPEDException("No parent found for tsk objectId " + id);
+        return parent;
     }
 
     private void cacheTskParentIds(long[] ids) throws TskCoreException, SQLException {
@@ -636,8 +640,12 @@ public class SleuthkitReader extends DataSourceReader {
                 long parId = rs.getLong(2);
                 while (objId >= tskParentIds.size())
                     tskParentIds.add(null);
-                if (parId != 0)
-                    tskParentIds.set((int) objId, (int) parId);
+
+                tskParentIds.set((int) objId, (int) parId);
+                if (parId > objId) {
+                    throw new IPEDException(
+                            "Sleuthkit parentId greater then objectId, please report this unexpected behaviour to iped project.");
+                }
             }
         } finally {
             dbQuery.close();
@@ -783,7 +791,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         boolean first = true;
         Integer tskId = (int) absFile.getId();
-        while ((tskId = getTskParentId(tskId)) != null) {
+        while ((tskId = getTskParentId(tskId)) != 0) {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
@@ -902,7 +910,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         boolean first = true;
         Integer tskId = (int) content.getId();
-        while ((tskId = getTskParentId(tskId)) != null) {
+        while ((tskId = getTskParentId(tskId)) != 0) {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);

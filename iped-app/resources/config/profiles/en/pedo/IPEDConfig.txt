@@ -19,6 +19,10 @@ enableKff = true
 # Need to use hash md5 or sha-1.
 enableLedWkff = true
 
+# Enables ProjectVIC hashset lookup. Needs md5 or sha-1 to be computed. Files found will be tagged
+# with ProjectVic categories and other extra properties prefixed with "projectvic".
+enableProjectVicHashLookup = true
+
 # Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
 # and classeNudez (1 to 5) for ranking and/or filtering.
 enableLedDie = true

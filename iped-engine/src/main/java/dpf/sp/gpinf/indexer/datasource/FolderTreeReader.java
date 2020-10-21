@@ -18,11 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.Item;
-import iped3.ICaseData;
-import iped3.IItem;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -36,6 +31,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.commons.text.StringTokenizer;
@@ -43,13 +39,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 public class FolderTreeReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
+
+    private static final String EXCLUDE_KEY = "skipFolderRegex"; //$NON-NLS-1$
+
+    private Pattern excludePattern;
 
     private File rootFile;
     private String evidenceName;
@@ -71,12 +76,28 @@ public class FolderTreeReader extends DataSourceReader {
 
     }
 
+    private boolean isRoot(File file) {
+        for (File f : File.listRoots()) {
+            if (f.equals(file))
+                return true;
+        }
+        return false;
+    }
+
     @Override
     public void read(File file, Item parent) throws Exception {
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         evidenceName = getEvidenceName(file);
         if (evidenceName == null) {
             evidenceName = file.getName();
+        }
+        if (evidenceName.isEmpty() && isRoot(file)) {
+            evidenceName = file.getAbsolutePath().substring(0, 2);
+        }
+
+        String arg;
+        if ((arg = Configuration.getInstance().properties.getProperty(EXCLUDE_KEY)) != null) {
+            excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
         }
 
         rootFile = file;
@@ -121,9 +142,6 @@ public class FolderTreeReader extends DataSourceReader {
             } catch (InvalidPathException e) {
                 LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
             }
-
-            String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-            item.setPath(path1);
 
             if (args.isAddowner())
                 try {
@@ -174,9 +192,9 @@ public class FolderTreeReader extends DataSourceReader {
                     item.setRoot(true);
                 }
 
-                String fileName = path.getFileName().toString();
-                String evidencePath = paths.stream().collect(Collectors.joining(File.separator)) + File.separator
-                        + fileName;
+                String fileName = item.getName();
+                String evidencePath = paths.isEmpty() ? fileName
+                        : paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
                 item.setPath(evidencePath);
 
                 if (attr.isDirectory()) {
@@ -209,6 +227,10 @@ public class FolderTreeReader extends DataSourceReader {
         @Override
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
+            if (excludePattern != null && excludePattern.matcher(path.toString()).find()) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+
             if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
                 return FileVisitResult.TERMINATE;
             }
@@ -217,7 +239,6 @@ public class FolderTreeReader extends DataSourceReader {
                 parentIds.pollLast();
                 paths.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
-
             }
 
             return FileVisitResult.CONTINUE;

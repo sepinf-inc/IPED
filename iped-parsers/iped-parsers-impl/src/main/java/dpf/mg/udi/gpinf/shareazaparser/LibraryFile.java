@@ -63,7 +63,7 @@ class LibraryFile extends ShareazaEntity {
     private boolean cachedPreview;
     private boolean bogus;
     private final LibraryFolder parentFolder;
-    private boolean kffHit = false;
+    private boolean hashSetHit = false;
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -212,7 +212,7 @@ class LibraryFile extends ShareazaEntity {
                     (sha1 != null && sha1.length() == 40
                             && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), new HashValue(sha1)) >= 0)) { //$NON-NLS-1$
                 html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                kffHit = true;
+                hashSetHit = true;
             } else
                 html.startElement("tr"); //$NON-NLS-1$
         } else
@@ -220,28 +220,34 @@ class LibraryFile extends ShareazaEntity {
 
         printTd(html, searcher, path, name, index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1,
                 tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating, comments,
-                shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
+                shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus, hashSetHit, null);
 
         html.endElement("tr"); //$NON-NLS-1$
     }
 
     private void printTd(XHTMLContentHandler html, IItemSearcher searcher, Object... tdtext) throws SAXException {
         int col = 0;
+        Boolean foundInCase = false;
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$
-            if (o != null)
+            if (o != null) {
                 if (col != 1) {
                     html.characters(o.toString());
                 } else {
-                    KnownMetParser.printNameWithLink(html, searcher, name, "md5", md5); //$NON-NLS-1$
+                    if(KnownMetParser.printNameWithLink(html, searcher, name, "md5", md5)) {
+                        foundInCase = true;
+                    }
                 }
+            } else if(col == tdtext.length - 1) {
+                html.characters(foundInCase.toString());
+            }
             html.endElement("td"); //$NON-NLS-1$
             col++;
         }
     }
 
     public boolean isKffHit() {
-        return kffHit;
+        return hashSetHit;
     }
 
     public long getSize() {

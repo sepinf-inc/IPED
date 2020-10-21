@@ -346,7 +346,10 @@ public class LedKFFTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        hashArrays = null;
+        if (hashArrays != null) {
+            hashArrays.clear();
+            hashArrays = null;
+        }
         kffItems = null;
     }
 
@@ -367,6 +370,7 @@ public class LedKFFTask extends AbstractTask {
                 if (hash != null) {
                     if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
                         evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
+                        evidence.setExtraAttribute(KFFTask.KFF_GROUP, "led"); //$NON-NLS-1$
                     }
                     break;
                 }

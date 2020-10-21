@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
@@ -47,16 +48,21 @@ public class MenuClass extends JPopupMenu {
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
             similarImagesCurrent, similarImagesExternal;
 
-    MenuListener menuListener;
+    MenuListener menuListener = new MenuListener(this);
+    boolean isTreeMenu;
 
     public MenuClass() {
         this(null);
     }
 
+    public MenuClass(boolean isTreeMenu) {
+        super();
+        this.isTreeMenu = isTreeMenu;
+        addExportTreeMenuItems(this);
+    }
+
     public MenuClass(IItem item) {
         super();
-
-        menuListener = new MenuListener(this);
 
         marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
         marcarSelecionados.addActionListener(menuListener);
@@ -141,21 +147,11 @@ public class MenuClass extends JPopupMenu {
         exportarMarcados.addActionListener(menuListener);
         submenu.add(exportarMarcados);
 
-        exportTree = new JMenuItem(Messages.getString("MenuClass.ExportTree")); //$NON-NLS-1$
-        exportTree.addActionListener(menuListener);
-        submenu.add(exportTree);
-
-        exportTreeChecked = new JMenuItem(Messages.getString("MenuClass.ExportTree.Checked")); //$NON-NLS-1$
-        exportTreeChecked.addActionListener(menuListener);
-        submenu.add(exportTreeChecked);
-
         exportCheckedToZip = new JMenuItem(Messages.getString("MenuClass.ExportCheckedToZip")); //$NON-NLS-1$
         exportCheckedToZip.addActionListener(menuListener);
         submenu.add(exportCheckedToZip);
 
-        exportCheckedTreeToZip = new JMenuItem(Messages.getString("MenuClass.ExportTreeToZip.Checked")); //$NON-NLS-1$
-        exportCheckedTreeToZip.addActionListener(menuListener);
-        submenu.add(exportCheckedTreeToZip);
+        addExportTreeMenuItems(submenu);
 
         this.addSeparator();
 
@@ -261,6 +257,20 @@ public class MenuClass extends JPopupMenu {
         createReport.addActionListener(menuListener);
         this.add(createReport);
 
+    }
+
+    public void addExportTreeMenuItems(JComponent menu) {
+        exportTree = new JMenuItem(Messages.getString("MenuClass.ExportTree")); //$NON-NLS-1$
+        exportTree.addActionListener(menuListener);
+        menu.add(exportTree);
+
+        exportTreeChecked = new JMenuItem(Messages.getString("MenuClass.ExportTree.Checked")); //$NON-NLS-1$
+        exportTreeChecked.addActionListener(menuListener);
+        menu.add(exportTreeChecked);
+
+        exportCheckedTreeToZip = new JMenuItem(Messages.getString("MenuClass.ExportTreeToZip.Checked")); //$NON-NLS-1$
+        exportCheckedTreeToZip.addActionListener(menuListener);
+        menu.add(exportCheckedTreeToZip);
     }
 
 }

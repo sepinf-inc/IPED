@@ -14,8 +14,6 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
@@ -410,8 +408,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
-        System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 
     }

@@ -41,6 +41,8 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final MediaType UFED_CHAT_MIME = MediaType.application("x-ufed-chat"); //$NON-NLS-1$
     public static final MediaType UFED_CHAT_WA_MIME = MediaType.application("x-ufed-chat-whatsapp"); //$NON-NLS-1$
+    public static final MediaType UFED_CHAT_TELEGRAM = MediaType.application("x-ufed-chat-telegram"); //$NON-NLS-1$
+
     public static final MediaType UFED_CHAT_PREVIEW_MIME = MediaType.application("x-ufed-chat-preview");
 
     public static final String META_PHONE_OWNER = ExtraProperties.UFED_META_PREFIX + "phoneOwner"; //$NON-NLS-1$
@@ -49,7 +51,8 @@ public class UFEDChatParser extends AbstractParser {
 
     public static final String ATTACHED_MEDIA_MSG = "ATTACHED_MEDIA: ";
 
-    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME);
+    private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(UFED_CHAT_MIME, UFED_CHAT_WA_MIME,
+            UFED_CHAT_TELEGRAM);
 
     public static void setSupportedTypes(Set<MediaType> supportedTypes) {
         SUPPORTED_TYPES = supportedTypes;
@@ -170,7 +173,9 @@ public class UFEDChatParser extends AbstractParser {
             m.setLocalResource(msg.getMetadata().get(org.apache.tika.metadata.Message.MESSAGE_FROM));
         }
         if (attach != null) {
-            m.setMediaHash(attach.getHash(), false);
+            if (attach.getLength() != null && attach.getLength() > 0) {
+                m.setMediaHash(attach.getHash(), false);
+            }
             m.setMediaName(attach.getName());
             m.setMediaTrueExt(attach.getTypeExt());
             m.setMediaUrl(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "URL")); //$NON-NLS-1$

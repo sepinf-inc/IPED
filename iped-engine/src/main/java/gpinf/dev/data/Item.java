@@ -281,6 +281,8 @@ public class Item implements ISleuthKitItem {
         } catch (Exception e) {
             // LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
         }
+        tmpFile = null;
+        tis = null;
         try {
             if (textCache != null)
                 textCache.close();
@@ -456,9 +458,12 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
-            id = getNextId();
+            synchronized (Counter.class) {
+                if (id == -1) {
+                    id = getNextId();
+                }
+            }
         }
-
         return id;
     }
 

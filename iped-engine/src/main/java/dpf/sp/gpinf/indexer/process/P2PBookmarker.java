@@ -8,6 +8,9 @@ import org.apache.lucene.document.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.inc.sepinf.gdrive.parsers.GDriveCloudGraphParser;
+import dpf.inc.sepinf.gdrive.parsers.GDriveSnapshotParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -61,6 +64,9 @@ public class P2PBookmarker {
                 new P2PProgram(IndexItem.HASH.toString(), "UFED_Chats")); //$NON-NLS-1$
         p2pPrograms.put(SkypeParser.FILETRANSFER_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
         p2pPrograms.put(SkypeParser.CONVERSATION_MIME_TYPE, new P2PProgram(IndexItem.HASH, "Skype")); //$NON-NLS-1$
+        p2pPrograms.put(TelegramParser.TELEGRAM_CHAT.toString(), new P2PProgram(IndexItem.HASH, "Telegram")); // $NON-NLS-1$
+        p2pPrograms.put(GDriveCloudGraphParser.GDRIVE_CLOUD_GRAPH_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
+        p2pPrograms.put(GDriveSnapshotParser.GDRIVE_SNAPSHOT_REG.toString(), new P2PProgram(HashTask.HASH.MD5.toString(), "GoogleDrive"));
 
         IPEDSource ipedSrc = new IPEDSource(caseDir);
         String queryText = ExtraProperties.SHARED_HASHES + ":*"; //$NON-NLS-1$

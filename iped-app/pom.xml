@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.18.2</version>
+        <version>3.19-snapshot</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -444,6 +444,25 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>copy-telegram-decoder</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>dpf.ap</groupId>
+    								<artifactId>telegram-decoder-impl</artifactId>
+    								<version>1.0.4-SNAPSHOT</version>
+                                    <type>jar</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>copy-nsfw-model</id>
                         <phase>package</phase>
                         <goals>
@@ -473,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>1.26</version>
+                                    <version>20200916</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>

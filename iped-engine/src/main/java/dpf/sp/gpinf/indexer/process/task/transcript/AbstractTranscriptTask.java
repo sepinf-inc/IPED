@@ -125,17 +125,23 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private void createConnection() {
+        this.conn = createConnection(output);
+    }
+
+    private Connection createConnection(File output) {
         File db = new File(output, TEXT_STORAGE);
         db.getParentFile().mkdirs();
         try {
             SQLiteConfig config = new SQLiteConfig();
             config.setSynchronous(SynchronousMode.OFF);
             config.setBusyTimeout(3600000);
-            conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
+            Connection conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
 
             try (Statement stmt = conn.createStatement()) {
                 stmt.executeUpdate(CREATE_TABLE);
             }
+
+            return conn;
 
         } catch (SQLException e) {
             throw new RuntimeException(e);
@@ -148,6 +154,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     private TextAndScore getTextFromDb(String id) throws IOException {
+        TextAndScore result = getTextFromDb(this.conn, id);
+        return result;
+    }
+
+    private TextAndScore getTextFromDb(Connection conn, String id) throws IOException {
         try (PreparedStatement ps = conn.prepareStatement(SELECT_EXACT)) {
             ps.setString(1, id);
             ResultSet rs = ps.executeQuery();
@@ -254,6 +265,10 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (!isToProcess(evidence)) {
             return;
         }
+
+        if (evidence.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR) != null
+                && evidence.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR) != null)
+            return;
 
         TextAndScore prevResult = getTextFromDb(evidence.getHash());
         if (prevResult != null) {

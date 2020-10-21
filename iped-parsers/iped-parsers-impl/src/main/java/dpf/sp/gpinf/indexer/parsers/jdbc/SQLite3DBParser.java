@@ -16,7 +16,6 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  * limitations under the License.
  */
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -77,21 +76,14 @@ public class SQLite3DBParser extends AbstractDBParser {
         TemporaryResources tmp = new TemporaryResources();
         try {
             File dbFile = TikaInputStream.get(stream, tmp).getFile();
-            File walTemp = exportWalLog(dbFile, context);
-            if (walTemp != null) {
-                tmp.addResource(new Closeable() {
-                    @Override
-                    public void close() {
-                        walTemp.delete();
-                        new File(dbFile.getAbsolutePath() + "-shm").delete();
-                    }
-                });
-            }
-            String connectionString = getConnectionString(dbFile);
+            boolean isTempDb = IOUtil.isTemporaryFile(dbFile);
+            if (isTempDb)
+                exportWalLog(dbFile, context);
 
             SQLiteConfig config = new SQLiteConfig();
-
             config.setReadOnly(true);
+
+            String connectionString = getConnectionString(dbFile);
             connection = config.createConnection(connectionString);
 
             connection = new DelegatingConnection(connection) {
@@ -100,6 +92,11 @@ public class SQLite3DBParser extends AbstractDBParser {
                     super.close();
                     try {
                         tmp.close();
+                        if (isTempDb) {
+                            // these files may be created by sqlite, even if wal was not exported
+                            new File(dbFile.getAbsolutePath() + "-wal").delete();
+                            new File(dbFile.getAbsolutePath() + "-shm").delete();
+                        }
                     } catch (IOException e) {
                         throw new SQLException(e);
                     }
@@ -114,23 +111,21 @@ public class SQLite3DBParser extends AbstractDBParser {
 
     private File exportWalLog(File dbFile, ParseContext context) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
-        if (IOUtil.isTemporaryFile(dbFile)) {
-            if (searcher != null) {
-                IItemBase dbItem = context.get(IItemBase.class);
-                if (dbItem != null) {
-                    String dbPath = dbItem.getPath();
-                    String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
-                    List<IItemBase> items = searcher.search(walQuery);
-                    if (items.size() > 0) {
-                        IItemBase wal = items.get(0);
-                        File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                        try (InputStream in = wal.getBufferedStream()) {
-                            Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        return walTemp;
+        if (searcher != null) {
+            IItemBase dbItem = context.get(IItemBase.class);
+            if (dbItem != null) {
+                String dbPath = dbItem.getPath();
+                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
+                List<IItemBase> items = searcher.search(walQuery);
+                if (items.size() > 0) {
+                    IItemBase wal = items.get(0);
+                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
+                    try (InputStream in = wal.getBufferedStream()) {
+                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
+                    return walTemp;
                 }
             }
         }
@@ -176,5 +171,34 @@ public class SQLite3DBParser extends AbstractDBParser {
     @Override
     public JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext context) {
         return new SQLite3TableReader(connection, tableName, context);
+    }
+
+    public boolean checkIfColumnExists(Connection connection, String table, String column) {
+        String query = "SELECT name FROM pragma_table_info('" + table + "')";
+        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
+            while (rs.next()) {
+                if (rs.getString(1).equals(column)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public String getStringIfExists(ResultSet rs, String col) throws SQLException {
+        int colIdx;
+        try {
+            colIdx = rs.findColumn(col);
+
+        } catch (SQLException e) {
+            // is there an error constant to check this?
+            if (e.toString().contains("no such column"))
+                return null;
+            else
+                throw e;
+        }
+        return rs.getString(colIdx);
     }
 }

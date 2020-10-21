@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -28,7 +27,6 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -91,8 +89,10 @@ public class ItemProducer extends Thread {
 
     @Override
     public void run() {
+        File currSource = null;
         try {
             for (File source : datasources) {
+                currSource = source;
                 if (Thread.interrupted()) {
                     throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
                 }
@@ -136,7 +136,8 @@ public class ItemProducer extends Thread {
 
         } catch (Throwable e) {
             if (manager.exception == null) {
-                Exception e1 = new Exception();
+                String source = currSource != null ? currSource.getAbsolutePath() : "";
+                Exception e1 = new Exception("Error decoding datasource " + source);
                 e1.initCause(e);
                 manager.exception = e1;
             }

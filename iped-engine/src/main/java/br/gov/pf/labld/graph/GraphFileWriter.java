@@ -18,6 +18,8 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
@@ -336,11 +338,14 @@ public class GraphFileWriter implements Closeable, Flushable {
     // TODO improve to merge duplicate nodes instead of just skip
     public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
         AtomicInteger subDir = new AtomicInteger(-1);
-        HashSet<String> ids = new HashSet<>();
+        Set<String> ids = Collections.synchronizedSet(new HashSet<>());
         csvParents.parallelStream().forEach(parent -> {
             int num = subDir.incrementAndGet();
             try {
-                for (File input : parent.listFiles()) {
+                File[] subFiles = parent.listFiles();
+                if (subFiles == null)
+                    return;
+                for (File input : subFiles) {
                     File dest = new File(output, num + File.separator + input.getName().replace(".gzip", ""));
                     dest.getParentFile().mkdirs();
                     if (input.getName().startsWith(NODE_CSV_PREFIX) && !input.getName().contains(HEADER_CSV_STR)
@@ -366,7 +371,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                 }
                 File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
                 String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
-                args = args.replace(parent.getAbsolutePath(), importArgs.getParentFile().getAbsolutePath());
+                args = args.replace(getPathPrefix(args, parent), importArgs.getParentFile().getAbsolutePath());
                 Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8),
                         StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -374,6 +379,17 @@ public class GraphFileWriter implements Closeable, Flushable {
                 throw new RuntimeException(e);
             }
         });
+    }
+
+    private static String getPathPrefix(String args, File parent) {
+        String[] lines = args.split("\n");
+        for (String line : lines) {
+            int start = line.indexOf("\"") + 1;
+            int end = line.indexOf(".csv,", start) + 4;
+            Path path = Paths.get(line.substring(start, end));
+            return path.getParent().toString();
+        }
+        return parent.getAbsolutePath();
     }
 
     public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,

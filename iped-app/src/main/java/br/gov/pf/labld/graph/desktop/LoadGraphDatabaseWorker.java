@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -18,6 +17,7 @@ import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -38,6 +38,9 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         long t = System.currentTimeMillis();
         app.setEnabled(false);
+        boolean enabled = Boolean.valueOf(Configuration.getInstance().properties.getProperty(GraphTask.ENABLE_PARAM));
+        if (!enabled)
+            return null;
         List<IPEDSource> cases = App.get().appCase.getAtomicSources();
         if (cases.size() == 1) {
             loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_PATH));
@@ -69,17 +72,14 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 importer.execute();
                 if (importer.get()) {
                     Files.move(tempDir.toPath(), graphDir.toPath());
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
+                    return;
                 }
-                SwingUtilities.invokeLater(new Runnable() {
-                    public void run() {
-                        JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphOk"));
-                    }
-                });
             } catch (Exception e) {
                 e.printStackTrace();
-                JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphError"), "Error",
-                        JOptionPane.ERROR_MESSAGE);
             }
+            JOptionPane.showMessageDialog(App.get(), Messages.getString("GraphAnalysis.MultiGraphError"), "Error",
+                    JOptionPane.ERROR_MESSAGE);
         }
     }
 
