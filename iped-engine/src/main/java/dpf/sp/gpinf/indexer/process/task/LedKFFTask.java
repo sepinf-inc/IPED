@@ -232,14 +232,28 @@ public class LedKFFTask extends AbstractTask {
         }
     }
 
+    private int getExpectedHashTypeCount() {
+        int count = 0;
+        for (int col = 0; col < ledHashOrder.length; col++) {
+            if (ledHashOrder[col] != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private void readCache(File ledWkffCache, String cacheKey) {
         BufferedInputStream is = null;
         try {
             is = new BufferedInputStream(new FileInputStream(ledWkffCache), 1 << 24);
             String fileKey = readString(is);
             if (fileKey.equals(cacheKey)) {
-                hashArrays = new HashMap<String, IHashValue[]>();
                 int n = readInt(is);
+                if (n != getExpectedHashTypeCount()) {
+                    logger.warn("Led cache has a different number of hash types, the cache will be ignored.");
+                    return;
+                }
+                hashArrays = new HashMap<String, IHashValue[]>();
                 for (int i = 0; i < n; i++) {
                     String key = readString(is);
                     int arrLen = readInt(is);
