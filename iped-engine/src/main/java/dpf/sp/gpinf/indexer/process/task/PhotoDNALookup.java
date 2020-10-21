@@ -81,8 +81,9 @@ public class PhotoDNALookup extends AbstractTask {
             
             photoDNAHashSet.addAll(ProjectVICHashLookup.buildPhotoDNAReferenceList());
             
-            vptree.addAll(photoDNAHashSet);
-            if(vptree.isEmpty()) {
+            if (!photoDNAHashSet.isEmpty()) {
+                vptree.addAll(photoDNAHashSet);
+            } else {
                 taskEnabled = false;
             }
         }
