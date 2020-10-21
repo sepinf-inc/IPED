@@ -467,6 +467,7 @@ public class ProjectVICHashLookup extends AbstractTask {
             storeProjectVicEntryInfo(item, ve);
             if (ve.category == 1 || ve.category == 2) {
                 item.setExtraAttribute(KFFTask.KFF_STATUS, "pedo");
+                item.setExtraAttribute(KFFTask.KFF_GROUP, "projectvic");
             }
         }
 
