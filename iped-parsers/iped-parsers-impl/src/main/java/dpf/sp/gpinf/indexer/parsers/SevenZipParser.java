@@ -69,7 +69,7 @@ public class SevenZipParser extends AbstractParser {
             File javaTmp = new File(System.getProperty("java.io.tmpdir"));
             File tmpDir = new File(javaTmp, "7zip-" + new Random().nextLong());
             Files.createDirectories(tmpDir.toPath());
-            // use a different tmp dir for each process, see
+            // use a different tmp dir for each process, see #301
             SevenZip.initSevenZipFromPlatformJAR(tmpDir);
             supportedTypes.add(MediaType.application(ISO9660));
             supportedTypes.add(MediaType.application(UDF));
@@ -80,7 +80,6 @@ public class SevenZipParser extends AbstractParser {
              * 7zipJBinding-9.20 does not work correctly with some rare ISO files.
              */
             // supportedTypes.add(MediaType.application("x-7z-compressed"));
-
             // supportedTypes.add(MediaType.application("vnd.ms-htmlhelp"));
             // supportedTypes.add(MediaType.application("vnd.ms-cab-compressed"));
             // supportedTypes.add(MediaType.application("x-rar-compressed"));
