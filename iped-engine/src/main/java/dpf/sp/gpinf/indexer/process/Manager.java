@@ -676,6 +676,8 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
+            // copy default conf folder
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
                     true);
             IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
@@ -690,14 +692,6 @@ public class Manager {
                         .listFiles(new ExeFileFilter()))
                     IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
             }
-            // copia arquivo de assinaturas customizadas
-            IOUtil.copiaArquivo(
-                    new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
-                    new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + IndexItem.attrTypesFilename), //$NON-NLS-1$
-                    new File(output, "conf/" + IndexItem.attrTypesFilename)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), //$NON-NLS-1$
-                    new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$
         }
 
         if (palavrasChave != null) {
