@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -71,7 +70,7 @@ public class FTK42FileTypes {
     public static String getTypeDesc(int type) throws IOException {
 
         if (mapTypeDesc == null) {
-            getFTK42FileTypes(Configuration.getInstance().configPath);
+            getFTK42FileTypes(Configuration.getInstance().appRoot);
         }
 
         String desc = mapTypeDesc.get(type);
