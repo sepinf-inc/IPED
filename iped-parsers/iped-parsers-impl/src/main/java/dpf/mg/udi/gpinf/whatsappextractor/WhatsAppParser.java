@@ -340,22 +340,30 @@ public class WhatsAppParser extends SQLite3DBParser {
             String dbPath = mainDB.getPath();
             WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
             
-            extFactory.setConnectionParams(mainDB.getStream(), metadata, context, this);
-            chatlist.addAll(getChatList(extFactory, contacts, account, mainDB.getStream(), tmp));
+            try (InputStream is = mainDB.getStream()) {
+                TikaInputStream tis = TikaInputStream.get(is, tmp);
+                File tempFile = tis.getFile();
+                extFactory.setConnectionParams(tis, metadata, context, this);
+                chatlist.addAll(getChatList(extFactory, contacts, account, tempFile));
+            }
+
             System.out.println("Chegou aqui " + mainDB.getName());
             for (IItemBase it : result) {
 
-
-                extFactory.setConnectionParams(it.getStream(), metadata, context, this);
-
-                List<Chat> temp = getChatList(extFactory, contacts, account, it.getStream(), tmp);
+                List<Chat> tempChatList;
+                try (InputStream is = it.getStream()) {
+                    TikaInputStream tis = TikaInputStream.get(is, tmp);
+                    File tempFile = tis.getFile();
+                    extFactory.setConnectionParams(tis, metadata, context, this);
+                    tempChatList = getChatList(extFactory, contacts, account, tempFile);
+                }
                 
                 ChatMerge cm = new ChatMerge(chatlist, it.getName());
-                if (cm.isBackup(temp)) {// merge in the main chat
-                    System.out.println("recovered messages " + cm.mergeChatList(temp) + " from " + it.getName());
+                if (cm.isBackup(tempChatList)) {// merge in the main chat
+                    System.out.println("recovered messages " + cm.mergeChatList(tempChatList) + " from " + it.getName());
                 } else {// create a separate report
                     System.out.println("Separeted report for " + it.getName());
-                    createReport(temp, searcher,
+                    createReport(tempChatList, searcher,
                             getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
                             extractor,
                             getUserAccount(searcher, it.getPath(), true));
@@ -374,11 +382,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private List<Chat> getChatList(ExtractorFactory extFactory, WAContactsDirectory contacts, WAAccount account,
-            InputStream is, TemporaryResources tmp) throws Exception {
-
-        TikaInputStream tis = TikaInputStream.get(is, tmp);
-
-        Extractor waExtractor = extFactory.createMessageExtractor(tis.getFile(), contacts, account);
+            File dbFile) throws Exception {
+        Extractor waExtractor = extFactory.createMessageExtractor(dbFile, contacts, account);
         return waExtractor.getChatList();
 
     }
