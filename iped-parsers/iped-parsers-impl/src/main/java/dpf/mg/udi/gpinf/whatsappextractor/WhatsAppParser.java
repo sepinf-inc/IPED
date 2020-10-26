@@ -49,6 +49,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -74,7 +76,10 @@ public class WhatsAppParser extends SQLite3DBParser {
     /**
      * 
      */
+    private static Logger logger = LoggerFactory.getLogger(WhatsAppParser.class);
+
     private static boolean processed = false;
+
     private boolean mergeDbs = false;
 
     private static final long serialVersionUID = 1L;
@@ -224,16 +229,12 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    public IItemBase findMainDB(List<IItemBase> result) {
+    public IItemBase findAndRemoveMainDBFromList(List<IItemBase> result) {
 
         for (IItemBase it : result) {
-
             String path = it.getPath();
-            System.out.println(path);
             if (path.contains("com.whatsapp") && path.contains("msgstore.db")) {
-                System.out.println(it.getExt());
                 if (it.getExt().equals("sqlite") || it.getExt().equals("db")) {
-                    System.out.println("Chegou !!!!");
                     result.remove(it);
                     return it;
                 }
@@ -324,13 +325,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 .getItems(BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\"",
                 searcher);
         
-        List<Chat> chatlist = new ArrayList<>();
-        
-        IItemBase mainDB = findMainDB(result);
+        IItemBase mainDB = findAndRemoveMainDBFromList(result);
        
         String filePath = null;
         if (mainDB != null) {
             filePath = mainDB.getPath();
+            logger.info("Found main whatsapp DB: {}", filePath);
         }
 
         TemporaryResources tmp = new TemporaryResources();
@@ -340,6 +340,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             String dbPath = mainDB.getPath();
             WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
             
+            List<Chat> chatlist = new ArrayList<>();
             try (InputStream is = mainDB.getStream()) {
                 TikaInputStream tis = TikaInputStream.get(is, tmp);
                 File tempFile = tis.getFile();
@@ -347,7 +348,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 chatlist.addAll(getChatList(extFactory, contacts, account, tempFile));
             }
 
-            System.out.println("Chegou aqui " + mainDB.getName());
             for (IItemBase it : result) {
 
                 List<Chat> tempChatList;
@@ -359,10 +359,13 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
                 
                 ChatMerge cm = new ChatMerge(chatlist, it.getName());
-                if (cm.isBackup(tempChatList)) {// merge in the main chat
-                    System.out.println("recovered messages " + cm.mergeChatList(tempChatList) + " from " + it.getName());
-                } else {// create a separate report
-                    System.out.println("Separeted report for " + it.getName());
+                if (cm.isBackup(tempChatList)) {
+                    // merge in the main chat list
+                    int numMsgRecovered = cm.mergeChatList(tempChatList);
+                    logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath());
+
+                } else {
+                    logger.info("Creating separate report for {}", it.getPath());
                     createReport(tempChatList, searcher,
                             getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
                             extractor,
@@ -370,6 +373,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
             }
             createReport(chatlist, searcher, contacts, handler, extractor, account);
+
         } catch (Exception e) {
             e.printStackTrace();
             // sqliteParser.parse(tis, handler, metadata, context);
