@@ -48,10 +48,10 @@ public class ChatMerge {
             if (indexmain >= 0) {// verify if the chats are compatible
                 if (!c.getRemote().getId().equals(main.get(indexmain).getRemote().getId())) {
                     // if there is a chat incompatible the msgstore is not a backup
-                    System.out.println("incompatible");
                     return false;
+                } else if (hasCompatibleMessage(c.getMessages(), main.get(indexmain).getMessages())) {
+                    totchats++;
                 }
-                totchats++;
             }
 
         }
@@ -59,6 +59,17 @@ public class ChatMerge {
     }
 
 
+    private boolean hasCompatibleMessage(List<Message> backup, List<Message> main) {
+        Collections.sort(main, cmpMessage);
+        int maxMsgsToCheck = 10;
+        for (int i = 0; i < backup.size(); i += Math.max(1, backup.size() / maxMsgsToCheck)) {
+            int idx = Collections.binarySearch(main, backup.get(i), cmpMessage);
+            if (idx >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
 
     public int mergeChatList(List<Chat> backup) {
         int tot_rec = 0;
@@ -85,13 +96,12 @@ public class ChatMerge {
         int tot_rec = 0;
 
         Collections.sort(main, cmpMessage);
-        Collections.sort(backup, cmpMessage);
         int indexmain = 0;
         for (Message m : backup) {
 
             indexmain = Collections.binarySearch(main, m, cmpMessage);
             if (indexmain < 0) {// message was removed
-                main.add(m);
+                main.add(-indexmain - 1, m);
                 tot_rec++;
                 m.setRecoveredFrom(dbname);
             } 
