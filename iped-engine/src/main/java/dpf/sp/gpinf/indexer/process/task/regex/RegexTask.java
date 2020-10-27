@@ -211,7 +211,7 @@ public class RegexTask extends AbstractTask {
 
         Item evidence = (Item) item;
 
-        if (!enabled || evidence.getTextCache() == null || caseData.isIpedReport())
+        if (!enabled || evidence.getTextCache() == null)
             return;
 
         try (Reader reader = evidence.getTextReader()) {
@@ -270,7 +270,7 @@ public class RegexTask extends AbstractTask {
                     String key = REGEX_PREFIX + regexList.get(i).name;
                     Collection<RegexHits> prevHits = (Collection<RegexHits>) evidence.getExtraAttribute(key);
                     Map<String, RegexHits> hitsMap = hitList.get(i);
-                    if (prevHits == null) {
+                    if (prevHits == null || prevHits.isEmpty() || !(prevHits.iterator().next() instanceof RegexHits)) {
                         evidence.setExtraAttribute(key, hitsMap.values());
                     } else {
                         if (prevHits.size() >= MAX_RESULTS) {
