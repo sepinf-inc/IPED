@@ -184,6 +184,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, WAAccount account) throws Exception {
         int chatVirtualId = 0;
+        HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
             int frag = 0;
@@ -214,7 +215,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 
                 if(c.isGroupChat()) {
                     for(WAContact member:c.getGroupmembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, Collections.emptyMap()));
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
                     }
                 }
 
@@ -223,7 +224,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 bytes = nextBytes;
 
                 if (extractMessages) {
-                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor);
+                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor,
+                            cache);
                 }
             }
         }
@@ -494,9 +496,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void extractMessages(String chatName, Chat c, List<Message> messages, WAAccount account,
             WAContactsDirectory contacts, int parentVirtualId, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor) throws SAXException, IOException {
+            EmbeddedDocumentExtractor extractor, Map<String, String> cache) throws SAXException, IOException {
         int msgCount = 0;
-        HashMap<String, String> cache = new HashMap<>();
         for (dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
