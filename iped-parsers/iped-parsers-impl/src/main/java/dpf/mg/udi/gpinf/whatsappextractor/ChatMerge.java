@@ -10,11 +10,25 @@ public class ChatMerge {
     String dbname;
 
     Comparator<Message> cmpMessage = new Comparator<Message>() {
+
         @Override
         public int compare(Message u1, Message u2) {
-            if (u1.getId() == u2.getId())
+            if (u1.getTimeStamp() != null && u2.getTimeStamp() != null) {
+                int comp = u1.getTimeStamp().compareTo(u2.getTimeStamp());
+                if (comp != 0) {
+                    return comp;
+                } else {
+                    return compareId(u1, u2);
+                }
+            } else {
+                return compareId(u1, u2);
+            }
+        }
+
+        private int compareId(Message u1, Message u2) {
+            if (u1.getId() == u2.getId()) {
                 return 0;
-            else if (u1.getId() < u2.getId())
+            } else if (u1.getId() < u2.getId())
                 return -1;
             else
                 return 1;
