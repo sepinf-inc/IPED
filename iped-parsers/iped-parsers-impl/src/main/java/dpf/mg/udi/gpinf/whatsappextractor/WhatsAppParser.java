@@ -59,8 +59,10 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
+import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import iped3.IItem;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -77,10 +79,6 @@ public class WhatsAppParser extends SQLite3DBParser {
      * 
      */
     private static Logger logger = LoggerFactory.getLogger(WhatsAppParser.class);
-
-    private static boolean processed = false;
-
-    private boolean mergeDbs = false;
 
     private static final long serialVersionUID = 1L;
 
@@ -112,17 +110,15 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
 
-    // ugly workaround to show message type before caption (values are shown in sort
+    // workaround to show message type before caption (values are shown in sort
     // order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
 
-    private static synchronized boolean processMSGSTORE() {
-        if (processed == false) {
-            processed = true;
-            return true;
-        }
-        return false;
-    }
+    private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
+
+    private static boolean mainDbFound = false;
+
+    private boolean mergeDbs = false;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
             WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
@@ -166,7 +162,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             parseWhatsAppAccount(stream, context, handler, false);
         } else if (mimetype.equals(MSG_STORE.toString())) {
             if (mergeDbs)
-                parseWhatsappMessagesMerging(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                checkIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
             else
                 parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
         } else if (mimetype.equals(WA_DB.toString())) {
@@ -224,27 +220,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                 bytes = nextBytes;
 
                 if (extractMessages) {
-                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor,
-                            cache);
+                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor, cache);
                 }
             }
         }
-    }
-
-    public IItemBase findAndRemoveMainDBFromList(List<IItemBase> result) {
-
-        for (IItemBase it : result) {
-            String path = it.getPath();
-            if (path.contains("com.whatsapp") && path.contains("msgstore.db")) {
-                if (it.getExt().equals("sqlite") || it.getExt().equals("db")) {
-                    result.remove(it);
-                    return it;
-                }
-            }
-        }
-        IItemBase it = result.get(0);
-        result.remove(0);
-        return it;
     }
 
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -284,31 +263,25 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void parseWhatsappMessagesMerging(InputStream stream, ContentHandler handler, Metadata metadata,
+    private static synchronized void checkIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        if (!processMSGSTORE()) {
-            return;
+        // workaround to show DBs in tree view, because they could be expanded later
+        // TODO this should be updated later, when it is supported by the project
+        metadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+
+        String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+        if (!mainDbFound && !MSGSTORE_BKP.matcher(dbName).find()) {
+            metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
+            mainDbFound = true;
         }
 
-        Metadata chatMetadata = new Metadata();
-        chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
-        chatMetadata.set(TikaCoreProperties.TITLE, "Temp_file");
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-
-        // ugly workaround for zip bomb
-        byte[] b = new byte[10 << 20];
-        ByteArrayInputStream bs = new ByteArrayInputStream(b);
-
-        extractor.parseEmbedded(bs, handler, chatMetadata, false);
+        logger.info("hasChildren " + ((IItem) context.get(IItemBase.class)).getParentIds().toString());
 
     }
 
     private void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
             ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
-
-        
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
@@ -316,39 +289,26 @@ public class WhatsAppParser extends SQLite3DBParser {
             return;
         }
 
-        // ugly workaround for zip bomb
-        byte[] b=new byte[512];
-        while (stream.read(b) > 0)
-            ;
+        IItemBase mainDB = context.get(IItemBase.class);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
        
-        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util
-                .getItems(BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\"",
-                searcher);
-        
-        IItemBase mainDB = findAndRemoveMainDBFromList(result);
-       
-        String filePath = null;
-        if (mainDB != null) {
-            filePath = mainDB.getPath();
-            logger.info("Found main whatsapp DB: {}", filePath);
-        }
+        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\"";
+        query += " && " + BasicProps.EVIDENCE_UUID + ":" + mainDB.getDataSource().getUUID();
+        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
 
         TemporaryResources tmp = new TemporaryResources();
         try {
-            WAContactsDirectory contacts = getWAContactsDirectoryForPath(filePath, searcher, extFactory.getClass());
-            
             String dbPath = mainDB.getPath();
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(dbPath, searcher, extFactory.getClass());
+            
             WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
             
+            TikaInputStream mainTis = TikaInputStream.get(stream, tmp);
+            File mainTempFile = mainTis.getFile();
+            extFactory.setConnectionParams(mainTis, metadata, context, this);
             List<Chat> chatlist = new ArrayList<>();
-            try (InputStream is = mainDB.getStream()) {
-                TikaInputStream tis = TikaInputStream.get(is, tmp);
-                File tempFile = tis.getFile();
-                extFactory.setConnectionParams(tis, metadata, context, this);
-                chatlist.addAll(getChatList(extFactory, contacts, account, tempFile));
-            }
+            chatlist.addAll(getChatList(extFactory, contacts, account, mainTempFile));
 
             for (IItemBase it : result) {
 
@@ -367,11 +327,14 @@ public class WhatsAppParser extends SQLite3DBParser {
                     logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath());
 
                 } else {
+                    // TODO these chats should be put as children of the original DB, not current DB
                     logger.info("Creating separate report for {}", it.getPath());
+                    context.set(EmbeddedParent.class, new EmbeddedParent(it));
                     createReport(tempChatList, searcher,
                             getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
                             extractor,
                             getUserAccount(searcher, it.getPath(), true));
+                    context.set(EmbeddedParent.class, null);
                 }
             }
             createReport(chatlist, searcher, contacts, handler, extractor, account);

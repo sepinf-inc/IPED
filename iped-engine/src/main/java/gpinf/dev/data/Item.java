@@ -284,8 +284,10 @@ public class Item implements ISleuthKitItem {
         tmpFile = null;
         tis = null;
         try {
-            if (textCache != null)
+            if (textCache != null) {
                 textCache.close();
+                textCache = null;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

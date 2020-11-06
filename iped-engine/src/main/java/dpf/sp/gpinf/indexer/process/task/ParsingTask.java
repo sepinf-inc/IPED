@@ -370,12 +370,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
-            metadataToExtraAttribute(evidence);
+            handleMetadata(evidence);
         }
 
     }
 
-    private static final void metadataToExtraAttribute(IItem evidence) {
+    private static final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -404,6 +404,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (hashSetStatus != null) {
             evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
             metadata.remove(KFFTask.KFF_STATUS);
+        }
+
+        String prevMediaType = evidence.getMediaType().toString();
+        String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        if (!prevMediaType.equals(parsedMediaType)) {
+            evidence.setMediaType(MediaType.parse(parsedMediaType));
+        }
+
+        if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
+            metadata.remove(BasicProps.HASCHILD);
+            System.out.println(evidence.getPath());
+            evidence.setHasChildren(true);
         }
 
     }
