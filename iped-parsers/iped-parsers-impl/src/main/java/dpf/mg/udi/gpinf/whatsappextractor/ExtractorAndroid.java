@@ -43,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 
 /**
  *
@@ -51,6 +52,7 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
 public class ExtractorAndroid extends Extractor {
 
     private boolean hasThumbTable = false;
+    private boolean hasEditVersionCol = false;
 
     public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
         super(databaseFile, contacts, account);
@@ -63,6 +65,7 @@ public class ExtractorAndroid extends Extractor {
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
+            hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version");
             String selectChatQuery = hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
             try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
 
@@ -114,7 +117,8 @@ public class ExtractorAndroid extends Extractor {
     private List<Message> extractMessages(Connection conn, WAContact remote, boolean isGroupChat) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn
-                .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE : SELECT_MESSAGES_NO_THUMBS_TABLE)) {
+                .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
+                        : hasEditVersionCol ? SELECT_MESSAGES_NO_THUMBS_TABLE : SELECT_MESSAGES_NO_EDIT_VERSION)) {
             stmt.setFetchSize(1000);
             String id = remote.getId();
             id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -127,7 +131,8 @@ public class ExtractorAndroid extends Extractor {
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
-                int edit_version = rs.getInt("edit_version"); //$NON-NLS-1$
+                String str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
+                Integer edit_version = str != null ? Integer.parseInt(str) : null;
                 int media_size = rs.getInt("mediaSize"); //$NON-NLS-1$
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
@@ -182,7 +187,7 @@ public class ExtractorAndroid extends Extractor {
         return messages;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int status, int edit_version, String caption,
+    protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
             int mediaSize) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
@@ -274,10 +279,12 @@ public class ExtractorAndroid extends Extractor {
                 result = GIF_MESSAGE;
                 break;
             case 15:
-                if (edit_version == 5) {
-                    result = DELETED_MESSAGE;
-                } else {
-                    result = DELETED_FROM_SENDER;
+                if (edit_version != null) {
+                    if (edit_version == 5) {
+                        result = DELETED_MESSAGE;
+                    } else {
+                        result = DELETED_FROM_SENDER;
+                    }
                 }
                 break; 
             case 16:
@@ -311,6 +318,14 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
+            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+
+    private static final String SELECT_MESSAGES_NO_EDIT_VERSION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
+            + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
+            + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
+            + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
