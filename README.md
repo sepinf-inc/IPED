@@ -28,6 +28,8 @@ mvn install
 ```
 It will generate a snapshot version of IPED in target/release folder.
 
+On Linux you also must build The Sleuthkit and additional dependencies. Please refer to [Linux Section](https://github.com/sepinf-inc/IPED/wiki/Linux)
+
 If you want to contribute to the project, refer to [Contributing](https://github.com/lfcnassif/IPED/wiki/Contributing)
 
 ## Features
@@ -35,7 +37,7 @@ If you want to contribute to the project, refer to [Contributing](https://github
 Some of IPED several features are listed below:
 
 - Supported hashes: md5, sha-1, sha-256, sha-512 and edonkey. PhotoDNA is also available for law enforcement (please contact iped@dpf.gov.br)
-- Fast hash deduplication and NIST NSRL hash lookup
+- Fast hash deduplication, NIST NSRL, ProjectVIC and LED hashset lookup
 - Signature analysis
 - Categorization by file type and properties
 - Recursive container expansion of dozens of file formats
@@ -58,13 +60,13 @@ Some of IPED several features are listed below:
 - Extensible with javascript and python (including cpython extensions) scripts
 - External command line tools integration for file decoding
 - Browser history for Edge, Firefox, Chrome and Safari
-- Custom parsers for Emule, Shareaza, Ares, WhatsApp, Skype, Bittorrent and more...
-- Fast nudity detection using random forests algorithm (thanks to its author Wladimir Leite)
+- Custom parsers for Emule, Shareaza, Ares, WhatsApp, Skype, Telegram, Bittorrent, ActivitiesCache, and more...
+- Fast nudity detection for images and videos using random forests algorithm (thanks to its author Wladimir Leite)
 - Nudity detection using Yahoo open-nsfw deeplearning model (needs keras and jep)
 - Audio Transcription, implementations with Azure and Google Cloud services
 - Graph analysis for communications (calls, emails, instant messages...)
 - Stable processing with out-of-process file system decoding and file parsing
-- Resuming of stopped or aborted processing (--continue option)
+- Resuming or restarting of stopped or aborted processing (--continue/--restart options)
 - Web API for searching remote cases, get file metadata, raw content, decoded text, thumbnails and posting bookmarks
 - Creation of bookmarks/tags for interesting data
 - HTML, CSV reports and portable cases with tagged data
