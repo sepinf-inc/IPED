@@ -173,7 +173,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         return new SQLite3TableReader(connection, tableName, context);
     }
 
-    public boolean checkIfColumnExists(Connection connection, String table, String column) {
+    public static boolean checkIfColumnExists(Connection connection, String table, String column) {
         String query = "SELECT name FROM pragma_table_info('" + table + "')";
         try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
             while (rs.next()) {
@@ -187,7 +187,7 @@ public class SQLite3DBParser extends AbstractDBParser {
         return false;
     }
 
-    public String getStringIfExists(ResultSet rs, String col) throws SQLException {
+    public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
         int colIdx;
         try {
             colIdx = rs.findColumn(col);
