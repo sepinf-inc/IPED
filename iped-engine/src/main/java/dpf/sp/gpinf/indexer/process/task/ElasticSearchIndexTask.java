@@ -280,6 +280,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
+        if (!item.isToAddToCase())
+            return;
+
         Reader textReader = item.getTextReader();
         if (textReader == null) {
             LOGGER.warn("Null text reader: " + item.getPath() + " ("

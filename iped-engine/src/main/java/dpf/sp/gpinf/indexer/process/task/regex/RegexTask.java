@@ -211,7 +211,7 @@ public class RegexTask extends AbstractTask {
 
         Item evidence = (Item) item;
 
-        if (!enabled || evidence.getTextCache() == null)
+        if (!enabled || evidence.getTextCache() == null || !evidence.isToAddToCase())
             return;
 
         try (Reader reader = evidence.getTextReader()) {
