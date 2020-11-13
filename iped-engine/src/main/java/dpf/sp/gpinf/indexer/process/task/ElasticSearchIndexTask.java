@@ -64,6 +64,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
+    private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
@@ -78,6 +79,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static boolean enabled = false;
     private static String host;
+    private static String protocol;
     private static int port = 9200;
     private static int max_fields = 10000;
     private static int min_bulk_size = 1 << 23;
@@ -138,7 +140,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             parseCmdLineFields(cmdFields);
         }
 
-        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, "http"))
+        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
@@ -187,6 +189,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();
         port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
+        protocol = props.getProperty(PROTOCOL_KEY);
         max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
         min_bulk_size = Integer.valueOf(props.getProperty(MIN_BULK_SIZE_KEY).trim());
         min_bulk_items = Integer.valueOf(props.getProperty(MIN_BULK_ITEMS_KEY).trim());
