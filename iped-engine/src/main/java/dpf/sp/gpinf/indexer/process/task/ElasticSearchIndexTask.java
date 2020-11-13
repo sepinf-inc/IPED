@@ -11,13 +11,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
@@ -54,6 +47,13 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import repackaged.org.apache.http.HttpHost;
+import repackaged.org.apache.http.auth.AuthScope;
+import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
+import repackaged.org.apache.http.client.CredentialsProvider;
+import repackaged.org.apache.http.client.config.RequestConfig;
+import repackaged.org.apache.http.impl.client.BasicCredentialsProvider;
+import repackaged.org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 

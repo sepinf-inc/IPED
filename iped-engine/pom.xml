@@ -144,7 +144,7 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded2</version>
+            <version>7.6.1-shaded3</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
