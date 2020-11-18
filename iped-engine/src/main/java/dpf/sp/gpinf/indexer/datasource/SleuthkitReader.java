@@ -24,8 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -84,7 +87,9 @@ public class SleuthkitReader extends DataSourceReader {
 
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
 
+    // TODO update @deleteDatasource() when updating TSK
     public static final String MIN_TSK_VER = "4.6.5";
+
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -311,7 +316,6 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.put(image, range);
                     idRangeMap.notify();
                 }
-
             } else if (image.getName().equals(DB_NAME)) {
                 firstId = 0L;
                 lastId = sleuthCase.getLastObjectId();
@@ -322,6 +326,10 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
             } else {
+                if (args.isContinue()) {
+                    deleteDatasource(image);
+                }
+
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("SleuthkitReader.WaitDecode") + image.getAbsolutePath()); //$NON-NLS-1$
                 LOGGER.info("Decoding image {}", image.getAbsolutePath()); //$NON-NLS-1$
@@ -407,6 +415,37 @@ public class SleuthkitReader extends DataSourceReader {
             waitLoadDbThread.join();
 
     }
+    
+    private void deleteDatasource(File image) throws TskCoreException, SQLException {
+        Long sourceId = null;
+        for(Image img : sleuthCase.getImages()) {
+            if(img.getName().equals(image.getName())) {
+                sourceId = img.getId();
+            }
+        }
+        if(sourceId != null) {
+            String queries[] = {
+                    "DELETE FROM tsk_files WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_vs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_vs_parts WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_image_names WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_image_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_fs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_file_layout WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_files_path WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM data_source_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_objects WHERE obj_id >= '" + sourceId + "';"
+            };
+            String dbPath = sleuthCase.getDbDirPath() + File.separator + DB_NAME;
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+                for (String query : queries) {
+                    try (Statement st = conn.createStatement()) {
+                        st.executeUpdate(query);
+                    }
+                }
+            }
+        }
+    }
 
     public int read(File image) throws Exception {
         read(image, null);
@@ -417,6 +456,9 @@ public class SleuthkitReader extends DataSourceReader {
         File file = new File(output, RANGE_ID_FILE);
         UTF8Properties props = new UTF8Properties();
         try {
+            if (file.exists()) {
+                props.load(file);
+            }
             props.setProperty(image.getCanonicalPath() + ":startid", start.toString());
             props.setProperty(image.getCanonicalPath() + ":lastid", last.toString());
             props.store(file);
