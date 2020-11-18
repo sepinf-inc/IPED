@@ -96,12 +96,14 @@ public class ProjectVICHashLookup extends AbstractTask {
         if (vicSet.compressedHashArray != null)
             return;
 
-        File vicJsonFile;
+        File vicJsonFile = null;
         String path = confParams.getProperty(JSON_PATH_KEY);
         if (path != null && !path.trim().isEmpty()) {
             vicJsonFile = new File(path.trim());
-        } else {
-            logger.error(JSON_PATH_KEY + " not configured in LocalConfig. ProjectVic hashset lookup will be disabled.");
+        }
+        if (vicJsonFile == null || !vicJsonFile.exists()) {
+            String msg = vicJsonFile == null ? " not configured." : " not found.";
+            logger.error(JSON_PATH_KEY + msg + " ProjectVic hashset lookup will be disabled.");
             enabled = false;
             return;
         }
