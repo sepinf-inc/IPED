@@ -133,7 +133,7 @@ public class ExtractorAndroid extends Extractor {
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
                 String str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
                 Integer edit_version = str != null ? Integer.parseInt(str) : null;
-                int media_size = rs.getInt("mediaSize"); //$NON-NLS-1$
+                long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
                 String remoteResource = rs.getString("remoteResource");
                 if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
@@ -152,7 +152,7 @@ public class ExtractorAndroid extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, media_size));
+                m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
                 m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { m.getData() }));
