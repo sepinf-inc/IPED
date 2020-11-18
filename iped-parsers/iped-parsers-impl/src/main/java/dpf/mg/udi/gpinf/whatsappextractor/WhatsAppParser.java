@@ -398,7 +398,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (m.isFromMe())
                     metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
 
-            } else if (m.getMediaName() != null && !m.getMediaName().isEmpty()) {
+            } else if (m.getMediaName() != null && !m.getMediaName().isEmpty() && m.getMediaSize() > 2) {
                 String mediaName = m.getMediaName();
                 if (mediaName.contains("/")) //$NON-NLS-1$
                     mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
