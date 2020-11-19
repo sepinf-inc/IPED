@@ -58,16 +58,34 @@ public class IOUtil {
             "VEXE", "VLX", "VPM", "VXP", "WCM", "WIDGET", "WIZ", "WORKFLOW", "WPK", "WPM", "WS", "WSF", "WSH", "X86",
             "X86_64", "XAP", "XBAP", "XLM", "XQT", "XYS", "ZL9"));
 
+    public static enum ExternalOpenEnum {
+        NEVER, ASK_ALWAYS, ASK_IF_EXE, ALWAYS
+    }
+
+    private static ExternalOpenEnum externalOpenConfig = ExternalOpenEnum.ASK_IF_EXE;
+
+    public static void setExternalOpenConfig(ExternalOpenEnum config) {
+        externalOpenConfig = config;
+    }
+
+    public static boolean isToOpenExternally(String fileName, String fileExt) {
+        return IOUtil.externalOpenConfig == ExternalOpenEnum.ALWAYS
+                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_ALWAYS && IOUtil.confirmOpenDialog(fileName))
+                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_IF_EXE
+                        && (!IOUtil.isDangerousExtension(fileExt) || IOUtil.confirmOpenDialog(fileName)));
+    }
+
     public static final boolean isDangerousExtension(String ext) {
         return ext != null && DANGEROUS_EXTS.contains(ext.toUpperCase());
     }
 
-    public static final boolean hasDangerousExtension(File file) {
+    public static final String getExtension(File file) {
         int idx = file.getName().lastIndexOf('.');
-        if (idx == -1)
-            return false;
-        else
-            return isDangerousExtension(file.getName().substring(idx + 1));
+        if (idx == -1) {
+            return "";
+        } else {
+            return file.getName().substring(idx + 1);
+        }
     }
 
     public static final boolean confirmOpenDialog(String fileName) {

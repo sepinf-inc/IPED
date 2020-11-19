@@ -123,7 +123,7 @@ public class EmailViewer extends HtmlViewer {
             Object[] att = mch.attachs.get(attNum);
             File file = (File) att[0];
             String attachName = (String) att[2];
-            if (!IOUtil.hasDangerousExtension(file) || IOUtil.confirmOpenDialog(attachName)) {
+            if (IOUtil.isToOpenExternally(attachName, IOUtil.getExtension(file))) {
                 this.openFile(file);
             }
         }
