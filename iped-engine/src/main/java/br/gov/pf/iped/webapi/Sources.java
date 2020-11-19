@@ -55,16 +55,16 @@ public class Sources {
         for (Object object : arr) {
             JSONObject jsonobj = (JSONObject) object;
             String id = (String) jsonobj.get("id");
-            String path = (String) jsonobj.get("path");
+            File file = new File((String) jsonobj.get("path"));
 
-            sourcePathToStringID.put(path, id);
+            sourcePathToStringID.put(file.toString(), id);
 
             if (!confInited) {
-                Configuration.getInstance().loadConfigurables(path + "/indexador", true); //$NON-NLS-1$
+                Configuration.getInstance().loadConfigurables(file + File.separator + "indexador", true); //$NON-NLS-1$
                 confInited = true;
             }
 
-            IIPEDSource source = new IPEDSource(new File(path));
+            IIPEDSource source = new IPEDSource(file);
             sources.add(source);
         }
 
