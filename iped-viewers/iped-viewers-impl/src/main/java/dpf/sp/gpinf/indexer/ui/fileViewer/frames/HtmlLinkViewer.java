@@ -131,7 +131,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         public void open(final String luceneQuery) {
 
             IItem item = attachSearcher.getItem(luceneQuery);
-            if (IOUtil.isDangerousExtension(item.getTypeExt()) && !IOUtil.confirmOpenDialog(item.getName())) {
+            if (!IOUtil.isToOpenExternally(item.getName(), item.getTypeExt())) {
                 return;
             }
             File file = null;
