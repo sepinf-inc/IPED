@@ -14,17 +14,24 @@ import java.nio.file.StandardOpenOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import iped3.IItem;
+
 public class TextCache implements Closeable {
 
     private static Logger logger = LoggerFactory.getLogger(TextCache.class);
 
     private static int MAX_MEMORY_CHARS = 10000000;
 
+    private IItem sourceItem;
     private StringBuilder sb = new StringBuilder();
     private File tmp;
     private Writer writer;
     private long size = 0;
     private boolean diskCacheEnabled = true;
+
+    public void setSourceItem(IItem sourceItem) {
+        this.sourceItem = sourceItem;
+    }
 
     public void setEnableDiskCache(boolean diskCacheEnabled) {
         this.diskCacheEnabled = diskCacheEnabled;
@@ -82,8 +89,8 @@ public class TextCache implements Closeable {
                 reader = Files.newBufferedReader(tmp.toPath());
 
             } catch (FileSystemException | FileNotFoundException e) {
-                logger.error("Error reading extracted text file, maybe your antivirus blocked or deleted it? "
-                        + e.toString());
+                logger.error("Error reading extracted text file{}, maybe your antivirus blocked or deleted it? {}",
+                        sourceItem != null ? " from " + sourceItem.getPath() : "", e.toString());
                 e.printStackTrace();
                 return new StringReader("");
             }
