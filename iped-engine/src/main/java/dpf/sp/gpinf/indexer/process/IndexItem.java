@@ -23,9 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -944,14 +942,9 @@ public class IndexItem extends BasicProps {
 
     private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
             throws IOException {
-        if (evidence.getPath().contains(">>"))
+        if (evidence.isSubItem())
             return localFile;
-        Path path;
-        try {
-            path = Paths.get(evidence.getPath());
-        } catch (InvalidPathException e) {
-            return localFile;
-        }
+        Path path = localFile.toPath();
         String pathSuffix = "";
         if (path.getNameCount() > 1)
             pathSuffix = path.subpath(1, path.getNameCount()).toString();
