@@ -570,8 +570,10 @@ public class Item implements ISleuthKitItem {
     public Reader getTextReader() throws IOException {
         if (textCache == null)
             return null;
-        else
+        else {
+            textCache.setSourceItem(this);
             return textCache.getTextReader();
+        }
     }
 
     /**
