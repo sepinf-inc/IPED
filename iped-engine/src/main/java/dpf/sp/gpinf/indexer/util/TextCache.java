@@ -2,14 +2,21 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class TextCache implements Closeable {
+
+    private static Logger logger = LoggerFactory.getLogger(TextCache.class);
 
     private static int MAX_MEMORY_CHARS = 10000000;
 
@@ -70,8 +77,17 @@ public class TextCache implements Closeable {
         if (sb != null)
             reader = new StringReader(sb.toString());
 
-        if (tmp != null)
-            reader = Files.newBufferedReader(tmp.toPath());
+        if (tmp != null) {
+            try {
+                reader = Files.newBufferedReader(tmp.toPath());
+
+            } catch (FileSystemException | FileNotFoundException e) {
+                logger.error("Error reading extracted text file, maybe your antivirus blocked or deleted it? "
+                        + e.toString());
+                e.printStackTrace();
+                return new StringReader("");
+            }
+        }
 
         if (reader != null)
             return new KnownSizeReader(reader);
