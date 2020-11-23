@@ -50,6 +50,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
 
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    private String evidenceToRemove;
+
     @Parameter(names = { "-r",
             "-report" }, description = "FTK3+ report folder", validateWith = FTKReportValidator.class)
     private File reportDir;
@@ -250,6 +253,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         return extraParams;
     }
 
+    public String getEvidenceToRemove() {
+        return evidenceToRemove;
+    }
+
     @Override
     public String getDataSourceName(File datasource) {
         for (int i = 0; i < allArgs.size(); i++) {
@@ -381,7 +388,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             System.exit(0);
         }
 
-        if (reportDir == null && (datasources == null || datasources.isEmpty())) {
+        if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 

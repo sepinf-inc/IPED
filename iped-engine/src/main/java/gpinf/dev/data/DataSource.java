@@ -46,4 +46,9 @@ public class DataSource implements IDataSource {
         return sourceFile;
     }
 
+    @Override
+    public String toString() {
+        return this.getUUID();
+    }
+
 }

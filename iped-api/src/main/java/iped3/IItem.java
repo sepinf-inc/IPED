@@ -1,9 +1,5 @@
 package iped3;
 
-import iped3.io.ISeekableInputStreamFactory;
-import iped3.io.IItemBase;
-import iped3.datasource.IDataSource;
-import iped3.io.SeekableInputStream;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -17,6 +13,11 @@ import java.util.Map;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+
+import iped3.datasource.IDataSource;
+import iped3.io.IItemBase;
+import iped3.io.ISeekableInputStreamFactory;
+import iped3.io.SeekableInputStream;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -93,8 +94,6 @@ public interface IItem extends IItemBase {
      */
     @Override
     Date getCreationDate();
-
-    IDataSource getDataSource();
 
     String getIdInDataSource();
 

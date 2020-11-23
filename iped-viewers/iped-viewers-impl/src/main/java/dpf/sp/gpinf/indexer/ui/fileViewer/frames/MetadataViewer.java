@@ -237,6 +237,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());
         fillProp(sb, BasicProps.ID, item.getId());
         fillProp(sb, BasicProps.PARENTID, item.getParentId());
+        fillProp(sb, BasicProps.EVIDENCE_UUID, item.getDataSource());
         fillProp(sb, BasicProps.SUBITEM, item.isSubItem());
         fillProp(sb, BasicProps.SUBITEMID, item.getSubitemId());
         fillProp(sb, BasicProps.CARVED, item.isCarved());

@@ -58,4 +58,6 @@ public interface CmdLineArgs {
 
     String getDataSourceName(File datasource);
 
+    public String getEvidenceToRemove();
+
 }
