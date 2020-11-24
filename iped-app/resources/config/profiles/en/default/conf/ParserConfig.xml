@@ -115,7 +115,8 @@
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
 			<params>
-				<param name="mergeDbs" type="bool">true</param>
+			    <!--Experimental feature, not completed yet -->
+				<param name="mergeDbs" type="bool">false</param>
 			</params>
 		</parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">

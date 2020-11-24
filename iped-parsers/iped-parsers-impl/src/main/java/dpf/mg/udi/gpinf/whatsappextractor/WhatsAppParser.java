@@ -118,6 +118,9 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean mainDbFound = false;
 
+    /**
+     * Experimental and incomplete feature. See TODOs below.
+     */
     private boolean mergeDbs = false;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
@@ -143,6 +146,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         this.extractMessages = extractMessages;
     }
 
+    /**
+     * Experimental and incomplete feature. See TODOs below.
+     */
     @Field
     public void setMergeDbs(boolean mergeDbs) {
         this.mergeDbs = mergeDbs;
@@ -266,11 +272,13 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static synchronized void checkIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        // workaround to show DBs in tree view, because they could be expanded later
-        // TODO this should be updated later, when it is supported by the project
+        // workaround to show backups in tree view, because they could be expanded later
+        // TODO this should be enhanced when flags could be updated, it's a minor detail
         metadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
 
         String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
+
+        // TODO if no main db is found, backups are not processed. This must be fixed!
         if (!mainDbFound && !MSGSTORE_BKP.matcher(dbName).find()) {
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
             mainDbFound = true;
@@ -327,7 +335,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath());
 
                 } else {
-                    // TODO these chats should be put as children of the original DB, not current DB
+                    // TODO if the backup is not merged, parent of chats should be the backup, not
+                    // main db. This is not working currently.
                     logger.info("Creating separate report for {}", it.getPath());
                     context.set(EmbeddedParent.class, new EmbeddedParent(it));
                     createReport(tempChatList, searcher,

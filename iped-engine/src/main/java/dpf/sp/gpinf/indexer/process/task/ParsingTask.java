@@ -414,7 +414,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
             metadata.remove(BasicProps.HASCHILD);
-            System.out.println(evidence.getPath());
             evidence.setHasChildren(true);
         }
 
