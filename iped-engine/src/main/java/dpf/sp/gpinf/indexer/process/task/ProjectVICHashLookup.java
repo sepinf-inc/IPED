@@ -27,6 +27,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupHashSet;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IHashValue;
@@ -206,6 +208,7 @@ public class ProjectVICHashLookup extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        ChildPornHashLookup.dispose();
         vicSet = null;
         photoDnaSet = null;
     }
@@ -283,6 +286,7 @@ public class ProjectVICHashLookup extends AbstractTask {
         
         if (vicSet != null && (!photoDNAEnabled || photoDnaSet != null)) {
             printStats();
+            installLookupForParsers();
             return;
         }
 
@@ -442,9 +446,10 @@ public class ProjectVICHashLookup extends AbstractTask {
         }
 
         printStats();
+        installLookupForParsers();
 
     }
-    
+
     private void printStats() {
         logger.info("Number of ProjectVic hashes loaded: " + vicSet.getNumRecords());
         logger.info("Number of ProjectVic photoDNA hashes loaded: "
@@ -462,6 +467,26 @@ public class ProjectVICHashLookup extends AbstractTask {
             return null;
         }
     }
+    
+    private void installLookupForParsers() {
+        ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
+            @Override
+            public boolean lookupHash(String algorithm, String hashString) {
+                if ((isMd5Enabled && "md5".equals(algorithm)) || (!isMd5Enabled && "sha-1".equals(algorithm))) {
+                    if (hashString != null && !hashString.isEmpty()) {
+                        byte[] hash = new HashValue(hashString).getBytes();
+                        VicEntry ve = lookupVicEntry(hash);
+                        if (ve != null) {
+                            if (ve.category == 1 || ve.category == 2) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        });
+    }
 
     @Override
     protected void process(IItem item) throws Exception {
@@ -475,9 +500,8 @@ public class ProjectVICHashLookup extends AbstractTask {
         else
             hash = new HashValue((String) item.getExtraAttribute(HashTask.HASH.SHA1.toString())).getBytes();
 
-        int idx = vicSet.binarySearch(hash);
-        if (idx >= 0) {
-            VicEntry ve = vicSet.getEntry(idx);
+        VicEntry ve = lookupVicEntry(hash);
+        if (ve != null) {
             storeProjectVicEntryInfo(item, ve);
             if (ve.category == 1 || ve.category == 2) {
                 item.setExtraAttribute(KFFTask.KFF_STATUS, "pedo");
@@ -485,6 +509,14 @@ public class ProjectVICHashLookup extends AbstractTask {
             }
         }
 
+    }
+
+    private VicEntry lookupVicEntry(byte[] hash) {
+        int idx = vicSet.binarySearch(hash);
+        if (idx >= 0) {
+            return vicSet.getEntry(idx);
+        }
+        return null;
     }
 
     public static void storeProjectVicEntryInfo(IItem item, VicEntry ve) {

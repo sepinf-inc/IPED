@@ -1,16 +1,13 @@
 package dpf.mt.gpinf.skype.parser;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.sql.Connection;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -31,8 +28,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
@@ -221,6 +218,9 @@ public class SkypeParser extends AbstractParser {
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
                                 meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); // $NON-NLS-1$
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
+                                if (ChildPornHashLookup.lookupHash(item.getHash())) {
+                                    meta.set("kffstatus", "pedo");
+                                }
                             }
 
                             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
@@ -267,6 +267,9 @@ public class SkypeParser extends AbstractParser {
                             tMetadata.add(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + t.getItem().getHash());
                             if (t.getFrom().equals(sqlite.getSkypeName()))
                                 tMetadata.add(ExtraProperties.SHARED_HASHES, t.getItem().getHash());
+                        }
+                        if (ChildPornHashLookup.lookupHash(t.getItem().getHash())) {
+                            tMetadata.set("kffstatus", "pedo");
                         }
                     }
 
