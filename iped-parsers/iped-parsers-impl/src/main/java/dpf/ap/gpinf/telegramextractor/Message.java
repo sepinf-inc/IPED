@@ -23,7 +23,7 @@ import java.util.List;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 
 public class Message implements MessageInterface {
     private long id;
@@ -65,7 +65,7 @@ public class Message implements MessageInterface {
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
         if (mediaHash != null) {
-            setChildPorn(LedHashes.lookupHashDatabase(mediaHash));
+            setChildPorn(ChildPornHashLookup.lookupHash(mediaHash));
         }
     }
 

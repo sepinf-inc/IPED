@@ -21,7 +21,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupHashSet;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IHashValue;
@@ -50,6 +51,10 @@ public class LedKFFTask extends AbstractTask {
     private static final int idxName = 6;
     private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
     private static Boolean taskEnabled;
+
+    public static IHashValue[] getHashArray(String algorithm) {
+        return hashArrays.get(algorithm);
+    }
 
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
@@ -170,8 +175,24 @@ public class LedKFFTask extends AbstractTask {
                 writeCache(ledWkffCache, cacheKey);
             }
             logger.info("Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
-            LedHashes.hashMap = hashArrays;
+
+            ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
+                @Override
+                public boolean lookupHash(String algorithm, String hash) {
+                    return lookup(algorithm, hash);
+                }
+            });
         }
+    }
+
+    private boolean lookup(String algorithm, String hash) {
+        if (hash != null) {
+            IHashValue[] hashes = hashArrays.get(algorithm);
+            if (hashes != null && Arrays.binarySearch(hashes, new HashValue(hash)) >= 0) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeCache(File ledWkffCache, String cacheKey) {
@@ -346,6 +367,7 @@ public class LedKFFTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        ChildPornHashLookup.dispose();
         if (hashArrays != null) {
             hashArrays.clear();
             hashArrays = null;
@@ -365,11 +387,13 @@ public class LedKFFTask extends AbstractTask {
         }
 
         for (int col = 0; col < ledHashOrder.length; col++) {
-            if (ledHashOrder[col] != null) {
-                String hash = (String) evidence.getExtraAttribute(ledHashOrder[col]);
+            String algorithm = ledHashOrder[col];
+            if (algorithm != null) {
+                String hash = (String) evidence.getExtraAttribute(algorithm);
                 if (hash != null) {
-                    if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
+                    if (lookup(algorithm, hash)) {
                         evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
+                        evidence.setExtraAttribute(KFFTask.KFF_GROUP, "led"); //$NON-NLS-1$
                     }
                     break;
                 }

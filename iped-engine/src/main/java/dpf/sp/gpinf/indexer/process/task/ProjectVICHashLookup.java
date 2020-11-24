@@ -24,6 +24,8 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupHashSet;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IItem;
@@ -76,6 +78,7 @@ public class ProjectVICHashLookup extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        ChildPornHashLookup.dispose();
         vicSet = null;
     }
 
@@ -132,6 +135,7 @@ public class ProjectVICHashLookup extends AbstractTask {
                     ObjectInputStream ois = new ObjectInputStream(bis)) {
                 vicSet = (VicSet) ois.readObject();
             }
+            installLookupForParsers();
             return;
         } else {
             Files.deleteIfExists(cacheFile.toPath());
@@ -247,6 +251,8 @@ public class ProjectVICHashLookup extends AbstractTask {
             vicSet.compressedHashArray[(i + 1) * recordSize - 1] = flags;
         }
 
+        installLookupForParsers();
+
         cacheFile.getParentFile().mkdirs();
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
                 ObjectOutputStream oos = new ObjectOutputStream(bos)){
@@ -254,6 +260,26 @@ public class ProjectVICHashLookup extends AbstractTask {
         }
         cacheFile.setLastModified(jsonDate);
 
+    }
+
+    private void installLookupForParsers() {
+        ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
+            @Override
+            public boolean lookupHash(String algorithm, String hashString) {
+                if ((isMd5Enabled && "md5".equals(algorithm)) || (!isMd5Enabled && "sha-1".equals(algorithm))) {
+                    if (hashString != null && !hashString.isEmpty()) {
+                        byte[] hash = new HashValue(hashString).getBytes();
+                        VicEntry ve = lookupVicEntry(hash);
+                        if (ve != null) {
+                            if (ve.category == 1 || ve.category == 2) {
+                                return true;
+                            }
+                        }
+                    }
+                }
+                return false;
+            }
+        });
     }
 
     /**
@@ -305,9 +331,8 @@ public class ProjectVICHashLookup extends AbstractTask {
         else
             hash = new HashValue((String) item.getExtraAttribute(HashTask.HASH.SHA1.toString())).getBytes();
 
-        int pos = binarySearch(vicSet.compressedHashArray, hash);
-        if (pos >= 0) {
-            VicEntry ve = getEntry(vicSet.compressedHashArray, pos, hash.length);
+        VicEntry ve = lookupVicEntry(hash);
+        if (ve != null) {
             item.setExtraAttribute("projectvic_category", ve.category);
             item.setExtraAttribute("projectvic_victimIdentified", ve.victimIdentified);
             item.setExtraAttribute("projectvic_ofenderIdentified", ve.ofenderIdentified);
@@ -318,6 +343,14 @@ public class ProjectVICHashLookup extends AbstractTask {
             }
         }
 
+    }
+
+    private VicEntry lookupVicEntry(byte[] hash) {
+        int pos = binarySearch(vicSet.compressedHashArray, hash);
+        if (pos >= 0) {
+            return getEntry(vicSet.compressedHashArray, pos, hash.length);
+        }
+        return null;
     }
 
     private VicEntry getEntry(byte[] array, int index, int hashSize) {

@@ -26,7 +26,6 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -44,12 +43,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.AttributesImpl;
 
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.HashValue;
 import gpinf.emule.KnownMetEntry;
-import iped3.IHashValue;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
@@ -169,8 +166,7 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                IHashValue hashVal = new HashValue(hash);
-                if (LedHashes.hashMap != null && Arrays.binarySearch(LedHashes.hashMap.get("edonkey"), hashVal) >= 0) { //$NON-NLS-1$
+                if (ChildPornHashLookup.lookupHash("edonkey", hash)) { //$NON-NLS-1$
                     kffHit++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
@@ -210,7 +206,7 @@ public class KnownMetParser extends AbstractParser {
             xhtml.newline();
         }
 
-        if (LedHashes.hashMap != null)
+        if (kffHit > 0)
             metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
 
         xhtml.endElement("div"); //$NON-NLS-1$
