@@ -14,11 +14,7 @@ import org.xml.sax.ContentHandler;
 import dpf.mt.gpinf.skype.parser.v8.SkypeContactV8;
 import dpf.mt.gpinf.skype.parser.v8.SkypeConversationV14;
 import dpf.mt.gpinf.skype.parser.v8.SkypeMessageV12;
-<<<<<<< HEAD
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-=======
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
->>>>>>> refs/heads/master
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -142,11 +138,7 @@ public class ReportGenerator {
                     }
                     out.print("<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     out.println("</a>"); //$NON-NLS-1$
-<<<<<<< HEAD
                     if (ChildPornHashLookup.lookupHash(item.getHash())) {
-=======
-                    if (LedHashes.lookupHashDatabase(item.getHash())) {
->>>>>>> refs/heads/master
                         out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></div>");
                     }
                 } catch (Exception e) {
@@ -395,11 +387,7 @@ public class ReportGenerator {
                         + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
             out.println("</a></p>"); //$NON-NLS-1$
 
-<<<<<<< HEAD
             if (ChildPornHashLookup.lookupHash(item.getHash())) {
-=======
-            if (LedHashes.lookupHashDatabase(item.getHash())) {
->>>>>>> refs/heads/master
                 out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></div>");
             }
         }
