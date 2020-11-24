@@ -12,8 +12,9 @@ import java.io.Reader;
 import java.io.Serializable;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
@@ -46,9 +47,7 @@ public class ProjectVICHashLookup extends AbstractTask {
 
     private static final String DATA_MODEL = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
 
-    private static boolean isMd5Enabled;
-
-    private static VicSet vicSet, photoDnaSet;
+    private static VicSet md5Set, sha1Set, photoDnaSet;
 
     private static Boolean enabled;
     
@@ -66,7 +65,7 @@ public class ProjectVICHashLookup extends AbstractTask {
         private boolean ofenderIdentified;
         private boolean isDistributed;
         private int seriesId;
-        private byte[] photoDNA;
+        private byte[] photoDNA, sha1;
 
         private VicEntry() {
             super();
@@ -78,6 +77,29 @@ public class ProjectVICHashLookup extends AbstractTask {
 
     }
     
+    private class VicEntrySha1Comparator implements Comparator<VicEntry> {
+
+        @Override
+        public int compare(VicEntry arg0, VicEntry arg1) {
+            byte[] bytes = arg0.sha1;
+            byte[] compBytes = arg1.sha1;
+            if (bytes == null && compBytes != null) {
+                return -1;
+            } else if (bytes != null && compBytes == null) {
+                return 1;
+            } else if (bytes == null && compBytes == null) {
+                return 0;
+            }
+            for (int i = 0; i < bytes.length; i++) {
+                int cmp = Integer.compare(bytes[i] & 0xFF, compBytes[i] & 0xFF);
+                if (cmp != 0)
+                    return cmp;
+            }
+            return 0;
+        }
+
+    }
+
     public static class ProjectVicPhotoDNA implements IHashValue{
         
         /**
@@ -143,6 +165,10 @@ public class ProjectVICHashLookup extends AbstractTask {
         private byte[] compressedHashArray;
         private Integer hashSize;
         
+        private VicSet(int hashSize) {
+            this.hashSize = hashSize;
+        }
+
         private byte[] getHash(int idx) {
             int pos = idx * getRecordSize();
             byte[] hash = new byte[hashSize];
@@ -209,7 +235,7 @@ public class ProjectVICHashLookup extends AbstractTask {
     @Override
     public void finish() throws Exception {
         ChildPornHashLookup.dispose();
-        vicSet = null;
+        md5Set = null;
         photoDnaSet = null;
     }
 
@@ -227,7 +253,7 @@ public class ProjectVICHashLookup extends AbstractTask {
         if (!enabled)
             return;
 
-        if (vicSet != null)
+        if (md5Set != null && sha1Set != null)
             return;
         
         try {
@@ -253,48 +279,50 @@ public class ProjectVICHashLookup extends AbstractTask {
         }
 
         String hashes = confParams.getProperty(HashTask.HASH_PROP);
-        String hashAlgorithm;
-        if (hashes != null && hashes.contains(HashTask.HASH.MD5.toString())) {
-            isMd5Enabled = true;
-            hashAlgorithm = HashTask.HASH.MD5.toString();
-        } else if (hashes != null && hashes.contains(HashTask.HASH.SHA1.toString())) {
-            isMd5Enabled = false;
-            hashAlgorithm = HashTask.HASH.SHA1.toString();
-        } else {
+        if (hashes != null && !hashes.contains(HashTask.HASH.MD5.toString())
+                && !hashes.contains(HashTask.HASH.SHA1.toString())) {
             logger.error("Neither md5 nor sha-1 were enabled. ProjectVic hashset lookup will be disabled.");
             enabled = false;
             return;
         }
 
-        long jsonDate = vicJsonFile.lastModified();
+        String[] cacheSuffixes = { ".md5", ".sha-1", ".pdna" };
 
-        if (photoDNAEnabled) {
-            File cacheFile = new File(CACHE_PATH + ".pdna");
+        long jsonDate = vicJsonFile.lastModified();
+        for (int i = 0; i < cacheSuffixes.length; i++) {
+            File cacheFile = new File(CACHE_PATH + cacheSuffixes[i]);
             if (cacheFile.exists() && cacheFile.lastModified() == jsonDate) {
-                photoDnaSet = loadCache(cacheFile);
+                if (i == 0) {
+                    md5Set = loadCache(cacheFile);
+                } else if (i == 1) {
+                    sha1Set = loadCache(cacheFile);
+                } else if (photoDNAEnabled && i == 2) {
+                    photoDnaSet = loadCache(cacheFile);
+                }
             } else {
                 Files.deleteIfExists(cacheFile.toPath());
             }
         }
-        
-        File cacheFile = new File(CACHE_PATH + "." + hashAlgorithm);
-        if (cacheFile.exists() && cacheFile.lastModified() == jsonDate) {
-            vicSet = loadCache(cacheFile);
-        } else {
-            Files.deleteIfExists(cacheFile.toPath());
-        }
-        
-        if (vicSet != null && (!photoDNAEnabled || photoDnaSet != null)) {
+
+        if (md5Set != null && sha1Set != null && (!photoDNAEnabled || photoDnaSet != null)) {
             printStats();
             installLookupForParsers();
             return;
         }
 
+        md5Set = new VicSet(16);
+        sha1Set = new VicSet(20);
+        if (photoDNAEnabled) {
+            photoDnaSet = new VicSet(144);
+        }
+
+        // must be in same order than cacheSufixes array
+        VicSet[] sets = { md5Set, sha1Set, photoDnaSet };
+
         List<VicEntry> vicHashList = new ArrayList<>();
         logger.info("Loading ProjectVic json " + vicJsonFile.getAbsolutePath());
 
-        int nullHashes = 0;
-        int photoDnaCount = 0;
+        int md5Count = 0, sha1Count = 0, photoDnaCount = 0;
         int invalidPdna = 0;
 
         HashMap<String, Integer> seriesMap = new HashMap<>();
@@ -326,10 +354,12 @@ public class ProjectVICHashLookup extends AbstractTask {
                                 ve = new VicEntry();
                             }else if ("Category".equals(jp.currentName())) {
                                 ve.category = (byte) jp.nextIntValue(-1);
-                            } else if (isMd5Enabled && "MD5".equals(jp.currentName())) {
+                            } else if ("MD5".equals(jp.currentName())) {
                                 ve.setHash(jp.nextTextValue().trim());
-                            } else if (!isMd5Enabled && "SHA1".equals(jp.currentName())) {
-                                ve.setHash(jp.nextTextValue().trim());
+                                md5Count++;
+                            } else if ("SHA1".equals(jp.currentName())) {
+                                ve.sha1 = new HashValue(jp.nextTextValue().trim()).getBytes();
+                                sha1Count++;
                             } else if ("VictimIdentified".equals(jp.currentName())) {
                                 ve.victimIdentified = Boolean.valueOf(jp.nextTextValue());
                             } else if ("OffenderIdentified".equals(jp.currentName())) {
@@ -352,10 +382,8 @@ public class ProjectVICHashLookup extends AbstractTask {
                             } else if ("Tags".equals(jp.currentName())) {
                                 // TODO
                             } else if (token == JsonToken.END_OBJECT) {
-                                if (ve.getBytes() != null) {
+                                if (ve.getBytes() != null || ve.sha1 != null) {
                                     vicHashList.add(ve);
-                                }else {
-                                    nullHashes++;
                                 }
                             }
                         } else if (arrayDepth == 2 && photoDNAEnabled) {
@@ -381,62 +409,59 @@ public class ProjectVICHashLookup extends AbstractTask {
             jp.close();
         }
 
-        vicSet = new VicSet();
-        if (photoDNAEnabled) {
-            photoDnaSet = new VicSet();
-        }
         for (Entry<String, Integer> e : seriesMap.entrySet()) {
-            vicSet.seriesMap.put(e.getValue(), e.getKey());
+            md5Set.seriesMap.put(e.getValue(), e.getKey());
+            sha1Set.seriesMap.put(e.getValue(), e.getKey());
             if(photoDnaSet != null) {
                 photoDnaSet.seriesMap.put(e.getValue(), e.getKey());
             }
         }
 
         logger.debug("Number of ProjectVic invalid photoDNA hashes: " + invalidPdna);
-        logger.debug("Number of ProjectVic null " + hashAlgorithm + " values: " + nullHashes);
-
-        VicEntry[] hashArray = vicHashList.toArray(new VicEntry[vicHashList.size()]);
-        vicHashList = null;
-
-        logger.info("Sorting ProjectVic hashes.");
-        Arrays.parallelSort(hashArray);
 
         logger.info("Compressing ProjectVic hashes.");
-        VicSet[] sets = {vicSet, photoDnaSet};
         
+        int suffixIdx = 0;
         for(VicSet set : sets) {
-            if(set == null) {
+            if (set == null) {
                 continue;
+            } else if (set != photoDnaSet) {
+                logger.info("Sorting ProjectVic hashes.");
+                if (set == md5Set) {
+                    Collections.sort(vicHashList);
+                } else if (set == sha1Set) {
+                    Collections.sort(vicHashList, new VicEntrySha1Comparator());
+                }
             }
+            boolean isMd5 = set == md5Set;
             boolean isPDNA = set == photoDnaSet;
-            int hashSize = isPDNA ? 144 : hashArray[0].getBytes().length;
-            set.hashSize = hashSize;
+            int hashSize = set.hashSize;
             int recordSize = set.getRecordSize();
-            int numHashes = isPDNA ? photoDnaCount : hashArray.length;
+            int numHashes = isPDNA ? photoDnaCount : isMd5 ? md5Count : sha1Count;
             set.compressedHashArray = new byte[numHashes * recordSize];
             int k = 0;
-            for (int i = 0; i < hashArray.length; i++) {
-                byte[] hash = isPDNA ? hashArray[i].photoDNA : hashArray[i].getBytes();
+            for (int i = 0; i < vicHashList.size(); i++) {
+                VicEntry entry = vicHashList.get(i);
+                byte[] hash = isPDNA ? entry.photoDNA : isMd5 ? entry.getBytes() : entry.sha1;
                 if(hash == null || hash.length == 0) {
                     continue;
                 }
                 System.arraycopy(hash, 0, set.compressedHashArray, k * recordSize, hashSize);
                 byte flags = 0;
-                if (hashArray[i].victimIdentified)
+                if (entry.victimIdentified)
                     flags |= 1;
-                if (hashArray[i].ofenderIdentified)
+                if (entry.ofenderIdentified)
                     flags |= 1 << 1;
-                if (hashArray[i].isDistributed)
+                if (entry.isDistributed)
                     flags |= 1 << 2;
-                set.compressedHashArray[(k + 1) * recordSize - 4] = hashArray[i].category;
-                set.compressedHashArray[(k + 1) * recordSize - 3] = (byte) (hashArray[i].seriesId >> 8);
-                set.compressedHashArray[(k + 1) * recordSize - 2] = (byte) (hashArray[i].seriesId & 0xFF);
+                set.compressedHashArray[(k + 1) * recordSize - 4] = entry.category;
+                set.compressedHashArray[(k + 1) * recordSize - 3] = (byte) (entry.seriesId >> 8);
+                set.compressedHashArray[(k + 1) * recordSize - 2] = (byte) (entry.seriesId & 0xFF);
                 set.compressedHashArray[(k + 1) * recordSize - 1] = flags;
                 k++;
             }
             
-            String cacheSuffix = isPDNA ? ".pdna" : "." + hashAlgorithm;
-            cacheFile = new File(CACHE_PATH + cacheSuffix);
+            File cacheFile = new File(CACHE_PATH + cacheSuffixes[suffixIdx++]);
             cacheFile.getParentFile().mkdirs();
             try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
                     ObjectOutputStream oos = new ObjectOutputStream(bos)){
@@ -451,10 +476,11 @@ public class ProjectVICHashLookup extends AbstractTask {
     }
 
     private void printStats() {
-        logger.info("Number of ProjectVic hashes loaded: " + vicSet.getNumRecords());
+        logger.info("Number of ProjectVic md5 hashes loaded: " + md5Set.getNumRecords());
+        logger.info("Number of ProjectVic sha1 hashes loaded: " + sha1Set.getNumRecords());
         logger.info("Number of ProjectVic photoDNA hashes loaded: "
                 + (photoDnaSet != null ? photoDnaSet.getNumRecords() : 0));
-        logger.info("Number of ProjectVic series loaded: " + vicSet.seriesMap.size());
+        logger.info("Number of ProjectVic series loaded: " + md5Set.seriesMap.size());
     }
 
     private VicSet loadCache(File cacheFile) throws IOException, ClassNotFoundException {
@@ -472,8 +498,8 @@ public class ProjectVICHashLookup extends AbstractTask {
         ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
             @Override
             public boolean lookupHash(String algorithm, String hashString) {
-                if ((isMd5Enabled && "md5".equals(algorithm)) || (!isMd5Enabled && "sha-1".equals(algorithm))) {
-                    if (hashString != null && !hashString.isEmpty()) {
+                if (hashString != null && !hashString.isEmpty()) {
+                    if ("md5".equals(algorithm) || "sha-1".equals(algorithm)) {
                         byte[] hash = new HashValue(hashString).getBytes();
                         VicEntry ve = lookupVicEntry(hash);
                         if (ve != null) {
@@ -494,13 +520,13 @@ public class ProjectVICHashLookup extends AbstractTask {
         if(item.getHash() == null || item.getHash().isEmpty())
             return;
         
-        byte[] hash;
-        if (isMd5Enabled)
-            hash = new HashValue((String) item.getExtraAttribute(HashTask.HASH.MD5.toString())).getBytes();
-        else
-            hash = new HashValue((String) item.getExtraAttribute(HashTask.HASH.SHA1.toString())).getBytes();
+        String hash = (String) item.getExtraAttribute(HashTask.HASH.MD5.toString());
+        if (hash == null)
+            hash = (String) item.getExtraAttribute(HashTask.HASH.SHA1.toString());
+        if(hash == null)
+            return;
 
-        VicEntry ve = lookupVicEntry(hash);
+        VicEntry ve = lookupVicEntry(new HashValue(hash).getBytes());
         if (ve != null) {
             storeProjectVicEntryInfo(item, ve);
             if (ve.category == 1 || ve.category == 2) {
@@ -512,9 +538,10 @@ public class ProjectVICHashLookup extends AbstractTask {
     }
 
     private VicEntry lookupVicEntry(byte[] hash) {
-        int idx = vicSet.binarySearch(hash);
+        VicSet set = hash.length == 16 ? md5Set : sha1Set;
+        int idx = set.binarySearch(hash);
         if (idx >= 0) {
-            return vicSet.getEntry(idx);
+            return set.getEntry(idx);
         }
         return null;
     }
@@ -524,7 +551,7 @@ public class ProjectVICHashLookup extends AbstractTask {
         item.setExtraAttribute("projectvic_victimIdentified", ve.victimIdentified);
         item.setExtraAttribute("projectvic_ofenderIdentified", ve.ofenderIdentified);
         item.setExtraAttribute("projectvic_isDistributed", ve.isDistributed);
-        String series = vicSet.seriesMap.get(ve.seriesId);
+        String series = md5Set.seriesMap.get(ve.seriesId);
         if (series != null) {
             item.setExtraAttribute("projectvic_Series", series);
         }
