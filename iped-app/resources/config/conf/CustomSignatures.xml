@@ -235,6 +235,10 @@
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="msgstore*.db"/>
     </mime-type>
+    
+    <mime-type type="application/x-whatsapp-db-f">
+        <sub-class-of type="application/x-whatsapp-db"/>
+    </mime-type>
 	
 	<mime-type type="application/x-telegram-db">
         <sub-class-of type="application/x-sqlite3"/>

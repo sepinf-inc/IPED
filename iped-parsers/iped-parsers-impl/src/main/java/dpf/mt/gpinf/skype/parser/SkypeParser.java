@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -218,7 +219,11 @@ public class SkypeParser extends AbstractParser {
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
                                 meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); // $NON-NLS-1$
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
+<<<<<<< HEAD
                                 if (ChildPornHashLookup.lookupHash(item.getHash())) {
+=======
+                                if (LedHashes.lookupHashDatabase(item.getHash())) {
+>>>>>>> refs/heads/master
                                     meta.set("kffstatus", "pedo");
                                 }
                             }
@@ -268,7 +273,11 @@ public class SkypeParser extends AbstractParser {
                             if (t.getFrom().equals(sqlite.getSkypeName()))
                                 tMetadata.add(ExtraProperties.SHARED_HASHES, t.getItem().getHash());
                         }
+<<<<<<< HEAD
                         if (ChildPornHashLookup.lookupHash(t.getItem().getHash())) {
+=======
+                        if (LedHashes.lookupHashDatabase(t.getItem().getHash())) {
+>>>>>>> refs/heads/master
                             tMetadata.set("kffstatus", "pedo");
                         }
                     }

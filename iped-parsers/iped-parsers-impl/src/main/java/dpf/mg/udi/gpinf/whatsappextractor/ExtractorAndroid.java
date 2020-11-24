@@ -73,6 +73,7 @@ public class ExtractorAndroid extends Extractor {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
                     WAContact remote = contacts.getContact(contactId);
                     Chat c = new Chat(remote);
+                    c.setId(rs.getLong("id"));
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -326,10 +327,10 @@ public class ExtractorAndroid extends Extractor {
     /**
      * ** static strings ***
      */
-    private static final String SELECT_CHAT_LIST = "SELECT key_remote_jid AS contact," //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation, sort_timestamp FROM chat_list ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
-    private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT key_remote_jid AS contact," //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation FROM chat_list ORDER BY creation DESC"; //$NON-NLS-1$
 
     /*
