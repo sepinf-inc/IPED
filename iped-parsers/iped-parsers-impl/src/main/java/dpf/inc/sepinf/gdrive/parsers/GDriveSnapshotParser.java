@@ -27,7 +27,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
@@ -90,7 +90,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
 
                 String md5 = entry.getMd5();
                 if(md5 == null) md5 = entry.getLocalMd5();
-                boolean kffFound = LedHashes.lookupHashDatabase(md5);
+                boolean kffFound = ChildPornHashLookup.lookupHash(md5);
                 
                 emitSnapshotEntry(xHtmlOuput, entry, kffFound);
 

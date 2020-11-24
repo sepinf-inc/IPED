@@ -30,7 +30,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.util.BasicProps;
@@ -101,7 +101,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
             int i = 0;
             for (CloudGraphEntry entry : entries) {
                 
-                boolean kffFound = LedHashes.lookupHashDatabase(entry.getMd5());
+                boolean kffFound = ChildPornHashLookup.lookupHash(entry.getMd5());
 
                 emitCloudGraphEntry(xHtmlOuput, entry, kffFound);
 
