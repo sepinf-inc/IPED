@@ -161,10 +161,11 @@ public interface IItemBase extends IStreamSource {
 
     public Map<String, Object> getExtraAttributeMap();
 
+    public IDataSource getDataSource();
+
     /**
      * @return Object containing the metadata of the item
      */
     public Metadata getMetadata();
 
-    IDataSource getDataSource();
 }

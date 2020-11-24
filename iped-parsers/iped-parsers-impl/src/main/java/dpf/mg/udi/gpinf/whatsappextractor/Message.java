@@ -7,6 +7,8 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+
 /**
  *
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -39,6 +41,8 @@ public class Message {
     private String thumbpath;
     private int mediaDuration;
     private MessageStatus messageStatus;
+    private String recoveredFrom = null;
+    private boolean childporn = false;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -140,6 +144,9 @@ public class Message {
             this.mediaHash = new String(Hex.encodeHex(hash, false));
         } else {
             this.mediaHash = mediaHash;
+        }
+        if (LedHashes.lookupHashDatabase(this.mediaHash)) {
+            this.setChildporn(true);
         }
     }
 
@@ -287,6 +294,22 @@ public class Message {
     public boolean isCall() {
         return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
                 || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL;
+    }
+
+    public String getRecoveredFrom() {
+        return recoveredFrom;
+    }
+
+    public void setRecoveredFrom(String recoveredFrom) {
+        this.recoveredFrom = recoveredFrom;
+    }
+
+    public boolean isChildporn() {
+        return childporn;
+    }
+
+    public void setChildporn(boolean childporn) {
+        this.childporn = childporn;
     }
 
     public static enum MessageType {

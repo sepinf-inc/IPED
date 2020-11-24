@@ -16,6 +16,8 @@ public class Chat {
     private String title = null;
     private boolean groupChat = false;
 
+    private String recoveredFrom = null;
+
     private List<WAContact> groupmembers = new ArrayList<>();
 
     public Chat(WAContact remote) {
@@ -99,6 +101,14 @@ public class Chat {
 
     public WAContact getRemote() {
         return remote;
+    }
+
+    public String getRecoveredFrom() {
+        return recoveredFrom;
+    }
+
+    public void setRecoveredFrom(String recoveredFrom) {
+        this.recoveredFrom = recoveredFrom;
     }
 
     public List<WAContact> getGroupmembers() {
