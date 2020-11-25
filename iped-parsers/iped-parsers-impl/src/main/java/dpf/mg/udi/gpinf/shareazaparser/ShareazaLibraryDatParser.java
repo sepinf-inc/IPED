@@ -125,7 +125,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             kffHits += countKffHits(folder);
 
         if (kffHits > 0)
-            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHits));
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHits));
 
     }
 

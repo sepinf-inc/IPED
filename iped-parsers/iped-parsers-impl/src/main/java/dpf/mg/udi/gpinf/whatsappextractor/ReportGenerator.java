@@ -17,6 +17,7 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
@@ -494,6 +495,11 @@ public class ReportGenerator {
                         break;
                     default:
                         break;
+                }
+                if (result != null && !result.isEmpty()) {
+                    if (ChildPornHashLookup.lookupHash(result.get(0).getHash())) {
+                        message.setChildporn(true);
+                    }
                 }
                 break;
         }

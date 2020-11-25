@@ -50,6 +50,7 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import gpinf.emule.KnownMetEntry;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 /**
@@ -60,6 +61,8 @@ import iped3.util.ExtraProperties;
  */
 public class KnownMetParser extends AbstractParser {
     private static final long serialVersionUID = 5039027273156031902L;
+
+    public static final String EDONKEY = "edonkey";
 
     public static final String EMULE_MIME_TYPE = "application/x-emule"; //$NON-NLS-1$
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(EMULE_MIME_TYPE));
@@ -142,6 +145,7 @@ public class KnownMetParser extends AbstractParser {
             cells.clear();
             String trClass = ""; //$NON-NLS-1$
             KnownMetEntry e = null;
+            IItemBase item = null;
             if (i == -1) {
                 for (int j = 0; j < header.length; j++) {
                     cells.add(header[j]);
@@ -175,7 +179,9 @@ public class KnownMetParser extends AbstractParser {
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 boolean kffFound = false;
-                if (ChildPornHashLookup.lookupHash("edonkey", hash)) { //$NON-NLS-1$
+                item = searchItemInCase(searcher, EDONKEY, e.getHash());
+                if (ChildPornHashLookup.lookupHash(EDONKEY, hash)
+                        || (item != null && ChildPornHashLookup.lookupHash(item.getHash()))) { // $NON-NLS-1$
                     kffHit++;
                     trClass = "rr"; //$NON-NLS-1$
                     kffFound = true;
@@ -204,8 +210,11 @@ public class KnownMetParser extends AbstractParser {
                 if (j != 1 || e == null)
                     xhtml.characters(cells.get(j));
                 else {
-                    if (printNameWithLink(xhtml, searcher, e.getName(), "edonkey", e.getHash())) { //$NON-NLS-1$
+                    if (item != null) {
+                        printNameWithLink(xhtml, item, e.getName());
                         cells.set(cells.size() - 1, strYes);
+                    } else {
+                        xhtml.characters(e.getName());
                     }
                 }
                 if (i < 0 || i >= l.size())
@@ -217,34 +226,34 @@ public class KnownMetParser extends AbstractParser {
         }
 
         if (kffHit > 0)
-            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHit));
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHit));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
     }
 
-    public static boolean printNameWithLink(XHTMLContentHandler xhtml, IItemSearcher searcher, String name,
-            String hashAlgo, String p2pHash) throws SAXException {
+    public static IItemBase searchItemInCase(IItemSearcher searcher, String hashAlgo, String hash) {
         if (searcher == null) {
-            xhtml.characters(name);
-            return false;
+            return null;
         }
-        List<IItemBase> items = searcher.search(hashAlgo + ":" + p2pHash); //$NON-NLS-1$
-        if (items.isEmpty()) {
-            xhtml.characters(name);
-            return false;
+        List<IItemBase> items = searcher.search(hashAlgo + ":" + hash); //$NON-NLS-1$
+        if (items == null || items.isEmpty()) {
+            return null;
         }
-        IItemBase item = items.get(0);
+        return items.get(0);
+    }
+
+    public static void printNameWithLink(XHTMLContentHandler xhtml, IItemBase item, String name) throws SAXException {
         String hashPath = getPathFromHash(new File("../../../../", ExportFolder.getExportPath()), //$NON-NLS-1$
                 item.getHash(), item.getExt());
 
         AttributesImpl attributes = new AttributesImpl();
-        attributes.addAttribute("", "onclick", "onclick", "CDATA", "app.open(\"" + hashAlgo + ":" + p2pHash + "\")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+        attributes.addAttribute("", "onclick", "onclick", "CDATA", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\")"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         attributes.addAttribute("", "href", "href", "CDATA", hashPath); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         xhtml.startElement("a", attributes); //$NON-NLS-1$
         xhtml.characters(name);
         xhtml.endElement("a"); //$NON-NLS-1$
-        return true;
     }
 
     private static String getPathFromHash(File baseDir, String hash, String ext) {

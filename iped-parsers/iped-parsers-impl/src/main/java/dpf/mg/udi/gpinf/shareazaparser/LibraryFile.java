@@ -27,6 +27,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
 /**
@@ -227,8 +228,12 @@ class LibraryFile extends ShareazaEntity {
                 if (col != 1) {
                     html.characters(o.toString());
                 } else {
-                    if(KnownMetParser.printNameWithLink(html, searcher, name, "md5", md5)) {
+                    IItemBase item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
+                    if (item != null) {
+                        KnownMetParser.printNameWithLink(html, item, name);
                         foundInCase = true;
+                    } else {
+                        html.characters(name);
                     }
                 }
             } else if(col == tdtext.length - 1) {
