@@ -44,6 +44,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import gpinf.ares.AresEntry;
+import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
@@ -216,8 +217,12 @@ public class AresParser extends AbstractParser {
                     if (j != 1 || e == null)
                         xhtml.characters(s);
                     else {
-                        if (KnownMetParser.printNameWithLink(xhtml, searcher, s, "sha-1", e.getHash())) {; //$NON-NLS-1$
+                        IItemBase item = KnownMetParser.searchItemInCase(searcher, "sha-1", e.getHash());
+                        if (item != null) {
+                            KnownMetParser.printNameWithLink(xhtml, item, s);
                             cells.set(cells.size() - 1, strYes);
+                        } else {
+                            xhtml.characters(s);
                         }
                     }
                     
@@ -231,7 +236,7 @@ public class AresParser extends AbstractParser {
         }
 
         if (hashAlertHit > 0)
-            metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(hashAlertHit));
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashAlertHit));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
