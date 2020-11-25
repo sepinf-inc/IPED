@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupHashSet;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IHashValue;
@@ -176,7 +176,7 @@ public class LedKFFTask extends AbstractTask {
             }
             logger.info("Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
 
-            ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
+            ChildPornHashLookup.addLookupProvider(new LookupProvider() {
                 @Override
                 public boolean lookupHash(String algorithm, String hash) {
                     return lookup(algorithm, hash);

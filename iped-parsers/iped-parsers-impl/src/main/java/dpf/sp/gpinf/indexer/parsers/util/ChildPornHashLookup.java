@@ -4,18 +4,18 @@ import java.util.ArrayList;
 
 public class ChildPornHashLookup {
     
-    private static ArrayList<LookupHashSet> hashSets = new ArrayList<>();
+    private static ArrayList<LookupProvider> lookupProviders = new ArrayList<>();
 
-    public static void addLookupHashSet(LookupHashSet hashSet) {
-        hashSets.add(hashSet);
+    public static void addLookupProvider(LookupProvider provider) {
+        lookupProviders.add(provider);
     }
 
     public static void dispose() {
-        hashSets.clear();
+        lookupProviders.clear();
     }
 
     public static boolean lookupHash(String mediaHash) {
-        if (mediaHash == null || hashSets.isEmpty())
+        if (mediaHash == null || lookupProviders.isEmpty())
             return false;
         String guessedAlgo = "";
         if (mediaHash.length() == 32)
@@ -30,8 +30,8 @@ public class ChildPornHashLookup {
 
     public static boolean lookupHash(String algorithm, String hash) {
         if (hash != null) {
-            for (LookupHashSet hashSet : hashSets) {
-                if (hashSet.lookupHash(algorithm, hash)) {
+            for (LookupProvider provider : lookupProviders) {
+                if (provider.lookupHash(algorithm, hash)) {
                     return true;
                 }
             }
@@ -39,7 +39,7 @@ public class ChildPornHashLookup {
         return false;
     }
 
-    public static abstract class LookupHashSet {
+    public static abstract class LookupProvider {
 
         public abstract boolean lookupHash(String hashAlgo, String hash);
 
