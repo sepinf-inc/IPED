@@ -29,7 +29,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupHashSet;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import iped3.IHashValue;
@@ -495,7 +495,7 @@ public class ProjectVICHashLookup extends AbstractTask {
     }
     
     private void installLookupForParsers() {
-        ChildPornHashLookup.addLookupHashSet(new LookupHashSet() {
+        ChildPornHashLookup.addLookupProvider(new LookupProvider() {
             @Override
             public boolean lookupHash(String algorithm, String hashString) {
                 if (hashString != null && !hashString.isEmpty()) {
