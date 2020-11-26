@@ -20,6 +20,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -62,7 +63,7 @@ class LibraryFile extends ShareazaEntity {
     private boolean cachedPreview;
     private boolean bogus;
     private final LibraryFolder parentFolder;
-    private boolean hashSetHit = false;
+    private HashSet<String> hashSetHits = new HashSet<>();
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -205,16 +206,16 @@ class LibraryFile extends ShareazaEntity {
 
     public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher) throws SAXException {
 
-        if ((md5 != null && md5.length() == 32 && ChildPornHashLookup.lookupHash(md5)) || // $NON-NLS-1$
-                (sha1 != null && sha1.length() == 40 && ChildPornHashLookup.lookupHash(sha1))) { // $NON-NLS-1$
+        hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
+        hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
+        if (!hashSetHits.isEmpty()) {
             html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            hashSetHit = true;
         } else
             html.startElement("tr"); //$NON-NLS-1$
 
         printTd(html, searcher, path, name, index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1,
                 tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating, comments,
-                shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus, hashSetHit, null);
+                shareTags, hitsTotal, uploadsTotal, cachedPreview, bogus);
 
         html.endElement("tr"); //$NON-NLS-1$
     }
@@ -236,16 +237,22 @@ class LibraryFile extends ShareazaEntity {
                         html.characters(name);
                     }
                 }
-            } else if(col == tdtext.length - 1) {
-                html.characters(foundInCase.toString());
             }
             html.endElement("td"); //$NON-NLS-1$
             col++;
         }
+        html.startElement("td"); //$NON-NLS-1$
+        if (!hashSetHits.isEmpty()) {
+            html.characters(hashSetHits.toString());
+        }
+        html.endElement("td"); //$NON-NLS-1$
+        html.startElement("td"); //$NON-NLS-1$
+        html.characters(foundInCase.toString());
+        html.endElement("td"); //$NON-NLS-1$
     }
 
     public boolean isKffHit() {
-        return hashSetHit;
+        return !hashSetHits.isEmpty();
     }
 
     public long getSize() {

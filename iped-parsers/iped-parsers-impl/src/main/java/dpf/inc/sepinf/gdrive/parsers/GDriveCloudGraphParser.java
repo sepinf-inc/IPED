@@ -12,6 +12,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
 
@@ -101,15 +102,15 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
             int i = 0;
             for (CloudGraphEntry entry : entries) {
                 
-                boolean kffFound = ChildPornHashLookup.lookupHash(entry.getMd5());
+                List<String> hashSets = ChildPornHashLookup.lookupHash(entry.getMd5());
 
-                emitCloudGraphEntry(xHtmlOuput, entry, kffFound);
+                emitCloudGraphEntry(xHtmlOuput, entry, hashSets);
 
                 /**
                  * Optionally extract entries as subitems
                  */
                 if (extractEntries) {
-                    Metadata metadataCloudGraphItem = getEntryMetadata(entry, i++, kffFound);
+                    Metadata metadataCloudGraphItem = getEntryMetadata(entry, i++, hashSets);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataCloudGraphItem, true);
                 }
 
@@ -133,7 +134,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         }
     }
 
-    private Metadata getEntryMetadata(CloudGraphEntry entry, int i, boolean kffFound) throws ParseException {
+    private Metadata getEntryMetadata(CloudGraphEntry entry, int i, List<String> hashSets) throws ParseException {
 
         Metadata metadataCloudGraphItem = new Metadata();
 
@@ -160,8 +161,11 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("down_sample_status", entry.getDown_sample_status());
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
-        if(kffFound) {
+        if (!hashSets.isEmpty()) {
             metadataCloudGraphItem.set("kffstatus", "pedo");
+            for (String set : hashSets) {
+                metadataCloudGraphItem.add("kffgroup", set);
+            }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
             metadataCloudGraphItem.set(ExtraProperties.SHARED_HASHES, entry.getMd5());
@@ -322,9 +326,10 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
 
     }
 
-    private void emitCloudGraphEntry(XHTMLContentHandler xHandler, CloudGraphEntry entry, boolean kffFound) throws SAXException {
+    private void emitCloudGraphEntry(XHTMLContentHandler xHandler, CloudGraphEntry entry, List<String> hashSets)
+            throws SAXException {
 
-        String trClass = kffFound ? "rr" : "ra";
+        String trClass = !hashSets.isEmpty() ? "rr" : "ra";
         xHandler.startElement("tr", "class", trClass);
 
         xHandler.startElement("td");
@@ -370,8 +375,8 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.characters(entry.getParent_doc_id());
         xHandler.endElement("td");
         xHandler.startElement("td");
-        if(kffFound) {
-            xHandler.characters("Yes");
+        if (!hashSets.isEmpty()) {
+            xHandler.characters(hashSets.toString());
         }
         xHandler.endElement("td");
         

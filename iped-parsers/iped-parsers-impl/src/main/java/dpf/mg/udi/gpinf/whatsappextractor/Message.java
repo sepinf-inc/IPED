@@ -2,11 +2,13 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Hex;
-
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 
@@ -43,7 +45,7 @@ public class Message {
     private int mediaDuration;
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
-    private boolean childporn = false;
+    private Set<String> childPornSets = new HashSet<>();
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -146,9 +148,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        if (ChildPornHashLookup.lookupHash(this.mediaHash)) {
-            this.setChildporn(true);
-        }
+        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
     }
 
     public byte[] getThumbData() {
@@ -305,12 +305,12 @@ public class Message {
         this.recoveredFrom = recoveredFrom;
     }
 
-    public boolean isChildporn() {
-        return childporn;
+    public Set<String> getChildPornSets() {
+        return childPornSets;
     }
 
-    public void setChildporn(boolean childporn) {
-        this.childporn = childporn;
+    public void addChildPornSets(Collection<String> sets) {
+        this.childPornSets.addAll(sets);
     }
 
     public static enum MessageType {

@@ -10,6 +10,7 @@ import java.sql.Statement;
 import java.text.ParseException;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.config.Field;
@@ -90,15 +91,15 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
 
                 String md5 = entry.getMd5();
                 if(md5 == null) md5 = entry.getLocalMd5();
-                boolean kffFound = ChildPornHashLookup.lookupHash(md5);
+                List<String> hashSets = ChildPornHashLookup.lookupHash(md5);
                 
-                emitSnapshotEntry(xHtmlOuput, entry, kffFound);
+                emitSnapshotEntry(xHtmlOuput, entry, hashSets);
 
                 /**
                  * Optionally extract entries as subitems
                  */
                 if (extractEntries) {
-                    Metadata metadataSnapshotItem = getEntryMetadata(entry, i++, kffFound);
+                    Metadata metadataSnapshotItem = getEntryMetadata(entry, i++, hashSets);
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataSnapshotItem, true);
                 }
 
@@ -122,7 +123,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         }
     }
 
-    private Metadata getEntryMetadata(SnapshotEntry entry, int i, boolean kffFound) throws ParseException {
+    private Metadata getEntryMetadata(SnapshotEntry entry, int i, List<String> hashSets) throws ParseException {
 
         Metadata metadataSnapshotItem = new Metadata();
 
@@ -157,8 +158,11 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("volume", entry.getVolume());
         metadataSnapshotItem.add("child_volume", entry.getChildVolume());
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
-        if(kffFound) {
+        if (!hashSets.isEmpty()) {
             metadataSnapshotItem.set("kffstatus", "pedo");
+            for (String set : hashSets) {
+                metadataSnapshotItem.add("kffgroup", set);
+            }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
             String md5 = entry.getMd5();
@@ -351,9 +355,10 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
 
     }
 
-    private void emitSnapshotEntry(XHTMLContentHandler xHandler, SnapshotEntry entry, boolean kffFound) throws SAXException {
+    private void emitSnapshotEntry(XHTMLContentHandler xHandler, SnapshotEntry entry, List<String> hashSets)
+            throws SAXException {
 
-        String trClass = kffFound ? "rr" : "ra";
+        String trClass = !hashSets.isEmpty() ? "rr" : "ra";
         xHandler.startElement("tr", "class", trClass);
 
         xHandler.startElement("td");
@@ -420,8 +425,8 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         xHandler.characters(entry.getParentVolume());
         xHandler.endElement("td");
         xHandler.startElement("td");
-        if(kffFound) {
-            xHandler.characters("Yes");
+        if (!hashSets.isEmpty()) {
+            xHandler.characters(hashSets.toString());
         }
         xHandler.endElement("td");
 

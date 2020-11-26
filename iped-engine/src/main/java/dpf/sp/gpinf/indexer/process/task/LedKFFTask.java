@@ -178,8 +178,11 @@ public class LedKFFTask extends AbstractTask {
 
             ChildPornHashLookup.addLookupProvider(new LookupProvider() {
                 @Override
-                public boolean lookupHash(String algorithm, String hash) {
-                    return lookup(algorithm, hash);
+                public String lookupHash(String algorithm, String hash) {
+                    if (lookup(algorithm, hash)) {
+                        return "LED";
+                    }
+                    return null;
                 }
             });
         }

@@ -502,14 +502,13 @@ public class ReportGenerator {
                         break;
                 }
                 if (result != null && !result.isEmpty()) {
-                    if (ChildPornHashLookup.lookupHash(result.get(0).getHash())) {
-                        message.setChildporn(true);
-                    }
+                    message.addChildPornSets(ChildPornHashLookup.lookupHash(result.get(0).getHash()));
                 }
                 break;
         }
-        if (message.isChildporn()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></p>");
+        if (!message.getChildPornSets().isEmpty()) {
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+                    + message.getChildPornSets().toString() + "</i></p>");
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$

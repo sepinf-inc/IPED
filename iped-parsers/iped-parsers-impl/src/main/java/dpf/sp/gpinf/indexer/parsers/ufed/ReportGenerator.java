@@ -170,8 +170,9 @@ public class ReportGenerator {
             out.println("</i><br/>"); //$NON-NLS-1$
         }
 
-        if (message.isChildporn()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></p>");
+        if (!message.getChildPornSets().isEmpty()) {
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+                    + message.getChildPornSets().toString() + "</i></p>");
         }
 
         if (message.getTimeStamp() != null) {

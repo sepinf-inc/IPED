@@ -218,8 +218,12 @@ public class SkypeParser extends AbstractParser {
                                 String referenceQuery = BasicProps.HASH + ":" + item.getHash();
                                 meta.set(ExtraProperties.LINKED_ITEMS, referenceQuery); // $NON-NLS-1$
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
-                                if (ChildPornHashLookup.lookupHash(item.getHash())) {
+                                List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
+                                if (!hashSets.isEmpty()) {
                                     meta.set("kffstatus", "pedo");
+                                    for (String set : hashSets) {
+                                        meta.add("kffgroup", set);
+                                    }
                                 }
                             }
 
@@ -268,8 +272,12 @@ public class SkypeParser extends AbstractParser {
                             if (t.getFrom().equals(sqlite.getSkypeName()))
                                 tMetadata.add(ExtraProperties.SHARED_HASHES, t.getItem().getHash());
                         }
-                        if (ChildPornHashLookup.lookupHash(t.getItem().getHash())) {
+                        List<String> hashSets = ChildPornHashLookup.lookupHash(t.getItem().getHash());
+                        if (!hashSets.isEmpty()) {
                             tMetadata.set("kffstatus", "pedo");
+                            for (String set : hashSets) {
+                                tMetadata.add("kffgroup", set);
+                            }
                         }
                     }
 
