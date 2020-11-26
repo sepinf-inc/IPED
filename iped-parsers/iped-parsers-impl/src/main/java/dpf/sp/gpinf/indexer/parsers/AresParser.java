@@ -180,11 +180,10 @@ public class AresParser extends AbstractParser {
                 String hash = e.getHash();
                 if (e.isShared())
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                boolean hashAlertFound = false;
-                if (ChildPornHashLookup.lookupHash("sha-1", hash)) { //$NON-NLS-1$
+                List<String> hashSets = ChildPornHashLookup.lookupHash("sha-1", hash);
+                if (!hashSets.isEmpty()) {
                     hashAlertHit++;
                     trClass = "rr"; //$NON-NLS-1$
-                    hashAlertFound = true;
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getDate() == null ? "-" : df.format(e.getDate())); //$NON-NLS-1$
@@ -196,7 +195,7 @@ public class AresParser extends AbstractParser {
                 cells.add(e.getCategory());
                 cells.add(e.getUrl());
                 cells.add(e.getComment());
-                cells.add(hashAlertFound ? strYes : " "); //$NON-NLS-1$
+                cells.add(!hashSets.isEmpty() ? hashSets.toString() : ""); // $NON-NLS-1$
                 cells.add(" "); //$NON-NLS-1$
 
                 colClass[1] = colClass[2] = "b"; //$NON-NLS-1$

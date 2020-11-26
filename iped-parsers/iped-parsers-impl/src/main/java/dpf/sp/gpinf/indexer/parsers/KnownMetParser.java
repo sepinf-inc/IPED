@@ -28,6 +28,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TimeZone;
@@ -178,13 +179,15 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(e.getName());
                 String hash = e.getHash();
                 metadata.add(ExtraProperties.SHARED_HASHES, hash);
-                boolean kffFound = false;
+                HashSet<String> hashSets = new HashSet<>();
+                hashSets.addAll(ChildPornHashLookup.lookupHash(EDONKEY, hash));
                 item = searchItemInCase(searcher, EDONKEY, e.getHash());
-                if (ChildPornHashLookup.lookupHash(EDONKEY, hash)
-                        || (item != null && ChildPornHashLookup.lookupHash(item.getHash()))) { // $NON-NLS-1$
+                if(item != null) {
+                    hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
+                }
+                if (!hashSets.isEmpty()) {
                     kffHit++;
                     trClass = "rr"; //$NON-NLS-1$
-                    kffFound = true;
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
                 cells.add(e.getLastModified() == null ? " " : df.format(e.getLastModified())); //$NON-NLS-1$
@@ -195,7 +198,7 @@ public class KnownMetParser extends AbstractParser {
                 cells.add(toFormatStr(nf, e.getAcceptedRequests()));
                 cells.add(toFormatStr(nf, e.getBytesTransfered()));
                 cells.add(e.getPartName() == null ? " " : e.getPartName()); //$NON-NLS-1$
-                cells.add(kffFound ? strYes : " "); //$NON-NLS-1$
+                cells.add(!hashSets.isEmpty() ? hashSets.toString() : ""); // $NON-NLS-1$
                 cells.add(" "); //$NON-NLS-1$
                 totReq += toSum(e.getTotalRequests());
                 accReq += toSum(e.getAcceptedRequests());

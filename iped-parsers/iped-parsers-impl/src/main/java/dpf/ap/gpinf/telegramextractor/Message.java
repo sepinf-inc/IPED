@@ -18,8 +18,11 @@
  */
 package dpf.ap.gpinf.telegramextractor;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
@@ -48,7 +51,7 @@ public class Message implements MessageInterface {
     private long toId = 0;
     private Double latitude = null;
     private Double longitude = null;
-    private boolean childPorn = false;
+    private Set<String> childPornSets = new HashSet<>();
 
     public long getId() {
         return id;
@@ -64,9 +67,7 @@ public class Message implements MessageInterface {
 
     public void setMediaHash(String mediaHash) {
         this.mediaHash = mediaHash;
-        if (mediaHash != null) {
-            setChildPorn(ChildPornHashLookup.lookupHash(mediaHash));
-        }
+        childPornSets.addAll(ChildPornHashLookup.lookupHash(mediaHash));
     }
 
     public String getMediaFile() {
@@ -238,11 +239,11 @@ public class Message implements MessageInterface {
         this.longitude = longitude;
     }
 
-    public boolean isChildPorn() {
-        return childPorn;
+    public Set<String> getChildPornSets() {
+        return this.childPornSets;
     }
 
-    public void setChildPorn(boolean childPorn) {
-        this.childPorn = childPorn;
+    public void addChildPornSets(Collection<String> sets) {
+        this.childPornSets.addAll(sets);
     }
 }

@@ -382,8 +382,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMediaHash() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
-                if (m.isChildporn()) {
+                if (!m.getChildPornSets().isEmpty()) {
                     meta.set("kffstatus", "pedo");
+                    for (String set : m.getChildPornSets()) {
+                        meta.add("kffgroup", set);
+                    }
                 }
             }
 

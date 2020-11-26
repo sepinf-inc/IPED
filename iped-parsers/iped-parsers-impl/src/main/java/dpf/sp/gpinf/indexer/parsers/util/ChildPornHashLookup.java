@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class ChildPornHashLookup {
     
@@ -14,9 +16,9 @@ public class ChildPornHashLookup {
         lookupProviders.clear();
     }
 
-    public static boolean lookupHash(String mediaHash) {
-        if (mediaHash == null || lookupProviders.isEmpty())
-            return false;
+    public static List<String> lookupHash(String mediaHash) {
+        if (mediaHash == null || mediaHash.isEmpty() || lookupProviders.isEmpty())
+            return Collections.EMPTY_LIST;
         String guessedAlgo = "";
         if (mediaHash.length() == 32)
             guessedAlgo = "md5";
@@ -28,20 +30,30 @@ public class ChildPornHashLookup {
         return lookupHash(guessedAlgo, mediaHash);
     }
 
-    public static boolean lookupHash(String algorithm, String hash) {
+    public static List<String> lookupHash(String algorithm, String hash) {
+        ArrayList<String> hashsets = new ArrayList<>();
         if (hash != null) {
             for (LookupProvider provider : lookupProviders) {
-                if (provider.lookupHash(algorithm, hash)) {
-                    return true;
+                String hashSet = provider.lookupHash(algorithm, hash);
+                if (hashSet != null) {
+                    hashsets.add(hashSet);
                 }
+
             }
         }
-        return false;
+        return hashsets;
     }
 
     public static abstract class LookupProvider {
 
-        public abstract boolean lookupHash(String hashAlgo, String hash);
+        /**
+         * @param hashAlgo
+         *            hash algorithm
+         * @param hash
+         *            hash to look up
+         * @return hashset id where hash was found.
+         */
+        public abstract String lookupHash(String hashAlgo, String hash);
 
     }
 

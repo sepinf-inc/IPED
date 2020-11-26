@@ -138,8 +138,10 @@ public class ReportGenerator {
                     }
                     out.print("<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     out.println("</a>"); //$NON-NLS-1$
-                    if (ChildPornHashLookup.lookupHash(item.getHash())) {
-                        out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></div>");
+                    List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
+                    if (!hashSets.isEmpty()) {
+                        out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                                + "</i></div>");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -387,8 +389,10 @@ public class ReportGenerator {
                         + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
             out.println("</a></p>"); //$NON-NLS-1$
 
-            if (ChildPornHashLookup.lookupHash(item.getHash())) {
-                out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + "</i></div>");
+            List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
+            if (!hashSets.isEmpty()) {
+                out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                        + "</i></div>");
             }
         }
     }

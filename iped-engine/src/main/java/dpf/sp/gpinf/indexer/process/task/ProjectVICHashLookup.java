@@ -497,19 +497,21 @@ public class ProjectVICHashLookup extends AbstractTask {
     private void installLookupForParsers() {
         ChildPornHashLookup.addLookupProvider(new LookupProvider() {
             @Override
-            public boolean lookupHash(String algorithm, String hashString) {
+            public String lookupHash(String algorithm, String hashString) {
                 if (hashString != null && !hashString.isEmpty()) {
                     if ("md5".equals(algorithm) || "sha-1".equals(algorithm)) {
                         byte[] hash = new HashValue(hashString).getBytes();
                         VicEntry ve = lookupVicEntry(hash);
                         if (ve != null) {
-                            if (ve.category == 1 || ve.category == 2) {
-                                return true;
+                            if (ve.category == 1) {
+                                return "ProjectVic_Cat1";
+                            } else if (ve.category == 2) {
+                                return "ProjectVic_Cat2";
                             }
                         }
                     }
                 }
-                return false;
+                return null;
             }
         });
     }
