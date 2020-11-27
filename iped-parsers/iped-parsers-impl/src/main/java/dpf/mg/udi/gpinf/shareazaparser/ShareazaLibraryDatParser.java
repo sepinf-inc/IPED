@@ -34,6 +34,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
@@ -124,7 +125,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder folder : library.getLibraryFolders())
             kffHits += countKffHits(folder);
 
-        if (kffHits > 0)
+        if (LedHashes.hashMap != null)
             metadata.set(ExtraProperties.WKFF_HITS, Integer.toString(kffHits));
 
     }

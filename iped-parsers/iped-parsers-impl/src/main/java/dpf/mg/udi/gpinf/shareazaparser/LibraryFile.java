@@ -20,13 +20,15 @@ package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import iped3.search.IItemSearcher;
 
 /**
@@ -204,10 +206,15 @@ class LibraryFile extends ShareazaEntity {
 
     public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher) throws SAXException {
 
-        if ((md5 != null && md5.length() == 32 && ChildPornHashLookup.lookupHash(md5)) || // $NON-NLS-1$
-                (sha1 != null && sha1.length() == 40 && ChildPornHashLookup.lookupHash(sha1))) { // $NON-NLS-1$
-            html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            kffHit = true;
+        if (LedHashes.hashMap != null) {
+            if ((md5 != null && md5.length() == 32
+                    && Arrays.binarySearch(LedHashes.hashMap.get("md5"), new HashValue(md5)) >= 0) || //$NON-NLS-1$
+                    (sha1 != null && sha1.length() == 40
+                            && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), new HashValue(sha1)) >= 0)) { //$NON-NLS-1$
+                html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                kffHit = true;
+            } else
+                html.startElement("tr"); //$NON-NLS-1$
         } else
             html.startElement("tr"); //$NON-NLS-1$
 

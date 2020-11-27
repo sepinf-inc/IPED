@@ -17,10 +17,11 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import iped3.IHashValue;
 import iped3.IItem;
+import iped3.IHashValue;
 
 public class KFFCarveTask extends BaseCarveTask {
 
@@ -90,7 +91,7 @@ public class KFFCarveTask extends BaseCarveTask {
                 String value = confParams.getProperty("enableKFFCarving"); //$NON-NLS-1$
                 if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
                     if (LedKFFTask.kffItems != null) {
-                        md5_512 = LedKFFTask.getHashArray("md5-512"); //$NON-NLS-1$
+                        md5_512 = LedHashes.hashMap.get("md5-512"); //$NON-NLS-1$
                         logger.info("Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
                         taskEnabled = true;
                     } else {

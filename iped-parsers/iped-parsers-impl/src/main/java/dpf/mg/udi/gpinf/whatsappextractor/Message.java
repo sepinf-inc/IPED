@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.apache.commons.codec.binary.Hex;
 
-import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
 
 /**
  *
@@ -144,7 +144,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
-        if (ChildPornHashLookup.lookupHash(this.mediaHash)) {
+        if (LedHashes.lookupHashDatabase(this.mediaHash)) {
             this.setChildporn(true);
         }
     }
