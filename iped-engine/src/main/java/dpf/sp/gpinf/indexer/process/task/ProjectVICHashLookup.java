@@ -533,7 +533,15 @@ public class ProjectVICHashLookup extends AbstractTask {
             storeProjectVicEntryInfo(item, ve);
             if (ve.category == 1 || ve.category == 2) {
                 item.setExtraAttribute(KFFTask.KFF_STATUS, "pedo");
-                item.setExtraAttribute(KFFTask.KFF_GROUP, "projectvic");
+                String group = (String) item.getExtraAttribute(KFFTask.KFF_GROUP);
+                // this should be multivalued, will break back compat
+                if (group == null) {
+                    group = "";
+                } else {
+                    group += " | ";
+                }
+                group += "projectvic";
+                item.setExtraAttribute(KFFTask.KFF_GROUP, group);
             }
         }
 
