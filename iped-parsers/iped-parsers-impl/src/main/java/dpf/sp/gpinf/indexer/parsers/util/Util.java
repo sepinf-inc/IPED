@@ -41,20 +41,21 @@ public class Util {
 
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
-    private static String getContentPreview(InputStream is, Metadata m, boolean isHtml) throws IOException {
+    private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
         TextContentHandler textHandler = new TextContentHandler(contentHandler, true);
         if (m == null)
             m = new Metadata();
-        if (isHtml) {
-            m.set(Metadata.CONTENT_TYPE, "text/html"); //$NON-NLS-1$
-            m.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "text/html"); //$NON-NLS-1$
+        if (mimeType != null && !mimeType.isEmpty()) {
+            m.set(Metadata.CONTENT_TYPE, mimeType); // $NON-NLS-1$
+            m.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, mimeType); // $NON-NLS-1$
         }
         boolean limitReached = false;
         try {
             autoParser.parse(is, textHandler, m, new ParseContext());
 
-        } catch (TikaException e) {
+        } catch (TikaException | IOException e) {
+            e.printStackTrace();
 
         } catch (SAXException se) {
             if (contentHandler.isWriteLimitReached(se))
@@ -66,18 +67,19 @@ public class Util {
         return msg;
     }
 
-    public static String getContentPreview(InputStream is, boolean isHtml) throws IOException {
-        return getContentPreview(is, null, isHtml);
+    public static String getContentPreview(InputStream is, String mimeType) throws IOException {
+        return getContentPreview(is, null, mimeType);
     }
 
-    public static String getContentPreview(String content, boolean isHtml) throws IOException {
+    public static String getContentPreview(String content, String mimeType) throws IOException {
         Metadata m = new Metadata();
         m.set(KNOWN_CONTENT_ENCODING, "UTF-8"); //$NON-NLS-1$
-        return getContentPreview(new ByteArrayInputStream(content.getBytes("UTF-8")), m, isHtml); //$NON-NLS-1$
+        m.set(Metadata.CONTENT_ENCODING, "UTF-8"); //$NON-NLS-1$
+        return getContentPreview(new ByteArrayInputStream(content.getBytes("UTF-8")), m, mimeType); //$NON-NLS-1$
     }
 
-    public static String getContentPreview(byte[] content, boolean isHtml) throws IOException {
-        return getContentPreview(new ByteArrayInputStream(content), null, isHtml);
+    public static String getContentPreview(byte[] content, String mimeType) throws IOException {
+        return getContentPreview(new ByteArrayInputStream(content), null, mimeType);
     }
 
     public static String decodeUnknowCharset(byte[] data) {
