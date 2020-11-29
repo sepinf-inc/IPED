@@ -44,7 +44,6 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -134,7 +133,7 @@ public class EmailViewer extends HtmlViewer {
         private boolean strictParsing = false;
 
         // private XHTMLContentHandler handler;
-        private Metadata metadata, submd;
+        private Metadata metadata;
         private boolean inPart = false;
 
         File previewFile, bodyFile;
@@ -430,7 +429,7 @@ public class EmailViewer extends HtmlViewer {
             if (!inPart) {
                 metadata = this.metadata;
             } else {
-                metadata = submd;
+                metadata = new Metadata();
             }
 
             try {
@@ -503,9 +502,6 @@ public class EmailViewer extends HtmlViewer {
                         String name = ctField.getFilename();
                         if (name == null) {
                             name = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
-                        }
-                        if (name == null) {
-                            name = Messages.getString("EmailViewer.UnNamed"); //$NON-NLS-1$
                         }
                         if (this.attachName == null) {
                             attachName = name;
@@ -633,7 +629,6 @@ public class EmailViewer extends HtmlViewer {
 
         @Override
         public void startHeader() throws MimeException {
-            submd = new Metadata();
             attachName = null;
             contentID = null;
         }
@@ -663,7 +658,6 @@ public class EmailViewer extends HtmlViewer {
         public void endHeader() throws MimeException {
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
-                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
             }
 
         }

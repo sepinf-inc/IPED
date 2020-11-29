@@ -194,6 +194,13 @@ public class RFC822Parser extends AbstractParser {
             } else
                 isAttach = true;
 
+            if (isAttach) {
+                if (attachName == null) {
+                    attachName = Messages.getString("RFC822Parser.UnNamed"); //$NON-NLS-1$
+                }
+                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
+            }
+
             try {
                 if (isAttach) {
                     if (extractor.shouldParseEmbedded(submd))
@@ -295,8 +302,6 @@ public class RFC822Parser extends AbstractParser {
                         String attachName = ctField.getFilename();
                         if (attachName == null)
                             attachName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
-                        if (attachName == null)
-                            attachName = Messages.getString("RFC822Parser.UnNamed"); //$NON-NLS-1$
                         if (this.attachName == null)
                             this.attachName = attachName;
 
@@ -439,7 +444,6 @@ public class RFC822Parser extends AbstractParser {
         public void endHeader() throws MimeException {
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
-                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
             }
         }
 
