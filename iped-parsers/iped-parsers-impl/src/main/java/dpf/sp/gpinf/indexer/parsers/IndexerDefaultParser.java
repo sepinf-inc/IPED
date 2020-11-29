@@ -213,6 +213,7 @@ public class IndexerDefaultParser extends CompositeParser {
                 } catch (IOException e) {
                     LOGGER.warn("{} Error detecting file type: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), //$NON-NLS-1$
                             filePath, length, e.toString());
+                    contentType = MediaType.OCTET_STREAM.toString();
                 }
             }
             // System.out.println(contentType);

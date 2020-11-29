@@ -58,9 +58,7 @@ import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlParser;
-import org.apache.tika.sax.WriteOutContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -203,7 +201,7 @@ public class RFC822Parser extends AbstractParser {
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
                         BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
                         bis.mark(1024 * 1024);
-                        String msg = Util.getContentPreview(bis, type.equalsIgnoreCase("text/html")); //$NON-NLS-1$
+                        String msg = Util.getContentPreview(bis, type);
                         metadata.set(ExtraProperties.MESSAGE_BODY, msg);
                         bis.reset();
                         is = bis;
