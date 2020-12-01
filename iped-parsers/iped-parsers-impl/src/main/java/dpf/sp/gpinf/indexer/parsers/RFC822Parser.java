@@ -174,7 +174,6 @@ public class RFC822Parser extends AbstractParser {
             // sub part without damaging the main metadata
 
             submd.set(HttpHeaders.CONTENT_TYPE, body.getMimeType());
-            submd.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, body.getMimeType());
             submd.set(HttpHeaders.CONTENT_ENCODING, body.getCharset());
 
             boolean isAttach = false;
@@ -214,6 +213,7 @@ public class RFC822Parser extends AbstractParser {
                         bis.reset();
                         is = bis;
                     }
+                    submd.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, type);
                     embeddedParser.parseEmbedded(is, handler, submd, false);
                 }
 
