@@ -148,7 +148,7 @@ public class RFC822Parser extends AbstractParser {
         private ParseContext context;
         private Metadata metadata, submd;
         private String attachName;
-        private boolean inPart = false, textBody, htmlBody;
+        private boolean inPart = false, textBody, htmlBody, isAttach;
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
 
@@ -176,9 +176,10 @@ public class RFC822Parser extends AbstractParser {
             submd.set(HttpHeaders.CONTENT_TYPE, body.getMimeType());
             submd.set(HttpHeaders.CONTENT_ENCODING, body.getCharset());
 
-            boolean isAttach = false;
             String type = body.getMimeType();
-            if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
+            if (isAttach) {
+                //skip
+            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
                 if (textBody || htmlBody || attachName != null)
                     isAttach = true;
                 else
@@ -190,8 +191,10 @@ public class RFC822Parser extends AbstractParser {
                 else
                     htmlBody = true;
 
-            } else
+            } else {
+                // images (inline or not) and other mimes as attachs
                 isAttach = true;
+            }
 
             if (isAttach) {
                 if (attachName == null) {
@@ -298,7 +301,8 @@ public class RFC822Parser extends AbstractParser {
 
                 } else if (fieldname.equalsIgnoreCase("Content-Disposition")) { //$NON-NLS-1$
                     ContentDispositionField ctField = (ContentDispositionField) parsedField;
-                    if (ctField.isAttachment() || ctField.isInline()) {
+                    isAttach = ctField.isAttachment();
+                    if (isAttach || ctField.isInline()) {
                         String attachName = ctField.getFilename();
                         if (attachName == null)
                             attachName = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
@@ -478,6 +482,7 @@ public class RFC822Parser extends AbstractParser {
         public void startHeader() throws MimeException {
             submd = new Metadata();
             attachName = null;
+            isAttach = false;
         }
 
         @Override
