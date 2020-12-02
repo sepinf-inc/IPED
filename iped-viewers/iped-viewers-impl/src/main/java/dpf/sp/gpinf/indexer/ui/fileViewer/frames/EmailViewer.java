@@ -142,7 +142,7 @@ public class EmailViewer extends HtmlViewer {
         String bodyCharset = "windows-1252"; //$NON-NLS-1$
 
         private String attachName, contentID;
-        private boolean textBody = false, htmlBody = false;
+        private boolean textBody = false, htmlBody = false, isAttach = false;
         private ArrayList<Object[]> attachs = new ArrayList<Object[]>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
@@ -330,7 +330,10 @@ public class EmailViewer extends HtmlViewer {
             Object[] obj = { attach, body.getMimeType(),
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName) }; //$NON-NLS-1$
 
-            if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
+            if (isAttach) {
+                attachs.add(obj);
+
+            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
                 if (textBody || htmlBody || attachName != null) {
                     attachs.add(obj);
                 } else {
@@ -349,6 +352,7 @@ public class EmailViewer extends HtmlViewer {
                 }
 
             } else {
+                // images (inline or not) and other mimes as attachs
                 attachs.add(obj);
             }
 
@@ -498,7 +502,8 @@ public class EmailViewer extends HtmlViewer {
 
                 } else if (fieldname.equalsIgnoreCase("Content-Disposition")) { //$NON-NLS-1$
                     ContentDispositionField ctField = (ContentDispositionField) parsedField;
-                    if (ctField.isAttachment() || ctField.isInline()) {
+                    isAttach = ctField.isAttachment();
+                    if (isAttach || ctField.isInline()) {
                         String name = ctField.getFilename();
                         if (name == null) {
                             name = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
@@ -630,6 +635,7 @@ public class EmailViewer extends HtmlViewer {
         @Override
         public void startHeader() throws MimeException {
             attachName = null;
+            isAttach = false;
             contentID = null;
         }
 
