@@ -113,7 +113,12 @@
 		</parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
+			<params>
+			    <!--Experimental feature, not completed yet -->
+				<param name="mergeDbs" type="bool">false</param>
+			</params>
+		</parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
         	<!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
@@ -144,6 +149,7 @@
         </parser>
         <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 		
     </parsers>
 

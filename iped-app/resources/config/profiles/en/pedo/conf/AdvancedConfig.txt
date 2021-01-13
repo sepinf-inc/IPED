@@ -168,3 +168,6 @@ openImagesCacheWarmUpEnabled = false
 
 # Maximum number of threads used for image cache warm up.
 openImagesCacheWarmUpThreads = 256
+
+# Double click behaviour. Possible values: never, ask_always, ask_if_exe, always
+openWithDoubleClick = ask_if_exe

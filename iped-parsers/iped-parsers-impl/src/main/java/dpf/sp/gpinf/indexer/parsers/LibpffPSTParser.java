@@ -32,7 +32,6 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.apache.tika.utils.DateUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
@@ -353,14 +352,16 @@ public class LibpffPSTParser extends AbstractParser {
              */
             if (text != null && !text.isEmpty()) {
                 preview.append(text);
-                metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(text, true));
+                metadata.set(ExtraProperties.MESSAGE_BODY,
+                        Util.getContentPreview(text, MediaType.TEXT_HTML.toString()));
             }
         } else {
             body = new File(file, "Message.txt"); //$NON-NLS-1$
             if (body.exists()) {
                 String text = Util.decodeMixedCharset(Files.readAllBytes(body.toPath()));
                 if (text != null && !text.isEmpty()) {
-                    metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(text, false));
+                    metadata.set(ExtraProperties.MESSAGE_BODY,
+                            Util.getContentPreview(text, MediaType.TEXT_PLAIN.toString()));
                     text = SimpleHTMLEncoder.htmlEncode(text);
                     preview.append("<pre>"); //$NON-NLS-1$
                     preview.append(text);

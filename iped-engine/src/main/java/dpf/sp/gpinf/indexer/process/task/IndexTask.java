@@ -216,6 +216,14 @@ public class IndexTask extends AbstractTask {
             indexUnallocated = Boolean.valueOf(value);
         }
 
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+            try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
+                stats.setLastId(ipedSrc.getLastId());
+                Item.setStartID(ipedSrc.getLastId() + 1);
+            }
+        }
+
         textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
         if (textSizes == null) {
             textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
@@ -237,20 +245,12 @@ public class IndexTask extends AbstractTask {
                         textSizesArray[i++] = size * 1000L;
                 }
                 for (int i = 0; i < textSizesArray.length; i++) {
-                    if (textSizesArray[i] != 0) {
+                    if (textSizesArray[i] != 0 && i <= stats.getLastId()) {
                         textSizes.add(new IdLenPair(i, textSizesArray[i]));
                     }
                 }
                 in.close();
                 fileIn.close();
-            }
-
-            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
-                try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
-                    stats.setLastId(ipedSrc.getLastId());
-                    Item.setStartID(ipedSrc.getLastId() + 1);
-                }
             }
         }
 

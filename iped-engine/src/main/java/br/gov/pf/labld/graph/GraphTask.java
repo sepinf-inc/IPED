@@ -209,7 +209,8 @@ public class GraphTask extends AbstractTask {
 
     @Override
     public void process(IItem evidence) throws Exception {
-        if (!isEnabled()) {
+
+        if (!isEnabled() || !evidence.isToAddToCase()) {
             return;
         }
 

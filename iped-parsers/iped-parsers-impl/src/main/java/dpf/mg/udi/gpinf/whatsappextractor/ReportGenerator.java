@@ -17,6 +17,7 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
@@ -128,6 +129,11 @@ public class ReportGenerator {
         printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
+            if(c.getRecoveredFrom()!=null) {
+                out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
+                        + Messages.getString("WhatsAppReport.RecoveredFrom") + " " + c.getRecoveredFrom()
+                        + "</div></div>");
+            }
             if (currentMsg > 0)
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.ChatContinuation") + "</div></div>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -495,10 +501,18 @@ public class ReportGenerator {
                     default:
                         break;
                 }
+                if (result != null && !result.isEmpty()) {
+                    message.addChildPornSets(ChildPornHashLookup.lookupHash(result.get(0).getHash()));
+                }
                 break;
+        }
+        if (!message.getChildPornSets().isEmpty()) {
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+                    + message.getChildPornSets().toString() + "</i></p>");
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
+
         out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         if (message.isFromMe() && message.getMessageStatus() != null) {
             switch (message.getMessageStatus()) {
@@ -517,6 +531,14 @@ public class ReportGenerator {
             }
         }
         out.println("</span>"); //$NON-NLS-1$
+
+        if (message.getRecoveredFrom() != null) {
+            out.println("<br/><span class=\"recovered\">"); //$NON-NLS-1$
+            out.print(Messages.getString("WhatsAppReport.RecoveredFrom") + " " + message.getRecoveredFrom());
+            out.println("</span>"); //$NON-NLS-1$
+
+        }
+
         out.println("</div></div>"); //$NON-NLS-1$
     }
 

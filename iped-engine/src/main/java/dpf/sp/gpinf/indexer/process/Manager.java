@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.ConcurrentMergeScheduler;
 import org.apache.lucene.index.DirectoryReader;
@@ -41,8 +44,6 @@ import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
@@ -74,6 +75,7 @@ import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
+import iped3.util.BasicProps;
 
 /**
  * Classe responsável pela preparação do processamento, inicialização do
@@ -106,7 +108,7 @@ public class Manager {
 
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static int QUEUE_SIZE = 100000;
-    private static Logger LOGGER = LoggerFactory.getLogger(Manager.class);
+    private static Logger LOGGER = LogManager.getLogger(Manager.class);
     private static Manager instance;
 
     private ICaseData caseData;
@@ -194,6 +196,10 @@ public class Manager {
             changeTempDir();
         }
 
+        if (args.getEvidenceToRemove() != null) {
+            indexDir = finalIndexDir;
+        }
+
         saveCurrentTempDir();
 
         int i = 1;
@@ -202,7 +208,8 @@ public class Manager {
         }
 
         try {
-            iniciarIndexacao();
+            if (!iniciarIndexacao())
+                return;
 
             // apenas conta o número de arquivos a indexar
             contador = new ItemProducer(this, caseData, true, sources, output);
@@ -285,7 +292,7 @@ public class Manager {
         indexDir = localConfig.getIndexTemp();
     }
 
-    private void loadExistingData() throws Exception {
+    private void loadExistingData() throws IOException {
 
         try (IndexReader reader = DirectoryReader.open(writer, true, true)) {
             stats.previousIndexedFiles = reader.numDocs();
@@ -325,7 +332,21 @@ public class Manager {
         return conf;
     }
 
-    private void iniciarIndexacao() throws Exception {
+    private void removeEvidence(String uuid) throws IOException {
+        Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
+        LOGGER.log(CONSOLE,
+                "WARN: removing evidence does NOT update duplicate flag, graph and internal storage for now!");
+        LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
+        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
+        int prevDocs = writer.numDocs();
+        writer.deleteDocuments(query);
+        writer.commit();
+        int deletes = prevDocs - writer.numDocs();
+        LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+        writer.close();
+    }
+
+    private boolean iniciarIndexacao() throws Exception {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
 
@@ -347,6 +368,11 @@ public class Manager {
             loadExistingData();
         }
 
+        if (args.getEvidenceToRemove() != null) {
+            removeEvidence(args.getEvidenceToRemove());
+            return false;
+        }
+
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
             workers[k] = new Worker(k, caseData, writer, output, this);
@@ -359,6 +385,8 @@ public class Manager {
         }
 
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
+
+        return true;
     }
 
     private void monitorarIndexacao() throws Exception {
@@ -650,20 +678,22 @@ public class Manager {
     }
 
     private void prepareOutputFolder() throws Exception {
-        if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
-            throw new IOException("Directory already exists: " + output.getAbsolutePath()); //$NON-NLS-1$
+        if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()
+                && args.getEvidenceToRemove() == null) {
+            throw new IPEDException("Directory already exists: " + output.getAbsolutePath()); //$NON-NLS-1$
         }
 
         File export = new File(output.getParentFile(), ExportFileTask.EXTRACT_DIR);
-        if (export.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
-            throw new IOException("Directory already exists: " + export.getAbsolutePath()); //$NON-NLS-1$
+        if (export.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()
+                && args.getEvidenceToRemove() == null) {
+            throw new IPEDException("Directory already exists: " + export.getAbsolutePath()); //$NON-NLS-1$
         }
 
         if (!output.exists() && !output.mkdirs()) {
             throw new IOException("Fail to create folder " + output.getAbsolutePath()); //$NON-NLS-1$
         }
 
-        if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
+        if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -676,6 +706,8 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
+            // copy default conf folder
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
                     true);
             IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
@@ -690,14 +722,6 @@ public class Manager {
                         .listFiles(new ExeFileFilter()))
                     IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
             }
-            // copia arquivo de assinaturas customizadas
-            IOUtil.copiaArquivo(
-                    new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
-                    new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + IndexItem.attrTypesFilename), //$NON-NLS-1$
-                    new File(output, "conf/" + IndexItem.attrTypesFilename)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), //$NON-NLS-1$
-                    new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$
         }
 
         if (palavrasChave != null) {

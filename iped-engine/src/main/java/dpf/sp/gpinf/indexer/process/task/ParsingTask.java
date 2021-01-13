@@ -40,8 +40,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -370,12 +370,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (numSubitems > 0) {
                 evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
             }
-            metadataToExtraAttribute(evidence);
+            handleMetadata(evidence);
         }
 
     }
 
-    private static final void metadataToExtraAttribute(IItem evidence) {
+    private static final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
@@ -398,6 +398,23 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             metadata.remove(ExtraProperties.USER_THUMB);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
+        }
+
+        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
+        if (hashSetStatus != null) {
+            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
+            metadata.remove(KFFTask.KFF_STATUS);
+        }
+
+        String prevMediaType = evidence.getMediaType().toString();
+        String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        if (!prevMediaType.equals(parsedMediaType)) {
+            evidence.setMediaType(MediaType.parse(parsedMediaType));
+        }
+
+        if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
+            metadata.remove(BasicProps.HASCHILD);
+            evidence.setHasChildren(true);
         }
 
     }

@@ -311,7 +311,6 @@ public class ExportFileTask extends AbstractTask {
         try {
             is = evidence.getBufferedStream();
             extractFile(is, evidence, null);
-            evidence.setFileOffset(-1);
 
         } catch (IOException e) {
             LOGGER.warn("{} Error exporting {} \t{}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
@@ -403,6 +402,7 @@ public class ExportFileTask extends AbstractTask {
         String relativePath = Util.getRelativePath(output, file);
         evidence.setExportedFile(relativePath);
         evidence.setFile(file);
+        evidence.setFileOffset(-1);
         file.setReadOnly();
     }
 
@@ -546,6 +546,8 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(md5.toString());
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setFile(null);
+        evidence.setFileOffset(-1);
         evidence.setLength((long) len);
     }
 

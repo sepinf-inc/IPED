@@ -55,6 +55,11 @@ public class VCardParser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(VCARD_MIME);
 
+    /**
+     * Protection for OOME: max file size to load on heap (see #310)
+     */
+    private static final int MAX_BUFFER_SIZE = 1 << 24;
+
     private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
     private static Template TEMPLATE = null;
 
@@ -496,7 +501,9 @@ public class VCardParser extends AbstractParser {
     }
 
     private static String readInputStream(InputStream is) throws IOException, TikaException {
-        AutoDetectReader reader = new AutoDetectReader(is);
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        IOUtils.copyLarge(is, bout, 0, MAX_BUFFER_SIZE);
+        AutoDetectReader reader = new AutoDetectReader(new ByteArrayInputStream(bout.toByteArray()));
         return IOUtils.toString(reader);
     }
 
