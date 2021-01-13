@@ -7,10 +7,17 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import gpinf.dev.data.Item;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
 import io.minio.MakeBucketArgs;
@@ -30,16 +37,46 @@ import iped3.io.SeekableInputStream;
 
 public class MinIOTask extends AbstractTask {
 
+    private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
+
+    private static final String CONF_FILE = "MinIOConfig.txt";
+    private static final String ENABLE_KEY = "enable";
+    private static final String HOST_KEY = "host";
+    private static final String PORT_KEY = "port";
+    private static final String CMD_LINE_KEY = "minio";
+    private static final String ACCESS_KEY = "accesskey";
+    private static final String SECRET_KEY = "secretkey";
+    private static final String BUCKET_KEY = "bucket";
+
+    private static boolean enabled = false;
+    private static String server = "http://127.0.0.1:9000";
+    private static String accessKey = "accesskey";
+    private static String secretKey = "secretkey";
+    private static String bucket = "default-bucket";
+
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
-    private static String server = "http://127.0.0.1:9000";
-    private static String accessKey = "minioadmin";
-    private static String secretKey = "minioadmin";
-    private static String bucket = "dev-test";
-
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
+
+        File config = new File(confDir, CONF_FILE);
+        UTF8Properties props = new UTF8Properties();
+        props.load(config);
+
+        enabled = Boolean.valueOf(props.getProperty(ENABLE_KEY));
+
+        String host = props.getProperty(HOST_KEY);
+        String port = props.getProperty(PORT_KEY);
+
+        server = host + ":" + port;
+
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        String cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
+
+        if (cmdFields != null) {
+            parseCmdLineFields(cmdFields);
+        }
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
         inputStreamFactory = new MinIOInputInputStreamFactory(null);
@@ -50,6 +87,24 @@ public class MinIOTask extends AbstractTask {
             minioClient.makeBucket(MakeBucketArgs.builder().bucket(bucket).build());
         }
 
+    }
+
+    private void parseCmdLineFields(String cmdFields) {
+        String[] entries = cmdFields.split(";");
+        for (String entry : entries) {
+            String[] pair = entry.split(":", 2);
+            if (ACCESS_KEY.equals(pair[0]))
+                accessKey = pair[1];
+            else if (SECRET_KEY.equals(pair[0]))
+                secretKey = pair[1];
+            else if (BUCKET_KEY.equals(pair[0]))
+                bucket = pair[1];
+        }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return enabled;
     }
 
     @Override
@@ -76,8 +131,10 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
+        String uri = buildUri(server, bucket, hash);
+
         if (exists) {
-            updateDataSource(item, hash);
+            updateDataSource(item, uri);
             return;
         }
 
@@ -86,33 +143,64 @@ public class MinIOTask extends AbstractTask {
             try (InputStream is = item.getBufferedStream()) {
                 minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(hash)
                         .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
+
             }
-            updateDataSource(item, hash);
+            updateDataSource(item, uri);
 
         } catch (Exception e) {
-            System.out.println("Error occurred uploading file " + item.getPath());
-            e.printStackTrace();
+            logger.error("Error when uploading object " + item.getPath(), e);
         }
 
+    }
+
+    private static String buildUri(String server, String bucket, String hash) {
+        return server + "/" + bucket + "/" + hash;
+    }
+
+    private static String[] parseUri(String uri) {
+        ArrayList<String> parts = new ArrayList<>();
+        int end = uri.length();
+        for (int i = uri.length() - 1; i > 0; i--) {
+            if (uri.charAt(i) == '/') {
+                parts.add(0, uri.substring(i + 1, end));
+                end = i;
+            }
+            if (parts.size() == 2) {
+                parts.add(0, uri.substring(0, i));
+                break;
+            }
+        }
+        return parts.toArray(new String[3]);
     }
 
     private void updateDataSource(IItem item, String id) {
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
+        item.setFile(null);
+        item.setFileOffset(-1);
     }
 
     public static class MinIOInputInputStreamFactory extends SeekableInputStreamFactory {
 
-        private MinioClient minioClient = null;
+        private Map<String, MinioClient> map = new ConcurrentHashMap<>();
 
         public MinIOInputInputStreamFactory(Path dataSource) {
-            super(Paths.get("minio-test"));
-            minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
+            super(Paths.get("minio-storage"));
         }
 
         @Override
         public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-            return new MinIOSeekableInputStream(minioClient, identifier);
+            String[] parts = parseUri(identifier);
+            String server = parts[0];
+            String bucket = parts[1];
+            String hash = parts[2];
+
+            MinioClient minioClient = map.get(server);
+            if (minioClient == null) {
+                minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
+                map.put(server, minioClient);
+            }
+            return new MinIOSeekableInputStream(minioClient, bucket, hash);
         }
 
     }
@@ -120,14 +208,15 @@ public class MinIOTask extends AbstractTask {
     public static class MinIOSeekableInputStream extends SeekableInputStream {
 
         private MinioClient minioClient;
-        private String id;
+        private String bucket, id;
         private Long size;
         private long pos = 0, markPos;
         private InputStream is;
 
-        public MinIOSeekableInputStream(MinioClient minioClient, String id) {
+        public MinIOSeekableInputStream(MinioClient minioClient, String bucket, String hash) {
             this.minioClient = minioClient;
-            this.id = id;
+            this.bucket = bucket;
+            this.id = hash;
         }
 
         @Override
@@ -149,8 +238,8 @@ public class MinIOTask extends AbstractTask {
             if (size == null) {
                 try {
                     size = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(id).build()).length();
-                } catch (InvalidKeyException | ErrorResponseException | IllegalArgumentException
-                        | InsufficientDataException | InternalException | InvalidBucketNameException
+                } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
+                        | InvalidBucketNameException
                         | InvalidResponseException | NoSuchAlgorithmException | ServerException
                         | XmlParserException e) {
                     throw new IOException(e);
@@ -197,7 +286,7 @@ public class MinIOTask extends AbstractTask {
             try {
                 return minioClient.getObject(bucket, id, pos);
 
-            } catch (InvalidKeyException | ErrorResponseException | IllegalArgumentException | InsufficientDataException
+            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException
                     | InternalException | InvalidBucketNameException | InvalidResponseException
                     | NoSuchAlgorithmException | ServerException | XmlParserException e) {
                 throw new IOException(e);

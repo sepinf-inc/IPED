@@ -1,0 +1,12 @@
+##################################
+# MinIO Task configuration
+#################################
+
+# Enable indexing to ElasticSearch cluster
+enable = false
+
+# Host name or ip address of Elastic cluster
+host = http://127.0.0.1
+
+# Port where Elastic is listening
+port = 9000
