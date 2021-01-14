@@ -50,9 +50,9 @@ public class MinIOTask extends AbstractTask {
 
     private static boolean enabled = false;
     private static String server = "http://127.0.0.1:9000";
-    private static String accessKey = "accesskey";
-    private static String secretKey = "secretkey";
-    private static String bucket = "default-bucket";
+    private static String accessKey = "minioadmin";
+    private static String secretKey = "minioadmin";
+    private static String bucket;
 
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
@@ -66,10 +66,17 @@ public class MinIOTask extends AbstractTask {
 
         enabled = Boolean.valueOf(props.getProperty(ENABLE_KEY));
 
+        if (!enabled) {
+            return;
+        }
+
         String host = props.getProperty(HOST_KEY);
         String port = props.getProperty(PORT_KEY);
 
         server = host + ":" + port;
+
+        // case name is default bucket name
+        bucket = output.getParentFile().getName().toLowerCase();
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         String cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
@@ -114,6 +121,9 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     protected void process(IItem item) throws Exception {
+
+        if (!item.isToAddToCase())
+            return;
 
         String hash = item.getHash();
         if (hash == null || hash.isEmpty())
@@ -182,10 +192,14 @@ public class MinIOTask extends AbstractTask {
 
     public static class MinIOInputInputStreamFactory extends SeekableInputStreamFactory {
 
-        private Map<String, MinioClient> map = new ConcurrentHashMap<>();
+        private static Map<String, MinioClient> map = new ConcurrentHashMap<>();
 
         public MinIOInputInputStreamFactory(Path dataSource) {
             super(Paths.get("minio-storage"));
+        }
+
+        public boolean checkIfDataSourceExists() {
+            return false;
         }
 
         @Override
