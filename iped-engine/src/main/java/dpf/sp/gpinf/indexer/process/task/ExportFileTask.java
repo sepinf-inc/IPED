@@ -561,6 +561,8 @@ public class ExportFileTask extends AbstractTask {
 
         private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
 
+        private static final String CLEAR_DATA = "UPDATE t1 SET data=NULL WHERE id=?;";
+
         private Connection conn;
 
         public SQLiteInputStreamFactory(Path datasource) {
@@ -578,6 +580,16 @@ public class ExportFileTask extends AbstractTask {
             // and files which content was not exported to report will not trigger a dialog
             // asking for datasource path
             return false;
+        }
+
+        @Override
+        public void deleteItemInDataSource(String identifier) throws IOException {
+            try (PreparedStatement ps = conn.prepareStatement(CLEAR_DATA)) {
+                ps.setString(1, identifier);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                throw new IOException(e);
+            }
         }
 
         @Override
