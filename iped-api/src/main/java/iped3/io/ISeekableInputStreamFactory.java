@@ -9,4 +9,8 @@ public interface ISeekableInputStreamFactory {
 
     public Path getDataSourcePath();
 
+    public default void deleteItemInDataSource(String identifier) throws IOException {
+        // do nothing by default
+    }
+
 }
