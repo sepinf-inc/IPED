@@ -276,15 +276,19 @@ public class Item implements ISleuthKitItem {
      *             caso ocorra erro de IO
      */
     public void dispose() {
+        this.dispose(true);
+    }
+
+    public void dispose(boolean clearTextCache) {
         try {
             tmpResources.close();
         } catch (Exception e) {
-            // LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+            LOGGER.warn("Error closing resources of " + getPath(), e);
         }
         tmpFile = null;
         tis = null;
         try {
-            if (textCache != null) {
+            if (textCache != null && clearTextCache) {
                 textCache.close();
                 textCache = null;
             }
@@ -293,8 +297,9 @@ public class Item implements ISleuthKitItem {
         }
         if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
             try {
-                if (file != null) {
-                    Files.deleteIfExists(file.toPath());
+                if (file != null && file.exists() && !file.delete()) {
+                    // in some scenarios file.delete() works but Files.delete() throws ioexception
+                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
                 }
                 if (inputStreamFactory != null && idInDataSource != null) {
                     inputStreamFactory.deleteItemInDataSource(idInDataSource);

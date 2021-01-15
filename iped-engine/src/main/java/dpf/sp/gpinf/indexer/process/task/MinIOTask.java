@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
 import io.minio.MakeBucketArgs;
@@ -35,6 +36,15 @@ import io.minio.errors.XmlParserException;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
+/**
+ * Task to export files to MinIO object storage service.
+ * 
+ * TODO: This and @ExportFileTask should extend a common abstract class, and the
+ * implementation should be chosen depending on configuration.
+ * 
+ * @author Nassif
+ *
+ */
 public class MinIOTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
@@ -114,6 +124,10 @@ public class MinIOTask extends AbstractTask {
         return enabled;
     }
 
+    public static boolean isTaskEnabled() {
+        return enabled;
+    }
+
     @Override
     public void finish() throws Exception {
         
@@ -122,7 +136,7 @@ public class MinIOTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
-        if (!item.isToAddToCase())
+        if (caseData.isIpedReport() || !item.isToAddToCase())
             return;
 
         String hash = item.getHash();
@@ -184,9 +198,14 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
+        if (item.isSubItem()) {
+            item.setDeleteFile(true);
+            ((Item) item).dispose(false);
+        }
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFile(null);
+        item.setExportedFile(null);
         item.setFileOffset(-1);
     }
 

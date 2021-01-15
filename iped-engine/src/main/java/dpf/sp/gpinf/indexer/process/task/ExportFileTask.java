@@ -249,7 +249,8 @@ public class ExportFileTask extends AbstractTask {
                     ((ISleuthKitItem) evidence).setSleuthId(null);
                 }
                 evidence.setExportedFile(null);
-            } else {
+
+            } else if (!MinIOTask.isTaskEnabled() || caseData.isIpedReport()) {
                 extract(evidence);
             }
 
@@ -274,7 +275,7 @@ public class ExportFileTask extends AbstractTask {
             incItensExtracted();
         }
 
-        if ((hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn()) && !evidence.isToExtract()) {
+        if (isAutomaticFileExtractionOn && !evidence.isToExtract()) {
             evidence.setAddToCase(false);
         }
 
