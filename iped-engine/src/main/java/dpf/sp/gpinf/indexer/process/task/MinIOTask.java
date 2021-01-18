@@ -18,6 +18,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import dpf.sp.gpinf.network.util.ProxySever;
 import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
@@ -33,6 +34,7 @@ import io.minio.errors.InvalidBucketNameException;
 import io.minio.errors.InvalidResponseException;
 import io.minio.errors.ServerException;
 import io.minio.errors.XmlParserException;
+import iped3.ICaseData;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
 
@@ -53,15 +55,15 @@ public class MinIOTask extends AbstractTask {
     private static final String ENABLE_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
-    private static final String CMD_LINE_KEY = "minio";
+    private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
     private static boolean enabled = false;
     private static String server = "http://127.0.0.1:9000";
-    private static String accessKey = "minioadmin";
-    private static String secretKey = "minioadmin";
+    private static String accessKey;
+    private static String secretKey;
     private static String bucket;
 
     private MinioClient minioClient;
@@ -88,12 +90,7 @@ public class MinIOTask extends AbstractTask {
         // case name is default bucket name
         bucket = output.getParentFile().getName().toLowerCase();
 
-        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        String cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
-
-        if (cmdFields != null) {
-            parseCmdLineFields(cmdFields);
-        }
+        loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
         inputStreamFactory = new MinIOInputInputStreamFactory(null);
@@ -106,7 +103,21 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private void parseCmdLineFields(String cmdFields) {
+    private static void loadCredentials(ICaseData caseData) {
+        if (accessKey != null && secretKey != null) {
+            return;
+        }
+        String cmdFields = System.getenv(CMD_LINE_KEY);
+        if (cmdFields == null) {
+            cmdFields = System.getProperty(CMD_LINE_KEY);
+        }
+        if (cmdFields == null && caseData != null) {
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
+        }
+        if (cmdFields == null) {
+            throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
+        }
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
@@ -142,6 +153,9 @@ public class MinIOTask extends AbstractTask {
         String hash = item.getHash();
         if (hash == null || hash.isEmpty())
             return;
+
+        // disable blocking proxy possibly enabled by HtmlViewer
+        ProxySever.get().disable();
 
         boolean exists = false;
         try {
@@ -230,6 +244,7 @@ public class MinIOTask extends AbstractTask {
 
             MinioClient minioClient = map.get(server);
             if (minioClient == null) {
+                loadCredentials(null);
                 minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
                 map.put(server, minioClient);
             }
@@ -250,6 +265,8 @@ public class MinIOTask extends AbstractTask {
             this.minioClient = minioClient;
             this.bucket = bucket;
             this.id = hash;
+            // disable blocking proxy possibly enabled by HtmlViewer
+            ProxySever.get().disable();
         }
 
         @Override
