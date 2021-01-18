@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -451,7 +454,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private String getInputStreamSourcePath(IItem item) {
         if (item.getInputStreamFactory() != null) {
-            return Util.getRelativePath(output, item.getInputStreamFactory().getDataSourcePath().toFile());
+            URI uri = item.getInputStreamFactory().getDataSourceURI();
+            return Util.getRelativePath(output, uri);
         }
         return null;
     }

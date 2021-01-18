@@ -22,8 +22,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
+import java.net.URI;
+import java.nio.file.FileSystemException;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -115,7 +119,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean guessMetaTypes = false;
 
-    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static class StringComparator implements Comparator<String> {
@@ -240,9 +244,10 @@ public class IndexItem extends BasicProps {
             doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
         }
-        if (evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourcePath() != null) {
-            Path srcPath = evidence.getInputStreamFactory().getDataSourcePath();
-            value = Util.getRelativePath(output, srcPath.toFile());
+        if (evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourceURI() != null) {
+            URI uri = evidence.getInputStreamFactory().getDataSourceURI();
+            value = Util.getRelativePath(output, uri);
+
             doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
             doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
 
@@ -765,18 +770,24 @@ public class IndexItem extends BasicProps {
                     evidence.setIdInDataSource(value.trim());
                 }
                 if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                    String relPath = doc.get(IndexItem.SOURCE_PATH);
-                    Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
+                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                     if (sisf == null) {
                         String className = doc.get(IndexItem.SOURCE_DECODER);
                         Class<?> clazz = Class.forName(className);
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        sisf = c.newInstance(absPath);
+                        try {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
+                            sisf = c.newInstance(absPath);
+
+                        } catch (NoSuchMethodException e) {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            sisf = c.newInstance(URI.create(sourcePath));
+                        }
                         if (sisf.checkIfDataSourceExists()) {
                             checkIfExistsAndAsk(sisf, outputBase);
                         }
-                        inputStreamFactories.put(absPath, sisf);
+                        inputStreamFactories.put(sourcePath, sisf);
                     }
                     evidence.setInputStreamFactory(sisf);
                 }
@@ -909,17 +920,17 @@ public class IndexItem extends BasicProps {
     }
 
     private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
-        Path path = sisf.getDataSourcePath();
+        Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
             if (newPath != null && Files.exists(newPath)) {
-                sisf.setDataSourcePath(newPath);
+                sisf.setDataSourceURI(newPath.toUri());
                 return;
             }
             SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(path.toFile());
             File newDataSource = siwd.askImagePathInGUI();
             if (newDataSource != null) {
-                sisf.setDataSourcePath(newDataSource.toPath());
+                sisf.setDataSourceURI(newDataSource.toPath().toUri());
                 saveDataSourcePath(caseModuleDir, path, newDataSource.toPath());
             }
         }

@@ -27,8 +27,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -567,11 +569,11 @@ public class ExportFileTask extends AbstractTask {
         private Connection conn;
 
         public SQLiteInputStreamFactory(Path datasource) {
-            super(datasource);
+            super(datasource.toUri());
         }
 
         public SQLiteInputStreamFactory(Path datasource, Connection conn) {
-            super(datasource);
+            super(datasource.toUri());
             this.conn = conn;
         }
 
@@ -598,7 +600,7 @@ public class ExportFileTask extends AbstractTask {
             try {
                 byte[] bytes = null;
                 if (conn == null || conn.isClosed()) {
-                    conn = getSQLiteStorageCon(getDataSourcePath().toFile());
+                    conn = getSQLiteStorageCon(Paths.get(getDataSourceURI()).toFile());
                 }
                 try (PreparedStatement ps = conn.prepareStatement(SELECT_DATA)) {
                     ps.setString(1, identifier);

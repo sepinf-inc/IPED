@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.InvalidKeyException;
@@ -93,7 +94,7 @@ public class MinIOTask extends AbstractTask {
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
-        inputStreamFactory = new MinIOInputInputStreamFactory(null);
+        inputStreamFactory = new MinIOInputInputStreamFactory(URI.create(server));
 
         // Check if the bucket already exists.
         boolean isExist = minioClient.bucketExists(BucketExistsArgs.builder().bucket(bucket).build());
@@ -169,10 +170,10 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
-        String uri = buildUri(server, bucket, hash);
+        String identifier = buildPath(bucket, hash);
 
         if (exists) {
-            updateDataSource(item, uri);
+            updateDataSource(item, identifier);
             return;
         }
 
@@ -183,7 +184,7 @@ public class MinIOTask extends AbstractTask {
                         .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
 
             }
-            updateDataSource(item, uri);
+            updateDataSource(item, identifier);
 
         } catch (Exception e) {
             logger.error("Error when uploading object " + item.getPath(), e);
@@ -191,24 +192,12 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private static String buildUri(String server, String bucket, String hash) {
-        return server + "/" + bucket + "/" + hash;
+    private static String buildPath(String bucket, String hash) {
+        return bucket + "/" + hash;
     }
 
-    private static String[] parseUri(String uri) {
-        ArrayList<String> parts = new ArrayList<>();
-        int end = uri.length();
-        for (int i = uri.length() - 1; i > 0; i--) {
-            if (uri.charAt(i) == '/') {
-                parts.add(0, uri.substring(i + 1, end));
-                end = i;
-            }
-            if (parts.size() == 2) {
-                parts.add(0, uri.substring(0, i));
-                break;
-            }
-        }
-        return parts.toArray(new String[3]);
+    private static String[] parsePath(String path) {
+        return path.split("/");
     }
 
     private void updateDataSource(IItem item, String id) {
@@ -227,8 +216,8 @@ public class MinIOTask extends AbstractTask {
 
         private static Map<String, MinioClient> map = new ConcurrentHashMap<>();
 
-        public MinIOInputInputStreamFactory(Path dataSource) {
-            super(Paths.get("minio-storage"));
+        public MinIOInputInputStreamFactory(URI dataSource) {
+            super(dataSource);
         }
 
         public boolean checkIfDataSourceExists() {
@@ -237,10 +226,10 @@ public class MinIOTask extends AbstractTask {
 
         @Override
         public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
-            String[] parts = parseUri(identifier);
-            String server = parts[0];
-            String bucket = parts[1];
-            String hash = parts[2];
+            String server = dataSource.toString();
+            String[] parts = parsePath(identifier);
+            String bucket = parts[0];
+            String hash = parts[1];
 
             MinioClient minioClient = map.get(server);
             if (minioClient == null) {
