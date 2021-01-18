@@ -283,10 +283,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
-        if (!item.isToAddToCase())
-            return;
+        Reader textReader = null;
 
-        Reader textReader = item.getTextReader();
+        if (!item.isToAddToCase()) {
+            textReader = IndexTask.getReaderIfTreeNode(item, caseData);
+            if (textReader == null) {
+                return;
+            }
+        }
+
+        if (textReader == null) {
+            textReader = item.getTextReader();
+        }
+
         if (textReader == null) {
             LOGGER.warn("Null text reader: " + item.getPath() + " ("
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");

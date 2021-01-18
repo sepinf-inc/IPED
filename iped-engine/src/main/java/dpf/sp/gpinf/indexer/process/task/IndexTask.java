@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -73,6 +74,20 @@ public class IndexTask extends AbstractTask {
         }
     }
 
+    public static Reader getReaderIfTreeNode(IItem item, ICaseData caseData) {
+        if (item.isDir() || item.isRoot() || item.hasChildren() || caseData.isIpedReport()) {
+            if (item instanceof ISleuthKitItem) {
+                ((ISleuthKitItem) item).setSleuthId(null);
+            }
+            item.setExportedFile(null);
+            item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+            item.getCategorySet().clear();
+            return new StringReader(""); //$NON-NLS-1$
+        } else {
+            return null;
+        }
+    }
+
     public void process(IItem evidence) throws IOException {
         if (evidence.isQueueEnd()) {
             return;
@@ -86,15 +101,8 @@ public class IndexTask extends AbstractTask {
         Reader textReader = null;
 
         if (!evidence.isToAddToCase()) {
-            if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
-                textReader = new StringReader(""); //$NON-NLS-1$
-                if (evidence instanceof ISleuthKitItem) {
-                    ((ISleuthKitItem) evidence).setSleuthId(null);
-                }
-                evidence.setExportedFile(null);
-                evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
-                evidence.getCategorySet().clear();
-            } else {
+            textReader = getReaderIfTreeNode(evidence, caseData);
+            if (textReader == null) {
                 return;
             }
         }
