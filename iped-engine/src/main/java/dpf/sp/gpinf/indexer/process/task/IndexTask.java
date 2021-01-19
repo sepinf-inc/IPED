@@ -74,18 +74,20 @@ public class IndexTask extends AbstractTask {
         }
     }
 
-    public static Reader getReaderIfTreeNode(IItem item, ICaseData caseData) {
-        if (item.isDir() || item.isRoot() || item.hasChildren() || caseData.isIpedReport()) {
-            if (item instanceof ISleuthKitItem) {
-                ((ISleuthKitItem) item).setSleuthId(null);
-            }
-            item.setExportedFile(null);
-            item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
-            item.getCategorySet().clear();
-            return new StringReader(""); //$NON-NLS-1$
-        } else {
-            return null;
+    public static boolean isTreeNodeOnly(IItem item) {
+        return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
+                || item.getExtraAttribute(IndexItem.TREENODE) != null;
+    }
+
+    public static void configureTreeNodeAttributes(IItem item) {
+        if (item instanceof ISleuthKitItem) {
+            ((ISleuthKitItem) item).setSleuthId(null);
         }
+        item.setExportedFile(null);
+        item.setIdInDataSource(null);
+        item.setInputStreamFactory(null);
+        item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+        item.getCategorySet().clear();
     }
 
     public void process(IItem evidence) throws IOException {
@@ -101,10 +103,11 @@ public class IndexTask extends AbstractTask {
         Reader textReader = null;
 
         if (!evidence.isToAddToCase()) {
-            textReader = getReaderIfTreeNode(evidence, caseData);
-            if (textReader == null) {
+            if (isTreeNodeOnly(evidence)) {
+                configureTreeNodeAttributes(evidence);
+                textReader = new StringReader("");
+            } else
                 return;
-            }
         }
 
         stats.updateLastId(evidence.getId());

@@ -289,10 +289,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
         Reader textReader = null;
 
         if (!item.isToAddToCase()) {
-            textReader = IndexTask.getReaderIfTreeNode(item, caseData);
-            if (textReader == null) {
+            if (IndexTask.isTreeNodeOnly(item)) {
+                IndexTask.configureTreeNodeAttributes(item);
+                textReader = new StringReader("");
+            } else
                 return;
-            }
         }
 
         if (textReader == null) {
