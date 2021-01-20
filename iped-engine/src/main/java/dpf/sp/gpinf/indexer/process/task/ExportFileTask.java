@@ -267,7 +267,7 @@ public class ExportFileTask extends AbstractTask {
                 && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticFileExtractionOn)) {
 
             evidence.setToExtract(true);
-            if (!doNotExport(evidence)) {
+            if (!doNotExport(evidence) && !MinIOTask.isTaskEnabled()) {
                 renameToHash(evidence);
             } else {
                 // just clear path to be indexed, continues to point to file for processing
@@ -398,6 +398,16 @@ public class ExportFileTask extends AbstractTask {
             }
 
         }
+        if (hash != null && !hash.isEmpty() && !hash.equalsIgnoreCase(evidence.getIdInDataSource())
+                && evidence.getInputStreamFactory() instanceof SQLiteInputStreamFactory) {
+            SQLiteInputStreamFactory sisf = (SQLiteInputStreamFactory) evidence.getInputStreamFactory();
+            try {
+                sisf.renameToHash(Integer.toString(evidence.getId()), hash);
+                evidence.setIdInDataSource(hash);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -522,18 +532,23 @@ public class ExportFileTask extends AbstractTask {
             throws InterruptedException, IOException, SQLException, CompressorException {
         byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         int k = getStorageSuffix(hash);
-        HashValue md5 = new HashValue(hash);
+        String id;
         boolean alreadyInDB = false;
-        try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
-            ps.setString(1, md5.toString());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                alreadyInDB = true;
+        if (evidence.isSubItem() && caseData.containsReport() && !caseData.isIpedReport()) {
+            id = Integer.toString(evidence.getId());
+        } else {
+            id = new HashValue(hash).toString();
+            try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
+                ps.setString(1, id);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    alreadyInDB = true;
+                }
             }
         }
         if (!alreadyInDB) {
             try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(INSERT_DATA)) {
-                ps.setString(1, md5.toString());
+                ps.setString(1, id);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 OutputStream gzippedOut = new GzipCompressorOutputStream(baos, getGzipParams());
                 // OutputStream gzippedOut = new LZ4BlockOutputStream(baos);
@@ -546,7 +561,7 @@ public class ExportFileTask extends AbstractTask {
                 ps.executeUpdate();
             }
         }
-        evidence.setIdInDataSource(md5.toString());
+        evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
         evidence.setFile(null);
@@ -566,6 +581,8 @@ public class ExportFileTask extends AbstractTask {
 
         private static final String CLEAR_DATA = "UPDATE t1 SET data=NULL WHERE id=?;";
 
+        private static final String RENAME_ID = "UPDATE t1 SET id=? WHERE id=?;";
+
         private Connection conn;
 
         public SQLiteInputStreamFactory(Path datasource) {
@@ -583,6 +600,19 @@ public class ExportFileTask extends AbstractTask {
             // and files which content was not exported to report will not trigger a dialog
             // asking for datasource path
             return false;
+        }
+
+        public void renameToHash(String identifier, String hash) throws IOException {
+            try (PreparedStatement ps = conn.prepareStatement(RENAME_ID)) {
+                ps.setString(1, hash);
+                ps.setString(2, identifier);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                if (e.toString().contains("UNIQUE")) {
+                    deleteItemInDataSource(identifier);
+                } else
+                    throw new IOException(e);
+            }
         }
 
         @Override
