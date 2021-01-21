@@ -80,9 +80,13 @@ public class IndexTask extends AbstractTask {
     }
 
     public static void configureTreeNodeAttributes(IItem item) {
+        if (item.isSubItem()) {
+            item.dispose();
+        }
         if (item instanceof ISleuthKitItem) {
             ((ISleuthKitItem) item).setSleuthId(null);
         }
+        item.setFile(null);
         item.setExportedFile(null);
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);
