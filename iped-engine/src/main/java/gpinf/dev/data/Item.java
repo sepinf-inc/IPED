@@ -291,16 +291,9 @@ public class Item implements ISleuthKitItem {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
-            try {
-                if (file != null) {
-                    Files.deleteIfExists(file.toPath());
-                }
-                if (inputStreamFactory != null && idInDataSource != null) {
-                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
-                }
-            } catch (IOException e) {
-                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
+        if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
+            if (!file.delete()) {
+                LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
             }
         }
     }
