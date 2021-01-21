@@ -533,14 +533,20 @@ public class ExportFileTask extends AbstractTask {
 
     private void insertIntoStorage(IItem evidence, byte[] buf, int len)
             throws InterruptedException, IOException, SQLException, CompressorException {
-        byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
+        byte[] hash = null;
+        String hashString = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
+        if (hashString != null) {
+            hash = new HashValue(hashString).getBytes();
+        } else {
+            hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
+        }
         int k = getStorageSuffix(hash);
         String id;
         boolean alreadyInDB = false;
         if (evidence.isSubItem() && caseData.containsReport() && !caseData.isIpedReport()) {
             id = Integer.toString(evidence.getId());
         } else {
-            id = new HashValue(hash).toString();
+            id = hashString != null ? hashString : new HashValue(hash).toString();
             try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
                 ps.setString(1, id);
                 ResultSet rs = ps.executeQuery();
