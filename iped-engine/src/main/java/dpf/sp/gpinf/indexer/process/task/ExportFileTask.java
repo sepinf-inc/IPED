@@ -92,11 +92,12 @@ public class ExportFileTask extends AbstractTask {
 
     private static final byte DB_SUFFIX_BITS = 4; // current impl maximum is 8
 
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
+    private static final String CREATE_TABLE1 = "CREATE TABLE IF NOT EXISTS thumbs(id TEXT PRIMARY KEY, thumb BLOB);";
+    private static final String CREATE_TABLE2 = "CREATE TABLE IF NOT EXISTS data(id TEXT PRIMARY KEY, data BLOB);";
 
-    private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
+    private static final String INSERT_DATA = "INSERT INTO data(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
-    private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
+    private static final String CHECK_HASH = "SELECT id FROM data WHERE id=? AND data IS NOT NULL;";
 
     private static final int MAX_SUBITEM_COMPRESSION = 100;
     private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
@@ -178,9 +179,11 @@ public class ExportFileTask extends AbstractTask {
             try {
                 Connection con = getSQLiteConnection(db);
                 try (Statement stmt = con.createStatement()) {
-                    stmt.executeUpdate(CREATE_TABLE);
+                    stmt.executeUpdate(CREATE_TABLE1);
                 }
-
+                try (Statement stmt = con.createStatement()) {
+                    stmt.executeUpdate(CREATE_TABLE2);
+                }
                 tempStorageCon.put(i, con);
 
             } catch (SQLException e) {
@@ -577,11 +580,11 @@ public class ExportFileTask extends AbstractTask {
 
     public static class SQLiteInputStreamFactory extends SeekableInputStreamFactory {
 
-        private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
+        private static final String SELECT_DATA = "SELECT data FROM data WHERE id=?;";
 
-        private static final String CLEAR_DATA = "UPDATE t1 SET data=NULL WHERE id=?;";
+        private static final String CLEAR_DATA = "DELETE FROM data WHERE id=?;";
 
-        private static final String RENAME_ID = "UPDATE t1 SET id=? WHERE id=?;";
+        private static final String RENAME_ID = "UPDATE data SET id=? WHERE id=?;";
 
         private Connection conn;
 
