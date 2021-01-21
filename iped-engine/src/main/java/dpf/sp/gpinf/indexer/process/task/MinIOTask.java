@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,6 +53,7 @@ public class MinIOTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
 
+    private static final int FOLDER_LEVELS = 4;
     private static final String CONF_FILE = "MinIOConfig.txt";
     private static final String ENABLE_KEY = "enable";
     private static final String HOST_KEY = "host";
@@ -173,21 +175,29 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
-        String identifier = buildPath(bucket, hash);
+        String bucketPath = buildPath(hash);
+        String fullPath = bucket + "/" + bucketPath;
 
         if (exists) {
-            updateDataSource(item, identifier);
+            updateDataSource(item, fullPath);
             return;
+        }
+
+        // create directory structure
+        if (FOLDER_LEVELS > 0) {
+            String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(folder)
+                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1).build());
         }
 
         try {
             // Upload the file to the bucket with putObject
             try (InputStream is = item.getBufferedStream()) {
-                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(hash)
+                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath)
                         .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
 
             }
-            updateDataSource(item, identifier);
+            updateDataSource(item, fullPath);
 
         } catch (Exception e) {
             logger.error("Error when uploading object " + item.getPath(), e);
@@ -195,12 +205,17 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private static String buildPath(String bucket, String hash) {
-        return bucket + "/" + hash;
+    private static String buildPath(String hash) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < FOLDER_LEVELS; i++) {
+            sb.append(hash.charAt(i)).append("/");
+        }
+        sb.append(hash);
+        return sb.toString();
     }
 
-    private static String[] parsePath(String path) {
-        return path.split("/");
+    private static String[] parseBucketAndPath(String path) {
+        return path.split("/", 2);
     }
 
     private void updateDataSource(IItem item, String id) {
@@ -230,9 +245,9 @@ public class MinIOTask extends AbstractTask {
         @Override
         public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
             String server = dataSource.toString();
-            String[] parts = parsePath(identifier);
+            String[] parts = parseBucketAndPath(identifier);
             String bucket = parts[0];
-            String hash = parts[1];
+            String path = parts[1];
 
             MinioClient minioClient = map.get(server);
             if (minioClient == null) {
@@ -240,7 +255,7 @@ public class MinIOTask extends AbstractTask {
                 minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
                 map.put(server, minioClient);
             }
-            return new MinIOSeekableInputStream(minioClient, bucket, hash);
+            return new MinIOSeekableInputStream(minioClient, bucket, path);
         }
 
     }
@@ -253,10 +268,10 @@ public class MinIOTask extends AbstractTask {
         private long pos = 0, markPos;
         private InputStream is;
 
-        public MinIOSeekableInputStream(MinioClient minioClient, String bucket, String hash) {
+        public MinIOSeekableInputStream(MinioClient minioClient, String bucket, String id) {
             this.minioClient = minioClient;
             this.bucket = bucket;
-            this.id = hash;
+            this.id = id;
             // disable blocking proxy possibly enabled by HtmlViewer
             ProxySever.get().disable();
         }
