@@ -108,13 +108,16 @@ public class MinIOTask extends AbstractTask {
         if (accessKey != null && secretKey != null) {
             return;
         }
-        String cmdFields = System.getenv(CMD_LINE_KEY);
+        String cmdFields = null;
+        if (caseData != null) {
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
+        }
         if (cmdFields == null) {
             cmdFields = System.getProperty(CMD_LINE_KEY);
         }
-        if (cmdFields == null && caseData != null) {
-            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            cmdFields = args.getExtraParams().get(CMD_LINE_KEY);
+        if (cmdFields == null) {
+            cmdFields = System.getenv(CMD_LINE_KEY);
         }
         if (cmdFields == null) {
             throw new RuntimeException("'MinioCredentials' not set by ENV var, sys prop or cmd line param.");
