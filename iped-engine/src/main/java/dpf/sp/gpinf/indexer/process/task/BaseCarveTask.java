@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.MediaTypes;
 
 /**
  * Classe base de tarefas de carving. Centraliza contador de itens carveados e
@@ -38,7 +39,7 @@ import iped3.sleuthkit.ISleuthKitItem;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 
-    public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
+    public static MediaType UNALLOCATED_MIMETYPE = MediaTypes.UNALLOCATED;
     protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
     protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
     protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
