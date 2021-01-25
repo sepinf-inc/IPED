@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer.datasource;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,7 +91,7 @@ public class IPEDReader extends DataSourceReader {
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
-    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
 
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
@@ -519,15 +520,21 @@ public class IPEDReader extends DataSourceReader {
                         evidence.setIdInDataSource(value.trim());
                     }
                     if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                        String relPath = doc.get(IndexItem.SOURCE_PATH);
-                        Path absPath = Util.getResolvedFile(basePath, relPath).toPath();
-                        SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
+                        String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                        SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                         if (sisf == null) {
                             String className = doc.get(IndexItem.SOURCE_DECODER);
                             Class<?> clazz = Class.forName(className);
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            sisf = c.newInstance(absPath);
-                            inputStreamFactories.put(absPath, sisf);
+                            try {
+                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                                Path absPath = Util.getResolvedFile(basePath, sourcePath).toPath();
+                                sisf = c.newInstance(absPath);
+
+                            } catch (NoSuchMethodException e) {
+                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                                sisf = c.newInstance(URI.create(sourcePath));
+                            }
+                            inputStreamFactories.put(sourcePath, sisf);
                         }
                         evidence.setInputStreamFactory(sisf);
 

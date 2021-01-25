@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -283,10 +286,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
-        if (!item.isToAddToCase())
-            return;
+        Reader textReader = null;
 
-        Reader textReader = item.getTextReader();
+        if (!item.isToAddToCase()) {
+            if (IndexTask.isTreeNodeOnly(item)) {
+                IndexTask.configureTreeNodeAttributes(item);
+                textReader = new StringReader("");
+            } else
+                return;
+        }
+
+        if (textReader == null) {
+            textReader = item.getTextReader();
+        }
+
         if (textReader == null) {
             LOGGER.warn("Null text reader: " + item.getPath() + " ("
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");
@@ -442,7 +455,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private String getInputStreamSourcePath(IItem item) {
         if (item.getInputStreamFactory() != null) {
-            return Util.getRelativePath(output, item.getInputStreamFactory().getDataSourcePath().toFile());
+            URI uri = item.getInputStreamFactory().getDataSourceURI();
+            return Util.getRelativePath(output, uri);
         }
         return null;
     }

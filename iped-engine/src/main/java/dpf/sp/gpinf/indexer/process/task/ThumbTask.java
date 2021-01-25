@@ -16,8 +16,8 @@ public abstract class ThumbTask extends AbstractTask {
     public static final String thumbsFolder = "thumbs"; //$NON-NLS-1$
     public static final String HAS_THUMB = "hasThumb"; //$NON-NLS-1$
 
-    private static final String SELECT_THUMB = "SELECT thumb FROM t1 WHERE id=?;"; //$NON-NLS-1$
-    private static final String INSERT_THUMB = "INSERT INTO t1(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;"; //$NON-NLS-1$
+    private static final String SELECT_THUMB = "SELECT thumb FROM thumbs WHERE id=?;"; //$NON-NLS-1$
+    private static final String INSERT_THUMB = "INSERT INTO thumbs(id, thumb) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET thumb=? WHERE thumb IS NULL;"; //$NON-NLS-1$
 
     protected File getThumbFile(IItem evidence) throws Exception {
         File thumbFile = null;

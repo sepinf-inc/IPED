@@ -27,7 +27,11 @@ public class DuplicateTask extends AbstractTask {
 
     private HashMap<IHashValue, IHashValue> hashMap;
 
-    public static boolean ignoreDuplicates = false;
+    private static boolean ignoreDuplicates = false;
+
+    public static boolean isIgnoreDuplicatesEnabled() {
+        return ignoreDuplicates;
+    }
 
     public void process(IItem evidence) {
 

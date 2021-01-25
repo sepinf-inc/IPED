@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -73,6 +74,26 @@ public class IndexTask extends AbstractTask {
         }
     }
 
+    public static boolean isTreeNodeOnly(IItem item) {
+        return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
+                || item.getExtraAttribute(IndexItem.TREENODE) != null;
+    }
+
+    public static void configureTreeNodeAttributes(IItem item) {
+        if (item.isSubItem()) {
+            item.dispose();
+        }
+        if (item instanceof ISleuthKitItem) {
+            ((ISleuthKitItem) item).setSleuthId(null);
+        }
+        item.setFile(null);
+        item.setExportedFile(null);
+        item.setIdInDataSource(null);
+        item.setInputStreamFactory(null);
+        item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+        item.getCategorySet().clear();
+    }
+
     public void process(IItem evidence) throws IOException {
         if (evidence.isQueueEnd()) {
             return;
@@ -86,17 +107,11 @@ public class IndexTask extends AbstractTask {
         Reader textReader = null;
 
         if (!evidence.isToAddToCase()) {
-            if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
-                textReader = new StringReader(""); //$NON-NLS-1$
-                if (evidence instanceof ISleuthKitItem) {
-                    ((ISleuthKitItem) evidence).setSleuthId(null);
-                }
-                evidence.setExportedFile(null);
-                evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
-                evidence.getCategorySet().clear();
-            } else {
+            if (isTreeNodeOnly(evidence)) {
+                configureTreeNodeAttributes(evidence);
+                textReader = new StringReader("");
+            } else
                 return;
-            }
         }
 
         stats.updateLastId(evidence.getId());
