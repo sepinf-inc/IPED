@@ -68,6 +68,7 @@ import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -95,9 +96,6 @@ public class ExportFileTask extends AbstractTask {
     private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
-
-    private static final int MAX_SUBITEM_COMPRESSION = 100;
-    private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
 
     private static HashSet<String> categoriesToExtract = new HashSet<String>();
     public static int subDirCounter = 0, itensExtracted = 0;
@@ -483,9 +481,10 @@ public class ExportFileTask extends AbstractTask {
                         if (exception != null)
                             throw exception;
 
-                        if (parentSize != null && total >= ZIPBOMB_MIN_SIZE
-                                && total > parentSize * MAX_SUBITEM_COMPRESSION)
-                            throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
+                        if (ZipBombException.isZipBomb(parentSize, total)) {
+                            throw new ZipBombException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
+                        }
+
                     }
 
                     // must catch generic Exception because of Runtime exceptions while extracting

@@ -59,7 +59,7 @@ public class SevenZipParser extends AbstractParser {
 
     private static final String ISO9660 = "x-iso9660-image"; //$NON-NLS-1$
     private static final String UDF = "x-udf-image"; //$NON-NLS-1$
-    private static final String RAR = "x-rar-compressed"; //$NON-NLS-1$
+    public static final MediaType RAR = MediaType.application("x-rar-compressed"); //$NON-NLS-1$
 
     private static synchronized Set<MediaType> getTypes() {
 
@@ -73,7 +73,7 @@ public class SevenZipParser extends AbstractParser {
             SevenZip.initSevenZipFromPlatformJAR(tmpDir);
             supportedTypes.add(MediaType.application(ISO9660));
             supportedTypes.add(MediaType.application(UDF));
-            supportedTypes.add(MediaType.application(RAR));
+            supportedTypes.add(RAR);
 
             /*
              * 7zipJBinding-4.65 does not work with 7z files created by 7z-16.04 or higher.
