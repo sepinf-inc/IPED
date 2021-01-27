@@ -54,12 +54,13 @@ public class SevenZipParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
     private static Logger LOGGER = LoggerFactory.getLogger(SevenZipParser.class);
 
     private static final String ISO9660 = "x-iso9660-image"; //$NON-NLS-1$
     private static final String UDF = "x-udf-image"; //$NON-NLS-1$
     public static final MediaType RAR = MediaType.application("x-rar-compressed"); //$NON-NLS-1$
+
+    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
     private static synchronized Set<MediaType> getTypes() {
 
