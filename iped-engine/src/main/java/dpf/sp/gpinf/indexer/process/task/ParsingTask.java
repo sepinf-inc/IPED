@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -65,6 +66,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.PackageParser;
+import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -83,6 +86,7 @@ import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.exception.ZipBombException;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.search.IItemSearcher;
@@ -125,6 +129,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
+    private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
+    private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
+
     private IItem evidence;
     private ParseContext context;
     private boolean extractEmbedded;
@@ -135,6 +142,23 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
     private int numSubitems = 0;
     private IndexerDefaultParser autoParser;
+
+    private static Set<MediaType> getTypesToCheckZipbomb() {
+        HashSet<MediaType> set = new HashSet<>();
+        set.addAll(PackageParser.SUPPORTED_TYPES);
+        set.add(SevenZipParser.RAR);
+        return set;
+    }
+
+    private class ZipBombStats {
+
+        private Long itemSize;
+        private long childrenSize = 0;
+
+        private ZipBombStats(Long itemSize) {
+            this.itemSize = itemSize;
+        }
+    }
 
     public ParsingTask() {
         this.autoParser = new IndexerDefaultParser();
@@ -336,6 +360,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         context = getTikaContext();
         Metadata metadata = evidence.getMetadata();
 
+        if (typesToCheckZipBomb.contains(evidence.getMediaType())) {
+            zipBombStatsMap.put(evidence.getId(), new ZipBombStats(evidence.getLength()));
+        }
+
         reader = new ParsingReader(this.autoParser, tis, metadata, context);
         reader.startBackgroundParsing();
 
@@ -502,8 +530,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (depth == null)
                 depth = 0;
             if (++depth > MAX_SUBITEM_DEPTH) {
-                throw new IOException(
-                        "Max subitem depth of " + MAX_SUBITEM_DEPTH + "reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+                throw new ZipBombException(
+                        "Max subitem depth of " + MAX_SUBITEM_DEPTH + " reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
             }
             subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
@@ -573,6 +601,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             extractor.setWorker(worker);
             extractor.extractFile(inputStream, subItem, evidence.getLength());
 
+            checkRecursiveZipBomb(subItem);
+
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
@@ -613,6 +643,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                     e.toString());
             LOGGER.debug("SAX error extracting subitem " + subitemPath, (Throwable) e);
 
+        } catch (ZipBombException e) {
+            throw e;
+
         } catch (Exception e) {
             LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, //$NON-NLS-1$
                     e.toString());
@@ -622,6 +655,33 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             tmp.close();
         }
 
+    }
+
+    private void checkRecursiveZipBomb(Item subItem) throws ZipBombException {
+        ZipBombException zipBombException = null;
+        for (Integer id : subItem.getParentIds()) {
+            ZipBombStats stats = zipBombStatsMap.get(id);
+            if (stats == null) {
+                continue;
+            }
+            if (subItem.getLength() != null) {
+                synchronized (stats) {
+                    stats.childrenSize += subItem.getLength();
+                }
+            }
+            if (zipBombException == null && ZipBombException.isZipBomb(stats.itemSize, stats.childrenSize)) {
+                zipBombException = new ZipBombException("Possible zipBomb detected: id=" + id + " size="
+                        + stats.itemSize + " childrenSize=" + stats.childrenSize);
+            }
+        }
+        if (zipBombException != null) {
+            // dispose now because this item will not be added to processing queue
+            if (subItem.hasFile()) {
+                subItem.setDeleteFile(true);
+                subItem.dispose();
+            }
+            throw zipBombException;
+        }
     }
 
     private static void removeMetadataAndDuplicates(Metadata metadata, Property prop) {
