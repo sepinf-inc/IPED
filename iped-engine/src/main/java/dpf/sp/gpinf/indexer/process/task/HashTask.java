@@ -31,6 +31,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 
@@ -85,6 +86,9 @@ public class HashTask extends AbstractTask {
                     digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider()); //$NON-NLS-1$
                 }
                 digestMap.put(algorithm, digest);
+                if (HASH.SHA256.toString().equals(algorithm)) {
+                    System.setProperty(WhatsAppParser.SHA256_ENABLED_SYSPROP, Boolean.TRUE.toString());
+                }
             }
 
         }

@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,6 +50,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -75,6 +78,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     /**
      * 
      */
+    private static Logger logger = LoggerFactory.getLogger(WhatsAppParser.class);
+
     private static final long serialVersionUID = 1L;
 
     public static final String WHATSAPP = "WhatsApp";
@@ -103,7 +108,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
 
-    // ugly workaround to show message type before caption (values are shown in sort
+    public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled";
+
+    private static final AtomicBoolean sha256Checked = new AtomicBoolean();
+
+    // workaround to show message type before caption (values are shown in sort
     // order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
 
@@ -118,6 +127,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
+        if (!sha256Checked.getAndSet(true)) {
+            if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) {
+                logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!");
+            }
+        }
         return SUPPORTED_TYPES;
     }
 
