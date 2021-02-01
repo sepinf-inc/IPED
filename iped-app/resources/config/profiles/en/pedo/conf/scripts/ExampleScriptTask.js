@@ -80,7 +80,7 @@ function process(item){
 	
 	//Create attribute example
 	/* WARN: searching for text in all items in case will be very slow!
-	if(item.getParsedTextCache().toLowerCase().indexOf("maria da Silva") != -1)
+	if(item.getParsedTextCache().toLowerCase().indexOf("maria da silva") != -1)
 	    item.setExtraAttribute("containsMaria", "true");
 	*/ 
 }

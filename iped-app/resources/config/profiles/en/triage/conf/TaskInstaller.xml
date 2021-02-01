@@ -6,7 +6,8 @@
 -->
 <tasks>
     <!--<task script="ExampleScriptTask.js"></task>-->
-	<task script="IgnoreFilesByPathTask.js"></task>
+    <task script="IgnoreFilesByPathTask.js"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.SkipCommitedTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IgnoreHardLinkTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.TempFileTask"></task>
     
@@ -19,8 +20,11 @@
     <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KFFTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LedKFFTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.ProjectVICHashLookup"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DuplicateTask"></task>
     
+    <task class="dpf.sp.gpinf.indexer.process.task.transcript.AudioTranscriptTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
@@ -29,18 +33,23 @@
     <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
-	<task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
+    <!--<task script="NSFWNudityDetectTask.py"></task>-->
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
     <task class="dpf.sp.gpinf.carver.CarverTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     
+    <task class="dpf.sp.gpinf.indexer.process.task.FragmentLargeBinaryTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.EntropyTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.MinIOTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.IndexTask"></task>
+    <task class="br.gov.pf.labld.graph.GraphTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.ExportCSVTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.HTMLReportTask"></task>

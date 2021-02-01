@@ -62,6 +62,8 @@ public abstract class AbstractTask {
     protected AbstractTask nextTask;
 
     private long taskTime;
+    
+    private boolean decremented;
 
     private HashMap<Integer, Long> subitemProcessingTime = new HashMap<Integer, Long>();
 
@@ -165,20 +167,10 @@ public abstract class AbstractTask {
             taskTime += System.nanoTime() / 1000 - t - subitensTime;
         }
 
-        boolean decremented = false;
-        int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
-        if (priority <= caseData.getCurrentQueuePriority()) {
-            sendToNextTask(evidence);
-        }else {
-            caseData.addItemToQueue(evidence, priority);
-            worker.itensBeingProcessed--;
-            decremented = true;
-        }
-        
+        decremented = false;
+        sendToNextTask(evidence);
+
         worker.runningTask = prevTask;
-        
-        if(nextTask == null && !decremented)
-            worker.itensBeingProcessed--;
 
         // ESTATISTICAS
         if (nextTask == null && !evidence.isQueueEnd()) {
@@ -195,6 +187,9 @@ public abstract class AbstractTask {
                 stats.addVolume(len);
             }
         }
+        
+        if(nextTask == null && !decremented)
+            worker.itensBeingProcessed--;
     }
 
     /**
@@ -207,7 +202,15 @@ public abstract class AbstractTask {
      */
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
-            nextTask.processAndSendToNextTask(evidence);
+            int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
+            if (priority <= caseData.getCurrentQueuePriority())
+                nextTask.processAndSendToNextTask(evidence);
+            else {
+                evidence.dispose();
+                caseData.addItemToQueue(evidence, priority);
+                worker.itensBeingProcessed--;
+                decremented = true;
+            }
         }
     }
 
@@ -235,10 +238,7 @@ public abstract class AbstractTask {
         } catch (Throwable t) {
             // Ignora arquivos recuperados e corrompidos
             if (t.getCause() instanceof CorruptedCarvedException) {
-                stats.incCorruptCarveIgnored();
-                // System.out.println(new Date() + "\t[AVISO]\t" + this.getName() + " " +
-                // "Ignorando arquivo recuperado corrompido " + evidence.getPath() + " (" +
-                // length + "bytes)\t" + t.getCause());
+                stats.incCarvedIgnored(evidence);
                 evidence.setToIgnore(true, false);
                 evidence.setAddToCase(false);
             } else {

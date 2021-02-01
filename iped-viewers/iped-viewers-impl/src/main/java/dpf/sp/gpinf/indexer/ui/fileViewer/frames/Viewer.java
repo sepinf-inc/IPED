@@ -15,13 +15,12 @@ import java.util.Set;
 
 import javax.swing.JPanel;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 /**
  * Classe base para todas as interfaces gráficas de visualizadores.
@@ -34,11 +33,13 @@ public abstract class Viewer {
 
     private static final long serialVersionUID = 1L;
 
+    protected static final String resPath = "/dpf/sp/gpinf/indexer/search/viewer/res/";
+
     private JPanel panel;
 
     protected int currentHit, totalHits;
 
-    private static MediaTypeRegistry mimeRegistry;
+    protected boolean isToolbarVisible;
 
     public Viewer() {
         panel = new JPanel();
@@ -75,9 +76,7 @@ public abstract class Viewer {
     }
 
     public MediaType getParentType(MediaType mediaType) {
-        if (mimeRegistry == null)
-            mimeRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-        return mimeRegistry.getSupertype(mediaType);
+        return MediaTypes.getParentType(mediaType);
     }
 
     /*
@@ -105,6 +104,34 @@ public abstract class Viewer {
     abstract public void loadFile(IStreamSource content, Set<String> highlightTerms);
 
     abstract public void scrollToNextHit(boolean forward);
+
+    /**
+     * May be overridden when hits navigation is not supported.
+     * 
+     * @return -1: no support 0: default, has support, external control when there
+     *         are hits 1: has support, always enable as hits control is internal in
+     *         the viewer
+     */
+    public int getHitsSupported() {
+        return 0;
+    }
+
+    /**
+     * May be overridden when the viewer has a tool bar (that may be hidden).
+     * 
+     * @return -1 (never), 0 (currently no tool bar), 1 (has tool bar)
+     */
+    public int getToolbarSupported() {
+        return -1;
+    }
+
+    public void setToolbarVisible(boolean isVisible) {
+        this.isToolbarVisible = isVisible;
+    }
+
+    public boolean isToolbarVisible() {
+        return isToolbarVisible;
+    }
 
     public void copyScreen() {
         copyScreen(panel);

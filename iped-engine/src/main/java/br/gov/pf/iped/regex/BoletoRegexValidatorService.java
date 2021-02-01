@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class BoletoRegexValidatorService extends AbstractDocRegexValidatorService {
 
-    protected static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
+    protected static final Pattern SEPARATORS = Pattern.compile("[^0-9xX]");
 
     private static final String REGEX_NAME = "BOLETO";
 
@@ -15,7 +15,7 @@ public class BoletoRegexValidatorService extends AbstractDocRegexValidatorServic
 
     @Override
     public String format(String boleto) {
-        boleto = NON_DIGIT.matcher(boleto).replaceAll("");
+        boleto = SEPARATORS.matcher(boleto).replaceAll("");
 
         StringBuilder builder = new StringBuilder();
 
@@ -34,7 +34,7 @@ public class BoletoRegexValidatorService extends AbstractDocRegexValidatorServic
     @Override
     public boolean validate(String boleto) {
 
-        boleto = NON_DIGIT.matcher(boleto).replaceAll("");
+        boleto = SEPARATORS.matcher(boleto).replaceAll("");
         if (isRepeated(boleto))
             return false;
 

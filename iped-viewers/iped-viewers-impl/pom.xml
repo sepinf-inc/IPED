@@ -5,11 +5,11 @@
 	<parent>
 		<groupId>iped</groupId>
 		<artifactId>iped-viewers</artifactId>
-		<version>3.16</version>
+		<version>3.19-snapshot</version>
 	</parent>
 	<artifactId>iped-viewers-impl</artifactId>
 
-	<dependencies>
+    <dependencies>
 		<dependency>
 			<groupId>iped</groupId>
 			<artifactId>iped-viewers-api</artifactId>
@@ -23,23 +23,28 @@
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
+    		<artifactId>deltahex-core</artifactId>
+    		<version>0.1.3</version>
+		</dependency>
+		<dependency>
+    		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-delta</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-swing</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3-p3</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.deltahex</groupId>
     		<artifactId>deltahex-highlight-swing</artifactId>
-    		<version>0.1.3</version>
+    		<version>0.1.3-p2</version>
 		</dependency>
 		<dependency>
     		<groupId>org.exbin.utils</groupId>
     		<artifactId>exbin-binary_data</artifactId>
-    		<version>0.1.2</version>
+    		<version>0.1.3</version>
 		</dependency>
         <dependency>
       		<groupId>com.drewnoakes</groupId>
@@ -127,6 +132,8 @@
             <version>${icepdf.version}</version>
             <type>jar</type>
         </dependency>
+        
+       
 	</dependencies>
 
 </project>

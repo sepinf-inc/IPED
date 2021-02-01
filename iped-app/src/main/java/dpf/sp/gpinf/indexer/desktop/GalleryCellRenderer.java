@@ -67,7 +67,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
             int row, int col) {
 
         GalleryValue cellValue = (GalleryValue) value;
-        if (cellValue.id == null) {
+        if (cellValue == null || cellValue.id == null) {
             return new JPanel();
         }
 

@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 
@@ -153,14 +152,14 @@ public class VideoThumbsMaker {
         }
 
         int maxThumbs = 0;
-        int maxWidth = 0;
+        int maxSize = 0;
         for (VideoThumbsOutputConfig config : outs) {
             int curr = config.getColumns() * config.getRows();
             if (maxThumbs < curr) {
                 maxThumbs = curr;
             }
-            if (maxWidth < config.getThumbWidth()) {
-                maxWidth = config.getThumbWidth();
+            if (maxSize < config.getThumbWidth()) {
+                maxSize = config.getThumbWidth();
             }
         }
         int frequency = (int) ((result.getVideoDuration() - 1000) * 0.00095 / (maxThumbs + 2));
@@ -168,14 +167,12 @@ public class VideoThumbsMaker {
             frequency = 1;
         }
 
-        String s1 = "VO: [jpeg] "; //$NON-NLS-1$
-        String s2 = " => "; //$NON-NLS-1$
         File[] files = null;
 
-        int maxHeight = result.getDimension().height * maxWidth / result.getDimension().width;
-        String scale = "scale=" + maxWidth + ":" + maxHeight; //$NON-NLS-1$ //$NON-NLS-2$
+        Dimension targetDimension = getTargetDimension(maxSize, result.getDimension());
 
-        boolean scaled = result.getDimension().width > maxWidth;
+        String scale = "scale=" + targetDimension.width + ":" + targetDimension.height; //$NON-NLS-1$ //$NON-NLS-2$
+
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
         cmds.add("-speed"); //$NON-NLS-1$
@@ -184,12 +181,12 @@ public class VideoThumbsMaker {
         cmds.add("-nosound"); //$NON-NLS-1$
         cmds.add("-noconsolecontrols"); //$NON-NLS-1$
         cmds.add("-noautosub"); //$NON-NLS-1$
+        cmds.add("-noaspect"); //$NON-NLS-1$
+        cmds.add("-sws"); //$NON-NLS-1$
+        cmds.add("1"); //$NON-NLS-1$
         if (ignoreWaitKeyFrame != 1) {
             cmds.add("-lavdopts"); //$NON-NLS-1$
             cmds.add("wait_keyframe"); //$NON-NLS-1$
-        }
-        if (scaled) {
-            cmds.addAll(Arrays.asList(new String[] { "-sws", "0", "-vf", scale })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
 
         if (videoStream != null) {
@@ -199,49 +196,75 @@ public class VideoThumbsMaker {
 
         cmds.addAll(Arrays.asList(new String[] { "-vo", //$NON-NLS-1$
                 "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape //$NON-NLS-1$ //$NON-NLS-2$
-                        + subTmp.getPath().replace('\\', '/') + escape,
-                "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-                String.valueOf(maxThumbs + 1), in.getPath() }));
+                        + subTmp.getPath().replace('\\', '/') + escape }));
 
+        String rot = null;
+        boolean transposed = false;
+        if (result.getRotation() == 90) {
+            rot = "rotate=1"; //$NON-NLS-1$
+            transposed = true;
+        } else if (result.getRotation() == 180) {
+            rot = "flip,mirror"; //$NON-NLS-1$
+        } else if (result.getRotation() == 270) {
+            transposed = true;
+            rot = "rotate=2"; //$NON-NLS-1$
+        }
+
+        cmds.addAll(
+                Arrays.asList(new String[] { "-ao", "null", "-ss", "1", "-sstep", String.valueOf(frequency), "-frames", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+                        String.valueOf(maxThumbs + 1), in.getPath() }));
+
+        cmds.addAll(vfOptions(scale, rot));
+
+        String frameStepStr = null;
         int initialStep = frequency > 1 ? 0 : 1;
         for (int step = initialStep; step <= 3; step++) {
             if (step == 1) {
                 int pos = cmds.indexOf("-sstep"); //$NON-NLS-1$
-                cmds.remove(pos + 1);
-                cmds.remove(pos);
-                pos = cmds.indexOf("-ss"); //$NON-NLS-1$
-                cmds.remove(pos + 1);
-                cmds.remove(pos);
-                float fps = result.getFPS();
-                if (fps > 240)
-                    fps = 1;
-                int frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
-                if (frameStep < 1) {
-                    frameStep = 1;
-                } else if (frameStep > 600) {
-                    frameStep = 600;
+                if (pos >= 0) {
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
+                    pos = cmds.indexOf("-ss"); //$NON-NLS-1$
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
+                    float fps = result.getFPS();
+                    if (fps > 240)
+                        fps = 1;
+                    int frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+                    if (frameStep < 1) {
+                        frameStep = 1;
+                    } else if (frameStep > 600) {
+                        frameStep = 600;
+                    }
+                    frameStepStr = "framestep=" + frameStep; //$NON-NLS-1$
+                    pos = cmds.indexOf("-vf");
+                    if (pos > 0) {
+                        cmds.remove(pos + 1);
+                        cmds.remove(pos);
+                    }
+                    cmds.addAll(vfOptions(frameStepStr, scale, rot));
                 }
-                cmds.add("-vf"); //$NON-NLS-1$
-                cmds.add("framestep=" + frameStep); //$NON-NLS-1$
             } else if (step == 2) {
                 int pos = cmds.indexOf("-vid"); //$NON-NLS-1$
                 if (pos < 0) {
                     continue;
-                } else {
-                    cmds.remove(pos + 1);
-                    cmds.remove(pos);
                 }
+
+                cmds.remove(pos + 1);
+                cmds.remove(pos);
+
             } else if (step == 3) {
                 cmds.add("-demuxer"); //$NON-NLS-1$
                 cmds.add("lavf"); //$NON-NLS-1$
-                for (int i = cmds.size() - 1; i > 0; i--) {
-                    if (cmds.get(i).startsWith("framestep=")) { //$NON-NLS-1$
-                        cmds.remove(i);
-                        cmds.remove(i - 1);
-                        break;
-                    }
+                frameStepStr = null;
+                int pos = cmds.indexOf("-vf");
+                if (pos > 0) {
+                    cmds.remove(pos + 1);
+                    cmds.remove(pos);
                 }
+                cmds.addAll(vfOptions(frameStepStr, scale, rot));
             }
+
             ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
             if (res.timeout) {
                 result.setTimeout(true);
@@ -255,35 +278,6 @@ public class VideoThumbsMaker {
             });
             String ret = res.output;
             if (ret != null) {
-                if (!scaled) {
-                    int p1 = ret.indexOf(s1);
-                    if (p1 > 0) {
-                        int p2 = ret.indexOf(s2, p1);
-                        if (p2 > 0) {
-                            int p3 = ret.indexOf(" ", p2 + s2.length()); //$NON-NLS-1$
-                            if (p3 > 0) {
-                                String[] s = ret.substring(p1 + s1.length(), p3).split(s2);
-                                if (s.length == 2) {
-                                    s = s[1].split("x"); //$NON-NLS-1$
-                                    scaled = true;
-                                    Dimension nd = new Dimension(Integer.parseInt(s[0]), Integer.parseInt(s[1]));
-                                    if (!nd.equals(result.getDimension())) {
-                                        result.setDimension(nd);
-                                        int pos = cmds.indexOf(scale);
-                                        if (pos >= 0) {
-                                            maxHeight = result.getDimension().height * maxWidth
-                                                    / result.getDimension().width;
-                                            scale = "scale=" + maxWidth + ":" + maxHeight; //$NON-NLS-1$ //$NON-NLS-2$
-                                            cmds.set(pos, scale);
-                                            step--;
-                                            continue;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
                 if (ignoreWaitKeyFrame == 0 && step == initialStep) {
                     String rlc = ret.toLowerCase();
                     if ((rlc.indexOf("unknown") >= 0 || rlc.indexOf("suboption") >= 0 || rlc.indexOf("error") >= 0) //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -320,6 +314,9 @@ public class VideoThumbsMaker {
             cleanTemp(subTmp);
             return result;
         }
+        if (transposed) {
+            transpose(result.getDimension());
+        }
         for (VideoThumbsOutputConfig config : outs) {
             generateGridImage(config, images, result.getDimension());
         }
@@ -329,6 +326,34 @@ public class VideoThumbsMaker {
         result.setSuccess(true);
         result.setProcessingTime(System.currentTimeMillis() - start);
         return result;
+    }
+
+    private void transpose(Dimension d) {
+        int aux = d.height;
+        d.height = d.width;
+        d.width = aux;
+    }
+
+    private Dimension getTargetDimension(int maxSize, Dimension srcDimension) {
+        double zoom = maxSize / (double) Math.max(1, Math.max(srcDimension.height, srcDimension.width));
+        int w = (int) Math.round(srcDimension.width * zoom);
+        int h = (int) Math.round(srcDimension.height * zoom);
+        return new Dimension(w, h);
+    }
+
+    private List<String> vfOptions(String... options) {
+        List<String> l = new ArrayList<String>(2);
+        for (String opt : options) {
+            if (opt != null) {
+                if (l.isEmpty()) {
+                    l.add("-vf");
+                    l.add(opt);
+                } else {
+                    l.set(1, l.get(1) + "," + opt);
+                }
+            }
+        }
+        return l;
     }
 
     private File makeLink(File in, File dir) {
@@ -435,14 +460,14 @@ public class VideoThumbsMaker {
         }
 
         StringBuilder sb = new StringBuilder();
-        AtomicInteger counter = new AtomicInteger();
         int exitCode = -1000;
         boolean isTimeout = false;
+        Process process = null;
         try {
             final ProcessBuilder pb = new ProcessBuilder(cmds);
             pb.redirectErrorStream(true);
-            Process process = pb.start();
-            StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), sb, counter, process);
+            process = pb.start();
+            StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), sb, process);
             outputGobbler.start();
 
             boolean finished = process.waitFor(timeout, TimeUnit.MILLISECONDS);
@@ -461,6 +486,9 @@ public class VideoThumbsMaker {
                 System.err.print("Error running program '"); //$NON-NLS-1$
                 e.printStackTrace();
             }
+        } finally {
+            if (process != null && process.isAlive())
+                process.destroyForcibly();
         }
         return new ExecResult(exitCode, null, isTimeout);
     }
@@ -498,13 +526,12 @@ public class VideoThumbsMaker {
     }
 
     class StreamGobbler extends Thread {
+        private InputStream is;
+        private StringBuilder sb;
+        private int counter;
+        private Process process;
 
-        InputStream is;
-        StringBuilder sb;
-        int counter;
-        Process process;
-
-        StreamGobbler(InputStream is, StringBuilder sb, AtomicInteger counter, Process process) {
+        StreamGobbler(InputStream is, StringBuilder sb, Process process) {
             this.is = is;
             this.sb = sb;
             this.process = process;
@@ -540,7 +567,6 @@ public class VideoThumbsMaker {
     }
 
     class ExecResult {
-
         final int exitCode;
         final String output;
         boolean timeout;

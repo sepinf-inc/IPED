@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.datasource;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
@@ -59,8 +60,6 @@ public class AD1DataSourceReader extends DataSourceReader {
         }
 
         String evidenceName = getEvidenceName(root);
-        if (evidenceName == null)
-            evidenceName = root.getName();
         dataSource = new DataSource(root);
         dataSource.setName(evidenceName);
 
@@ -128,12 +127,12 @@ public class AD1DataSourceReader extends DataSourceReader {
         AD1Extractor ad1;
 
         public AD1InputStreamFactory(Path dataSource) {
-            super(dataSource);
+            super(dataSource.toUri());
         }
 
         private synchronized void init() throws IOException {
             if (ad1 == null)
-                ad1 = new AD1Extractor(dataSource.toFile());
+                ad1 = new AD1Extractor(Paths.get(dataSource).toFile());
         }
 
         @Override

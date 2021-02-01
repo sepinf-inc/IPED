@@ -18,40 +18,72 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+
+import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.KeyStroke;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import org.apache.tika.metadata.Metadata;
+
+import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import iped3.IItem;
+import iped3.util.MediaTypes;
 
 public class MenuClass extends JPopupMenu {
 
     private static final long serialVersionUID = 1L;
 
-    JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados, lerSelecionados,
-            deslerSelecionados, exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria,
-            diminuirGaleria, layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas,
-            importarPalavras, navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
+    JMenuItem exportarSelecionados, copiarSelecionados, marcarSelecionados, desmarcarSelecionados,
+            marcarRecursivamenteSelecionados, desmarcarRecursivamenteSelecionados, lerSelecionados, deslerSelecionados,
+            exportarMarcados, copiarMarcados, salvarMarcadores, carregarMarcadores, aumentarGaleria, diminuirGaleria,
+            layoutPadrao, disposicao, copiarPreview, gerenciarMarcadores, limparBuscas, importarPalavras,
+            navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
-            resetColLayout, lastColLayout, saveColLayout;
+            resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
+            similarImagesCurrent, similarImagesExternal;
 
-    MenuListener menuListener;
+    MenuListener menuListener = new MenuListener(this);
+    boolean isTreeMenu;
 
-    // JCheckBoxMenuItem changeViewerTab;
     public MenuClass() {
-        super();
+        this(null);
+    }
 
-        menuListener = new MenuListener(this);
+    public MenuClass(boolean isTreeMenu) {
+        super();
+        this.isTreeMenu = isTreeMenu;
+        addExportTreeMenuItems(this);
+    }
+
+    public MenuClass(IItem item) {
+        super();
 
         marcarSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckHighlighted")); //$NON-NLS-1$
         marcarSelecionados.addActionListener(menuListener);
+        marcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(marcarSelecionados);
 
         desmarcarSelecionados = new JMenuItem(Messages.getString("MenuClass.UnCheckHighlighted")); //$NON-NLS-1$
         desmarcarSelecionados.addActionListener(menuListener);
+        desmarcarSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0));
         this.add(desmarcarSelecionados);
+
+        marcarRecursivamenteSelecionados = new JMenuItem(Messages.getString("MenuClass.CheckRecursivelyHighlighted")); //$NON-NLS-1$
+        marcarRecursivamenteSelecionados.addActionListener(menuListener);
+        marcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.CTRL_MASK));
+        this.add(marcarRecursivamenteSelecionados);
+
+        desmarcarRecursivamenteSelecionados = new JMenuItem(
+                Messages.getString("MenuClass.UnCheckRecursivelyHighlighted")); //$NON-NLS-1$
+        desmarcarRecursivamenteSelecionados.addActionListener(menuListener);
+        desmarcarRecursivamenteSelecionados.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_R, ActionEvent.ALT_MASK));
+        this.add(desmarcarRecursivamenteSelecionados);
 
         /*
          * lerSelecionados = new JMenuItem("Marcar selecionados como lido");
@@ -72,6 +104,7 @@ public class MenuClass extends JPopupMenu {
 
         gerenciarMarcadores = new JMenuItem(Messages.getString("MenuClass.ManageBookmarks")); //$NON-NLS-1$
         gerenciarMarcadores.addActionListener(menuListener);
+        gerenciarMarcadores.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_B, ActionEvent.CTRL_MASK));
         this.add(gerenciarMarcadores);
 
         gerenciarFiltros = new JMenuItem(Messages.getString("MenuClass.ManageFilters")); //$NON-NLS-1$
@@ -84,6 +117,10 @@ public class MenuClass extends JPopupMenu {
         gerenciarColunas = new JMenuItem(Messages.getString("MenuClass.ManageVisibleCols")); //$NON-NLS-1$
         gerenciarColunas.addActionListener(menuListener);
         submenu.add(gerenciarColunas);
+
+        pinFirstColumns = new JMenuItem(Messages.getString("MenuClass.PinFirstCols")); //$NON-NLS-1$
+        pinFirstColumns.addActionListener(menuListener);
+        submenu.add(pinFirstColumns);
 
         lastColLayout = new JMenuItem(Messages.getString("MenuClass.LoadLastColLayout")); //$NON-NLS-1$
         lastColLayout.addActionListener(menuListener);
@@ -110,21 +147,11 @@ public class MenuClass extends JPopupMenu {
         exportarMarcados.addActionListener(menuListener);
         submenu.add(exportarMarcados);
 
-        exportTree = new JMenuItem(Messages.getString("MenuClass.ExportTree")); //$NON-NLS-1$
-        exportTree.addActionListener(menuListener);
-        submenu.add(exportTree);
-
-        exportTreeChecked = new JMenuItem(Messages.getString("MenuClass.ExportTree.Checked")); //$NON-NLS-1$
-        exportTreeChecked.addActionListener(menuListener);
-        submenu.add(exportTreeChecked);
-
         exportCheckedToZip = new JMenuItem(Messages.getString("MenuClass.ExportCheckedToZip")); //$NON-NLS-1$
         exportCheckedToZip.addActionListener(menuListener);
         submenu.add(exportCheckedToZip);
 
-        exportCheckedTreeToZip = new JMenuItem(Messages.getString("MenuClass.ExportTreeToZip.Checked")); //$NON-NLS-1$
-        exportCheckedTreeToZip.addActionListener(menuListener);
-        submenu.add(exportCheckedTreeToZip);
+        addExportTreeMenuItems(submenu);
 
         this.addSeparator();
 
@@ -168,11 +195,27 @@ public class MenuClass extends JPopupMenu {
         aumentarGaleria.addActionListener(menuListener);
         this.add(aumentarGaleria);
 
+        this.addSeparator();
+
         if (!App.get().appCase.isFTKReport()) {
             navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
             navigateToParent.addActionListener(menuListener);
             this.add(navigateToParent);
         }
+
+        navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
+        navigateToParentChat.addActionListener(menuListener);
+        boolean enableGoToChat = false;
+        if (item != null) {
+            enableGoToChat = MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.CHAT_MESSAGE_MIME)
+                    || (VCardParser.VCARD_MIME.equals(item.getMediaType())
+                            && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
+                            && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+        }
+        navigateToParentChat.setEnabled(enableGoToChat);
+        this.add(navigateToParentChat);
+
+        this.addSeparator();
 
         similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
         similarDocs.addActionListener(menuListener);
@@ -181,9 +224,32 @@ public class MenuClass extends JPopupMenu {
         similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
         this.add(similarDocs);
 
+        submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$
+        submenu.setEnabled(SimilarImagesFilterActions.isFeatureEnabled());
+        this.add(submenu);
+
+        similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
+        similarImagesCurrent.addActionListener(menuListener);
+        similarImagesCurrent.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
+        submenu.add(similarImagesCurrent);
+
+        similarImagesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.External")); //$NON-NLS-1$
+        similarImagesExternal.addActionListener(menuListener);
+        similarImagesExternal.setEnabled(submenu.isEnabled());
+        submenu.add(similarImagesExternal);
+
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
+        openViewfile.setEnabled(item != null && item.getViewFile() != null);
         this.add(openViewfile);
+
+        this.addSeparator();
+        addToGraph = new JMenuItem(Messages.getString("MenuClass.AddToGraph")); //$NON-NLS-1$
+        addToGraph.setEnabled(App.get().appGraphAnalytics.isEnabled() && item != null
+                && item.getMetadata().get(Metadata.MESSAGE_FROM) != null
+                && item.getMetadata().get(Metadata.MESSAGE_TO) != null);
+        addToGraph.addActionListener(menuListener);
+        this.add(addToGraph);
 
         this.addSeparator();
 
@@ -191,6 +257,20 @@ public class MenuClass extends JPopupMenu {
         createReport.addActionListener(menuListener);
         this.add(createReport);
 
+    }
+
+    public void addExportTreeMenuItems(JComponent menu) {
+        exportTree = new JMenuItem(Messages.getString("MenuClass.ExportTree")); //$NON-NLS-1$
+        exportTree.addActionListener(menuListener);
+        menu.add(exportTree);
+
+        exportTreeChecked = new JMenuItem(Messages.getString("MenuClass.ExportTree.Checked")); //$NON-NLS-1$
+        exportTreeChecked.addActionListener(menuListener);
+        menu.add(exportTreeChecked);
+
+        exportCheckedTreeToZip = new JMenuItem(Messages.getString("MenuClass.ExportTreeToZip.Checked")); //$NON-NLS-1$
+        exportCheckedTreeToZip.addActionListener(menuListener);
+        menu.add(exportCheckedTreeToZip);
     }
 
 }

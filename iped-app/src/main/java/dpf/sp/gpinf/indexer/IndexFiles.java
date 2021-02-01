@@ -59,8 +59,9 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     private static Logger LOGGER = null;
-    
+
     String rootPath, configPath;
+    String profile, locale;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -106,7 +107,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         this.palavrasChave = keywordList;
         this.configPath = configPath;
         this.logFile = logFile;
-        OCRParser.bookmarksToOCR = bookmarksToOCR;
+
+        String list = "";
+        for (String o : bookmarksToOCR)
+            list += o + OCRParser.SUBSET_SEPARATOR;
+        System.setProperty(OCRParser.SUBSET_TO_OCR, list);
     }
 
     /**
@@ -133,7 +138,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 
         boolean isReportFromCaseFolder = false;
-        
+
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
         } else {
@@ -146,15 +151,15 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         }
 
         configPath = rootPath;
-        String locale = getProfileLocale();
+        locale = getProfileLocale();
 
-        String profile = null;
+        profile = null;
 
         if (cmdLineParams.getProfile() != null) {
             profile = cmdLineParams.getProfile();
-        } else if (!locale.equals("pt-BR") && !isReportFromCaseFolder) //$NON-NLS-1$
+        } else if (!isReportFromCaseFolder) {
             profile = "default"; //$NON-NLS-1$
-
+        }
         if (profile != null)
             configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -180,8 +185,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             setConfigPath();
             Configuration.getInstance().getConfiguration(configPath);
             KFFTask kff = new KFFTask();
-            kff.init(Configuration.getInstance().properties, null);
+            kff.init(Configuration.getInstance().properties, null, true);
             kff.importKFF(kffPath);
+        } catch (IPEDException e) {
+            System.out.println(e.toString());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -202,7 +210,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                     WorkerProvider.getInstance().cancel(true);
                 }
             });
-            
+
             manager = new Manager(dataSource, output, palavrasChave);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
@@ -217,10 +225,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.error("Processing Error: " + e.getMessage()); //$NON-NLS-1$
             else
                 LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
-            
-            if(!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
-                LOGGER.error("It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
-                        + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
+
+            if (!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
+                LOGGER.error(
+                        "It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
+                                + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
 
         } finally {
             done = true;

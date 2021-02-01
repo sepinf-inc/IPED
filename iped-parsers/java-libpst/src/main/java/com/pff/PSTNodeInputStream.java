@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.util.LinkedList;
+import java.util.TreeSet;
 
 /**
  * this input stream basically "maps" an input stream on top of the random
@@ -50,6 +51,7 @@ public class PSTNodeInputStream extends InputStream {
     private RandomAccessFile in;
     private PSTFile pstFile;
     private LinkedList<Long> skipPoints = new LinkedList<Long>();
+    private TreeSet<Long> skipPointsSet;
     private LinkedList<OffsetIndexItem> indexItems = new LinkedList<OffsetIndexItem>();
     private int currentBlock = 0;
     private long currentLocation = 0;
@@ -393,21 +395,29 @@ public class PSTNodeInputStream extends InputStream {
             return;
         }
 
+        // nassif patch
+        if (skipPointsSet == null) {
+            skipPointsSet = new TreeSet<Long>(skipPoints);
+        }
+
         // get us to the right block
-        long skipPoint = 0;
+        Long skipPoint = 0L;
         this.currentBlock = 0;
         if (this.allData == null) {
-            skipPoint = this.skipPoints.get(this.currentBlock + 1);
-            while (location >= skipPoint) {
-                this.currentBlock++;
-                // is this the last block?
-                if (this.currentBlock == this.skipPoints.size() - 1) {
-                    // that's all folks
-                    break;
-                } else {
-                    skipPoint = this.skipPoints.get(this.currentBlock + 1);
-                }
+            // nassif patch
+            skipPoint = this.skipPointsSet.higher(location);
+            if (skipPoint == null) {
+                skipPoint = this.skipPointsSet.last();
+                currentBlock = skipPointsSet.size() - 1;
+            } else {
+                currentBlock = skipPointsSet.headSet(skipPoint).size() - 1;
             }
+            /*
+             * skipPoint = this.skipPoints.get(this.currentBlock + 1); while (location >=
+             * skipPoint) { this.currentBlock++; // is this the last block? if
+             * (this.currentBlock == this.skipPoints.size() - 1) { // that's all folks
+             * break; } else { skipPoint = this.skipPoints.get(this.currentBlock + 1); } }
+             */
         }
 
         // now move us to the right position in there

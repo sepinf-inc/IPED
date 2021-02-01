@@ -24,7 +24,6 @@ import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
-import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -35,7 +34,6 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.Collator;
 import java.text.DateFormat;
@@ -49,7 +47,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -59,25 +56,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
-import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Log;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
 
 /**
@@ -88,15 +84,12 @@ import iped3.IItem;
  */
 public class HTMLReportTask extends AbstractTask {
 
+    private static Logger logger = LoggerFactory.getLogger(HTMLReportTask.class);
+
     /**
      * Collator utilizado para ordenação correta alfabética, incluindo acentuação.
      */
     private static final Collator collator = getCollator();
-
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "HTML Report Task"; //$NON-NLS-1$
 
     /**
      * Nome da subpasta com versões de visualização dos arquivos.
@@ -229,6 +222,8 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
+    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
      */
@@ -260,9 +255,9 @@ public class HTMLReportTask extends AbstractTask {
                 String value = confParams.getProperty("enableHTMLReport"); //$NON-NLS-1$
                 if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
                     taskEnabled = true;
-                    Log.info(taskName, "Task enabled."); //$NON-NLS-1$
+                    logger.info("Task enabled."); //$NON-NLS-1$
                 } else {
-                    Log.info(taskName, "Task disabled."); //$NON-NLS-1$
+                    logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
                 }
@@ -321,20 +316,20 @@ public class HTMLReportTask extends AbstractTask {
                         thumbsPageEnabled = true;
                     }
 
-                    info.cabecalho = properties.getProperty("Header"); //$NON-NLS-1$
+                    info.reportHeader = properties.getProperty("Header"); //$NON-NLS-1$
                     // info.classe.add(properties.getProperty("Classe"));
-                    info.dataLaudo = properties.getProperty("ReportDate"); //$NON-NLS-1$
-                    info.dataDocumento = properties.getProperty("RequestDate"); //$NON-NLS-1$
-                    info.dataProtocolo = properties.getProperty("RecordDate"); //$NON-NLS-1$
-                    info.documento = properties.getProperty("RequestDoc"); //$NON-NLS-1$
-                    info.ipl = properties.getProperty("Investigation"); //$NON-NLS-1$
-                    info.laudo = properties.getProperty("Report"); //$NON-NLS-1$
-                    info.material = properties.getProperty("Material"); //$NON-NLS-1$
-                    info.matricula.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
-                    info.perito.add(properties.getProperty("Examiner")); //$NON-NLS-1$
-                    info.protocolo = properties.getProperty("Record"); //$NON-NLS-1$
-                    info.solicitante = properties.getProperty("Requester"); //$NON-NLS-1$
-                    info.titulo = properties.getProperty("Title"); //$NON-NLS-1$
+                    info.reportDate = properties.getProperty("ReportDate"); //$NON-NLS-1$
+                    info.requestDate = properties.getProperty("RequestDate"); //$NON-NLS-1$
+                    info.labCaseDate = properties.getProperty("RecordDate"); //$NON-NLS-1$
+                    info.requestForm = properties.getProperty("RequestDoc"); //$NON-NLS-1$
+                    info.caseNumber = properties.getProperty("Investigation"); //$NON-NLS-1$
+                    info.reportNumber = properties.getProperty("Report"); //$NON-NLS-1$
+                    info.fillEvidenceFromText(properties.getProperty("Material")); //$NON-NLS-1$
+                    info.examinersID.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
+                    info.examiners.add(properties.getProperty("Examiner")); //$NON-NLS-1$
+                    info.labCaseNumber = properties.getProperty("Record"); //$NON-NLS-1$
+                    info.requester = properties.getProperty("Requester"); //$NON-NLS-1$
+                    info.reportTitle = properties.getProperty("Title"); //$NON-NLS-1$
                 } catch (Exception e) {
                     e.printStackTrace();
                     init.set(true);
@@ -347,12 +342,21 @@ public class HTMLReportTask extends AbstractTask {
                 if (args != null) {
                     File infoFile = args.getAsap();
                     if (infoFile != null) {
-                        Log.info(taskName, "Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
+                        logger.info("Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                         if (!infoFile.exists()) {
                             throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
                         }
                         try {
-                            readInfoFile(infoFile);
+                            if (infoFile.getName().endsWith(".asap")) //$NON-NLS-1$
+                                info.readAsapInfoFile(infoFile);
+                            else if (infoFile.getName().endsWith(".json")) //$NON-NLS-1$
+                                info.readJsonInfoFile(infoFile);
+                            else if (infoFile.getName().endsWith(".report")) { //$NON-NLS-1$
+                                ReportInfo ri = ReportInfo.readReportInfoFile(infoFile);
+                                ri.reportHeader = info.reportHeader;
+                                info = ri;
+                            }
+
                         } catch (Exception e) {
                             e.printStackTrace();
                             init.set(true);
@@ -376,7 +380,7 @@ public class HTMLReportTask extends AbstractTask {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
             if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
-                Log.error(taskName, "Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
+                logger.error("Html report already exists, report update not implemented yet!"); //$NON-NLS-1$
                 return;
             }
 
@@ -387,19 +391,20 @@ public class HTMLReportTask extends AbstractTask {
             String codePath = Configuration.getInstance().appRoot;
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
-            if(!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = (LocaleConfig)ConfigurationManager.getInstance().findObjects(LocaleConfig.class).iterator().next();
+            if (!new File(templatesFolder, reportRootModel).exists()) {
+                LocaleConfig localeConf = (LocaleConfig) ConfigurationManager.getInstance()
+                        .findObjects(LocaleConfig.class).iterator().next();
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
-            } 
-            
-            Log.info(taskName, "Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
-            Log.info(taskName, "Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
+            }
+
+            logger.info("Report folder: " + reportSubFolder.getAbsolutePath()); //$NON-NLS-1$
+            logger.info("Template folder: " + templatesFolder.getAbsolutePath()); //$NON-NLS-1$
             if (!templatesFolder.exists()) {
                 throw new FileNotFoundException("Template folder not found!"); //$NON-NLS-1$
             }
-            
+
             File templateSubFolder = new File(templatesFolder, "modelos"); //$NON-NLS-1$
-            if(!templateSubFolder.exists())
+            if (!templateSubFolder.exists())
                 templateSubFolder = new File(templatesFolder, "templates"); //$NON-NLS-1$
 
             long t = System.currentTimeMillis();
@@ -425,20 +430,22 @@ public class HTMLReportTask extends AbstractTask {
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), //$NON-NLS-1$
                     new File(reportSubFolder, "caseinformation.htm")); //$NON-NLS-1$
             processContents(new File(templatesFolder, "contents.htm"), new File(reportSubFolder, "contents.htm")); //$NON-NLS-1$ //$NON-NLS-2$
-            
+
             File reportRootModelFile = new File(templatesFolder, reportRootModel);
-            if(!reportRootModelFile.exists())
+            if (!reportRootModelFile.exists())
                 reportRootModelFile = new File(templatesFolder, "report.htm"); //$NON-NLS-1$
             Files.copy(reportRootModelFile.toPath(), new File(reportSubFolder.getParentFile(), reportRoot).toPath());
-            
+
             File help = new File(templatesFolder, "ajuda.htm"); //$NON-NLS-1$
-            if(help.exists())
+            if (help.exists())
                 copyFile(help, reportSubFolder);
-            
+
             copyFiles(new File(templatesFolder, "res"), new File(reportSubFolder, "res")); //$NON-NLS-1$ //$NON-NLS-2$
 
             t = (System.currentTimeMillis() - t + 500) / 1000;
-            Log.info(taskName, "Report creation time (seconds): " + t); //$NON-NLS-1$
+            logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
+
+            graphicsMagicConverter.close();
         }
     }
 
@@ -545,34 +552,34 @@ public class HTMLReportTask extends AbstractTask {
 
     private void processCaseInfo(File src, File target) throws Exception {
         EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1"); //$NON-NLS-1$
-        replace(arq.content, "%REPORT%", info.laudo); //$NON-NLS-1$
-        replace(arq.content, "%REPORT_DATE%", info.dataLaudo); //$NON-NLS-1$
+        replace(arq.content, "%REPORT%", info.reportNumber); //$NON-NLS-1$
+        replace(arq.content, "%REPORT_DATE%", info.reportDate); //$NON-NLS-1$
         replace(arq.content, "%EXAMINERS%", formatPeritos()); //$NON-NLS-1$
-        replace(arq.content, "%HEADER%", info.cabecalho); //$NON-NLS-1$
-        replace(arq.content, "%TITLE%", info.titulo); //$NON-NLS-1$
-        replace(arq.content, "%INVESTIGATION%", info.ipl); //$NON-NLS-1$
-        replace(arq.content, "%REQUEST_DOC%", info.documento); //$NON-NLS-1$
-        replace(arq.content, "%REQUEST_DATE%", info.dataDocumento); //$NON-NLS-1$
-        replace(arq.content, "%REQUESTER%", info.solicitante); //$NON-NLS-1$
-        replace(arq.content, "%RECORD%", info.protocolo); //$NON-NLS-1$
-        replace(arq.content, "%RECORD_DATE%", info.dataProtocolo); //$NON-NLS-1$
-        replace(arq.content, "%EVIDENCE%", info.material); //$NON-NLS-1$
+        replace(arq.content, "%HEADER%", info.reportHeader); //$NON-NLS-1$
+        replace(arq.content, "%TITLE%", info.reportTitle); //$NON-NLS-1$
+        replace(arq.content, "%INVESTIGATION%", info.caseNumber); //$NON-NLS-1$
+        replace(arq.content, "%REQUEST_DOC%", info.requestForm); //$NON-NLS-1$
+        replace(arq.content, "%REQUEST_DATE%", info.requestDate); //$NON-NLS-1$
+        replace(arq.content, "%REQUESTER%", info.requester); //$NON-NLS-1$
+        replace(arq.content, "%RECORD%", info.labCaseNumber); //$NON-NLS-1$
+        replace(arq.content, "%RECORD_DATE%", info.labCaseDate); //$NON-NLS-1$
+        replace(arq.content, "%EVIDENCE%", info.getEvidenceDescHtml()); //$NON-NLS-1$
         arq.file = target;
         arq.write();
     }
 
     private String formatPeritos() {
         StringBuilder ret = new StringBuilder();
-        for (int i = 0; i < info.perito.size(); i++) {
+        for (int i = 0; i < info.examiners.size(); i++) {
             if (i > 0) {
                 ret.append("<br><br>\n"); //$NON-NLS-1$
             }
             StringBuilder s = new StringBuilder();
             s.append(modeloPerito);
-            replace(s, "%EXAMINER%", info.perito.get(i)); //$NON-NLS-1$
+            replace(s, "%EXAMINER%", info.examiners.get(i)); //$NON-NLS-1$
             // replace(s, "%CLASSE%", info.classe.size() > i ?
             // formatClass(info.classe.get(i)) : ""); //$NON-NLS-2$
-            replace(s, "%EXAMINER_ID%", info.matricula.size() > i ? info.matricula.get(i) : ""); //$NON-NLS-1$//$NON-NLS-2$
+            replace(s, "%EXAMINER_ID%", info.examinersID.size() > i ? info.examinersID.get(i) : ""); //$NON-NLS-1$//$NON-NLS-2$
             ret.append(s);
         }
         return ret.toString();
@@ -893,7 +900,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private File getImageThumbFile(String hash) {
-        File file = Util.getFileFromHash(new File(output, ImageThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
+        File file = Util.getFileFromHash(new File(output, ThumbTask.thumbsFolder), hash, "jpg"); //$NON-NLS-1$
         if (!file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
@@ -918,10 +925,13 @@ public class HTMLReportTask extends AbstractTask {
         if (!thumbFile.getParentFile().exists()) {
             thumbFile.getParentFile().mkdirs();
         }
-
         try {
+            if (evidence.getThumb() != null) {
+                Files.write(thumbFile.toPath(), evidence.getThumb());
+                return;
+            }
             BufferedImage img = null;
-            if (ImageThumbTask.extractThumb && evidence.getMediaType().getSubtype().startsWith("jpeg")) { //$NON-NLS-1$
+            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);
@@ -940,7 +950,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (img == null) {
                     stream = evidence.getBufferedStream();
                     try {
-                        img = new GraphicsMagicConverter().getImage(stream, thumbSize * sampleFactor);
+                        img = graphicsMagicConverter.getImage(stream, thumbSize * sampleFactor, evidence.getLength());
                     } finally {
                         IOUtil.closeQuietly(stream);
                     }
@@ -1148,88 +1158,6 @@ public class HTMLReportTask extends AbstractTask {
         }
     }
 
-    /**
-     * Lê arquivo com informações do caso (para inclusão em página informativa do
-     * relatório).
-     */
-    private void readInfoFile(File asap) throws IOException {
-        BufferedReader in = new BufferedReader(
-                new InputStreamReader(new FileInputStream(asap), Charset.forName("cp1252"))); //$NON-NLS-1$
-        String str = null;
-        String subTit = ""; //$NON-NLS-1$
-        String numero = ""; //$NON-NLS-1$
-        String unidade = ""; //$NON-NLS-1$
-        String matDesc = ""; //$NON-NLS-1$
-        String matNum = ""; //$NON-NLS-1$
-        info.perito.clear();
-        info.matricula.clear();
-        // info.classe.clear();
-        while ((str = in.readLine()) != null) {
-            String[] s = str.split("=", 2); //$NON-NLS-1$
-            if (s.length < 2) {
-                continue;
-            }
-            String chave = s[0];
-            String valor = s[1];
-            if (chave.equalsIgnoreCase("Titulo")) { //$NON-NLS-1$
-                info.titulo = valor;
-            } else if (chave.equalsIgnoreCase("Subtitulo")) { //$NON-NLS-1$
-                subTit = valor;
-            } else if (chave.equalsIgnoreCase("Unidade")) { //$NON-NLS-1$
-                unidade = valor;
-            } else if (chave.equalsIgnoreCase("Numero")) { //$NON-NLS-1$
-                numero = valor;
-            } else if (chave.equalsIgnoreCase("Data")) { //$NON-NLS-1$
-                info.dataLaudo = valor;
-            } else if (chave.toUpperCase().startsWith("PCF")) { //$NON-NLS-1$
-                String[] v = valor.split("\\|"); //$NON-NLS-1$
-                if (v.length >= 1 && v[0].length() > 0) {
-                    info.perito.add(v[0]);
-                    if (v.length >= 2) {
-                        info.matricula.add(v[1]);
-                    }
-                    if (v.length >= 3) {
-                        // info.classe.add(v[2]);
-                    }
-                }
-            } else if (chave.equalsIgnoreCase("MATERIAL_DESCR")) { //$NON-NLS-1$
-                matDesc = valor;
-            } else if (chave.equalsIgnoreCase("MATERIAL_NUMERO")) { //$NON-NLS-1$
-                matNum = valor;
-            } else if (chave.equalsIgnoreCase("NUMERO_IPL")) { //$NON-NLS-1$
-                info.ipl = valor;
-            } else if (chave.equalsIgnoreCase("AUTORIDADE")) { //$NON-NLS-1$
-                info.solicitante = valor;
-            } else if (chave.equalsIgnoreCase("DOCUMENTO")) { //$NON-NLS-1$
-                info.documento = valor;
-            } else if (chave.equalsIgnoreCase("DATA_DOCUMENTO")) { //$NON-NLS-1$
-                info.dataDocumento = valor;
-            } else if (chave.equalsIgnoreCase("NUMERO_CRIMINALISTICA")) { //$NON-NLS-1$
-                info.protocolo = valor;
-            } else if (chave.equalsIgnoreCase("DATA_CRIMINALISTICA")) { //$NON-NLS-1$
-                info.dataProtocolo = valor;
-            }
-        }
-        in.close();
-
-        info.titulo += " (" + subTit + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-        info.laudo = numero + "-" + unidade; //$NON-NLS-1$
-
-        String[] md = matDesc.split("\\|"); //$NON-NLS-1$
-        String[] mn = matNum.split("\\|"); //$NON-NLS-1$
-        if (md.length != mn.length) {
-            md = new String[] { matDesc };
-            mn = new String[] { matNum };
-        }
-        StringBuilder mat = new StringBuilder();
-        for (int i = 0; i < md.length; i++) {
-            if (i > 0) {
-                mat.append("<br>\n"); //$NON-NLS-1$
-            }
-            mat.append(md[i]).append(" (Registro Interno do Material: ").append(mn[i]).append(")"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        info.material = mat.toString();
-    }
 }
 
 /**
@@ -1242,17 +1170,6 @@ class ReportEntry {
     Long length;
     boolean deleted, carved, isImage, isVideo;
     Date accessed, modified, created;
-}
-
-/**
- * Classe auxiliar para armazenar dados utilizado na geração de página com
- * informações do caso.
- */
-class ReportInfo {
-
-    String laudo, dataLaudo, cabecalho, titulo, ipl, documento, solicitante, protocolo, dataProtocolo, material,
-            dataDocumento;
-    List<String> perito = new ArrayList<String>(), matricula = new ArrayList<String>();
 }
 
 /**

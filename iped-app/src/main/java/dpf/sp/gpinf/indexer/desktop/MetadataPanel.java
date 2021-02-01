@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
-import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -14,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,23 +27,17 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
-import org.apache.lucene.index.AtomicReader;
-import org.apache.lucene.index.IndexReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
@@ -55,7 +47,7 @@ import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IMultiSearchResult;
 
-public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener {
+public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
@@ -65,7 +57,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
 
-    private volatile static AtomicReader reader;
+    private volatile static LeafReader reader;
 
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
@@ -83,7 +75,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array;
 
-    boolean updatingProps = false, updatingList = false;
+    boolean updatingProps = false, updatingList = false, clearing = false;
     volatile boolean updatingResult = false;
 
     volatile boolean logScale = false;
@@ -264,9 +256,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private void updateProps() {
         updatingProps = true;
         props.removeAllItems();
-        String[] fields = ColumnsManager.getInstance().fieldGroups[groups.getSelectedIndex()];
-        for (String f : fields)
-            props.addItem(f);
+        int selIdx = groups.getSelectedIndex();
+        if (selIdx != -1) {
+            String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
+            for (String f : fields)
+                props.addItem(f);
+        }
         updatingProps = false;
     }
 
@@ -418,7 +413,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     private void countValues(boolean updateResult) throws IOException {
 
-        reader = App.get().appCase.getAtomicReader();
+        reader = App.get().appCase.getLeafReader();
 
         String field = (String) props.getSelectedItem();
         if (field == null) {
@@ -716,9 +711,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if ((e != null && e.getValueIsAdjusting()) || updatingList)
             return;
 
-        // System.out.println("listSelectionEvent");
-
-        App.get().appletListener.updateFileListing();
+        if (!clearing)
+            App.get().appletListener.updateFileListing();
 
         updateTabColor();
 
@@ -789,6 +783,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             sb.append(c);
         }
         return sb.toString();
+    }
+
+    @Override
+    public void clearFilter() {
+        clearing = true;
+        list.setListData(new ValueCount[0]);
+        clearing = false;
     }
 
 }

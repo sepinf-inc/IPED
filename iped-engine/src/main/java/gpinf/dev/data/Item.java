@@ -34,8 +34,8 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
-import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
@@ -46,9 +46,9 @@ import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IItem;
 import iped3.IEvidenceFileType;
 import iped3.IHashValue;
+import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
@@ -131,9 +131,16 @@ public class Item implements ISleuthKitItem {
 
     private Integer parentId;
 
+    private Integer subitemId;
+
     private List<Integer> parentIds = new ArrayList<Integer>();
 
     private Map<String, Object> extraAttributes = new ConcurrentHashMap<String, Object>();
+
+    /**
+     * Temporaty attributes present only during processing flow.
+     */
+    private Map<String, Object> tempAttributes = new HashMap<>();
 
     /**
      * Data de criação do arquivo.
@@ -220,9 +227,13 @@ public class Item implements ISleuthKitItem {
 
     private String idInDataSource;
 
+    private String parentIdInDataSource;
+
     private TikaInputStream tis;
 
     private byte[] thumb;
+
+    private byte[] imageSimilarityFeatures;
 
     private ISeekableInputStreamFactory inputStreamFactory;
 
@@ -265,20 +276,36 @@ public class Item implements ISleuthKitItem {
      *             caso ocorra erro de IO
      */
     public void dispose() {
+        this.dispose(true);
+    }
+
+    public void dispose(boolean clearTextCache) {
         try {
             tmpResources.close();
         } catch (Exception e) {
-            // LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+            LOGGER.warn("Error closing resources of " + getPath(), e);
         }
+        tmpFile = null;
+        tis = null;
         try {
-            if (textCache != null)
+            if (textCache != null && clearTextCache) {
                 textCache.close();
+                textCache = null;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
-            if (!file.delete()) {
-                LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
+        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
+            try {
+                if (file != null && file.exists() && !file.delete()) {
+                    // in some scenarios file.delete() works but Files.delete() throws ioexception
+                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
+                }
+                if (inputStreamFactory != null && idInDataSource != null) {
+                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
             }
         }
     }
@@ -445,9 +472,12 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
-            id = getNextId();
+            synchronized (Counter.class) {
+                if (id == -1) {
+                    id = getNextId();
+                }
+            }
         }
-
         return id;
     }
 
@@ -497,6 +527,10 @@ public class Item implements ISleuthKitItem {
         return parentId;
     }
 
+    public Integer getSubitemId() {
+        return subitemId;
+    }
+
     /**
      *
      * @return lista contendo os ids dos itens pai
@@ -510,12 +544,15 @@ public class Item implements ISleuthKitItem {
      * @return ids dos itens pai concatenados com espaço
      */
     public String getParentIdsString() {
-        String parents = ""; //$NON-NLS-1$
+        StringBuilder parents = new StringBuilder(); // $NON-NLS-1$
+        int i = 0;
         for (Integer id : parentIds) {
-            parents += id + " "; //$NON-NLS-1$
+            parents.append(id);
+            if (++i < parentIds.size()) {
+                parents.append(" ");
+            }
         }
-
-        return parents;
+        return parents.toString();
     }
 
     /**
@@ -547,8 +584,10 @@ public class Item implements ISleuthKitItem {
     public Reader getTextReader() throws IOException {
         if (textCache == null)
             return null;
-        else
+        else {
+            textCache.setSourceItem(this);
             return textCache.getTextReader();
+        }
     }
 
     /**
@@ -610,11 +649,14 @@ public class Item implements ISleuthKitItem {
                 }
 
                 // workaround para itens carveados apontando para tmpFile do pai que foi apagado
-                //Sometimes NPE is thrown, needs investigation...
+                // Sometimes NPE is thrown, needs investigation...
             } catch (IOException | NullPointerException e) {
                 file = null;
             }
         }
+
+        if (stream == null && inputStreamFactory != null)
+            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
 
         if (stream == null && sleuthFile != null) {
             SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
@@ -627,9 +669,6 @@ public class Item implements ISleuthKitItem {
                 stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
             }
         }
-
-        if (stream == null && inputStreamFactory != null)
-            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
 
         if (stream != null && startOffset != -1) {
             stream = new LimitedSeekableInputStream(stream, startOffset, length);
@@ -1073,6 +1112,10 @@ public class Item implements ISleuthKitItem {
         extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
     }
 
+    public void setSubitemId(Integer subitemId) {
+        this.subitemId = subitemId;
+    }
+
     /**
      * @param parentId
      *            identificador do item pai
@@ -1087,6 +1130,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
+        this.setParentIdInDataSource(parent.getIdInDataSource());
     }
 
     public void setParent(ParentInfo parent) {
@@ -1095,6 +1139,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
+        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parent.getPersistentId());
     }
 
     /**
@@ -1239,23 +1284,12 @@ public class Item implements ISleuthKitItem {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("File: " + name); //$NON-NLS-1$
-        sb.append("\n\t\tPath: ").append(getPath()); //$NON-NLS-1$
+        sb.append("Item: ").append(getPath()); //$NON-NLS-1$
         if (type != null) {
-            sb.append("\n\t\t").append("File type: ") //$NON-NLS-1$ //$NON-NLS-2$
-                    .append(type.getLongDescr());
-        }
-        if (creationDate != null) {
-            sb.append("\n\t\tCreation: ").append(creationDate.toString()); //$NON-NLS-1$
-        }
-        if (modificationDate != null) {
-            sb.append("\n\t\tModification: ").append(modificationDate.toString()); //$NON-NLS-1$
-        }
-        if (accessDate != null) {
-            sb.append("\n\t\tLast Accessed: ").append(accessDate.toString()); //$NON-NLS-1$
+            sb.append(" type: ").append(type.getLongDescr()); //$NON-NLS-1$
         }
         if (length != null) {
-            sb.append("\n\t\tSize: ").append(length); //$NON-NLS-1$
+            sb.append(" size: ").append(length); //$NON-NLS-1$
         }
         return sb.toString();
     }
@@ -1298,7 +1332,15 @@ public class Item implements ISleuthKitItem {
 
     public void setThumb(byte[] thumb) {
         this.thumb = thumb;
-        this.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+    }
+
+    @Override
+    public byte[] getImageSimilarityFeatures() {
+        return imageSimilarityFeatures;
+    }
+
+    public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures) {
+        this.imageSimilarityFeatures = imageSimilarityFeatures;
     }
 
     public ISeekableInputStreamFactory getInputStreamFactory() {
@@ -1317,6 +1359,14 @@ public class Item implements ISleuthKitItem {
         this.idInDataSource = idInDataSource;
     }
 
+    public void setParentIdInDataSource(String string) {
+        this.parentIdInDataSource = string;
+    }
+
+    public String getParentIdInDataSource() {
+        return this.parentIdInDataSource;
+    }
+
     @Override
     public IItem createChildItem() {
         IItem child = new Item();
@@ -1324,5 +1374,17 @@ public class Item implements ISleuthKitItem {
         child.setDeleted(this.isDeleted());
 
         return child;
+    }
+
+    public Object getTempAttribute(String key) {
+        synchronized (tempAttributes) {
+            return tempAttributes.get(key);
+        }
+    }
+
+    public void setTempAttribute(String key, Object value) {
+        synchronized (tempAttributes) {
+            tempAttributes.put(key, value);
+        }
     }
 }

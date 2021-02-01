@@ -39,18 +39,23 @@ import dpf.sp.gpinf.indexer.ConstantsViewer;
 public class GraphicsMagicConverter implements Closeable {
 
     private static final String RESOLUTION = "resolution"; //$NON-NLS-1$
+    private static final String THREADS = "threads"; //$NON-NLS-1$
+    private static final String NUM_THREADS = "numThreads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
 
-    private static String[] CMD = { "gm", "convert", "-density", "96", "-sample", RESOLUTION, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$
+    private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", "96", "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
+            RESOLUTION, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$
+
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
 
-    public static boolean USE_GM = false;
-    public static int TIMEOUT = 10;
-    public static boolean enabled = true;
+    private static boolean useGM = false;
+    private static boolean enabled = true;
+    private static int minTimeout = 10;
+    private static int timeoutPerMB = 2;
     private static String toolPath = ""; //$NON-NLS-1$
 
     private static File tmpDir;
@@ -59,6 +64,7 @@ public class GraphicsMagicConverter implements Closeable {
 
     private ExecutorService executorService = null;
     private boolean ownsExecutor;
+    private int numThreads = 1;
 
     static {
         try {
@@ -88,8 +94,24 @@ public class GraphicsMagicConverter implements Closeable {
         this.ownsExecutor = true;
     }
 
+    public static void setMinTimeout(int minimumSeconds) {
+        minTimeout = minimumSeconds;
+    }
+
+    public static void setTimeoutPerMB(int timeoutPerMegabyte) {
+        timeoutPerMB = timeoutPerMegabyte;
+    }
+
     public static void setWinToolPathPrefix(String prefix) {
         toolPath = prefix + winToolPath;
+    }
+
+    public static void setUseGM(boolean useGraphicsMagick) {
+        useGM = useGraphicsMagick;
+    }
+
+    public static void setEnabled(boolean isEnabled) {
+        enabled = isEnabled;
     }
 
     private static void startTmpDirCleaner() {
@@ -127,6 +149,11 @@ public class GraphicsMagicConverter implements Closeable {
             int exit = p.waitFor();
             if (exit == 0) {
                 CMD[0] = "magick";
+                for (int i = 1; i < CMD.length; i++) {
+                    if (CMD[i].equals(THREADS)) {
+                        CMD[i] = "thread";
+                    }
+                }
             } else
                 throw new IOException("error");
 
@@ -142,9 +169,13 @@ public class GraphicsMagicConverter implements Closeable {
         imageMagickConfigured = true;
     }
 
+    public void setNumThreads(int threads) {
+        this.numThreads = threads;
+    }
+
     private String[] getCmd(int resolution) {
 
-        if (!USE_GM && !imageMagickConfigured) {
+        if (!useGM && !imageMagickConfigured) {
             configureImageMagick();
         }
         String[] cmd = new String[CMD.length];
@@ -156,20 +187,24 @@ public class GraphicsMagicConverter implements Closeable {
             if (cmd[i].equals(RESOLUTION)) {
                 cmd[i] = String.valueOf(resolution);
             }
+            if (cmd[i].equals(NUM_THREADS)) {
+                cmd[i] = String.valueOf(numThreads);
+            }
         }
         return cmd;
     }
 
-    public BufferedImage getImage(final InputStream in, final int resolution) {
+    public BufferedImage getImage(final InputStream in, final int resolution, Long imageSize) {
         try {
-            return getImage(in, resolution, false);
+            return getImage(in, resolution, imageSize, false);
 
         } catch (TimeoutException e) {
             return null;
         }
     }
 
-    public BufferedImage getImage(InputStream in, int resolution, boolean throwTimeout) throws TimeoutException {
+    public BufferedImage getImage(InputStream in, int resolution, Long imageSize, boolean throwTimeout)
+            throws TimeoutException {
 
         if (!enabled) {
             return null;
@@ -185,7 +220,7 @@ public class GraphicsMagicConverter implements Closeable {
         try {
             p = pb.start();
         } catch (IOException e1) {
-            Log.error("ImageMagickConverter", "Error executing imageMagick/graphicsMagick" //$NON-NLS-1$ //$NON-NLS-2$
+            Log.error("ImageMagickConverter", "Error executing imageMagick/graphicsMagick. " //$NON-NLS-1$ //$NON-NLS-2$
                     + "Check if it is installed and if its path is configured!"); //$NON-NLS-1$
         }
         BufferedImage result = null;
@@ -193,9 +228,10 @@ public class GraphicsMagicConverter implements Closeable {
             Future<?> sendFuture = sendInputStream(in, p);
             ignoreErrorStream(p);
             Future<BufferedImage> resultFuture = getResultFuture(p);
+            int timeout = getTotalTimeout(imageSize);
             try {
-                sendFuture.get(TIMEOUT, TimeUnit.SECONDS);
-                result = resultFuture.get(TIMEOUT, TimeUnit.SECONDS);
+                sendFuture.get(timeout, TimeUnit.SECONDS);
+                result = resultFuture.get(timeout, TimeUnit.SECONDS);
 
             } catch (TimeoutException | InterruptedException e) {
                 if (throwTimeout) {
@@ -207,7 +243,7 @@ public class GraphicsMagicConverter implements Closeable {
                         throw te;
                     }
                 } else {
-                    Log.warning("ImageMagickConverter", "Timeout while converting image to BMP."); //$NON-NLS-1$ //$NON-NLS-2$
+                    Log.warning("ImageMagickConverter", "Timeout converting image to BMP, elapsed " + timeout + "s."); //$NON-NLS-1$
                 }
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);
@@ -226,6 +262,13 @@ public class GraphicsMagicConverter implements Closeable {
         }
 
         return result;
+    }
+
+    public static int getTotalTimeout(Long imageSize) {
+        if(imageSize == null)
+            return minTimeout;
+        else
+            return minTimeout + (int) (imageSize >> 20) * timeoutPerMB;
     }
 
     private Future<BufferedImage> getResultFuture(final Process p) {

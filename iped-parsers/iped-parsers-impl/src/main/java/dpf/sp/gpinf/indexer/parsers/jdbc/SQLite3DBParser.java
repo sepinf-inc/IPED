@@ -19,6 +19,8 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -28,11 +30,18 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.tika.io.IOExceptionWithCause;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.sqlite.SQLiteConfig;
+
+import dpf.sp.gpinf.indexer.parsers.util.DelegatingConnection;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped3.io.IItemBase;
+import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 
 /**
  * This is the implementation of the db parser for SQLite.
@@ -40,7 +49,8 @@ import org.sqlite.SQLiteConfig;
  * This parser is internal only; it should not be registered in the services
  * file or configured in the TikaConfig xml file.
  */
-class SQLite3DBParser extends AbstractDBParser {
+@SuppressWarnings("serial")
+public class SQLite3DBParser extends AbstractDBParser {
 
     protected static final String SQLITE_CLASS_NAME = "org.sqlite.JDBC"; //$NON-NLS-1$
 
@@ -57,20 +67,41 @@ class SQLite3DBParser extends AbstractDBParser {
 
     @Override
     protected Connection getConnection(InputStream stream, Metadata metadata, ParseContext context) throws IOException {
-        String connectionString = getConnectionString(stream, metadata, context);
-
         Connection connection = null;
         try {
             Class.forName(getJDBCClassName());
         } catch (ClassNotFoundException e) {
             throw new IOExceptionWithCause(e);
         }
+        TemporaryResources tmp = new TemporaryResources();
         try {
-            SQLiteConfig config = new SQLiteConfig();
+            File dbFile = TikaInputStream.get(stream, tmp).getFile();
+            boolean isTempDb = IOUtil.isTemporaryFile(dbFile);
+            if (isTempDb)
+                exportWalLog(dbFile, context);
 
-            // good habit, but effectively meaningless here
+            SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
+
+            String connectionString = getConnectionString(dbFile);
             connection = config.createConnection(connectionString);
+
+            connection = new DelegatingConnection(connection) {
+                @Override
+                public void close() throws SQLException {
+                    super.close();
+                    try {
+                        tmp.close();
+                        if (isTempDb) {
+                            // these files may be created by sqlite, even if wal was not exported
+                            new File(dbFile.getAbsolutePath() + "-wal").delete();
+                            new File(dbFile.getAbsolutePath() + "-shm").delete();
+                        }
+                    } catch (IOException e) {
+                        throw new SQLException(e);
+                    }
+                }
+            };
 
         } catch (SQLException e) {
             throw new IOException(e.getMessage());
@@ -78,9 +109,36 @@ class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
+    private File exportWalLog(File dbFile, ParseContext context) {
+        IItemSearcher searcher = context.get(IItemSearcher.class);
+        if (searcher != null) {
+            IItemBase dbItem = context.get(IItemBase.class);
+            if (dbItem != null) {
+                String dbPath = dbItem.getPath();
+                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
+                List<IItemBase> items = searcher.search(walQuery);
+                if (items.size() > 0) {
+                    IItemBase wal = items.get(0);
+                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
+                    try (InputStream in = wal.getBufferedStream()) {
+                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return walTemp;
+                }
+            }
+        }
+        return null;
+    }
+
     @Override
-    protected String getConnectionString(InputStream is, Metadata metadata, ParseContext context) throws IOException {
-        File dbFile = TikaInputStream.get(is).getFile();
+    protected String getConnectionString(InputStream stream, Metadata metadata, ParseContext context)
+            throws IOException {
+        throw new RuntimeException("Not Implemented"); //$NON-NLS-1$
+    }
+
+    protected String getConnectionString(File dbFile) throws IOException {
         return "jdbc:sqlite:" + dbFile.getAbsolutePath(); //$NON-NLS-1$
     }
 
@@ -113,5 +171,34 @@ class SQLite3DBParser extends AbstractDBParser {
     @Override
     public JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext context) {
         return new SQLite3TableReader(connection, tableName, context);
+    }
+
+    public static boolean checkIfColumnExists(Connection connection, String table, String column) {
+        String query = "SELECT name FROM pragma_table_info('" + table + "')";
+        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
+            while (rs.next()) {
+                if (rs.getString(1).equals(column)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
+        int colIdx;
+        try {
+            colIdx = rs.findColumn(col);
+
+        } catch (SQLException e) {
+            // is there an error constant to check this?
+            if (e.toString().contains("no such column"))
+                return null;
+            else
+                throw e;
+        }
+        return rs.getString(colIdx);
     }
 }

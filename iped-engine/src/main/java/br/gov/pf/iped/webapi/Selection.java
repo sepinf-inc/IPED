@@ -51,8 +51,7 @@ public class Selection {
     public Response add(@ApiParam(required = true) DocIDJSON[] docs) {
         IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d : docs) {
-            mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()),
-                    Sources.multiSource);
+            mm.setSelected(true, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.saveState();
         return Response.ok().build();
@@ -65,8 +64,7 @@ public class Selection {
     public Response remove(@ApiParam(required = true) DocIDJSON[] docs) {
         IMultiMarcadores mm = Sources.multiSource.getMultiMarcadores();
         for (DocIDJSON d : docs) {
-            mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()),
-                    Sources.multiSource);
+            mm.setSelected(false, new ItemId(Sources.sourceStringToInt.get(d.getSource()), d.getId()));
         }
         mm.saveState();
         return Response.ok().build();

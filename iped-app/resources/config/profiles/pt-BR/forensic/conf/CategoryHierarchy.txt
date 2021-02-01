@@ -11,6 +11,8 @@ Emails e Caixas = Emails; Caixas de Emails
 Multimídia = Áudios; Vídeos; Imagens
 Espelhos de Discos = Discos ISO; Outros Espelhos; Discos Virtuais
 Vestígios de Navegadores = Histórico de Internet; Registros de Histórico de Internet; Favoritos Web;
+Windows 10 = Atividades de Usuário; Registros de Atividades de Usuário;
+Google Drive = Arquivos Sincronizados GDrive; Registros de Arquivos GDrive;
 
 Receita Federal = Declaracoes e Recibos IRPF; Declaracoes e Recibos DIRF; Declaracoes e Recibos DIPJ; Declaracoes e Recibos CNPJ; Declaracoes e Recibos DSIMPLES; Declaracoes e Recibos DCTF; Declaracoes e Recibos PER DCOMP; Outras Declaracoes e Recibos; Guias em PDF; Arquivos programa SPED; Arquivos programa Receitanet; Arquivos programas RFB
 Previdência Social e CEF = Arquivos SEFIP_GEFIP; Arquivos Conectividade Social; Base de dados SEFIP; Executaveis SEFIP; Executaveis Conectividade Social; Arquivos GRRF; 

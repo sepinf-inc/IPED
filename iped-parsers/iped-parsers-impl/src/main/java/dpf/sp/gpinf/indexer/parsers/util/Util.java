@@ -1,12 +1,15 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -38,20 +41,21 @@ public class Util {
 
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
-    private static String getContentPreview(InputStream is, Metadata m, boolean isHtml) throws IOException {
+    private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
         TextContentHandler textHandler = new TextContentHandler(contentHandler, true);
         if (m == null)
             m = new Metadata();
-        if (isHtml) {
-            m.set(Metadata.CONTENT_TYPE, "text/html"); //$NON-NLS-1$
-            m.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "text/html"); //$NON-NLS-1$
+        if (mimeType != null && !mimeType.isEmpty()) {
+            m.set(Metadata.CONTENT_TYPE, mimeType); // $NON-NLS-1$
+            m.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, mimeType); // $NON-NLS-1$
         }
         boolean limitReached = false;
         try {
             autoParser.parse(is, textHandler, m, new ParseContext());
 
-        } catch (TikaException e) {
+        } catch (TikaException | IOException e) {
+            e.printStackTrace();
 
         } catch (SAXException se) {
             if (contentHandler.isWriteLimitReached(se))
@@ -63,43 +67,44 @@ public class Util {
         return msg;
     }
 
-    public static String getContentPreview(InputStream is, boolean isHtml) throws IOException {
-        return getContentPreview(is, null, isHtml);
+    public static String getContentPreview(InputStream is, String mimeType) throws IOException {
+        return getContentPreview(is, null, mimeType);
     }
 
-    public static String getContentPreview(String content, boolean isHtml) throws IOException {
+    public static String getContentPreview(String content, String mimeType) throws IOException {
         Metadata m = new Metadata();
         m.set(KNOWN_CONTENT_ENCODING, "UTF-8"); //$NON-NLS-1$
-        return getContentPreview(new ByteArrayInputStream(content.getBytes("UTF-8")), m, isHtml); //$NON-NLS-1$
+        m.set(Metadata.CONTENT_ENCODING, "UTF-8"); //$NON-NLS-1$
+        return getContentPreview(new ByteArrayInputStream(content.getBytes("UTF-8")), m, mimeType); //$NON-NLS-1$
     }
 
-    public static String getContentPreview(byte[] content, boolean isHtml) throws IOException {
-        return getContentPreview(new ByteArrayInputStream(content), null, isHtml);
+    public static String getContentPreview(byte[] content, String mimeType) throws IOException {
+        return getContentPreview(new ByteArrayInputStream(content), null, mimeType);
     }
 
     public static String decodeUnknowCharset(byte[] data) {
 
         try {
             int count0 = 0, max = 10000;
-            if (data.length < max)
+            if (data.length < max) {
                 max = data.length;
-
-            for (int i = 0; i < max; i++)
-                if (data[i] == 0)
+            }
+            for (int i = 0; i < max; i++) {
+                if (data[i] == 0) {
                     count0++;
-            if (count0 > 0 && count0 * 2 >= 0.9 * (float) max)
-                return new String(data, "UTF-16LE"); //$NON-NLS-1$
-
-            boolean hasUtf8 = false;
-            for (int i = 0; i < max - 1; i++)
-                if (data[i] == (byte) 0xC3 && data[i + 1] >= (byte) 0x80 && data[i + 1] <= (byte) 0xBC) {
-                    hasUtf8 = true;
-                    break;
                 }
-            if (hasUtf8)
-                return new String(data, "UTF-8"); //$NON-NLS-1$
+            }
+            if (count0 > 0 && count0 * 2 >= 0.9 * (float) max) {
+                return new String(data, StandardCharsets.UTF_16LE);
+            }
 
-            return new String(data, "windows-1252"); //$NON-NLS-1$
+            String result = new String(data, StandardCharsets.UTF_8);
+
+            if (result.contains("�")) {
+                result = new String(data, "windows-1252"); //$NON-NLS-1$
+            }
+
+            return result;
 
         } catch (UnsupportedEncodingException e) {
             return new String(data);
@@ -181,14 +186,70 @@ public class Util {
 
     public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
-        String ext = "." + item.getExt(); //$NON-NLS-1$
+        String ext = item.getTypeExt(); // $NON-NLS-1$
         return getExportPath(hash, ext);
     }
 
     public static String getExportPath(String hash, String ext) {
         if (hash == null || hash.length() < 2)
             return ""; //$NON-NLS-1$
-        return "../../" + hash.charAt(0) + "/" + hash.charAt(1) + "/" + hash + ext; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        StringBuilder sb = new StringBuilder();
+        sb.append("../../").append(hash.charAt(0)).append("/").append(hash.charAt(1)).append("/").append(hash);
+        if (ext != null && !ext.isEmpty())
+            sb.append(".").append(ext);
+        return sb.toString();
+    }
+
+    public static String getReportHref(String hash, String ext, String originalPath) {
+        String exportPath = getExportPath(hash, ext);
+        String path = getSourceFileIfExists(originalPath);
+        return "javascript:openIfExists('" + exportPath + "','" + path + "')";
+    }
+
+    public static String getReportHref(IItemBase item) {
+        String exportPath = getExportPath(item);
+        String originalPath = getSourceFileIfExists(item).orElse("");
+        return "javascript:openIfExists('" + exportPath + "','" + originalPath + "')";
+    }
+
+    public static String getSourceFileIfExists(String originalPath) {
+        File file;
+        if (originalPath != null && (file = new File(originalPath)).exists()) {
+            String path = normalizePath(file);
+            if (path != null) {
+                return ajustPath(path);
+            }
+        }
+        return null;
+    }
+
+    public static Optional<String> getSourceFileIfExists(IItemBase item) {
+        if (item.hasFile()) {
+            String path = normalizePath(item.getFile());
+            if (path != null) {
+                path = ajustPath(path);
+                return Optional.of(path);
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static String ajustPath(String path) {
+        path = path.replaceAll("\\\\", "/");
+        if (path.startsWith("/")) {
+            path = path.substring(1);
+        }
+        if (path.length() > 2 && path.charAt(1) == ':') {
+            path = "file:///" + path;
+        }
+        return path;
+    }
+
+    private static String normalizePath(File file) {
+        if (file == null || !file.exists()) {
+            return null;
+        }
+        return file.toPath().toAbsolutePath().normalize().toString();
     }
 
     public static byte[] getPreview(IItemBase item) {

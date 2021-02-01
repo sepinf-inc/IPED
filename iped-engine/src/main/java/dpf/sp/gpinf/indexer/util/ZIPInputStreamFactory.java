@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
@@ -22,20 +23,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private ZipFile4j zip;
 
     public ZIPInputStreamFactory(Path dataSource) {
-        super(dataSource);
+        super(dataSource.toUri());
     }
 
     private synchronized void init() throws ZipException {
         if (zip == null) {
-            zip = new ZipFile4j(this.dataSource.toFile());
-            /*
-             * File file = dataSource.toFile(); File part1 = new
-             * File(file.getAbsolutePath().substring(0,
-             * file.getAbsolutePath().lastIndexOf('.')) + ".z01");
-             * SequenceSeekableByteChannel ssbc = new
-             * SequenceSeekableByteChannel(Files.newByteChannel(part1.toPath()),
-             * Files.newByteChannel(dataSource)); zip = new ZipFile(ssbc);
-             */
+            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
         }
     }
 
@@ -50,6 +43,9 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             zae = zip.getFileHeader(path);
         } catch (ZipException e1) {
             throw new IOException(e1);
+        }
+        if (zae == null) {
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
             if (zae.getUncompressedSize() <= MAX_MEM_BYTES) {

@@ -72,11 +72,11 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
     public static final MediaType CHROME_DOWNLOADS = MediaType.application("x-chrome-downloads"); //$NON-NLS-1$
 
     public static final MediaType CHROME_DOWNLOADS_REG = MediaType.application("x-chrome-downloads-registry"); //$NON-NLS-1$
-    
+
     public static final MediaType CHROME_SEARCHES = MediaType.application("x-chrome-searches"); //$NON-NLS-1$
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(CHROME_SQLITE);
-    
+
     private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
@@ -89,13 +89,12 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             throws IOException, SAXException, TikaException {
 
         TemporaryResources tmp = new TemporaryResources();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp); 
-        File dbFile = tis.getFile();
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
         File downloadsFile = tmp.createTemporaryFile();
         File historyFile = tmp.createTemporaryFile();
         File searchFile = tmp.createTemporaryFile();
 
-        try (Connection connection = getConnection(dbFile)) {
+        try (Connection connection = getConnection(tis, metadata, context)) {
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
@@ -126,8 +125,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 int i = 0;
 
                 for (Download d : downloads) {
-                    
-                    if(!extractEntries)
+
+                    if (!extractEntries)
                         break;
 
                     i++;
@@ -139,6 +138,10 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataDownload.add(ExtraProperties.LOCAL_PATH, d.getDownloadedLocalPath());
                     metadataDownload.set(TikaCoreProperties.CREATED, d.getDownloadedDate());
                     metadataDownload.set(ExtraProperties.DOWNLOAD_DATE, d.getDownloadedDate());
+                    if (d.getTotalBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_TOTAL_BYTES, d.getTotalBytes().toString());
+                    if (d.getReceivedBytes() != null)
+                        metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
                     metadataDownload.add((BasicProps.HASH), "");
 
@@ -164,8 +167,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 i = 0;
 
                 for (Visit h : history) {
-                    
-                    if(!extractEntries)
+
+                    if (!extractEntries)
                         break;
 
                     i++;
@@ -182,7 +185,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
-                
+
                 try (FileOutputStream tmpSearchesFile = new FileOutputStream(searchFile)) {
 
                     ToXMLContentHandler searchesHandler = new ToXMLContentHandler(tmpSearchesFile, "UTF-8"); //$NON-NLS-1$
@@ -201,18 +204,18 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             }
 
         } catch (Exception e) {
-            
+
             sqliteParser.parse(tis, handler, metadata, context);
-            
+
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
-            
+
         } finally {
             tmp.close();
         }
     }
 
-    private void parseChromeDownloads(ContentHandler handler, Metadata metadata,
-            ParseContext context, List<Download> downloads) throws IOException, SAXException, TikaException {
+    private void parseChromeDownloads(ContentHandler handler, Metadata metadata, ParseContext context,
+            List<Download> downloads) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
 
@@ -242,7 +245,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("URL"); //$NON-NLS-1$
+            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
@@ -250,7 +253,15 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters("DOWNLOAD DATE (UTC)"); //$NON-NLS-1$
+            xHandler.characters("RECEIVED BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("TOTAL BYTES"); //$NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters("URL"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
@@ -265,7 +276,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getUrlFromDownload());
+                xHandler.characters(d.getDownloadedDateAsString());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
@@ -273,7 +284,15 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.startElement("td"); //$NON-NLS-1$
-                xHandler.characters(d.getDownloadedDateAsString());
+                xHandler.characters(d.getReceivedBytes() != null ? d.getReceivedBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getTotalBytes() != null ? d.getTotalBytes().toString() : "-"); //$NON-NLS-1$
+                xHandler.endElement("td"); //$NON-NLS-1$
+
+                xHandler.startElement("td"); //$NON-NLS-1$
+                xHandler.characters(d.getUrlFromDownload());
                 xHandler.endElement("td"); //$NON-NLS-1$
 
                 xHandler.endElement("tr"); //$NON-NLS-1$
@@ -291,8 +310,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         }
     }
 
-    private void parseChromeResumedHistory(ContentHandler handler, Metadata metadata,
-            ParseContext context, List<ResumedVisit> resumedHistory) throws IOException, SAXException, TikaException {
+    private void parseChromeResumedHistory(ContentHandler handler, Metadata metadata, ParseContext context,
+            List<ResumedVisit> resumedHistory) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
 
@@ -379,9 +398,9 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endDocument();
         }
     }
-    
-    private void parseChromeSearches(ContentHandler handler, Metadata metadata,
-            ParseContext context, List<Search> searches) throws IOException, SAXException, TikaException {
+
+    private void parseChromeSearches(ContentHandler handler, Metadata metadata, ParseContext context,
+            List<Search> searches) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
 
@@ -409,11 +428,11 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters(""); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("LAST SEARCH DATE (UTC)"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
-            
+
             xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters("SEARCH TERMS"); //$NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
@@ -467,7 +486,6 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 xHandler.endDocument();
         }
     }
-
 
     protected List<ResumedVisit> getResumedHistory(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
@@ -535,15 +553,16 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                 String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads_url_chains.url, downloads.current_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
                         + "FROM downloads, downloads_url_chains WHERE downloads.id = downloads_url_chains.id;"; //$NON-NLS-1$
                 rs = st.executeQuery(sql);
-            }catch(Exception e) {
-                //Old Chrome versions
+            } catch (Exception e) {
+                // Old Chrome versions
                 String sql = "SELECT downloads.id, ((downloads.start_time/1000)-11644473600000), downloads.url, downloads.full_path, downloads.received_bytes, downloads.total_bytes " //$NON-NLS-1$
                         + "FROM downloads;"; //$NON-NLS-1$
                 rs = st.executeQuery(sql);
             }
 
             while (rs.next()) {
-                downloads.add(new Download(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4)));
+                downloads.add(new Download(String.valueOf(rs.getLong(1)), rs.getLong(2), rs.getString(3),
+                        rs.getString(4), rs.getLong(6), rs.getLong(5)));
             }
         } finally {
             if (st != null)
@@ -551,7 +570,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         }
         return downloads;
     }
-    
+
     protected List<Search> getSearchTerms(Connection connection, Metadata metadata, ParseContext context)
             throws SQLException {
         List<Search> searches = new LinkedList<Search>();
@@ -569,7 +588,8 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
             ResultSet rs = st.executeQuery(sql);
 
             while (rs.next()) {
-                searches.add(new Search(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getString(5)));
+                searches.add(
+                        new Search(rs.getLong(1), rs.getLong(2), rs.getString(3), rs.getString(4), rs.getString(5)));
             }
         } finally {
             if (st != null)

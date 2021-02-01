@@ -1,22 +1,15 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
-import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
-import java.awt.GridLayout;
-import java.awt.Rectangle;
-import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ComponentAdapter;
-import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.io.InputStream;
-import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -25,44 +18,37 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.swing.ImageIcon;
-import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.JTextField;
-import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped3.io.IStreamSource;
 
-public class TiffViewer extends Viewer {
-
-    private static final long serialVersionUID = -7364831780786494299L;
-
-    private final JLabel pageCounter1 = new JLabel(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
-    private JTextField pageCounter2 = new JTextField(3);
-    private JLabel pageCounter3 = new JLabel(" / "); //$NON-NLS-1$
-
-    private JPanel imgPanel;
-    private JScrollPane scrollPane;
-
-    private ExecutorService executor = Executors.newFixedThreadPool(1);
+public class TiffViewer extends ImageViewer {
+    private final JTextField textCurrentPage = new JTextField(2);
+    private final JLabel labelNumPages = new JLabel();
+    private final ExecutorService executor = Executors.newFixedThreadPool(1);
+    private final List<JComponent> pageComponents = new ArrayList<JComponent>();
 
     volatile private InputStream is = null;
     volatile private ImageInputStream iis = null;
     volatile private ImageReader reader = null;
 
-    volatile private BufferedImage image = null;
     volatile private IStreamSource currentContent;
     volatile private int currentPage = 0;
     volatile private int numPages = 0;
-    volatile private double zoomFactor = 1;
-    volatile private int rotation = 0;
-    volatile private boolean painting = false;
+
+    private static final String actionFirstPage = "first-page";
+    private static final String actionPreviousPage = "previous-page";
+    private static final String actionNextPage = "next-page";
+    private static final String actionLastPage = "last-page";
 
     @Override
     public String getName() {
@@ -75,75 +61,67 @@ public class TiffViewer extends Viewer {
     }
 
     public TiffViewer() {
-        super(new BorderLayout());
+        super(1);
 
-        imgPanel = new JPanel() {
-            @Override
-            public void paintComponent(Graphics g) {
-                painting = true;
-                // System.out.println("painting");
-                super.paintComponent(g);
-                Graphics2D g2 = (Graphics2D) g;
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                if (image != null) {
-                    int w = (int) (image.getWidth() * zoomFactor);
-                    int h = (int) (image.getHeight() * zoomFactor);
-                    g2.drawImage(image, 0, 0, w, h, null);
-                }
-                painting = false;
-            }
-        };
+        pageComponents.add(textCurrentPage);
+        pageComponents.add(labelNumPages);
 
-        this.getPanel().addComponentListener(new ComponentAdapter() {
+        textCurrentPage.setEditable(true);
+        textCurrentPage.setHorizontalAlignment(SwingConstants.RIGHT);
+        textCurrentPage.setToolTipText(Messages.getString("TiffViewer.Page"));
+        textCurrentPage.addActionListener(new ActionListener() {
             @Override
-            public void componentResized(ComponentEvent e) {
-                if (image != null) {
-                    fitWidth();
-                    imgPanel.repaint();
+            public void actionPerformed(ActionEvent a) {
+                String value = textCurrentPage.getText().trim();
+                try {
+                    int newPage = Integer.parseInt(value);
+                    if (newPage > numPages || newPage < 1) {
+                        return;
+                    }
+                    currentPage = newPage;
+                    displayPage();
+                } catch (Exception e) {
+                    JOptionPane.showMessageDialog(null,
+                            "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
                 }
             }
         });
 
-        scrollPane = new JScrollPane(imgPanel);
-        scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-        scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
-        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-        JPanel topPanel = initControlPanel();
-        this.getPanel().add(topPanel, BorderLayout.NORTH);
-        this.getPanel().add(scrollPane, BorderLayout.CENTER);
+        labelNumPages.setPreferredSize(new Dimension(28, 14));
+        labelNumPages.setHorizontalAlignment(SwingConstants.LEFT);
 
+        pageComponents.add(createToolBarButton(actionFirstPage));
+        pageComponents.add(createToolBarButton(actionPreviousPage));
+
+        toolBar.add(textCurrentPage);
+        toolBar.add(labelNumPages);
+
+        pageComponents.add(createToolBarButton(actionNextPage));
+        pageComponents.add(createToolBarButton(actionLastPage));
+
+        JLabel separator = new JLabel(IconUtil.getIcon("separator", resPath, 24));
+        pageComponents.add(separator);
+        toolBar.add(separator);
     }
 
-    @Override
-    public void copyScreen(Component comp) {
-        super.copyScreen(scrollPane);
-    }
-
-    private void fitWidth() {
-        if (image != null) {
-            zoomFactor = (imgPanel.getVisibleRect().getWidth()) / image.getWidth();
-            Dimension d = new Dimension((int) imgPanel.getVisibleRect().getWidth(),
-                    (int) (image.getHeight() * zoomFactor));
-            imgPanel.setPreferredSize(d);
-        }
+    protected void cleanState() {
+        super.cleanState(true);
+        currentPage = 1;
+        numPages = 0;
+        textCurrentPage.setText("");
+        labelNumPages.setText(" / ");
     }
 
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
-
-        currentPage = 1;
-        numPages = 0;
-        rotation = 0;
-        image = null;
-
-        if (content != currentContent && currentContent != null)
-            refreshGUI();
+        cleanState();
         currentContent = content;
-
+        toolBar.setVisible(currentContent != null && isToolbarVisible());
         if (currentContent != null) {
             openContent(content);
+        } else {
+            imagePanel.setImage(null);
         }
-
     }
 
     private void disposeResources() {
@@ -152,10 +130,8 @@ public class TiffViewer extends Viewer {
                 reader.dispose();
         } catch (Exception e) {
         }
-
         IOUtil.closeQuietly(iis);
         IOUtil.closeQuietly(is);
-
         reader = null;
         iis = null;
         is = null;
@@ -166,31 +142,28 @@ public class TiffViewer extends Viewer {
             @Override
             public void run() {
                 disposeResources();
-                if (content != currentContent)
+                if (!content.equals(currentContent))
                     return;
                 try {
                     is = currentContent.getStream();
                     iis = ImageIO.createImageInputStream(is);
                     reader = ImageIO.getImageReaders(iis).next();
                     reader.setInput(iis, false, true);
-
                     numPages = reader.getNumImages(true);
-
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
                 displayPage(content);
             }
         });
-
     }
 
     private void displayPage() {
+        super.cleanState(false);
         displayPage(currentContent);
     }
 
     private void displayPage(final IStreamSource content) {
-
         executor.submit(new Runnable() {
             @Override
             public void run() {
@@ -220,38 +193,35 @@ public class TiffViewer extends Viewer {
                     if (image != null)
                         image = getCompatibleImage(image);
                 }
-
+                if (rotation != 0) {
+                    imagePanel.setImage(ImageUtil.rotatePos(image, rotation));
+                } else {
+                    imagePanel.setImage(image);
+                }
                 refreshGUI();
             }
         });
-
     }
 
     private void refreshGUI() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                fitWidth();
-                imgPanel.scrollRectToVisible(new Rectangle());
-                imgPanel.revalidate();
-                imgPanel.repaint();
-                pageCounter2.setText(String.valueOf(currentPage));
-                pageCounter3.setText(" / " + numPages); //$NON-NLS-1$
+                for (JComponent c : pageComponents) {
+                    c.setVisible(numPages > 1);
+                }
+                textCurrentPage.setText(String.valueOf(currentPage));
+                labelNumPages.setText(" / " + numPages); //$NON-NLS-1$
             }
         });
     }
 
     private BufferedImage getCompatibleImage(BufferedImage image) {
-        // System.out.println("getCompat" + System.currentTimeMillis()/1000);
-
         // obtain the current system graphical settings
         GraphicsConfiguration gfx_config = GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice()
                 .getDefaultConfiguration();
 
-        /*
-         * if image is already compatible and optimized for current system settings,
-         * simply return it
-         */
+        // if image is already compatible and optimized for current system settings,
         if (image.getColorModel().equals(gfx_config.getColorModel())) {
             return image;
         }
@@ -267,146 +237,44 @@ public class TiffViewer extends Viewer {
         g2d.drawImage(image, 0, 0, null);
         g2d.dispose();
 
-        // System.out.println("CompatGot" + System.currentTimeMillis()/1000);
-
         // return the new optimized image
         return new_image;
     }
 
-    private JPanel initControlPanel() {
-
-        JPanel topBar = new JPanel();
-        topBar.setLayout(new GridLayout());// new
-        // FlowLayout(FlowLayout.CENTER,0,0));
-        topBar.setPreferredSize(new Dimension(30, 27));
-
-        /**
-         * back to page 1
-         */
-        JButton start = new JButton();
-        start.setBorderPainted(false);
-        URL startImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/start.gif"); //$NON-NLS-1$
-        start.setIcon(new ImageIcon(startImage));
-        topBar.add(start);
-
-        start.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentContent != null && currentPage != 1) {
-                    currentPage = 1;
-                    displayPage();
-                }
-            }
-        });
-
-        /**
-         * back icon
-         */
-        JButton back = new JButton();
-        back.setBorderPainted(false);
-        URL backImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/back.gif"); //$NON-NLS-1$
-        back.setIcon(new ImageIcon(backImage));
-        topBar.add(back);
-        back.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentContent != null && currentPage > 1) {
-                    currentPage -= 1;
-                    displayPage();
-                }
-            }
-        });
-
-        pageCounter2.setEditable(true);
-        pageCounter2.setToolTipText(Messages.getString("TiffViewer.Page")); //$NON-NLS-1$
-        pageCounter2.addActionListener(new ActionListener() {
-
-            @Override
-            public void actionPerformed(ActionEvent a) {
-
-                String value = pageCounter2.getText().trim();
-                int newPage;
-
-                // allow for bum values
-                try {
-                    newPage = Integer.parseInt(value);
-
-                    if ((newPage > numPages) || (newPage < 1)) {
-                        return;
-                    }
-
-                    currentPage = newPage;
-                    displayPage();
-
-                } catch (Exception e) {
-                    JOptionPane.showMessageDialog(null,
-                            "<" + value + "> " + Messages.getString("TiffViewer.InvalidPage") + numPages); //$NON-NLS-1$
-                }
-
-            }
-
-        });
-
-        topBar.add(new JPanel());
-        topBar.add(pageCounter2);
-        topBar.add(pageCounter3);
-        // topBar.add(new JPanel());
-
-        /**
-         * forward icon
-         */
-        JButton forward = new JButton();
-        forward.setBorderPainted(false);
-        URL fowardImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/forward.gif"); //$NON-NLS-1$
-        forward.setIcon(new ImageIcon(fowardImage));
-        topBar.add(forward);
-        forward.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentContent != null && currentPage < numPages) {
-                    currentPage += 1;
-                    displayPage();
-                }
-            }
-        });
-
-        /**
-         * goto last page
-         */
-        JButton end = new JButton();
-        end.setBorderPainted(false);
-        URL endImage = getClass().getResource("/dpf/sp/gpinf/indexer/search/viewer/res/end.gif"); //$NON-NLS-1$
-        end.setIcon(new ImageIcon(endImage));
-        topBar.add(end);
-        end.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if (currentContent != null && currentPage < numPages) {
-                    currentPage = numPages;
-                    displayPage();
-                }
-            }
-        });
-
-        return topBar;
-    }
-
     @Override
     public void init() {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void dispose() {
-        // TODO Auto-generated method stub
-
     }
 
-    @Override
-    public void scrollToNextHit(boolean forward) {
-        // TODO Auto-generated method stub
-
+    public synchronized void actionPerformed(ActionEvent e) {
+        if (image == null) {
+            return;
+        }
+        super.actionPerformed(e);
+        String cmd = e.getActionCommand();
+        if (cmd.equals(actionFirstPage)) {
+            if (currentContent != null && currentPage != 1) {
+                currentPage = 1;
+                displayPage();
+            }
+        } else if (cmd.equals(actionNextPage)) {
+            if (currentContent != null && currentPage < numPages) {
+                currentPage++;
+                displayPage();
+            }
+        } else if (cmd.equals(actionPreviousPage)) {
+            if (currentContent != null && currentPage > 1) {
+                currentPage--;
+                displayPage();
+            }
+        } else if (cmd.equals(actionLastPage)) {
+            if (currentContent != null && currentPage != numPages) {
+                currentPage = numPages;
+                displayPage();
+            }
+        }
     }
-
 }

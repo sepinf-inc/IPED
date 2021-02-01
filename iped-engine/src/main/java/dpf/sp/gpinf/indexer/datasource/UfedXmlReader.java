@@ -9,22 +9,37 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.Statement;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
+import java.util.TreeMap;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
+import org.apache.tika.metadata.Property;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
@@ -34,19 +49,20 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.UFDRInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
-import dpf.sp.gpinf.indexer.util.ZIPInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ZipFile4j;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -54,29 +70,50 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 import net.lingala.zip4j.exception.ZipException;
 import net.lingala.zip4j.model.FileHeader;
 
 public class UfedXmlReader extends DataSourceReader {
 
+    private static Logger LOGGER = LoggerFactory.getLogger(UfedXmlReader.class);
+
     private static final String[] HEADER_STRINGS = { "project id", "extractionType", "sourceExtractions" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-    private static String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
-    private static String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
-    private static String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
+    private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
+    private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
+    private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
-    public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
-    public static final String UFED_EMAIL_MIME = "message/x-ufed-email"; //$NON-NLS-1$
+    public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
+    public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
+    public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
+    public static final String MSISDN_PROP = "MSISDN";
+
+    private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+
+    private static final Set<String> SUPPORTED_APPS = new HashSet<String>(
+            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
 
     File root, ufdrFile;
     ZipFile4j ufdr;
-    ZIPInputStreamFactory zisf;
+    UFDRInputStreamFactory uisf;
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
+    boolean ignoreSupportedChats = false;
+    HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
+    }
+
+    private void reset() {
+        root = null;
+        ufdrFile = null;
+        ufdr = null;
+        uisf = null;
+        rootItem = null;
+        decodedFolder = null;
     }
 
     @Override
@@ -124,7 +161,7 @@ public class UfedXmlReader extends DataSourceReader {
                 return ufdr.getInputStream(xml);
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Invalid UFDR file " + file.getAbsolutePath(), e);
             }
         }
         return null;
@@ -146,26 +183,33 @@ public class UfedXmlReader extends DataSourceReader {
 
     @Override
     public int read(File root) throws Exception {
+        read(root, null);
+        return 0;
+    }
+
+    @Override
+    public void read(File root, Item parent) throws Exception {
 
         this.root = root;
-        addRootItem();
+        addRootItem(parent);
         addVirtualDecodedFolder();
-        InputStream xmlStream = lookUpXmlReportInputStream(root);
+        InputStream xmlStream = null;
+        try {
+            xmlStream = lookUpXmlReportInputStream(root);
 
-        configureParsers();
+            configureParsers();
 
-        SAXParserFactory spf = SAXParserFactory.newInstance();
-        spf.setNamespaceAware(true);
-        SAXParser saxParser = spf.newSAXParser();
-        XMLReader xmlReader = saxParser.getXMLReader();
-        xmlReader.setContentHandler(new XMLContentHandler());
-        xmlReader.setErrorHandler(new XMLErrorHandler());
-        xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
-
-        IOUtil.closeQuietly(xmlStream);
-        // IOUtil.closeQuietly(ufdr);
-
-        return 0;
+            SAXParserFactory spf = SAXParserFactory.newInstance();
+            spf.setNamespaceAware(true);
+            SAXParser saxParser = spf.newSAXParser();
+            XMLReader xmlReader = saxParser.getXMLReader();
+            xmlReader.setContentHandler(new XMLContentHandler());
+            xmlReader.setErrorHandler(new XMLErrorHandler());
+            xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
+        } finally {
+            IOUtil.closeQuietly(xmlStream);
+            reset();
+        }
     }
 
     private void configureParsers() {
@@ -173,35 +217,51 @@ public class UfedXmlReader extends DataSourceReader {
         UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
                 .findObjects(UFEDReaderConfig.class).iterator().next();
 
+        // TODO enable TelegramParser for UFDR in next major release
+        if (!TelegramParser.isEnabledForUfdr()) {
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+            SUPPORTED_APPS.remove(TelegramParser.TELEGRAM);
+        }
+
         if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
+            ignoreSupportedChats = true;
 
-        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
+        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) { //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+        }
     }
 
-    private void addRootItem() throws InterruptedException {
+    private void addRootItem(IItem parent) throws InterruptedException {
 
         if (listOnly)
             return;
 
         String evidenceName = getEvidenceName(root);
-        if (evidenceName == null)
-            evidenceName = root.getName();
         IDataSource evidenceSource = new DataSource(root);
         evidenceSource.setName(evidenceName);
 
         rootItem = new Item();
-        rootItem.setRoot(true);
         rootItem.setDataSource(evidenceSource);
-        rootItem.setPath(evidenceName);
-        rootItem.setName(evidenceName);
         rootItem.setHasChildren(true);
         if (root.getName().endsWith(".ufdr")) {
             rootItem.setLength(root.length());
             rootItem.setSumVolume(false);
         }
+        // rootItem.setLength(0L);
         rootItem.setHash(""); //$NON-NLS-1$
+
+        if (parent != null) {
+            rootItem.setName(root.getName());
+            rootItem.setParent(parent);
+            rootItem.setPath(parent.getPath() + "/" + root.getName());
+        } else {
+            rootItem.setPath(evidenceName);
+            rootItem.setRoot(true);
+            rootItem.setName(evidenceName);
+        }
+        rootItem.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
 
         pathToParent.put(rootItem.getPath(), rootItem);
 
@@ -246,21 +306,36 @@ public class UfedXmlReader extends DataSourceReader {
 
     private class XMLContentHandler implements ContentHandler {
 
+        private static final String LAST_USE_PREFIX = "last known use:";
+
         StringBuilder chars = new StringBuilder();
 
         HashMap<String, String> extractionInfoMap = new HashMap<String, String>();
 
-        String df2Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS"; //$NON-NLS-1$
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
-        DateFormat df2 = new SimpleDateFormat(df2Pattern);
+        DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); //$NON-NLS-1$
+        DateFormat df3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"); //$NON-NLS-1$
+        DateFormat[] dfs = { df1, df2, df3 };
+
+        DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
         ArrayList<Item> itemSeq = new ArrayList<>();
 
         HashSet<String> elements = new HashSet<>();
-        HashSet<String> types = new HashSet<>();
 
-        HashMap<String, IItem> ids = new HashMap<>();
+        HashSet<String> ownerParties = new HashSet<>();
+
+        HashMap<Integer, List<Item>> seenAttachsPerId = new HashMap<>();
+
+        List<String> msisdns = new ArrayList<>();
+        TreeMap<Date, String> lastUseToMsisdn = new TreeMap<>();
+        TreeMap<Date, String> iphoneSimSwitch = new TreeMap<>();
+
+        boolean ignoreItems = false;
+        boolean inChat = false;
+        int numAttachments = 0;
+        String prevUfedId = null;
 
         private class XmlNode {
             String element;
@@ -311,8 +386,31 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void startDocument() throws SAXException {
             // TODO remover timezone da exibição? obter da linha de comando?
-            df2.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
-            df1.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            for (DateFormat df : dfs) {
+                df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            }
+            out.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+        }
+
+        private DateFormat lastDateFormat = null;
+
+        private Date parseDate(String value) throws ParseException {
+            if (lastDateFormat != null) {
+                try {
+                    return lastDateFormat.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            for (DateFormat df : dfs) {
+                try {
+                    lastDateFormat = df;
+                    return df.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            throw new ParseException("No dateformat configured for value " + value, 0);
         }
 
         @Override
@@ -423,6 +521,8 @@ public class UfedXmlReader extends DataSourceReader {
                     Item item = new Item();
 
                     String type = atts.getValue("type"); //$NON-NLS-1$
+                    if (type.equals("Chat"))
+                        inChat = true;
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
                     item.setName(name);
                     String path = decodedFolder.getPath() + "/" + type + "/" + name; //$NON-NLS-1$ //$NON-NLS-2$
@@ -472,6 +572,10 @@ public class UfedXmlReader extends DataSourceReader {
 
                     fillCommonMeta(item, atts);
                     itemSeq.add(item);
+
+                    if ("InstantMessage".equals(type)) {
+                        this.numAttachments = 0;
+                    }
                 }
             }
 
@@ -492,16 +596,19 @@ public class UfedXmlReader extends DataSourceReader {
                     item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + attName, value);
                 }
             }
+            if (item.getMetadata().get(UFED_ID) != null) {
+                item.setIdInDataSource(item.getMetadata().get(UFED_ID));
+            }
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
 
             XmlNode currentNode = nodeSeq.remove(nodeSeq.size() - 1);
-            
-            for(XmlNode node : nodeSeq) {
-                if(node.element.equals("entityBookmarks")) { //$NON-NLS-1$
-                    //currently there is no support for bookmarks
+
+            for (XmlNode node : nodeSeq) {
+                if (node.element.equals("entityBookmarks")) { //$NON-NLS-1$
+                    // currently there is no support for bookmarks
                     return;
                 }
             }
@@ -518,12 +625,42 @@ public class UfedXmlReader extends DataSourceReader {
             if (nodeSeq.size() > 0)
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
 
-            if (qName.equals("item")) { //$NON-NLS-1$
+            if (("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null
+                    && "Device Info".equals(parentNode.atts.get("section"))) {
+                String msisdn = chars.toString().trim();
+                if (!msisdn.isEmpty()) {
+                    if ("LastUsedMSISDN".equals(nameAttr))
+                        msisdns.add(0, msisdn);
+                    else
+                        msisdns.add(msisdn);
+                    caseData.putCaseObject(MSISDN_PROP + rootItem.getDataSource().getUUID(), msisdns);
+
+                    for (String attrVal : currentNode.atts.values()) {
+                        if (attrVal.toLowerCase().startsWith(LAST_USE_PREFIX)) {
+                            attrVal = attrVal.substring(LAST_USE_PREFIX.length()).trim();
+                            SimpleDateFormat df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss XXX");
+                            if (attrVal.contains("  "))
+                                df = new SimpleDateFormat("dd-MMM-yy hh:mm:ss  XXX");
+                            try {
+                                Date date = df.parse(attrVal);
+                                this.lastUseToMsisdn.put(date, msisdn);
+                            } catch (ParseException e) {
+                                e.printStackTrace();
+                            }
+                            break;
+                        }
+                    }
+                }
+
+            } else if (qName.equals("item")) { //$NON-NLS-1$
                 if ("Tags".equals(nameAttr) && "Configuration".equals(chars.toString())) { //$NON-NLS-1$ //$NON-NLS-2$
                     item.setCategory(chars.toString());
 
                 } else if ("Local Path".equals(nameAttr)) { //$NON-NLS-1$
-                    setContent(item, chars.toString());
+                    setContent(item, normalizePaths(chars.toString()));
+                    if (item.getPath().endsWith("wireless/Library/Databases/CellularUsage.db")) {
+                        parseIphoneSimSwitch(item);
+                    }
 
                 } else if (!ignoreNameAttrs.contains(nameAttr) && !nameAttr.toLowerCase().startsWith("exif")) //$NON-NLS-1$
                     if (item != null && !chars.toString().trim().isEmpty())
@@ -533,15 +670,12 @@ public class UfedXmlReader extends DataSourceReader {
                 try {
                     String value = chars.toString().trim();
                     if (!value.isEmpty()) {
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
                         if (nameAttr.equals("CreationTime")) //$NON-NLS-1$
-                            item.setCreationDate(df.parse(value));
+                            item.setCreationDate(parseDate(value));
                         else if (nameAttr.equals("ModifyTime")) //$NON-NLS-1$
-                            item.setModificationDate(df.parse(value));
+                            item.setModificationDate(parseDate(value));
                         else if (nameAttr.equals("AccessTime")) //$NON-NLS-1$
-                            item.setAccessDate(df.parse(value));
+                            item.setAccessDate(parseDate(value));
                         else
                             item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + nameAttr, value);
                     }
@@ -556,17 +690,19 @@ public class UfedXmlReader extends DataSourceReader {
                         String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
                         String type = currentNode.atts.get("type"); //$NON-NLS-1$
                         String value = chars.toString().trim();
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
-                        if (type.equals("TimeStamp")) //$NON-NLS-1$
+                        if (type.equals("TimeStamp") && !value.isEmpty()) //$NON-NLS-1$
                             try {
-                                item.getMetadata().add(meta, df.format(df.parse(value)));
+                                item.getMetadata().add(meta, out.format(parseDate(value)));
                             } catch (ParseException e) {
-                                e.printStackTrace();
+                                throw new SAXException(e);
                             }
-                        else
+                        else if (item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
+                            if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
+                                    && SUPPORTED_APPS.contains(value)) {
+                                ignoreItems = true;
+                            }
+                        }
                     }
                 }
             } else if (qName.equals("targetid") && parentNode.element.equals("jumptargets")) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -585,6 +721,7 @@ public class UfedXmlReader extends DataSourceReader {
                     parentNode.element.equals("modelField") || //$NON-NLS-1$
                     parentNode.element.equals("multiModelField"))) { //$NON-NLS-1$
 
+                boolean seenAttachment = false;
                 itemSeq.remove(itemSeq.size() - 1);
                 String type = currentNode.atts.get("type"); //$NON-NLS-1$
                 if ("Contact".equals(type) || "UserAccount".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -594,29 +731,35 @@ public class UfedXmlReader extends DataSourceReader {
                     createEmailPreview(item);
 
                 } else if ("Attachment".equals(type)) { //$NON-NLS-1$
-                    handleAttachment(item);
+                    prevUfedId = handleAttachment(item);
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
-                    if (parentItem.getMediaType().toString().contains("email")) //$NON-NLS-1$
+                    if (parentItem.getMediaType().equals(MediaTypes.UFED_EMAIL_MIME)) // $NON-NLS-1$
                         parentItem.getMetadata().add(EMAIL_ATTACH_KEY, item.getName());
-                } else if ("Chat".equals(type)) { //$NON-NLS-1$
-                    String name = "Chat"; //$NON-NLS-1$
-                    String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-                    if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
-                        item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
-                    if (source != null)
-                        name += "_" + source; //$NON-NLS-1$
-                    String[] parties = item.getMetadata().getValues(ExtraProperties.UFED_META_PREFIX + "Participants"); //$NON-NLS-1$
-                    if (parties != null && parties.length > 2) {
-                        name += "_Group_" + item.getName().split("_")[1]; //$NON-NLS-1$ //$NON-NLS-2$
-                    } else if (parties != null && parties.length > 0) {
-                        name += "_" + parties[0]; //$NON-NLS-1$
-                        if (parties.length > 1)
-                            name += "_" + parties[1]; //$NON-NLS-1$
+                    else if (parentItem.getMediaType().equals(MediaTypes.UFED_MESSAGE_MIME)) {
+                        this.numAttachments++;
+                        parentItem.getMetadata().add(ExtraProperties.LINKED_ITEMS,
+                                ESCAPED_UFED_ID + ":" + item.getMetadata().get(UFED_ID));
+                        if (prevUfedId != null) {
+                            seenAttachment = true;
+                            List<Item> attachs = seenAttachsPerId.get(item.getParentId());
+                            if (attachs == null) {
+                                attachs = new ArrayList<>();
+                                seenAttachsPerId.put(item.getParentId(), attachs);
+                            }
+                            attachs.add(item);
+                        }
                     }
-                    updateName(item, name);
+                } else if ("Chat".equals(type)) { //$NON-NLS-1$
+                    String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
+                    if (WhatsAppParser.WHATSAPP.equalsIgnoreCase(source)) // $NON-NLS-1$
+                        item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                    if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
+                        item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
-                if ("InstantMessage".equals(type) || "Email".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
+                if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$
+                        || "MMS".equals(type)) { //$NON-NLS-1$
                     String date = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "TimeStamp"); //$NON-NLS-1$
                     item.getMetadata().set(ExtraProperties.MESSAGE_DATE, date);
@@ -632,6 +775,17 @@ public class UfedXmlReader extends DataSourceReader {
                         item.getMetadata().remove(ExtraProperties.UFED_META_PREFIX + "Snippet"); //$NON-NLS-1$
                     }
                     item.getMetadata().set(ExtraProperties.MESSAGE_BODY, body);
+                }
+                int numInstantMsgAttachs = 0;
+                if ("InstantMessage".equals(type)) {
+                    item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
+                    numInstantMsgAttachs = this.numAttachments;
+                    if (numInstantMsgAttachs > 0) {
+                        item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
+                        item.getMetadata().add(ExtraProperties.MESSAGE_BODY,
+                                UFEDChatParser.ATTACHED_MEDIA_MSG + numInstantMsgAttachs);
+                    }
+                    this.numAttachments = 0;
                 }
                 if (mergeInParentNode.contains(type) && itemSeq.size() > 0) {
                     IItem parentItem = itemSeq.get(itemSeq.size() - 1);
@@ -649,22 +803,26 @@ public class UfedXmlReader extends DataSourceReader {
                         String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
                         String value = name == null || name.equals(identifier) ? identifier
                                 : identifier == null ? name : name + "(" + identifier + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                        if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_FROM, value);
-                        else if ("To".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_TO, value);
-                        else if ("Cc".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_CC, value);
-                        else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
-                            parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
-                        else
-                            parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
-
-                        String isOwner = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner"); //$NON-NLS-1$
-                        if (Boolean.valueOf(isOwner) && parentItem.getMediaType().toString().contains("chat")) //$NON-NLS-1$
-                            parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
-
-                        if (Boolean.valueOf(isOwner) && "From".equals(role)) //$NON-NLS-1$
+                        if (value != null) {
+                            if ("From".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_FROM, value);
+                            else if ("To".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_TO, value);
+                            else if ("Cc".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_CC, value);
+                            else if ("Bcc".equalsIgnoreCase(role)) //$NON-NLS-1$
+                                parentItem.getMetadata().add(Message.MESSAGE_BCC, value);
+                            else
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + role, value);
+                        }
+                        boolean isOwner = Boolean
+                                .valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "IsPhoneOwner")); //$NON-NLS-1$
+                        if (value != null && isOwner) { // $NON-NLS-1$
+                            ownerParties.add(value);
+                            if (parentItem.getMediaType().toString().contains("chat"))
+                                parentItem.getMetadata().add(UFEDChatParser.META_PHONE_OWNER, value);
+                        }
+                        if (isOwner && "From".equals(role)) //$NON-NLS-1$
                             parentItem.getMetadata().add(UFEDChatParser.META_FROM_OWNER, Boolean.TRUE.toString());
 
                     } else if ("PhoneNumber".equals(type) || "EmailAddress".equals(type)) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -679,8 +837,8 @@ public class UfedXmlReader extends DataSourceReader {
                     } else if ("Coordinate".equals(type)) { //$NON-NLS-1$
                         String lat = ExtraProperties.UFED_META_PREFIX + "Latitude"; //$NON-NLS-1$
                         String lon = ExtraProperties.UFED_META_PREFIX + "Longitude"; //$NON-NLS-1$
-                        parentItem.getMetadata().add(lat, item.getMetadata().get(lat));
-                        parentItem.getMetadata().add(lon, item.getMetadata().get(lon));
+                        parentItem.getMetadata().set(lat, item.getMetadata().get(lat));
+                        parentItem.getMetadata().set(lon, item.getMetadata().get(lon));
 
                     } else if ("Organization".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Name"); //$NON-NLS-1$
@@ -692,7 +850,15 @@ public class UfedXmlReader extends DataSourceReader {
                         }
                     } else if ("UserID".equals(type)) { //$NON-NLS-1$
                         String value = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Value"); //$NON-NLS-1$
-                        parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                        if (value != null) {
+                            if (!inChat) {
+                                parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + type, value);
+                            } else {
+                                String category = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Category"); //$NON-NLS-1$
+                                if (category != null)
+                                    parentItem.getMetadata().add(ExtraProperties.UFED_META_PREFIX + category, value);
+                            }
+                        }
 
                     } else if ("ContactPhoto".equals(type)) { //$NON-NLS-1$
                         String avatarPath = item.getMetadata().get(AVATAR_PATH_META);
@@ -707,19 +873,151 @@ public class UfedXmlReader extends DataSourceReader {
                                 parentItem.getMetadata().add(meta, val);
                         }
                     }
-                } else
-                    try {
-                        caseData.incDiscoveredVolume(item.getLength());
-                        caseData.addItem(item);
-
-                    } catch (InterruptedException e) {
-                        throw new SAXException(e);
+                } else {
+                    if (!ignoreItems) {
+                        // process seen attachments later
+                        if (!seenAttachment) {
+                            List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
+                            if (seenAttachs != null && numInstantMsgAttachs > 1) {
+                                for (Item attach : seenAttachs) {
+                                    processItem(attach);
+                                }
+                            } else if (seenAttachs != null) {
+                                item.getMetadata().set(ExtraProperties.LINKED_ITEMS,
+                                        ESCAPED_UFED_ID + ":" + prevUfedId);
+                                caseData.incDiscoveredEvidences(-1);
+                            }
+                            processItem(item);
+                            seenAttachsPerId.remove(item.getId());
+                        }
+                    } else {
+                        caseData.incDiscoveredEvidences(-1);
                     }
+                    if (MediaTypes.isInstanceOf(item.getMediaType(), UFEDChatParser.UFED_CHAT_MIME)) {
+                        inChat = false;
+                        ignoreItems = false;
+                    }
+                }
+
             }
 
             chars = new StringBuilder();
             nameAttr = null;
 
+        }
+
+        private void processItem(Item item) throws SAXException {
+            try {
+                caseData.incDiscoveredVolume(item.getLength());
+                fillMissingInfo(item);
+                caseData.addItem(item);
+
+            } catch (Exception e) {
+                throw new SAXException(e);
+            }
+        }
+
+        private HashMap<String, String[]> toCache = new LinkedHashMap<String, String[]>(16, 0.75f, true) {
+
+            private static final long serialVersionUID = 1L;
+
+            @Override
+            protected boolean removeEldestEntry(Entry<String, String[]> eldest) {
+                return this.size() > 1000;
+            }
+        };
+
+        private Property toProperty = Property.internalText(Message.MESSAGE_TO);
+
+        private void fillMissingInfo(Item item) {
+            String from = item.getMetadata().get(Message.MESSAGE_FROM);
+            String to = item.getMetadata().get(Message.MESSAGE_TO);
+            boolean fromOwner = Boolean.valueOf(item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "fromOwner"));
+            if (to == null) {
+                if (item.getMediaType() != null
+                        && MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+                    // we have seen ufed messages without parent chat
+                    if (itemSeq.size() == 0)
+                        return;
+                    IItem parentChat = itemSeq.get(itemSeq.size() - 1);
+                    String[] parties = parentChat.getMetadata()
+                            .getValues(ExtraProperties.UFED_META_PREFIX + "Participants");
+                    ArrayList<String> toList = new ArrayList<>();
+                    for (String party : parties) {
+                        if ((from != null && !party.equals(from)) || (fromOwner && !ownerParties.contains(party)))
+                            toList.add(party);
+                    }
+                    String key = toList.toString();
+                    String[] val = toCache.get(key);
+                    if (val == null) {
+                        val = toList.toArray(new String[toList.size()]);
+                        toCache.put(key, val);
+                    }
+                    item.getMetadata().set(toProperty, val);
+                }
+            }
+            if (!msisdns.isEmpty() && (MediaTypes.UFED_CALL_MIME.equals(item.getMediaType())
+                    || MediaTypes.UFED_SMS_MIME.equals(item.getMediaType())
+                    || MediaTypes.UFED_MMS_MIME.equals(item.getMediaType()))) {
+                String likelyMsisdn = getLikelyMSISDN(item);
+                likelyMsisdn += Messages.getString("UfedXmlReader.LowConfidence");
+                String direction = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Type");
+                String status = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Status");
+                if (item.getMetadata().get(Message.MESSAGE_TO) == null && likelyMsisdn != null
+                        && ("Incoming".equals(direction) || "Missed".equals(direction)
+                                || (!fromOwner && ("Read".equals(status) || "Unread".equals(status))))) {
+                    item.getMetadata().set(Message.MESSAGE_TO, likelyMsisdn);
+                } else if (from == null && likelyMsisdn != null && ("Outgoing".equals(direction) || fromOwner
+                        || "Sent".equals(status) || "Unsent".equals(status))) {
+                    item.getMetadata().set(Message.MESSAGE_FROM, likelyMsisdn);
+                }
+            }
+        }
+
+        private String getLikelyMSISDN(IItem item) {
+            Property time = Property.externalDate(ExtraProperties.UFED_META_PREFIX + "TimeStamp");
+            Date date = item.getMetadata().getDate(time);
+            Entry<Date, String> entry = null;
+            if (date != null)
+                entry = iphoneSimSwitch.floorEntry(date);
+            if (date != null && entry == null)
+                entry = lastUseToMsisdn.ceilingEntry(date);
+            if (entry == null)
+                entry = iphoneSimSwitch.firstEntry();
+            if (entry == null)
+                entry = lastUseToMsisdn.lastEntry();
+            if (entry != null)
+                return entry.getValue();
+            return msisdns.get(0);
+        }
+
+        private void parseIphoneSimSwitch(IItem item) {
+            File file = null;
+            try {
+                file = File.createTempFile("CellularUsage", "db");
+                try (InputStream is = item.getStream()) {
+                    Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                }
+                try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
+                        Statement st = conn.createStatement()) {
+                    String sql = "SELECT subscriber_mdn, last_update_time FROM subscriber_info"; //$NON-NLS-1$
+                    ResultSet rs = st.executeQuery(sql);
+                    while (rs.next()) {
+                        String msisdn = rs.getString(1);
+                        if (msisdn != null && !msisdn.isEmpty()) {
+                            int time = rs.getInt(2);
+                            Date date = new Date((time + 978307200l) * 1000l);
+                            iphoneSimSwitch.put(date, msisdn);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LOGGER.error("Failed to parse " + item.getPath(), e.toString());
+                e.printStackTrace();
+            } finally {
+                if (file != null)
+                    file.delete();
+            }
         }
 
         private void setContent(Item item, String path) {
@@ -728,7 +1026,10 @@ public class UfedXmlReader extends DataSourceReader {
             item.setInputStreamFactory(null);
             if (path == null)
                 return;
-            path = normalizePaths(path);
+            String ufedId = item.getMetadata().get(UFED_ID);
+            if (ufedId != null && !ufdrPathToUfedId.containsKey(path)) {
+                ufdrPathToUfedId.put(path, ufedId);
+            }
             if (ufdrFile == null) {
                 File file = new File(root, path);
                 String relativePath = Util.getRelativePath(output, file);
@@ -736,8 +1037,8 @@ public class UfedXmlReader extends DataSourceReader {
                 item.setFile(file);
                 item.setLength(file.length());
             } else {
-                if (zisf == null) {
-                    zisf = new ZIPInputStreamFactory(ufdrFile.toPath());
+                if (uisf == null) {
+                    uisf = new UFDRInputStreamFactory(ufdrFile.toPath());
                 }
                 FileHeader zae = null;
                 try {
@@ -747,8 +1048,10 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 if (zae != null) {
                     item.setLength(zae.getUncompressedSize());
-                    item.setInputStreamFactory(zisf);
-                    item.setIdInDataSource(path);
+                    item.setInputStreamFactory(uisf);
+                    path = UFDRInputStreamFactory.UFDR_PATH_PREFIX + path;
+                    String id = item.getIdInDataSource() != null ? item.getIdInDataSource() + "_" + path : path;
+                    item.setIdInDataSource(id);
                 }
             }
         }
@@ -762,20 +1065,18 @@ public class UfedXmlReader extends DataSourceReader {
             item.setPath(item.getPath().substring(0, item.getPath().lastIndexOf('/') + 1) + newName);
         }
 
-        private void handleAttachment(Item item) {
+        private String handleAttachment(Item item) {
             String name = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Filename"); //$NON-NLS-1$
             if (name != null)
                 updateName(item, name);
             String extracted_path = item.getMetadata().get(ATTACH_PATH_META);
+            String ufedId = null;
+            if (extracted_path != null) {
+                extracted_path = normalizePaths(extracted_path);
+                ufedId = ufdrPathToUfedId.get(extracted_path);
+            }
             setContent(item, extracted_path);
-            if (item.getFile() == null)
-                try {
-                    String ufedSize = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Size"); //$NON-NLS-1$
-                    if (ufedSize != null)
-                        item.setLength(Long.parseLong(ufedSize.trim()));
-                } catch (NumberFormatException e) {
-                    // ignore
-                }
+            return ufedId;
         }
 
         private String normalizePaths(String path) {
@@ -909,6 +1210,7 @@ public class UfedXmlReader extends DataSourceReader {
                                 + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(bytes)
                                 + "\" width=\"150\"/><br>\n"); //$NON-NLS-1$
                         contact.setThumb(bytes);
+                        contact.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
                     }
                 }
                 String[] metas = contact.getMetadata().names();

@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parsers</artifactId>
-        <version>3.16</version>
+        <version>3.19-snapshot</version>
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
@@ -92,25 +92,52 @@
         	<artifactId>iped-utils</artifactId>
         	<version>${project.version}</version>
         </dependency>
-        <dependency>
-        	<groupId>net.sf</groupId>
-        	<artifactId>sevenzipjbinding</artifactId>
-        	<version>4.65-1.06-rc</version>
-        </dependency>
-        <dependency>
-        	<groupId>net.sf</groupId>
-        	<artifactId>sevenzipjbinding-allplatforms</artifactId>
-        	<version>4.65-1.06-rc</version>
-        </dependency>
-        <dependency>
+		<dependency>
+			<groupId>net.sf.sevenzipjbinding</groupId>
+			<artifactId>sevenzipjbinding</artifactId>
+			<version>16.02-2.01</version>
+		</dependency>
+		<dependency>
+			<groupId>net.sf.sevenzipjbinding</groupId>
+			<artifactId>sevenzipjbinding-all-platforms</artifactId>
+			<version>16.02-2.01</version>
+		</dependency>
+		<dependency>
 	        <groupId>com.googlecode.ez-vcard</groupId>
 	        <artifactId>ez-vcard</artifactId>
-	        <version>0.10.5</version>
+	        <version>0.10.6</version>
+	        <exclusions>
+				<!-- hCard functionality not needed -->
+				<exclusion>
+					<groupId>org.jsoup</groupId>
+					<artifactId>jsoup</artifactId>
+				</exclusion>
+				<!-- jCard functionality not needed -->
+				<exclusion>
+					<groupId>com.fasterxml.jackson.core</groupId>
+					<artifactId>jackson-core</artifactId>
+				</exclusion>
+			</exclusions>
         </dependency>
         <dependency>
             <groupId>com.googlecode.plist</groupId>
             <artifactId>dd-plist</artifactId>
             <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>com.dampcake</groupId>
+            <artifactId>bencode</artifactId>
+            <version>1.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.8</version>
+        </dependency>
+        <dependency>
+            <groupId>dpf.ap</groupId>
+            <artifactId>telegram-decoder-api</artifactId>
+            <version>1.0.2-SNAPSHOT</version>
         </dependency>
     </dependencies>
     

@@ -8,6 +8,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -19,15 +20,13 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Log;
-import iped3.IItem;
 import iped3.IHashValue;
+import iped3.IItem;
 
 /**
  * Tarefa de consulta a base de hashes do LED. Pode ser removida no futuro e ser
@@ -44,14 +43,18 @@ public class LedKFFTask extends AbstractTask {
     private static Object lock = new Object();
     private static HashMap<String, IHashValue[]> hashArrays;
     public static KffItem[] kffItems;
-    private static final String taskName = "LED Database Search"; //$NON-NLS-1$
-    private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+    private static final String[] ledHashOrder = { "md5", null, "edonkey", "sha-1", "md5-512", null, null, null, //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            "sha-256" };
     private static final int idxMd5 = 0;
     private static final int idxMd5_64K = 1;
     private static final int idxLength = 5;
     private static final int idxName = 6;
     private static final String ENABLE_PARAM = "enableLedWkff"; //$NON-NLS-1$
-    private static boolean taskEnabled = false;
+    private static Boolean taskEnabled;
+
+    public static IHashValue[] getHashArray(String algorithm) {
+        return hashArrays.get(algorithm);
+    }
 
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
@@ -61,7 +64,7 @@ public class LedKFFTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
 
         synchronized (lock) {
-            if (hashArrays != null) {
+            if (hashArrays != null || (taskEnabled != null && !taskEnabled)) {
                 return;
             }
 
@@ -71,8 +74,12 @@ public class LedKFFTask extends AbstractTask {
 
             String hash = confParams.getProperty("hash"); //$NON-NLS-1$
             String ledWkffPath = confParams.getProperty("ledWkffPath"); //$NON-NLS-1$
-            if (taskEnabled && ledWkffPath == null)
-                throw new IPEDException("Configure LED database path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
+            if (taskEnabled && ledWkffPath == null) {
+                String msg = "Configure LED database path on " + Configuration.LOCAL_CONFIG;
+                logger.error(msg);
+                taskEnabled = false;
+                return;
+            }
 
             // backwards compatibility
             if (enabled == null && ledWkffPath != null)
@@ -84,15 +91,9 @@ public class LedKFFTask extends AbstractTask {
             File wkffDir = new File(ledWkffPath.trim());
             if (!wkffDir.exists()) {
                 String msg = "Invalid LED database path: " + wkffDir.getAbsolutePath(); //$NON-NLS-1$
-                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                for (File source : args.getDatasources()) {
-                    if (source.getName().endsWith(".iped")) {
-                        logger.warn(msg);
-                        taskEnabled = false;
-                        return;
-                    }
-                }
-                throw new IPEDException(msg);
+                logger.error(msg);
+                taskEnabled = false;
+                return;
             }
 
             if (hash == null || hash.trim().isEmpty())
@@ -173,12 +174,40 @@ public class LedKFFTask extends AbstractTask {
                 Arrays.sort(kffItems);
                 writeCache(ledWkffCache, cacheKey);
             }
-            Log.info(taskName, "Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
-            LedHashes.hashMap = hashArrays;
+            logger.info("Loaded hashes: " + hashArrays.get(ledHashOrder[0]).length); //$NON-NLS-1$
+
+            ChildPornHashLookup.addLookupProvider(new LookupProvider() {
+                @Override
+                public String lookupHash(String algorithm, String hash) {
+                    if (lookup(algorithm, hash)) {
+                        return "LED";
+                    }
+                    return null;
+                }
+            });
         }
     }
 
+    private boolean lookup(String algorithm, String hash) {
+        if (hash != null) {
+            IHashValue[] hashes = hashArrays.get(algorithm);
+            if (hashes != null && Arrays.binarySearch(hashes, new HashValue(hash)) >= 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private void writeCache(File ledWkffCache, String cacheKey) {
+        File folder = ledWkffCache.getParentFile();
+        if (folder != null && !folder.exists()) {
+            try {
+                Files.createDirectories(folder.toPath());
+            } catch (Exception e) {
+                logger.warn("Error creating cache folder: " + folder.getAbsolutePath(), e);
+                return;
+            }
+        }
         boolean ok = false;
         BufferedOutputStream os = null;
         try {
@@ -227,14 +256,28 @@ public class LedKFFTask extends AbstractTask {
         }
     }
 
+    private int getExpectedHashTypeCount() {
+        int count = 0;
+        for (int col = 0; col < ledHashOrder.length; col++) {
+            if (ledHashOrder[col] != null) {
+                count++;
+            }
+        }
+        return count;
+    }
+
     private void readCache(File ledWkffCache, String cacheKey) {
         BufferedInputStream is = null;
         try {
             is = new BufferedInputStream(new FileInputStream(ledWkffCache), 1 << 24);
             String fileKey = readString(is);
             if (fileKey.equals(cacheKey)) {
-                hashArrays = new HashMap<String, IHashValue[]>();
                 int n = readInt(is);
+                if (n != getExpectedHashTypeCount()) {
+                    logger.warn("Led cache has a different number of hash types, the cache will be ignored.");
+                    return;
+                }
+                hashArrays = new HashMap<String, IHashValue[]>();
                 for (int i = 0; i < n; i++) {
                     String key = readString(is);
                     int arrLen = readInt(is);
@@ -327,7 +370,11 @@ public class LedKFFTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        hashArrays = null;
+        ChildPornHashLookup.dispose();
+        if (hashArrays != null) {
+            hashArrays.clear();
+            hashArrays = null;
+        }
         kffItems = null;
     }
 
@@ -343,11 +390,13 @@ public class LedKFFTask extends AbstractTask {
         }
 
         for (int col = 0; col < ledHashOrder.length; col++) {
-            if (ledHashOrder[col] != null) {
-                String hash = (String) evidence.getExtraAttribute(ledHashOrder[col]);
+            String algorithm = ledHashOrder[col];
+            if (algorithm != null) {
+                String hash = (String) evidence.getExtraAttribute(algorithm);
                 if (hash != null) {
-                    if (Arrays.binarySearch(hashArrays.get(ledHashOrder[col]), new HashValue(hash)) >= 0) {
+                    if (lookup(algorithm, hash)) {
                         evidence.setExtraAttribute(KFFTask.KFF_STATUS, "pedo"); //$NON-NLS-1$
+                        evidence.setExtraAttribute(KFFTask.KFF_GROUP, "led"); //$NON-NLS-1$
                     }
                     break;
                 }

@@ -54,7 +54,7 @@ public class ScriptValidatorService implements RegexValidatorService {
     }
 
     private List<String> getStringArrayValues(Bindings bindings) {
-        Integer length = (Integer) bindings.get("length");
+        Integer length = ((Number) bindings.get("length")).intValue();
         List<String> result = new ArrayList<String>();
 
         for (int i = 0; i < length; i++) {

@@ -1,7 +1,7 @@
-﻿# Tarefa de processamento em Python que calcula score nudez baseada no algoritmo deeplearning open NSFW do yahoo adaptado
-# Necessário instalar o jep (pip install jep==3.8.2), além do keras e tensorflow 
-# e incluir a jep.dll(.so) no PATH (win) ou LD_LIBRARY_PATH (Linux)
-# Habilitar esta tarefa em conf/TaskInstaller.xml
+﻿# Python nudity detection based on yahoo open_nsfw algorithm.
+# You need to install jep (pip install jep==3.8.2) and include jep.dll(.so) in PATH or LD_LIBRARY_PATH (Linux)
+# You also need to install keras with tensorflow backend.
+# This must be installed in TaskInstaller.xml to be executed.
 
 import traceback
 import keras
@@ -19,15 +19,11 @@ def __flatten(name, input):
     if input.shape.ndims > 2: return layers.Flatten(name = name)(input)
     else: return input
 
-# Retorna o nome da tarefa.
+
 def getName():
 	return ("NSFWNudityDetectTask")
 
-# Realiza alguma inicialização da tarefa, como acessar opções e arquivos de configuração.
-# É executado antes de iniciar o processamento dos itens do caso.
-# @Params
-# confProps: arquivo java Properties com opções gerais do processamento
-# configFolder: diretório de configurações extras, onde a tarefa pode criar um arquivo de configuração próprio
+
 def init(confProps, configFolder):
 	if caseData.getCaseObject('nsfw_model') is None:
 		from java.lang import System
@@ -40,14 +36,10 @@ def init(confProps, configFolder):
 	return
 
 
-# Finaliza a tarefa, podendo limpar recursos. É executado após o término do processamento de todos os itens do caso.
-# São disponibilizados os objetos ipedCase e searcher, podendo ser realizadas consultas no caso e criados bookmarks, por exemplo.
-# TODO: documentar métodos desses objetos.
 def finish():
 	return
 
-# Realiza o processamento do objeto "item" da classe EvidenceFile. Esta função é executada sobre todos os itens do caso.
-# Pode utilizar qualquer método da classe EvidenceFile:
+
 def process(item):
 
 	if not item.getMediaType().toString().startswith('image'):

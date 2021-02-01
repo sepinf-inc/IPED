@@ -16,11 +16,9 @@ package dpf.sp.gpinf.indexer.analysis;
  */
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.Reader;
 import java.util.ArrayList;
 
 import org.apache.lucene.analysis.util.CharTokenizer;
-import org.apache.lucene.util.Version;
 
 /*
  * Tokenizador que divide o texto em caracteres diferentes de letras e números.
@@ -36,8 +34,8 @@ public class LetterDigitTokenizer extends CharTokenizer {
     /**
      * Construct a new LetterTokenizer.
      */
-    public LetterDigitTokenizer(Version version, Reader in) {
-        super(version, in);
+    public LetterDigitTokenizer() {
+        super();
     }
 
     private static final boolean[] isChar = getCharMap();
@@ -69,9 +67,9 @@ public class LetterDigitTokenizer extends CharTokenizer {
 
         ArrayList<Integer> codePoints = new ArrayList<Integer>();
 
-        for (char c : chars.toCharArray()) { //$NON-NLS-1$
-            if(c != ' ')
-                codePoints.add((int)c);
+        for (char c : chars.toCharArray()) { // $NON-NLS-1$
+            if (c != ' ')
+                codePoints.add((int) c);
         }
 
         if (codePoints.size() > 0) {

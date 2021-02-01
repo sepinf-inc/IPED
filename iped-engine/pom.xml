@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.16</version>
+        <version>3.19-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -14,7 +14,31 @@
     	<release.dir>${project.parent.build.directory}/release/iped-${project.version}</release.dir>
     </properties>
     
+    <repositories>
+	    <repository>
+	      <id>maven-cognitiveservices-speech</id>
+	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
+	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
+	    </repository>
+    </repositories>
+    
     <dependencies>
+   	    <dependency>
+            <groupId>com.microsoft.cognitiveservices.speech</groupId>
+            <artifactId>client-sdk</artifactId>
+            <version>1.11.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.cloud</groupId>
+            <artifactId>google-cloud-speech</artifactId>
+            <version>1.22.5</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+    	    <groupId>br.dpf</groupId>
+    	    <artifactId>photodna-api</artifactId>
+    	    <version>1.0</version>
+	    </dependency>
     	<dependency>
     		<groupId>com.eatthepath</groupId>
     		<artifactId>jvptree</artifactId>
@@ -100,9 +124,9 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>postgresql</groupId>
-            <artifactId>postgresql</artifactId>
-            <version>9.1-901-1.jdbc4</version>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
+            <version>${lucene.version}</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -115,6 +139,28 @@
             <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-queryparser</artifactId>
             <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-misc</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>7.6.1-shaded3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>7.1.4-shaded</version>
+        </dependency>
+        <dependency>
+            <groupId>postgresql</groupId>
+            <artifactId>postgresql</artifactId>
+            <version>9.1-901-1.jdbc4</version>
             <type>jar</type>
         </dependency>
         <dependency>
@@ -141,7 +187,7 @@
         <dependency>
             <groupId>com.mchange</groupId>
             <artifactId>c3p0</artifactId>
-            <version>0.9.5.2</version>
+            <version>0.9.5.4</version>
         </dependency>
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
@@ -171,12 +217,17 @@
         <dependency>
         	<groupId>org.glassfish.jersey.containers</groupId>
         	<artifactId>jersey-container-grizzly2-servlet</artifactId>
-        	<version>2.22.1</version>
+        	<version>2.30.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.glassfish.jersey.inject</groupId>
+            <artifactId>jersey-hk2</artifactId>
+            <version>2.30.1</version>
         </dependency>
         <dependency>
     		<groupId>io.swagger</groupId>
     		<artifactId>swagger-jersey2-jaxrs</artifactId>
-    		<version>1.5.9</version>
+    		<version>1.5.24</version>
 		</dependency>
 		<dependency>
   			<groupId>org.glassfish.jersey.media</groupId>
@@ -185,11 +236,20 @@
   			<scope>runtime</scope>
 		</dependency>
 		<dependency>
-			<groupId>microsoft</groupId>
-  			<artifactId>photodna</artifactId>
-  			<version>1.0.0-SNAPSHOT</version>
-  			<scope>provided</scope>
-  		</dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>8.9.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>3.4.10-shaded</version>
+        </dependency>
+		<dependency>
+			<groupId>org.bouncycastle</groupId>
+			<artifactId>bcpkix-jdk15on</artifactId>
+			<version>1.64</version>
+		</dependency>
     </dependencies>
     
 </project>

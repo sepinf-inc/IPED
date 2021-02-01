@@ -21,8 +21,11 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
@@ -44,8 +47,8 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
+import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
@@ -116,7 +119,7 @@ public class Configuration {
 
         configPath = configPathStr;
 
-        if(appRoot == null) {
+        if (appRoot == null) {
             appRoot = getAppRoot(configPath);
         }
 
@@ -209,7 +212,7 @@ public class Configuration {
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
-        
+
         loadLibsAndToolPaths();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
@@ -228,7 +231,7 @@ public class Configuration {
 
         KFFConfig kffConfig = new KFFConfig();
         configManager.addObject(kffConfig);
-        
+
         OCRConfig ocrConfig = new OCRConfig();
         configManager.addObject(ocrConfig);
 

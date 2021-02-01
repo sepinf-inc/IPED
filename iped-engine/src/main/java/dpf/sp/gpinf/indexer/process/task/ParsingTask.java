@@ -25,20 +25,24 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Base64;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -54,13 +58,16 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
+import dpf.sp.gpinf.indexer.parsers.PackageParser;
+import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
@@ -68,15 +75,18 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
-import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
+import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.exception.ZipBombException;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.search.IItemSearcher;
@@ -106,14 +116,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static final String ENABLE_PARSING = "enableFileParsing"; //$NON-NLS-1$
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
+    public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
+
+    private static final int MAX_SUBITEM_DEPTH = 100;
+    private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
     private static boolean expandContainers = false;
     private static boolean enableFileParsing = true;
 
-    public static int subitensDiscovered = 0;
+    public static AtomicInteger subitensDiscovered = new AtomicInteger();
     private static HashSet<String> categoriesToExpand = new HashSet<String>();
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
+
+    private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
+    private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private IItem evidence;
     private ParseContext context;
@@ -123,8 +140,25 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private Map<Integer, Long> timeInDepth = new ConcurrentHashMap<>();
     private volatile int depth = 0;
     private Map<Object, ParentInfo> idToItemMap = new HashMap<>();
-
+    private int numSubitems = 0;
     private IndexerDefaultParser autoParser;
+
+    private static Set<MediaType> getTypesToCheckZipbomb() {
+        HashSet<MediaType> set = new HashSet<>();
+        set.addAll(PackageParser.SUPPORTED_TYPES);
+        set.add(SevenZipParser.RAR);
+        return set;
+    }
+
+    private class ZipBombStats {
+
+        private Long itemSize;
+        private long childrenSize = 0;
+
+        private ZipBombStats(Long itemSize) {
+            this.itemSize = itemSize;
+        }
+    }
 
     public ParsingTask() {
         this.autoParser = new IndexerDefaultParser();
@@ -150,16 +184,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public ParseContext getTikaContext() {
+        return getTikaContext(this.output, null);
+    }
+
+    public ParseContext getTikaContext(IPEDSource ipedsource) {
+        return getTikaContext(ipedsource.getModuleDir(), ipedsource);
+    }
+
+    private ParseContext getTikaContext(File output, IPEDSource ipedsource) {
         // DEFINE CONTEXTO: PARSING RECURSIVO, ETC
         context = new ParseContext();
         context.set(Parser.class, this.autoParser);
 
         ItemInfo itemInfo = ItemInfoFactory.getItemInfo(evidence);
         context.set(ItemInfo.class, itemInfo);
-        if (output != null)
-            context.set(OCROutputFolder.class, new OCROutputFolder(output));
-        else
-            context.set(OCROutputFolder.class, new OCROutputFolder());
+        context.set(OCROutputFolder.class, new OCROutputFolder(output));
 
         if (CarverTask.ignoreCorrupted && caseData != null && !caseData.isIpedReport()) {
             context.set(IgnoreCorruptedCarved.class, new IgnoreCorruptedCarved());
@@ -174,10 +213,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         context.set(IStreamSource.class, evidence);
         context.set(IItemBase.class, evidence);
-        if (output != null && worker != null)
-            context.set(IItemSearcher.class, new ItemSearcher(output.getParentFile(), worker.writer));
+        if (ipedsource != null) {
+            context.set(IItemSearcher.class, new ItemSearcher(ipedsource));
+        } else {
+            context.set(IItemSearcher.class, (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName()));
+        }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getBookmarks());
+        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -221,7 +263,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.close();
     }
 
-    private static boolean isToBeExpanded(HashSet<String> categories) {
+    private static boolean isToAlwaysExpand(IItem item) {
+        return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
+                || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
+                || TelegramParser.TELEGRAM_USER_CONF.equals(item.getMediaType())
+                || TelegramParser.TELEGRAM_DB_IOS.equals(item.getMediaType());
+    }
+
+    private static boolean isToBeExpanded(Collection<String> categories) {
 
         if (!expandContainers) {
             return false;
@@ -237,12 +286,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         return result;
     }
 
-    private static synchronized void incSubitensDiscovered() {
-        subitensDiscovered++;
-    }
-
     public static int getSubitensDiscovered() {
-        return subitensDiscovered;
+        return subitensDiscovered.get();
     }
 
     public void process(IItem evidence) throws IOException {
@@ -315,13 +360,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         context = getTikaContext();
         Metadata metadata = evidence.getMetadata();
 
+        if (typesToCheckZipBomb.contains(evidence.getMediaType())) {
+            zipBombStatsMap.put(evidence.getId(), new ZipBombStats(evidence.getLength()));
+        }
+
         reader = new ParsingReader(this.autoParser, tis, metadata, context);
         reader.startBackgroundParsing();
 
         try {
             AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                     .findObjects(AdvancedIPEDConfig.class).iterator().next();
-            
+
             TextCache textCache = new TextCache();
             textCache.setEnableDiskCache(advancedConfig.isStoreTextCacheOnDisk());
             char[] cbuf = new char[128 * 1024];
@@ -336,23 +385,31 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setParsed(true);
             totalText.addAndGet(textCache.getSize());
 
+        } catch (IOException e) {
+            if (e.toString().contains("Write end dead"))
+                LOGGER.error("{} Parsing thread ended without closing pipedWriter {} ({} bytes)", //$NON-NLS-1$
+                        Thread.currentThread().getName(), evidence.getPath(), evidence.getLength());
+            else
+                throw e;
+
         } finally {
             // IOUtil.closeQuietly(tis);
             reader.close();
-
-            metadataToExtraAttribute(evidence);
-            IOUtil.closeQuietly(context.get(IItemSearcher.class));
+            if (numSubitems > 0) {
+                evidence.setExtraAttribute(NUM_SUBITEMS, numSubitems);
+            }
+            handleMetadata(evidence);
         }
 
     }
 
-    private static final void metadataToExtraAttribute(IItem evidence) {
+    private static final void handleMetadata(IItem evidence) {
         // Ajusta metadados:
         Metadata metadata = evidence.getMetadata();
         if (metadata.get(IndexerDefaultParser.ENCRYPTED_DOCUMENT) != null) {
             evidence.setExtraAttribute(ParsingTask.ENCRYPTED, "true"); //$NON-NLS-1$
+            metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         }
-        metadata.remove(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
 
         String value = metadata.get(OCRParser.OCR_CHAR_COUNT);
         if (value != null) {
@@ -362,6 +419,30 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (charCount >= 100 && evidence.getMediaType().getType().equals("image")) { //$NON-NLS-1$
                 evidence.setCategory(SetCategoryTask.SCANNED_CATEGORY);
             }
+        }
+
+        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        if (base64Thumb != null) {
+            evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
+            metadata.remove(ExtraProperties.USER_THUMB);
+            evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
+        }
+
+        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
+        if (hashSetStatus != null) {
+            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
+            metadata.remove(KFFTask.KFF_STATUS);
+        }
+
+        String prevMediaType = evidence.getMediaType().toString();
+        String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
+        if (!prevMediaType.equals(parsedMediaType)) {
+            evidence.setMediaType(MediaType.parse(parsedMediaType));
+        }
+
+        if (Boolean.valueOf(metadata.get(BasicProps.HASCHILD))) {
+            metadata.remove(BasicProps.HASCHILD);
+            evidence.setHasChildren(true);
         }
 
     }
@@ -431,7 +512,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             Item subItem = new Item();
             subItem.setPath(subitemPath);
+            subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
+
+            Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
+            subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
 
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -440,6 +525,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (!extractEmbedded) {
                 return;
             }
+
+            Integer depth = (Integer) evidence.getExtraAttribute(SUBITEM_DEPTH);
+            if (depth == null)
+                depth = 0;
+            if (++depth > MAX_SUBITEM_DEPTH) {
+                throw new ZipBombException(
+                        "Max subitem depth of " + MAX_SUBITEM_DEPTH + " reached, possible zip bomb detected."); //$NON-NLS-1$ //$NON-NLS-2$
+            }
+            subItem.setExtraAttribute(SUBITEM_DEPTH, depth);
 
             // root has children
             evidence.setHasChildren(true);
@@ -468,7 +562,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(BasicProps.HASCHILD);
                 subItem.setHasChildren(true);
             }
-            
+
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
 
@@ -507,6 +601,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             extractor.setWorker(worker);
             extractor.extractFile(inputStream, subItem, evidence.getLength());
 
+            checkRecursiveZipBomb(subItem);
+
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
@@ -517,10 +613,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    //When external parsing is on, items MUST be sent to queue, or errors will occur
-                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO; 
+                    // When external parsing is on, items MUST be sent to queue, or errors will
+                    // occur
+                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO;
                     worker.processNewItem(subItem, time);
-                    incSubitensDiscovered();
+                    subitensDiscovered.incrementAndGet();
+                    numSubitems++;
 
                     long diff = (System.nanoTime() / 1000) - start;
                     Long prevTime = timeInDepth.get(depth);
@@ -545,6 +643,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                     e.toString());
             LOGGER.debug("SAX error extracting subitem " + subitemPath, (Throwable) e);
 
+        } catch (ZipBombException e) {
+            throw e;
+
         } catch (Exception e) {
             LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, //$NON-NLS-1$
                     e.toString());
@@ -554,6 +655,33 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             tmp.close();
         }
 
+    }
+
+    private void checkRecursiveZipBomb(Item subItem) throws ZipBombException {
+        ZipBombException zipBombException = null;
+        for (Integer id : subItem.getParentIds()) {
+            ZipBombStats stats = zipBombStatsMap.get(id);
+            if (stats == null) {
+                continue;
+            }
+            if (subItem.getLength() != null) {
+                synchronized (stats) {
+                    stats.childrenSize += subItem.getLength();
+                }
+            }
+            if (zipBombException == null && ZipBombException.isZipBomb(stats.itemSize, stats.childrenSize)) {
+                zipBombException = new ZipBombException("Possible zipBomb detected: id=" + id + " size="
+                        + stats.itemSize + " childrenSize=" + stats.childrenSize);
+            }
+        }
+        if (zipBombException != null) {
+            // dispose now because this item will not be added to processing queue
+            if (subItem.hasFile()) {
+                subItem.setDeleteFile(true);
+                subItem.dispose();
+            }
+            throw zipBombException;
+        }
     }
 
     private static void removeMetadataAndDuplicates(Metadata metadata, Property prop) {
@@ -581,8 +709,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (value != null & !value.trim().isEmpty()) {
             enableFileParsing = Boolean.valueOf(value.trim());
         }
-
-        subitensDiscovered = 0;
 
     }
 

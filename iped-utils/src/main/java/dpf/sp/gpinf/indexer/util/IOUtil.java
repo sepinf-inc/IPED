@@ -29,11 +29,74 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import javax.swing.JOptionPane;
 
 import org.slf4j.LoggerFactory;
 
 public class IOUtil {
+
+    private static final Set<String> DANGEROUS_EXTS = new HashSet<>(Arrays.asList("0XE", "73K", "89K", "8CK", "A6P",
+            "A7R", "AC", "ACC", "ACR", "ACTC", "ACTION", "ACTM", "AHK", "AIR", "APK", "APP", "APPIMAGE", "APPLESCRIPT",
+            "ARSCRIPT", "ASB", "AZW2", "BA_", "BAT", "BEAM", "BIN", "BTM", "CACTION", "CEL", "CELX", "CGI", "CMD",
+            "COF", "COFFEE", "COM", "COMMAND", "CPL", "CSH", "CYW", "DEK", "DLD", "DMC", "DS", "DXL", "E_E", "EAR",
+            "EBM", "EBS", "EBS2", "ECF", "EHAM", "ELF", "EPK", "ES", "ESH", "EX_", "EX4", "EX5", "EXE", "EXE1", "EXOPC",
+            "EZS", "EZT", "FAS", "FKY", "FPI", "FRS", "FXP", "GADGET", "GPE", "GPU", "GS", "HAM", "HMS", "HPF", "HTA",
+            "ICD", "IIM", "INF1", "INS", "INX", "IPA", "IPF", "ISU", "ITA", "JAR", "JOB", "JS", "JSE", "JSF", "JSX",
+            "KIX", "KSH", "KX", "LNK", "LO", "LS", "M3G", "MAC", "MAM", "MCR", "MEL", "MEM", "MIO", "MLX", "MM", "MRC",
+            "MRP", "MS", "MSC", "MSI", "MSL", "MSP", "MST", "MXE", "N", "NCL", "NEXE", "ORE", "OSX", "OTM", "OUT",
+            "PAF", "PAFEXE", "PEX", "PHAR", "PIF", "PLSC", "PLX", "PRC", "PRG", "PS1", "PVD", "PWC", "PYC", "PYO",
+            "QIT", "QPX", "RBF", "RBX", "REG", "RFU", "RGS", "ROX", "RPJ", "RUN", "RXE", "S2A", "SBS", "SCA", "SCAR",
+            "SCB", "SCF", "SCPT", "SCPTD", "SCR", "SCRIPT", "SCT", "SEED", "SERVER", "SHB", "SHS", "SK", "SMM", "SNAP",
+            "SPR", "STS", "TCP", "THM", "TIAPP", "TMS", "U3P", "UDF", "UPX", "VB", "VBE", "VBS", "VBSCRIPT", "VDO",
+            "VEXE", "VLX", "VPM", "VXP", "WCM", "WIDGET", "WIZ", "WORKFLOW", "WPK", "WPM", "WS", "WSF", "WSH", "X86",
+            "X86_64", "XAP", "XBAP", "XLM", "XQT", "XYS", "ZL9"));
+
+    public static enum ExternalOpenEnum {
+        NEVER, ASK_ALWAYS, ASK_IF_EXE, ALWAYS
+    }
+
+    private static ExternalOpenEnum externalOpenConfig = ExternalOpenEnum.ASK_IF_EXE;
+
+    public static void setExternalOpenConfig(ExternalOpenEnum config) {
+        externalOpenConfig = config;
+    }
+
+    public static boolean isToOpenExternally(String fileName, String fileExt) {
+        return IOUtil.externalOpenConfig == ExternalOpenEnum.ALWAYS
+                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_ALWAYS && IOUtil.confirmOpenDialog(fileName))
+                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_IF_EXE
+                        && (!IOUtil.isDangerousExtension(fileExt) || IOUtil.confirmOpenDialog(fileName)));
+    }
+
+    public static final boolean isDangerousExtension(String ext) {
+        return ext != null && DANGEROUS_EXTS.contains(ext.toUpperCase());
+    }
+
+    public static final String getExtension(File file) {
+        int idx = file.getName().lastIndexOf('.');
+        if (idx == -1) {
+            return "";
+        } else {
+            return file.getName().substring(idx + 1);
+        }
+    }
+
+    public static final boolean confirmOpenDialog(String fileName) {
+        int option = JOptionPane.showConfirmDialog(null,
+                Messages.getString("IOUtil.ConfirmOpening") + " \"" + fileName + "\" ?", "",
+                JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (option == JOptionPane.YES_OPTION)
+            return true;
+        else
+            return false;
+    }
 
     public static final boolean isDiskFull(IOException e) {
         if (e == null)
@@ -103,18 +166,31 @@ public class IOUtil {
     }
 
     public static void deletarDiretorio(File file) {
+        try {
+            deleteDirectory(file, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void deleteDirectory(File file, boolean logError) throws IOException {
         if (file.isDirectory()) {
             String[] names = file.list();
             if (names != null)
                 for (int i = 0; i < names.length; i++) {
                     File subFile = new File(file, names[i]);
-                    deletarDiretorio(subFile);
+                    deleteDirectory(subFile, logError);
                 }
         }
         try {
             Files.delete(file.toPath());
+
         } catch (Exception e) {
-            LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            // also catch InvalidPathException and others
+            if (logError) {
+                LoggerFactory.getLogger(IOUtil.class).info("Delete failed on '" + file.getPath() + "' " + e.toString()); //$NON-NLS-1$ //$NON-NLS-2$
+            } else
+                throw e;
         }
 
     }
@@ -177,6 +253,16 @@ public class IOUtil {
             bos.write(buf, 0, len);
 
         return bos.toByteArray();
+    }
+
+    private static Path tmpDir = null;
+
+    public static boolean isTemporaryFile(File file) {
+        if (tmpDir == null) {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        }
+        Path filePath = Paths.get(file.getAbsolutePath()).getParent();
+        return tmpDir.compareTo(filePath) == 0;
     }
 
 }

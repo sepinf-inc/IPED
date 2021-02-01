@@ -20,9 +20,9 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,6 +31,8 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 
@@ -67,8 +69,8 @@ public class ItemProducer extends Thread {
     private void installDataSourceReaders() throws Exception {
 
         Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
-                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, FolderTreeReader.class // deve ser o
-                                                                                                         // último
+                IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, IpedCaseReader.class,
+                FolderTreeReader.class // deve ser o último
         };
 
         for (Class<? extends DataSourceReader> srcReader : readerList) {
@@ -88,8 +90,10 @@ public class ItemProducer extends Thread {
 
     @Override
     public void run() {
+        File currSource = null;
         try {
             for (File source : datasources) {
+                currSource = source;
                 if (Thread.interrupted()) {
                     throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
                 }
@@ -110,6 +114,15 @@ public class ItemProducer extends Thread {
 
                 }
                 caseData.incAlternativeFiles(alternativeFiles);
+
+                // executed only when restarting interrupted processing
+                Set<HashValue> parentsWithLostSubitems = (Set<HashValue>) caseData
+                        .getCaseObject(SkipCommitedTask.PARENTS_WITH_LOST_SUBITEMS);
+                if (parentsWithLostSubitems != null && parentsWithLostSubitems.size() > 0) {
+                    IPEDReader reader = new IPEDReader(caseData, output, listOnly);
+                    reader.read(parentsWithLostSubitems, manager);
+                }
+
             }
             if (!listOnly) {
                 Item evidence = new Item();
@@ -118,14 +131,15 @@ public class ItemProducer extends Thread {
                 caseData.addItem(evidence);
 
             } else {
-                WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
-                        (int) (caseData.getDiscoveredVolume() / 1000000));
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
             }
+            WorkerProvider.getInstance().firePropertyChange("taskSize", 0, //$NON-NLS-1$
+                    (int) (caseData.getDiscoveredVolume() / 1000000));
 
         } catch (Throwable e) {
             if (manager.exception == null) {
-                Exception e1 = new Exception();
+                String source = currSource != null ? currSource.getAbsolutePath() : "";
+                Exception e1 = new Exception("Error decoding datasource " + source);
                 e1.initCause(e);
                 manager.exception = e1;
             }

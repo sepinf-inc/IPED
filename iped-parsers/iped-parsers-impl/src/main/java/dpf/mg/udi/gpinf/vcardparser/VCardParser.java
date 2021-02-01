@@ -7,18 +7,19 @@ import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
-import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -27,11 +28,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
+import ezvcard.io.chain.ChainingHtmlWriter;
+import ezvcard.property.Address;
+import ezvcard.property.Email;
+import ezvcard.property.Organization;
 import ezvcard.property.Photo;
 import ezvcard.property.RawProperty;
 import ezvcard.property.StructuredName;
@@ -39,13 +43,34 @@ import ezvcard.property.Telephone;
 import ezvcard.property.TextListProperty;
 import ezvcard.property.TextProperty;
 import ezvcard.property.VCardProperty;
+import freemarker.template.Configuration;
+import freemarker.template.Template;
+import iped3.util.ExtraProperties;
 
 public class VCardParser extends AbstractParser {
 
     private static final long serialVersionUID = -7436203736342471550L;
+
+    public static final MediaType VCARD_MIME = MediaType.text("x-vcard"); //$NON-NLS-1$
+
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(VCARD_MIME);
+
+    /**
+     * Protection for OOME: max file size to load on heap (see #310)
+     */
     private static final int MAX_BUFFER_SIZE = 1 << 24;
-    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.text("x-vcard")); //$NON-NLS-1$
-    public static final MediaType PARSED_VCARD_MIME_TYPE = MediaType.application("x-vcard-html"); //$NON-NLS-1$
+
+    private static final Configuration TEMPLATE_CFG = new Configuration(Configuration.VERSION_2_3_23);
+    private static Template TEMPLATE = null;
+
+    static {
+        TEMPLATE_CFG.setClassForTemplateLoading(VCardParser.class, "");
+        TEMPLATE_CFG.setWhitespaceStripping(true);
+        try {
+            TEMPLATE = TEMPLATE_CFG.getTemplate("hcard-template.html");
+        } catch (Exception e) {
+        }
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -56,53 +81,102 @@ public class VCardParser extends AbstractParser {
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-
-        ItemInfo itemInfo = context.get(ItemInfo.class);
-        String title = null;
-        if (itemInfo != null) {
-            title = itemInfo.getPath();
-        }
-        if (title == null) {
-            title = ""; //$NON-NLS-1$
-        } else if (title.contains("/")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf('/') + 1); // $NON-NLS-1$
-        } else if (title.contains("\\")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf('\\') + 1); // $NON-NLS-1$
-        }
-        if (title.contains(">>")) { //$NON-NLS-1$
-            title = title.substring(title.lastIndexOf(">>") + 2); //$NON-NLS-1$
-        }
-        title += " (Conv)"; //$NON-NLS-1$
-
         String text = readInputStream(stream);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
 
-        xhtml.startDocument();
-        xhtml.startElement("pre"); //$NON-NLS-1$
-        xhtml.characters(text);
-        xhtml.characters("\n\n"); //$NON-NLS-1$
-        xhtml.endElement("pre"); //$NON-NLS-1$
-
         try {
+            xhtml.startDocument();
             List<VCard> vcards = Ezvcard.parse(text).all();
 
-            Metadata cMetadata = new Metadata();
-            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, PARSED_VCARD_MIME_TYPE.toString());
-            cMetadata.set(TikaCoreProperties.TITLE, title); // $NON-NLS-1$
+            for (VCard vcard : vcards) {
+                extractMetadata(vcard, metadata);
+            }
 
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
-            PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
-
-            Ezvcard.writeHtml(vcards).go(out);
-
+            try (PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8))) {
+                new ChainingHtmlWriter(vcards).template(TEMPLATE).go(out);
+            }
             InputStream is = new ByteArrayInputStream(bout.toByteArray());
-            extractor.parseEmbedded(is, xhtml, cMetadata, false);
+
+            new IndentityHtmlParser().parse(is, context, xhtml);
+
         } finally {
             xhtml.endDocument();
         }
+    }
+
+    private void extractMetadata(VCard vcard, Metadata metadata) {
+        String name = null;
+        if (vcard.getFormattedName() != null) {
+            name = vcard.getFormattedName().getValue();
+        }
+        if (name == null && vcard.getStructuredName() != null) {
+            ArrayList<String> names = new ArrayList<>();
+            names.add(vcard.getStructuredName().getGiven());
+            names.addAll(vcard.getStructuredName().getAdditionalNames());
+            names.add(vcard.getStructuredName().getFamily());
+            name = names.stream().filter(n -> n != null && !n.isEmpty()).collect(Collectors.joining(" "));
+        }
+        if (name == null && vcard.getNickname() != null) {
+            name = vcard.getNickname().getValues().toString();
+        }
+        if (name != null && !name.trim().isEmpty())
+            metadata.add(ExtraProperties.USER_NAME, name.trim());
+
+        if (vcard.getBirthday() != null) {
+            metadata.set(ExtraProperties.USER_BIRTH, vcard.getBirthday().getDate());
+        } else if (vcard.getAnniversary() != null) {
+            metadata.set(ExtraProperties.USER_BIRTH, vcard.getAnniversary().getDate());
+        }
+
+        for (Telephone t : vcard.getTelephoneNumbers()) {
+            metadata.add(ExtraProperties.USER_PHONE, t.getText());
+        }
+
+        for (Email e : vcard.getEmails()) {
+            metadata.add(ExtraProperties.USER_EMAIL, e.getValue());
+        }
+
+        for (Address a : vcard.getAddresses()) {
+            metadata.add(ExtraProperties.USER_ADDRESS, getAddressString(a));
+        }
+
+        for (Organization o : vcard.getOrganizations()) {
+            metadata.add(ExtraProperties.USER_ORGANIZATION, o.getValues().toString());
+        }
+
+        if (vcard.getNotes() != null) {
+            vcard.getNotes().stream().forEach(n -> metadata.add(ExtraProperties.USER_NOTES, n.getValue()));
+        }
+        if (vcard.getUrls() != null) {
+            vcard.getUrls().stream().forEach(n -> metadata.add(ExtraProperties.USER_URLS, n.getValue()));
+        }
+        if (vcard.getPhotos() != null && vcard.getPhotos().size() > 0) {
+            metadata.set(ExtraProperties.USER_THUMB,
+                    Base64.getEncoder().encodeToString(vcard.getPhotos().get(0).getData()));
+        }
+    }
+
+    private String getAddressString(Address a) {
+        StringBuilder sb = new StringBuilder();
+        if (a.getLabel() != null)
+            sb.append(a.getLabel()).append(": ");
+        if (a.getStreetAddressFull() != null)
+            sb.append(a.getStreetAddressFull()).append(" ");
+        if (a.getExtendedAddressFull() != null)
+            sb.append(a.getExtendedAddressFull()).append(" ");
+        if (a.getLocality() != null)
+            sb.append(a.getLocality()).append(" ");
+        if (a.getRegion() != null)
+            sb.append(a.getRegion()).append(" ");
+        if (a.getCountry() != null)
+            sb.append(a.getCountry()).append(" ");
+        if (a.getPostalCode() != null)
+            sb.append("ZIP ").append(a.getPostalCode()).append(" ");
+        if (a.getGeo() != null)
+            sb.append(a.getGeo());
+        return sb.toString().trim();
     }
 
     public static void printHtmlFromString(PrintWriter out, String text) {
@@ -426,14 +500,16 @@ public class VCardParser extends AbstractParser {
         }
     }
 
-    private static String readInputStream(InputStream is) throws IOException {
+    private static String readInputStream(InputStream is) throws IOException, TikaException {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         IOUtils.copyLarge(is, bout, 0, MAX_BUFFER_SIZE);
-        return new String(bout.toByteArray(), StandardCharsets.UTF_8);
+        AutoDetectReader reader = new AutoDetectReader(new ByteArrayInputStream(bout.toByteArray()));
+        return IOUtils.toString(reader);
     }
 
     public static final String HTML_STYLE = "<style>\n" //$NON-NLS-1$
             + ".tab {display: inline-block; border-collapse: collapse; border: 1px solid black;}\n" //$NON-NLS-1$
             + ".cel {border-colapse: colapse; border: 1px solid black; font-family: Arial, sans-serif;}\n" //$NON-NLS-1$
             + "</style>\n"; //$NON-NLS-1$
+
 }

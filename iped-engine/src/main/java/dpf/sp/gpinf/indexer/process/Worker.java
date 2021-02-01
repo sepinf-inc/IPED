@@ -73,9 +73,11 @@ public class Worker extends Thread {
     public ICaseData caseData;
     public volatile Exception exception;
     public volatile IItem evidence;
+    public final int id;
 
     public Worker(int k, ICaseData caseData, IndexWriter writer, File output, Manager manager) throws Exception {
         super(new ThreadGroup(workerNamePrefix + k), workerNamePrefix + k); // $NON-NLS-1$
+        id = k;
         this.caseData = caseData;
         this.writer = writer;
         this.output = output;
@@ -154,7 +156,9 @@ public class Worker extends Thread {
     public void process(IItem evidence) {
 
         IItem prevEvidence = this.evidence;
-        this.evidence = evidence;
+        if (!evidence.isQueueEnd()) {
+            this.evidence = evidence;
+        }
 
         try {
 
@@ -168,8 +172,6 @@ public class Worker extends Thread {
              * processTask(evidence, task); }
              */
             firstTask.processAndSendToNextTask(evidence);
-            
-            this.evidence = prevEvidence;
 
         } catch (Throwable t) {
             // ABORTA PROCESSAMENTO NO CASO DE QQ OUTRO ERRO
@@ -184,6 +186,9 @@ public class Worker extends Thread {
             }
 
         }
+
+        this.evidence = prevEvidence;
+
     }
 
     /**

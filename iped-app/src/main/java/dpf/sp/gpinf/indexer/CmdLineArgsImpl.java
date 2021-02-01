@@ -1,11 +1,16 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+
+import org.apache.commons.io.IOUtils;
 
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.IParameterValidator;
@@ -13,10 +18,10 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
@@ -44,6 +49,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
+
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    private String evidenceToRemove;
 
     @Parameter(names = { "-r",
             "-report" }, description = "FTK3+ report folder", validateWith = FTKReportValidator.class)
@@ -88,6 +96,12 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "--append", description = "add data to be processed to an existent case")
     private boolean appendIndex;
 
+    @Parameter(names = "--continue", description = "continue a stopped or aborted processing")
+    private boolean isContinue;
+
+    @Parameter(names = "--restart", description = "discard last aborted processing and start from beginning")
+    private boolean restart;
+
     @Parameter(names = "--nogui", description = "do not open progress windows, text mode processing")
     private boolean nogui;
 
@@ -111,6 +125,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private Map<String, String> extraParams = new HashMap<>();
 
     private List<String> allArgs;
+
+    private HashSet<String> evidenceNames = new HashSet<>();
 
     @Override
     public List<File> getDatasources() {
@@ -193,6 +209,16 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Override
+    public boolean isContinue() {
+        return isContinue;
+    }
+
+    @Override
+    public boolean isRestart() {
+        return restart;
+    }
+
+    @Override
     public boolean isNogui() {
         return nogui;
     }
@@ -227,6 +253,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         return extraParams;
     }
 
+    public String getEvidenceToRemove() {
+        return evidenceToRemove;
+    }
+
     @Override
     public String getDataSourceName(File datasource) {
         for (int i = 0; i < allArgs.size(); i++) {
@@ -236,7 +266,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 return allArgs.get(i + 3);
             }
         }
-        return null;
+        return datasource.getName();
     }
 
     public static class FileExistsValidator implements IParameterValidator {
@@ -279,6 +309,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      */
     public void saveIntoCaseData(ICaseData caseData) {
         caseData.putCaseObject(CmdLineArgs.class.getName(), this);
+        caseData.putCaseObject(SkipCommitedTask.DATASOURCE_NAMES, evidenceNames);
     }
 
     /**
@@ -290,22 +321,55 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         try {
             jc.parse(args);
             if (help)
-                printUsageAndExit(jc, null);
+                printUsageAndExit(jc);
 
             allArgs = Arrays.asList(args);
             handleSpecificArgs();
+            checkIfAppendingToCompatibleCase();
 
         } catch (Exception e) {
-            printUsageAndExit(jc, e);
+            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+            System.exit(1);
         }
     }
 
-    private void printUsageAndExit(JCommander jc, Exception e) {
+    private void checkIfAppendingToCompatibleCase() {
+        if (this.isAppendIndex()) {
+            String classpath = outputDir.getAbsolutePath() + "/indexador/lib/iped-search-app.jar"; //$NON-NLS-1$
+            List<String> cmd = new ArrayList<>();
+            cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            String line;
+            try {
+                Process process = pb.start();
+                line = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset()).get(0);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            String thisVersion = Versao.APP_VERSION.substring(0, Versao.APP_VERSION.lastIndexOf('.'));
+            String fullVersion = line.replace(Versao.APP_NAME_PREFIX, "").trim();
+            String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
+            if (!version.equals(thisVersion)) {
+                throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");
+            }
+        }
+    }
+
+    private void checkDuplicateDataSources() {
+        for (File source : datasources) {
+            String name = getDataSourceName(source);
+            if (!evidenceNames.add(name)) {
+                throw new ParameterException("Duplicate evidence names not allowed: " + name);
+            }
+        }
+    }
+
+    private void printUsageAndExit(JCommander jc) {
         System.out.println(Versao.APP_NAME);
-        if (e != null)
-            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
         jc.usage();
-        System.exit(1);
+        System.exit(0);
     }
 
     /**
@@ -324,7 +388,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             System.exit(0);
         }
 
-        if (reportDir == null && (datasources == null || datasources.isEmpty())) {
+        if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 
@@ -335,11 +399,14 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             for (File dataSource : this.datasources) {
                 IndexFiles.getInstance().dataSource.add(dataSource);
             }
+            checkDuplicateDataSources();
         }
 
-        OCRParser.bookmarksToOCR = new ArrayList<String>();
         if (this.ocr != null) {
-            OCRParser.bookmarksToOCR.addAll(this.ocr);
+            String list = "";
+            for (String o : ocr)
+                list += (o + OCRParser.SUBSET_SEPARATOR);
+            System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
         if (this.palavrasChave != null) {
             IndexFiles.getInstance().palavrasChave = this.palavrasChave;
@@ -376,8 +443,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
-        System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 
     }

@@ -9,22 +9,10 @@ import java.io.RandomAccessFile;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
-
-import net.sf.sevenzipjbinding.ExtractAskMode;
-import net.sf.sevenzipjbinding.ExtractOperationResult;
-import net.sf.sevenzipjbinding.IArchiveExtractCallback;
-import net.sf.sevenzipjbinding.ISequentialOutStream;
-import net.sf.sevenzipjbinding.ISevenZipInArchive;
-import net.sf.sevenzipjbinding.SevenZip;
-import net.sf.sevenzipjbinding.SevenZipException;
-import net.sf.sevenzipjbinding.SevenZipNativeInitializationException;
-import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
-import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
-import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.tika.exception.EncryptedDocumentException;
@@ -48,6 +36,16 @@ import dpf.sp.gpinf.indexer.parsers.util.RawISOConverter;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.util.ExtraProperties;
+import net.sf.sevenzipjbinding.ExtractAskMode;
+import net.sf.sevenzipjbinding.ExtractOperationResult;
+import net.sf.sevenzipjbinding.IArchiveExtractCallback;
+import net.sf.sevenzipjbinding.IInArchive;
+import net.sf.sevenzipjbinding.ISequentialOutStream;
+import net.sf.sevenzipjbinding.SevenZip;
+import net.sf.sevenzipjbinding.SevenZipException;
+import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
+import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
+import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
 public class SevenZipParser extends AbstractParser {
 
@@ -56,35 +54,41 @@ public class SevenZipParser extends AbstractParser {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
     private static Logger LOGGER = LoggerFactory.getLogger(SevenZipParser.class);
 
     private static final String ISO9660 = "x-iso9660-image"; //$NON-NLS-1$
     private static final String UDF = "x-udf-image"; //$NON-NLS-1$
+    public static final MediaType RAR = MediaType.application("x-rar-compressed"); //$NON-NLS-1$
+
+    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
     private static synchronized Set<MediaType> getTypes() {
 
         HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
 
         try {
-            SevenZip.initSevenZipFromPlatformJAR();
+            File javaTmp = new File(System.getProperty("java.io.tmpdir"));
+            File tmpDir = new File(javaTmp, "7zip-" + new Random().nextLong());
+            Files.createDirectories(tmpDir.toPath());
+            // use a different tmp dir for each process, see #301
+            SevenZip.initSevenZipFromPlatformJAR(tmpDir);
             supportedTypes.add(MediaType.application(ISO9660));
             supportedTypes.add(MediaType.application(UDF));
+            supportedTypes.add(RAR);
 
             /*
              * 7zipJBinding-4.65 does not work with 7z files created by 7z-16.04 or higher.
              * 7zipJBinding-9.20 does not work correctly with some rare ISO files.
              */
             // supportedTypes.add(MediaType.application("x-7z-compressed"));
-
             // supportedTypes.add(MediaType.application("vnd.ms-htmlhelp"));
             // supportedTypes.add(MediaType.application("vnd.ms-cab-compressed"));
             // supportedTypes.add(MediaType.application("x-rar-compressed"));
             // supportedTypes.add(MediaType.application("x-vhd"));
             // supportedTypes.add(MediaType.application("x-wim-image"));
 
-        } catch (SevenZipNativeInitializationException e) {
-            LOGGER.error("Error starting 7zipJBinding: {}", e.getMessage()); //$NON-NLS-1$
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
 
         return supportedTypes;
@@ -107,7 +111,7 @@ public class SevenZipParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         RandomAccessFile randomAccessFile = null;
-        ISevenZipInArchive inArchive = null;
+        IInArchive inArchive = null;
         try {
             File file = TikaInputStream.get(stream, tmp).getFile();
 

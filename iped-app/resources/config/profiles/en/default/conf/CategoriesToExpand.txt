@@ -12,7 +12,10 @@ Chats
 Contacts
 ISO disks
 Internet History
+User Activities
+GDrive Synced Files
 OLE files
+Georeferenced Files
 
 # Generates registry reports:
 Windows Registry

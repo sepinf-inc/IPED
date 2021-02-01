@@ -1,6 +1,8 @@
 package dpf.mt.gpinf.mapas.webkit;
 
 import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +27,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MapaCanvasWebkit extends AbstractMapaCanvas {
+public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
 
     WebView browser;
     WebEngine webEngine = null;
@@ -37,6 +39,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
     @SuppressWarnings("restriction")
     public MapaCanvasWebkit() {
         this.jfxPanel = new JFXPanel();
+        this.jfxPanel.addMouseMotionListener(this);
 
         Platform.runLater(new Runnable() {
             public void run() {
@@ -85,7 +88,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
     @Override
     public void setText(final String html) {
         final MapaCanvasWebkit mapa = this;
-        
+
         Platform.runLater(new Runnable() {
             public void run() {
                 ProxySever.get().disable();
@@ -112,7 +115,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
             String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
                     .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
-            
+
             html = replaceApiKey(html);
 
             html = html.replace("{{load_geoxml3}}", js); //$NON-NLS-1$
@@ -130,17 +133,18 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
             e.printStackTrace();
         }
     }
-    
+
     private String replaceApiKey(String html) {
-        if(googleApiKey.isEmpty()) {
-            if(keyStore.exists())
+        if (googleApiKey.isEmpty()) {
+            if (keyStore.exists())
                 try {
                     googleApiKey = new String(Files.readAllBytes(keyStore.toPath()), "UTF-8");
                 } catch (IOException e1) {
                     e1.printStackTrace();
                 }
-            String key = JOptionPane.showInputDialog(jfxPanel, "Please insert Google Maps Javascript API key to use the map feature:", googleApiKey);
-            if(key != null) {
+            String key = JOptionPane.showInputDialog(jfxPanel,
+                    "Please insert Google Maps Javascript API key to use the map feature:", googleApiKey);
+            if (key != null) {
                 googleApiKey = key;
                 try {
                     Files.write(keyStore.toPath(), googleApiKey.getBytes("UTF-8"));
@@ -211,6 +215,16 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
                 }
             }
         });
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        ProxySever.get().disable();
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        ProxySever.get().disable();
     }
 
 }

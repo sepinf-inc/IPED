@@ -2,10 +2,15 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.codec.binary.Hex;
+
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 
 /**
  *
@@ -39,6 +44,8 @@ public class Message {
     private String thumbpath;
     private int mediaDuration;
     private MessageStatus messageStatus;
+    private String recoveredFrom = null;
+    private Set<String> childPornSets = new HashSet<>();
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -141,6 +148,7 @@ public class Message {
         } else {
             this.mediaHash = mediaHash;
         }
+        childPornSets.addAll(ChildPornHashLookup.lookupHash(this.mediaHash));
     }
 
     public byte[] getThumbData() {
@@ -263,8 +271,50 @@ public class Message {
         this.messageStatus = messageStatus;
     }
 
+    public boolean isSystemMessage() {
+        switch (messageType) {
+            case MESSAGES_NOW_ENCRYPTED:
+            case ENCRIPTION_KEY_CHANGED:
+            case GROUP_CREATED:
+            case USER_JOINED_GROUP:
+            case USER_JOINED_GROUP_FROM_LINK:
+            case USERS_JOINED_GROUP:
+            case USER_LEFT_GROUP:
+            case USER_REMOVED_FROM_GROUP:
+            case GROUP_ICON_CHANGED:
+            case GROUP_ICON_DELETED:
+            case GROUP_DESCRIPTION_CHANGED:
+            case SUBJECT_CHANGED:
+            case YOU_ADMIN:
+            case UNKNOWN_MESSAGE:
+                return true;
+        }
+        return false;
+    }
+
+    public boolean isCall() {
+        return messageType == MessageType.VIDEO_CALL || messageType == MessageType.VOICE_CALL
+                || messageType == MessageType.MISSED_VIDEO_CALL || messageType == MessageType.MISSED_VOICE_CALL;
+    }
+
+    public String getRecoveredFrom() {
+        return recoveredFrom;
+    }
+
+    public void setRecoveredFrom(String recoveredFrom) {
+        this.recoveredFrom = recoveredFrom;
+    }
+
+    public Set<String> getChildPornSets() {
+        return childPornSets;
+    }
+
+    public void addChildPornSets(Collection<String> sets) {
+        this.childPornSets.addAll(sets);
+    }
+
     public static enum MessageType {
-        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, SHARED_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE, UNKNOWN_MESSAGE
+        TEXT_MESSAGE, IMAGE_MESSAGE, AUDIO_MESSAGE, VIDEO_MESSAGE, CONTACT_MESSAGE, LOCATION_MESSAGE, SHARE_LOCATION_MESSAGE, VOICE_CALL, VIDEO_CALL, APP_MESSAGE, GIF_MESSAGE, MESSAGES_NOW_ENCRYPTED, ENCRIPTION_KEY_CHANGED, MISSED_VOICE_CALL, MISSED_VIDEO_CALL, DELETED_MESSAGE, DELETED_FROM_SENDER, GROUP_CREATED, USER_JOINED_GROUP, USER_JOINED_GROUP_FROM_LINK, USERS_JOINED_GROUP, USER_LEFT_GROUP, USER_REMOVED_FROM_GROUP, URL_MESSAGE, GROUP_ICON_CHANGED, GROUP_ICON_DELETED, GROUP_DESCRIPTION_CHANGED, SUBJECT_CHANGED, YOU_ADMIN, WAITING_MESSAGE,STICKER_MESSAGE, UNKNOWN_MESSAGE
     }
 
     public static enum MessageStatus {

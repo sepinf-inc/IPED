@@ -1,4 +1,4 @@
-﻿﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -79,8 +79,7 @@
         <!-- <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>-->
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
-        <parser class="dpf.sp.gpinf.indexer.parsers.RARParser"></parser>
-		<!-- <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser> currently only parses ISO files-->
+		<parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
         <!-- parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser -->
@@ -96,6 +95,11 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
 		<!--<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser> SQLite will be parsed by RawStringParser, configured below-->
+		<parser class="dpf.ap.gpinf.telegramextractor.TelegramParser">
+			<params>
+				<param name="enabledForUfdr" type="bool">false</param>
+			</params>
+		</parser>
 		<parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
@@ -106,6 +110,8 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.bittorrent.BitTorrentResumeDatParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.bittorrent.TorrentFileParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
 		<!--parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser-->
         <!--<parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser">
@@ -129,6 +135,8 @@
 			<mime>application/x-edb</mime> <!-- Will be parsed by RawStringParser for better performance-->
 			<mime>application/x-sqlite3</mime> <!-- Will be parsed by RawStringParser for better performance-->
         </parser>
+        <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 	
     </parsers>
 

@@ -35,11 +35,13 @@ import org.apache.lucene.search.Query;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -103,31 +105,41 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         if (App.get().filtro.getSelectedIndex() > 1) {
             String filter = App.get().filtro.getSelectedItem().toString();
             filter = App.get().filterManager.getFilterExpression(filter);
-            BooleanQuery boolQuery = new BooleanQuery();
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
             boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
             boolQuery.add(result, Occur.MUST);
-            result = boolQuery;
+            result = boolQuery.build();
             numFilters++;
         }
 
-        if (App.get().categoryListener.query != null) {
-            BooleanQuery boolQuery = new BooleanQuery();
-            boolQuery.add(App.get().categoryListener.query, Occur.MUST);
+        if (App.get().categoryListener.getQuery() != null) {
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+            boolQuery.add(App.get().categoryListener.getQuery(), Occur.MUST);
             boolQuery.add(result, Occur.MUST);
-            result = boolQuery;
+            result = boolQuery.build();
             numFilters++;
         }
 
         if (!App.get().appCase.isFTKReport()) {
-            Query treeQuery = App.get().treeListener.treeQuery;
-            if (App.get().recursiveTreeList.isSelected())
-                treeQuery = App.get().treeListener.recursiveTreeQuery;
-
+            Query treeQuery = App.get().treeListener.getQuery();
             if (treeQuery != null) {
-                BooleanQuery boolQuery = new BooleanQuery();
+                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
                 boolQuery.add(treeQuery, Occur.MUST);
                 boolQuery.add(result, Occur.MUST);
-                result = boolQuery;
+                result = boolQuery.build();
+                numFilters++;
+            }
+        }
+
+        if (App.get().similarImagesQueryRefItem != null) {
+            Query similarImagesQuery = new SimilarImagesSearch()
+                    .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
+            if (similarImagesQuery != null) {
+                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+                boolQuery.add(result, Occur.MUST);
+                boolQuery.add(similarImagesQuery, Occur.MUST);
+                result = boolQuery.build();
+                searcher.setNoScoring(true);
                 numFilters++;
             }
         }
@@ -192,8 +204,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                                     .filtrarSemEComMarcadores(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores()
-                                .filtrarMarcadores(result, bookmarkSelection);
+                        result = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarMarcadores(result,
+                                bookmarkSelection);
 
                 }
 
@@ -212,6 +224,28 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     }
                     result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+
+                Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
+                if (selectedEdges != null && !selectedEdges.isEmpty()) {
+                    numFilters++;
+                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
+                    ArrayList<Float> scores = new ArrayList<Float>();
+                    int i = 0;
+                    for (IItemId item : result.getIterator()) {
+                        if (selectedEdges.contains(item)) {
+                            filteredItems.add(item);
+                            scores.add(result.getScore(i));
+                        }
+                        i++;
+                    }
+                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
+                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
+                }
+
+                if (App.get().similarImagesQueryRefItem != null) {
+                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
+                    result = ImageSimilarityLowScoreFilter.filter(result);
                 }
 
                 if (App.get().filterDuplicates.isSelected()) {
@@ -242,10 +276,10 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 
         Query highlightQuery = App.get().metadataPanel.getHighlightQuery();
         if (highlightQuery != null) {
-            BooleanQuery boolQuery = new BooleanQuery();
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
             boolQuery.add(highlightQuery, Occur.SHOULD);
             boolQuery.add(searcher.getQuery(), Occur.SHOULD);
-            highlightQuery = boolQuery;
+            highlightQuery = boolQuery.build();
         } else
             highlightQuery = searcher.getQuery();
 
@@ -255,10 +289,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
     @Override
     public void done() {
 
-        if (numFilters > 1)
-            App.get().multiFilterAlert.setVisible(true);
-        else
-            App.get().multiFilterAlert.setVisible(false);
+        App.get().clearAllFilters.setNumberOfFilters(numFilters);
 
         if (!this.isCancelled())
             try {

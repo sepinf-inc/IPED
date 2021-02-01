@@ -28,29 +28,23 @@ import java.nio.channels.FileChannel;
 import java.util.ArrayList;
 import java.util.TreeMap;
 
-import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.commons.io.input.CountingInputStream;
 import org.apache.lucene.search.highlight.TextFragment;
-import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
-import org.apache.tika.parser.html.HtmlMapper;
-import org.apache.tika.parser.html.IdentityHtmlMapper;
-import org.apache.tika.parser.microsoft.OfficeParserConfig;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -190,7 +184,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
             sortedHits = new TreeMap<Long, int[]>();
             hits = new ArrayList<Long>();
             viewRows = new ArrayList<Long>();
-            appSearchParams.hitsModel.fireTableDataChanged();
+            App.get().getTextViewer().getHitsModel().fireTableDataChanged();
             App.get().getTextViewer().textViewerModel.fireTableDataChanged();
 
             parseText();
@@ -202,7 +196,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     private ParseContext getTikaContext(IItem item) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
         expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
-        ParseContext context = expander.getTikaContext();
+        ParseContext context = expander.getTikaContext((IPEDSource) appSearchParams.lastSelectedSource);
         expander.setExtractEmbedded(false);
         return context;
     }
@@ -225,10 +219,9 @@ public class TextParser extends CancelableWorker implements ITextParser {
         try {
 
             // this can cause ConcurrentModificationException if another viewer access
-            // metadata
-            // and can insert duplicate values in metadata
+            // metadata at same time
             // Metadata metadata = item.getMetadata();
-            Metadata metadata = new Metadata();
+            Metadata metadata = MetadataUtil.clone(item.getMetadata());
 
             ParsingTask.fillMetadata(item, metadata);
 
@@ -358,7 +351,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
                         }
 
                         // atualiza lista de hits
-                        appSearchParams.hitsModel.fireTableRowsInserted(numHits, numHits);
+                        App.get().getTextViewer().getHitsModel().fireTableRowsInserted(numHits, numHits);
                         this.firePropertyChange("hits", numHits, numHits + 1); //$NON-NLS-1$
                     }
 

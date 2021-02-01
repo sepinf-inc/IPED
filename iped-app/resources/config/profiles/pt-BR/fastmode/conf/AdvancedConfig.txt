@@ -9,7 +9,7 @@
 # Acelera bastante o processamento de imagens comprimidas E01 ou armazenadas na rede.
 robustImageReading = false
 
-# Número de processos auxiliares de leitura das imagens. 'auto' utiliza metade do número de processadores lógicos.
+# Número de processos auxiliares de leitura das imagens. 'auto' utiliza 1/4 do número de processadores lógicos.
 # Pode-se diminuir esse valor caso haja pouca RAM. Aumentar normalmente é ineficaz, pois geralmente o IO não consegue
 # atender muitas requisições de leitura simultaneamente.
 numImageReaders = auto
@@ -91,11 +91,15 @@ minItemSizeToFragment = 104857600
 
 # Tamanho (bytes) de divisão do texto extraído dos itens antes da indexação. Inclui todos os itens,
 # não apenas os indexados via strings. Isso evita OutOfMemory na indexação de itens com texto extraído mto grande. 
-textSplitSize = 10000000
+textSplitSize = 10485760
 
 # Usa NIOFSDirectory ao invés de MMAPDirectory ao manipular o índice (https://lucene.apache.org/core/4_9_0/core/org/apache/lucene/store/FSDirectory.html)
 # É um pouco mais lento, mas pode evitar crashes da JVM ao manipular o índice via rede.
 useNIOFSDirectory = false
+
+# Intervalo entre commits parciais do processamento, assim ele pode ser retomado caso interrompido.
+# Commits parciais podem ser muito custosos, cuidado ao alterar o padrão.
+commitIntervalSeconds = 1800
 
 ########################################################################
 # Configurações OCR
@@ -151,7 +155,7 @@ searchThreads = 1
 maxBackups = 10
 
 # Intervalo (em segundos) entre a realização dos backups
-backupInterval = 60
+backupInterval = 3600
 
 # Habilita por padrão gerenciamento automático de colunas
 autoManageCols = true
@@ -165,3 +169,6 @@ openImagesCacheWarmUpEnabled = false
 
 # Número de threads utilizado, caso o aquecimento do cache esteja habilitado.
 openImagesCacheWarmUpThreads = 256
+
+# Comportamento do clique duplo do mouse. Valores possíveis: never, ask_always, ask_if_exe, always
+openWithDoubleClick = ask_if_exe

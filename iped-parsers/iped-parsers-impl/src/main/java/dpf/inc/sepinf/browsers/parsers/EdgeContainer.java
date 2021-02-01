@@ -1,27 +1,24 @@
 package dpf.inc.sepinf.browsers.parsers;
 
-import java.util.LinkedList;
-import java.util.List;
+import com.sun.jna.ptr.PointerByReference;
 
-public class EdgeContainer {
+public abstract class EdgeContainer implements Iterable<EdgeVisit> {
+
     private String tableName = "";
-    private List<EdgeVisit> entries = new LinkedList<EdgeVisit>();
+    PointerByReference tablePointer;
 
-    public EdgeContainer(String tableName) {
+    public EdgeContainer(String tableName, PointerByReference tablePointer) {
         super();
         this.tableName = tableName;
+        this.tablePointer = tablePointer;
     }
 
     public String getTableName() {
         return this.tableName;
     }
 
-    public List<EdgeVisit> getEntries() {
-        return entries;
-    }
-
-    public void addEntry(EdgeVisit edgeEntry) {
-        this.entries.add(edgeEntry);
+    public PointerByReference getTablePointer() {
+        return this.tablePointer;
     }
 
 }

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.BitSet;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -25,7 +25,7 @@ public class DynamicDuplicateFilter {
     public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException {
         if (ipedCase != ipedSource) {
             ipedCase = ipedSource;
-            AtomicReader reader = ipedCase.getAtomicReader();
+            LeafReader reader = ipedCase.getLeafReader();
             docValues = reader.getSortedDocValues(IndexItem.HASH);
         }
     }
@@ -35,13 +35,17 @@ public class DynamicDuplicateFilter {
         ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
+        boolean filterOrdZero = false;
+        if (!docValues.lookupOrd(0).utf8ToString().isEmpty()) {
+            filterOrdZero = true;
+        }
         for (IItemId item : result.getIterator()) {
             int docId = ipedCase.getLuceneId(item);
             int ord = docValues.getOrd(docId);
-            if (ord <= 0 || !ordSet.get(ord)) {
+            if (ord < 0 || !ordSet.get(ord)) {
                 filteredItems.add(item);
                 scores.add(result.getScore(i));
-                if (ord > 0)
+                if (ord > 0 || (ord == 0 && filterOrdZero))
                     ordSet.set(ord);
             }
             i++;

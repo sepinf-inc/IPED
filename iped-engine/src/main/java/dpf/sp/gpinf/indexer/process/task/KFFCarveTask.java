@@ -14,20 +14,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.Log;
-import iped3.IItem;
 import iped3.IHashValue;
+import iped3.IItem;
 
 public class KFFCarveTask extends BaseCarveTask {
-    /**
-     * Nome da tarefa.
-     */
-    private static final String taskName = "KFF Carving"; //$NON-NLS-1$
+
+    private static Logger logger = LoggerFactory.getLogger(KFFCarveTask.class);
 
     /**
      * Indica se a tarefa está habilitada ou não.
@@ -93,14 +90,14 @@ public class KFFCarveTask extends BaseCarveTask {
                 String value = confParams.getProperty("enableKFFCarving"); //$NON-NLS-1$
                 if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
                     if (LedKFFTask.kffItems != null) {
-                        md5_512 = LedHashes.hashMap.get("md5-512"); //$NON-NLS-1$
-                        Log.info(taskName, "Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
+                        md5_512 = LedKFFTask.getHashArray("md5-512"); //$NON-NLS-1$
+                        logger.info("Loaded Hashes: " + md5_512.length); //$NON-NLS-1$
                         taskEnabled = true;
                     } else {
-                        Log.error(taskName, "LED database must be loaded to enable KFFCarving."); //$NON-NLS-1$
+                        logger.error("LED database must be loaded to enable KFFCarving."); //$NON-NLS-1$
                     }
                 }
-                Log.info(taskName, taskEnabled ? "Task enabled." : "Task disabled."); //$NON-NLS-1$ //$NON-NLS-2$
+                logger.info(taskEnabled ? "Task enabled." : "Task disabled."); //$NON-NLS-1$ //$NON-NLS-2$
                 init.set(true);
             }
         }
@@ -114,12 +111,14 @@ public class KFFCarveTask extends BaseCarveTask {
     public void finish() throws Exception {
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
+                md5_512 = null;
+                kffCarved.clear();
                 finished.set(true);
                 NumberFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
-                Log.info(taskName, "Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
-                Log.info(taskName, "512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " //$NON-NLS-1$ //$NON-NLS-2$
+                logger.info("Carved files: " + nf.format(numCarvedItems.get())); //$NON-NLS-1$
+                logger.info("512 blocks (Hits / Total): " + nf.format(num512hit.get()) + " / " //$NON-NLS-1$ //$NON-NLS-2$
                         + nf.format(num512total.get()));
-                Log.info(taskName, "Bytes hashes: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
+                logger.info("Bytes hashed: " + nf.format(bytesHashed.get())); //$NON-NLS-1$
             }
         }
     }
@@ -195,8 +194,7 @@ public class KFFCarveTask extends BaseCarveTask {
                 offset += read512;
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            Log.warning(taskName, "Error KFFCarving on: " + evidence.getPath() + " : " + e); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.warn(evidence.toString(), e);
         } finally {
             IOUtil.closeQuietly(is);
         }
@@ -210,6 +208,7 @@ public class KFFCarveTask extends BaseCarveTask {
         return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile)
                 || mediaType.getBaseType().equals(mtDiskImage) || mediaType.getBaseType().equals(mtUnknown)
                 || mediaType.getBaseType().equals(mtVdi) || mediaType.getBaseType().equals(mtVhd)
-                || mediaType.getBaseType().equals(mtVmdk) || mediaType.getBaseType().equals(mtVolumeShadow);
+                || mediaType.getBaseType().equals(mtVhdx) || mediaType.getBaseType().equals(mtVmdk)
+                || mediaType.getBaseType().equals(mtVolumeShadow);
     }
 }

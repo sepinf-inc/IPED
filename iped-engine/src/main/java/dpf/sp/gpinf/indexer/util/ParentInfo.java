@@ -9,6 +9,7 @@ public class ParentInfo {
 
     private IDataSource dataSource;
     private int id;
+    private String persistentId;
     private List<Integer> parentIds;
     private String path;
     private boolean isDeleted;
@@ -19,6 +20,7 @@ public class ParentInfo {
         this.parentIds = item.getParentIds();
         this.path = item.getPath();
         this.isDeleted = item.isDeleted();
+        this.persistentId = Util.getPersistentId(item);
     }
 
     public IDataSource getDataSource() {
@@ -39,6 +41,10 @@ public class ParentInfo {
 
     public boolean isDeleted() {
         return this.isDeleted;
+    }
+
+    public String getPersistentId() {
+        return persistentId;
     }
 
 }

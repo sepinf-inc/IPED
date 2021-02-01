@@ -12,17 +12,22 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class ConfiguredFSDirectory {
-    
+
     private static Logger LOGGER = LoggerFactory.getLogger(ConfiguredFSDirectory.class);
-    
+
     public static FSDirectory open(File indexDir) throws IOException {
-        AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance().findObjects(AdvancedIPEDConfig.class).iterator().next();
-        
-        if(advConfig.isUseNIOFSDirectory()) {
-            LOGGER.info("Using NIOFSDirectory to open index...");
-            return NIOFSDirectory.open(indexDir);
-        }else
-            return FSDirectory.open(indexDir);
+        AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
+                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+
+        FSDirectory result;
+        if (advConfig.isUseNIOFSDirectory()) {
+            result = new NIOFSDirectory(indexDir.toPath());
+        } else {
+            result = FSDirectory.open(indexDir.toPath());
+        }
+        LOGGER.info("Using " + result.getClass().getSimpleName() + " to open index...");
+        return result;
+
     }
 
 }

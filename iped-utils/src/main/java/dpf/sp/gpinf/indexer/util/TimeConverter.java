@@ -12,7 +12,7 @@ public class TimeConverter {
      *            the FILETIME value.
      * @return the number of milliseconds since 1970.
      */
-    private static long filetimeToMillis(long filetime) {
+    public static long filetimeToMillis(long filetime) {
         // Move the starting epoch from 01/01/1601 to 01/01/1970.
         filetime -= 116444736000000000L;
 

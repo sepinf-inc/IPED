@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>iped</groupId>
     <artifactId>iped-parent</artifactId>
-    <version>3.16</version>
+    <version>3.19-snapshot</version>
     <packaging>pom</packaging>
     
     <modules>
@@ -30,50 +30,36 @@
         
         <!--dependencies-->
         <tika.version>1.20</tika.version>
-        <lucene.version>4.9.0</lucene.version>
-        <sleuthkit.version>4.6.5-p02</sleuthkit.version>
+        <lucene.version>6.6.6</lucene.version>
+        <sleuthkit.version>4.6.5-p05</sleuthkit.version>
         <libreoffice.version>5.1.4</libreoffice.version>
         <slf4j.version>1.7.25</slf4j.version>
-        <log4j.version>2.3</log4j.version>
-        <junit.version>4.12</junit.version>
+        <log4j.version>2.13.3</log4j.version>
+        <junit.version>4.13.1</junit.version>
         <icepdf.version>6.3.2</icepdf.version>
-        <xerial.sqlite.version>3.23.1</xerial.sqlite.version>
+        <xerial.sqlite.version>3.25.2</xerial.sqlite.version>
         <dockingframes.version>1.1.1</dockingframes.version>
     </properties>
-    
+
     <repositories>
     	<repository>
             <id>central</id>
             <name>Maven Repository Switchboard</name>
             <layout>default</layout>
-            <url>http://repo1.maven.org/maven2</url>
+            <url>https://repo1.maven.org/maven2</url>
         </repository>
         <repository>
-            <id>internal</id>
-            <name>Archiva SEPINF - Internal</name>
-            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/internal/</url>
-        </repository>
-        <repository>
-            <id>snapshots</id>
-            <name>Archiva SEPINF - Snapshot</name>
-            <url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/snapshots/</url>
-        </repository>
+        	<id>mvn-repo</id>
+        	<url>https://gitlab.com/iped-project/iped-maven/raw/master</url>
+        	<releases>
+            	<enabled>true</enabled>
+        	</releases>
+        	<snapshots>
+            	<enabled>true</enabled>
+        	</snapshots>
+    	</repository>
     </repositories>
-    
-    <distributionManagement>
-		<repository>
-			<id>archiva.internal</id>
-			<name>Internal Release Repository</name>
-			<url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/internal/</url>
-		</repository>
-		<snapshotRepository>
-			<id>archiva.snapshots</id>
-			<name>Internal Snapshot Repository</name>
-			<layout>default</layout>
-			<url>http://sepinf-dev.ditec.pf.gov.br:8081/repository/snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>

@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.tika.detect.Detector;
@@ -17,12 +18,18 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.sqlite.SQLiteConfig;
+import org.sqlite.SQLiteOpenMode;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.SafariSqliteParser;
+import dpf.inc.sepinf.gdrive.parsers.GDriveMainParser;
+import dpf.inc.sepinf.winx.parsers.WinXTimelineParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Detects subtypes of SQLite based on table names.
@@ -43,10 +50,15 @@ public class SQLiteContainerDetector implements Detector {
 
     private static byte[] header;
 
+    private static Properties sqliteConnectionProperties;
+
     static {
         try {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
-
+            SQLiteConfig config = new SQLiteConfig();
+            config.setReadOnly(true);
+            config.setOpenMode(SQLiteOpenMode.MAIN_DB);
+            sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
         }
@@ -59,6 +71,7 @@ public class SQLiteContainerDetector implements Detector {
             return MediaType.OCTET_STREAM;
 
         TemporaryResources tmp = new TemporaryResources();
+        File dbFile = null;
         try {
             TikaInputStream tis = TikaInputStream.get(input, tmp);
 
@@ -71,17 +84,22 @@ public class SQLiteContainerDetector implements Detector {
                 if (prefix[i] != header[i])
                     return MediaType.OCTET_STREAM;
 
-            return detectSQLiteFormat(tis.getFile());
+            dbFile = tis.getFile();
+            return detectSQLiteFormat(dbFile);
 
         } finally {
             tmp.close();
+            if (dbFile != null && IOUtil.isTemporaryFile(dbFile)) {
+                new File(dbFile.getAbsolutePath() + "-wal").delete();
+                new File(dbFile.getAbsolutePath() + "-shm").delete();
+            }
         }
 
     }
 
     private MediaType detectSQLiteFormat(File file) {
-        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath()); //$NON-NLS-1$
-                Statement st = conn.createStatement();) {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath(), //$NON-NLS-1$
+                sqliteConnectionProperties); Statement st = conn.createStatement();) {
             Set<String> tableNames = new HashSet<String>();
             String sql = "SELECT name FROM sqlite_master WHERE type='table'"; //$NON-NLS-1$
             ResultSet rs = st.executeQuery(sql);
@@ -96,6 +114,12 @@ public class SQLiteContainerDetector implements Detector {
     }
 
     private MediaType detectTableNames(Set<String> tableNames) {
+
+        if (tableNames.contains("messagesv12") && //$NON-NLS-1$
+                tableNames.contains("profilecachev8") && //$NON-NLS-1$
+                (tableNames.contains("conversationsv14") || tableNames.contains("conversationsv13")) && //$NON-NLS-1$
+                tableNames.contains("internaldata")) //$NON-NLS-1$
+            return SkypeParser.SKYPE_MIME_V12;
 
         if (tableNames.contains("Messages") && //$NON-NLS-1$
                 tableNames.contains("Participants") && //$NON-NLS-1$
@@ -132,7 +156,7 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("moz_places") && //$NON-NLS-1$
                 tableNames.contains("moz_bookmarks")) //$NON-NLS-1$
             return FirefoxSqliteParser.MOZ_PLACES;
-        
+
         if (tableNames.contains("history_items") && //$NON-NLS-1$
                 tableNames.contains("history_visits")) //$NON-NLS-1$
             return SafariSqliteParser.SAFARI_SQLITE;
@@ -142,6 +166,34 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("visits") && //$NON-NLS-1$
                 tableNames.contains("downloads_url_chains")) //$NON-NLS-1$
             return ChromeSqliteParser.CHROME_SQLITE;
+
+        if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
+                && tableNames.contains("ActivityOperation"))
+            return WinXTimelineParser.WIN10_TIMELINE;
+        
+        if (tableNames.contains("cloud_graph_entry") &&
+                tableNames.contains("cloud_relations"))
+            return GDriveMainParser.GDRIVE_CLOUD_GRAPH;
+        
+        if (tableNames.contains("cloud_entry") &&
+                tableNames.contains("mapping") &&
+                tableNames.contains("cloud_relations") &&
+                tableNames.contains("local_entry") &&
+                tableNames.contains("local_relations") &&
+                tableNames.contains("volume_info"))
+            return GDriveMainParser.GDRIVE_SNAPSHOT;
+        
+        if (tableNames.contains("global_preferences") ||
+                tableNames.contains("data"))
+            return GDriveMainParser.GDRIVE_ACCOUNT_INFO;
+
+        if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
+                && tableNames.contains("messages") && tableNames.contains("media_v2"))
+            return TelegramParser.TELEGRAM_DB;
+        
+        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
+                && tableNames.contains("ft41") && tableNames.contains("t18"))
+            return TelegramParser.TELEGRAM_DB_IOS;
 
         return SQLITE_MIME;
 

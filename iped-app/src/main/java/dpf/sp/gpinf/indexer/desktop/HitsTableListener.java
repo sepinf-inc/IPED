@@ -90,7 +90,7 @@ public class HitsTableListener implements ListSelectionListener {
                 } while (++viewRow <= endViewRow);
 
                 if (App.get().getTextViewer().textParser.getFirstHitAutoSelected()) {
-                    App.get().compositeViewer.changeToViewer(App.get().getTextViewer());
+                    App.get().getViewerController().changeToViewer(App.get().getTextViewer());
                 }
 
             }

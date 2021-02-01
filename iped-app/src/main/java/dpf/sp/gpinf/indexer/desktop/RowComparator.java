@@ -24,7 +24,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.AtomicReader;
+import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
@@ -34,7 +34,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
@@ -46,7 +45,7 @@ public class RowComparator implements Comparator<Integer> {
     private boolean bookmarkCol = false;
     private boolean scoreCol = false;
 
-    private volatile static AtomicReader atomicReader;
+    private volatile static LeafReader atomicReader;
     private static boolean loadDocValues = true;
 
     private App app = App.get();
@@ -60,7 +59,6 @@ public class RowComparator implements Comparator<Integer> {
     protected SortedSetDocValues ssdv;
     private NumericDocValues ndv;
     private SortedNumericDocValues sndv;
-    private Bits docsWithField;
 
     public static void setLoadDocValues(boolean load) {
         loadDocValues = load;
@@ -105,15 +103,13 @@ public class RowComparator implements Comparator<Integer> {
             return;
 
         try {
-            atomicReader = App.get().appCase.getAtomicReader();
+            atomicReader = App.get().appCase.getLeafReader();
 
             if (IndexItem.getMetadataTypes().get(indexedField) == null
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
-                docsWithField = atomicReader.getDocsWithField(indexedField);
                 if (ndv == null) {
                     ndv = atomicReader.getNumericDocValues("_num_" + indexedField); //$NON-NLS-1$
-                    docsWithField = atomicReader.getDocsWithField("_num_" + indexedField); //$NON-NLS-1$
                 }
                 if (ndv == null) {
                     sndv = atomicReader.getSortedNumericDocValues(indexedField);
@@ -136,6 +132,54 @@ public class RowComparator implements Comparator<Integer> {
             e.printStackTrace();
         }
     }
+
+    private ThreadLocal<Bits> localDocsWithField = new ThreadLocal<Bits>() {
+        @Override
+        protected Bits initialValue() {
+            try {
+                Bits bits = atomicReader.getDocsWithField(field);
+                if (bits == null)
+                    bits = atomicReader.getDocsWithField("_num_" + field); //$NON-NLS-1$
+                return bits;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    };
+
+    private ThreadLocal<NumericDocValues> localNDV = new ThreadLocal<NumericDocValues>() {
+        @Override
+        protected NumericDocValues initialValue() {
+            try {
+                NumericDocValues ndv = atomicReader.getNumericDocValues(field);
+                if (ndv == null)
+                    ndv = atomicReader.getNumericDocValues("_num_" + field); //$NON-NLS-1$
+                return ndv;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    };
+
+    private ThreadLocal<SortedDocValues> localSDV = new ThreadLocal<SortedDocValues>() {
+        @Override
+        protected SortedDocValues initialValue() {
+            try {
+                SortedDocValues sdv = atomicReader.getSortedDocValues(field);
+                if (sdv == null)
+                    sdv = atomicReader.getSortedDocValues("_" + field);
+                return sdv;
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return null;
+        }
+    };
 
     private ThreadLocal<SortedSetDocValues> localSSDV = new ThreadLocal<SortedSetDocValues>() {
         @Override
@@ -170,7 +214,7 @@ public class RowComparator implements Comparator<Integer> {
     };
 
     public static boolean isNewIndexReader() {
-        return atomicReader != App.get().appCase.getAtomicReader();
+        return atomicReader != App.get().appCase.getLeafReader();
     }
 
     public boolean isStringComparator() {
@@ -184,7 +228,7 @@ public class RowComparator implements Comparator<Integer> {
             throw new RuntimeException(Messages.getString("RowComparator.SortCanceled")); //$NON-NLS-1$
 
         if (scoreCol)
-            return (int) (app.ipedResult.getScore(a) - app.ipedResult.getScore(b));
+            return Float.compare(app.ipedResult.getScore(a), app.ipedResult.getScore(b));
 
         IItemId itemA = app.ipedResult.getItem(a);
         IItemId itemB = app.ipedResult.getItem(b);
@@ -205,10 +249,11 @@ public class RowComparator implements Comparator<Integer> {
             return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemA))
                     .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
 
-        else if (sdv != null)
+        else if (sdv != null) {
+            SortedDocValues sdv = localSDV.get();
             return sdv.getOrd(a) - sdv.getOrd(b);
 
-        else if (ssdv != null) {
+        } else if (ssdv != null) {
             SortedSetDocValues lssdv = localSSDV.get();
             int result, k = 0, ordA = -1, ordB = -1;
             do {
@@ -254,10 +299,12 @@ public class RowComparator implements Comparator<Integer> {
         }
 
         else if (ndv != null) {
+            Bits docsWithField = localDocsWithField.get();
             if (docsWithField.get(a)) {
-                if (docsWithField.get(b))
+                if (docsWithField.get(b)) {
+                    NumericDocValues ndv = localNDV.get();
                     return Long.compare(ndv.get(a), ndv.get(b));
-                else
+                } else
                     return 1;
             } else if (docsWithField.get(b))
                 return -1;
@@ -294,6 +341,7 @@ public class RowComparator implements Comparator<Integer> {
                 return v1.compareTo(v2);
 
             } catch (IOException e) {
+                e.printStackTrace();
                 return 0;
             }
 

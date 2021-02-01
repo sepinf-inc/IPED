@@ -18,12 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
-import gpinf.dev.data.DataSource;
-import gpinf.dev.data.Item;
-import gpinf.dev.data.FileGroup;
-import iped3.ICaseData;
-import iped3.IItem;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
@@ -33,21 +27,34 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
+import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
+import org.apache.commons.text.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.DataSource;
+import gpinf.dev.data.Item;
+import iped3.ICaseData;
+import iped3.IItem;
 
 public class FolderTreeReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
+
+    private static final String EXCLUDE_KEY = "skipFolderRegex"; //$NON-NLS-1$
+
+    private Pattern excludePattern;
 
     private File rootFile;
     private String evidenceName;
@@ -58,21 +65,60 @@ public class FolderTreeReader extends DataSourceReader {
     }
 
     public int read(File file) throws Exception {
-
-        args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-
-        rootFile = file;
         evidenceName = getEvidenceName(file);
         if (evidenceName == null) {
             evidenceName = file.getName();
         }
         dataSource = new DataSource(file);
         dataSource.setName(evidenceName);
-
-        new FolderVisitor().walk(file);
-
+        read(file, null);
         return 0;
 
+    }
+
+    private boolean isRoot(File file) {
+        for (File f : File.listRoots()) {
+            if (f.equals(file))
+                return true;
+        }
+        return false;
+    }
+
+    @Override
+    public void read(File file, Item parent) throws Exception {
+        args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        evidenceName = getEvidenceName(file);
+        if (evidenceName == null) {
+            evidenceName = file.getName();
+        }
+        if (evidenceName.isEmpty() && isRoot(file)) {
+            evidenceName = file.getAbsolutePath().substring(0, 2);
+        }
+
+        String arg;
+        if ((arg = Configuration.getInstance().properties.getProperty(EXCLUDE_KEY)) != null) {
+            excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
+        }
+
+        rootFile = file;
+
+        List<Integer> parents;
+        List<String> paths;
+        if (parent != null) {
+            parents = parent.getParentIds();
+            parents.add(parent.getId());
+
+            StringTokenizer stringTokenizer = new StringTokenizer(parent.getPath(), File.separator);
+            paths = stringTokenizer.getTokenList();
+        } else {
+            parents = Collections.emptyList();
+            paths = Collections.emptyList();
+        }
+        transverse(file, parents, paths);
+    }
+
+    private void transverse(File file, List<Integer> parents, List<String> paths) throws IOException {
+        new FolderVisitor(parents, paths).walk(file);
     }
 
     private IItem getEvidence(Path path, BasicFileAttributes attr) {
@@ -97,11 +143,6 @@ public class FolderTreeReader extends DataSourceReader {
                 LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
             }
 
-            String path1 = file.getAbsolutePath().replace(rootFile.getAbsolutePath(), evidenceName);
-            item.setPath(path1);
-
-            // evidenceFile.setType(new UnknownFileType(evidenceFile.getExt()));
-
             if (args.isAddowner())
                 try {
                     UserPrincipal owner = Files.getOwner(path);
@@ -118,7 +159,14 @@ public class FolderTreeReader extends DataSourceReader {
 
     class FolderVisitor implements FileVisitor<Path> {
 
-        private LinkedList<Integer> parentIds = new LinkedList<Integer>();
+        private LinkedList<Integer> parentIds;
+        private LinkedList<String> paths;
+
+        public FolderVisitor(List<Integer> parentIds, List<String> paths) {
+            super();
+            this.parentIds = new LinkedList<>(parentIds);
+            this.paths = new LinkedList<>(paths);
+        }
 
         public void walk(File file) throws IOException {
             Path startingDir = file.toPath();
@@ -136,13 +184,21 @@ public class FolderTreeReader extends DataSourceReader {
                 if (!parentIds.isEmpty()) {
                     item.setParentId(parentIds.getLast());
                     item.addParentIds(parentIds);
+
+                    if (parentIds.size() == 2) {
+                        item.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+                    }
                 } else {
                     item.setRoot(true);
                 }
 
+                String fileName = item.getName();
+                String evidencePath = paths.isEmpty() ? fileName
+                        : paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
+                item.setPath(evidencePath);
+
                 if (attr.isDirectory()) {
                     item.setIsDir(true);
-                    parentIds.addLast(item.getId());
                 }
 
                 item.setAccessDate(new Date(attr.lastAccessTime().toMillis()));
@@ -156,6 +212,13 @@ public class FolderTreeReader extends DataSourceReader {
                 } catch (InterruptedException e) {
                     return FileVisitResult.TERMINATE;
                 }
+
+                if (attr.isDirectory()) {
+                    // must getId() after caseData.addItem(), it could set item id to previous id
+                    // with --continue
+                    parentIds.addLast(item.getId());
+                    paths.addLast(fileName);
+                }
             }
 
             return FileVisitResult.CONTINUE;
@@ -164,14 +227,18 @@ public class FolderTreeReader extends DataSourceReader {
         @Override
         public FileVisitResult preVisitDirectory(Path path, BasicFileAttributes attr) throws IOException {
 
+            if (excludePattern != null && excludePattern.matcher(path.toString()).find()) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+
             if (this.visitFile(path, attr).equals(FileVisitResult.TERMINATE)) {
                 return FileVisitResult.TERMINATE;
             }
 
             if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
                 parentIds.pollLast();
+                paths.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
-
             }
 
             return FileVisitResult.CONTINUE;
@@ -181,10 +248,12 @@ public class FolderTreeReader extends DataSourceReader {
         public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
             parentIds.pollLast();
+            paths.pollLast();
 
             if (exception != null) {
-                System.err.println(new Date() + "\t[WARN]\t" + "Directory ignored: " + path.toFile().getAbsolutePath() //$NON-NLS-1$ //$NON-NLS-2$
-                        + " " + exception.toString()); //$NON-NLS-1$
+                System.err.println(
+                        new Date() + "\t[WARN]\t" + "Directory ignored: " + path.toFile().getAbsolutePath() + " " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                + exception.toString());
             }
 
             return FileVisitResult.CONTINUE;

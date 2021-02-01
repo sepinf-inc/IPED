@@ -10,6 +10,8 @@ import java.util.Map;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
+import iped3.datasource.IDataSource;
+
 public interface IItemBase extends IStreamSource {
     /**
      *
@@ -23,6 +25,11 @@ public interface IItemBase extends IStreamSource {
      *         FTK3+
      */
     public Integer getParentId();
+
+    /**
+     * @return the subitem order into its parent, null if this is not a subitem.
+     */
+    public Integer getSubitemId();
 
     /**
      * @return nome do arquivo
@@ -135,6 +142,8 @@ public interface IItemBase extends IStreamSource {
 
     public byte[] getThumb();
 
+    public byte[] getImageSimilarityFeatures();
+
     public BufferedInputStream getBufferedStream() throws IOException;
 
     /**
@@ -146,12 +155,17 @@ public interface IItemBase extends IStreamSource {
 
     public Date getAccessDate();
 
+    public Date getRecordDate();
+
     public Object getExtraAttribute(String key);
 
     public Map<String, Object> getExtraAttributeMap();
+
+    public IDataSource getDataSource();
 
     /**
      * @return Object containing the metadata of the item
      */
     public Metadata getMetadata();
+
 }

@@ -9,13 +9,15 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import java.nio.file.Path;
 
 public class IPEDConfig extends AbstractPropertiesConfigurable {
-    
+
     boolean toAddUnallocated = false;
     boolean toAddFileSlacks = false;
+    boolean enableHtmlReport = true;
 
     public static final String CONFDIR = "confdir";
     public static final String TOADDUNALLOCATED = "addUnallocated";
     public static final String TOADDFILESLACKS = "addFileSlacks";
+    public static final String ENABLEHTMLREPORT = "enableHTMLReport"; //$NON-NLS-1$
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -41,6 +43,10 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isToAddFileSlacks() {
         return toAddFileSlacks;
+    }
+
+    public boolean isHtmlReportEnabled() {
+        return enableHtmlReport;
     }
 
     @Override
@@ -77,6 +83,11 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("indexCorruptedFiles"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, value.trim());
+        }
+
+        value = properties.getProperty(ENABLEHTMLREPORT);
+        if (value != null && !value.trim().isEmpty()) {
+            enableHtmlReport = Boolean.valueOf(value.trim());
         }
 
     }

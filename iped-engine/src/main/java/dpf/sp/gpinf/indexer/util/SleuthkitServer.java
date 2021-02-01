@@ -1,12 +1,11 @@
 package dpf.sp.gpinf.indexer.util;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
@@ -21,9 +20,9 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 
 public class SleuthkitServer {
-    
+
     public static final int MMAP_FILE_SIZE = 10 * 1024 * 1024;
-    private static final int MAX_BUF_SIZE = 8 * 1024 * 1024; //must be less than MMAP_FILE_SIZE
+    private static final int MAX_BUF_SIZE = 8 * 1024 * 1024; // must be less than MMAP_FILE_SIZE
 
     static class FLAGS {
 
@@ -42,42 +41,32 @@ public class SleuthkitServer {
         static byte SQLITE_READ = 11;
 
         final static boolean isClientCmd(int cmd) {
-            return cmd != FLAGS.DONE && cmd != FLAGS.ERROR && cmd != FLAGS.EOF && cmd != FLAGS.EXCEPTION;
+            return cmd != FLAGS.DONE && cmd != FLAGS.ERROR && cmd != FLAGS.EOF && cmd != FLAGS.EXCEPTION
+                    && cmd != FLAGS.SQLITE_READ;
         }
     }
 
-    static SleuthkitCase sleuthCase;
     static boolean useUnsafe = true;
-    static HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<Long, SleuthkitInputStream>();
 
     public static void main(String args[]) {
 
         String dbPath = args[0];
-        String port = args[1];
+        String id = args[1];
         String pipePath = args[2];
         MappedByteBuffer out = null;
-        OutputStream os = null;
-        try {
-            // InputStream in = System.in;
-            // os = System.out;
-            // System.setOut(System.err);
 
+        InputStream in = System.in;
+        OutputStream os = System.out;
+        System.setIn(new ByteArrayInputStream(new byte[0]));
+        System.setOut(System.err);
+
+        try {
             int size = MMAP_FILE_SIZE;
             RandomAccessFile raf = new RandomAccessFile(pipePath, "rw"); //$NON-NLS-1$
             raf.setLength(size);
             FileChannel fc = raf.getChannel();
             out = fc.map(MapMode.READ_WRITE, 0, size);
             out.load();
-
-            ServerSocket serverSocket = new ServerSocket(Integer.valueOf(port));
-            serverSocket.setPerformancePreferences(0, 1, 2);
-            serverSocket.setReceiveBufferSize(1);
-            serverSocket.setSoTimeout(10000);
-            Socket clientSocket = serverSocket.accept();
-            clientSocket.setTcpNoDelay(true);
-            clientSocket.setSendBufferSize(1);
-            InputStream in = clientSocket.getInputStream();
-            os = clientSocket.getOutputStream();
 
             Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
             ConfigurationManager cm = ConfigurationManager.getInstance();
@@ -86,7 +75,8 @@ public class SleuthkitServer {
             cm.loadConfigs();
             Configuration.getInstance().loadLibsAndToolPaths();
 
-            sleuthCase = SleuthkitCase.openCase(dbPath);
+            SleuthkitCase sleuthCase = SleuthkitCase.openCase(dbPath);
+            HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();
 
             java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$
 
@@ -99,8 +89,17 @@ public class SleuthkitServer {
 
             while (true) {
                 try {
+                    int read = in.read();
+                    if (read == -1)
+                        break;
+                    if (read > 0) {
+                        // ping response
+                        os.write(read);
+                        os.flush();
+                        continue;
+                    }
                     byte cmd = waitCmd(out, in);
-                    sis = getSis(out);
+                    sis = getSis(out, sleuthCase, sisMap);
                     commitByte(out, 0, FLAGS.SQLITE_READ);
 
                     if (cmd == FLAGS.SEEK) {
@@ -153,7 +152,8 @@ public class SleuthkitServer {
 
     private static HashSet<Long> warmedDataSources = new HashSet<>();
 
-    private static SleuthkitInputStream getSis(MappedByteBuffer out) throws Exception {
+    private static SleuthkitInputStream getSis(MappedByteBuffer out, SleuthkitCase sleuthCase,
+            HashMap<Long, SleuthkitInputStream> sisMap) throws Exception {
         long streamId = out.getLong(5);
         SleuthkitInputStream sis = sisMap.get(streamId);
         if (sis == null) {
@@ -178,10 +178,14 @@ public class SleuthkitServer {
     }
 
     private static byte waitCmd(MappedByteBuffer out, InputStream in) throws Exception {
-        in.read();
         byte cmd;
+        long t = 0;
         while (!FLAGS.isClientCmd(cmd = getByte(out, 0))) {
-            System.err.println("Waiting Client Memory Write..."); //$NON-NLS-1$
+            if (t == 0)
+                t = System.currentTimeMillis();
+            long time = (System.currentTimeMillis() - t) / 1000;
+            if (time >= 10)
+                throw new IOException("MemoryReadTimeout waiting SleuthkitClient!"); //$NON-NLS-1$
             Thread.sleep(1);
         }
         return cmd;
@@ -198,7 +202,7 @@ public class SleuthkitServer {
     }
 
     static void notify(OutputStream os) throws IOException {
-        os.write(1);
+        os.write(0);
         os.flush();
     }
 

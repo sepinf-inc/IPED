@@ -56,7 +56,7 @@ public class TempFileTask extends AbstractTask {
         if (indexTempOnSSD && len != null
                 && len <= MAX_TEMPFILE_LEN /* && evidence.getPath().toLowerCase().contains(".e01/vol_vol") */) {
             try {
-                if (evidence.getFile() == null) {
+                if (evidence.getFile() == null && !evidence.isSubItem()) {
                     evidence.getTempFile();
                 }
             } catch (IOException e) {

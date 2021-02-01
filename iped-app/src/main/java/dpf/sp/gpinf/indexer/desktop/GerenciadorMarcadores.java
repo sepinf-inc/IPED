@@ -19,16 +19,19 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
-import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.text.Collator;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.BitSet;
 import java.util.Collections;
-import java.util.Map.Entry;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -46,25 +49,23 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.KeyStroke;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.lucene.index.Term;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
-import org.apache.lucene.search.NumericRangeQuery;
-import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.util.NumericUtils;
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.util.BytesRef;
 
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
-import dpf.sp.gpinf.indexer.util.VersionsMap;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
+import iped3.util.BasicProps;
 
-public class GerenciadorMarcadores implements ActionListener, ListSelectionListener {
+public class GerenciadorMarcadores implements ActionListener, ListSelectionListener, KeyListener {
 
     private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
@@ -83,12 +84,45 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     JButton novo = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
     JButton updateComment = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
     JButton delete = new JButton(Messages.getString("BookmarksManager.Delete")); //$NON-NLS-1$
-    DefaultListModel<String> listModel = new DefaultListModel<String>();
-    JList<String> list = new JList<String>(listModel);
+    DefaultListModel<BookmarkAndKey> listModel = new DefaultListModel<>();
+    JList<BookmarkAndKey> list = new JList<>(listModel);
     JScrollPane scrollList = new JScrollPane(list);
+
+    HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
+
+    private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
+        String bookmark;
+        KeyStroke key;
+
+        public BookmarkAndKey(String bookmark) {
+            this.bookmark = bookmark;
+        }
+
+        public boolean equals(Object obj) {
+            if (obj instanceof BookmarkAndKey) {
+                return ((BookmarkAndKey) obj).bookmark.equals(bookmark);
+            } else if (obj instanceof String) {
+                return obj.equals(bookmark);
+            }
+            return false;
+        }
+
+        public String toString() {
+            return bookmark + (key != null ? " (" + key.toString().replace("released ", "") + ")" : "");
+        }
+
+        @Override
+        public int compareTo(BookmarkAndKey obj) {
+            return bookmark.compareToIgnoreCase(((BookmarkAndKey) obj).bookmark);
+        }
+    }
 
     public static GerenciadorMarcadores get() {
         return instance;
+    }
+
+    public static boolean isVisible() {
+        return instance.dialog.isVisible();
     }
 
     public static void setVisible() {
@@ -138,9 +172,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
         left1.add(novo);
         left1.add(updateComment);
-        left1.add(Box.createRigidArea(new Dimension(0, 35)));
+        left1.add(Box.createRigidArea(new Dimension(0, 65)));
         left1.add(add);
         left1.add(remove);
+        left1.add(Box.createRigidArea(new Dimension(0, 35)));
 
         JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
         left2.add(rename);
@@ -155,10 +190,14 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         JScrollPane commentScroll = new JScrollPane(comments);
         commentScroll.setPreferredSize(new Dimension(300, 50));
 
-        JPanel center = new JPanel(new BorderLayout(0, 10));
+        JLabel shortcutLabel = new JLabel(Messages.getString("BookmarksManager.KeyStrokeLabel"));
+        shortcutLabel.setBorder(BorderFactory.createEmptyBorder(6, 1, 0, 0));
+
+        JPanel center = new JPanel(new BorderLayout());
         JPanel bookmark = new JPanel(new BorderLayout());
         bookmark.add(newLabel, BorderLayout.PAGE_START);
         bookmark.add(commentScroll, BorderLayout.CENTER);
+        bookmark.add(shortcutLabel, BorderLayout.PAGE_END);
         center.add(bookmark, BorderLayout.PAGE_START);
         center.add(scrollList, BorderLayout.CENTER);
 
@@ -177,62 +216,126 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         delete.addActionListener(this);
 
         list.addListSelectionListener(this);
+        // disable selection by typing
+        for (KeyListener kl : list.getKeyListeners()) {
+            list.removeKeyListener(kl);
+        }
+        list.addKeyListener(this);
 
         dialog.setLocationRelativeTo(App.get());
 
     }
 
     public void updateList() {
-        listModel.clear();
-        String[] labels = App.get().appCase.getMultiMarcadores().getLabelMap().toArray(new String[0]);
-        Arrays.sort(labels, Collator.getInstance());
-        for (String label : labels) {
-            listModel.addElement(label);
-        }
-
+        updateList(null, null);
     }
 
-    /*
-     * Lento com mtos itens
-     */
+    private void updateList(String oldLabel, String newLabel) {
+        TreeSet<BookmarkAndKey> bookmarks = new TreeSet<>();
+        KeyStroke prevStroke = null;
+        if (!listModel.isEmpty()) {
+            for (int i = 0; i < listModel.size(); i++) {
+                BookmarkAndKey bk = listModel.get(i);
+                bookmarks.add(bk);
+                if (bk.bookmark.equals(oldLabel)) {
+                    prevStroke = bk.key;
+                }
+            }
+        }
+        TreeSet<String> labels = App.get().appCase.getMultiMarcadores().getLabelMap();
+        for (String label : labels) {
+            BookmarkAndKey bk = new BookmarkAndKey(label);
+            if (!bookmarks.contains(bk)) {
+                bookmarks.add(bk);
+            }
+        }
+        Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
+        while (iterator.hasNext()) {
+            BookmarkAndKey bk = iterator.next();
+            if (prevStroke != null && bk.bookmark.equals(newLabel)) {
+                bk.key = prevStroke;
+            }
+            if (!labels.contains(bk.bookmark)) {
+                iterator.remove();
+            }
+        }
+        keystrokeToBookmark.clear();
+        for (BookmarkAndKey bk : bookmarks) {
+            if (bk.key != null) {
+                keystrokeToBookmark.put(bk.key, bk.bookmark);
+                keystrokeToBookmark.put(getRemoveKey(bk.key), bk.bookmark);
+            }
+        }
+        listModel.clear();
+        for (BookmarkAndKey b : bookmarks) {
+            listModel.addElement(b);
+        }
+    }
+
+    private int getEmptyDataHashOrd(SortedDocValues sdv) {
+        byte[] emptyData = new byte[0];
+        String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
+        int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
+        if (ord < 0) {
+            String emptySHA1 = DigestUtils.sha1Hex(emptyData).toUpperCase();
+            ord = sdv.lookupTerm(new BytesRef(emptySHA1));
+        }
+        if (ord < 0) {
+            String emptySHA256 = DigestUtils.sha256Hex(emptyData).toUpperCase();
+            ord = sdv.lookupTerm(new BytesRef(emptySHA256));
+        }
+        return ord;
+    }
+
     private void includeDuplicates(ArrayList<IItemId> uniqueSelectedIds) {
 
         ProgressDialog progress = new ProgressDialog(App.get(), null);
-        progress.setNote(Messages.getString("BookmarksManager.LoadingHashes")); //$NON-NLS-1$
-        progress.setMaximum(uniqueSelectedIds.size());
+        progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
         try {
-            BooleanQuery query = new BooleanQuery();
-            App app = App.get();
+            LeafReader reader = App.get().appCase.getLeafReader();
+            SortedDocValues sdv = reader.getSortedDocValues(BasicProps.HASH);
+
+            progress.setMaximum(uniqueSelectedIds.size() + reader.maxDoc());
             int i = 0;
+
+            int emptyDataHashOrd = getEmptyDataHashOrd(sdv);
+            int emptyValueOrd = sdv.lookupTerm(new BytesRef("")); //$NON-NLS-1$
+            if (emptyValueOrd < 0) {
+                emptyValueOrd = -1;
+            }
+
+            IPEDMultiSource ipedCase = App.get().appCase;
+            BitSet hashOrd = new BitSet(sdv.getValueCount());
+            BitSet luceneIds = new BitSet(reader.maxDoc());
             for (IItemId item : uniqueSelectedIds) {
-                if (progress.isCanceled()) {
+                int luceneId = ipedCase.getLuceneId(item);
+                int ord = sdv.getOrd(luceneId);
+                if (ord > emptyValueOrd && ord != emptyDataHashOrd) {
+                    hashOrd.set(ord);
+                }
+                luceneIds.set(luceneId);
+                progress.setProgress(++i);
+                if (progress.isCanceled())
                     return;
+            }
+            int duplicates = 0;
+            for (int doc = 0; doc < reader.maxDoc(); doc++) {
+                int ord = sdv.getOrd(doc);
+                if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
+                    IItemId itemId = ipedCase.getItemId(doc);
+                    uniqueSelectedIds.add(itemId);
+                    duplicates++;
                 }
                 progress.setProgress(++i);
-                String hash = app.appCase.getSearcher().doc(app.appCase.getLuceneId(item)).get(IndexItem.HASH);
-                if (hash != null) {
-                    query.add(new TermQuery(new Term(IndexItem.HASH, hash.toLowerCase())), Occur.SHOULD);
-                }
-                // query.add(new TermQuery(new Term(IndexItem.ID, id.toString())),
-                // Occur.MUST_NOT);
+                if (progress.isCanceled())
+                    return;
             }
-            query.add(NumericRangeQuery.newLongRange(IndexItem.LENGTH, NumericUtils.PRECISION_STEP_DEFAULT, 0L, 0L,
-                    true, true), Occur.MUST_NOT);
-
-            PesquisarIndice task = new PesquisarIndice(query);
-            progress.setTask(task);
-            progress.setNote(Messages.getString("BookmarksManager.SearchingDuplicates")); //$NON-NLS-1$
-            progress.setIndeterminate(true);
-            MultiSearchResult duplicates = MultiSearchResult.get(app.appCase, task.pesquisar());
-
-            System.out.println(Messages.getString("BookmarksManager.DuplicatesAdded") + duplicates.getLength()); //$NON-NLS-1$
-
-            for (IItemId item : duplicates.getIterator()) {
-                uniqueSelectedIds.add(item);
-            }
+            System.out.println(
+                    Messages.getString("BookmarksManager.DuplicatesAdded") + " " + duplicates + " (luceneIds)"); //$NON-NLS-1$ //$NON-NLS-2$
 
         } catch (Exception e) {
             e.printStackTrace();
+
         } finally {
             progress.close();
         }
@@ -245,13 +348,13 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (evt.getSource() == novo) {
             String texto = newLabel.getText().trim();
             String comment = comments.getText().trim();
-            if (!texto.isEmpty() && !listModel.contains(texto)) {
+            if (!texto.isEmpty() && !listModel.contains(new BookmarkAndKey(texto))) {
                 App.get().appCase.getMultiMarcadores().newLabel(texto);
                 App.get().appCase.getMultiMarcadores().setLabelComment(texto, comment);
                 updateList();
             }
             for (int i = 0; i < listModel.size(); i++) {
-                if (listModel.get(i).equals(texto)) {
+                if (listModel.get(i).bookmark.equals(texto)) {
                     list.setSelectedIndex(i);
                 }
             }
@@ -260,7 +363,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (evt.getSource() == updateComment) {
             int idx = list.getSelectedIndex();
             if (idx != -1) {
-                String labelName = list.getModel().getElementAt(idx);
+                String labelName = list.getModel().getElementAt(idx).bookmark;
                 App.get().appCase.getMultiMarcadores().setLabelComment(labelName, comments.getText());
                 App.get().appCase.getMultiMarcadores().saveState();
             }
@@ -268,62 +371,21 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
 
-            App app = App.get();
-            final ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
+            ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
 
-            if (checked.isSelected()) {
-                for (IPEDSource source : App.get().appCase.getAtomicSources()) {
-                    for (int id = 0; id <= source.getLastId(); id++) {
-                        if (source.getMarcadores().isSelected(id)) {
-                            uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
-                        }
-                    }
-                }
+            ArrayList<String> labels = new ArrayList<String>();
+            for (int index : list.getSelectedIndices())
+                labels.add(list.getModel().getElementAt(index).bookmark);
 
-            } else if (highlighted.isSelected()) {
-                for (Integer row : App.get().resultsTable.getSelectedRows()) {
-                    int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
-                    IItemId id = app.ipedResult.getItem(rowModel);
-                    uniqueSelectedIds.add(id);
-
-                    VersionsMap viewMap = (VersionsMap) app.appCase.getAtomicSourceBySourceId(id.getSourceId())
-                            .getViewToRawMap();
-                    Integer id2 = viewMap.getRaw(id.getId());
-                    if (id2 == null)
-                        id2 = viewMap.getView(id.getId());
-                    if (id2 != null)
-                        uniqueSelectedIds.add(new ItemId(id.getSourceId(), id2));
-                }
-            }
-
-            new Thread() {
-                public void run() {
-
-                    ArrayList<String> labels = new ArrayList<String>();
-                    for (int index : list.getSelectedIndices())
-                        labels.add(list.getModel().getElementAt(index));
-
-                    if (duplicates.isSelected())
-                        includeDuplicates(uniqueSelectedIds);
-
-                    for (String label : labels) {
-                        if (evt.getSource() == add || evt.getSource() == novo) {
-                            App.get().appCase.getMultiMarcadores().addLabel(uniqueSelectedIds, label);
-                        } else {
-                            App.get().appCase.getMultiMarcadores().removeLabel(uniqueSelectedIds, label);
-                        }
-                    }
-                    App.get().appCase.getMultiMarcadores().saveState();
-                    MarcadoresController.get().atualizarGUI();
-                }
-            }.start();
+            boolean insert = evt.getSource() == add || evt.getSource() == novo;
+            bookmark(uniqueSelectedIds, labels, insert);
 
         } else if (evt.getSource() == delete) {
             int result = JOptionPane.showConfirmDialog(dialog, Messages.getString("BookmarksManager.ConfirmDelete"), //$NON-NLS-1$
                     Messages.getString("BookmarksManager.ConfirmDelTitle"), JOptionPane.YES_NO_OPTION); //$NON-NLS-1$
             if (result == JOptionPane.YES_OPTION) {
                 for (int index : list.getSelectedIndices()) {
-                    String label = list.getModel().getElementAt(index);
+                    String label = list.getModel().getElementAt(index).bookmark;
                     App.get().appCase.getMultiMarcadores().delLabel(label);
                 }
                 updateList();
@@ -334,21 +396,63 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         } else if (evt.getSource() == rename) {
             String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("BookmarksManager.NewName"), //$NON-NLS-1$
-                    list.getSelectedValue());
-            if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
-                for (int idx : list.getSelectedIndices()) {
-                    String label = list.getModel().getElementAt(idx);
+                    list.getSelectedValue().bookmark);
+            if (newLabel != null && !newLabel.trim().isEmpty()
+                    && !listModel.contains(new BookmarkAndKey(newLabel.trim()))) {
+                int selIdx = list.getSelectedIndex();
+                if (selIdx != -1) {
+                    String label = list.getModel().getElementAt(selIdx).bookmark;
                     App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel.trim());
-                    ;
-                    break;
+                    updateList(label, newLabel.trim());
+                    App.get().appCase.getMultiMarcadores().saveState();
+                    MarcadoresController.get().atualizarGUI();
                 }
-                updateList();
-                App.get().appCase.getMultiMarcadores().saveState();
-                MarcadoresController.get().atualizarGUI();
-
             }
         }
 
+    }
+
+    private ArrayList<IItemId> getUniqueSelectedIds() {
+        ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
+
+        if (checked.isSelected()) {
+            for (IPEDSource source : App.get().appCase.getAtomicSources()) {
+                for (int id = 0; id <= source.getLastId(); id++) {
+                    if (source.getMarcadores().isSelected(id)) {
+                        uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
+                    }
+                }
+            }
+
+        } else if (highlighted.isSelected()) {
+            App app = App.get();
+            for (Integer row : App.get().resultsTable.getSelectedRows()) {
+                int rowModel = App.get().resultsTable.convertRowIndexToModel(row);
+                IItemId id = app.ipedResult.getItem(rowModel);
+                uniqueSelectedIds.add(id);
+            }
+        }
+
+        return uniqueSelectedIds;
+    }
+
+    private void bookmark(ArrayList<IItemId> uniqueSelectedIds, List<String> labels, boolean insert) {
+        new Thread() {
+            public void run() {
+                if (duplicates.isSelected())
+                    includeDuplicates(uniqueSelectedIds);
+
+                for (String label : labels) {
+                    if (insert) {
+                        App.get().appCase.getMultiMarcadores().addLabel(uniqueSelectedIds, label);
+                    } else {
+                        App.get().appCase.getMultiMarcadores().removeLabel(uniqueSelectedIds, label);
+                    }
+                }
+                App.get().appCase.getMultiMarcadores().saveState();
+                MarcadoresController.get().atualizarGUI();
+            }
+        }.start();
     }
 
     @Override
@@ -356,11 +460,79 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         int idx = list.getSelectedIndex();
         if (idx == -1) {
             comments.setText(null);
+            newLabel.setText(null);
             return;
         }
-        String labelName = list.getModel().getElementAt(idx);
+        String labelName = list.getModel().getElementAt(idx).bookmark;
         String comment = App.get().appCase.getMultiMarcadores().getLabelComment(labelName);
+        newLabel.setText(labelName);
         comments.setText(comment);
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void keyPressed(KeyEvent e) {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+
+        if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
+                || e.getKeyCode() == KeyEvent.VK_ALT) {
+            return;
+        }
+
+        KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
+
+        if (e.getSource() == list) {
+            if (list.getSelectedIndices().length != 1) {
+                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                return;
+            }
+            if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
+                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                return;
+            }
+            if (keystrokeToBookmark.containsKey(stroke)) {
+                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                return;
+            }
+            int index = list.getSelectedIndex();
+            list.getModel().getElementAt(index).key = stroke;
+            list.repaint();
+
+            String label = list.getModel().getElementAt(index).bookmark;
+            Iterator<KeyStroke> iterator = keystrokeToBookmark.keySet().iterator();
+            while (iterator.hasNext()) {
+                String bookmark = keystrokeToBookmark.get(iterator.next());
+                if (bookmark.equals(label)) {
+                    iterator.remove();
+                }
+            }
+
+            keystrokeToBookmark.put(stroke, label);
+            keystrokeToBookmark.put(getRemoveKey(stroke), label);
+        } else {
+            String label = keystrokeToBookmark.get(stroke);
+            if (label == null) {
+                return;
+            }
+            ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
+            bookmark(uniqueSelectedIds, Collections.singletonList(label), (e.getModifiers() & KeyEvent.ALT_MASK) == 0);
+        }
+
+    }
+
+    // alt key remove from bookmark
+    private KeyStroke getRemoveKey(KeyStroke k) {
+        return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
 }
