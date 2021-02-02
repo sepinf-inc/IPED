@@ -200,7 +200,19 @@ public class UsnJrnlParser extends AbstractParser {
 	 
 	 
 	 
-	 
+    private void createReport(ArrayList<UsnJrnlEntry> entries,int n,ParseContext context, ContentHandler handler) throws SAXException, IOException {
+    	ReportGenerator rg=new ReportGenerator();
+    	EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+		 byte[] bytes=rg.createHTMLReport(entries);
+		 ByteArrayInputStream html = new ByteArrayInputStream(bytes);
+		 
+		 Metadata cMetadata = new Metadata();
+        cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT.toString());
+        cMetadata.set(TikaCoreProperties.TITLE,"JOURNAL "+n);
+		 
+        extractor.parseEmbedded(html, handler, cMetadata, false);
+    }
 
 	
 	@Override
@@ -208,28 +220,30 @@ public class UsnJrnlParser extends AbstractParser {
 			throws IOException, SAXException, TikaException {
 		
 		System.out.println("olaaa");
-		ReportGenerator rg=new ReportGenerator();
+		
 		 
 		ArrayList<UsnJrnlEntry> entries=new ArrayList<>();
-		
+		int n=1;
 		 while(findNextEntry(stream)) {
 			 UsnJrnlEntry u=readEntry(stream);
-			 if(u!=null && entries.size()<10000) {
-				 entries.add(u);
-			 }		
+			 
+			 if(u==null) {
+				 continue;
+				 
+			 }	
+			 if(entries.size()==5000) {
+				 createReport(entries,n, context, handler);
+				 entries.clear();
+				 n++;
+			 }
+			 entries.add(u);
 		 }
 		 
-		 EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                 new ParsingEmbeddedDocumentExtractor(context));
-		 byte[] bytes=rg.createHTMLReport(entries);
-		 ByteArrayInputStream html = new ByteArrayInputStream(bytes);
+		 if(entries.size()>0) {
+			 createReport(entries,n, context, handler);
+		 }
 		 
-		 Metadata cMetadata = new Metadata();
-         cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT.toString());
-         cMetadata.set(TikaCoreProperties.TITLE,"JOURNAL");
-         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT.toString());
-		 
-         extractor.parseEmbedded(html, handler, cMetadata, false);
+		
 		 
 		 
 		 
