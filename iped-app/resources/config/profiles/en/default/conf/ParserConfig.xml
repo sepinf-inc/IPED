@@ -106,6 +106,7 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser>
+		<parser class="dpf.inc.sepinf.UsnJrnl.UsnJrnlParser"></parser>
 		<parser class="dpf.ap.gpinf.telegramextractor.TelegramParser">
 			<params>
 				<param name="enabledForUfdr" type="bool">false</param>
