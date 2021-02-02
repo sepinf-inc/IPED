@@ -240,6 +240,16 @@
         <sub-class-of type="application/x-whatsapp-db"/>
     </mime-type>
 	
+	<mime-type type="USNJOURNAL/$J">
+        <glob pattern="$J*"/>
+    </mime-type>
+	
+	<mime-type type="USNJOURNAL/Report">
+		<sub-class-of type="USNJOURNAL/$J"/>
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	
+	
 	<mime-type type="application/x-telegram-db">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="cache4.db"/>
