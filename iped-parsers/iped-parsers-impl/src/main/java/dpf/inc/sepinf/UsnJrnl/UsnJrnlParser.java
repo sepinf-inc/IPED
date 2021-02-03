@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -18,19 +19,29 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 
 public class UsnJrnlParser extends AbstractParser {
 
     private static final int MAX_ENTRIES = 10000;
 
+    // Option to extract each registry as a sub item.
+    private boolean extractEntries = true;
+
     public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
     public static final MediaType USNJRNL_REPORT = MediaType.parse("USNJOURNAL/Report");
+    public static final MediaType USNJRNL_REGISTRY = MediaType.application("USNJOURNAL/Report/registry");
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(USNJRNL_$J);
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return SUPPORTED_TYPES;
+    }
+
+    @Field
+    public void setExtractEntries(boolean extractEntries) {
+        this.extractEntries = extractEntries;
     }
 
 
@@ -109,6 +120,30 @@ public class UsnJrnlParser extends AbstractParser {
         cMetadata.set(TikaCoreProperties.TITLE, "JOURNAL " + n);
 
         extractor.parseEmbedded(html, handler, cMetadata, false);
+
+        /**
+         * Optionally extract entries as subitems
+         */
+        if (extractEntries) {
+            for(UsnJrnlEntry entry:entries) {
+                Metadata metadataItem = new Metadata();
+                metadataItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
+                metadataItem.add(Metadata.RESOURCE_NAME_KEY, "USN journal Entry " + entry.getUSN());
+    
+                // These properties need to get a "Date" type as parameters, so it can correctly
+                // show times in UTC
+                metadataItem.set(TikaCoreProperties.CREATED, ReportGenerator.timeFormat.format(entry.getFileTime()));
+                metadataItem.set("FileName", entry.getFileName());
+                metadataItem.set("USN", entry.getUSN() + "");
+                metadataItem.set("MTF Ref", entry.getMftRef() + "");
+                metadataItem.set("Parent MTF Ref", entry.getParentMftRef() + "");
+                metadataItem.set("Reasons", entry.getReasons());
+                metadataItem.set("File Attributes", entry.getHumanAttributes());
+
+                extractor.parseEmbedded(new EmptyInputStream(), handler, metadataItem, true);
+            }
+        }
+
     }
 
     @Override

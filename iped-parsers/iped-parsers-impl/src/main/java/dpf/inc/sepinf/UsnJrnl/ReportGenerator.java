@@ -12,7 +12,7 @@ public class ReportGenerator {
     private static final String NEW_ROW = "<TR>"; //$NON-NLS-1$
     private static final String CLOSE_ROW = "</TR>"; //$NON-NLS-1$
 
-    private final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
+    public static final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
 
     private static final String newCol(String value, String tag) {
 
