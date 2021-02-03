@@ -3,7 +3,6 @@ package dpf.inc.sepinf.UsnJrnl;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -22,6 +21,8 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 
 public class UsnJrnlParser extends AbstractParser {
 
+    private static final int MAX_ENTRIES = 10000;
+
     public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
     public static final MediaType USNJRNL_REPORT = MediaType.parse("USNJOURNAL/Report");
 
@@ -32,93 +33,7 @@ public class UsnJrnlParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-    public int readInt16(InputStream in) {
-        return readInt16(in, true);
-    }
 
-    public int readInt32(InputStream in) {
-        return readInt32(in, true);
-    }
-
-    public long readInt64(InputStream in) {
-        return readInt64(in, true);
-    }
-
-    public int readInt16(InputStream in, boolean bigEndian) {
-        try {
-            int b1 = in.read(), b2 = in.read();
-            if (bigEndian) {
-                return b1 + (b2 << 8);
-            } else {
-                return b2 + (b1 << 8);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return 0;
-    }
-
-    public int readInt32(InputStream in, boolean bigEndian) {
-        try {
-            int i = 0;
-            byte len = 4;
-            for (int j = 0; j < len; j++) {
-                int a = in.read();
-
-                if (bigEndian) {
-                    i |= (a << (j * 8));
-                } else {
-                    i |= (a << ((len - j - 1) * 8));
-                }
-            }
-            return i;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return 0;
-    }
-
-    public long readInt64(InputStream in, boolean bigEndian) {
-        try {
-            long i = 0;
-            byte len = 8;
-            for (int j = 0; j < len; j++) {
-                long a = in.read();
-                if (bigEndian) {
-                    i |= (a << (j * 8L));
-                } else {
-                    i |= (a << ((len - j - 1) * 8L));
-                }
-            }
-            return i;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return 0;
-    }
-
-    public String readString(InputStream in, int len) {
-        try {
-            byte[] b = new byte[len];
-            in.read(b, 0, len);
-            return new String(b, StandardCharsets.UTF_16LE);
-        } catch (Exception e) {
-            // TODO: handle exception
-        }
-        return null;
-    }
-
-    private boolean zero(byte[] b) {
-        for (int i = 0; i < b.length; i++) {
-            if (b[i] != 0) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     public boolean findNextEntry(InputStream in) throws IOException {
         byte[] b = new byte[8];
@@ -127,7 +42,7 @@ public class UsnJrnlParser extends AbstractParser {
             in.mark(8);
             rb = in.read(b, 0, 8);
 
-            if (zero(b)) {
+            if (Util.zero(b)) {
                 continue;
             }
             in.reset();
@@ -144,31 +59,31 @@ public class UsnJrnlParser extends AbstractParser {
 
     public UsnJrnlEntry readEntry(InputStream in) throws IOException {
         in.mark(4);
-        int tam = readInt32(in);
+        int tam = Util.readInt32(in);
         in.reset();
         in.mark(tam);
         in.skip(4);
         if (tam > 0) {
             UsnJrnlEntry u = new UsnJrnlEntry();
             u.setTam(tam);
-            u.setMajorVersion(readInt16(in));
-            u.setMinorVersion(readInt16(in));
-            u.setMftRef(readInt64(in));
-            u.setParentMftRef(readInt64(in));
-            u.setUSN(readInt64(in));
-            long filetime = readInt64(in);
+            u.setMajorVersion(Util.readInt16(in));
+            u.setMinorVersion(Util.readInt16(in));
+            u.setMftRef(Util.readInt64(in));
+            u.setParentMftRef(Util.readInt64(in));
+            u.setUSN(Util.readInt64(in));
+            long filetime = Util.readInt64(in);
             u.setFileTime(filetime);
-            u.setReasonFlag(readInt32(in));
-            u.setSourceInformation(readInt32(in));
-            u.setSecurityId(readInt32(in));
-            u.setFileAttributes(readInt32(in));
-            u.setSizeofFileName(readInt16(in));
-            u.setOffsetFilename(readInt16(in));
+            u.setReasonFlag(Util.readInt32(in));
+            u.setSourceInformation(Util.readInt32(in));
+            u.setSecurityId(Util.readInt32(in));
+            u.setFileAttributes(Util.readInt32(in));
+            u.setSizeofFileName(Util.readInt16(in));
+            u.setOffsetFilename(Util.readInt16(in));
             if (u.getOffsetFilename() != 0x3c) {
                 System.out.println("error");
                 return null;
             } else {
-                u.setFileName(readString(in, u.getSizeofFileName()));
+                u.setFileName(Util.readString(in, u.getSizeofFileName()));
 
             }
             in.reset();
@@ -207,13 +122,14 @@ public class UsnJrnlParser extends AbstractParser {
 
             if (u == null) {
                 continue;
-
             }
-            if (entries.size() == 5000) {
+
+            if (entries.size() == MAX_ENTRIES) {
                 createReport(entries, n, context, handler);
                 entries.clear();
                 n++;
             }
+
             entries.add(u);
         }
 
