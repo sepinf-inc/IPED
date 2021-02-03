@@ -248,6 +248,9 @@
 		<sub-class-of type="USNJOURNAL/$J"/>
         <sub-class-of type="text/html"/>
     </mime-type>
+	<mime-type type="USNJOURNAL/registry">
+		<sub-class-of type="USNJOURNAL/$J"/>
+    </mime-type>
 	
 	
 	<mime-type type="application/x-telegram-db">
