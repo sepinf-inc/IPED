@@ -30,7 +30,7 @@ public class UsnJrnlParser extends AbstractParser {
 
     public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
     public static final MediaType USNJRNL_REPORT = MediaType.parse("USNJOURNAL/Report");
-    public static final MediaType USNJRNL_REGISTRY = MediaType.application("USNJOURNAL/Report/registry");
+    public static final MediaType USNJRNL_REGISTRY = MediaType.parse("USNJOURNAL/registry");
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(USNJRNL_$J);
 
@@ -126,12 +126,12 @@ public class UsnJrnlParser extends AbstractParser {
          */
         if (extractEntries) {
             for(UsnJrnlEntry entry:entries) {
+                extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
                 Metadata metadataItem = new Metadata();
-                metadataItem.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
-                metadataItem.add(Metadata.RESOURCE_NAME_KEY, "USN journal Entry " + entry.getUSN());
+                metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
+                metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
     
-                // These properties need to get a "Date" type as parameters, so it can correctly
-                // show times in UTC
+
                 metadataItem.set(TikaCoreProperties.CREATED, ReportGenerator.timeFormat.format(entry.getFileTime()));
                 metadataItem.set("FileName", entry.getFileName());
                 metadataItem.set("USN", entry.getUSN() + "");
@@ -139,11 +139,10 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set("Parent MTF Ref", entry.getParentMftRef() + "");
                 metadataItem.set("Reasons", entry.getReasons());
                 metadataItem.set("File Attributes", entry.getHumanAttributes());
+                extractor.parseEmbedded(new EmptyInputStream(), handler, metadataItem, false);
 
-                extractor.parseEmbedded(new EmptyInputStream(), handler, metadataItem, true);
             }
         }
-
     }
 
     @Override
