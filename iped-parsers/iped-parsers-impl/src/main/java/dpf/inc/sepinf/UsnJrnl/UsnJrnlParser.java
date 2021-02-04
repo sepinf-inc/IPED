@@ -31,7 +31,7 @@ public class UsnJrnlParser extends AbstractParser {
     private static final int MAX_ENTRIES = 10000;
 
     // Option to extract each registry as a sub item.
-    private boolean extractEntries = true;
+    private boolean extractEntries = false;
 
     public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
     public static final MediaType USNJRNL_REPORT_HTM = MediaType.parse("USNJOURNAL/Report-HTML");
