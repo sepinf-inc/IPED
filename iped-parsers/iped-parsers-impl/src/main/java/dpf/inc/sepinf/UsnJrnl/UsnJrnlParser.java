@@ -22,6 +22,11 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 
 public class UsnJrnlParser extends AbstractParser {
+    public enum ReportType {
+        CSV, HTML
+    };
+
+    ReportType reportType = ReportType.CSV;
 
     private static final int MAX_ENTRIES = 10000;
 
@@ -29,7 +34,8 @@ public class UsnJrnlParser extends AbstractParser {
     private boolean extractEntries = true;
 
     public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
-    public static final MediaType USNJRNL_REPORT = MediaType.parse("USNJOURNAL/Report");
+    public static final MediaType USNJRNL_REPORT_HTM = MediaType.parse("USNJOURNAL/Report-HTML");
+    public static final MediaType USNJRNL_REPORT_CSV = MediaType.parse("USNJOURNAL/Report-CSV");
     public static final MediaType USNJRNL_REGISTRY = MediaType.parse("USNJOURNAL/registry");
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(USNJRNL_$J);
@@ -112,11 +118,22 @@ public class UsnJrnlParser extends AbstractParser {
         ReportGenerator rg = new ReportGenerator();
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
-        byte[] bytes = rg.createHTMLReport(entries);
-        ByteArrayInputStream html = new ByteArrayInputStream(bytes);
+        byte[] bytes = null;
+        
 
         Metadata cMetadata = new Metadata();
-        cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT.toString());
+        if (reportType == ReportType.CSV) {
+            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_CSV.toString());
+            bytes = rg.createCSVReport(entries);
+        }
+
+        if (reportType == ReportType.HTML) {
+            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTM.toString());
+            bytes=rg.createHTMLReport(entries);
+        }
+        
+        ByteArrayInputStream html = new ByteArrayInputStream(bytes);
+
         cMetadata.set(TikaCoreProperties.TITLE, "JOURNAL " + n);
 
         extractor.parseEmbedded(html, handler, cMetadata, false);
@@ -158,7 +175,8 @@ public class UsnJrnlParser extends AbstractParser {
                 continue;
             }
 
-            if (entries.size() == MAX_ENTRIES) {
+            // limits the html table size
+            if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
                 createReport(entries, n, context, handler);
                 entries.clear();
                 n++;
