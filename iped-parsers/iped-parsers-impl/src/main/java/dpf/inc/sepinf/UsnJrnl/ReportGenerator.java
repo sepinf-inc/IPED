@@ -5,12 +5,15 @@ import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.util.List;
 
 public class ReportGenerator {
 
     private static final String NEW_ROW = "<TR>"; //$NON-NLS-1$
     private static final String CLOSE_ROW = "</TR>"; //$NON-NLS-1$
+
+    private static final String[] cols = { "FileName", "USN", "TimeStamp", "Reasons", "MTF Ref.", "MTF parent Ref",
+            "File attr", "Source Info", "Security Id" };
 
     public static final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
 
@@ -23,7 +26,7 @@ public class ReportGenerator {
         return newCol(value, "TD");
     }
 
-    public void startDocument(PrintWriter out) {
+    public void startHTMLDocument(PrintWriter out) {
         out.println("<!DOCTYPE html>"); //$NON-NLS-1$
         out.println("<HTML>"); //$NON-NLS-1$
         out.println("<HEAD>"); //$NON-NLS-1$
@@ -37,28 +40,22 @@ public class ReportGenerator {
         out.println("<h2>Usn Journal</h2>"); //$NON-NLS-1$
     }
 
-    public void endDocument(PrintWriter out) {
+    public void endHTMLDocument(PrintWriter out) {
         out.println("</BODY></HTML>"); //$NON-NLS-1$
     }
 
-    public byte[] createHTMLReport(ArrayList<UsnJrnlEntry> entries) {
+    public byte[] createHTMLReport(List<UsnJrnlEntry> entries) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
-        startDocument(out);
+        startHTMLDocument(out);
 
         out.print("<table border=1>");
 
         out.print(NEW_ROW);
-        out.print(newCol("FileName", "TH"));
-        out.print(newCol("USN", "TH"));
-        out.print(newCol("TimeStamp", "TH"));
-        out.print(newCol("Reasons", "TH"));
-        out.print(newCol("MTF Ref.", "TH"));
-        out.print(newCol("MTF parent Ref", "TH"));
-        out.print(newCol("File attr", "TH"));
-        out.print(newCol("Source Info", "TH"));
-        out.print(newCol("Security Id", "TH"));
+        for (String col : cols) {
+            out.print(newCol(col, "TH"));
+        }
         out.print(CLOSE_ROW);
         for (UsnJrnlEntry u : entries) {
             out.print(NEW_ROW);
@@ -76,11 +73,41 @@ public class ReportGenerator {
 
         out.print("</table>");
 
-        endDocument(out);
+        endHTMLDocument(out);
 
-        out.flush();
+        out.close();
         return bout.toByteArray();
 
+    }
+
+    public byte[] createCSVReport(List<UsnJrnlEntry> entries) {
+        ByteArrayOutputStream bout = new ByteArrayOutputStream();
+        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
+        boolean first = true;
+        for (String col : cols) {
+            if (first) {
+                out.print(col);
+                first = false;
+            } else {
+                out.print(";" + col);
+            }
+        }
+        for (UsnJrnlEntry u : entries) {
+            out.print("\n");
+            out.print(u.getFileName() + ";");
+            out.print(u.getUSN() + ";");
+            out.print(timeFormat.format(u.getFileTime()) + ";");
+            out.print(u.getReasons() + ";");
+            out.print(u.getMftRef() + ";");
+            out.print(u.getParentMftRef() + ";");
+            out.print(u.getHumanAttributes() + ";");
+            out.print(u.getSourceInformation() + ";");
+            out.print(u.getSecurityId());
+
+        }
+
+        out.close();
+        return bout.toByteArray();
     }
 
 }
