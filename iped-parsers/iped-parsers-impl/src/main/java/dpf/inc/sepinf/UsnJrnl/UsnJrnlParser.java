@@ -33,10 +33,10 @@ public class UsnJrnlParser extends AbstractParser {
     // Option to extract each registry as a sub item.
     private boolean extractEntries = false;
 
-    public static final MediaType USNJRNL_$J = MediaType.parse("USNJOURNAL/$J");
-    public static final MediaType USNJRNL_REPORT_HTM = MediaType.parse("USNJOURNAL/Report-HTML");
-    public static final MediaType USNJRNL_REPORT_CSV = MediaType.parse("USNJOURNAL/Report-CSV");
-    public static final MediaType USNJRNL_REGISTRY = MediaType.parse("USNJOURNAL/registry");
+    public static final MediaType USNJRNL_$J = MediaType.parse("application/x-usnjournal-$J");
+    public static final MediaType USNJRNL_REPORT_HTM = MediaType.parse("application/x-usnjournal-report-html");
+    public static final MediaType USNJRNL_REPORT_CSV = MediaType.parse("application/x-usnjournal-report-csv");
+    public static final MediaType USNJRNL_REGISTRY = MediaType.parse("application/x-usnjournal-registry");
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(USNJRNL_$J);
 

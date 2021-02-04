@@ -236,23 +236,23 @@
         <glob pattern="msgstore*.db"/>
     </mime-type>
 	
-	<mime-type type="USNJOURNAL/$J">
+	<mime-type type="application/x-usnjournal-$J">
         <glob pattern="$J*"/>
     </mime-type>
 	
-	<mime-type type="USNJOURNAL/Report">
-		<sub-class-of type="USNJOURNAL/$J"/>    
+	<mime-type type="application/x-usnjournal-report">
+		<sub-class-of type="application/x-usnjournal-$J"/>    
     </mime-type>
-	<mime-type type="USNJOURNAL/Report-HTML">
-		<sub-class-of type="USNJOURNAL/Report"/>
+	<mime-type type="application/x-usnjournal-report-html">
+		<sub-class-of type="application/x-usnjournal-report"/>
 		<sub-class-of type="text/html"/>		
     </mime-type>
-	<mime-type type="USNJOURNAL/Report-CSV">
-		<sub-class-of type="USNJOURNAL/Report"/> 
+	<mime-type type="application/x-usnjournal-report-csv">
+		<sub-class-of type="application/x-usnjournal-report"/> 
 		<sub-class-of type="text/csv"/>		
     </mime-type>
-	<mime-type type="USNJOURNAL/registry">
-		<sub-class-of type="USNJOURNAL/$J"/>
+	<mime-type type="application/x-usnjournal-registry">
+		<sub-class-of type="application/x-usnjournal-$J"/>
     </mime-type>
 	
 	
