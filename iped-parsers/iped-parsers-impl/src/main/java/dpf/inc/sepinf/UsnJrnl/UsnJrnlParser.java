@@ -35,7 +35,7 @@ public class UsnJrnlParser extends AbstractParser {
     private boolean extractEntries = false;
 
     public static final MediaType USNJRNL_$J = MediaType.parse("application/x-usnjournal-$J");
-    public static final MediaType USNJRNL_REPORT_HTM = MediaType.parse("application/x-usnjournal-report-html");
+    public static final MediaType USNJRNL_REPORT_HTML = MediaType.parse("application/x-usnjournal-report-html");
     public static final MediaType USNJRNL_REPORT_CSV = MediaType.parse("application/x-usnjournal-report-csv");
     public static final MediaType USNJRNL_REGISTRY = MediaType.parse("application/x-usnjournal-registry");
 
@@ -64,7 +64,7 @@ public class UsnJrnlParser extends AbstractParser {
             }
             in.reset();
 
-            if (b[4] == 2 && b[5] + b[6] + b[7] == 0) {
+            if (b[4] == 2 && (b[5] | b[6] | b[7]) == 0) {
                 return true;
             }
             // advances one byte
@@ -99,7 +99,6 @@ public class UsnJrnlParser extends AbstractParser {
             u.setSizeofFileName(Util.readInt16(in));
             u.setOffsetFilename(Util.readInt16(in));
             if (u.getOffsetFilename() != 0x3c) {
-                System.out.println("error");
                 return null;
             } else {
                 u.setFileName(Util.readString(in, u.getSizeofFileName()));
@@ -132,7 +131,7 @@ public class UsnJrnlParser extends AbstractParser {
         }
 
         if (reportType == ReportType.HTML) {
-            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTM.toString());
+            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
             bytes=rg.createHTMLReport(entries);
         }
         
@@ -166,16 +165,30 @@ public class UsnJrnlParser extends AbstractParser {
         }
     }
 
+    private static final int READ_PAGE = 0XFFFF;
+
+    public void jumpZeros(InputStream in) throws IOException {
+        byte buff[] = new byte[READ_PAGE];
+        int rb = 0;
+        do {
+            in.mark(READ_PAGE + 1);
+            rb = IOUtils.read(in, buff);
+        } while (Util.zero(buff) && rb == READ_PAGE);
+        in.reset();
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
 
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
+        jumpZeros(stream);
         while (findNextEntry(stream)) {
             UsnJrnlEntry u = readEntry(stream);
 
             if (u == null) {
+                // System.out.println("file: " + metadata.toString());
                 continue;
             }
 
