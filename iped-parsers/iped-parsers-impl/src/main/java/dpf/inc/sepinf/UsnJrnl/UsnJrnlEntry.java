@@ -28,49 +28,45 @@ public class UsnJrnlEntry {
     }
 
     private void initHashMaps() {
-        reasonFlags.put(0x01, "The file was overwritten");
-        reasonFlags.put(0x02, "The file or directory was added to");
-        reasonFlags.put(0x04, "The file or directory was truncated");
-        reasonFlags.put(0x10, "The named data streams for a file is overwritten");
-        reasonFlags.put(0x20, "A named data streams for the file were added");
-        reasonFlags.put(0x40, "A named data streams for the file was truncated");
-        reasonFlags.put(0x100, "The file or directory was created for the first time");
-        reasonFlags.put(0x200, "The file or directory was deleted");
-        reasonFlags.put(0x400, "The file's or directory's extended attributes were changed");
-        reasonFlags.put(0x800, "The access rights to the file or directory was changed");
-        reasonFlags.put(0x1000, "The file or directory was renamed(previous name)");
-        reasonFlags.put(0x2000, "The file or directory was renamed(new name)");
-        reasonFlags.put(0x4000, "A user changed the FILE_ATTRIBUTE_NOT_CONTENT_INDEXED attribute");
-        reasonFlags.put(0x8000,
-                "A user has either changed one or more file or directory attributes or one or more time stamps");
-        reasonFlags.put(0x10000, "A hard link was added to or removed from the file or directory");
-        reasonFlags.put(0x20000, "The compression state of the file or directory was changed from or to compressed.");
-        reasonFlags.put(0x40000, "The file or directory was encrypted or decrypted");
-        reasonFlags.put(0x80000, "The object identifier of the file or directory was changed");
-        reasonFlags.put(0x100000,
-                "The reparse point contained in the file or directory was changed, or a reparse point was added to or deleted from the file ordirectory");
-        reasonFlags.put(0x200000,
-                "A named stream has been added to or removed from the file, or a named stream has been renamed.");
-        reasonFlags.put(0x80000000, "The file or directory was closed");
+        reasonFlags.put(0x01, "DATA_OVERWRITE");
+        reasonFlags.put(0x02, "DATA_EXTEND");
+        reasonFlags.put(0x04, "DATA_TRUNCATION");
+        reasonFlags.put(0x10, "NAMED_DATA_OVERWRITE");
+        reasonFlags.put(0x20, "NAMED_DATA_EXTEND");
+        reasonFlags.put(0x40, "NAMED_DATA_TRUNCATION");
+        reasonFlags.put(0x100, "FILE_CREATE");
+        reasonFlags.put(0x200, "FILE_DELETE");
+        reasonFlags.put(0x400, "EXTENDED_ATTRIBUTE_CHANGE");
+        reasonFlags.put(0x800, "SECURITY_CHANGE");
+        reasonFlags.put(0x1000, "RENAME_OLD_NAME");
+        reasonFlags.put(0x2000, "RENAME_NEW_NAME");
+        reasonFlags.put(0x4000, "INDEXABLE_CHANGE");
+        reasonFlags.put(0x8000, "BASIC_INFO_CHANGE");
+        reasonFlags.put(0x10000, "HARD_LINK_CHANGE");
+        reasonFlags.put(0x20000, "COMPRESSION_CHANGE");
+        reasonFlags.put(0x40000, "ENCRYPTION_CHANGE");
+        reasonFlags.put(0x80000, "OBJECT_ID_CHANGE");
+        reasonFlags.put(0x100000, "REPARSE_POINT_CHANGE");
+        reasonFlags.put(0x200000, "STREAM_CHANGE");
+        reasonFlags.put(0x80000000, "CLOSE");
 
         fileAttributesToString.put(0x01, "READONLY");
         fileAttributesToString.put(0x02, "HIDDEN");
         fileAttributesToString.put(0x04, "SYSTEM");
-        fileAttributesToString.put(0x10, "DIRECTORY_ID");
-        fileAttributesToString.put(0x20, "FILE/DIRECTORY");
-        fileAttributesToString.put(0x40, "RESERVED");
-        fileAttributesToString.put(0x80, "A file that does not have other attributes set");
+        fileAttributesToString.put(0x10, "DIRECTORY");
+        fileAttributesToString.put(0x20, "ARCHIVE");
+        fileAttributesToString.put(0x40, "DEVICE");
+        fileAttributesToString.put(0x80, "NORMAL");
         fileAttributesToString.put(0x100, "TEMPORARY");
-        fileAttributesToString.put(0x200, "SPARSE");
-        fileAttributesToString.put(0x400, "SYMBOLIC");
+        fileAttributesToString.put(0x200, "SPARSE_FILE");
+        fileAttributesToString.put(0x400, "REPARSE_POINT");
         fileAttributesToString.put(0x800, "COMPRESSED");
         fileAttributesToString.put(0x1000, "OFFILINE_STORAGE");
         fileAttributesToString.put(0x2000, "NOT_INDEXED");
         fileAttributesToString.put(0x4000, "ENCRYPTED");
-        fileAttributesToString.put(0x8000, "INTEGRITY");
-        fileAttributesToString.put(0x10000, "RESERVED");
-        fileAttributesToString.put(0x20000,
-                "The user data stream not to be read by the background data integrity scanner");
+        fileAttributesToString.put(0x8000, "INTEGRITY_STREAM");
+        fileAttributesToString.put(0x10000, "VIRTUAL");
+        fileAttributesToString.put(0x20000, "NO_SCRUB_DATA");
 
     }
 
