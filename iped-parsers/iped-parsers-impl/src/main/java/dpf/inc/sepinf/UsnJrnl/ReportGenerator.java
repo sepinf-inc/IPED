@@ -15,7 +15,7 @@ public class ReportGenerator {
     private static final String[] cols = { "FileName", "USN", "TimeStamp", "Reasons", "MTF Ref.", "MTF parent Ref",
             "File attr", "Source Info", "Security Id" };
 
-    public static final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
+    public final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
 
     private static final String newCol(String value, String tag) {
 

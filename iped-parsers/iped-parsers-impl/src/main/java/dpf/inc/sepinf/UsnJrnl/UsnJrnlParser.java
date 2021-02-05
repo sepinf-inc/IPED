@@ -149,7 +149,7 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
     
 
-                metadataItem.set(TikaCoreProperties.CREATED, ReportGenerator.timeFormat.format(entry.getFileTime()));
+                metadataItem.set(TikaCoreProperties.CREATED, rg.timeFormat.format(entry.getFileTime()));
                 metadataItem.set("FileName", entry.getFileName());
                 metadataItem.set("USN", entry.getUSN() + "");
                 metadataItem.set("MTF Ref", entry.getMftRef() + "");
