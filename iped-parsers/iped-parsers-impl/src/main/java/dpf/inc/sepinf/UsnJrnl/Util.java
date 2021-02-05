@@ -32,11 +32,11 @@ public class Util {
 
     public static long readInt32(InputStream in, boolean bigEndian) throws IOException {
         
-        int i = 0;
+        long i = 0;
         byte len = 4;
         byte[] b = IOUtils.readFully(in, len);
         for (int j = 0; j < len; j++) {
-            int a = b[j];
+            long a = b[j];
             a = a & 0xFF;
 
             if (!bigEndian) {
