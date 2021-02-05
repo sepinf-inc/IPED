@@ -237,7 +237,8 @@
     </mime-type>
 	
 	<mime-type type="application/x-usnjournal-$J">
-        <glob pattern="$J*"/>
+        <glob pattern="$UsnJrnl:$J"/>
+		<glob pattern="$J"/>
     </mime-type>
 	
 	<mime-type type="application/x-usnjournal-report">
