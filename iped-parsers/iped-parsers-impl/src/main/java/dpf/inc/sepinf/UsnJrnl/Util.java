@@ -11,7 +11,7 @@ public class Util {
         return readInt16(in, false);
     }
 
-    public static int readInt32(InputStream in) throws IOException {
+    public static long readInt32(InputStream in) throws IOException {
         return readInt32(in, false);
     }
 
@@ -20,22 +20,24 @@ public class Util {
     }
 
     public static int readInt16(InputStream in, boolean bigEndian) throws IOException {
-       
+
         int b1 = in.read(), b2 = in.read();
         if (!bigEndian) {
-            return b1 + (b2 << 8);
+            return b1 | (b2 << 8);
         } else {
-            return b2 + (b1 << 8);
+            return b2 | (b1 << 8);
         }
        
     }
 
-    public static int readInt32(InputStream in, boolean bigEndian) throws IOException {
+    public static long readInt32(InputStream in, boolean bigEndian) throws IOException {
         
         int i = 0;
         byte len = 4;
+        byte[] b = IOUtils.readFully(in, len);
         for (int j = 0; j < len; j++) {
-            int a = in.read();
+            int a = b[j];
+            a = a & 0xFF;
 
             if (!bigEndian) {
                 i |= (a << (j * 8));
@@ -52,8 +54,10 @@ public class Util {
       
         long i = 0;
         byte len = 8;
+        byte[] b = IOUtils.readFully(in, len);
         for (int j = 0; j < len; j++) {
-            long a = in.read();
+            long a = b[j];
+            a = a & 0xFF;
             if (!bigEndian) {
                 i |= (a << (j * 8L));
             } else {
