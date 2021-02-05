@@ -12,10 +12,10 @@ public class UsnJrnlEntry {
     private long parentMftRef;
     private long USN;
     private Date fileTime;
-    private int reasonFlag;
-    private int sourceInformation;
-    private int securityId;
-    private int fileAttributes;
+    private long reasonFlag;
+    private long sourceInformation;
+    private long securityId;
+    private long fileAttributes;
     private int sizeofFileName;
     private int offsetFilename;
     private String fileName;
@@ -170,35 +170,35 @@ public class UsnJrnlEntry {
         this.fileTime = new Date(filetimeToMillis(fileTime));
     }
 
-    public int getReasonFlag() {
+    public long getReasonFlag() {
         return reasonFlag;
     }
 
-    public void setReasonFlag(int reasonFlag) {
+    public void setReasonFlag(long reasonFlag) {
         this.reasonFlag = reasonFlag;
     }
 
-    public int getSourceInformation() {
+    public long getSourceInformation() {
         return sourceInformation;
     }
 
-    public void setSourceInformation(int sourceInformation) {
+    public void setSourceInformation(long sourceInformation) {
         this.sourceInformation = sourceInformation;
     }
 
-    public int getSecurityId() {
+    public long getSecurityId() {
         return securityId;
     }
 
-    public void setSecurityId(int securityId) {
+    public void setSecurityId(long securityId) {
         this.securityId = securityId;
     }
 
-    public int getFileAttributes() {
+    public long getFileAttributes() {
         return fileAttributes;
     }
 
-    public void setFileAttributes(int fileAttributes) {
+    public void setFileAttributes(long fileAttributes) {
         this.fileAttributes = fileAttributes;
     }
 

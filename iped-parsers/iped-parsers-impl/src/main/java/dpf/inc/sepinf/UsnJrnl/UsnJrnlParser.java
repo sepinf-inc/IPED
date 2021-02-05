@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -54,11 +55,10 @@ public class UsnJrnlParser extends AbstractParser {
 
     public boolean findNextEntry(InputStream in) throws IOException {
         byte[] b = new byte[8];
-        int rb = -1;
+        int rb = 0;
         do {
             in.mark(8);
-            rb = in.read(b, 0, 8);
-
+            rb = IOUtils.read(in, b, 0, 8);
             if (Util.zero(b)) {
                 continue;
             }
@@ -67,20 +67,22 @@ public class UsnJrnlParser extends AbstractParser {
             if (b[4] == 2 && b[5] + b[6] + b[7] == 0) {
                 return true;
             }
+            // advances one byte
             in.read();
 
-        } while (rb == 8);
+        } while (rb > 0);
 
         return false;
     }
 
     public UsnJrnlEntry readEntry(InputStream in) throws IOException {
         in.mark(4);
-        int tam = Util.readInt32(in);
+        int tam = (int) Util.readInt32(in);
         in.reset();
-        in.mark(tam);
-        in.skip(4);
+
         if (tam > 0) {
+            in.mark(tam);
+            IOUtils.skipFully(in, 4);
             UsnJrnlEntry u = new UsnJrnlEntry();
             u.setTam(tam);
             u.setMajorVersion(Util.readInt16(in));
@@ -108,6 +110,8 @@ public class UsnJrnlParser extends AbstractParser {
                 tam -= in.skip(tam);
             }
             return u;
+        } else {
+            IOUtils.skipFully(in, 4);
         }
 
         return null;
