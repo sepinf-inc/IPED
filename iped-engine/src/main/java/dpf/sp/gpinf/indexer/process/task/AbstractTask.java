@@ -62,8 +62,6 @@ public abstract class AbstractTask {
     protected AbstractTask nextTask;
 
     private long taskTime;
-    
-    private boolean decremented;
 
     private HashMap<Integer, Long> subitemProcessingTime = new HashMap<Integer, Long>();
 
@@ -150,12 +148,14 @@ public abstract class AbstractTask {
             Thread.sleep(1000);
         }
 
-        if (this == worker.firstTask) {
+        if (this == worker.firstTask && !evidence.isQueueEnd()) {
             worker.itensBeingProcessed++;
         }
 
         AbstractTask prevTask = worker.runningTask;
+        IItem prevEvidence = worker.evidence;
         worker.runningTask = this;
+        worker.evidence = evidence;
 
         if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
             long t = System.nanoTime() / 1000;
@@ -167,9 +167,9 @@ public abstract class AbstractTask {
             taskTime += System.nanoTime() / 1000 - t - subitensTime;
         }
 
-        decremented = false;
         sendToNextTask(evidence);
 
+        worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
         // ESTATISTICAS
@@ -188,7 +188,7 @@ public abstract class AbstractTask {
             }
         }
         
-        if(nextTask == null && !decremented)
+        if (nextTask == null && !evidence.isQueueEnd())
             worker.itensBeingProcessed--;
     }
 
@@ -208,8 +208,9 @@ public abstract class AbstractTask {
             else {
                 evidence.dispose();
                 caseData.addItemToQueue(evidence, priority);
-                worker.itensBeingProcessed--;
-                decremented = true;
+                if (!evidence.isQueueEnd()) {
+                    worker.itensBeingProcessed--;
+                }
             }
         }
     }
@@ -225,7 +226,7 @@ public abstract class AbstractTask {
      */
     private void processMonitorTimeout(IItem evidence) throws Exception {
         try {
-            if(!evidence.isQueueEnd())
+            if (!evidence.isQueueEnd() || processQueueEnd())
                 this.process(evidence);
 
         } catch (TimeoutException e) {
@@ -257,6 +258,10 @@ public abstract class AbstractTask {
      * @return se a tarefa deve processar um item ignorado.
      */
     protected boolean processIgnoredItem() {
+        return false;
+    }
+
+    protected boolean processQueueEnd() {
         return false;
     }
 

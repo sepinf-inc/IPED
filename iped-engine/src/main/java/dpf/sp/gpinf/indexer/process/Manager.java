@@ -426,14 +426,14 @@ public class Manager {
                  * detectado o problema no log de estatísticas e o usuario sera informado do
                  * erro.
                  */
-                if (workers[k].evidence != null) // if(workers[k].isAlive())
+                if (workers[k].evidence != null || workers[k].itensBeingProcessed > 0)
                     someWorkerAlive = true;
             }
             
             IItem queueEnd = caseData.getItemQueue().peek();
-            boolean queueEmpty = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
-            
-            if(!queueEmpty || produtor.isAlive())
+            boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+
+            if (!justQueueEndLeft || produtor.isAlive())
                 someWorkerAlive = true;
 
             if (!someWorkerAlive) {
@@ -513,7 +513,7 @@ public class Manager {
         return t;
     }
 
-    public int numItensBeingProcessed() {
+    public synchronized int numItensBeingProcessed() {
         int num = 0;
         for (int k = 0; k < workers.length; k++) {
             num += workers[k].itensBeingProcessed;
