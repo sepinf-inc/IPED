@@ -7,11 +7,13 @@ import java.awt.Rectangle;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -424,6 +426,30 @@ public class ImageUtil {
         }
         g2.dispose();
         return fit;
+    }
+
+    public static List<byte[]> getBmpFrames(File videoFramesFile) throws IOException {
+        ArrayList<byte[]> result = new ArrayList<>();
+        List<BufferedImage> frames = getFrames(videoFramesFile);
+        if (frames != null) {
+            for (BufferedImage frame : frames) {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                ImageIO.write(frame, "bmp", baos);
+                result.add(baos.toByteArray());
+            }
+        }
+        return result;
+    }
+
+    public static List<BufferedImage> getFrames(File videoFramesFile) throws IOException {
+        Object[] read = ImageUtil.readJpegWithMetaData(videoFramesFile);
+        if (read != null && read.length == 2) {
+            String videoComment = (String) read[1];
+            if (videoComment != null && videoComment.startsWith("Frames=")) {
+                return ImageUtil.getFrames((BufferedImage) read[0], videoComment);
+            }
+        }
+        return null;
     }
 
     public static List<BufferedImage> getFrames(BufferedImage img, String comment) {
