@@ -421,14 +421,20 @@ public class VideoThumbTask extends ThumbTask {
             if (r == null)
                 r = new VideoProcessResult();
 
+            boolean mainOutFileExists = mainOutFile != null && mainOutFile.exists();
+
             // Atualiza atributo HasThumb do item
             evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
-            if (r.isSuccess())
+            if (r.isSuccess()) {
                 saveMetadata(r, evidence.getMetadata());
+                if (mainOutFileExists) {
+                    evidence.setViewFile(mainOutFile);
+                }
+            }
 
             // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
             // with fewer frames
-            if (galleryThumbWidth > 0 && mainOutFile != null && mainOutFile.exists()) {
+            if (galleryThumbWidth > 0 && mainOutFileExists) {
                 try {
                     long t = System.currentTimeMillis();
                     Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
