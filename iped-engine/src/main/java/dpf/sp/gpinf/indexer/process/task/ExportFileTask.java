@@ -326,6 +326,9 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void copyViewFile(IItem evidence) {
+        if (!caseData.isIpedReport()) {
+            return;
+        }
         File viewFile = evidence.getViewFile();
         if (viewFile != null) {
             String viewName = viewFile.getName();

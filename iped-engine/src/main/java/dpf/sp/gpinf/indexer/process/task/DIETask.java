@@ -230,7 +230,7 @@ public class DIETask extends AbstractTask {
                     return;
                 }
                 //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
-                File viewFile = Util.getFileFromHash(new File(output, "view"), evidence.getHash(), "jpg");
+                File viewFile = evidence.getViewFile();
                 if (viewFile != null && viewFile.exists()) {
                     Object[] read = ImageUtil.readJpegWithMetaData(viewFile);
                     if (read != null && read.length == 2) {
