@@ -6,8 +6,11 @@ import java.util.Properties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
@@ -18,14 +21,13 @@ public class PythonTask extends AbstractTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
 
-    private static boolean finished;
     private static String scriptName;
 
     private File scriptFile;
     private Jep jep;
-
     private Properties confParams;
     private File confDir;
+    private Boolean processQueueEnd;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -40,7 +42,7 @@ public class PythonTask extends AbstractTask {
     private void loadScript() throws JepException {
 
         if (scriptName == null) {
-            try (Jep jep = getNewJep()) {
+            try (Jep jep = getNewJep(false)) {
                 scriptName = (String) jep.invoke("getName");
             }
         }
@@ -81,13 +83,18 @@ public class PythonTask extends AbstractTask {
         }
     }
 
-    private Jep getNewJep() throws JepException {
+    private Jep getNewJepSync() throws JepException {
+        synchronized (this.getClass()) {
+            return getNewJep(true);
+        }
+    }
+
+    private Jep getNewJep(boolean callInit) throws JepException {
+
         Jep jep = new SharedInterpreter();
-        jep.setInteractive(false);
 
         jep.eval("from jep import redirect_streams");
         jep.eval("redirect_streams.setup()");
-        jep.eval(null); // flush
 
         jep.set("caseData", this.caseData); //$NON-NLS-1$
         jep.set("moduleDir", this.output); //$NON-NLS-1$
@@ -96,10 +103,15 @@ public class PythonTask extends AbstractTask {
         jep.set("logger", LOGGER); //$NON-NLS-1$
         jep.set("javaArray", new ArrayConverter()); //$NON-NLS-1$
         jep.set("javaTask", this); //$NON-NLS-1$
+        jep.set("ImageUtil", new ImageUtil()); //$NON-NLS-1$
+
+        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
+                .iterator().next();
+        jep.set("numThreads", Integer.valueOf(localConfig.getNumThreads()));
 
         jep.runScript(scriptFile.getAbsolutePath());
 
-        if (confParams != null && confDir != null) {
+        if (callInit) {
             jep.invoke("init", confParams, confDir);
         }
 
@@ -115,27 +127,24 @@ public class PythonTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         this.confParams = confParams;
         this.confDir = confDir;
-        try (Jep jep = getNewJep()) {
+        try (Jep jep = getNewJep(true)) {
         }
     }
 
     @Override
     public void finish() throws Exception {
 
-        if (finished)
-            return;
-
-        try (Jep jep = getNewJep(); IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
+        try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
 
             IPEDSearcher searcher = new IPEDSearcher(ipedCase);
 
             jep.set("ipedCase", ipedCase); //$NON-NLS-1$
             jep.set("searcher", searcher); //$NON-NLS-1$
-
             jep.invoke("finish"); //$NON-NLS-1$
 
         } finally {
-            finished = true;
+            jep.close();
+            jep = null;
         }
 
     }
@@ -167,16 +176,28 @@ public class PythonTask extends AbstractTask {
     }
 
     @Override
+    protected boolean processQueueEnd() {
+        if (processQueueEnd == null) {
+            try {
+                processQueueEnd = (Boolean) jep.invoke("processQueueEnd"); //$NON-NLS-1$
+            } catch (JepException e) {
+                processQueueEnd = false;
+            }
+        }
+        return processQueueEnd;
+    }
+
+    @Override
     protected void process(IItem item) throws Exception {
+
         if (jep == null)
-            jep = getNewJep();
+            jep = getNewJepSync();
 
         try {
             jep.invoke("process", item); //$NON-NLS-1$
 
         } catch (JepException e) {
-            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString());
-            LOGGER.debug("", e);
+            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString(), e);
         }
     }
 
