@@ -352,6 +352,8 @@ public class VideoThumbTask extends ThumbTask {
             return;
         }
 
+        File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
+
         // Verifica se outro vídeo igual foi ou está em processamento
         synchronized (processedVideos) {
             if (processedVideos.containsKey(evidence.getHash())) {
@@ -362,6 +364,7 @@ public class VideoThumbTask extends ThumbTask {
                 evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
                 if (r.isSuccess()) {
                     saveMetadata(r, evidence.getMetadata());
+                    evidence.setViewFile(mainOutFile);
                     File thumbFile = getThumbFile(evidence);
                     hasThumb(evidence, thumbFile);
                 }
@@ -373,10 +376,8 @@ public class VideoThumbTask extends ThumbTask {
 
         // Chama o método de extração de cenas
         File mainTmpFile = null;
-        File mainOutFile = null;
         VideoProcessResult r = null;
         try {
-            mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
             if (!mainOutFile.getParentFile().exists()) {
                 mainOutFile.getParentFile().mkdirs();
             }
@@ -421,20 +422,16 @@ public class VideoThumbTask extends ThumbTask {
             if (r == null)
                 r = new VideoProcessResult();
 
-            boolean mainOutFileExists = mainOutFile != null && mainOutFile.exists();
-
             // Atualiza atributo HasThumb do item
             evidence.setExtraAttribute(HAS_THUMB, r.isSuccess());
             if (r.isSuccess()) {
                 saveMetadata(r, evidence.getMetadata());
-                if (mainOutFileExists) {
-                    evidence.setViewFile(mainOutFile);
-                }
+                evidence.setViewFile(mainOutFile);
             }
 
             // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
             // with fewer frames
-            if (galleryThumbWidth > 0 && mainOutFileExists) {
+            if (galleryThumbWidth > 0 && r.isSuccess()) {
                 try {
                     long t = System.currentTimeMillis();
                     Object[] read = ImageUtil.readJpegWithMetaData(mainOutFile);
