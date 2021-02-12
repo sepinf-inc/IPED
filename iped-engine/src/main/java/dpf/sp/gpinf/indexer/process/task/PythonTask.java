@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,33 +21,17 @@ import jep.SharedInterpreter;
 public class PythonTask extends AbstractTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
-
-    private static String scriptName;
+    private static AtomicBoolean jepChecked = new AtomicBoolean();
 
     private File scriptFile;
     private Jep jep;
     private Properties confParams;
     private File confDir;
     private Boolean processQueueEnd;
+    private boolean isEnabled = true;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
-        try {
-            loadScript();
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void loadScript() throws JepException {
-
-        if (scriptName == null) {
-            try (Jep jep = getNewJep(false)) {
-                scriptName = (String) jep.invoke("getName");
-            }
-        }
-
     }
 
     private class ArrayConverter {
@@ -83,15 +68,30 @@ public class PythonTask extends AbstractTask {
         }
     }
 
-    private Jep getNewJepSync() throws JepException {
-        synchronized (this.getClass()) {
-            return getNewJep(true);
+    private Jep getJep() throws JepException {
+        if (jep == null) {
+            synchronized (this.getClass()) {
+                jep = getNewJep(true);
+            }
         }
+        return jep;
     }
 
     private Jep getNewJep(boolean callInit) throws JepException {
 
-        Jep jep = new SharedInterpreter();
+        Jep jep;
+        try {
+            jep = new SharedInterpreter();
+
+        } catch (UnsatisfiedLinkError e) {
+            if (!jepChecked.getAndSet(true)) {
+                LOGGER.error(
+                        "JEP not found, all python modules will be disabled. If you want to enable them see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules");
+                e.printStackTrace();
+            }
+            isEnabled = false;
+            return null;
+        }
 
         jep.eval("from jep import redirect_streams");
         jep.eval("redirect_streams.setup()");
@@ -113,6 +113,7 @@ public class PythonTask extends AbstractTask {
 
         if (callInit) {
             jep.invoke("init", confParams, confDir);
+            isEnabled = (Boolean) jep.invoke("isEnabled"); //$NON-NLS-1$
         }
 
         return jep;
@@ -120,7 +121,7 @@ public class PythonTask extends AbstractTask {
 
     @Override
     public String getName() {
-        return scriptName; // $NON-NLS-1$
+        return scriptFile.getName();
     }
 
     @Override
@@ -157,7 +158,8 @@ public class PythonTask extends AbstractTask {
     
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
-        if(!methodExists) {
+
+        if (!isEnabled || !methodExists) {
             super.sendToNextTask(item);
             return;
         }
@@ -170,16 +172,21 @@ public class PythonTask extends AbstractTask {
                 super.sendToNextTask(item);
                 return;
             }
-            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString());
+            LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString());
             LOGGER.debug("", e);
         }
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return isEnabled;
     }
 
     @Override
     protected boolean processQueueEnd() {
         if (processQueueEnd == null) {
             try {
-                processQueueEnd = (Boolean) jep.invoke("processQueueEnd"); //$NON-NLS-1$
+                processQueueEnd = (Boolean) getJep().invoke("processQueueEnd"); //$NON-NLS-1$
             } catch (JepException e) {
                 processQueueEnd = false;
             }
@@ -189,15 +196,11 @@ public class PythonTask extends AbstractTask {
 
     @Override
     protected void process(IItem item) throws Exception {
-
-        if (jep == null)
-            jep = getNewJepSync();
-
         try {
-            jep.invoke("process", item); //$NON-NLS-1$
+            getJep().invoke("process", item); //$NON-NLS-1$
 
         } catch (JepException e) {
-            LOGGER.warn("Exception from " + scriptName + " on " + item.getPath() + ": " + e.toString(), e);
+            LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString(), e);
         }
     }
 

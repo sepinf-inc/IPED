@@ -27,6 +27,13 @@ enableProjectVicHashLookup = false
 # and classeNudez (1 to 5) for ranking and/or filtering.
 enableLedDie = false
 
+# Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
+# You MUST install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
+# This is about 7.5 times slower than LedDie algorithm on the CPU, using a good GPU is recommended.
+# It has better accuracy for some images and videos, worse for others.
+# An attribute nsfw_nudity_score from 0 to 100 will be created.
+enableYahooNSFWDetection = false
+
 # Excludes from the rest of processing (and from the case) ignorable files according hashes database.
 excludeKffIgnorable = true
 
