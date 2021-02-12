@@ -28,6 +28,7 @@ videoFramesTime = 0
 arrayConvTime = 0
 predictTime = 0
 loadImgTime = 0
+queued = False
 
 def __flatten(name, input):
     if input.shape.ndims > 2: return layers.Flatten(name = name)(input)
@@ -50,6 +51,9 @@ def loadModel():
 		model.predict(x)
 		caseData.putCaseObject('nsfw_model', model)
 		logger.info('Loaded NSFW model ' + file)
+		from java.util.concurrent import ConcurrentHashMap
+		cache = ConcurrentHashMap()
+		caseData.putCaseObject('nsfw_score_cache', cache)
 	
 	return model
 
@@ -107,11 +111,7 @@ def loadRawImage(input):
 	
 def sendToNextTask(item):
 	
-	if (not item.isQueueEnd() and not supported(item)) or item.getExtraAttribute('nsfw_error') is not None:
-		javaTask.sendToNextTaskSuper(item)
-		return
-		
-	if isSupportedVideo(item):
+	if not item.isQueueEnd() and not queued:
 		javaTask.sendToNextTaskSuper(item)
 		return
 	
@@ -131,11 +131,21 @@ def isToProcessBatch(item):
 	return size >= batchSize or (size > 0 and item.isQueueEnd())
 
 def process(item):
+	
+	global queued
+	queued = False
 
 	if not item.isQueueEnd() and not supported(item):
 		return
 		
 	try:
+		if item.getHash() is not None:
+			cache = caseData.getCaseObject('nsfw_score_cache')
+			score = cache.get(item.getHash())
+			if score is not None:
+				item.setExtraAttribute('nsfw_nudity_score', score)
+				return
+		
 		#print('Processing ' + item.getPath())
 		img = None
 		
@@ -147,7 +157,7 @@ def process(item):
 			img_path = item.getTempFile().getAbsolutePath()
 			img = image.load_img(img_path, target_size=targetSize)
 			
-		if isImage(item) and useImageThumbs and item.getThumb() is not None:
+		if isImage(item) and useImageThumbs and item.getExtraAttribute('hasThumb'):
 			input = convertJavaByteArray(item.getThumb())
 			img = loadRawImage(input)
 			
@@ -159,6 +169,7 @@ def process(item):
 			x = image.img_to_array(img)
 			imageList.append(x)
 			itemList.append(item)
+			queued = True
 		
 	except Exception as e:
 		item.setExtraAttribute('nsfw_error', 2)
@@ -188,6 +199,8 @@ def processVideoFrames(item):
 	
 	finalScore = videoScore(scores)
 	item.setExtraAttribute('nsfw_nudity_score', finalScore)
+	cache = caseData.getCaseObject('nsfw_score_cache')
+	cache.put(item.getHash(), finalScore)
 	
 def videoScore(scores):
 	scores.sort(reverse=True)
@@ -206,8 +219,11 @@ def videoScore(scores):
 def processImages(imageList, itemList):
 	logger.info('Processing batch of ' + str(len(imageList)) + " images.")
 	preds = makePrediction(imageList)
+	cache = caseData.getCaseObject('nsfw_score_cache')
 	for i in range(len(itemList)):
-		itemList[i].setExtraAttribute('nsfw_nudity_score', preds[i][1] * 100)
+		score = preds[i][1] * 100
+		itemList[i].setExtraAttribute('nsfw_nudity_score', score)
+		cache.put(itemList[i].getHash(), score)
 	
 	
 def makePrediction(list):
