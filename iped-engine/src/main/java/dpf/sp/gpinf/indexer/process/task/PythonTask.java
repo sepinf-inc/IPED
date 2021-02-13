@@ -135,6 +135,9 @@ public class PythonTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
 
+        if (!isEnabled)
+            return;
+
         try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
 
             IPEDSearcher searcher = new IPEDSearcher(ipedCase);
