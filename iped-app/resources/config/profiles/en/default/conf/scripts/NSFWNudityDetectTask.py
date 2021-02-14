@@ -181,18 +181,19 @@ def processVideoFrames(item):
 	frames = ImageUtil.getBmpFrames(item.getViewFile())
 	videoFramesTime += time.time() - t 
 	list = []
-	for i in range(frames.size()):
+	scores = []
+	numFrames = frames.size()
+	for i in range(numFrames):
 		input = convertJavaByteArray(frames.get(i))
 		img = loadRawImage(input)
 		from keras.preprocessing import image
 		x = image.img_to_array(img)
 		list.append(x)
-		
-	preds = makePrediction(list)
-	
-	scores = []
-	for i in range(len(list)):
-		scores.append(preds[i][1])
+		if batchSize == 1 or (i > 0 and i % batchSize == 0) or i == (numFrames - 1):
+			preds = makePrediction(list)
+			for i in range(len(list)):
+				scores.append(preds[i][1])
+			list.clear()
 	
 	finalScore = videoScore(scores)
 	item.setExtraAttribute('nsfw_nudity_score', finalScore)
