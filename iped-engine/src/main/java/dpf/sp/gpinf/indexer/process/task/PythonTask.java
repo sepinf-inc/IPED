@@ -1,7 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.Properties;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -199,12 +201,44 @@ public class PythonTask extends AbstractTask {
 
     @Override
     protected void process(IItem item) throws Exception {
+
         try {
             getJep().invoke("process", item); //$NON-NLS-1$
 
         } catch (JepException e) {
             LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString(), e);
+
         }
+    }
+
+    private static HashMap<File, Semaphore> semaphorePerScript = new HashMap<>();
+
+    private Semaphore getSemaphore() {
+        synchronized (semaphorePerScript) {
+            Semaphore semaphore = semaphorePerScript.get(scriptFile);
+            if (semaphore == null) {
+                semaphore = new Semaphore(getMaxPermits());
+                semaphorePerScript.put(scriptFile, semaphore);
+            }
+            return semaphore;
+        }
+    }
+
+    private int getMaxPermits() {
+        try {
+            return ((Number) getJep().invoke("getMaxPermits")).intValue();
+
+        } catch (JepException e) {
+            return Integer.MAX_VALUE;
+        }
+    }
+
+    public void acquirePermit() throws InterruptedException {
+        getSemaphore().acquire();
+    }
+
+    public void releasePermit() {
+        getSemaphore().release();
     }
 
 }
