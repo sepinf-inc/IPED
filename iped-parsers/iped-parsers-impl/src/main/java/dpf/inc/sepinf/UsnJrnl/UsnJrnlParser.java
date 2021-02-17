@@ -29,8 +29,10 @@ public class UsnJrnlParser extends AbstractParser {
         CSV, HTML
     };
 
-    ReportType reportType = ReportType.CSV;
+    // select if the report will be in CSV or HTML format
+    private ReportType reportType = ReportType.CSV;
 
+    // max entries for html report
     private static final int MAX_ENTRIES = 10000;
 
     // Option to extract each registry as a sub item.
@@ -68,8 +70,12 @@ public class UsnJrnlParser extends AbstractParser {
             }
 
             in.reset();
-            // usn entry version 2
+            // usn entry version 2.0
             if (b[4] == 2 && (b[5] | b[6] | b[7]) == 0) {
+                return true;
+            }
+            // usn entry version 3.0
+            if (b[4] == 3 && (b[5] | b[6] | b[7]) == 0) {
                 return true;
             }
             // advances one byte
@@ -90,8 +96,12 @@ public class UsnJrnlParser extends AbstractParser {
             u.setOffset(pos);
             u.setMajorVersion(Util.readInt16(in));
             u.setMinorVersion(Util.readInt16(in));
-            u.setMftRef(Util.readInt64(in));
-            u.setParentMftRef(Util.readInt64(in));
+            int filerefLen = 8;
+            if (u.getMajorVersion() == 3) {
+                filerefLen = 16;
+            }
+            u.setMftRef(IOUtils.readFully(in, filerefLen));
+            u.setParentMftRef(IOUtils.readFully(in, filerefLen));
             u.setUSN(Util.readInt64(in));
             long filetime = Util.readInt64(in);
             u.setFileTime(filetime);
@@ -192,7 +202,7 @@ public class UsnJrnlParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        try {
+
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
         IItemBase item = context.get(IItemBase.class);
@@ -200,9 +210,8 @@ public class UsnJrnlParser extends AbstractParser {
         jumpZeros(sis, 0, sis.size());
         while (findNextEntry(sis)) {
             UsnJrnlEntry u = readEntry(sis);
-
+            // do not insert empty registries in the list
             if (u == null) {
-                // System.out.println("file: " + metadata.toString());
                 continue;
             }
 
@@ -219,11 +228,7 @@ public class UsnJrnlParser extends AbstractParser {
         if (entries.size() > 0) {
             createReport(entries, n, context, handler);
         }
-    } catch (Exception e) {
-        // TODO: handle exception
-        System.out.println("ola mundo");
-        e.printStackTrace();
-    }
+
 
     }
 

@@ -8,8 +8,8 @@ public class UsnJrnlEntry {
     private int tam;
     private int majorVersion;
     private int minorVersion;
-    private long mftRef;
-    private long parentMftRef;
+    private byte[] mftRef;
+    private byte[] parentMftRef;
     private long USN;
     private Date fileTime;
     private long reasonFlag;
@@ -120,19 +120,19 @@ public class UsnJrnlEntry {
         this.minorVersion = minorVersion;
     }
 
-    public long getMftRef() {
+    public byte[] getMftRef() {
         return mftRef;
     }
 
-    public void setMftRef(long mftRef) {
+    public void setMftRef(byte[] mftRef) {
         this.mftRef = mftRef;
     }
 
-    public long getParentMftRef() {
+    public byte[] getParentMftRef() {
         return parentMftRef;
     }
 
-    public void setParentMftRef(long parentMftRef) {
+    public void setParentMftRef(byte[] parentMftRef) {
         this.parentMftRef = parentMftRef;
     }
 

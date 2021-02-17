@@ -7,6 +7,13 @@ import java.nio.charset.StandardCharsets;
 import org.apache.commons.io.IOUtils;
 
 public class Util {
+    public static String byteArrayToHex(byte[] a) {
+        StringBuilder sb = new StringBuilder(a.length * 2);
+        for (byte b : a) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
+    }
     public static int readInt16(InputStream in) throws IOException {
         return readInt16(in, false);
     }
