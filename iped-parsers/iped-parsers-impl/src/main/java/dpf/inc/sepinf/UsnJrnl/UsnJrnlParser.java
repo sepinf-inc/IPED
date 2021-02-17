@@ -21,6 +21,8 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import iped3.io.IItemBase;
+import iped3.io.SeekableInputStream;
 
 public class UsnJrnlParser extends AbstractParser {
     public enum ReportType {
@@ -59,11 +61,14 @@ public class UsnJrnlParser extends AbstractParser {
         do {
             in.mark(8);
             rb = IOUtils.read(in, b, 0, 8);
+
+            // if all zeros read next 8 bytes
             if (Util.zero(b)) {
                 continue;
             }
-            in.reset();
 
+            in.reset();
+            // usn entry version 2
             if (b[4] == 2 && (b[5] | b[6] | b[7]) == 0) {
                 return true;
             }
@@ -75,16 +80,14 @@ public class UsnJrnlParser extends AbstractParser {
         return false;
     }
 
-    public UsnJrnlEntry readEntry(InputStream in) throws IOException {
-        in.mark(4);
+    public UsnJrnlEntry readEntry(SeekableInputStream in) throws IOException {
+        long pos = in.position();
         int tam = (int) Util.readInt32(in);
-        in.reset();
 
         if (tam > 0) {
-            in.mark(tam);
-            IOUtils.skipFully(in, 4);
             UsnJrnlEntry u = new UsnJrnlEntry();
             u.setTam(tam);
+            u.setOffset(pos);
             u.setMajorVersion(Util.readInt16(in));
             u.setMinorVersion(Util.readInt16(in));
             u.setMftRef(Util.readInt64(in));
@@ -102,17 +105,13 @@ public class UsnJrnlParser extends AbstractParser {
                 return null;
             } else {
                 u.setFileName(Util.readString(in, u.getSizeofFileName()));
+            }
+            if (in.position() < pos + tam) {
+                in.seek(pos + tam);
+            }
 
-            }
-            in.reset();
-            while (tam > 0) {
-                tam -= in.skip(tam);
-            }
             return u;
-        } else {
-            IOUtils.skipFully(in, 4);
         }
-
         return null;
     }
 
@@ -167,25 +166,40 @@ public class UsnJrnlParser extends AbstractParser {
 
     private static final int READ_PAGE = 0XFFFF;
 
-    public void jumpZeros(InputStream in) throws IOException {
+    public long jumpZeros(SeekableInputStream in, long start, long end) throws IOException {
+
+        long pos=(start + end) / 2;
+        in.seek(pos);
+
         byte buff[] = new byte[READ_PAGE];
-        int rb = 0;
-        do {
-            in.mark(READ_PAGE + 1);
-            rb = IOUtils.read(in, buff);
-        } while (Util.zero(buff) && rb == READ_PAGE);
-        in.reset();
+        int rb = in.read(buff, 0, READ_PAGE);
+       if(Util.zero(buff) && rb == READ_PAGE){
+           return jumpZeros(in, pos, end);
+       }else {
+
+           in.seek(start);
+           do {
+               rb = in.read(buff, 0, READ_PAGE);
+           } while (Util.zero(buff) && rb == READ_PAGE);
+           pos = in.position() - rb;
+           in.seek(pos);
+           return pos;
+       }
+
+       
     }
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-
+        try {
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
-        jumpZeros(stream);
-        while (findNextEntry(stream)) {
-            UsnJrnlEntry u = readEntry(stream);
+        IItemBase item = context.get(IItemBase.class);
+        SeekableInputStream sis = item.getStream();
+        jumpZeros(sis, 0, sis.size());
+        while (findNextEntry(sis)) {
+            UsnJrnlEntry u = readEntry(sis);
 
             if (u == null) {
                 // System.out.println("file: " + metadata.toString());
@@ -205,6 +219,11 @@ public class UsnJrnlParser extends AbstractParser {
         if (entries.size() > 0) {
             createReport(entries, n, context, handler);
         }
+    } catch (Exception e) {
+        // TODO: handle exception
+        System.out.println("ola mundo");
+        e.printStackTrace();
+    }
 
     }
 
