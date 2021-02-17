@@ -111,7 +111,8 @@ public class UsnJrnlParser extends AbstractParser {
             u.setFileAttributes(Util.readInt32(in));
             u.setSizeofFileName(Util.readInt16(in));
             u.setOffsetFilename(Util.readInt16(in));
-            if (u.getOffsetFilename() != 0x3c) {
+            // invalid registry
+            if (u.getOffsetFilename() + u.getSizeofFileName() > tam) {
                 return null;
             } else {
                 u.setFileName(Util.readString(in, u.getSizeofFileName()));

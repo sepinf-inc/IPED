@@ -65,8 +65,8 @@ public class ReportGenerator {
             out.print(newCol(u.getUSN() + ""));
             out.print(newCol(timeFormat.format(u.getFileTime())));
             out.print(newCol(u.getReasons()));
-            out.print(newCol(Util.byteArrayToHex(u.getMftRef())));
-            out.print(newCol(Util.byteArrayToHex(u.getParentMftRef())));
+            out.print(newCol("0x" + Util.byteArrayToHex(u.getMftRef())));
+            out.print(newCol("0x" + Util.byteArrayToHex(u.getParentMftRef())));
             out.print(newCol(u.getHumanAttributes()));
             out.print(newCol(u.getSourceInformation() + ""));
             out.print(newCol(u.getSecurityId() + ""));
@@ -101,8 +101,8 @@ public class ReportGenerator {
             out.print(u.getUSN() + ";");
             out.print(timeFormat.format(u.getFileTime()) + ";");
             out.print(u.getReasons() + ";");
-            out.print(Util.byteArrayToHex(u.getMftRef()) + ";");
-            out.print(Util.byteArrayToHex(u.getParentMftRef()) + ";");
+            out.print("0x" + Util.byteArrayToHex(u.getMftRef()) + ";");
+            out.print("0x" + Util.byteArrayToHex(u.getParentMftRef()) + ";");
             out.print(u.getHumanAttributes() + ";");
             out.print(u.getSourceInformation() + ";");
             out.print(u.getSecurityId());
