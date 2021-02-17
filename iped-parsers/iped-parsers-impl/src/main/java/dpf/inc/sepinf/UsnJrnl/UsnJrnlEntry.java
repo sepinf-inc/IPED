@@ -4,7 +4,7 @@ import java.util.Date;
 import java.util.HashMap;
 
 public class UsnJrnlEntry {
-
+    private long offset;
     private int tam;
     private int majorVersion;
     private int minorVersion;
@@ -228,6 +228,14 @@ public class UsnJrnlEntry {
 
     public void setTam(int tam) {
         this.tam = tam;
+    }
+
+    public long getOffset() {
+        return offset;
+    }
+
+    public void setOffset(long offset) {
+        this.offset = offset;
     }
 
 }

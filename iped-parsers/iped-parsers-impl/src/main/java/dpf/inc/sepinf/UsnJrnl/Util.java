@@ -22,11 +22,15 @@ public class Util {
     public static int readInt16(InputStream in, boolean bigEndian) throws IOException {
 
         int b1 = in.read(), b2 = in.read();
+        b1 &= 0xFF;
+        b2 &= 0xFF;
+        int r = 0;
         if (!bigEndian) {
-            return b1 | (b2 << 8);
+            r = b1 | (b2 << 8);
         } else {
-            return b2 | (b1 << 8);
+            r = b2 | (b1 << 8);
         }
+        return r;
        
     }
 
