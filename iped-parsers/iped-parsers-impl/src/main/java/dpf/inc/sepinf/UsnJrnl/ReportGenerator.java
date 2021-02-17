@@ -60,13 +60,13 @@ public class ReportGenerator {
         out.print(CLOSE_ROW);
         for (UsnJrnlEntry u : entries) {
             out.print(NEW_ROW);
-            out.print(newCol(String.format("%016", u.getOffset())));
+            out.print(newCol(String.format("0x%016X", u.getOffset())));
             out.print(newCol(u.getFileName()));
             out.print(newCol(u.getUSN() + ""));
             out.print(newCol(timeFormat.format(u.getFileTime())));
             out.print(newCol(u.getReasons()));
-            out.print(newCol(u.getMftRef() + ""));
-            out.print(newCol(u.getParentMftRef() + ""));
+            out.print(newCol(Util.byteArrayToHex(u.getMftRef())));
+            out.print(newCol(Util.byteArrayToHex(u.getParentMftRef())));
             out.print(newCol(u.getHumanAttributes()));
             out.print(newCol(u.getSourceInformation() + ""));
             out.print(newCol(u.getSecurityId() + ""));
@@ -96,13 +96,13 @@ public class ReportGenerator {
         }
         for (UsnJrnlEntry u : entries) {
             out.print("\n");
-            out.print(String.format("%016", u.getOffset()) + ";");
+            out.print(String.format("0x%016X", u.getOffset()) + ";");
             out.print("\"" + u.getFileName() + "\";");
             out.print(u.getUSN() + ";");
             out.print(timeFormat.format(u.getFileTime()) + ";");
             out.print(u.getReasons() + ";");
-            out.print(u.getMftRef() + ";");
-            out.print(u.getParentMftRef() + ";");
+            out.print(Util.byteArrayToHex(u.getMftRef()) + ";");
+            out.print(Util.byteArrayToHex(u.getParentMftRef()) + ";");
             out.print(u.getHumanAttributes() + ";");
             out.print(u.getSourceInformation() + ";");
             out.print(u.getSecurityId());
