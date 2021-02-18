@@ -2,7 +2,17 @@
 # You need to install jep (pip install jep==3.9.1), pillow, keras, and tensorflow backend.
 # Tested on Windows with python 3.8.6, pillow 8.1.0, keras 2.4.3, tensorflow 2.4.1.
 # You also need to include jep.dll(.so) in PATH env var (usually C:\Users\XXX\AppData\Roaming\Python\Python38\site-packages\jep) or LD_LIBRARY_PATH (Linux)
-      
+
+# If computed thumbnail will be reused or computed again
+useImageThumbs = True
+
+# Number of images or video frames to be processed at the same time
+batchSize = 50
+
+# Max number of threads allowed to enter code between acquirePermit() and releasePermit()
+# This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
+maxThreads = None
+
 import traceback
 from PIL import Image as PilImage
 import numpy as np
@@ -11,11 +21,8 @@ import time
 import sys
 from java.lang import System
 
-useImageThumbs = True
-
 itemList = []
 imageList = []
-batchSize = 50
 targetSize = (224, 224)
 videoFramesTime = 0
 arrayConvTime = 0
@@ -181,18 +188,19 @@ def processVideoFrames(item):
 	frames = ImageUtil.getBmpFrames(item.getViewFile())
 	videoFramesTime += time.time() - t 
 	list = []
-	for i in range(frames.size()):
+	scores = []
+	numFrames = frames.size()
+	for i in range(numFrames):
 		input = convertJavaByteArray(frames.get(i))
 		img = loadRawImage(input)
 		from keras.preprocessing import image
 		x = image.img_to_array(img)
 		list.append(x)
-		
-	preds = makePrediction(list)
-	
-	scores = []
-	for i in range(len(list)):
-		scores.append(preds[i][1])
+		if batchSize == 1 or (i > 0 and i % batchSize == 0) or i == (numFrames - 1):
+			preds = makePrediction(list)
+			for i in range(len(list)):
+				scores.append(preds[i][1])
+			list.clear()
 	
 	finalScore = videoScore(scores)
 	item.setExtraAttribute('nsfw_nudity_score', finalScore)
@@ -221,8 +229,13 @@ def processImages(imageList, itemList):
 		score = preds[i][1] * 100
 		itemList[i].setExtraAttribute('nsfw_nudity_score', score)
 		cache.put(itemList[i].getHash(), score)
-	
-	
+
+def getMaxPermits():
+	if maxThreads is not None:
+		return maxThreads
+	else:
+		return numThreads
+
 def makePrediction(list):
 	global predictTime 
 	t = time.time()
@@ -230,6 +243,10 @@ def makePrediction(list):
 	from keras.applications.imagenet_utils import preprocess_input
 	x = preprocess_input(x)
 	model = loadModel()
-	preds = model.predict(x)
-	predictTime += time.time() - t
-	return preds
+	try:
+		javaTask.acquirePermit()
+		preds = model.predict(x)
+		predictTime += time.time() - t
+		return preds
+	finally:
+		javaTask.releasePermit()
