@@ -27,6 +27,7 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -125,8 +126,9 @@ public class ItemProducer extends Thread {
             }
             if (!listOnly) {
                 Item evidence = new Item();
+                evidence.setPath("[queue-end]");
                 evidence.setQueueEnd(true);
-                // caseData.addEvidenceFile(evidence);
+                caseData.addItem(evidence);
 
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$

@@ -73,6 +73,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
+import iped3.IItem;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
@@ -425,9 +426,15 @@ public class Manager {
                  * detectado o problema no log de estatísticas e o usuario sera informado do
                  * erro.
                  */
-                if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || produtor.isAlive()) // if(workers[k].isAlive())
+                if (workers[k].evidence != null || workers[k].itensBeingProcessed > 0)
                     someWorkerAlive = true;
             }
+            
+            IItem queueEnd = caseData.getItemQueue().peek();
+            boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+
+            if (!justQueueEndLeft || produtor.isAlive())
+                someWorkerAlive = true;
 
             if (!someWorkerAlive) {
                 IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
@@ -439,7 +446,7 @@ public class Manager {
 
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-
+                    caseData.getItemQueue().addLast(queueEnd);
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();
@@ -506,7 +513,7 @@ public class Manager {
         return t;
     }
 
-    public int numItensBeingProcessed() {
+    public synchronized int numItensBeingProcessed() {
         int num = 0;
         for (int k = 0; k < workers.length; k++) {
             num += workers[k].itensBeingProcessed;
