@@ -239,24 +239,19 @@
 	<mime-type type="application/x-usnjournal-$J">
         <glob pattern="$UsnJrnl:$J*"/>
 		<glob pattern="$UsnJrnl$J*"/>
-		<glob pattern="$J"/>
     </mime-type>
-	
-	<mime-type type="application/x-usnjournal-report">
-		<sub-class-of type="application/x-usnjournal-$J"/>    
-    </mime-type>
+    
 	<mime-type type="application/x-usnjournal-report-html">
-		<sub-class-of type="application/x-usnjournal-report"/>
 		<sub-class-of type="text/html"/>		
     </mime-type>
-	<mime-type type="application/x-usnjournal-report-csv">
-		<sub-class-of type="application/x-usnjournal-report"/> 
+    
+	<mime-type type="application/x-usnjournal-report-csv"> 
 		<sub-class-of type="text/csv"/>		
     </mime-type>
+    
 	<mime-type type="application/x-usnjournal-registry">
-		<sub-class-of type="application/x-usnjournal-$J"/>
+		<sub-class-of type="application/x-metadata-entry"/>
     </mime-type>
-	
 	
 	<mime-type type="application/x-telegram-db">
         <sub-class-of type="application/x-sqlite3"/>
