@@ -202,23 +202,24 @@ public class UsnJrnlParser extends AbstractParser {
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
         IItemBase item = context.get(IItemBase.class);
-        SeekableInputStream sis = item.getStream();
-        jumpZeros(sis, 0, sis.size());
-        while (findNextEntry(sis)) {
-            UsnJrnlEntry u = readEntry(sis);
-            // do not insert empty registries in the list
-            if (u == null) {
-                continue;
-            }
+        try (SeekableInputStream sis = item.getStream()) {
+            jumpZeros(sis, 0, sis.size());
+            while (findNextEntry(sis)) {
+                UsnJrnlEntry u = readEntry(sis);
+                // do not insert empty registries in the list
+                if (u == null) {
+                    continue;
+                }
 
-            // limits the html table size
-            if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
-                createReport(entries, n, context, handler);
-                entries.clear();
-                n++;
-            }
+                // limits the html table size
+                if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
+                    createReport(entries, n, context, handler);
+                    entries.clear();
+                    n++;
+                }
 
-            entries.add(u);
+                entries.add(u);
+            }
         }
 
         if (entries.size() > 0) {
