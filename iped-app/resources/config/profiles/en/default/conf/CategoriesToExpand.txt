@@ -20,6 +20,9 @@ Georeferenced Files
 # Generates registry reports:
 Windows Registry
 
+# Generates NTFS journal reports
+NTFS Journal
+
 #Text Documents
 #Spreadsheets
 #Presentations
