@@ -55,8 +55,6 @@ public class UsnJrnlParser extends AbstractParser {
         this.extractEntries = extractEntries;
     }
 
-
-
     public boolean findNextEntry(InputStream in) throws IOException {
         byte[] b = new byte[8];
         int rb = 0;
@@ -132,7 +130,6 @@ public class UsnJrnlParser extends AbstractParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
         byte[] bytes = null;
-        
 
         Metadata cMetadata = new Metadata();
         if (reportType == ReportType.CSV) {
@@ -142,9 +139,9 @@ public class UsnJrnlParser extends AbstractParser {
 
         if (reportType == ReportType.HTML) {
             cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
-            bytes=rg.createHTMLReport(entries);
+            bytes = rg.createHTMLReport(entries);
         }
-        
+
         ByteArrayInputStream html = new ByteArrayInputStream(bytes);
 
         cMetadata.set(TikaCoreProperties.TITLE, "JOURNAL " + n);
@@ -155,12 +152,11 @@ public class UsnJrnlParser extends AbstractParser {
          * Optionally extract entries as subitems
          */
         if (extractEntries) {
-            for(UsnJrnlEntry entry:entries) {
+            for (UsnJrnlEntry entry : entries) {
                 extractor = context.get(EmbeddedDocumentExtractor.class, new ParsingEmbeddedDocumentExtractor(context));
                 Metadata metadataItem = new Metadata();
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
-    
 
                 metadataItem.set(TikaCoreProperties.CREATED, rg.timeFormat.format(entry.getFileTime()));
                 metadataItem.set("FileName", entry.getFileName());
@@ -179,25 +175,24 @@ public class UsnJrnlParser extends AbstractParser {
 
     public long jumpZeros(SeekableInputStream in, long start, long end) throws IOException {
 
-        long pos=(start + end) / 2;
+        long pos = (start + end) / 2;
         in.seek(pos);
 
         byte buff[] = new byte[READ_PAGE];
         int rb = in.read(buff, 0, READ_PAGE);
-       if(Util.zero(buff) && rb == READ_PAGE){
-           return jumpZeros(in, pos, end);
-       }else {
+        if (Util.zero(buff) && rb == READ_PAGE) {
+            return jumpZeros(in, pos, end);
+        } else {
 
-           in.seek(start);
-           do {
-               rb = in.read(buff, 0, READ_PAGE);
-           } while (Util.zero(buff) && rb == READ_PAGE);
-           pos = in.position() - rb;
-           in.seek(pos);
-           return pos;
-       }
+            in.seek(start);
+            do {
+                rb = in.read(buff, 0, READ_PAGE);
+            } while (Util.zero(buff) && rb == READ_PAGE);
+            pos = in.position() - rb;
+            in.seek(pos);
+            return pos;
+        }
 
-       
     }
 
     @Override
@@ -229,7 +224,6 @@ public class UsnJrnlParser extends AbstractParser {
         if (entries.size() > 0) {
             createReport(entries, n, context, handler);
         }
-
 
     }
 

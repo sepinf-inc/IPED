@@ -14,6 +14,7 @@ public class Util {
         }
         return sb.toString();
     }
+
     public static int readInt16(InputStream in) throws IOException {
         return readInt16(in, false);
     }
@@ -38,11 +39,11 @@ public class Util {
             r = b2 | (b1 << 8);
         }
         return r;
-       
+
     }
 
     public static long readInt32(InputStream in, boolean bigEndian) throws IOException {
-        
+
         long i = 0;
         byte len = 4;
         byte[] b = IOUtils.readFully(in, len);
@@ -57,12 +58,11 @@ public class Util {
             }
         }
         return i;
-        
 
     }
 
     public static long readInt64(InputStream in, boolean bigEndian) throws IOException {
-      
+
         long i = 0;
         byte len = 8;
         byte[] b = IOUtils.readFully(in, len);
@@ -76,11 +76,11 @@ public class Util {
             }
         }
         return i;
-      
+
     }
 
     public static String readString(InputStream in, int len) throws IOException {
-        
+
         byte[] b = IOUtils.readFully(in, len);
         return new String(b, StandardCharsets.UTF_16LE);
 

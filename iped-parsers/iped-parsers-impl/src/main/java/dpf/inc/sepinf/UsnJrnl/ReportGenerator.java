@@ -13,8 +13,7 @@ public class ReportGenerator {
     private static final String CLOSE_ROW = "</TR>"; //$NON-NLS-1$
 
     private static final String[] cols = { "Offset", "FileName", "USN", "TimeStamp", "Reasons", "MTF Ref.",
-            "MTF parent Ref",
-            "File attr", "Source Info", "Security Id" };
+            "MTF parent Ref", "File attr", "Source Info", "Security Id" };
 
     public final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
 
