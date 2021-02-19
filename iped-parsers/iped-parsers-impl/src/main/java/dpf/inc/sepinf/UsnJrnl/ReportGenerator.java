@@ -5,6 +5,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.Writer;
@@ -16,6 +17,8 @@ import java.util.List;
 
 import org.apache.tika.io.TemporaryResources;
 
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+
 public class ReportGenerator {
 
     private static final String NEW_ROW = "<TR>"; //$NON-NLS-1$
@@ -24,11 +27,14 @@ public class ReportGenerator {
     private static final String[] cols = { "Offset", "FileName", "USN", "TimeStamp", "Reasons", "MTF Ref.",
             "MTF parent Ref", "File attr", "Source Info", "Security Id" };
 
-    public final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss XXX"); //$NON-NLS-1$
+    public final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS XXX"); //$NON-NLS-1$
 
     private static final String newCol(String value, String tag) {
-
-        return "<" + tag + ">" + value + "</" + tag + ">";
+        StringBuilder sb = new StringBuilder();
+        sb.append("<").append(tag).append(">");
+        sb.append(SimpleHTMLEncoder.htmlEncode(value));
+        sb.append("</").append(tag).append(">");
+        return sb.toString();
     }
 
     private static final String newCol(String value) {
@@ -42,7 +48,7 @@ public class ReportGenerator {
         out.print("<meta charset=\"UTF-8\">"); //$NON-NLS-1$
         out.println("<style>\r\n" + "table {\r\n" + "  border-collapse: collapse;\r\n" + "  width: 100%;\r\n"
                 + "  border: 1px solid #ddd;\r\n" + "}\r\n" + "\r\n" + "th, td {\r\n" + "  text-align: left;\r\n"
-                + "  padding: 16px;\r\n" + "}\r\n" + "\r\n" + "tr:nth-child(even) {\r\n"
+                + "  padding: 1px;\r\n" + "}\r\n" + "\r\n" + "tr:nth-child(even) {\r\n"
                 + "  background-color: #f2f2f2;\r\n" + "}\r\n" + "</style>");
         out.println("</HEAD>"); //$NON-NLS-1$
         out.println("<BODY>"); //$NON-NLS-1$
@@ -92,7 +98,11 @@ public class ReportGenerator {
 
     public InputStream createCSVReport(List<UsnJrnlEntry> entries, TemporaryResources tmp) throws IOException {
         Path path = tmp.createTempFile();
-        try (Writer writer = Files.newBufferedWriter(path); PrintWriter out = new PrintWriter(writer);) {
+        try (OutputStream os = Files.newOutputStream(path);
+                Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                PrintWriter out = new PrintWriter(writer);) {
+            byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
+            os.write(utf8bom);
             boolean first = true;
             for (String col : cols) {
                 if (first) {
