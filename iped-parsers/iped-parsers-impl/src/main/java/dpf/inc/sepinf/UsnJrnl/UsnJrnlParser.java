@@ -133,7 +133,7 @@ public class UsnJrnlParser extends AbstractParser {
                 new ParsingEmbeddedDocumentExtractor(context));
 
         Metadata cMetadata = new Metadata();
-        cMetadata.set(TikaCoreProperties.TITLE, "JOURNAL " + n);
+        String name = "NTFS Journal Report";
 
         InputStream is = null;
         try (TemporaryResources tmp = new TemporaryResources()) {
@@ -144,8 +144,10 @@ public class UsnJrnlParser extends AbstractParser {
             } else if (reportType == ReportType.HTML) {
                 cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
                 is = rg.createHTMLReport(entries);
+                name += " " + n;
             }
 
+            cMetadata.set(TikaCoreProperties.TITLE, name);
             extractor.parseEmbedded(is, handler, cMetadata, false);
 
         } finally {
@@ -183,14 +185,13 @@ public class UsnJrnlParser extends AbstractParser {
         in.seek(pos);
 
         byte buff[] = new byte[READ_PAGE];
-        int rb = in.read(buff, 0, READ_PAGE);
+        int rb = IOUtils.read(in, buff, 0, READ_PAGE);
         if (Util.zero(buff) && rb == READ_PAGE) {
             return jumpZeros(in, pos, end);
         } else {
-
             in.seek(start);
             do {
-                rb = in.read(buff, 0, READ_PAGE);
+                rb = IOUtils.read(in, buff, 0, READ_PAGE);
             } while (Util.zero(buff) && rb == READ_PAGE);
             pos = in.position() - rb;
             in.seek(pos);
