@@ -11,6 +11,7 @@ import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -21,6 +22,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IItemBase;
 import iped3.io.SeekableInputStream;
 
@@ -129,24 +131,26 @@ public class UsnJrnlParser extends AbstractParser {
         ReportGenerator rg = new ReportGenerator();
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
-        byte[] bytes = null;
 
         Metadata cMetadata = new Metadata();
-        if (reportType == ReportType.CSV) {
-            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_CSV.toString());
-            bytes = rg.createCSVReport(entries);
-        }
-
-        if (reportType == ReportType.HTML) {
-            cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
-            bytes = rg.createHTMLReport(entries);
-        }
-
-        ByteArrayInputStream html = new ByteArrayInputStream(bytes);
-
         cMetadata.set(TikaCoreProperties.TITLE, "JOURNAL " + n);
 
-        extractor.parseEmbedded(html, handler, cMetadata, false);
+        InputStream is = null;
+        try (TemporaryResources tmp = new TemporaryResources()) {
+            if (reportType == ReportType.CSV) {
+                cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_CSV.toString());
+                is = rg.createCSVReport(entries, tmp);
+
+            } else if (reportType == ReportType.HTML) {
+                cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REPORT_HTML.toString());
+                is = rg.createHTMLReport(entries);
+            }
+
+            extractor.parseEmbedded(is, handler, cMetadata, false);
+
+        } finally {
+            IOUtil.closeQuietly(is);
+        }
 
         /**
          * Optionally extract entries as subitems
