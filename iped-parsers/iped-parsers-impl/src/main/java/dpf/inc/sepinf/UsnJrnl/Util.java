@@ -46,7 +46,8 @@ public class Util {
 
         long i = 0;
         byte len = 4;
-        byte[] b = IOUtils.readFully(in, len);
+        byte[] b = new byte[len];
+        len = (byte) IOUtils.read(in, b);
         for (int j = 0; j < len; j++) {
             long a = b[j];
             a = a & 0xFF;
@@ -65,7 +66,8 @@ public class Util {
 
         long i = 0;
         byte len = 8;
-        byte[] b = IOUtils.readFully(in, len);
+        byte[] b = new byte[len];
+        len = (byte) IOUtils.read(in, b);
         for (int j = 0; j < len; j++) {
             long a = b[j];
             a = a & 0xFF;
@@ -81,8 +83,9 @@ public class Util {
 
     public static String readString(InputStream in, int len) throws IOException {
 
-        byte[] b = IOUtils.readFully(in, len);
-        return new String(b, StandardCharsets.UTF_16LE);
+        byte[] b = new byte[len];
+        len = IOUtils.read(in, b);
+        return new String(b, 0, len, StandardCharsets.UTF_16LE);
 
     }
 
