@@ -20,14 +20,11 @@ public class UsnJrnlEntry {
     private int offsetFilename;
     private String fileName;
 
-    private HashMap<Integer, String> reasonFlags = new HashMap<>();
-    private HashMap<Integer, String> fileAttributesToString = new HashMap<>();
+    private static HashMap<Integer, String> reasonFlags;
+    private static HashMap<Integer, String> fileAttributesToString;
 
-    public UsnJrnlEntry() {
-        initHashMaps();
-    }
-
-    private void initHashMaps() {
+    static {
+        reasonFlags = new HashMap<>();
         reasonFlags.put(0x01, "DATA_OVERWRITE");
         reasonFlags.put(0x02, "DATA_EXTEND");
         reasonFlags.put(0x04, "DATA_TRUNCATION");
@@ -50,6 +47,7 @@ public class UsnJrnlEntry {
         reasonFlags.put(0x200000, "STREAM_CHANGE");
         reasonFlags.put(0x80000000, "CLOSE");
 
+        fileAttributesToString = new HashMap<>();
         fileAttributesToString.put(0x01, "READONLY");
         fileAttributesToString.put(0x02, "HIDDEN");
         fileAttributesToString.put(0x04, "SYSTEM");

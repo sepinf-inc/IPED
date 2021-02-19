@@ -1,11 +1,20 @@
 package dpf.inc.sepinf.UsnJrnl;
 
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.io.Writer;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.List;
+
+import org.apache.tika.io.TemporaryResources;
 
 public class ReportGenerator {
 
@@ -44,7 +53,7 @@ public class ReportGenerator {
         out.println("</BODY></HTML>"); //$NON-NLS-1$
     }
 
-    public byte[] createHTMLReport(List<UsnJrnlEntry> entries) {
+    public InputStream createHTMLReport(List<UsnJrnlEntry> entries) {
         ByteArrayOutputStream bout = new ByteArrayOutputStream();
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
 
@@ -77,39 +86,38 @@ public class ReportGenerator {
         endHTMLDocument(out);
 
         out.close();
-        return bout.toByteArray();
+        return new ByteArrayInputStream(bout.toByteArray());
 
     }
 
-    public byte[] createCSVReport(List<UsnJrnlEntry> entries) {
-        ByteArrayOutputStream bout = new ByteArrayOutputStream();
-        PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
-        boolean first = true;
-        for (String col : cols) {
-            if (first) {
-                out.print(col);
-                first = false;
-            } else {
-                out.print(";" + col);
+    public InputStream createCSVReport(List<UsnJrnlEntry> entries, TemporaryResources tmp) throws IOException {
+        Path path = tmp.createTempFile();
+        try (Writer writer = Files.newBufferedWriter(path); PrintWriter out = new PrintWriter(writer);) {
+            boolean first = true;
+            for (String col : cols) {
+                if (first) {
+                    out.print(col);
+                    first = false;
+                } else {
+                    out.print(";" + col);
+                }
+            }
+            for (UsnJrnlEntry u : entries) {
+                out.print("\n");
+                out.print(String.format("0x%016X", u.getOffset()) + ";");
+                out.print("\"" + u.getFileName() + "\";");
+                out.print(u.getUSN() + ";");
+                out.print(timeFormat.format(u.getFileTime()) + ";");
+                out.print(u.getReasons() + ";");
+                out.print("0x" + Util.byteArrayToHex(u.getMftRef()) + ";");
+                out.print("0x" + Util.byteArrayToHex(u.getParentMftRef()) + ";");
+                out.print(u.getHumanAttributes() + ";");
+                out.print(u.getSourceInformation() + ";");
+                out.print(u.getSecurityId());
             }
         }
-        for (UsnJrnlEntry u : entries) {
-            out.print("\n");
-            out.print(String.format("0x%016X", u.getOffset()) + ";");
-            out.print("\"" + u.getFileName() + "\";");
-            out.print(u.getUSN() + ";");
-            out.print(timeFormat.format(u.getFileTime()) + ";");
-            out.print(u.getReasons() + ";");
-            out.print("0x" + Util.byteArrayToHex(u.getMftRef()) + ";");
-            out.print("0x" + Util.byteArrayToHex(u.getParentMftRef()) + ";");
-            out.print(u.getHumanAttributes() + ";");
-            out.print(u.getSourceInformation() + ";");
-            out.print(u.getSecurityId());
 
-        }
-
-        out.close();
-        return bout.toByteArray();
+        return new BufferedInputStream(Files.newInputStream(path));
     }
 
 }
