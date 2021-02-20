@@ -102,7 +102,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
-            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED };
+            ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
+            IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };
 
     public static final String[] email = ExtraProperties.EMAIL_PROPS;
 

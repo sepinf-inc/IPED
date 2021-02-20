@@ -4,6 +4,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.io.IOUtils;
@@ -25,6 +27,8 @@ import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IItemBase;
 import iped3.io.SeekableInputStream;
+import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 
 public class UsnJrnlParser extends AbstractParser {
     public enum ReportType {
@@ -34,7 +38,7 @@ public class UsnJrnlParser extends AbstractParser {
     // select if the report will be in CSV or HTML format
     private ReportType reportType = ReportType.CSV;
 
-    // max entries for html report
+    // max entries for html report or parent search
     private static final int MAX_ENTRIES = 10000;
 
     // Option to extract each registry as a sub item.
@@ -206,6 +210,7 @@ public class UsnJrnlParser extends AbstractParser {
 
         ArrayList<UsnJrnlEntry> entries = new ArrayList<>();
         int n = 1;
+        IItemSearcher searcher = context.get(IItemSearcher.class);
         IItemBase item = context.get(IItemBase.class);
         try (SeekableInputStream sis = item.getStream()) {
             jumpZeros(sis, 0, sis.size());
@@ -215,6 +220,13 @@ public class UsnJrnlParser extends AbstractParser {
                 if (u == null) {
                     continue;
                 }
+                
+                entries.add(u);
+
+                if (entries.size() % MAX_ENTRIES == 0) {
+                    int baseIndex = ((entries.size() / MAX_ENTRIES) - 1) * MAX_ENTRIES;
+                    rebuildFullPaths(entries.subList(baseIndex, baseIndex + MAX_ENTRIES), searcher, item);
+                }
 
                 // limits the html table size
                 if (entries.size() == MAX_ENTRIES && reportType == ReportType.HTML) {
@@ -222,15 +234,47 @@ public class UsnJrnlParser extends AbstractParser {
                     entries.clear();
                     n++;
                 }
-
-                entries.add(u);
             }
         }
 
         if (entries.size() > 0) {
+            if (entries.size() % MAX_ENTRIES != 0) {
+                int baseIndex = (entries.size() / MAX_ENTRIES) * MAX_ENTRIES;
+                rebuildFullPaths(entries.subList(baseIndex, entries.size()), searcher, item);
+            }
             createReport(entries, n, context, handler);
         }
 
+    }
+
+    private void rebuildFullPaths(List<UsnJrnlEntry> entries, IItemSearcher searcher, IItemBase item) {
+        StringBuilder query = new StringBuilder();
+        query.append(BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID());
+        query.append(" && ");
+        query.append(BasicProps.FILESYSTEM_ID + ":" + item.getExtraAttribute(BasicProps.FILESYSTEM_ID));
+        query.append(" && (");
+        for (UsnJrnlEntry entry : entries) {
+            query.append("(");
+            query.append(BasicProps.META_ADDRESS + ":" + entry.getMftParentRecord());
+            query.append(" && ");
+            query.append(BasicProps.MFT_SEQUENCE + ":" + entry.getMftParentSequence());
+            query.append(") ");
+        }
+        query.append(")");
+        List<IItemBase> parents = searcher.search(query.toString());
+        HashMap<Long, IItemBase> map = new HashMap<>();
+        for (IItemBase parent : parents) {
+            long meta = Long.parseLong((String) parent.getExtraAttribute(BasicProps.META_ADDRESS));
+            long seq = Long.parseLong((String) parent.getExtraAttribute(BasicProps.MFT_SEQUENCE));
+            long fullRef = seq << 48 | meta;
+            map.put(fullRef, parent);
+        }
+        for (UsnJrnlEntry entry : entries) {
+            IItemBase parent = map.get(entry.getParentMftRefAsLong());
+            if (parent != null) {
+                entry.setFullPath(parent.getPath() + "/" + entry.getFileName());
+            }
+        }
     }
 
 }

@@ -19,6 +19,7 @@ public class UsnJrnlEntry {
     private int sizeofFileName;
     private int offsetFilename;
     private String fileName;
+    private String fullPath;
 
     private static HashMap<Integer, String> reasonFlags;
     private static HashMap<Integer, String> fileAttributesToString;
@@ -130,6 +131,20 @@ public class UsnJrnlEntry {
         return parentMftRef;
     }
 
+    public long getMftParentRecord() {
+        return ((long) parentMftRef[5] & 0xFF) << 40 | ((long) parentMftRef[4] & 0xFF) << 32
+                | ((long) parentMftRef[3] & 0xFF) << 24 | ((long) parentMftRef[2] & 0xFF) << 16
+                | ((long) parentMftRef[1] & 0xFF) << 8 | (long) parentMftRef[0] & 0xFF;
+    }
+
+    public int getMftParentSequence() {
+        return ((int) parentMftRef[7] & 0xFF) << 8 | (int) parentMftRef[6] & 0xFF;
+    }
+
+    public long getParentMftRefAsLong() {
+        return (long) getMftParentSequence() << 48 | getMftParentRecord();
+    }
+
     public void setParentMftRef(byte[] parentMftRef) {
         this.parentMftRef = parentMftRef;
     }
@@ -234,6 +249,17 @@ public class UsnJrnlEntry {
 
     public void setOffset(long offset) {
         this.offset = offset;
+    }
+
+    public String getFullPath() {
+        if (fullPath != null)
+            return fullPath;
+        else
+            return "-";
+    }
+
+    public void setFullPath(String fullPath) {
+        this.fullPath = fullPath;
     }
 
 }
