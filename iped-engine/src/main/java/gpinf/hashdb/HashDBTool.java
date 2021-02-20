@@ -670,7 +670,7 @@ public class HashDBTool {
                             } else if ("Category".equals(name)) {
                                 int cat = jp.nextIntValue(-1);
                                 if (cat >= 0) {
-                                    properties.put(getPropertyId(name), String.valueOf(cat));
+                                    properties.put(getPropertyId("VIC" + name), String.valueOf(cat));
                                     if (cat == 1 || cat == 2) properties.put(statusPropertyId, vicStatusPropertyValue);
                                 }
                             } else if ("MD5".equals(name) || "SHA1".equals(name)) {
@@ -685,7 +685,7 @@ public class HashDBTool {
                                 if (value != null) {
                                     if (value.indexOf('|') >= 0) value.replace('|', ' ');
                                     value = value.trim();
-                                    if (!value.isEmpty()) properties.put(getPropertyId(name), value);
+                                    if (!value.isEmpty()) properties.put(getPropertyId("VIC" + name), value);
                                 }
                             } else if (token == JsonToken.END_OBJECT) {
                                 if (hasHash && !properties.isEmpty()) {
