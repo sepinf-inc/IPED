@@ -1210,7 +1210,7 @@ public class HashDBTool {
         System.out.println("    from) the existing database.");
         System.out.println("Optional parameters:");
         System.out.println("  -replace");
-        System.out.println("    When importing new CSV files, if an existing property is already present,");
+        System.out.println("    When importing new files, if an existing property is already present,");
         System.out.println("    with a different value, the default is to merge, keeping both values. Use");
         System.out.println("    this option to replace, instead of merging, the value associated with the");
         System.out.println("    existing property.");
@@ -1220,8 +1220,8 @@ public class HashDBTool {
         System.out.println("  -remove");
         System.out.println("    The default behavior is to add CSV files to the database. Use this");
         System.out.println("    parameter to remove items. It will remove only properties/values present");
-        System.out.println("    in the current file. If there are no property remaining properties, the");
-        System.out.println("    hash itself will be removed.");
+        System.out.println("    in the current file. If there are no property remaining, the hash itself");
+        System.out.println("    is removed.");
         System.out.println("  -removeAll");
         System.out.println("    Remove all references to the hashes present in the input files.");
     }
