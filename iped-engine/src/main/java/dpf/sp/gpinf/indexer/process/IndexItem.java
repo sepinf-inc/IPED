@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.channels.SeekableByteChannel;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
@@ -65,10 +66,12 @@ import org.apache.lucene.index.IndexableField;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.IOUtils;
 import org.apache.lucene.util.NumericUtils;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
+import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
@@ -79,6 +82,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -87,8 +91,11 @@ import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.IEvidenceFileType;
+import iped3.IHashValue;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
+import iped3.io.ISeekableInputStreamFactory;
+import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -667,255 +674,458 @@ public class IndexItem extends BasicProps {
 
     public static IItem getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem) {
 
-        try {
-            Item evidence = new Item() {
-                public File getFile() {
-                    try {
-                        return getTempFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
+        return new Item() {
+
+            @Override
+            public String getName() {
+                return doc.get(IndexItem.NAME);
+            }
+
+            @Override
+            public Long getLength() {
+                String value = doc.get(IndexItem.LENGTH);
+                if (value != null && !value.isEmpty()) {
+                    return Long.valueOf(value);
                 }
-            };
-
-            evidence.setName(doc.get(IndexItem.NAME));
-
-            String value = doc.get(IndexItem.LENGTH);
-            Long len = null;
-            if (value != null && !value.isEmpty()) {
-                len = Long.valueOf(value);
-            }
-            evidence.setLength(len);
-
-            value = doc.get(IndexItem.ID);
-            if (value != null) {
-                evidence.setId(Integer.valueOf(value));
+                return null;
             }
 
-            // evidence.setLabels(state.getLabels(id));
-            value = doc.get(IndexItem.PARENTID);
-            if (value != null) {
-                evidence.setParentId(Integer.valueOf(value));
+            @Override
+            public int getId() {
+                return Integer.valueOf(doc.get(IndexItem.ID));
             }
 
-            value = doc.get(IndexItem.SUBITEMID);
-            if (value != null) {
-                evidence.setSubitemId(Integer.valueOf(value));
+            @Override
+            public Integer getParentId() {
+                String str = doc.get(IndexItem.PARENTID);
+                if (str != null)
+                    return Integer.valueOf(str);
+                return null;
             }
 
-            value = doc.get(IndexItem.EVIDENCE_UUID);
-            if (value != null) {
-                // TODO obter source corretamente
+            @Override
+            public Integer getSubitemId() {
+                String str = doc.get(IndexItem.SUBITEMID);
+                if (str != null)
+                    return Integer.valueOf(str);
+                return null;
+            }
+
+            @Override
+            public IDataSource getDataSource() {
+                String value = doc.get(IndexItem.EVIDENCE_UUID);
+                // TODO get source correctly
                 IDataSource dataSource = new DataSource();
                 dataSource.setUUID(value);
-                evidence.setDataSource(dataSource);
+                return dataSource;
             }
 
-            value = doc.get(IndexItem.TYPE);
-            if (value != null) {
-                evidence.setType(new GenericFileType(value));
+            @Override
+            public GenericFileType getType() {
+                String str = doc.get(IndexItem.TYPE);
+                if (str != null)
+                    return new GenericFileType(str);
+                return null;
             }
 
-            for (String category : doc.getValues(IndexItem.CATEGORY)) {
-                evidence.addCategory(category);
+            @Override
+            public Date getAccessDate() {
+                String str = doc.get(IndexItem.ACCESSED);
+                if (str != null)
+                    try {
+                        return DateUtil.stringToDate(str);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                return null;
             }
 
-            value = doc.get(IndexItem.ACCESSED);
-            if (value != null && !value.isEmpty()) {
-                evidence.setAccessDate(DateUtil.stringToDate(value));
+            @Override
+            public Date getCreationDate() {
+                String str = doc.get(IndexItem.CREATED);
+                if (str != null)
+                    try {
+                        return DateUtil.stringToDate(str);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                return null;
             }
 
-            value = doc.get(IndexItem.CREATED);
-            if (value != null && !value.isEmpty()) {
-                evidence.setCreationDate(DateUtil.stringToDate(value));
+            @Override
+            public Date getModDate() {
+                String str = doc.get(IndexItem.MODIFIED);
+                if (str != null)
+                    try {
+                        return DateUtil.stringToDate(str);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                return null;
             }
 
-            value = doc.get(IndexItem.MODIFIED);
-            if (value != null && !value.isEmpty()) {
-                evidence.setModificationDate(DateUtil.stringToDate(value));
+            @Override
+            public Date getRecordDate() {
+                String str = doc.get(IndexItem.RECORDDATE);
+                if (str != null)
+                    try {
+                        return DateUtil.stringToDate(str);
+                    } catch (ParseException e) {
+                        throw new RuntimeException(e);
+                    }
+                return null;
             }
 
-            value = doc.get(IndexItem.RECORDDATE);
-            if (value != null && !value.isEmpty()) {
-                evidence.setRecordDate(DateUtil.stringToDate(value));
+            @Override
+            public String getPath() {
+                return doc.get(IndexItem.PATH);
             }
 
-            evidence.setPath(doc.get(IndexItem.PATH));
-
-            value = doc.get(IndexItem.CONTENTTYPE);
-            if (value != null) {
-                evidence.setMediaType(MediaType.parse(value));
+            @Override
+            public MediaType getMediaType() {
+                String value = doc.get(IndexItem.CONTENTTYPE);
+                if (value != null) {
+                    return MediaType.parse(value);
+                }
+                return null;
             }
 
-            boolean hasFile = false;
-            value = doc.get(IndexItem.EXPORT);
-            if (value != null && !value.isEmpty()) {
-                File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
-                evidence.setFile(localFile);
-                hasFile = true;
+            @Override
+            public boolean isTimedOut() {
+                String value = doc.get(IndexItem.TIMEOUT);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
 
-            } else {
-                value = doc.get(IndexItem.SLEUTHID);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setSleuthId(Integer.valueOf(value));
-                    if (sleuthCase != null) {
-                        evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+            @Override
+            public boolean isDeleted() {
+                String value = doc.get(IndexItem.DELETED);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean isDir() {
+                String value = doc.get(IndexItem.ISDIR);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean isCarved() {
+                String value = doc.get(IndexItem.CARVED);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean isSubItem() {
+                String value = doc.get(IndexItem.SUBITEM);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
+
+            @Override
+            public boolean hasChildren() {
+                String value = doc.get(IndexItem.HASCHILD);
+                if (value != null) {
+                    return Boolean.parseBoolean(value);
+                }
+                return false;
+            }
+
+            private boolean extraFieldsPopulated = false;
+
+            private void populateExtraFields() {
+                if (extraFieldsPopulated) {
+                    return;
+                }
+                extraFieldsPopulated = true;
+
+                Set<String> multiValuedFields = new HashSet<>();
+                for (IndexableField f : doc.getFields()) {
+                    if (BasicProps.SET.contains(f.name()))
+                        continue;
+                    Class<?> c = typesMap.get(f.name());
+                    if (Item.getAllExtraAttributes().contains(f.name())) {
+                        if (multiValuedFields.contains(f.name()))
+                            continue;
+                        IndexableField[] fields = doc.getFields(f.name());
+                        if (fields.length > 1) {
+                            multiValuedFields.add(f.name());
+                            List<Object> fieldList = new ArrayList<>();
+                            for (IndexableField field : fields)
+                                fieldList.add(getCastedValue(c, field));
+                            this.setExtraAttribute(f.name(), fieldList);
+                        } else
+                            this.setExtraAttribute(f.name(), getCastedValue(c, f));
+                    } else {
+                        if (Date.class.equals(c) && f.stringValue() != null) {
+                            // it was stored lowercase because query parser converts range queries to
+                            // lowercase
+                            String val = f.stringValue().toUpperCase();
+                            this.getMetadata().add(f.name(), val);
+                        } else {
+                            Object casted = getCastedValue(c, f);
+                            if (casted != null) {
+                                this.getMetadata().add(f.name(), casted.toString());
+                            }
+                        }
                     }
                 }
+            }
 
-                value = doc.get(IndexItem.ID_IN_SOURCE);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setIdInDataSource(value.trim());
-                }
-                if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                    if (sisf == null) {
-                        String className = doc.get(IndexItem.SOURCE_DECODER);
-                        Class<?> clazz = Class.forName(className);
-                        try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
-                            sisf = c.newInstance(absPath);
+            @Override
+            public Metadata getMetadata() {
+                populateExtraFields();
+                return super.getMetadata();
+            }
 
-                        } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                            sisf = c.newInstance(URI.create(sourcePath));
-                        }
-                        if (sisf.checkIfDataSourceExists()) {
-                            checkIfExistsAndAsk(sisf, outputBase);
-                        }
-                        inputStreamFactories.put(sourcePath, sisf);
+            @Override
+            public Map<String, Object> getExtraAttributeMap() {
+                populateExtraFields();
+                return super.getExtraAttributeMap();
+            }
+            
+            @Override
+            public Object getExtraAttribute(String key) {
+                return getExtraAttributeMap().get(key);
+            }
+
+            /*
+             * @Override public static Set<String> getAllExtraAttributes() {
+             * populateExtraFields(); return super.get }
+             */
+
+            @Override
+            public HashSet<String> getCategorySet() {
+                if (super.getCategorySet().isEmpty()) {
+                    for (String category : doc.getValues(IndexItem.CATEGORY)) {
+                        this.addCategory(category);
                     }
-                    evidence.setInputStreamFactory(sisf);
                 }
+                return super.getCategorySet();
             }
 
-            value = doc.get(IndexItem.TIMEOUT);
-            if (value != null) {
-                evidence.setTimeOut(Boolean.parseBoolean(value));
+            @Override
+            public String getCategories() {
+                getCategorySet();
+                return super.getCategories();
             }
 
-            value = doc.get(IndexItem.HASH);
-            if (value != null) {
-                value = value.toUpperCase();
-                evidence.setHash(value);
+            @Override
+            public String getHash() {
+                if (super.getHash() == null) {
+                    String str = doc.get(IndexItem.HASH);
+                    if (str != null)
+                        this.setHash(str.toUpperCase());
+                }
+                return super.getHash();
             }
 
-            if (evidence.getHash() != null && !evidence.getHash().isEmpty()) {
+            @Override
+            public IHashValue getHashValue() {
+                getHash();
+                return super.getHashValue();
+            }
 
-                if (Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
-                    String mimePrefix = evidence.getMediaType().getType();
+            @Override
+            public long getFileOffset() {
+                String value = doc.get(IndexItem.OFFSET);
+                if (value != null) {
+                    return Long.parseLong(value);
+                }
+                return -1;
+            }
+
+            @Override
+            public byte[] getThumb() {
+                if (this.getHash() != null && Boolean.valueOf(doc.get(ImageThumbTask.HAS_THUMB))) {
+                    String mimePrefix = this.getMediaType().getType();
                     if (doc.getBinaryValue(THUMB) != null) {
-                        evidence.setThumb(doc.getBinaryValue(THUMB).bytes);
+                        return doc.getBinaryValue(THUMB).bytes;
 
                     } else if (mimePrefix.equals("image") || mimePrefix.equals("video")) { //$NON-NLS-1$ //$NON-NLS-2$
                         String thumbFolder = mimePrefix.equals("image") ? ImageThumbTask.thumbsFolder : "view"; //$NON-NLS-1$ //$NON-NLS-2$
-                        File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), evidence.getHash(),
-                                "jpg"); //$NON-NLS-1$
+                        File thumbFile = Util.getFileFromHash(new File(outputBase, thumbFolder), this.getHash(), "jpg"); //$NON-NLS-1$
                         try {
                             if (thumbFile.exists())
-                                evidence.setThumb(Files.readAllBytes(thumbFile.toPath()));
+                                return Files.readAllBytes(thumbFile.toPath());
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
                     }
                 }
+                return null;
+            }
 
+            @Override
+            public byte[] getImageSimilarityFeatures() {
                 BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
-                if (bytesRef != null) {
-                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
-                }
+                if (bytesRef != null)
+                    return bytesRef.bytes;
+                return null;
+            }
 
-                File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$
-                /*
-                 * if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
-                 * viewFile = Util.findFileFromHash(new File(outputBase,
-                 * ImageThumbTask.thumbsFolder), value); }
-                 */
-                if (viewFile != null) {
-                    evidence.setViewFile(viewFile);
-
-                    if (viewItem
-                            || (!hasFile && evidence.getSleuthId() == null && evidence.getIdInDataSource() == null)) {
-                        evidence.setFile(viewFile);
-                        evidence.setTempFile(viewFile);
-                        evidence.setMediaType(null);
+            @Override
+            public File getViewFile() {
+                if (this.getHash() != null && !this.getHash().isEmpty()) {
+                    File viewFile = Util.findFileFromHash(new File(outputBase, "view"), this.getHash()); //$NON-NLS-1$
+                    /*
+                     * if (viewFile == null && !hasFile && evidence.getSleuthId() == null) {
+                     * viewFile = Util.findFileFromHash(new File(outputBase,
+                     * ImageThumbTask.thumbsFolder), value); }
+                     */
+                    if (viewFile != null) {
+                        if (viewItem
+                                || (!hasFile() && this.getSleuthId() == null && this.getIdInDataSource() == null)) {
+                            this.setFile(viewFile);
+                            this.setTempFile(viewFile);
+                            this.setMediaType(null);
+                        }
+                        return viewFile;
                     }
                 }
+                return null;
             }
 
-            value = doc.get(IndexItem.DELETED);
-            if (value != null) {
-                evidence.setDeleted(Boolean.parseBoolean(value));
-            }
+            private boolean contentPopulated = false;
 
-            value = doc.get(IndexItem.ISDIR);
-            if (value != null) {
-                evidence.setIsDir(Boolean.parseBoolean(value));
-            }
+            private void populateContentParams() {
+                if (contentPopulated) {
+                    return;
+                }
+                contentPopulated = true;
 
-            value = doc.get(IndexItem.CARVED);
-            if (value != null) {
-                evidence.setCarved(Boolean.parseBoolean(value));
-            }
+                try {
+                    getFileOffset();
 
-            value = doc.get(IndexItem.SUBITEM);
-            if (value != null) {
-                evidence.setSubItem(Boolean.parseBoolean(value));
-            }
+                    String value = doc.get(IndexItem.EXPORT);
+                    if (value != null && !value.isEmpty()) {
+                        File localFile = Util.getResolvedFile(outputBase.getParent(), value);
+                        localFile = checkIfEvidenceFolderExists(this, localFile, outputBase);
+                        this.setFile(localFile);
 
-            value = doc.get(IndexItem.HASCHILD);
-            if (value != null) {
-                evidence.setHasChildren(Boolean.parseBoolean(value));
-            }
-
-            value = doc.get(IndexItem.OFFSET);
-            if (value != null) {
-                evidence.setFileOffset(Long.parseLong(value));
-            }
-
-            Set<String> multiValuedFields = new HashSet<>();
-            for (IndexableField f : doc.getFields()) {
-                if (BasicProps.SET.contains(f.name()))
-                    continue;
-                Class<?> c = typesMap.get(f.name());
-                if (Item.getAllExtraAttributes().contains(f.name())) {
-                    if (multiValuedFields.contains(f.name()))
-                        continue;
-                    IndexableField[] fields = doc.getFields(f.name());
-                    if (fields.length > 1) {
-                        multiValuedFields.add(f.name());
-                        List<Object> fieldList = new ArrayList<>();
-                        for (IndexableField field : fields)
-                            fieldList.add(getCastedValue(c, field));
-                        evidence.setExtraAttribute(f.name(), fieldList);
-                    } else
-                        evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
-                } else {
-                    if (Date.class.equals(c) && f.stringValue() != null) {
-                        // it was stored lowercase because query parser converts range queries to
-                        // lowercase
-                        String val = f.stringValue().toUpperCase();
-                        evidence.getMetadata().add(f.name(), val);
                     } else {
-                        Object casted = getCastedValue(c, f);
-                        if (casted != null) {
-                            evidence.getMetadata().add(f.name(), casted.toString());
+                        value = doc.get(IndexItem.SLEUTHID);
+                        if (value != null && !value.isEmpty()) {
+                            this.setSleuthId(Integer.valueOf(value));
+                            if (sleuthCase != null) {
+                                this.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+                            }
+                        }
+
+                        value = doc.get(IndexItem.ID_IN_SOURCE);
+                        if (value != null && !value.isEmpty()) {
+                            this.setIdInDataSource(value.trim());
+                        }
+                        if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                            String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                            SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                            if (sisf == null) {
+                                String className = doc.get(IndexItem.SOURCE_DECODER);
+                                Class<?> clazz = Class.forName(className);
+                                try {
+                                    Constructor<SeekableInputStreamFactory> c = (Constructor) clazz
+                                            .getConstructor(Path.class);
+                                    Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
+                                    sisf = c.newInstance(absPath);
+
+                                } catch (NoSuchMethodException e) {
+                                    Constructor<SeekableInputStreamFactory> c = (Constructor) clazz
+                                            .getConstructor(URI.class);
+                                    sisf = c.newInstance(URI.create(sourcePath));
+                                }
+                                if (sisf.checkIfDataSourceExists()) {
+                                    checkIfExistsAndAsk(sisf, outputBase);
+                                }
+                                inputStreamFactories.put(sourcePath, sisf);
+                            }
+                            this.setInputStreamFactory(sisf);
                         }
                     }
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+
+            @Override
+            public boolean hasFile() {
+                populateContentParams();
+                return super.hasFile();
+            }
+
+            @Override
+            public File getFile() {
+                populateContentParams();
+                try {
+                    return getTempFile();
+
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
             }
 
-            return evidence;
+            @Override
+            public File getTempFile() throws IOException {
+                populateContentParams();
+                return super.getTempFile();
+            }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            @Override
+            public SeekableInputStream getStream() throws IOException {
+                populateContentParams();
+                return super.getStream();
+            }
 
-        return null;
+            @Override
+            public SeekableByteChannel getSeekableByteChannel() throws IOException {
+                populateContentParams();
+                return super.getSeekableByteChannel();
+            }
+
+            @Override
+            public TikaInputStream getTikaStream() throws IOException {
+                populateContentParams();
+                return super.getTikaStream();
+            }
+
+            @Override
+            public String getIdInDataSource() {
+                populateContentParams();
+                return super.getIdInDataSource();
+            }
+
+            @Override
+            public ISeekableInputStreamFactory getInputStreamFactory() {
+                populateContentParams();
+                return super.getInputStreamFactory();
+            }
+
+            @Override
+            public Integer getSleuthId() {
+                populateContentParams();
+                return super.getSleuthId();
+            }
+
+            @Override
+            public Content getSleuthFile() {
+                populateContentParams();
+                return super.getSleuthFile();
+            }
+
+        };
 
     }
 
@@ -996,7 +1206,7 @@ public class IndexItem extends BasicProps {
         return localFile;
     }
 
-    public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
+    public static Object getCastedValue(Class<?> c, IndexableField f) {
         if (Date.class.equals(c)) {
             // it was stored lowercase because query parser converts range queries to
             // lowercase
