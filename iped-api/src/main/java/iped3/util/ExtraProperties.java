@@ -43,7 +43,7 @@ public class ExtraProperties {
 
     public static final String PST_EMAIL_HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
 
-    public static final String WKFF_HITS = "ledKffHits"; //$NON-NLS-1$
+    public static final String CSAM_HASH_HITS = "childPornHashHits"; //$NON-NLS-1$
 
     public static final String P2P_REGISTRY_COUNT = "p2pHistoryEntries"; //$NON-NLS-1$
 

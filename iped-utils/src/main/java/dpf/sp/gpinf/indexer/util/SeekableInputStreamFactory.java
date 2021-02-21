@@ -1,16 +1,16 @@
 package dpf.sp.gpinf.indexer.util;
 
 import java.io.IOException;
-import java.nio.file.Path;
+import java.net.URI;
 
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
 public abstract class SeekableInputStreamFactory implements ISeekableInputStreamFactory {
 
-    protected Path dataSource;
+    protected URI dataSource;
 
-    public SeekableInputStreamFactory(Path dataSource) {
+    public SeekableInputStreamFactory(URI dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -20,11 +20,11 @@ public abstract class SeekableInputStreamFactory implements ISeekableInputStream
 
     public abstract SeekableInputStream getSeekableInputStream(String identifier) throws IOException;
 
-    public Path getDataSourcePath() {
+    public URI getDataSourceURI() {
         return dataSource;
     }
 
-    public void setDataSourcePath(Path dataSource) {
+    public void setDataSourceURI(URI dataSource) {
         this.dataSource = dataSource;
     }
 

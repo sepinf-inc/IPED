@@ -370,6 +370,11 @@ public class ReportGenerator {
 
         out.println("<br/>");
 
+        if (!message.getChildPornSets().isEmpty()) {
+            out.print("<p><i>" + Messages.getString("TelegramReport.LEDKFF") + " "
+                    + message.getChildPornSets().toString() + "</i></p>");
+        }
+
         out.println("<span class=\"time\">"); //$NON-NLS-1$
         out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
         out.println("</span>"); //$NON-NLS-1$

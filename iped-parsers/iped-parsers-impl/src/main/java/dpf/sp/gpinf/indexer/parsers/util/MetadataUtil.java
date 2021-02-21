@@ -70,7 +70,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.SHARED_ITEMS);
         generalKeys.add(ExtraProperties.LINKED_ITEMS);
         generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
-        generalKeys.add(ExtraProperties.WKFF_HITS);
+        generalKeys.add(ExtraProperties.CSAM_HASH_HITS);
         generalKeys.add(ExtraProperties.PST_ATTACH);
         generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
         generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);

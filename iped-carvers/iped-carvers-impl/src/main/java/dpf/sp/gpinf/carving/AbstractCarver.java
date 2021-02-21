@@ -15,6 +15,7 @@ import dpf.sp.gpinf.carver.api.InvalidCarvedObjectException;
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public abstract class AbstractCarver implements Carver {
     protected static String carvedNamePrefix = "Carved-";// esta propriedade não foi declarada estatica para permitir
@@ -74,6 +75,11 @@ public abstract class AbstractCarver implements Carver {
     }
 
     public IItem carveFromHeader(IItem parentEvidence, Hit header, long len) throws IOException {
+        // end of item can't be > end of parent, except for unalloc, possibly fragmented
+        if (header.getOffset() + len > parentEvidence.getLength()
+                && !MediaTypes.UNALLOCATED.equals(parentEvidence.getMediaType())) {
+            len = parentEvidence.getLength() - header.getOffset();
+        }
         // verifica a validade dos bytes carveados
         if (!ignoreCorrupted || isValid(parentEvidence, header, len)) {
             IItem offsetFile = parentEvidence.createChildItem();

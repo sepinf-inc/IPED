@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.18.2</version>
+        <version>3.19-snapshot</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -454,7 +454,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.3-SNAPSHOT</version>
+    								<version>1.0.4-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${optional.dir}</outputDirectory>
@@ -492,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20200907</version>
+                                    <version>20200916</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>

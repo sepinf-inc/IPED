@@ -79,6 +79,9 @@ public class ExtractorIOS extends Extractor {
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
+                    if (c.isGroupChat()) {
+                        setGroupMembers(c, conn);
+                    }
                 }
             }
         } catch (SQLException ex) {
@@ -86,6 +89,27 @@ public class ExtractorIOS extends Extractor {
         }
 
         return list;
+    }
+
+    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
+
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
+            stmt.setString(1, c.getRemote().getFullId());
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String memberId = rs.getString("member");
+                    if (!memberId.trim().isEmpty()) {
+                        c.getGroupmembers().add(contacts.getContact(memberId));
+                    }
+                }
+
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            throw new WAExtractorException(ex);
+        }
+
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat) throws SQLException {
@@ -258,6 +282,9 @@ public class ExtractorIOS extends Extractor {
      * 1 - mensagens enviadas 3 - mensagens enviadas 5 - mensagens com mídia
      * associada 6 - mensagens 8 - mensagens
      */
+
+    private static final String SELECT_GROUP_MEMBERS = "select CS.ZCONTACTJID as `group`, ZMEMBERJID as member from ZWAGROUPMEMBER GM "
+            + "inner join ZWACHATSESSION CS on GM.ZCHATSESSION=CS.Z_PK where `group`=?";
 
     private static final String SELECT_MESSAGES_USER = "SELECT ZWAMESSAGE.Z_PK AS id, ZCHATSESSION " //$NON-NLS-1$
             + "as chatId, ZFROMJID AS remoteResource, ZMESSAGESTATUS AS status, ZTEXT AS data, " //$NON-NLS-1$

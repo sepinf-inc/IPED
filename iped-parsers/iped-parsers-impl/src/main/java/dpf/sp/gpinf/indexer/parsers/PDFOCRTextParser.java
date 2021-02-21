@@ -21,13 +21,10 @@ package dpf.sp.gpinf.indexer.parsers;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
@@ -38,7 +35,6 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.pdf.PDFParser;
 import org.apache.tika.parser.pdf.PDFParserConfig;
@@ -92,7 +88,7 @@ public class PDFOCRTextParser extends PDFParser {
             SortedPDFParser.setSortByPosition(true);
         }
         if (!checked.getAndSet(true)) {
-            Iterator<ImageReader> readers = ImageIO.getImageReadersByFormatName("JPEG2000"); //$NON-NLS-1$
+            Iterator<ImageReader> readers = ImageIO.getImageReadersBySuffix("jp2"); //$NON-NLS-1$
             ImageReader reader = null;
             while (readers.hasNext()) {
                 reader = readers.next();
@@ -104,7 +100,7 @@ public class PDFOCRTextParser extends PDFParser {
             if (reader == null)
                 LOGGER.warn("Plugin JPEG2000 not found, JPX images will not be decoded from PDFs." //$NON-NLS-1$
                         + " You can download it from https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-jpeg2000/1.3.0" //$NON-NLS-1$
-                        + " and put it in optional_jar folder."); //$NON-NLS-1$
+                        + " and put it in optional_jars folder. Warn: that plugin is worse to decode JPX outside of PDFs!"); //$NON-NLS-1$
         }
     }
 

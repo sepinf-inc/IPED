@@ -265,7 +265,7 @@ public class Statistics {
 
         int discovered = caseData.getDiscoveredEvidences();
         if (processed != discovered) {
-            LOGGER.error("Alert: Processed " + processed + " items of" + discovered); //$NON-NLS-1$ //$NON-NLS-2$
+            LOGGER.error("Alert: Processed " + processed + " items of " + discovered); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         if (!(ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {

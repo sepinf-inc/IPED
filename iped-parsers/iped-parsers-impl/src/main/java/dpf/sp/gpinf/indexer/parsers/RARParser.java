@@ -44,12 +44,13 @@ import com.github.junrar.exception.RarException;
 import com.github.junrar.impl.FileVolumeManager;
 import com.github.junrar.rarfile.FileHeader;
 
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped3.util.ExtraProperties;
 
-import dpf.sp.gpinf.indexer.parsers.util.Util;
-
 /**
- * Parser para arquivos RAR.
+ * RAR file parser. No support for Rar5 format as of 2020-10-11 because of
+ * junrar limitation. Currently this parser is disabled and SevenZipParser
+ * handles RAR files.
  * 
  * @author Nassif
  *

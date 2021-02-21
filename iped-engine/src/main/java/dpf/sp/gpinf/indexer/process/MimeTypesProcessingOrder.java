@@ -58,6 +58,7 @@ public class MimeTypesProcessingOrder {
        
         mediaTypes.put(WhatsAppParser.WA_DB, 1);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
+        mediaTypes.put(WhatsAppParser.MSG_STORE_2, 3);
         mediaTypes.put(WhatsAppParser.CONTACTS_V2, 1);
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 

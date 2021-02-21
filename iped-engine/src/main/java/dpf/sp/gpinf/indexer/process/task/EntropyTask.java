@@ -4,11 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Properties;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped3.IItem;
 
@@ -40,7 +38,7 @@ public class EntropyTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled())
+        if (!isEnabled() || !evidence.isToAddToCase())
             return;
 
         String ratio = evidence.getMetadata().get(COMPRESS_RATIO);

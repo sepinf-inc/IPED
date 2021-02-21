@@ -276,22 +276,36 @@ public class Item implements ISleuthKitItem {
      *             caso ocorra erro de IO
      */
     public void dispose() {
+        this.dispose(true);
+    }
+
+    public void dispose(boolean clearTextCache) {
         try {
             tmpResources.close();
         } catch (Exception e) {
-            // LOGGER.warn("{} {}", Thread.currentThread().getName(), e.toString());
+            LOGGER.warn("Error closing resources of " + getPath(), e);
         }
         tmpFile = null;
         tis = null;
         try {
-            if (textCache != null)
+            if (textCache != null && clearTextCache) {
                 textCache.close();
+                textCache = null;
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && file != null && (toIgnore || !addToCase || deleteFile)) {
-            if (!file.delete()) {
-                LOGGER.warn("{} Error deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
+        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
+            try {
+                if (file != null && file.exists() && !file.delete()) {
+                    // in some scenarios file.delete() works but Files.delete() throws ioexception
+                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
+                }
+                if (inputStreamFactory != null && idInDataSource != null) {
+                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
+                }
+            } catch (IOException e) {
+                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
             }
         }
     }
@@ -570,8 +584,10 @@ public class Item implements ISleuthKitItem {
     public Reader getTextReader() throws IOException {
         if (textCache == null)
             return null;
-        else
+        else {
+            textCache.setSourceItem(this);
             return textCache.getTextReader();
+        }
     }
 
     /**

@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
-import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.dev.data.Item;
@@ -132,7 +131,7 @@ public class NamedEntityTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!isEnabled)
+        if (!isEnabled || !evidence.isToAddToCase())
             return;
 
         String mime = evidence.getMediaType().toString();

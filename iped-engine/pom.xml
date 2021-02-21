@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.18.2</version>
+        <version>3.19-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -47,7 +47,7 @@
     	<dependency>
     		<groupId>black.ninia</groupId>
   			<artifactId>jep</artifactId>
-  			<version>3.8.2</version>
+  			<version>3.9.1</version>
   		</dependency>
     	<dependency>
             <groupId>iped</groupId>
@@ -150,7 +150,12 @@
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded</version>
+            <version>7.6.1-shaded3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>7.1.4-shaded</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>

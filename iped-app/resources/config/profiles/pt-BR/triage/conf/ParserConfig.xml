@@ -1,4 +1,4 @@
-﻿﻿﻿<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 
 <!--
   Licensed to the Apache Software Foundation (ASF) under one or more
@@ -79,8 +79,7 @@
         <!-- <parser class="dpf.sp.gpinf.indexer.parsers.RegistryParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>-->
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>	
-        <parser class="dpf.sp.gpinf.indexer.parsers.RARParser"></parser>
-		<!-- <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser> Processava arquivos ISO -->
+		<parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
         <!-- parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser -->
@@ -137,6 +136,7 @@
 			<mime>application/x-sqlite3</mime> <!-- Vai ser processado por esse parser para melhorar performance-->
         </parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
+        <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 		
     </parsers>
 

@@ -177,7 +177,7 @@ public class OCRParser extends AbstractParser {
                     LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
                 }
             }
-            if (ENABLED && tessVersion.startsWith("4")) { //$NON-NLS-1$
+            if (ENABLED && Integer.valueOf(tessVersion.charAt(0)) >= 4) { // $NON-NLS-1$
                 for (int i = 0; i < command.length; i++)
                     if (command[i].equals("-psm")) //$NON-NLS-1$
                         command[i] = "--psm"; //$NON-NLS-1$
@@ -548,7 +548,10 @@ public class OCRParser extends AbstractParser {
         logStream("OCR ERROR", err); //$NON-NLS-1$
 
         try {
-            process.waitFor();
+            int status = process.waitFor();
+            if (status != 0) {
+                throw new TikaException("tesseract returned error code " + status);
+            }
         } catch (InterruptedException e) {
             // System.out.println(new Date() + "\t[AVISO]\t" +
             // "Interrompendo OCRParsing of " + input.getPath());
@@ -639,7 +642,11 @@ public class OCRParser extends AbstractParser {
     }
 
     private static String extractVersion(InputStream is) throws IOException {
-        return IOUtils.readLines(is).get(0).replace("tesseract ", ""); //$NON-NLS-1$ //$NON-NLS-2$
+        String version = IOUtils.readLines(is).get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
+        if (version.startsWith("v")) {
+            version = version.substring(1);
+        }
+        return version;
     }
 
 }

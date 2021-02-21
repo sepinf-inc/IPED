@@ -19,6 +19,7 @@ Presentations
 Contacts
 Chats
 Internet History
+Web Bookmarks
 Link files
 URL links
 Peer-to-peer
@@ -29,13 +30,46 @@ Scanned Documents
 Temporary Internet Images
 #Images in System Folders
 Other Images
-#Videos
-#Audios
-#OLE files
-#Compressed Archives
-#Mailboxes
+Georeferenced Files
+User Activities
+GDrive Synced Files
 Windows Registry
+#Audios
+#Videos
+#Compressed Archives
+#OLE files
+#Mailboxes
 #Programs and Libraries
-#Unallocated
 #Other files
 #Empty Files
+#ISO disks
+#Virtual disks
+#Other disks
+#Unallocated
+#File Slacks
+
+#Extraction Summary
+#Calls
+#SMS Messages
+#MMS Messages
+#Bluetooth Devices
+#SIM Data
+#Calendar
+#Logs
+#User Accounts
+#Searches
+#Notes
+#Wireless Networks
+#Notifications
+#Locations
+#Cookies
+#Configuration
+#Passwords
+#Autofill
+#Cell Towers
+#Power Events
+#User Dictionaries
+#IP Connections
+#Recordings
+#Mobile Cards
+#Application Usage

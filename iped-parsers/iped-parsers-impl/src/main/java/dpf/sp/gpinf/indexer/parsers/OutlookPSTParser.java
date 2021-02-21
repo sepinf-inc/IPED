@@ -48,7 +48,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -490,7 +489,8 @@ public class OutlookPSTParser extends AbstractParser {
             String bodyHtml = email.getBodyHTML();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
                 preview.append(bodyHtml);
-                metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(bodyHtml, true));
+                metadata.set(ExtraProperties.MESSAGE_BODY,
+                        Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
             } else {
                 String text = email.getBody();
                 if (text == null || text.trim().isEmpty()) {
@@ -509,7 +509,8 @@ public class OutlookPSTParser extends AbstractParser {
                     }
                 }
                 if (text != null && !text.trim().isEmpty()) {
-                    metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(text, false));
+                    metadata.set(ExtraProperties.MESSAGE_BODY,
+                            Util.getContentPreview(text, MediaType.TEXT_PLAIN.toString()));
                     text = SimpleHTMLEncoder.htmlEncode(text);
                     preview.append("<pre>"); //$NON-NLS-1$
                     preview.append(text);

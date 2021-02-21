@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -11,13 +14,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
@@ -54,6 +50,13 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import repackaged.org.apache.http.HttpHost;
+import repackaged.org.apache.http.auth.AuthScope;
+import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
+import repackaged.org.apache.http.client.CredentialsProvider;
+import repackaged.org.apache.http.client.config.RequestConfig;
+import repackaged.org.apache.http.impl.client.BasicCredentialsProvider;
+import repackaged.org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -64,6 +67,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
+    private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
@@ -78,6 +82,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static boolean enabled = false;
     private static String host;
+    private static String protocol;
     private static int port = 9200;
     private static int max_fields = 10000;
     private static int min_bulk_size = 1 << 23;
@@ -138,7 +143,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             parseCmdLineFields(cmdFields);
         }
 
-        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, "http"))
+        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
@@ -187,6 +192,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();
         port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
+        protocol = props.getProperty(PROTOCOL_KEY);
         max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
         min_bulk_size = Integer.valueOf(props.getProperty(MIN_BULK_SIZE_KEY).trim());
         min_bulk_items = Integer.valueOf(props.getProperty(MIN_BULK_ITEMS_KEY).trim());
@@ -280,7 +286,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
-        Reader textReader = item.getTextReader();
+        Reader textReader = null;
+
+        if (!item.isToAddToCase()) {
+            if (IndexTask.isTreeNodeOnly(item)) {
+                IndexTask.configureTreeNodeAttributes(item);
+                textReader = new StringReader("");
+            } else
+                return;
+        }
+
+        if (textReader == null) {
+            textReader = item.getTextReader();
+        }
+
         if (textReader == null) {
             LOGGER.warn("Null text reader: " + item.getPath() + " ("
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");
@@ -436,7 +455,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private String getInputStreamSourcePath(IItem item) {
         if (item.getInputStreamFactory() != null) {
-            return Util.getRelativePath(output, item.getInputStreamFactory().getDataSourcePath().toFile());
+            URI uri = item.getInputStreamFactory().getDataSourceURI();
+            return Util.getRelativePath(output, uri);
         }
         return null;
     }

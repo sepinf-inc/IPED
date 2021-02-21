@@ -276,6 +276,12 @@ public class TelegramParser extends SQLite3DBParser {
             if (m.getMediaHash() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
+                if (!m.getChildPornSets().isEmpty()) {
+                    meta.set("kffstatus", "pedo");
+                    for (String set : m.getChildPornSets()) {
+                        meta.add("kffgroup", set);
+                    }
+                }
                 // TODO store thumb in metadata?
             }
             if (m.isPhoneCall()) {

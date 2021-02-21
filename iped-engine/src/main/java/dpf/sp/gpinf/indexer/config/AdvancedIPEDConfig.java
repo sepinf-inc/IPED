@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 import org.apache.tika.fork.ForkParser2;
 
@@ -13,6 +13,8 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
@@ -246,6 +248,19 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             commitIntervalSeconds = Integer.parseInt(value.trim());
+        }
+
+        value = properties.getProperty("openWithDoubleClick"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            value = value.trim();
+            if (ExternalOpenEnum.ALWAYS.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ALWAYS);
+            else if (ExternalOpenEnum.ASK_ALWAYS.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ASK_ALWAYS);
+            else if (ExternalOpenEnum.ASK_IF_EXE.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ASK_IF_EXE);
+            else if (ExternalOpenEnum.NEVER.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.NEVER);
         }
 
     }
