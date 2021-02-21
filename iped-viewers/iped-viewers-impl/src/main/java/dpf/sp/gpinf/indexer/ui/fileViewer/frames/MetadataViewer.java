@@ -238,9 +238,6 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.ID, item.getId());
         fillProp(sb, BasicProps.PARENTID, item.getParentId());
         fillProp(sb, BasicProps.EVIDENCE_UUID, item.getDataSource());
-        fillProp(sb, BasicProps.FILESYSTEM_ID, item.getExtraAttribute(BasicProps.FILESYSTEM_ID));
-        fillProp(sb, BasicProps.META_ADDRESS, item.getExtraAttribute(BasicProps.META_ADDRESS));
-        fillProp(sb, BasicProps.MFT_SEQUENCE, item.getExtraAttribute(BasicProps.MFT_SEQUENCE));
         fillProp(sb, BasicProps.SUBITEM, item.isSubItem());
         fillProp(sb, BasicProps.SUBITEMID, item.getSubitemId());
         fillProp(sb, BasicProps.CARVED, item.isCarved());
