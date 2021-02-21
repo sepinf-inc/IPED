@@ -137,7 +137,7 @@ public class UsnJrnlParser extends AbstractParser {
                 new ParsingEmbeddedDocumentExtractor(context));
 
         Metadata cMetadata = new Metadata();
-        String name = "NTFS Journal Report";
+        String name = "USN Journal Report";
 
         InputStream is = null;
         try (TemporaryResources tmp = new TemporaryResources()) {
@@ -168,13 +168,23 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
 
+                String[] props = ReportGenerator.cols;
+
                 metadataItem.set(TikaCoreProperties.CREATED, rg.timeFormat.format(entry.getFileTime()));
-                metadataItem.set("FileName", entry.getFileName());
-                metadataItem.set("USN", entry.getUSN() + "");
-                metadataItem.set("MTF Ref", entry.getMftRef() + "");
-                metadataItem.set("Parent MTF Ref", entry.getParentMftRef() + "");
-                metadataItem.set("Reasons", entry.getReasons());
-                metadataItem.set("File Attributes", entry.getHumanAttributes());
+                metadataItem.set(ReportGenerator.cols[0], String.format("0x%016X", entry.getOffset()));
+                metadataItem.set(props[1], entry.getFileName());
+                metadataItem.set(props[2], entry.getFullPath());
+                metadataItem.set(props[3], Long.toString(entry.getUSN()));
+                for (String value : entry.getReasons()) {
+                    metadataItem.add(props[5], value);
+                }
+                metadataItem.set(props[6], "0x" + Util.byteArrayToHex(entry.getMftRef()));
+                metadataItem.set(props[7], "0x" + Util.byteArrayToHex(entry.getParentMftRef()));
+                for (String value : entry.getHumanAttributes()) {
+                    metadataItem.add(props[8], value);
+                }
+                metadataItem.set(props[9], Long.toString(entry.getSourceInformation()));
+                metadataItem.set(props[10], Long.toString(entry.getSecurityId()));
                 extractor.parseEmbedded(new EmptyInputStream(), handler, metadataItem, false);
 
             }
