@@ -1,7 +1,9 @@
 package dpf.inc.sepinf.UsnJrnl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 
 public class UsnJrnlEntry {
     private long offset;
@@ -69,37 +71,31 @@ public class UsnJrnlEntry {
 
     }
 
-    public String getReasons() {
+    public List<String> getReasons() {
 
-        StringBuilder sb = new StringBuilder();
+        ArrayList<String> list = new ArrayList<>();
 
         for (int k : reasonFlags.keySet()) {
             if ((k & reasonFlag) != 0) {
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                }
-                sb.append(reasonFlags.get(k));
+                list.add(reasonFlags.get(k));
             }
         }
 
-        return sb.toString();
+        return list;
 
     }
 
-    public String getHumanAttributes() {
+    public List<String> getHumanAttributes() {
 
-        StringBuilder sb = new StringBuilder();
+        ArrayList<String> list = new ArrayList<>();
 
         for (int k : fileAttributesToString.keySet()) {
             if ((k & this.fileAttributes) != 0) {
-                if (sb.length() > 0) {
-                    sb.append(", ");
-                }
-                sb.append(fileAttributesToString.get(k));
+                list.add(fileAttributesToString.get(k));
             }
         }
 
-        return sb.toString();
+        return list;
 
     }
 
