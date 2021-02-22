@@ -20,6 +20,9 @@ Arquivos OLE
 # Gera relatórios de registro:
 Registro do Windows
 
+# Gera relatório do USN journal
+Journal USN
+
 #Documentos de Texto
 #Planilhas
 #Apresentações

@@ -35,6 +35,9 @@ public class BasicProps {
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
     public static final String THUMB = "thumbnail"; //$NON-NLS-1$
     public static final String SIMILARITY_FEATURES = "similarityFeatures"; //$NON-NLS-1$
+    public static final String META_ADDRESS = "metaAddress";
+    public static final String MFT_SEQUENCE = "MFTSequence";
+    public static final String FILESYSTEM_ID = "fileSystemId";
 
     public static final Set<String> SET = getBasicProps();
 

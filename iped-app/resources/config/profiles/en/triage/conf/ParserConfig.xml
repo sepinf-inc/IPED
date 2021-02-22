@@ -95,13 +95,23 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.OutlookDBXParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.XBaseParser"></parser>
 		<!--<parser class="dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser"></parser> SQLite will be parsed by RawStringParser, configured below-->
+		<parser class="dpf.inc.sepinf.UsnJrnl.UsnJrnlParser">
+			<params>
+				<param name="extractEntries" type="bool">false</param>
+			</params>
+		</parser>
 		<parser class="dpf.ap.gpinf.telegramextractor.TelegramParser">
 			<params>
 				<param name="enabledForUfdr" type="bool">false</param>
 			</params>
 		</parser>
 		<parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
-        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser"></parser>
+        <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
+			<params>
+			    <!--Experimental feature, not completed yet -->
+				<param name="mergeDbs" type="bool">false</param>
+			</params>
+		</parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">
         	<!--<mime-exclude>application/x-ufed-chat-whatsapp</mime-exclude>-->
         </parser>
