@@ -1,5 +1,6 @@
 package dpf.inc.sepinf.UsnJrnl;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -262,11 +263,7 @@ public class UsnJrnlParser extends AbstractParser {
         query.append(" && ");
         query.append(BasicProps.FILESYSTEM_ID + ":" + item.getExtraAttribute(BasicProps.FILESYSTEM_ID));
         query.append(" && (");
-
-        HashMap<Long, UsnJrnlEntry> map = new HashMap<>(entries.size());
-
         for (UsnJrnlEntry entry : entries) {
-            map.put(entry.getParentMftRefAsLong(), entry);
             query.append("(");
             query.append(BasicProps.META_ADDRESS + ":" + entry.getMftParentRecord());
             query.append(" && ");
@@ -274,18 +271,20 @@ public class UsnJrnlParser extends AbstractParser {
             query.append(") ");
         }
         query.append(")");
-
         List<IItemBase> parents = searcher.search(query.toString());
+        HashMap<Long, IItemBase> map = new HashMap<>();
         for (IItemBase parent : parents) {
             long meta = Long.parseLong((String) parent.getExtraAttribute(BasicProps.META_ADDRESS));
             long seq = Long.parseLong((String) parent.getExtraAttribute(BasicProps.MFT_SEQUENCE));
             long fullRef = seq << 48 | meta;
-            UsnJrnlEntry entry = map.get(fullRef);
-            if (entry != null) {
+            map.put(fullRef, parent);
+        }
+        for (UsnJrnlEntry entry : entries) {
+            IItemBase parent = map.get(entry.getParentMftRefAsLong());
+            if (parent != null) {
                 entry.setFullPath(parent.getPath() + "/" + entry.getFileName());
             }
         }
-
     }
 
 }
