@@ -67,7 +67,7 @@ public class HashDBTool {
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
     private int totIns, totRem, totUpd, totSkip;
-    private boolean dbExists, skipOpt;
+    private boolean dbExists, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -75,9 +75,11 @@ public class HashDBTool {
         tool.finish(success);
     }
 
+
     private boolean run(String[] args) {
         if (!parseParameters(args)) return false;
         if (!checkInputFiles()) return false;
+        if (inputs.isEmpty()) System.exit(0);
         dbExists = output.exists();
         if (!connect()) return false;
         if (!dbExists && !createDatabase()) return false;
@@ -548,7 +550,7 @@ public class HashDBTool {
     private boolean readFile(File file) {
         FileType type = getFileType(file);
         totIns = totRem = totUpd = totSkip = 0;
-        System.out.println("\nReading " + type.toString() + " file " + file.getPath() + "...");
+        System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
         BufferedReader in = null;
@@ -822,7 +824,7 @@ public class HashDBTool {
                 }
                 if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD)) return false;
                 inputs.add(i++, prodFile); //Insert NSRL Product file before the main file. 
-            } else if (type == FileType.CSV) {
+            } else if (type == FileType.CSV || type == FileType.INPUT) {
                 if (!checkInputHeader(file)) return false;
             } else if (type == FileType.PROJECT_VIC) {
                 //Identification was based on its contest (plus file extension) 
@@ -842,6 +844,7 @@ public class HashDBTool {
         if (name.equalsIgnoreCase(nsrlProdFileName)) return FileType.NSRL_PROD;
         if (name.endsWith(".csv")) return FileType.CSV;
         if (name.endsWith(".json") && isProjectVicJson(file)) return FileType.PROJECT_VIC;
+        if (!inputFolderUsed) return FileType.INPUT;
         return FileType.UNKNOWN;
     }
 
@@ -1113,6 +1116,7 @@ public class HashDBTool {
                     return false;
                 }
                 if (in.isDirectory()) {
+                    inputFolderUsed = true;
                     File[] files = in.listFiles();
                     for (File file : files) {
                         if (file.isFile()) {
@@ -1244,6 +1248,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_PROD, PROJECT_VIC, UNKNOWN;
+        CSV, NSRL_MAIN, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT;
     }
 }
