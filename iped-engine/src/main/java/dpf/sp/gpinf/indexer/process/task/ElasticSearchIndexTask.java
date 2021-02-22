@@ -80,6 +80,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String CMD_FIELDS_KEY = "elastic";
     private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
 
+    private static final String INDEX_NAME_KEY = "indexName";
+    private static final String USER_KEY = "user";
+    private static final String PASSWORD_KEY = "password";
+
     private static boolean enabled = false;
     private static String host;
     private static String protocol;
@@ -101,9 +105,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static HashMap<String, String> cmdLineFields = new HashMap<>();
 
-    private static String user, password;
-
-    private String indexName;
+    private static String user, password, indexName;
 
     private BulkRequest bulkRequest = new BulkRequest();
 
@@ -125,8 +127,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         count.incrementAndGet();
 
-        indexName = output.getParentFile().getName();
-
         if (client != null) {
             return;
         }
@@ -141,6 +141,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         String cmdFields = args.getExtraParams().get(CMD_FIELDS_KEY);
         if (cmdFields != null) {
             parseCmdLineFields(cmdFields);
+        }
+
+        if (indexName == null) {
+            indexName = output.getParentFile().getName();
         }
 
         RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
@@ -176,11 +180,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
-            if ("user".equals(pair[0]))
+            if (USER_KEY.equals(pair[0]))
                 user = pair[1];
-            else if ("password".equals(pair[0]))
+            else if (PASSWORD_KEY.equals(pair[0]))
                 password = pair[1];
-            else
+            else if (INDEX_NAME_KEY.equals(pair[0])) {
+                indexName = pair[1];
+            } else
                 cmdLineFields.put(pair[0], pair[1]);
         }
     }
