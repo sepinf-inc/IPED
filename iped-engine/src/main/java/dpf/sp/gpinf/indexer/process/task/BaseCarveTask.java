@@ -112,11 +112,11 @@ public abstract class BaseCarveTask extends AbstractTask {
         if (offsetFile.isCarved()) {
             incItensCarved();
         }
-        Integer numSubitems = (Integer) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
+        Number numSubitems = (Number) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
         if (numSubitems == null) {
             numSubitems = 0;
         }
-        parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, ++numSubitems);
+        parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, numSubitems.intValue() + 1);
 
         // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
         // processa no worker atual
