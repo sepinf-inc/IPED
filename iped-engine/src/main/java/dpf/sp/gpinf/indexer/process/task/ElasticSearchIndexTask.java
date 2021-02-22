@@ -256,6 +256,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void createFieldMappings(String indexName) throws IOException {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
+        properties.put(BasicProps.ID, Collections.singletonMap("type", "keyword"));
+        properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
+        properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
