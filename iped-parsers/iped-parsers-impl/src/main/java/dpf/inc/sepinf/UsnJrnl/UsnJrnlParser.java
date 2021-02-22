@@ -1,10 +1,10 @@
 package dpf.inc.sepinf.UsnJrnl;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -263,11 +263,15 @@ public class UsnJrnlParser extends AbstractParser {
         query.append(" && ");
         query.append(BasicProps.FILESYSTEM_ID + ":" + item.getExtraAttribute(BasicProps.FILESYSTEM_ID));
         query.append(" && (");
+        HashSet<Long> parentRefs = new HashSet<>();
         for (UsnJrnlEntry entry : entries) {
+            parentRefs.add(entry.getParentMftRefAsLong());
+        }
+        for (Long parentRef : parentRefs) {
             query.append("(");
-            query.append(BasicProps.META_ADDRESS + ":" + entry.getMftParentRecord());
+            query.append(BasicProps.META_ADDRESS + ":" + (parentRef.longValue() & 0xFFFFFFFFFFFFl));
             query.append(" && ");
-            query.append(BasicProps.MFT_SEQUENCE + ":" + entry.getMftParentSequence());
+            query.append(BasicProps.MFT_SEQUENCE + ":" + (parentRef.longValue() >> 48));
             query.append(") ");
         }
         query.append(")");
