@@ -67,7 +67,7 @@ public class HashDBTool {
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
     private int totIns, totRem, totUpd, totSkip;
-    private boolean dbExists;
+    private boolean dbExists, skipOpt;
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
@@ -969,25 +969,33 @@ public class HashDBTool {
         try {
             if (success) {
                 long t = System.currentTimeMillis();
-                System.out.println("\nOptimizing the database...");
-                try {
-                    deleteUnused();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+                System.out.println("\nCommiting changes...");
                 connection.commit();
-                try {
-                    analyze();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                try {
-                    vacuum();
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
                 t = System.currentTimeMillis() - t;
-                System.out.println("Optimization completed in " + t / 1000 + " seconds.");
+                System.out.println("Commit completed in " + t / 1000 + " seconds.");
+
+                if (!skipOpt) {
+                    t = System.currentTimeMillis();
+                    System.out.println("\nOptimizing the database...");
+                    try {
+                        deleteUnused();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    connection.commit();
+                    try {
+                        analyze();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        vacuum();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    t = System.currentTimeMillis() - t;
+                    System.out.println("Optimization completed in " + t / 1000 + " seconds.");
+                }
             } else {
                 if (connection != null) {
                     connection.rollback();
@@ -1154,6 +1162,8 @@ public class HashDBTool {
                     return false;
                 }
                 mode = ProcessMode.REMOVE_ALL;
+            } else if (arg.equalsIgnoreCase("-noOpt")) {
+                skipOpt = true;
             } else {
                 System.out.println("ERROR: unknown parameter '" + arg + "'.");
                 return false;
@@ -1224,6 +1234,9 @@ public class HashDBTool {
         System.out.println("    is removed.");
         System.out.println("  -removeAll");
         System.out.println("    Remove all references to the hashes present in the input files.");
+        System.out.println("  -noOpt");
+        System.out.println("    Skip optimizations (reclaim empty space and database analisys) executed");
+        System.out.println("    after processing input file(s).");
     }
 
     enum ProcessMode {
