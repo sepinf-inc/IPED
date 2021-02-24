@@ -273,6 +273,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return new MenuClass();
     }
 
+    public LogConfiguration getLogConfiguration() {
+        return this.logConfiguration;
+    }
+
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
             Manager processingManager) {
 
