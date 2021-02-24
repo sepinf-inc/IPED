@@ -37,10 +37,6 @@ public class LogConfiguration {
         indexador.logFile = logFile;
     }
 
-    public File getLogFile() {
-        return this.logFile;
-    }
-
     private boolean setConsoleLogFile(boolean createLogInTemp) {
         try {
             if (createLogInTemp)

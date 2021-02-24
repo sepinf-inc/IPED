@@ -48,11 +48,8 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             String caseNames = cases.stream().map(c -> c.getCaseDir().getName()).sorted()
                     .collect(Collectors.joining("-"));
             String hash = DigestUtils.md5Hex(caseNames);
-            String suffix = "iped-graph/multicase-" + hash + "/database";
-            File multiCaseGraphPath = new File(App.get().casesPathFile.getParentFile(), suffix);
-            if (!multiCaseGraphPath.exists() && !multiCaseGraphPath.mkdirs()) {
-                multiCaseGraphPath = new File(System.getProperty("java.io.tmpdir"), suffix);
-            }
+            File multiCaseGraphPath = new File(App.get().casesPathFile.getParentFile(),
+                    "iped-graph/multicase-" + hash + "/database");
             createMultiCaseGraph(cases, multiCaseGraphPath);
             if (multiCaseGraphPath.exists()) {
                 loaded = initGraphService(multiCaseGraphPath);
