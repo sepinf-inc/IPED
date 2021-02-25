@@ -180,9 +180,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (args.isRestart()) {
             deleteIndex(indexName);
         }
-
-        if (!args.isAppendIndex() && !args.isContinue())
+        
+        try {
             createIndex(indexName);
+            if (args.isAppendIndex() || args.isContinue()) {
+                deleteIndex(indexName);
+                throw new IPEDException("ElasticSearch index does not exist: " + indexName);
+            }
+
+        } catch (ElasticIndexAlreadyExists e) {
+            if (!args.isAppendIndex() && !args.isContinue()) {
+                throw e;
+            }
+        }
     }
 
     private void parseCmdLineFields(String cmdFields) {
@@ -244,10 +254,23 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         } catch (ElasticsearchStatusException e) {
             if (e.getDetailedMessage().contains("type=resource_already_exists_exception")) { //$NON-NLS-1$
-                throw new IPEDException("ElasticSearch index already exists: " + indexName);
+                throw new ElasticIndexAlreadyExists(indexName);
             } else {
                 throw e;
             }
+        }
+
+    }
+
+    private class ElasticIndexAlreadyExists extends IPEDException {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
+        public ElasticIndexAlreadyExists(String indexName) {
+            super("ElasticSearch index already exists: " + indexName);
         }
 
     }
