@@ -34,6 +34,7 @@ import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
@@ -181,18 +182,16 @@ public class ElasticSearchIndexTask extends AbstractTask {
             deleteIndex(indexName);
         }
         
-        try {
-            createIndex(indexName);
-            if (args.isAppendIndex() || args.isContinue()) {
-                deleteIndex(indexName);
-                throw new IPEDException("ElasticSearch index does not exist: " + indexName);
+        if (!args.isAppendIndex() && !args.isContinue()) {
+            if (indexExists(indexName)) {
+                throw new IPEDException("ElasticSearch index already exists: " + indexName);
+            } else {
+                createIndex(indexName);
             }
-
-        } catch (ElasticIndexAlreadyExists e) {
-            if (!args.isAppendIndex() && !args.isContinue()) {
-                throw e;
-            }
+        } else if (!indexExists(indexName)) {
+            throw new IPEDException("ElasticSearch index does not exist: " + indexName);
         }
+
     }
 
     private void parseCmdLineFields(String cmdFields) {
@@ -230,7 +229,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
 
+    private boolean indexExists(String indexName) throws IOException {
+        GetIndexRequest request = new GetIndexRequest(indexName);
+        return client.indices().exists(request, RequestOptions.DEFAULT);
+    }
+
     private void createIndex(String indexName) throws IOException {
+
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
                 .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy);
@@ -245,33 +250,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         request.settings(builder);
 
-        try {
-            CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
-            if (!response.isAcknowledged()) {
-                throw new IOException("Creation of index '" + indexName + "'failed!");
-            }
-            createFieldMappings(indexName);
-
-        } catch (ElasticsearchStatusException e) {
-            if (e.getDetailedMessage().contains("type=resource_already_exists_exception")) { //$NON-NLS-1$
-                throw new ElasticIndexAlreadyExists(indexName);
-            } else {
-                throw e;
-            }
+        CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+        if (!response.isAcknowledged()) {
+            throw new IOException("Creation of index '" + indexName + "'failed!");
         }
-
-    }
-
-    private class ElasticIndexAlreadyExists extends IPEDException {
-
-        /**
-         * 
-         */
-        private static final long serialVersionUID = 1L;
-
-        public ElasticIndexAlreadyExists(String indexName) {
-            super("ElasticSearch index already exists: " + indexName);
-        }
+        createFieldMappings(indexName);
 
     }
 
