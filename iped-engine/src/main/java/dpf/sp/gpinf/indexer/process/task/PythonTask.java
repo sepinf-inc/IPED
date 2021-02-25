@@ -115,7 +115,15 @@ public class PythonTask extends AbstractTask {
 
         if (callInit) {
             jep.invoke("init", confParams, confDir);
-            isEnabled = (Boolean) jep.invoke("isEnabled"); //$NON-NLS-1$
+            try {
+                isEnabled = (Boolean) jep.invoke("isEnabled"); //$NON-NLS-1$
+            } catch (JepException e) {
+                if (e.toString().contains("Unable to find object with name:")) {
+                    isEnabled = true;
+                } else {
+                    throw e;
+                }
+            }
         }
 
         return jep;
@@ -169,7 +177,7 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            jep.invoke("sendToNextTask", item); //$NON-NLS-1$
+            getJep().invoke("sendToNextTask", item); //$NON-NLS-1$
             
         }catch(JepException e) {
             if(e.toString().contains("Unable to find object with name: sendToNextTask")) { //$NON-NLS-1$
