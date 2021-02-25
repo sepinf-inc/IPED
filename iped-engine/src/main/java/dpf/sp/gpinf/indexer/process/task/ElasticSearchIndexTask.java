@@ -7,9 +7,11 @@ import java.io.StringReader;
 import java.net.URI;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -17,6 +19,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -45,6 +48,7 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
@@ -173,7 +177,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
             throw new IOException("ElasticSearch cluster at " + host + ":" + port + " not responding to ping.");
         }
 
-        createIndex(indexName, args);
+        if (args.isRestart()) {
+            deleteIndex(indexName);
+        }
+
+        if (!args.isAppendIndex() && !args.isContinue())
+            createIndex(indexName);
     }
 
     private void parseCmdLineFields(String cmdFields) {
@@ -211,7 +220,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
 
-    private void createIndex(String indexName, CmdLineArgs args) throws IOException {
+    private void createIndex(String indexName) throws IOException {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
                 .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy);
@@ -234,11 +243,22 @@ public class ElasticSearchIndexTask extends AbstractTask {
             createFieldMappings(indexName);
 
         } catch (ElasticsearchStatusException e) {
-            if (/* !args.isAppendIndex() || */ !e.getDetailedMessage().contains("resource_already_exists_exception")) { //$NON-NLS-1$
+            if (e.getDetailedMessage().contains("type=resource_already_exists_exception")) { //$NON-NLS-1$
+                throw new IPEDException("ElasticSearch index already exists: " + indexName);
+            } else {
                 throw e;
             }
         }
 
+    }
+
+    private void deleteIndex(String indexName) throws IOException {
+        DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+        AcknowledgedResponse deleteIndexResponse = client.indices().delete(request, RequestOptions.DEFAULT);
+        boolean acknowledged = deleteIndexResponse.isAcknowledged();
+        if (!acknowledged) {
+            throw new IOException("Fail to delete index in ElasticSearch: " + indexName);
+        }
     }
 
     private String getLatinExtendedBPattern() {
@@ -271,6 +291,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
+    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
+
     @Override
     public void finish() throws Exception {
 
@@ -281,13 +303,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
             sendBulkRequest();
         }
 
-        synchronized (lock) {
-            while (numRequests > 0) {
-                lock.wait();
-            }
-        }
+        taskInstances.add(this);
 
         if (count.decrementAndGet() == 0) {
+            for (ElasticSearchIndexTask instance : taskInstances) {
+                synchronized (instance.lock) {
+                    while (instance.numRequests > 0) {
+                        instance.lock.wait();
+                    }
+                }
+            }
+            taskInstances.clear();
             IOUtil.closeQuietly(client);
         }
     }
