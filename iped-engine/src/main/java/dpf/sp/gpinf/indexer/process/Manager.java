@@ -192,8 +192,12 @@ public class Manager {
 
         prepareOutputFolder();
 
-        if (args.isContinue() && indexDir != finalIndexDir) {
-            changeTempDir();
+        if ((args.isContinue() || args.isRestart())) {
+            if (finalIndexDir.exists()) {
+                indexDir = finalIndexDir;
+            } else if (indexDir != finalIndexDir) {
+                changeTempDir();
+            }
         }
 
         if (args.getEvidenceToRemove() != null) {
@@ -350,14 +354,15 @@ public class Manager {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
 
+        boolean newIndex = !indexDir.exists();
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
+        
         if (args.isRestart()) {
             List<IndexCommit> commits = DirectoryReader.listCommits(directory);
             config.setIndexCommit(commits.get(0));
         }
 
-        boolean newIndex = !indexDir.exists();
         writer = new IndexWriter(directory, config);
         if (newIndex) {
             // first empty commit to be used by --restart
