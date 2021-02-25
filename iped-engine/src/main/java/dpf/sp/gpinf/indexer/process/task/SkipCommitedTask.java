@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
@@ -56,9 +57,9 @@ public class SkipCommitedTask extends AbstractTask {
 
     private static HashMap<String, String> prevRootNameToEvidenceUUID = new HashMap<>();
 
-    private CmdLineArgs args;
+    private static CmdLineArgs args;
 
-    private boolean firstInit = true;
+    private static AtomicBoolean inited = new AtomicBoolean();
 
     public static boolean isAlreadyCommited(IItem item) {
         if (commitedPersistentIds == null) {
@@ -71,10 +72,9 @@ public class SkipCommitedTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        if (!firstInit) {
+        if (inited.getAndSet(true)) {
             return;
         }
-        firstInit = false;
 
         try (IndexReader reader = DirectoryReader.open(worker.writer, true)) {
             LeafReader aReader = SlowCompositeReaderWrapper.wrap(reader);
