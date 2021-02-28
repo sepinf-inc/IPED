@@ -86,6 +86,7 @@ public class HashDB {
     }
 
     public static String mergeProperties(String a, String b) {
+        if (a.equals(b)) return a;
         Set<String> all = toSet(a);
         all.addAll(toSet(b));
         return toStr(all);

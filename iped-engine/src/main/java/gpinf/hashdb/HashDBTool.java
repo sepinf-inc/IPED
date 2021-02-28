@@ -50,7 +50,7 @@ public class HashDBTool {
     private static final String vicSetPropertyValue = "ProjectVIC";
     private static final String vicStatusPropertyValue = "pedo";
     private static final String vicPrefix = "vic";
-    
+
     private final List<File> inputs = new ArrayList<File>();
     private File output;
     private int lastHashId, lastPropertyId;
@@ -68,7 +68,7 @@ public class HashDBTool {
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
-    private int totIns, totRem, totUpd, totSkip;
+    private int totIns, totRem, totUpd, totSkip, totComb;
     private boolean dbExists, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
@@ -135,13 +135,13 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean process(byte[][] newHashes, Map<Integer, String> newProperties) throws Exception {
-        if (newProperties.isEmpty()) return false;
+    private boolean process(byte[][] newHashes, Map<Integer, Set<String>> newProperties) throws Exception {
+        if (newProperties.isEmpty()) return true;
         int mask = 0;
         for (int i = 0; i < newHashes.length; i++) {
             if (newHashes[i] != null) mask |= 1 << i;
         }
-        if (mask == 0) return false;
+        if (mask == 0) return true;
         PreparedStatement stmtSelect = stmtSelectHash[mask];
         int k = 0;
         for (byte[] h : newHashes) {
@@ -184,14 +184,14 @@ public class HashDBTool {
                     }
                 }
             } else {
-                Map<Integer, String> currProperties = getProperties(prevHashId);
+                Map<Integer, Set<String>> currProperties = getProperties(prevHashId);
                 if (otherPrevHashIds != null) {
                     for (int id : otherPrevHashIds) {
-                        Map<Integer, String> otherProperties = getProperties(id);
+                        Map<Integer, Set<String>> otherProperties = getProperties(id);
                         if (otherProperties == null) return false;
                         if (!removeHash(id)) return false;
                         if (!currProperties.equals(otherProperties)) {
-                            Map<Integer, String> propertiesToAdd = new HashMap<Integer, String>();
+                            Map<Integer, Set<String>> propertiesToAdd = new HashMap<Integer, Set<String>>();
                             Set<Integer> propertiesToRemove = new HashSet<Integer>();
                             mergeProperties(currProperties, otherProperties, ProcessMode.MERGE, propertiesToAdd, propertiesToRemove);
                             if (propertiesToAdd.keySet().equals(propertiesToRemove)) {
@@ -211,7 +211,7 @@ public class HashDBTool {
                         totSkip++;
                     }
                 } else {
-                    Map<Integer, String> propertiesToAdd = new HashMap<Integer, String>();
+                    Map<Integer, Set<String>> propertiesToAdd = new HashMap<Integer, Set<String>>();
                     Set<Integer> propertiesToRemove = new HashSet<Integer>();
                     mergeProperties(newProperties, currProperties, mode, propertiesToAdd, propertiesToRemove);
                     if (propertiesToAdd.isEmpty() && propertiesToRemove.equals(currProperties.keySet())) {
@@ -239,14 +239,14 @@ public class HashDBTool {
 
     }
 
-    private void mergeProperties(Map<Integer, String> a, Map<Integer, String> b, ProcessMode m, Map<Integer, String> propertiesToAdd, Set<Integer> propertiesToRemove) {
+    private void mergeProperties(Map<Integer, Set<String>> newProp, Map<Integer, Set<String>> oldProp, ProcessMode m, Map<Integer, Set<String>> propertiesToAdd, Set<Integer> propertiesToRemove) {
         if (m == ProcessMode.REPLACE_ALL) {
-            propertiesToRemove.addAll(b.keySet());
-            propertiesToRemove.removeAll(a.keySet());
+            propertiesToRemove.addAll(oldProp.keySet());
+            propertiesToRemove.removeAll(newProp.keySet());
         }
-        for (int id : a.keySet()) {
-            String av = a.get(id);
-            String bv = b.get(id);
+        for (int id : newProp.keySet()) {
+            Set<String> av = newProp.get(id);
+            Set<String> bv = oldProp.get(id);
             if (m == ProcessMode.REPLACE_ALL) {
                 if (!av.equals(bv)) {
                     if (bv != null) propertiesToRemove.add(id);
@@ -261,24 +261,17 @@ public class HashDBTool {
                 if (av.equals(bv)) {
                     propertiesToRemove.add(id);
                 } else if (bv != null) {
-                    Set<String> as = toSet(av);
-                    Set<String> bs = toSet(bv);
-                    bs.removeAll(as);
-                    propertiesToRemove.add(id);
-                    propertiesToAdd.put(id, toStr(bs));
+                    if (bv.removeAll(av)) {
+                        propertiesToRemove.add(id);
+                        propertiesToAdd.put(id, bv);
+                    }
                 }
             } else if (m == ProcessMode.MERGE) {
-                if (!av.equals(bv)) {
-                    if (bv == null) {
-                        propertiesToAdd.put(id, av);
-                    } else {
-                        Set<String> as = toSet(av);
-                        Set<String> bs = toSet(bv);
-                        if (bs.addAll(as)) {
-                            propertiesToRemove.add(id);
-                            propertiesToAdd.put(id, toStr(bs));
-                        }
-                    }
+                if (bv == null) {
+                    propertiesToAdd.put(id, av);
+                } else if (bv.addAll(av)) {
+                    propertiesToRemove.add(id);
+                    propertiesToAdd.put(id, bv);
                 }
             }
         }
@@ -323,15 +316,15 @@ public class HashDBTool {
 
     }
 
-    private Map<Integer, String> getProperties(int hashId) {
+    private Map<Integer, Set<String>> getProperties(int hashId) {
         try {
             stmtSelectHashProperties.setInt(1, hashId);
             ResultSet rs = stmtSelectHashProperties.executeQuery();
-            Map<Integer, String> prop = new HashMap<Integer, String>();
+            Map<Integer, Set<String>> prop = new HashMap<Integer, Set<String>>();
             while (rs.next()) {
                 int propId = rs.getInt(1);
                 String value = rs.getString(2);
-                prop.put(propId, value);
+                prop.put(propId, toSet(value));
             }
             if (prop.isEmpty()) return null;
             return prop;
@@ -368,12 +361,12 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean insertHashProperties(int hashId, Map<Integer, String> properties) {
+    private boolean insertHashProperties(int hashId, Map<Integer, Set<String>> properties) {
         try {
             for (int propId : properties.keySet()) {
                 stmtInsertHashProperty.setInt(1, hashId);
                 stmtInsertHashProperty.setInt(2, propId);
-                stmtInsertHashProperty.setString(3, properties.get(propId));
+                stmtInsertHashProperty.setString(3, toStr(properties.get(propId)));
                 stmtInsertHashProperty.executeUpdate();
             }
             return true;
@@ -383,10 +376,10 @@ public class HashDBTool {
         return false;
     }
 
-    private boolean updateHashProperties(int hashId, Map<Integer, String> properties) {
+    private boolean updateHashProperties(int hashId, Map<Integer, Set<String>> properties) {
         try {
             for (int propId : properties.keySet()) {
-                stmtUpdateHashProperty.setString(1, properties.get(propId));
+                stmtUpdateHashProperty.setString(1, toStr(properties.get(propId)));
                 stmtUpdateHashProperty.setInt(2, hashId);
                 stmtUpdateHashProperty.setInt(3, propId);
                 stmtUpdateHashProperty.executeUpdate();
@@ -491,7 +484,7 @@ public class HashDBTool {
 
     private boolean readFile(File file) {
         FileType type = getFileType(file);
-        totIns = totRem = totUpd = totSkip = 0;
+        totIns = totRem = totUpd = totSkip = totComb = 0;
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
@@ -501,16 +494,21 @@ public class HashDBTool {
             long len = file.length();
             in = new BufferedReader(new FileReader(file), 1 << 20);
             String line = in.readLine();
+            String prevLine = line;
             long pos = line.length() + 2;
             List<String> header = splitLine(line);
             int[] colIdx = new int[header.size()];
-            Arrays.fill(colIdx, Integer.MIN_VALUE);
             int nsrlProductCodeCol = -1;
+            int numHashCols = 0;
+            int numPropCols = 0;
+            int[] hashCols = new int[header.size()];
+            int[] propCols = new int[header.size()];
             for (int i = 0; i < header.size(); i++) {
                 String col = header.get(i);
                 int h = hashType(col);
                 if (h >= 0) {
-                    colIdx[i] = -h - 1;
+                    colIdx[i] = h;
+                    hashCols[numHashCols++] = i;
                 } else {
                     if (type == FileType.NSRL_MAIN) {
                         if (!col.equals(nsrlProductCode) && !col.equals(nsrlSpecialCode)) continue;
@@ -521,46 +519,73 @@ public class HashDBTool {
                         header.set(i, col = nsrlPrefix + col);
                     }
                     colIdx[i] = getPropertyId(col);
+                    propCols[numPropCols++] = i;
                 }
             }
+            propCols = Arrays.copyOf(propCols, numPropCols);
+            hashCols = Arrays.copyOf(hashCols, numHashCols);
+
+            byte[][] prevHashes = new byte[hashTypes.length][];
             byte[][] hashes = new byte[hashTypes.length][];
             long t = System.currentTimeMillis();
             int cnt = 0;
             int numCols = header.size();
-            Map<Integer, String> properties = new HashMap<Integer, String>();
+            Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
             while ((line = in.readLine()) != null) {
                 pos += line.length() + 2;
-                if (line.charAt(0) == '#') continue;
                 cnt++;
+                if ((cnt & 8191) == 0) updatePercentage(pos / (double) len);
+                if (line.charAt(0) == '#') continue;
                 List<String> cols = splitLine(line);
                 if (cols.size() != numCols) {
                     in.close();
                     throw new RuntimeException("Line #" + cnt + ": number of columns does not match header columns " + cols.size() + "/" + numCols + ".\n" + line);
                 }
-                properties.clear();
                 Arrays.fill(hashes, null);
-                for (int i = 0; i < numCols; i++) {
+                for (int i : hashCols) {
                     int idx = colIdx[i];
-                    if (idx == Integer.MIN_VALUE) continue;
-                    String val = cols.get(i);
-                    if (idx < 0) {
-                        idx = -idx - 1;
-                        hashes[idx] = hashStrToBytes(val, hashBytesLen[idx]);
-                    } else if (!val.isEmpty()) {
-                        if (i == nsrlProductCodeCol) val = nsrlProdCodeToName.get(Integer.parseInt(val));
-                        properties.put(idx, val);
+                    hashes[idx] = hashStrToBytes(cols.get(i), hashBytesLen[idx]);
+                }
+                boolean sameHashes = true;
+                for (int i = 0; i < hashes.length; i++) {
+                    byte[] a = hashes[i];
+                    byte[] b = prevHashes[i];
+                    if (a == null && b == null) continue;
+                    if (a == null || b == null || !Arrays.equals(a, b)) {
+                        sameHashes = false;
+                        break;
                     }
                 }
-                if (setPropertyId != -1) properties.put(setPropertyId, nsrlSetPropertyValue);
-                if (!process(hashes, properties)) {
-                    in.close();
-                    throw new RuntimeException("Line #" + cnt + ": invalid content:\n" + line);
+                if (sameHashes) {
+                    totComb++;
+                    if (mode == ProcessMode.REPLACE_ALL || mode == ProcessMode.REMOVE_ALL) {
+                        properties.clear();
+                    }
+                } else {
+                    if (!process(prevHashes, properties)) {
+                        in.close();
+                        throw new RuntimeException("Line #" + (cnt - 1) + ": invalid content:\n" + prevLine);
+                    }
+                    properties.clear();
+                    System.arraycopy(hashes, 0, prevHashes, 0, hashes.length);
                 }
-                if ((cnt & 8191) == 0) updatePercentage(pos / (double) len);
+                for (int i : propCols) {
+                    String val = cols.get(i);
+                    if (!val.isEmpty()) {
+                        if (i == nsrlProductCodeCol) val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                        int idx = colIdx[i];
+                        merge(properties, idx, val);
+                    }
+                }
+                if (setPropertyId != -1) merge(properties, setPropertyId, nsrlSetPropertyValue);
+                prevLine = line;
+            }
+            if (!process(prevHashes, properties)) {
+                in.close();
+                throw new RuntimeException("Line #" + (cnt - 1) + ": invalid content:\n" + prevLine);
             }
             updatePercentage(-1);
-            t = System.currentTimeMillis() - t;
-            System.out.println("\r" + cnt + " lines read in " + t / 1000 + " seconds.");
+            System.out.println("\r" + cnt + " line" + (cnt == 1 ? "" : "s") + " read in " + endTime(t));
             printTotals();
         } catch (Exception e) {
             System.out.println("Error reading file: " + file);
@@ -572,6 +597,16 @@ public class HashDBTool {
             } catch (Exception e) {}
         }
         return true;
+    }
+
+    private void merge(Map<Integer, Set<String>> properties, int key, String newVal) {
+        Set<String> st = properties.get(key);
+        if (st == null) {
+            properties.put(key, st = new HashSet<String>());
+        } else if (mode == ProcessMode.REPLACE) {
+            st.clear();
+        }
+        st.add(newVal);
     }
 
     private boolean readProjectVIC(File file) {
@@ -591,7 +626,7 @@ public class HashDBTool {
             }
 
             byte[][] hashes = new byte[hashTypes.length][];
-            Map<Integer, String> properties = new HashMap<Integer, String>();
+            Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
             boolean hasHash = false;
             int cnt = 0;
             long len = file.length();
@@ -617,8 +652,10 @@ public class HashDBTool {
                             } else if ("Category".equals(name)) {
                                 int cat = jp.nextIntValue(-1);
                                 if (cat >= 0) {
-                                    properties.put(getPropertyId(vicPrefix + name), String.valueOf(cat));
-                                    if (cat == 1 || cat == 2) properties.put(statusPropertyId, vicStatusPropertyValue);
+                                    merge(properties, getPropertyId(vicPrefix + name), String.valueOf(cat));
+                                    if (cat == 1 || cat == 2) {
+                                        merge(properties, statusPropertyId, vicStatusPropertyValue);
+                                    }
                                 }
                             } else if ("MD5".equalsIgnoreCase(name) || "SHA1".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
@@ -631,11 +668,13 @@ public class HashDBTool {
                                 String value = jp.nextTextValue();
                                 if (value != null) {
                                     value = value.replace('|', ' ').trim();
-                                    if (!value.isEmpty()) properties.put(getPropertyId(vicPrefix + name), value);
+                                    if (!value.isEmpty()) {
+                                        merge(properties, getPropertyId(vicPrefix + name), value);
+                                    }
                                 }
                             } else if (token == JsonToken.END_OBJECT) {
                                 if (hasHash && !properties.isEmpty()) {
-                                    properties.put(setPropertyId, vicSetPropertyValue);
+                                    merge(properties, setPropertyId, vicSetPropertyValue);
                                     process(hashes, properties);
                                     if ((cnt++ & 8191) == 0) {
                                         long pos = raf.getFilePointer();
@@ -653,8 +692,7 @@ public class HashDBTool {
                 }
             }
             updatePercentage(-1);
-            t = System.currentTimeMillis() - t;
-            System.out.println("\r" + cnt + " records read in " + t / 1000 + " seconds.");
+            System.out.println("\r" + cnt + " records read in " + endTime(t));
             printTotals();
         } catch (Exception e) {
             System.out.println("Error reading file: " + file);
@@ -724,6 +762,7 @@ public class HashDBTool {
         if (totRem > 0) System.out.println(totRem + " hash" + (totRem == 1 ? "" : "es") + " removed.");
         if (totUpd > 0) System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
         if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
+        if (totComb > 0) System.out.println(totComb + " line" + (totComb == 1 ? "" : "s") + " combined.");
     }
 
     private static void updatePercentage(double pct) {
@@ -767,11 +806,12 @@ public class HashDBTool {
                     return false;
                 }
                 if (!checkNSRLHeader(prodFile, FileType.NSRL_PROD)) return false;
-                inputs.add(i++, prodFile); //Insert NSRL Product file before the main file. 
+                //Insert NSRL Product file before the main file. 
+                inputs.add(i++, prodFile);
             } else if (type == FileType.CSV || type == FileType.INPUT) {
                 if (!checkInputHeader(file)) return false;
             } else if (type == FileType.PROJECT_VIC) {
-                //Identification was based on its contest (plus file extension) 
+                //Identification was based on its content (plus file extension) 
             } else {
                 if (type == FileType.UNKNOWN) {
                     System.out.println("File " + file.getPath() + " skipped.");
@@ -912,14 +952,18 @@ public class HashDBTool {
         connection.setAutoCommit(false);
     }
 
+    private String endTime(long start) {
+        long time = (System.currentTimeMillis() - start) / 1000;
+        return time + " second" + (time == 1 ? "." : "s.");
+    }
+
     void finish(boolean success) {
         try {
             if (success) {
                 long t = System.currentTimeMillis();
                 System.out.println("\nCommiting changes...");
                 connection.commit();
-                t = System.currentTimeMillis() - t;
-                System.out.println("Commit completed in " + t / 1000 + " seconds.");
+                System.out.println("Commit completed in " + endTime(t));
 
                 if (!skipOpt) {
                     t = System.currentTimeMillis();
@@ -940,8 +984,7 @@ public class HashDBTool {
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
-                    t = System.currentTimeMillis() - t;
-                    System.out.println("Optimization completed in " + t / 1000 + " seconds.");
+                    System.out.println("Optimization completed in " + endTime(t));
                 }
             } else {
                 if (connection != null) {
