@@ -507,7 +507,7 @@ public class ReportGenerator {
                 break;
         }
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + message.getChildPornSets().toString() + "</i></p>");
         }
 

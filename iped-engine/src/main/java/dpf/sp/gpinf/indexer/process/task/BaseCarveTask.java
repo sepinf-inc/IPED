@@ -56,10 +56,10 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     private static int itensCarved;
 
-    private Set<Long> kffCarvedOffsets;
+    private Set<Long> ledCarvedOffsets;
     private IItem prevEvidence;
 
-    protected static final Map<IItem, Set<Long>> kffCarved = new HashMap<IItem, Set<Long>>();
+    protected static final Map<IItem, Set<Long>> ledCarved = new HashMap<IItem, Set<Long>>();
 
     private final synchronized static void incItensCarved() {
         itensCarved++;
@@ -78,7 +78,7 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     protected IItem createCarvedFile(IItem parentEvidence, long off, long len, String name, MediaType mediaType) {
 
-        if (kffCarvedExists(parentEvidence, off))
+        if (ledCarvedExists(parentEvidence, off))
             return null;
 
         Item carvedEvidence = getOffsetFile(parentEvidence, off, len, name, mediaType);
@@ -135,14 +135,14 @@ public abstract class BaseCarveTask extends AbstractTask {
         return true;
     }
 
-    private boolean kffCarvedExists(IItem parentEvidence, long off) {
+    private boolean ledCarvedExists(IItem parentEvidence, long off) {
         if (!parentEvidence.equals(prevEvidence)) {
-            synchronized (kffCarved) {
-                kffCarvedOffsets = kffCarved.get(parentEvidence);
+            synchronized (ledCarved) {
+                ledCarvedOffsets = ledCarved.get(parentEvidence);
             }
             prevEvidence = parentEvidence;
         }
-        if (kffCarvedOffsets != null && kffCarvedOffsets.contains(off)) {
+        if (ledCarvedOffsets != null && ledCarvedOffsets.contains(off)) {
             return true;
         } else
             return false;
@@ -179,7 +179,7 @@ public abstract class BaseCarveTask extends AbstractTask {
     // Carver
     protected boolean addCarvedEvidence(Item parentEvidence, Item carvedEvidence, long off) {
 
-        if (kffCarvedExists(parentEvidence, off))
+        if (ledCarvedExists(parentEvidence, off))
             return false;
 
         carvedEvidence.setCarved(true);

@@ -140,7 +140,7 @@ public class ReportGenerator {
                     out.println("</a>"); //$NON-NLS-1$
                     List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
                     if (!hashSets.isEmpty()) {
-                        out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                        out.print("<div><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " " + hashSets.toString()
                                 + "</i></div>");
                     }
                 } catch (Exception e) {
@@ -391,7 +391,7 @@ public class ReportGenerator {
 
             List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
             if (!hashSets.isEmpty()) {
-                out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                out.print("<div><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " " + hashSets.toString()
                         + "</i></div>");
             }
         }

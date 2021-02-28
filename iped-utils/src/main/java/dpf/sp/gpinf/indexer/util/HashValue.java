@@ -54,6 +54,8 @@ public class HashValue implements IHashValue, Comparable<IHashValue>, Serializab
 
     @Override
     public boolean equals(Object hash) {
+        if (hash == this) return true;
+        if (hash == null) return false;
         return compareTo((IHashValue) hash) == 0;
     }
 

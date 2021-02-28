@@ -43,12 +43,12 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
-import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import gpinf.hashdb.HashDBTool;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
@@ -175,27 +175,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
     }
 
     /**
-     * Importa base de hashes no formato NSRL.
-     *
-     * @param kffPath
-     *            caminho para base de hashes.
-     */
-    void importKFF(File kffPath) {
-        try {
-            setConfigPath();
-            Configuration.getInstance().getConfiguration(configPath);
-            KFFTask kff = new KFFTask();
-            kff.init(Configuration.getInstance().properties, null, true);
-            kff.importKFF(kffPath);
-        } catch (IPEDException e) {
-            System.out.println(e.toString());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * Realiza o processamento numa worker thread.
      *
      * @see javax.swing.SwingWorker#doInBackground()
@@ -290,6 +269,11 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      * Entrada principal da aplicação para processamento de evidências
      */
     public static void main(String[] args) {
+        //TODO: Move this to a better place, possibly in a separated JAR
+        if (args.length > 0 && args[0].equalsIgnoreCase("--hashdb")) {
+            HashDBTool.main(args);
+            return;
+        }
 
         boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
         String logPath = null;

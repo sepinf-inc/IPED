@@ -162,9 +162,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if (!hashSets.isEmpty()) {
-            metadataCloudGraphItem.set("kffstatus", "pedo");
+            metadataCloudGraphItem.set("hash:status", "pedo");
             for (String set : hashSets) {
-                metadataCloudGraphItem.add("kffgroup", set);
+                metadataCloudGraphItem.add("hash:set", set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
@@ -266,7 +266,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         xHandler.newline();
         
         xHandler.startElement("p");
-        xHandler.characters(Messages.getString("P2P.PedoHashHit"));
+        xHandler.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xHandler.endElement("p");
         xHandler.newline();
 
