@@ -2,10 +2,10 @@
 # Filtros pré-configurados
 ############################
 
-Filtrar KFF Ignoráveis = *:* -kffstatus:ignore
-Alerta de Hash = kffstatus:alert
-Alerta de Hash (PI) = kffstatus:pedo
-Alerta de Hash (PhotoDNA) = photoDnaKffHit:true -projectvic\_category:0
+Filtrar Hashes Ignoráveis = *:* -hash\\:status:ignore
+Alerta de Hash = hash\\:status:alert
+Alerta de Hash (PI) = hash\\:status:pedo
+Alerta PhotoDNA = photoDnaHit:true -hash\\:vicCategory:0
 Arquivos Criptografados = encrypted:true
 Possíveis Cifrados (Entropia) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 Erro de Parsing = parserException:true

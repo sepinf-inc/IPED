@@ -220,9 +220,9 @@ public class SkypeParser extends AbstractParser {
                                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ATTACHMENT_MIME_TYPE);
                                 List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
                                 if (!hashSets.isEmpty()) {
-                                    meta.set("kffstatus", "pedo");
+                                    meta.set("hash:status", "pedo");
                                     for (String set : hashSets) {
-                                        meta.add("kffgroup", set);
+                                        meta.add("hash:set", set);
                                     }
                                 }
                             }
@@ -274,9 +274,9 @@ public class SkypeParser extends AbstractParser {
                         }
                         List<String> hashSets = ChildPornHashLookup.lookupHash(t.getItem().getHash());
                         if (!hashSets.isEmpty()) {
-                            tMetadata.set("kffstatus", "pedo");
+                            tMetadata.set("hash:status", "pedo");
                             for (String set : hashSets) {
-                                tMetadata.add("kffgroup", set);
+                                tMetadata.add("hash:set", set);
                             }
                         }
                     }

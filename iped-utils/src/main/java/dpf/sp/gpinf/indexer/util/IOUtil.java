@@ -22,6 +22,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -265,4 +267,43 @@ public class IOUtil {
         return tmpDir.compareTo(filePath) == 0;
     }
 
+    public static byte[] readByteArray(DataInputStream is, int len) throws Exception {
+        byte[] arr = new byte[len];
+        int read = 0;
+        while (read < len) {
+            int r = is.read(arr, read, len - read);
+            if (r <= 0) break;
+            read += r;
+        }
+        return len == read ? arr : null;
+    }
+
+    public static int[] readIntArray(DataInputStream is, int len) throws Exception {
+        len <<= 2;
+        byte[] arr = new byte[len];
+        int read = 0;
+        while (read < len) {
+            int r = is.read(arr, read, len - read);
+            if (r <= 0) break;
+            read += r;
+        }
+        if (len != read) return null;
+        int[] ret = new int[len >>> 2];
+        for (int i = 0; i < arr.length; i += 4) {
+            ret[i >>> 2] = ((arr[i] & 0xFF) << 24) + ((arr[i + 1] & 0xFF) << 16) + ((arr[i + 2] & 0xFF) << 8) + ((arr[i + 3] & 0xFF) << 0);
+        }
+        return ret;
+    }
+
+    public static void writeIntArray(DataOutputStream os, int[] arr) throws Exception {
+        byte[] buf = new byte[arr.length << 2];
+        for (int i = 0; i < buf.length; i += 4) {
+            int v = arr[i >>> 2];
+            buf[i] = (byte) (v >>> 24);
+            buf[i + 1] = (byte) (v >>> 16);
+            buf[i + 2] = (byte) (v >>> 8);
+            buf[i + 3] = (byte) (v >>> 0);
+        }
+        os.write(buf);
+    }
 }

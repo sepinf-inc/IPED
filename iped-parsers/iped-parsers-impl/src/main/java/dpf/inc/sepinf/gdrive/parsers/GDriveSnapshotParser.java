@@ -159,9 +159,9 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("child_volume", entry.getChildVolume());
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
         if (!hashSets.isEmpty()) {
-            metadataSnapshotItem.set("kffstatus", "pedo");
+            metadataSnapshotItem.set("hash:status", "pedo");
             for (String set : hashSets) {
-                metadataSnapshotItem.add("kffgroup", set);
+                metadataSnapshotItem.add("hash:set", set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
@@ -273,7 +273,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         xHandler.newline();
         
         xHandler.startElement("p");
-        xHandler.characters(Messages.getString("P2P.PedoHashHit"));
+        xHandler.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xHandler.endElement("p");
         xHandler.newline();
 

@@ -18,9 +18,7 @@
     
     <!--tasks that ignore items should be after SetCategoryTask, so category of ignored items will be included in CSV properties file-->
     <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.KFFTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.LedKFFTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.ProjectVICHashLookup"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.HashDBLookupTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DuplicateTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.transcript.AudioTranscriptTask"></task>
@@ -40,7 +38,7 @@
     <task script="NSFWNudityDetectTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
-    <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.LedCarveTask"></task>
     <task class="dpf.sp.gpinf.carver.CarverTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     

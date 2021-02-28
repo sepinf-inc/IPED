@@ -30,7 +30,7 @@ public class PhotoDNATask extends AbstractTask {
 
     public static final String MIN_FILE_SIZE = "minFileSize";
 
-    public static final String SKIP_KFF_FILES = "skipKffFiles";
+    public static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
 
     public static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
 
@@ -46,7 +46,7 @@ public class PhotoDNATask extends AbstractTask {
 
     private int minFileSize = 10000;
 
-    private boolean skipKffFiles = true;
+    private boolean skipHashDBFiles = true;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -68,9 +68,9 @@ public class PhotoDNATask extends AbstractTask {
         if (value != null && !value.trim().isEmpty())
             minFileSize = Integer.valueOf(value.trim());
 
-        value = config.getProperty(SKIP_KFF_FILES);
+        value = config.getProperty(SKIP_HASH_DB_FILES);
         if (value != null && !value.trim().isEmpty())
-            skipKffFiles = Boolean.valueOf(value.trim());
+            skipHashDBFiles = Boolean.valueOf(value.trim());
 
         value = config.getProperty(MAX_SIMILARITY_DISTANCE);
         if (value != null && !value.trim().isEmpty())
@@ -115,7 +115,7 @@ public class PhotoDNATask extends AbstractTask {
         if (evidence.getLength() != null && evidence.getLength() < minFileSize)
             return;
 
-        if (skipKffFiles && evidence.getExtraAttribute(KFFTask.KFF_STATUS) != null)
+        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
             return;
 
         byte[] hash;

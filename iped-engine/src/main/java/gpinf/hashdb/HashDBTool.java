@@ -1,5 +1,7 @@
 package gpinf.hashdb;
 
+import static gpinf.hashdb.HashDB.*;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -33,23 +35,22 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 
 public class HashDBTool {
-    private static final String[] hashTypes = new String[] {"MD5","SHA1","SHA256","EDONKEY"};
-    private static final int[] hashBytesLen = new int[] {16,20,32,16};
-
     private static final String nsrlMainFileName = "NSRLFile.txt";
     private static final String nsrlProdFileName = "NSRLProd.txt";
     private static final String nsrlProductCode = "ProductCode";
     private static final String nsrlProductName = "ProductName";
     private static final String nsrlSpecialCode = "SpecialCode";
     private static final String nsrlSetPropertyValue = "NSRL";
+    private static final String nsrlPrefix = "nsrl";
 
-    private static final String setPropertyName = "Set";
-    private static final String statusPropertyName = "Status";
+    private static final String setPropertyName = "set";
+    private static final String statusPropertyName = "status";
 
     private static final String vicDataModel = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
     private static final String vicSetPropertyValue = "ProjectVIC";
-    private static final String vicStatusPropertyValue = "Pedo";
-
+    private static final String vicStatusPropertyValue = "pedo";
+    private static final String vicPrefix = "vic";
+    
     private final List<File> inputs = new ArrayList<File>();
     private File output;
     private int lastHashId, lastPropertyId;
@@ -61,6 +62,7 @@ public class HashDBTool {
     private PreparedStatement stmtRemoveHash;
     private PreparedStatement stmtUpdateHash;
     private PreparedStatement stmtRemoveHashProperties;
+    private PreparedStatement stmtRemoveAllHashProperties;
     private PreparedStatement stmtSelectHashProperties;
     private PreparedStatement[] stmtSelectHash;
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
@@ -75,8 +77,7 @@ public class HashDBTool {
         tool.finish(success);
     }
 
-
-    private boolean run(String[] args) {
+    boolean run(String[] args) {
         if (!parseParameters(args)) return false;
         if (!checkInputFiles()) return false;
         if (inputs.isEmpty()) System.exit(0);
@@ -273,37 +274,14 @@ public class HashDBTool {
                     } else {
                         Set<String> as = toSet(av);
                         Set<String> bs = toSet(bv);
-                        bs.addAll(as);
-                        propertiesToRemove.add(id);
-                        propertiesToAdd.put(id, toStr(bs));
+                        if (bs.addAll(as)) {
+                            propertiesToRemove.add(id);
+                            propertiesToAdd.put(id, toStr(bs));
+                        }
                     }
                 }
             }
         }
-    }
-
-    private String toStr(Set<String> set) {
-        String[] c = new String[set.size()];
-        int i = 0;
-        for (String a : set) {
-            c[i++] = a;
-        }
-        Arrays.sort(c);
-        StringBuilder sb = new StringBuilder();
-        for (String a : c) {
-            if (sb.length() > 0) sb.append('|');
-            sb.append(a);
-        }
-        return sb.toString();
-    }
-
-    private Set<String> toSet(String val) {
-        Set<String> set = new HashSet<String>();
-        String[] c = val.split("\\|");
-        for (String a : c) {
-            set.add(a);
-        }
-        return set;
     }
 
     private void mergeHashes(byte[][] a, byte[][] b) {
@@ -365,8 +343,8 @@ public class HashDBTool {
 
     private boolean removeHash(int hashId) {
         try {
-            stmtRemoveHashProperties.setInt(1, hashId);
-            stmtRemoveHashProperties.executeUpdate();
+            stmtRemoveAllHashProperties.setInt(1, hashId);
+            stmtRemoveAllHashProperties.executeUpdate();
             stmtRemoveHash.setInt(1, hashId);
             stmtRemoveHash.executeUpdate();
             return true;
@@ -432,42 +410,6 @@ public class HashDBTool {
             e.printStackTrace();
         }
         return false;
-    }
-
-    private byte[] hashStrToBytes(String s, int len) throws RuntimeException {
-        if (s.length() == 0) {
-            return null;
-        }
-        if (s.length() != len << 1) {
-            throw new RuntimeException("Invalid hash length: " + s);
-        }
-        byte[] ret = new byte[s.length() >>> 1];
-        for (int i = 0; i < s.length(); i += 2) {
-            int a = val(s.charAt(i));
-            int b = val(s.charAt(i + 1));
-            if (a < 0) throw new RuntimeException("Invalid hash value: " + s);
-            ret[i >>> 1] = (byte) ((a << 4) | b);
-        }
-        return ret;
-    }
-
-    public static final String hashBytesToStr(byte[] bytes) {
-        final char[] tos = "0123456789abcdef".toCharArray();
-        char[] c = new char[bytes.length << 1];
-        int k = 0;
-        for (int i = 0; i < bytes.length; i++) {
-            int b = bytes[i] & 0xFF;
-            c[k++] = tos[b >>> 4];
-            c[k++] = tos[b & 15];
-        }
-        return new String(c);
-    }
-
-    public static final int val(char c) {
-        if (c >= '0' && c <= '9') return c - '0';
-        if (c >= 'A' && c <= 'Z') return c - 'A' + 10;
-        if (c >= 'a' && c <= 'z') return c - 'a' + 10;
-        return -1;
     }
 
     private boolean createDatabase() {
@@ -572,8 +514,11 @@ public class HashDBTool {
                 } else {
                     if (type == FileType.NSRL_MAIN) {
                         if (!col.equals(nsrlProductCode) && !col.equals(nsrlSpecialCode)) continue;
-                        if (col.equals(nsrlProductCode)) nsrlProductCodeCol = i;
-                        header.set(i, col = "NSRL" + col);
+                        if (col.equals(nsrlProductCode)) {
+                            nsrlProductCodeCol = i;
+                            col = nsrlProductName;
+                        }
+                        header.set(i, col = nsrlPrefix + col);
                     }
                     colIdx[i] = getPropertyId(col);
                 }
@@ -672,22 +617,21 @@ public class HashDBTool {
                             } else if ("Category".equals(name)) {
                                 int cat = jp.nextIntValue(-1);
                                 if (cat >= 0) {
-                                    properties.put(getPropertyId("VIC" + name), String.valueOf(cat));
+                                    properties.put(getPropertyId(vicPrefix + name), String.valueOf(cat));
                                     if (cat == 1 || cat == 2) properties.put(statusPropertyId, vicStatusPropertyValue);
                                 }
-                            } else if ("MD5".equals(name) || "SHA1".equals(name)) {
+                            } else if ("MD5".equalsIgnoreCase(name) || "SHA1".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
                                 int idx = hashType(name);
                                 if (idx >= 0) {
                                     hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
                                     hasHash = true;
                                 }
-                            } else if ("VictimIdentified".equals(name) || "OffenderIdentified".equals(name) || "IsDistributed".equals(name) || "Series".equals(name) || "IsPrecategorized".equals(name) || "Tags".equals(name)) {
+                            } else if ("VictimIdentified".equalsIgnoreCase(name) || "OffenderIdentified".equalsIgnoreCase(name) || "IsDistributed".equalsIgnoreCase(name) || "Series".equalsIgnoreCase(name) || "IsPrecategorized".equalsIgnoreCase(name) || "Tags".equalsIgnoreCase(name)) {
                                 String value = jp.nextTextValue();
                                 if (value != null) {
-                                    if (value.indexOf('|') >= 0) value.replace('|', ' ');
-                                    value = value.trim();
-                                    if (!value.isEmpty()) properties.put(getPropertyId("VIC" + name), value);
+                                    value = value.replace('|', ' ').trim();
+                                    if (!value.isEmpty()) properties.put(getPropertyId(vicPrefix + name), value);
                                 }
                             } else if (token == JsonToken.END_OBJECT) {
                                 if (hasHash && !properties.isEmpty()) {
@@ -968,7 +912,7 @@ public class HashDBTool {
         connection.setAutoCommit(false);
     }
 
-    private void finish(boolean success) {
+    void finish(boolean success) {
         try {
             if (success) {
                 long t = System.currentTimeMillis();
@@ -1013,6 +957,7 @@ public class HashDBTool {
             if (stmtRemoveHash != null) stmtRemoveHash.close();
             if (stmtUpdateHash != null) stmtUpdateHash.close();
             if (stmtRemoveHashProperties != null) stmtRemoveHashProperties.close();
+            if (stmtRemoveAllHashProperties != null) stmtRemoveAllHashProperties.close();
             if (stmtSelectHashProperties != null) stmtSelectHashProperties.close();
             if (stmtSelectHash != null) {
                 for (PreparedStatement stmt : stmtSelectHash) {
@@ -1079,6 +1024,8 @@ public class HashDBTool {
 
             stmtRemoveHash = connection.prepareStatement("delete from HASHES where HASH_ID=?");
             stmtRemoveHashProperties = connection.prepareStatement("delete from HASHES_PROPERTIES where HASH_ID=? and PROPERTY_ID=?");
+            stmtRemoveAllHashProperties = connection.prepareStatement("delete from HASHES_PROPERTIES where HASH_ID=?");
+
             stmtSelectHashProperties = connection.prepareStatement("select PROPERTY_ID, VALUE from HASHES_PROPERTIES where HASH_ID=?");
             stmtSelectHashProperties.setFetchSize(64);
 
@@ -1087,14 +1034,6 @@ public class HashDBTool {
             e.printStackTrace();
         }
         return false;
-    }
-
-    private int hashType(String col) {
-        if (col.indexOf("-") > 0) col = col.replace("-", "");
-        for (int i = 0; i < hashTypes.length; i++) {
-            if (col.equalsIgnoreCase(hashTypes[i])) return i;
-        }
-        return -1;
     }
 
     private boolean parseParameters(String[] args) {
@@ -1142,31 +1081,37 @@ public class HashDBTool {
                     return false;
                 }
                 i++;
-            } else if (arg.equalsIgnoreCase("-replace")) {
+            } else if (arg.equalsIgnoreCase("--hashdb")) {
+                if (args.length == 1) {
+                    usage();
+                    return false;
+                }
+                continue;
+            } else if (arg.equalsIgnoreCase("--replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE;
-            } else if (arg.equalsIgnoreCase("-replaceAll")) {
+            } else if (arg.equalsIgnoreCase("--replaceAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE_ALL;
-            } else if (arg.equalsIgnoreCase("-remove")) {
+            } else if (arg.equalsIgnoreCase("--remove")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE;
-            } else if (arg.equalsIgnoreCase("-removeAll")) {
+            } else if (arg.equalsIgnoreCase("--removeAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
                     System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE_ALL;
-            } else if (arg.equalsIgnoreCase("-noOpt")) {
+            } else if (arg.equalsIgnoreCase("--noOpt")) {
                 skipOpt = true;
             } else {
                 System.out.println("ERROR: unknown parameter '" + arg + "'.");
@@ -1195,7 +1140,7 @@ public class HashDBTool {
                 if (s.length() > 1 && s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"') {
                     s = s.substring(1, s.length() - 1);
                 }
-                s.replace('|', ' ');
+                s = s.replace('|', ' ');
                 result.add(s);
                 start = i + 1;
             } else if (input.charAt(i) == '"') {
@@ -1206,39 +1151,43 @@ public class HashDBTool {
     }
 
     private void usage() {
-        System.out.println("IPED HashDBTool");
-        System.out.println("  Allows importing CSV files with a set of hashes and associated properties");
-        System.out.println("  into a database that can be later used during IPED case processing, to");
-        System.out.println("  search for these hashes and add their properties to the case item when a");
-        System.out.println("  hit is found. NIST NSRL files and Project VIC JSON can also be imported.");
-        System.out.println("Usage: java -jar hashdb.jar -d <input file or folder> -o <output DB file>");
-        System.out.println("            [-replace | -replaceAll | -remove | -removeAll]");
+        System.out.println();
+        System.out.println("IPED HashDB Tool");
+        System.out.println("    Allows importing CSV files with a set of hashes and associated properties");
+        System.out.println("    into a database that can be later used during IPED case processing, to");
+        System.out.println("    search for these hashes and add their properties to the case item when a");
+        System.out.println("    hit is found. NIST NSRL files and Project VIC JSON can also be imported.");
+        System.out.println();
+        System.out.println("Usage: java -jar iped.jar --hashdb -d <input file or folder> -o <output DB file>");
+        System.out.println("            [--replace | --replaceAll | --remove | --removeAll] [--noOpt]");
+        System.out.println();
         System.out.println("  -d");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
         System.out.println("    all files with '.csv' extension, NSRL or Project Vic files. CSV Input files");
         System.out.println("    should use plain text format, one item per line, with columns separated by");
         System.out.println("    commas. The first line must be a header, defining the columns names. There");
-        System.out.println("     must be one or more hash columns and one or more properties columns.");
+        System.out.println("    must be one or more hash columns and one or more properties columns.");
         System.out.println("  -o");
         System.out.println("    Output database file. If it exists, data will be added to (or removed");
         System.out.println("    from) the existing database.");
+        System.out.println();
         System.out.println("Optional parameters:");
-        System.out.println("  -replace");
+        System.out.println("  --replace");
         System.out.println("    When importing new files, if an existing property is already present,");
         System.out.println("    with a different value, the default is to merge, keeping both values. Use");
         System.out.println("    this option to replace, instead of merging, the value associated with the");
         System.out.println("    existing property.");
-        System.out.println("  -replaceAll");
-        System.out.println("    Same as -replace, but will remove all previously existing values, not");
+        System.out.println("  --replaceAll");
+        System.out.println("    Same as --replace, but will remove all previously existing values, not");
         System.out.println("    only the ones associated with properties being added.");
-        System.out.println("  -remove");
+        System.out.println("  --remove");
         System.out.println("    The default behavior is to add CSV files to the database. Use this");
         System.out.println("    parameter to remove items. It will remove only properties/values present");
         System.out.println("    in the current file. If there are no property remaining, the hash itself");
         System.out.println("    is removed.");
-        System.out.println("  -removeAll");
+        System.out.println("  --removeAll");
         System.out.println("    Remove all references to the hashes present in the input files.");
-        System.out.println("  -noOpt");
+        System.out.println("  --noOpt");
         System.out.println("    Skip optimizations (reclaim empty space and database analisys) executed");
         System.out.println("    after processing input file(s).");
     }

@@ -428,12 +428,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
         }
 
-        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
-        if (hashSetStatus != null) {
-            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
-            metadata.remove(KFFTask.KFF_STATUS);
-        }
-
         String prevMediaType = evidence.getMediaType().toString();
         String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         if (!prevMediaType.equals(parsedMediaType)) {
