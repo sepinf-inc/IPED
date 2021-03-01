@@ -3,7 +3,7 @@
 ############################
 
 OST Mailboxes (not processed) = type:ost
-Filter Ignorable Hashes = *:* -hash\\:status:ignore
+Filter Known Hashes = *:* -hash\\:status:known
 Hash Alert = hash\\:status:alert
 Hash Alert (Child Porn) = hash\\:status:pedo
 PhotoDNA Alert = photoDnaHit:true -hash\\:vicCategory:0

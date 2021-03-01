@@ -24,8 +24,8 @@ enableLedDie = false
 # Um atributo nsfw_nudity_score de 0 a 100 é criado nos arquivos processados.
 enableYahooNSFWDetection = false
 
-# Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
-excludeIgnorable = true
+# Exclui do restante do processamento e do caso arquivos conhecidos (hash:status = known) conforme base de hashes.
+excludeKnown = true
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.
 # Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o cálculo de hash.
