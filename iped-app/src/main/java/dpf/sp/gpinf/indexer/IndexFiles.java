@@ -269,12 +269,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      * Entrada principal da aplicação para processamento de evidências
      */
     public static void main(String[] args) {
-        //TODO: Move this to a better place, possibly in a separated JAR
-        if (args.length > 0 && args[0].equalsIgnoreCase("--hashdb")) {
-            HashDBTool.main(args);
-            return;
-        }
-
         boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
         String logPath = null;
         if (fromCustomLoader) {

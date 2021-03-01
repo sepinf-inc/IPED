@@ -1127,37 +1127,31 @@ public class HashDBTool {
                     return false;
                 }
                 i++;
-            } else if (arg.equalsIgnoreCase("--hashdb")) {
-                if (args.length == 1) {
-                    usage();
-                    return false;
-                }
-                continue;
-            } else if (arg.equalsIgnoreCase("--replace")) {
+            } else if (arg.equalsIgnoreCase("-replace")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
+                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE;
-            } else if (arg.equalsIgnoreCase("--replaceAll")) {
+            } else if (arg.equalsIgnoreCase("-replaceAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
+                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REPLACE_ALL;
-            } else if (arg.equalsIgnoreCase("--remove")) {
+            } else if (arg.equalsIgnoreCase("-remove")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
+                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE;
-            } else if (arg.equalsIgnoreCase("--removeAll")) {
+            } else if (arg.equalsIgnoreCase("-removeAll")) {
                 if (mode != ProcessMode.UNDEFINED) {
-                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other options.");
+                    System.out.println("ERROR: parameter '" + arg + "' can not be combined with other process mode option.");
                     return false;
                 }
                 mode = ProcessMode.REMOVE_ALL;
-            } else if (arg.equalsIgnoreCase("--noOpt")) {
+            } else if (arg.equalsIgnoreCase("-noOpt")) {
                 skipOpt = true;
             } else {
                 System.out.println("ERROR: unknown parameter '" + arg + "'.");
@@ -1204,8 +1198,8 @@ public class HashDBTool {
         System.out.println("    search for these hashes and add their properties to the case item when a");
         System.out.println("    hit is found. NIST NSRL files and Project VIC JSON can also be imported.");
         System.out.println();
-        System.out.println("Usage: java -jar iped.jar --hashdb -d <input file or folder> -o <output DB file>");
-        System.out.println("            [--replace | --replaceAll | --remove | --removeAll] [--noOpt]");
+        System.out.println("Usage: java -jar iped-hashdb.jar -d <input file or folder> -o <output DB file>");
+        System.out.println("            [-replace | -replaceAll | -remove | -removeAll] [-noOpt]");
         System.out.println();
         System.out.println("  -d");
         System.out.println("    Input files (can be used multiple times). If a folder is used, it processes");
@@ -1218,22 +1212,22 @@ public class HashDBTool {
         System.out.println("    from) the existing database.");
         System.out.println();
         System.out.println("Optional parameters:");
-        System.out.println("  --replace");
+        System.out.println("  -replace");
         System.out.println("    When importing new files, if an existing property is already present,");
         System.out.println("    with a different value, the default is to merge, keeping both values. Use");
         System.out.println("    this option to replace, instead of merging, the value associated with the");
         System.out.println("    existing property.");
-        System.out.println("  --replaceAll");
-        System.out.println("    Same as --replace, but will remove all previously existing values, not");
+        System.out.println("  -replaceAll");
+        System.out.println("    Same as -replace, but will remove all previously existing values, not");
         System.out.println("    only the ones associated with properties being added.");
-        System.out.println("  --remove");
+        System.out.println("  -remove");
         System.out.println("    The default behavior is to add CSV files to the database. Use this");
         System.out.println("    parameter to remove items. It will remove only properties/values present");
         System.out.println("    in the current file. If there are no property remaining, the hash itself");
         System.out.println("    is removed.");
-        System.out.println("  --removeAll");
+        System.out.println("  -removeAll");
         System.out.println("    Remove all references to the hashes present in the input files.");
-        System.out.println("  --noOpt");
+        System.out.println("  -noOpt");
         System.out.println("    Skip optimizations (reclaim empty space and database analisys) executed");
         System.out.println("    after processing input file(s).");
     }
