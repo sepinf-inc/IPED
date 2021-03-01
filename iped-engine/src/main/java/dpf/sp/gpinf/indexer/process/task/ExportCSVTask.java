@@ -56,7 +56,7 @@ public class ExportCSVTask extends AbstractTask {
     private File tmp;
 
     /**
-     * Indica que itens ignorados, como duplicados ou ignoráveis (hash), devem ser
+     * Indica que itens ignorados, como duplicados ou conhecidos (hash), devem ser
      * listados no arquivo CSV.
      *
      * @return true
