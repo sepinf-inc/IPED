@@ -270,34 +270,4 @@ public class PythonTask extends AbstractTask {
         }
     }
 
-    private static HashMap<File, Semaphore> semaphorePerScript = new HashMap<>();
-
-    private Semaphore getSemaphore() {
-        synchronized (semaphorePerScript) {
-            Semaphore semaphore = semaphorePerScript.get(scriptFile);
-            if (semaphore == null) {
-                semaphore = new Semaphore(getMaxPermits());
-                semaphorePerScript.put(scriptFile, semaphore);
-            }
-            return semaphore;
-        }
-    }
-
-    private int getMaxPermits() {
-        try {
-            return ((Number) getJep().invoke(getModuleFunction("getMaxPermits"))).intValue();
-
-        } catch (JepException e) {
-            return Integer.MAX_VALUE;
-        }
-    }
-
-    public void acquirePermit() throws InterruptedException {
-        getSemaphore().acquire();
-    }
-
-    public void releasePermit() {
-        getSemaphore().release();
-    }
-
 }
