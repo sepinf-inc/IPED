@@ -8,7 +8,7 @@ computeFromThumbnail = true
 # Minimal image size (bytes) to compute photoDNA
 minFileSize = 4000
 
-# Do not compute photoDNA of files present in hashes databases (ignorable, alert or child porn)
+# Do not compute photoDNA of files present in hashes databases
 skipHashDBFiles = true
 
 # Maximum distance between photoDNA hashes to consider two images as similar.

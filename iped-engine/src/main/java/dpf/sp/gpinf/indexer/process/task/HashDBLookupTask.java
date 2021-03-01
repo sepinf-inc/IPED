@@ -30,7 +30,7 @@ public class HashDBLookupTask extends AbstractTask {
     private static final String ATTRIBUTES_PREFIX = "hash:";
     private static final String STATUS_PROPERTY = "status";
     public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
-    private static final String IGNORE_VALUE = "ignore";
+    private static final String KNOWN_VALUE = "known";
     private static final String NSRL_PRODUCT_NAME_PROPERTY = "nsrlProductName";
 
     private Logger logger = LoggerFactory.getLogger(HashDBLookupTask.class);
@@ -38,7 +38,7 @@ public class HashDBLookupTask extends AbstractTask {
     public static int excluded;
 
     private static boolean taskEnabled;
-    private static boolean excludeIgnorable;
+    private static boolean excludeKnown;
 
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finish = new AtomicBoolean(false);
@@ -110,9 +110,9 @@ public class HashDBLookupTask extends AbstractTask {
                     }
                     throw new IPEDException(msg);
                 }
-                String s = confParams.getProperty("excludeIgnorable");
+                String s = confParams.getProperty("excludeKnown");
                 if (s != null) {
-                    excludeIgnorable = Boolean.valueOf(s.trim());
+                    excludeKnown = Boolean.valueOf(s.trim());
                 }
 
                 hashDBDataSource = new HashDBDataSource(hashDBFile);
@@ -130,7 +130,7 @@ public class HashDBLookupTask extends AbstractTask {
                 }
 
                 logger.info("HashDB: {}", hashDBFile.getAbsolutePath());
-                logger.info("ExcludeIgnorable: {}", excludeIgnorable);
+                logger.info("Exclude Known: {}", excludeKnown);
                 init.set(true);
             }
         }
@@ -271,8 +271,8 @@ public class HashDBLookupTask extends AbstractTask {
                         evidence.setExtraAttribute(STATUS_ATTRIBUTE, status);
                     }
                 }
-                //Ignore only if there is a single status = "ignore"
-                if (excludeIgnorable && status != null && status.size() == 1 && status.get(0).equalsIgnoreCase(IGNORE_VALUE)) {
+                //Ignore only if there is a single status = "known"
+                if (excludeKnown && status != null && status.size() == 1 && status.get(0).equalsIgnoreCase(KNOWN_VALUE)) {
                     evidence.setToIgnore(true);
                     synchronized (init) {
                         excluded++;

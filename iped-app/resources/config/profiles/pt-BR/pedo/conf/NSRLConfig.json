@@ -184,10 +184,6 @@
 		"Handy Keylogger",
 		"Steganography"	
 		]  
-     },
-     {"status": "ignore", 
-     "whenPresent": "skip",
-     "productNames": []
      }
      ]
 }
