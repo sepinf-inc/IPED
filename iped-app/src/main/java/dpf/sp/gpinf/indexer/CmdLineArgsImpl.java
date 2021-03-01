@@ -73,9 +73,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "-nocontent", description = "do not export to report file contents of a specific category/bookmark, only thumbs and properties")
     private List<String> nocontent;
 
-    @Parameter(names = "--hashdb", description = "import files to IPED hashes database. Run with no other parameters to get details about its specific parameters.")
-    private boolean isHashDB;
-
     @Parameter(names = { "-tz", "-timezone" }, description = "original timezone of FAT devices: GMT-3, GMT-4... "
             + "If unspecified, local system timezone is used.")
     private String timezone;

@@ -252,4 +252,36 @@
 		</dependency>
     </dependencies>
     
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>2.5</version>
+                <executions>
+                    <execution>
+                        <id>create-hashdb-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>iped-hashdb</finalName>
+                            <outputDirectory>${lib.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>gpinf.hashdb.HashDBTool</mainClass>
+                                </manifest>
+                            </archive>
+                            <includes>
+            					<include>**/hashdb/*</include>
+          					</includes>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    
 </project>
