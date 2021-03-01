@@ -668,6 +668,9 @@ public class HashDBTool {
                                 String value = jp.nextTextValue();
                                 if (value != null) {
                                     value = value.replace('|', ' ').trim();
+                                    if (value.equalsIgnoreCase("true") || value.equalsIgnoreCase("false")) {
+                                        value = value.toLowerCase();
+                                    }
                                     if (!value.isEmpty()) {
                                         merge(properties, getPropertyId(vicPrefix + name), value);
                                     }
