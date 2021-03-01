@@ -19,6 +19,7 @@ import org.apache.lucene.index.IndexReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -318,8 +319,11 @@ public class Statistics {
                     + Messages.getString("Statistics.LowMemory.2") + Messages.getString("Statistics.LowMemory.3") //$NON-NLS-1$ //$NON-NLS-2$
                     + Messages.getString("Statistics.LowMemory.4") + Messages.getString("Statistics.LowMemory.5") //$NON-NLS-1$ //$NON-NLS-2$
                     + Messages.getString("Statistics.LowMemory.6"); //$NON-NLS-1$
-            JOptionPane.showMessageDialog(null, memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
-                    JOptionPane.WARNING_MESSAGE);
+            CmdLineArgs cmdArgs = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            if (!cmdArgs.isNogui()) {
+                JOptionPane.showMessageDialog(null, memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
+                        JOptionPane.WARNING_MESSAGE);
+            }
             throw new Exception(memoryAlert);
         }
 
