@@ -29,6 +29,8 @@ public class PythonTask extends AbstractTask {
     private static AtomicBoolean jepChecked = new AtomicBoolean();
     private static final Map<Integer, Jep> jepPerWorker = new HashMap<>();
     private static volatile File lastInstalledScript;
+    private static volatile IPEDSource ipedCase;
+    private static volatile int numInstances = 0;
 
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
@@ -184,19 +186,26 @@ public class PythonTask extends AbstractTask {
             loadScript(jep);
         }
         lastInstalledScript = scriptFile;
+        numInstances++;
     }
 
     @Override
     public void finish() throws Exception {
 
-        if (isEnabled) {
-            try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
-                IPEDSearcher searcher = new IPEDSearcher(ipedCase);
-                setModuleVar(getJep(), moduleName, "ipedCase", ipedCase); //$NON-NLS-1$
-                setModuleVar(getJep(), moduleName, "searcher", searcher); //$NON-NLS-1$
+        if (ipedCase == null) {
+            ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+        }
 
-                getJep().invoke(getModuleFunction("finish")); //$NON-NLS-1$
-            }
+        if (isEnabled) {
+            IPEDSearcher searcher = new IPEDSearcher(ipedCase);
+            setModuleVar(getJep(), moduleName, "ipedCase", ipedCase); //$NON-NLS-1$
+            setModuleVar(getJep(), moduleName, "searcher", searcher); //$NON-NLS-1$
+
+            getJep().invoke(getModuleFunction("finish")); //$NON-NLS-1$
+        }
+
+        if (--numInstances == 0) {
+            ipedCase.close();
         }
 
         if (lastInstalledScript.equals(scriptFile)) {
