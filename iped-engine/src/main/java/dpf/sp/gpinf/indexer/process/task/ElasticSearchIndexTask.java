@@ -449,15 +449,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
+        String inputStreamSrcPath = getInputStreamSourcePath(item);
+
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field(BasicProps.SUBITEMID, item.getSubitemId())
                 .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
-                .field(IndexItem.SOURCE_PATH, getInputStreamSourcePath(item))
+                .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
                 .field(IndexItem.SOURCE_DECODER,
-                        item.getInputStreamFactory() != null ? item.getInputStreamFactory().getClass().getName() : null)
+                        inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
                 .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
@@ -497,7 +499,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private String getInputStreamSourcePath(IItem item) {
         if (item.getInputStreamFactory() != null) {
             URI uri = item.getInputStreamFactory().getDataSourceURI();
-            return Util.getRelativePath(output, uri);
+            if (uri != null) {
+                return Util.getRelativePath(output, uri);
+            }
         }
         return null;
     }
