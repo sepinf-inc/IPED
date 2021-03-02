@@ -9,6 +9,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 import org.slf4j.Logger;
@@ -23,7 +24,7 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.hashdb.HashDBDataSource;
-import iped3.IHashValue;
+import gpinf.hashdb.PhotoDnaItem;
 import iped3.IItem;
 
 public class PhotoDNALookup extends AbstractTask {
@@ -36,23 +37,33 @@ public class PhotoDNALookup extends AbstractTask {
 
     public static final String PHOTO_DNA_DIST = "photoDnaDistance";
 
-    public static final String PHOTO_DNA_DB_HASH = "photoDnaDBHash";
+    public static final String PHOTO_DNA_NEAREAST_HASH = "photoDnaNearestHash";
+
+    public static final String PHOTO_DNA_HIT_PREFIX = "photoDnaHit:";
 
     public static int MAX_DISTANCE = 50000;
 
     public static boolean rotateAndFlip = true;
-
-    private static VPTree<IHashValue, IHashValue> vptree = new VPTree<>(new VPDistance());
+    
+    private static final Object lock = new Object();
 
     private static VPDistance photoDNADistance = new VPDistance();
+
+    private static VPTree<PhotoDnaItem, PhotoDnaItem> vptree = new VPTree<PhotoDnaItem, PhotoDnaItem>(photoDNADistance);
 
     private static boolean taskEnabled = true;
 
     private static PhotoDNATransforms transforms;
 
+    private static HashDBDataSource hashDBDataSource;
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        synchronized (vptree) {
+        synchronized (lock) {
+            String value = confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA);
+            if (value != null && !value.trim().isEmpty()) {
+                taskEnabled = Boolean.valueOf(value.trim());
+            }
             if (taskEnabled && vptree.isEmpty()) {
                 try {
                     Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
@@ -61,7 +72,7 @@ public class PhotoDNALookup extends AbstractTask {
                     taskEnabled = false;
                     return;
                 }
-                
+
                 String hashDBPath = confParams.getProperty("hashesDB");
                 if (hashDBPath == null) {
                     throw new IPEDException("Hash database path (hashesDB) must be configured in " + Configuration.LOCAL_CONFIG);
@@ -76,13 +87,12 @@ public class PhotoDNALookup extends AbstractTask {
                     throw new IPEDException(msg);
                 }
                 long t = System.currentTimeMillis();
-                ArrayList<IHashValue> photoDNAHashSet = readCache(hashDBFile);
+                hashDBDataSource = new HashDBDataSource(hashDBFile);
+                ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile);
                 if (photoDNAHashSet != null) {
                     LOGGER.info("Load from cache file {}.", cachePath);
                 } else {
-                    HashDBDataSource hashDBDataSource = new HashDBDataSource(hashDBFile);
                     photoDNAHashSet = hashDBDataSource.readPhotoDNA();
-                    hashDBDataSource.close();
                     if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
                         LOGGER.error("PhotoDNA hashes must be loaded into IPED hash database to enable PhotoDNALookup.");
                         taskEnabled = false;
@@ -96,18 +106,18 @@ public class PhotoDNALookup extends AbstractTask {
                 t = System.currentTimeMillis();
                 vptree.addAll(photoDNAHashSet);
                 LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
-                taskEnabled = true;                
             }
+            LOGGER.info("Task {}.", taskEnabled ? "enabled" : "disabled");
         }
     }
 
-    private static class VPDistance implements DistanceFunction<IHashValue> {
+    private static class VPDistance implements DistanceFunction<PhotoDnaItem> {
 
         @Override
-        public double getDistance(IHashValue o1, IHashValue o2) {
+        public double getDistance(PhotoDnaItem o1, PhotoDnaItem o2) {
             int distance = 0;
-            byte[] b1 = o1.getBytes();
-            byte[] b2 = o2.getBytes();
+            byte[] b1 = o1.getHash().getBytes();
+            byte[] b2 = o2.getHash().getBytes();
             for (int i = 0; i < b1.length; i++) {
                 int diff = (0xff & b1[i]) - (0xff & b2[i]);
                 distance += diff * diff;
@@ -126,9 +136,14 @@ public class PhotoDNALookup extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (vptree != null) {
-            vptree.clear();
-            vptree = null;
+        synchronized (lock) {
+            if (hashDBDataSource != null) {
+                hashDBDataSource.close();
+            }
+            if (vptree != null) {
+                vptree.clear();
+                vptree = null;
+            }
         }
     }
 
@@ -136,8 +151,7 @@ public class PhotoDNALookup extends AbstractTask {
     protected void process(IItem evidence) throws Exception {
 
         String hashStr = (String) evidence.getExtraAttribute(PhotoDNATask.PHOTO_DNA);
-        if (hashStr == null)
-            return;
+        if (hashStr == null) return;
 
         HashValue photodna = new HashValue(hashStr);
 
@@ -145,23 +159,34 @@ public class PhotoDNALookup extends AbstractTask {
         boolean flip = false;
         while (rot == 0 || (rotateAndFlip && rot < 4)) {
             int degree = 90 * rot++;
-            HashValue photodnaRot = new HashValue(transforms.rot(photodna.getBytes(), degree, flip));
+            PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, new HashValue(transforms.rot(photodna.getBytes(), degree, flip)));
+            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot, MAX_DISTANCE);
 
-            List<IHashValue> neighbors = vptree.getAllWithinDistance(photodnaRot, MAX_DISTANCE);
-
-            IHashValue nearest = null;
-            int min_dist = Integer.MAX_VALUE;
-            for (IHashValue neighbor : neighbors) {
-                int dist = (int) photoDNADistance.getDistance(neighbor, photodnaRot);
-                if (dist < min_dist) {
-                    min_dist = dist;
+            PhotoDnaItem nearest = null;
+            int minDist = Integer.MAX_VALUE;
+            for (PhotoDnaItem neighbor : neighbors) {
+                int dist = (int) photoDNADistance.getDistance(neighbor, photoDnaItemRot);
+                if (dist < minDist) {
+                    minDist = dist;
                     nearest = neighbor;
                 }
             }
             if (nearest != null) {
                 evidence.setExtraAttribute(PHOTO_DNA_HIT, "true");
-                evidence.setExtraAttribute(PHOTO_DNA_DIST, min_dist);
-                evidence.setExtraAttribute(PHOTO_DNA_DB_HASH, nearest.toString());
+                evidence.setExtraAttribute(PHOTO_DNA_DIST, minDist);
+                evidence.setExtraAttribute(PHOTO_DNA_NEAREAST_HASH, nearest.toString());
+
+                String md5 = hashDBDataSource.getMD5(nearest.getHashId());
+                if (md5 != null) {
+                    evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + "md5", md5);
+                }
+                Map<String, List<String>> properties = hashDBDataSource.getProperties(nearest.getHashId());
+                for (String name : properties.keySet()) {
+                    if (!name.equalsIgnoreCase("photoDna")) {
+                        List<String> value = properties.get(name);
+                        evidence.setExtraAttribute(PHOTO_DNA_HIT_PREFIX + name, value);
+                    }
+                }
                 break;
             }
             if (rot == 4 && !flip) {
@@ -171,7 +196,7 @@ public class PhotoDNALookup extends AbstractTask {
         }
     }
 
-    private boolean writeCache(File hashDBFile, ArrayList<IHashValue> photoDNAHashSet) {
+    private boolean writeCache(File hashDBFile, ArrayList<PhotoDnaItem> photoDNAHashSet) {
         File cacheFile = new File(cachePath);
         boolean ret = false;
         DataOutputStream os = null;
@@ -183,8 +208,9 @@ public class PhotoDNALookup extends AbstractTask {
             os.writeLong(hashDBFile.length());
             os.writeLong(hashDBFile.lastModified());
             os.writeInt(photoDNAHashSet.size());
-            for (IHashValue v : photoDNAHashSet) {
-                byte[] b = v.getBytes();
+            for (PhotoDnaItem v : photoDNAHashSet) {
+                os.writeInt(v.getHashId());
+                byte[] b = v.getHash().getBytes();
                 os.write(b);
             }
             ret = true;
@@ -202,24 +228,25 @@ public class PhotoDNALookup extends AbstractTask {
         return ret;
     }
 
-    private ArrayList<IHashValue> readCache(File hashDBFile) {
+    private ArrayList<PhotoDnaItem> readCache(File hashDBFile) {
         File cacheFile = new File(cachePath);
         if (!cacheFile.exists()) return null;
         DataInputStream is = null;
         boolean ret = false;
-        ArrayList<IHashValue> photoDNAHashSet = null;
+        ArrayList<PhotoDnaItem> photoDNAHashSet = null;
         try {
-            is = new DataInputStream(new BufferedInputStream(new FileInputStream(cacheFile)));
+            is = new DataInputStream(new BufferedInputStream(new FileInputStream(cacheFile), 1 << 20));
             long fileLen = is.readLong();
             if (fileLen == hashDBFile.length()) {
                 long fileLastModified = is.readLong();
                 if (fileLastModified == hashDBFile.lastModified()) {
                     int len = is.readInt();
-                    photoDNAHashSet = new ArrayList<IHashValue>(len);
+                    photoDNAHashSet = new ArrayList<PhotoDnaItem>(len);
                     for (int i = 0; i < len; i++) {
+                        int hashId = is.readInt();
                         byte[] b = new byte[PhotoDNATask.HASH_SIZE];
                         is.read(b);
-                        photoDNAHashSet.add(new HashValue(b));
+                        photoDNAHashSet.add(new PhotoDnaItem(hashId, new HashValue(b)));
                     }
                     ret = true;
                 }

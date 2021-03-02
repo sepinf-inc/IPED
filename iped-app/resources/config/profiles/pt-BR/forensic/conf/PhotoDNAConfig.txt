@@ -8,13 +8,14 @@ computeFromThumbnail = true
 # Minimal image size (bytes) to compute photoDNA
 minFileSize = 4000
 
-# Do not compute photoDNA of files present in hashes databases
+# Do not compute photoDNA of files present in hashes database
 skipHashDBFiles = true
 
 # Maximum distance between photoDNA hashes to consider two images as similar.
 # It is used to look up for photoDNA hashes in a hash database.
 # The bigger the number, the look up will be SLOWER and you'll get more false positives and less false negatives.
-# Distances bellow this threshold will set 'photoDnaHit' property as 'true'
+# Distances below this threshold will set 'photoDnaHit' property as 'true' and will load other properties from the 
+# hash database (like 'photoDnaHit:status' and 'photoDnaHit:set', when present).  
 maxSimilarityDistance = 50000
 
 # Search for photoDNA of rotated (90, 180 and 270 degrees) and flipped images in photoDNA database.

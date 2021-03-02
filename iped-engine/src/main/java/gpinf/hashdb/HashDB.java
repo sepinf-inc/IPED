@@ -1,7 +1,10 @@
 package gpinf.hashdb;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class HashDB {
@@ -74,6 +77,16 @@ public class HashDB {
             set.add(a);
         }
         return set;
+    }
+
+    public static List<String> toList(String val) {
+        String[] c = val.split("\\|");
+        List<String> l = new ArrayList<String>(c.length);
+        for (String a : c) {
+            l.add(a);
+        }
+        Collections.sort(l);
+        return l;
     }
 
     public static boolean containsIgnoreCase(String propertyValue, String find) {
