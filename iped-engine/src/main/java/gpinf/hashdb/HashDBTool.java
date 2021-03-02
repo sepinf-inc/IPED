@@ -662,7 +662,7 @@ public class HashDBTool {
                                     }
                                 }
                             } else if ("MD5".equalsIgnoreCase(name) || "SHA1".equalsIgnoreCase(name)) {
-                                String value = jp.nextTextValue();
+                                String value = jp.nextTextValue().trim();
                                 int idx = hashType(name);
                                 if (idx >= 0) {
                                     hashes[idx] = hashStrToBytes(value, hashBytesLen[idx]);
@@ -695,9 +695,17 @@ public class HashDBTool {
                             String name = jp.currentName();
                             if ("HashName".equalsIgnoreCase(name)) {
                                 hashName = jp.nextTextValue();
+                                if (hashName != null) {
+                                    hashName = hashName.trim();
+                                }
                             } else if ("HashValue".equalsIgnoreCase(name) && "PhotoDNA".equalsIgnoreCase(hashName)) {
                                 String value = jp.nextTextValue();
-                                merge(properties, photoDnaPropertyId, value);
+                                if (value != null) {
+                                    value = value.trim();
+                                    if (!value.isEmpty()) {
+                                        merge(properties, photoDnaPropertyId, value);
+                                    }
+                                }
                             }
                         }
                     } while (arrayDepth > 0);
