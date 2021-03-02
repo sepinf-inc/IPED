@@ -48,7 +48,7 @@ public class HashDBTool {
 
     private static final String vicDataModel = "http://github.com/ICMEC/ProjectVic/DataModels/1.3.xml#Media";
     private static final String vicSetPropertyValue = "ProjectVIC";
-    private static final String vicStatusPropertyValue = "pedo";
+    private static final String[] vicStatusPropertyValues = new String[] {"known","pedo","pedo"};
     private static final String vicPrefix = "vic";
     private static final String photoDnaPropertyName = "photoDna";
 
@@ -620,7 +620,7 @@ public class HashDBTool {
             int setPropertyId = getPropertyId(setPropertyName);
             int statusPropertyId = getPropertyId(statusPropertyName);
             int photoDnaPropertyId = getPropertyId(photoDnaPropertyName);
-            
+
             JsonFactory jfactory = new JsonFactory();
             raf = new RandomAccessFile(file, "r");
             is = new FileInputStream(raf.getFD());
@@ -657,8 +657,8 @@ public class HashDBTool {
                                 int cat = jp.nextIntValue(-1);
                                 if (cat >= 0) {
                                     merge(properties, getPropertyId(vicPrefix + name), String.valueOf(cat));
-                                    if (cat == 1 || cat == 2) {
-                                        merge(properties, statusPropertyId, vicStatusPropertyValue);
+                                    if (cat < vicStatusPropertyValues.length) {
+                                        merge(properties, statusPropertyId, vicStatusPropertyValues[cat]);
                                     }
                                 }
                             } else if ("MD5".equalsIgnoreCase(name) || "SHA1".equalsIgnoreCase(name)) {
