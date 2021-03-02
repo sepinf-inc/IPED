@@ -220,13 +220,11 @@ public class MinIOTask extends AbstractTask {
 
     private void updateDataSource(IItem item, String id) {
         if (item.isSubItem()) {
+            // deletes local sqlite content after sent to minio
             item.setDeleteFile(true);
-            // TODO: this deletes content from sqlite and causes NPE when reading items.
-            // But the datasource is changed below, so should not read from sqlite anymore
-            // and the NPE is thrown from tasks before this, needs more investigation...
-            // commenting out for now...
-            // ((Item) item).dispose(false);
+            ((Item) item).dispose(false);
         }
+
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFile(null);
