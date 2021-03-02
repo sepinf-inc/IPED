@@ -50,6 +50,7 @@ public class HashDBTool {
     private static final String vicSetPropertyValue = "ProjectVIC";
     private static final String vicStatusPropertyValue = "pedo";
     private static final String vicPrefix = "vic";
+    private static final String photoDnaPropertyName = "photoDna";
 
     private final List<File> inputs = new ArrayList<File>();
     private File output;
@@ -613,10 +614,13 @@ public class HashDBTool {
         FileInputStream is = null;
         RandomAccessFile raf = null;
         JsonParser jp = null;
+        String hashName = null;
         try {
             long t = System.currentTimeMillis();
             int setPropertyId = getPropertyId(setPropertyName);
             int statusPropertyId = getPropertyId(statusPropertyName);
+            int photoDnaPropertyId = getPropertyId(photoDnaPropertyName);
+            
             JsonFactory jfactory = new JsonFactory();
             raf = new RandomAccessFile(file, "r");
             is = new FileInputStream(raf.getFD());
@@ -684,9 +688,18 @@ public class HashDBTool {
                                         updatePercentage(pos / (double) len);
                                     }
                                     hasHash = false;
+                                    hashName = null;
                                 }
                             }
-                        } else if (arrayDepth == 2) {}
+                        } else if (arrayDepth == 2) {
+                            String name = jp.currentName();
+                            if ("HashName".equalsIgnoreCase(name)) {
+                                hashName = jp.nextTextValue();
+                            } else if ("HashValue".equalsIgnoreCase(name) && "PhotoDNA".equalsIgnoreCase(hashName)) {
+                                String value = jp.nextTextValue();
+                                merge(properties, photoDnaPropertyId, value);
+                            }
+                        }
                     } while (arrayDepth > 0);
                 } else {
                     jp.close();
