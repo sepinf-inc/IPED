@@ -421,7 +421,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         for (String key : getMetadataKeys(item)) {
-            builder.array(key, item.getMetadata().getValues(key));
+            if (key != null) {
+                builder.array(key, item.getMetadata().getValues(key));
+            }
         }
 
         for (Entry<String, String> entry : cmdLineFields.entrySet()) {
