@@ -9,7 +9,7 @@ useImageThumbs = True
 # Number of images or video frames to be processed at the same time
 batchSize = 50
 
-# Max number of threads allowed to enter code between acquirePermit() and releasePermit()
+# Max number of threads allowed to enter code between semaphore.acquire() and semaphore.release()
 # This can be set if your GPU does not have enough memory to use all threads with configured 'batchSize'
 maxThreads = None
 
@@ -30,7 +30,7 @@ predictTime = 0
 loadImgTime = 0
 queued = False
 enabled = False
-
+semaphore = None
 
 def isEnabled():
 	return enabled
@@ -55,11 +55,23 @@ def loadModel():
 	
 	return model
 
+def createSemaphore():
+	if maxThreads is None:
+		return
+	global semaphore
+	semaphore = caseData.getCaseObject('nsfw_semaphore')
+	if(semaphore is None):
+		from java.util.concurrent import Semaphore
+		semaphore = Semaphore(maxThreads)
+		caseData.putCaseObject('nsfw_semaphore', semaphore)
+	return semaphore
+
 def init(confProps, configFolder):
 	global enabled
 	enabled = confProps.getProperty('enableYahooNSFWDetection').lower() == 'true'
 	if enabled:
 		loadModel()
+	createSemaphore()
 	return
 
 def finish():
@@ -230,12 +242,6 @@ def processImages(imageList, itemList):
 		itemList[i].setExtraAttribute('nsfw_nudity_score', score)
 		cache.put(itemList[i].getHash(), score)
 
-def getMaxPermits():
-	if maxThreads is not None:
-		return maxThreads
-	else:
-		return numThreads
-
 def makePrediction(list):
 	global predictTime 
 	t = time.time()
@@ -244,9 +250,12 @@ def makePrediction(list):
 	x = preprocess_input(x)
 	model = loadModel()
 	try:
-		javaTask.acquirePermit()
+		if semaphore is not None:
+			semaphore.acquire()
+
 		preds = model.predict(x)
 		predictTime += time.time() - t
 		return preds
 	finally:
-		javaTask.releasePermit()
+		if semaphore is not None:
+			semaphore.release()
