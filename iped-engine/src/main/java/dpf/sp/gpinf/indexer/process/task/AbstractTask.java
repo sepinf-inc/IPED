@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,7 +153,9 @@ public abstract class AbstractTask {
         }
 
         AbstractTask prevTask = worker.runningTask;
+        IItem prevEvidence = worker.evidence;
         worker.runningTask = this;
+        worker.evidence = evidence;
 
         if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
             long t = System.nanoTime() / 1000;
@@ -166,10 +169,11 @@ public abstract class AbstractTask {
 
         sendToNextTask(evidence);
 
+        worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
         // ESTATISTICAS
-        if ((nextTask == null) && !evidence.isQueueEnd()) {
+        if (nextTask == null && !evidence.isQueueEnd()) {
             evidence.dispose();
             stats.incProcessed();
             if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
@@ -182,8 +186,10 @@ public abstract class AbstractTask {
                 }
                 stats.addVolume(len);
             }
-            worker.itensBeingProcessed--;
         }
+        
+        if (nextTask == null && !evidence.isQueueEnd())
+            worker.itensBeingProcessed--;
     }
 
     /**
@@ -202,7 +208,9 @@ public abstract class AbstractTask {
             else {
                 evidence.dispose();
                 caseData.addItemToQueue(evidence, priority);
-                worker.itensBeingProcessed--;
+                if (!evidence.isQueueEnd()) {
+                    worker.itensBeingProcessed--;
+                }
             }
         }
     }
@@ -218,7 +226,8 @@ public abstract class AbstractTask {
      */
     private void processMonitorTimeout(IItem evidence) throws Exception {
         try {
-            this.process(evidence);
+            if (!evidence.isQueueEnd() || processQueueEnd())
+                this.process(evidence);
 
         } catch (TimeoutException e) {
             LOGGER.warn("{} TIMEOUT processing {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), //$NON-NLS-1$
@@ -249,6 +258,10 @@ public abstract class AbstractTask {
      * @return se a tarefa deve processar um item ignorado.
      */
     protected boolean processIgnoredItem() {
+        return false;
+    }
+
+    protected boolean processQueueEnd() {
         return false;
     }
 

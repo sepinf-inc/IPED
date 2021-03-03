@@ -80,6 +80,7 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.BasicProps;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -876,9 +877,33 @@ public class SleuthkitReader extends DataSourceReader {
         if (time != 0)
             evidence.setRecordDate(new Date(time * 1000));
 
+        if (absFile.getMetaAddr() != 0) {
+            evidence.setExtraAttribute(BasicProps.META_ADDRESS, Long.toString(absFile.getMetaAddr()));
+        }
+
+        if (absFile.getMetaSeq() != 0) {
+            evidence.setExtraAttribute(BasicProps.MFT_SEQUENCE, Long.toString(absFile.getMetaSeq()));
+        }
+        
+        long fileSystemId = getFileSystemId(absFile);
+        if (fileSystemId != -1) {
+            evidence.setExtraAttribute(BasicProps.FILESYSTEM_ID, Long.toString(fileSystemId));
+        }
+
         caseData.addItem(evidence);
 
         return evidence;
+    }
+
+    private long getFileSystemId(Content content) {
+        if (content instanceof FsContent) {
+            try {
+                return ((FsContent) content).getFileSystem().getId();
+            } catch (TskCoreException e) {
+                e.printStackTrace();
+            }
+        }
+        return -1;
     }
 
     private IItem addEvidenceFile(Content content) throws Exception {

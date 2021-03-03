@@ -73,6 +73,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
+import iped3.IItem;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
@@ -192,8 +193,12 @@ public class Manager {
 
         prepareOutputFolder();
 
-        if (args.isContinue() && indexDir != finalIndexDir) {
-            changeTempDir();
+        if ((args.isContinue() || args.isRestart())) {
+            if (finalIndexDir.exists()) {
+                indexDir = finalIndexDir;
+            } else if (indexDir != finalIndexDir) {
+                changeTempDir();
+            }
         }
 
         if (args.getEvidenceToRemove() != null) {
@@ -350,14 +355,15 @@ public class Manager {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         LOGGER.info("Creating index..."); //$NON-NLS-1$
 
+        boolean newIndex = !indexDir.exists();
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
+        
         if (args.isRestart()) {
             List<IndexCommit> commits = DirectoryReader.listCommits(directory);
             config.setIndexCommit(commits.get(0));
         }
 
-        boolean newIndex = !indexDir.exists();
         writer = new IndexWriter(directory, config);
         if (newIndex) {
             // first empty commit to be used by --restart
@@ -425,9 +431,15 @@ public class Manager {
                  * detectado o problema no log de estatísticas e o usuario sera informado do
                  * erro.
                  */
-                if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || produtor.isAlive()) // if(workers[k].isAlive())
+                if (workers[k].evidence != null || workers[k].itensBeingProcessed > 0)
                     someWorkerAlive = true;
             }
+            
+            IItem queueEnd = caseData.getItemQueue().peek();
+            boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+
+            if (!justQueueEndLeft || produtor.isAlive())
+                someWorkerAlive = true;
 
             if (!someWorkerAlive) {
                 IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
@@ -439,7 +451,7 @@ public class Manager {
 
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-
+                    caseData.getItemQueue().addLast(queueEnd);
                     someWorkerAlive = true;
                     for (int k = 0; k < workers.length; k++)
                         workers[k].processNextQueue();
@@ -506,7 +518,7 @@ public class Manager {
         return t;
     }
 
-    public int numItensBeingProcessed() {
+    public synchronized int numItensBeingProcessed() {
         int num = 0;
         for (int k = 0; k < workers.length; k++) {
             num += workers[k].itensBeingProcessed;

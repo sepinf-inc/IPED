@@ -326,6 +326,9 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void copyViewFile(IItem evidence) {
+        if (!caseData.isIpedReport()) {
+            return;
+        }
         File viewFile = evidence.getViewFile();
         if (viewFile != null) {
             String viewName = viewFile.getName();
@@ -544,8 +547,8 @@ public class ExportFileTask extends AbstractTask {
         boolean alreadyInDB = false;
         // uses id instead of hash if subitems could be ignored and deleted, to not
         // delete content referenced by other items with same hash
-        if (evidence.isSubItem() && !caseData.isIpedReport()
-                && (caseData.containsReport() || DuplicateTask.isIgnoreDuplicatesEnabled())) {
+        if (evidence.isSubItem() && !caseData.isIpedReport() && (MinIOTask.isTaskEnabled() || caseData.containsReport()
+                || DuplicateTask.isIgnoreDuplicatesEnabled())) {
             id = Integer.toString(evidence.getId());
         } else {
             id = hashString != null ? hashString : new HashValue(hash).toString();

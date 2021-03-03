@@ -10,6 +10,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.inc.sepinf.UsnJrnl.UsnJrnlParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -63,6 +64,10 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
+
+        // avoid NPE when the parser gets the item from parseContext when external
+        // parsing is on
+        mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 1);
 
         return mediaTypes;
     }

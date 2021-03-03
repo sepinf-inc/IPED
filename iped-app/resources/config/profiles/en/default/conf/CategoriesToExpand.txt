@@ -20,6 +20,9 @@ Georeferenced Files
 # Generates registry reports:
 Windows Registry
 
+# Generates USN Journal reports
+USN Journal
+
 #Text Documents
 #Spreadsheets
 #Presentations
