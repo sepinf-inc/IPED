@@ -287,19 +287,30 @@ public class HashDBTool {
     }
 
     private boolean equalsHashes(byte[][] a, byte[][] b) {
+        boolean ok = true;
         for (int i = 0; i < a.length; i++) {
             byte[] ai = a[i];
             byte[] bi = b[i];
             if (ai == null && bi != null) return false;
             if (ai != null && bi == null) return false;
             if (ai != null && bi != null && !Arrays.equals(ai, bi)) {
-                System.out.println("ERROR: Unexpected hash inconsistency!");
-                System.out.println(Arrays.toString(ai));
-                System.out.println(Arrays.toString(bi));
-                return false;
+                ok = false;
+                break;
             }
         }
-        return true;
+        if (!ok) {
+            System.out.println("\nWARNING: Unexpected hash inconsistency!");
+            System.out.println("\tNew:");
+            for (int i = 0; i < a.length; i++) {
+                if (a[i] != null) System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(a[i]));
+            }
+            System.out.println("\tCurrent:");
+            for (int i = 0; i < b.length; i++) {
+                if (b[i] != null) System.out.println("\t\t" + hashTypes[i] + "\t" + hashBytesToStr(b[i]));
+            }
+            System.out.println();
+        }
+        return ok;
     }
 
     private boolean removeHashProperties(int hashId, Set<Integer> properties) {
