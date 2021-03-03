@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
@@ -16,7 +14,6 @@ import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -69,6 +66,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
 
+    private static final String ELASTIC_ID = "elastic_id";
     private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
@@ -283,6 +281,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
         properties.put(BasicProps.ID, Collections.singletonMap("type", "keyword"));
+        properties.put(ELASTIC_ID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
@@ -450,10 +449,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
         String inputStreamSrcPath = getInputStreamSourcePath(item);
-
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId()).field(BasicProps.SUBITEMID, item.getSubitemId())
-                .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
+                .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
+                .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
+                .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
