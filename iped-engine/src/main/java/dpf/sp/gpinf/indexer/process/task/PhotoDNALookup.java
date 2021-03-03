@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +46,8 @@ public class PhotoDNALookup extends AbstractTask {
 
     public static boolean rotateAndFlip = true;
     
-    private static final Object lock = new Object();
+    private static final AtomicBoolean init = new AtomicBoolean(false);
+    private static final AtomicBoolean finished = new AtomicBoolean(false);
 
     private static VPDistance photoDNADistance = new VPDistance();
 
@@ -59,55 +61,61 @@ public class PhotoDNALookup extends AbstractTask {
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        synchronized (lock) {
-            String value = confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA);
-            if (value != null && !value.trim().isEmpty()) {
-                taskEnabled = Boolean.valueOf(value.trim());
-            }
-            if (taskEnabled && vptree.isEmpty()) {
-                try {
-                    Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
-                    transforms = (PhotoDNATransforms) c.newInstance();
-                } catch (ClassNotFoundException e) {
-                    taskEnabled = false;
-                    return;
+        synchronized (init) {
+            if (!init.get()) {
+                String value = confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA);
+                if (value != null && !value.trim().isEmpty()) {
+                    taskEnabled = Boolean.valueOf(value.trim());
                 }
-
-                String hashDBPath = confParams.getProperty("hashesDB");
-                if (hashDBPath == null) {
-                    throw new IPEDException("Hash database path (hashesDB) must be configured in " + Configuration.LOCAL_CONFIG);
-                }
-                File hashDBFile = new File(hashDBPath.trim());
-                if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                    String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
-                    if (hasIpedDatasource()) {
-                        LOGGER.warn(msg);
-                        return;
-                    }
-                    throw new IPEDException(msg);
-                }
-                long t = System.currentTimeMillis();
-                hashDBDataSource = new HashDBDataSource(hashDBFile);
-                ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile);
-                if (photoDNAHashSet != null) {
-                    LOGGER.info("Load from cache file {}.", cachePath);
-                } else {
-                    photoDNAHashSet = hashDBDataSource.readPhotoDNA();
-                    if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
-                        LOGGER.error("PhotoDNA hashes must be loaded into IPED hash database to enable PhotoDNALookup.");
+                if (taskEnabled && vptree.isEmpty()) {
+                    try {
+                        Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
+                        transforms = (PhotoDNATransforms) c.newInstance();
+                    } catch (ClassNotFoundException e) {
                         taskEnabled = false;
+                        init.set(true);
                         return;
                     }
-                    if (writeCache(hashDBFile, photoDNAHashSet)) {
-                        LOGGER.info("Cache file {} was created.", cachePath);
+    
+                    String hashDBPath = confParams.getProperty("hashesDB");
+                    if (hashDBPath == null) {
+                        throw new IPEDException("Hash database path (hashesDB) must be configured in " + Configuration.LOCAL_CONFIG);
                     }
+                    File hashDBFile = new File(hashDBPath.trim());
+                    if (!hashDBFile.exists() || !hashDBFile.canRead()) {
+                        String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
+                        if (hasIpedDatasource()) {
+                            LOGGER.warn(msg);
+                            init.set(true);
+                            return;
+                        }
+                        throw new IPEDException(msg);
+                    }
+                    long t = System.currentTimeMillis();
+                    hashDBDataSource = new HashDBDataSource(hashDBFile);
+                    ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile);
+                    if (photoDNAHashSet != null) {
+                        LOGGER.info("Load from cache file {}.", cachePath);
+                    } else {
+                        photoDNAHashSet = hashDBDataSource.readPhotoDNA();
+                        if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
+                            LOGGER.error("PhotoDNA hashes must be loaded into IPED hash database to enable PhotoDNALookup.");
+                            taskEnabled = false;
+                            init.set(true);
+                            return;
+                        }
+                        if (writeCache(hashDBFile, photoDNAHashSet)) {
+                            LOGGER.info("Cache file {} was created.", cachePath);
+                        }
+                    }
+                    LOGGER.info("{} PhotoDNA Hashes loaded in {} ms.", photoDNAHashSet.size(), System.currentTimeMillis() - t);
+                    t = System.currentTimeMillis();
+                    vptree.addAll(photoDNAHashSet);
+                    LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
                 }
-                LOGGER.info("{} PhotoDNA Hashes loaded in {} ms.", photoDNAHashSet.size(), System.currentTimeMillis() - t);
-                t = System.currentTimeMillis();
-                vptree.addAll(photoDNAHashSet);
-                LOGGER.info("Data structure built in {} ms.", System.currentTimeMillis() - t);
+                LOGGER.info("Task {}.", taskEnabled ? "enabled" : "disabled");
+                init.set(true);
             }
-            LOGGER.info("Task {}.", taskEnabled ? "enabled" : "disabled");
         }
     }
 
@@ -136,13 +144,16 @@ public class PhotoDNALookup extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        synchronized (lock) {
-            if (hashDBDataSource != null) {
-                hashDBDataSource.close();
-            }
-            if (vptree != null) {
-                vptree.clear();
-                vptree = null;
+        synchronized (finished) {
+            if (!finished.get()) {
+                if (hashDBDataSource != null) {
+                    hashDBDataSource.close();
+                }
+                if (vptree != null) {
+                    vptree.clear();
+                    vptree = null;
+                }
+                finished.set(true);
             }
         }
     }
