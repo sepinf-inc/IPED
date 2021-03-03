@@ -226,6 +226,8 @@ public class IndexFiles {
     public boolean execute() {
 
         WorkerProvider provider = WorkerProvider.getInstance();
+        provider.setExecutorThread(Thread.currentThread());
+
         Object frame = null;
 
         if (!cmdLineParams.isNogui()) {
@@ -246,16 +248,24 @@ public class IndexFiles {
         });
 
         try {
-            provider.setExecutorThread(Thread.currentThread());
             startManager();
 
         } finally {
             if (frame != null) {
-                ((ProgressFrame) frame).dispose();
+                closeFrameinEDT(frame);
             }
         }
 
         return success;
+    }
+
+    private void closeFrameinEDT(Object frame) {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                ((ProgressFrame) frame).dispose();
+            }
+        });
     }
 
     /**
