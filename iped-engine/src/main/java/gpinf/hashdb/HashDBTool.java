@@ -589,7 +589,9 @@ public class HashDBTool {
                         merge(properties, idx, val);
                     }
                 }
-                if (setPropertyId != -1) merge(properties, setPropertyId, nsrlSetPropertyValue);
+                if (setPropertyId != -1) {
+                    merge(properties, setPropertyId, nsrlSetPropertyValue);
+                }
                 prevLine = line;
             }
             if (!process(prevHashes, properties)) {
@@ -1212,7 +1214,7 @@ public class HashDBTool {
                 if (s.length() > 1 && s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"') {
                     s = s.substring(1, s.length() - 1);
                 }
-                s = s.replace('|', ' ');
+                s = s.replace('|', ' ').trim();
                 result.add(s);
                 start = i + 1;
             } else if (input.charAt(i) == '"') {
