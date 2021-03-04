@@ -1,9 +1,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -24,13 +25,19 @@ public class PythonTask extends AbstractTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
     private static AtomicBoolean jepChecked = new AtomicBoolean();
+    private static final Map<Integer, Jep> jepPerWorker = new HashMap<>();
+    private static volatile File lastInstalledScript;
+    private static volatile IPEDSource ipedCase;
+    private static volatile int numInstances = 0;
 
+    private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
-    private Jep jep;
+    private String moduleName;
     private Properties confParams;
     private File confDir;
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
+    private boolean scriptLoaded = false;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -71,15 +78,21 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
-        if (jep == null) {
-            synchronized (this.getClass()) {
-                jep = getNewJep(true);
+        synchronized (jepPerWorker) {
+            Jep jep = jepPerWorker.get(this.worker.id);
+            if (jep == null) {
+                jep = getNewJep();
+                jepPerWorker.put(this.worker.id, jep);
             }
+            if (!scriptLoaded) {
+                loadScript(jep);
+                scriptLoaded = true;
+            }
+            return jep;
         }
-        return jep;
     }
 
-    private Jep getNewJep(boolean callInit) throws JepException {
+    private Jep getNewJep() throws JepException {
 
         Jep jep;
         try {
@@ -98,27 +111,65 @@ public class PythonTask extends AbstractTask {
         jep.eval("from jep import redirect_streams");
         jep.eval("redirect_streams.setup()");
 
-        jep.set("caseData", this.caseData); //$NON-NLS-1$
-        jep.set("moduleDir", this.output); //$NON-NLS-1$
-        jep.set("worker", this.worker); //$NON-NLS-1$
-        jep.set("stats", this.stats); //$NON-NLS-1$
-        jep.set("logger", LOGGER); //$NON-NLS-1$
-        jep.set("javaArray", new ArrayConverter()); //$NON-NLS-1$
-        jep.set("javaTask", this); //$NON-NLS-1$
-        jep.set("ImageUtil", new ImageUtil()); //$NON-NLS-1$
+        setGlobalVar(jep, "caseData", this.caseData); //$NON-NLS-1$
+        setGlobalVar(jep, "moduleDir", this.output); //$NON-NLS-1$
+        setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
+        setGlobalVar(jep, "stats", this.stats); //$NON-NLS-1$
+        setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
+        setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
+        setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
 
         LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
                 .iterator().next();
-        jep.set("numThreads", Integer.valueOf(localConfig.getNumThreads()));
-
-        jep.runScript(scriptFile.getAbsolutePath());
-
-        if (callInit) {
-            jep.invoke("init", confParams, confDir);
-            isEnabled = (Boolean) jep.invoke("isEnabled"); //$NON-NLS-1$
-        }
+        setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
 
         return jep;
+    }
+
+    private void setGlobalVar(Jep jep, String name, Object obj) throws JepException {
+        jep.set(name, obj); // $NON-NLS-1$
+        globals.add(name);
+    }
+
+    private void setModuleVar(Jep jep, String moduleName, String name, Object obj) throws JepException {
+        setGlobalVar(jep, name, obj);
+        jep.eval(moduleName + "." + name + " = " + name);
+    }
+
+    private void loadScript(Jep jep) throws JepException {
+
+        moduleName = (scriptFile.getName().replace(".py", "_in_worker_") + worker.id).toLowerCase();
+
+        jep.eval("import importlib.util");
+        jep.eval("spec = importlib.util.spec_from_file_location('" + moduleName + "', '"
+                + scriptFile.getAbsolutePath().replace("\\", "\\\\") + "')");
+        jep.eval(moduleName + " = importlib.util.module_from_spec(spec)");
+        jep.eval("spec.loader.exec_module(" + moduleName + ")");
+
+        for (String global : globals) {
+            jep.eval(moduleName + "." + global + " = " + global);
+        }
+
+        String taskInstanceName = moduleName + "_javaTask";
+        jep.set(taskInstanceName, this);
+        jep.eval(moduleName + ".javaTask" + " = " + taskInstanceName);
+
+        jep.invoke(getModuleFunction("init"), confParams, confDir);
+
+        try {
+            isEnabled = (Boolean) jep.invoke(getModuleFunction("isEnabled"));
+
+        } catch (JepException e) {
+            if (e.toString().contains(" has no attribute ")) {
+                isEnabled = true;
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    private String getModuleFunction(String function) {
+        return moduleName + "." + function;
     }
 
     @Override
@@ -130,27 +181,34 @@ public class PythonTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         this.confParams = confParams;
         this.confDir = confDir;
-        try (Jep jep = getNewJep(true)) {
+        try (Jep jep = getNewJep()) {
+            loadScript(jep);
         }
+        lastInstalledScript = scriptFile;
+        numInstances++;
     }
 
     @Override
     public void finish() throws Exception {
 
-        if (!isEnabled)
-            return;
+        if (ipedCase == null) {
+            ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer);
+        }
 
-        try (IPEDSource ipedCase = new IPEDSource(this.output.getParentFile(), worker.writer)) {
-
+        if (isEnabled) {
             IPEDSearcher searcher = new IPEDSearcher(ipedCase);
+            setModuleVar(getJep(), moduleName, "ipedCase", ipedCase); //$NON-NLS-1$
+            setModuleVar(getJep(), moduleName, "searcher", searcher); //$NON-NLS-1$
 
-            jep.set("ipedCase", ipedCase); //$NON-NLS-1$
-            jep.set("searcher", searcher); //$NON-NLS-1$
-            jep.invoke("finish"); //$NON-NLS-1$
+            getJep().invoke(getModuleFunction("finish")); //$NON-NLS-1$
+        }
 
-        } finally {
-            jep.close();
-            jep = null;
+        if (--numInstances == 0) {
+            ipedCase.close();
+        }
+
+        if (lastInstalledScript.equals(scriptFile)) {
+            getJep().close();
         }
 
     }
@@ -169,16 +227,15 @@ public class PythonTask extends AbstractTask {
             return;
         }
         try {
-            jep.invoke("sendToNextTask", item); //$NON-NLS-1$
+            getJep().invoke(getModuleFunction("sendToNextTask"), item); //$NON-NLS-1$
             
         }catch(JepException e) {
-            if(e.toString().contains("Unable to find object with name: sendToNextTask")) { //$NON-NLS-1$
+            if (e.toString().contains(" has no attribute ")) {
                 methodExists = false;
                 super.sendToNextTask(item);
-                return;
+            } else {
+                throw e;
             }
-            LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString());
-            LOGGER.debug("", e);
         }
     }
 
@@ -191,7 +248,7 @@ public class PythonTask extends AbstractTask {
     protected boolean processQueueEnd() {
         if (processQueueEnd == null) {
             try {
-                processQueueEnd = (Boolean) getJep().invoke("processQueueEnd"); //$NON-NLS-1$
+                processQueueEnd = (Boolean) getJep().invoke(getModuleFunction("processQueueEnd")); //$NON-NLS-1$
             } catch (JepException e) {
                 processQueueEnd = false;
             }
@@ -203,42 +260,14 @@ public class PythonTask extends AbstractTask {
     protected void process(IItem item) throws Exception {
 
         try {
-            getJep().invoke("process", item); //$NON-NLS-1$
+            getJep().invoke(getModuleFunction("process"), item); //$NON-NLS-1$
 
         } catch (JepException e) {
             LOGGER.warn("Exception from " + getName() + " on " + item.getPath() + ": " + e.toString(), e);
-
-        }
-    }
-
-    private static HashMap<File, Semaphore> semaphorePerScript = new HashMap<>();
-
-    private Semaphore getSemaphore() {
-        synchronized (semaphorePerScript) {
-            Semaphore semaphore = semaphorePerScript.get(scriptFile);
-            if (semaphore == null) {
-                semaphore = new Semaphore(getMaxPermits());
-                semaphorePerScript.put(scriptFile, semaphore);
+            if (e.toString().toLowerCase().contains("invalid thread access")) {
+                throw e;
             }
-            return semaphore;
         }
-    }
-
-    private int getMaxPermits() {
-        try {
-            return ((Number) getJep().invoke("getMaxPermits")).intValue();
-
-        } catch (JepException e) {
-            return Integer.MAX_VALUE;
-        }
-    }
-
-    public void acquirePermit() throws InterruptedException {
-        getSemaphore().acquire();
-    }
-
-    public void releasePermit() {
-        getSemaphore().release();
     }
 
 }
