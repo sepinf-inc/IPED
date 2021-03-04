@@ -235,7 +235,7 @@ public class HashDBLookupTask extends AbstractTask {
                     }
                 }
                 //NSRL specific: set item status based on product name  
-                if (status == null && nsrlProductName != null) {
+                if (nsrlProductName != null) {
                     boolean modified = false;
                     boolean productFound = false;
                     String[] productNames = nsrlProductName.split("\\|");
