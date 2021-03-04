@@ -333,6 +333,7 @@ public class HashDBDataSource {
         config.setEncoding(Encoding.UTF8);
         config.setSynchronous(SynchronousMode.OFF);
         config.setJournalMode(JournalMode.OFF);
+        config.setReadOnly(true);
         connection = config.createConnection("jdbc:sqlite:" + dbFile.getAbsolutePath());
     }
 
