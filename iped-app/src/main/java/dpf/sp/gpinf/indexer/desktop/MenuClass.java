@@ -32,6 +32,7 @@ import org.apache.tika.metadata.Metadata;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
 import iped3.util.MediaTypes;
 
@@ -46,7 +47,7 @@ public class MenuClass extends JPopupMenu {
             navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal;
+            similarImagesCurrent, similarImagesExternal, similarFacesCurrent;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -237,6 +238,12 @@ public class MenuClass extends JPopupMenu {
         similarImagesExternal.addActionListener(menuListener);
         similarImagesExternal.setEnabled(submenu.isEnabled());
         submenu.add(similarImagesExternal);
+
+        similarFacesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.Current")); //$NON-NLS-1$
+        similarFacesCurrent.addActionListener(menuListener);
+        similarFacesCurrent
+                .setEnabled(item != null && item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) != null);
+        this.add(similarFacesCurrent);
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
