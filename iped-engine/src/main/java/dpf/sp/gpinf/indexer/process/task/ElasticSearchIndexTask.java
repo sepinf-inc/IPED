@@ -285,6 +285,15 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
+        // mapping the parent-child relation
+        /*
+         * "bookmark": { "type": "join", "relations": { "document": "bookmark" } }
+         */
+        HashMap<String, Object> bookmarkRelation = new HashMap<>();
+        bookmarkRelation.put("type", "join");
+        bookmarkRelation.put("relations", Collections.singletonMap("document", "bookmark"));
+        properties.put("bookmark", bookmarkRelation);
+
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
         PutMappingRequest putMappings = new PutMappingRequest(indexName);
@@ -451,6 +460,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
+                .field("bookmark", "document")
                 .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
