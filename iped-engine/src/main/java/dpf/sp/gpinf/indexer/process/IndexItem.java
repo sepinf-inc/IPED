@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.FileSystemException;
 import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
@@ -92,6 +93,7 @@ import iped3.datasource.IDataSource;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import jep.NDArray;
 
 /**
  * Cria um org.apache.lucene.document.Document a partir das propriedades do
@@ -513,6 +515,18 @@ public class IndexItem extends BasicProps {
             else
                 doc.add(new SortedNumericDocValuesField(keyPrefix + key,
                         NumericUtils.doubleToSortableLong((Double) oValue)));
+
+        } else if (oValue instanceof NDArray) {
+            NDArray nd = (NDArray) oValue;
+            double[] array = (double[]) nd.getData();
+            ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
+            for (double value : array) {
+                buffer.putDouble(value);
+            }
+            byte[] byteArray = buffer.array();
+            doc.add(new BinaryDocValuesField(key, new BytesRef(byteArray)));
+            doc.add(new StoredField(key, byteArray));
+
         } else {
             isString = true;
         }
@@ -1012,8 +1026,11 @@ public class IndexItem extends BasicProps {
                 return num.longValue();
             else
                 return num;
-        } else
+        } else if (f.binaryValue() != null) {
+            return f.binaryValue().bytes;
+        } else {
             return f.stringValue();
+        }
     }
 
 }
