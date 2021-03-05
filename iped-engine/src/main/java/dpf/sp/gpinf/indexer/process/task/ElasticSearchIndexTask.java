@@ -379,20 +379,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (fragNum == -1) {
             fragNum = 1;
         }
+
+
         String parentId = Util.getPersistentId(item);
-
-
-
 
         try {
             // creates the father;
+
             IndexRequest parentIndexRequest = createMetaDataRegistry(item, parentId);
             parentIndexRequest.routing(parentId);
             bulkRequest.add(parentIndexRequest);
             idToPath.put(parentId, item.getPath());
 
             do {
-                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, --fragNum);
+                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum--);
 
 
                 XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader, parentId, contentPersistentId);
@@ -539,16 +539,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
                 .field("document_content", document_content).field("contentPersistentId", contentPersistentId)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
-
-        for (String key : getMetadataKeys(item)) {
-            if (key != null) {
-                builder.array(key, item.getMetadata().getValues(key));
-            }
-        }
-
-        for (Entry<String, String> entry : cmdLineFields.entrySet()) {
-            builder.field(entry.getKey(), entry.getValue());
-        }
 
         return builder.endObject();
     }
