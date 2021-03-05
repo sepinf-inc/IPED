@@ -120,12 +120,11 @@ def finish():
     return
 
 
-def convertToJavaList(list):
-    from java.util import ArrayList
-    javaList = ArrayList()
-    for i in list:
-        javaList.add(i)
-    return javaList
+def convertTuplesToList(tuples):
+    result = []
+    for i in tuples:
+        result.append(list(i))
+    return result
 
 # This function is executed on all case items
 def process(item):
@@ -170,8 +169,8 @@ def process(item):
     face_locations = fr.face_locations(img)
     face_encodings = fr.face_encodings(img, face_locations)
     
-    item.setExtraAttribute("face_locations", convertToJavaList(face_locations))
-    item.setExtraAttribute("face_encodings", convertToJavaList(face_encodings))
+    item.setExtraAttribute("face_locations", convertTuplesToList(face_locations))
+    item.setExtraAttribute("face_encodings", face_encodings)
 
     # Loop through faces in image
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):
