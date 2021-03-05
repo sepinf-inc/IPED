@@ -524,7 +524,7 @@ public class IndexItem extends BasicProps {
                 buffer.putDouble(value);
             }
             byte[] byteArray = buffer.array();
-            doc.add(new BinaryDocValuesField(key, new BytesRef(byteArray)));
+            doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
 
         } else {

@@ -2,10 +2,11 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Collection;
 import java.util.Collections;
 
-import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.util.BytesRef;
 
 import iped3.IItem;
@@ -23,7 +24,11 @@ public class SimilarFacesSearch {
     public SimilarFacesSearch(IPEDSource ipedCase, IItem refImage) {
         this.ipedCase = ipedCase instanceof IPEDMultiSource ? (IPEDMultiSource) ipedCase
                 : new IPEDMultiSource(Collections.singletonList(ipedCase));
-        this.refSimilarityFeatures = convToDoubleVec((byte[]) refImage.getExtraAttribute(FACE_FEATURES));
+        Object value = refImage.getExtraAttribute(FACE_FEATURES);
+        if (value instanceof Collection)
+            // get first face in image
+            value = ((Collection) value).iterator().next();
+        this.refSimilarityFeatures = convToDoubleVec((byte[]) value);
     }
 
     public MultiSearchResult search() throws IOException {
@@ -53,9 +58,9 @@ public class SimilarFacesSearch {
             int threadIdx = k;
             (threads[k] = new Thread() {
                 public void run() {
-                    BinaryDocValues similarityFeaturesValues = null;
+                    SortedSetDocValues similarityFeaturesValues = null;
                     try {
-                        similarityFeaturesValues = leafReader.getBinaryDocValues(FACE_FEATURES);
+                        similarityFeaturesValues = leafReader.getSortedSetDocValues(FACE_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -65,14 +70,20 @@ public class SimilarFacesSearch {
                     for (int i = i0; i < i1; i++) {
                         IItemId itemId = result.getItem(i);
                         int luceneId = ipedCase.getLuceneId(itemId);
-                        BytesRef bytesRef = similarityFeaturesValues.get(luceneId);
-                        if (bytesRef == null || bytesRef.length == 0) {
-                            result.setScore(i, 0);
-                        } else {
-                            double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
-                            float distance = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
-                            System.out.println(distance);
-                            result.setScore(i, squaredDistToScore(distance));
+                        similarityFeaturesValues.setDocument(luceneId);
+                        long ordinal;
+                        while ((ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                            BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
+                            if (bytesRef == null || bytesRef.length == 0) {
+                                result.setScore(i, 0);
+                            } else {
+                                double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
+                                float distance = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
+                                result.setScore(i, squaredDistToScore(distance));
+                                if (distance < minDistSquared) {
+                                    break;
+                                }
+                            }
                         }
                     }
                 }
