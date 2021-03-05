@@ -15,8 +15,9 @@ import iped3.IItemId;
 public class SimilarFacesSearch {
 
     public static final String FACE_FEATURES = "face_encodings";
-    private static float minDist = 0.45f;
-    private static float minDistSquared = minDist * minDist;
+    private static final float DEFAULT_MIN_DISTANCE = 0.5f;
+
+    private static float minDistSquared = DEFAULT_MIN_DISTANCE * DEFAULT_MIN_DISTANCE;
 
     private IPEDMultiSource ipedCase;
     private double[] refSimilarityFeatures;
@@ -34,7 +35,6 @@ public class SimilarFacesSearch {
     public MultiSearchResult search() throws IOException {
         IPEDSearcher searcher = new IPEDSearcher(ipedCase, "*:*");
         MultiSearchResult result = searcher.multiSearch();
-        score(result);
         return filter(result);
     }
 
@@ -43,8 +43,17 @@ public class SimilarFacesSearch {
         return ImageSimilarityLowScoreFilter.filter(result, squaredDistToScore(minDistSquared));
     }
 
-    private float squaredDistToScore(float dist) {
-        return Math.max(0, (1 - dist * 2) * 100);
+    public static final int getMinScore() {
+        return (int) squaredDistToScore(minDistSquared);
+    }
+
+    public static final void setMinScore(int minScore) {
+        float dist = 1 - ((float) minScore / 100);
+        minDistSquared = dist * dist;
+    }
+
+    private static final float squaredDistToScore(float squaredDist) {
+        return Math.max(0, (1 - (float) Math.sqrt(squaredDist)) * 100);
     }
 
     private void score(MultiSearchResult result) throws IOException {
@@ -68,33 +77,40 @@ public class SimilarFacesSearch {
                     int i0 = Math.min(len, itemsPerThread * threadIdx);
                     int i1 = Math.min(len, i0 + itemsPerThread);
                     for (int i = i0; i < i1; i++) {
+                        if (i % 1000 == 0 && this.isInterrupted()) {
+                            return;
+                        }
                         IItemId itemId = result.getItem(i);
                         int luceneId = ipedCase.getLuceneId(itemId);
                         similarityFeaturesValues.setDocument(luceneId);
                         long ordinal;
+                        float score = 0;
                         while ((ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                             BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
-                            if (bytesRef == null || bytesRef.length == 0) {
-                                result.setScore(i, 0);
-                            } else {
-                                double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
-                                float distance = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
-                                result.setScore(i, squaredDistToScore(distance));
-                                if (distance < minDistSquared) {
-                                    break;
-                                }
+                            double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
+                            float squaredDist = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
+                            if (squaredDist <= minDistSquared) {
+                                score = squaredDistToScore(squaredDist);
+                                break;
                             }
                         }
+                        result.setScore(i, score);
                     }
                 }
             }).start();
         }
+        boolean canceled = false;
         for (Thread thread : threads) {
-            try {
-                if (thread != null) {
-                    thread.join();
+            if (thread != null) {
+                if (!canceled) {
+                    try {
+                        thread.join();
+                    } catch (InterruptedException e) {
+                        canceled = true;
+                    }
+                } else {
+                    thread.interrupt();
                 }
-            } catch (InterruptedException e) {
             }
         }
 

@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.JOptionPane;
 import javax.swing.RowSorter;
 import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
@@ -34,6 +35,23 @@ public class SimilarFacesFilterActions {
 
     public static void searchSimilarImages(boolean external) {
         App app = App.get();
+        
+        int minScore = 0;
+        while (minScore == 0) {
+            try {
+                String input = JOptionPane.showInputDialog(app, "Define minimum similarity (1-100):",
+                        SimilarFacesSearch.getMinScore());
+                minScore = Integer.parseInt(input.trim());
+                if (minScore < 1 || minScore > 100) {
+                    minScore = 0;
+                    continue;
+                }
+                SimilarFacesSearch.setMinScore(minScore);
+
+            } catch (NumberFormatException e) {
+            }
+        }
+
         if (external) {
             // TODO
         } else {
