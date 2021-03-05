@@ -517,13 +517,7 @@ public class IndexItem extends BasicProps {
                         NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
-            NDArray nd = (NDArray) oValue;
-            double[] array = (double[]) nd.getData();
-            ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
-            for (double value : array) {
-                buffer.putDouble(value);
-            }
-            byte[] byteArray = buffer.array();
+            byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
 
@@ -549,6 +543,15 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
         }
 
+    }
+
+    public static final byte[] convNDArrayToByteArray(NDArray nd) {
+        double[] array = (double[]) nd.getData();
+        ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
+        for (double value : array) {
+            buffer.putDouble(value);
+        }
+        return buffer.array();
     }
 
     private static void addMetadataToDoc(Document doc, Metadata metadata) {

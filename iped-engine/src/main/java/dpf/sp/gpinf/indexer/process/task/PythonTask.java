@@ -15,6 +15,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import iped3.ICaseData;
 import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
@@ -25,7 +26,7 @@ public class PythonTask extends AbstractTask {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
     private static AtomicBoolean jepChecked = new AtomicBoolean();
-    private static final Map<Integer, Jep> jepPerWorker = new HashMap<>();
+    private static final Map<Long, Jep> jepPerThread = new HashMap<>();
     private static volatile File lastInstalledScript;
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
@@ -41,6 +42,10 @@ public class PythonTask extends AbstractTask {
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
+    }
+
+    public void setCaseData(ICaseData caseData) {
+        super.caseData = caseData;
     }
 
     private class ArrayConverter {
@@ -78,11 +83,11 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
-        synchronized (jepPerWorker) {
-            Jep jep = jepPerWorker.get(this.worker.id);
+        synchronized (jepPerThread) {
+            Jep jep = jepPerThread.get(Thread.currentThread().getId());
             if (jep == null) {
                 jep = getNewJep();
-                jepPerWorker.put(this.worker.id, jep);
+                jepPerThread.put(Thread.currentThread().getId(), jep);
             }
             if (!scriptLoaded) {
                 loadScript(jep);
@@ -138,7 +143,7 @@ public class PythonTask extends AbstractTask {
 
     private void loadScript(Jep jep) throws JepException {
 
-        moduleName = (scriptFile.getName().replace(".py", "_in_worker_") + worker.id).toLowerCase();
+        moduleName = (scriptFile.getName().replace(".py", "_thread_") + Thread.currentThread().getId()).toLowerCase();
 
         jep.eval("import importlib.util");
         jep.eval("spec = importlib.util.spec_from_file_location('" + moduleName + "', '"
@@ -257,7 +262,7 @@ public class PythonTask extends AbstractTask {
     }
 
     @Override
-    protected void process(IItem item) throws Exception {
+    public void process(IItem item) throws Exception {
 
         try {
             getJep().invoke(getModuleFunction("process"), item); //$NON-NLS-1$

@@ -133,14 +133,6 @@ def process(item):
     if not item.getMediaType().toString().startswith('image'):
         return
 
-    # Faces loaded from input folder
-    known_names = caseData.getCaseObject('face_model_name')
-    known_face_encodings = caseData.getCaseObject('face_model_encoding')
-
-    # Exit if there is no faces in input folder to process
-    if len(known_names) == 0:
-        return
-
     try:
         # Get tiff:Orientation attribute
         tiff_orient = int(item.getMetadata().get("image:tiff:Orientation"))
@@ -171,6 +163,14 @@ def process(item):
     
     item.setExtraAttribute("face_locations", convertTuplesToList(face_locations))
     item.setExtraAttribute("face_encodings", face_encodings)
+    
+    # Faces loaded from input folder
+    known_names = caseData.getCaseObject('face_model_name')
+    known_face_encodings = caseData.getCaseObject('face_model_encoding')
+    
+    # Exit if there is no faces in input folder to process
+    if len(known_names) == 0:
+        return
 
     # Loop through faces in image
     for (top, right, bottom, left), face_encoding in zip(face_locations, face_encodings):

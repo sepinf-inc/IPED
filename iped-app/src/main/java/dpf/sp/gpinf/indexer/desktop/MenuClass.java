@@ -47,7 +47,7 @@ public class MenuClass extends JPopupMenu {
             navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal, similarFacesCurrent;
+            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -94,7 +94,8 @@ public class MenuClass extends JPopupMenu {
          * deslerSelecionados.addActionListener(menuListener);
          * this.add(deslerSelecionados);
          */
-        // this.addSeparator();
+        this.addSeparator();
+
         carregarMarcadores = new JMenuItem(Messages.getString("MenuClass.LoadBookmarks")); //$NON-NLS-1$
         carregarMarcadores.addActionListener(menuListener);
         this.add(carregarMarcadores);
@@ -239,11 +240,22 @@ public class MenuClass extends JPopupMenu {
         similarImagesExternal.setEnabled(submenu.isEnabled());
         submenu.add(similarImagesExternal);
 
+        submenu = new JMenu(Messages.getString("MenuClass.FindSimilarFaces")); //$NON-NLS-1$
+        submenu.setEnabled(SimilarFacesFilterActions.isFeatureEnabled());
+        this.add(submenu);
+
         similarFacesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.Current")); //$NON-NLS-1$
         similarFacesCurrent.addActionListener(menuListener);
         similarFacesCurrent
                 .setEnabled(item != null && item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) != null);
-        this.add(similarFacesCurrent);
+        submenu.add(similarFacesCurrent);
+
+        similarFacesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.External")); //$NON-NLS-1$
+        similarFacesExternal.addActionListener(menuListener);
+        similarFacesExternal.setEnabled(submenu.isEnabled());
+        submenu.add(similarFacesExternal);
+
+        this.addSeparator();
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);
