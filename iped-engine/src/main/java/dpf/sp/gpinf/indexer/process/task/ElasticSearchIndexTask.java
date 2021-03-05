@@ -287,12 +287,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         // mapping the parent-child relation
         /*
-         * "bookmark": { "type": "join", "relations": { "document": "bookmark" } }
+         * "document_content": { "type": "join", "relations": { "document": "content" }
+         * }
          */
         HashMap<String, Object> bookmarkRelation = new HashMap<>();
         bookmarkRelation.put("type", "join");
-        bookmarkRelation.put("relations", Collections.singletonMap("document", "bookmark"));
-        properties.put("bookmark", bookmarkRelation);
+        bookmarkRelation.put("relations", Collections.singletonMap("document", "content"));
+        properties.put("document_content", bookmarkRelation);
 
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
@@ -332,6 +333,24 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
+    private IndexRequest createMetaDataRegistry(IItem item, String metadata_id) throws IOException {
+
+        IndexRequest indexRequest = Requests.indexRequest(indexName);
+
+        indexRequest.id(metadata_id);
+
+        XContentBuilder jsonBuilder = getJsonMetadataBuilder(item);
+
+        indexRequest.source(jsonBuilder);
+
+        indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
+        indexRequest.opType(OpType.CREATE);
+
+
+        return indexRequest;
+
+    }
+
     @Override
     protected void process(IItem item) throws Exception {
 
@@ -354,27 +373,39 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");
             textReader = new StringReader(""); //$NON-NLS-1$
         }
+
         FragmentingReader fragReader = new FragmentingReader(textReader);
         int fragNum = fragReader.estimateNumberOfFrags();
         if (fragNum == -1) {
             fragNum = 1;
         }
-        String originalId = Util.getPersistentId(item);
-        try {
-            do {
-                String id = Util.generatePersistentIdForTextFrag(originalId, --fragNum);
-                item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
+        String parentId = Util.getPersistentId(item);
 
-                XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader);
+
+
+
+        try {
+            // creates the father;
+            IndexRequest parentIndexRequest = createMetaDataRegistry(item, parentId);
+            parentIndexRequest.routing(parentId);
+            bulkRequest.add(parentIndexRequest);
+            idToPath.put(parentId, item.getPath());
+
+            do {
+                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, --fragNum);
+
+
+                XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader, parentId, contentPersistentId);
 
                 IndexRequest indexRequest = Requests.indexRequest(indexName);
-                indexRequest.id(id);
+                indexRequest.routing(parentId);
+                indexRequest.id(contentPersistentId);
                 indexRequest.source(jsonBuilder);
                 indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
                 indexRequest.opType(OpType.CREATE);
 
                 bulkRequest.add(indexRequest);
-                idToPath.put(id, item.getPath());
+                idToPath.put(contentPersistentId, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
@@ -388,7 +419,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } finally {
-            item.setExtraAttribute(IndexItem.PERSISTENT_ID, originalId);
+            item.setExtraAttribute(IndexItem.PERSISTENT_ID, parentId);
             fragReader.close();
         }
 
@@ -454,15 +485,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
-    private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader) throws IOException {
+    private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
         String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
-                .field("bookmark", "document")
-                .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
-                .field(BasicProps.PARENTIDs, item.getParentIds())
+                .field("document_content", "document").field(BasicProps.SUBITEMID, item.getSubitemId())
+                .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
@@ -482,7 +512,32 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.HASCHILD, item.hasChildren()).field(BasicProps.ISDIR, item.isDir())
                 .field(BasicProps.ISROOT, item.isRoot()).field(BasicProps.CARVED, item.isCarved())
                 .field(BasicProps.SUBITEM, item.isSubItem()).field(BasicProps.OFFSET, item.getFileOffset())
-                .field("extraAttributes", item.getExtraAttributeMap())
+                .field("extraAttributes", item.getExtraAttributeMap());
+
+        for (String key : getMetadataKeys(item)) {
+            if (key != null) {
+                builder.array(key, item.getMetadata().getValues(key));
+            }
+        }
+
+        for (Entry<String, String> entry : cmdLineFields.entrySet()) {
+            builder.field(entry.getKey(), entry.getValue());
+        }
+
+        return builder.endObject();
+    }
+
+    private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader, String parentID,
+            String contentPersistentId) throws IOException {
+
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+        HashMap<String,String> document_content=new HashMap<>();
+        document_content.put("name", "content");
+        document_content.put("parent",parentID);
+        String inputStreamSrcPath = getInputStreamSourcePath(item);
+        builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
+                .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
+                .field("document_content", document_content).field("contentPersistentId", contentPersistentId)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         for (String key : getMetadataKeys(item)) {
