@@ -108,7 +108,8 @@ public class SimilarFacesSearch {
                     } catch (InterruptedException e) {
                         canceled = true;
                     }
-                } else {
+                }
+                if (canceled) {
                     thread.interrupt();
                 }
             }
@@ -127,7 +128,7 @@ public class SimilarFacesSearch {
 
     public static float distance(double[] a, double[] b, float cut) {
         double distance = 0;
-        for (int i = 0; i < a.length && distance < cut;) {
+        for (int i = 0; i < a.length && distance <= cut;) {
             double d = a[i] - b[i++];
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
