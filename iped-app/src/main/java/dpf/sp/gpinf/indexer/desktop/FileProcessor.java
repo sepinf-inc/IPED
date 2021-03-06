@@ -22,6 +22,8 @@ import java.awt.Dialog.ModalityType;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 import javax.swing.SwingUtilities;
 
@@ -34,6 +36,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.IFileProcessor;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -133,7 +137,17 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
 
         waitSleuthkitInit(item);
 
-        App.get().getViewerController().loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
+        Set<String> highlights = new HashSet<>();
+        highlights.addAll(App.get().getParams().highlightTerms);
+
+        if (App.get().similarFacesRefItem != null) {
+            List<String> locations = SimilarFacesSearch.getMatchLocations(App.get().similarFacesRefItem, item);
+            for (String location : locations) {
+                highlights.add(ImageViewer.HIGHLIGHT_LOCATION + location);
+            }
+        }
+
+        App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
             // listRelatedItens();

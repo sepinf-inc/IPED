@@ -2,8 +2,10 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedSetDocValues;
@@ -15,6 +17,8 @@ import iped3.IItemId;
 public class SimilarFacesSearch {
 
     public static final String FACE_FEATURES = "face_encodings";
+    public static final String FACE_LOCATIONS = "face_locations";
+
     private static final float DEFAULT_MIN_DISTANCE = 0.5f;
 
     private static float minDistSquared = DEFAULT_MIN_DISTANCE * DEFAULT_MIN_DISTANCE;
@@ -25,11 +29,7 @@ public class SimilarFacesSearch {
     public SimilarFacesSearch(IPEDSource ipedCase, IItem refImage) {
         this.ipedCase = ipedCase instanceof IPEDMultiSource ? (IPEDMultiSource) ipedCase
                 : new IPEDMultiSource(Collections.singletonList(ipedCase));
-        Object value = refImage.getExtraAttribute(FACE_FEATURES);
-        if (value instanceof Collection)
-            // get first face in image
-            value = ((Collection) value).iterator().next();
-        this.refSimilarityFeatures = convToDoubleVec((byte[]) value);
+        this.refSimilarityFeatures = getFirstFace(refImage);
     }
 
     public MultiSearchResult search() throws IOException {
@@ -117,7 +117,7 @@ public class SimilarFacesSearch {
 
     }
 
-    private double[] convToDoubleVec(byte[] bytes) {
+    private static double[] convToDoubleVec(byte[] bytes) {
         double[] result = new double[bytes.length / 8];
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         for (int i = 0; i < result.length; i++) {
@@ -133,6 +133,32 @@ public class SimilarFacesSearch {
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
         return (float) distance;
+    }
+
+    private static double[] getFirstFace(IItem refImage) {
+        Object value = refImage.getExtraAttribute(FACE_FEATURES);
+        if (value instanceof Collection)
+            // get first face in image
+            value = ((Collection) value).iterator().next();
+        return convToDoubleVec((byte[]) value);
+    }
+
+    public static List<String> getMatchLocations(IItem refImage, IItem item){
+        ArrayList<String> matchLocations = new ArrayList<>();
+        Object location = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
+        if (location instanceof List) {
+            double[] ref = getFirstFace(refImage);
+            List<byte[]> features = (List<byte[]>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
+            for (int i = 0; i < ((List) location).size(); i++) {
+                double[] face = convToDoubleVec(features.get(i));
+                if (distance(ref, face, minDistSquared) <= minDistSquared) {
+                    matchLocations.add((String) ((List) location).get(i));
+                }
+            }
+        } else {
+            matchLocations.add((String) location);
+        }
+        return matchLocations;
     }
 
 }
