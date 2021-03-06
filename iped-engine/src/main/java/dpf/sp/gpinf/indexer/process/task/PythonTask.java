@@ -5,11 +5,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -24,8 +24,12 @@ import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask {
 
+    private static final String JEP_NOT_FOUND = Messages.getString("PythonTask.JepNotFound");
+    private static final String DISABLED = Messages.getString("PythonTask.ModuleDisabled");
+    private static final String SEE_MANUAL = Messages.getString("PythonTask.SeeManual");
+
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
-    private static AtomicBoolean jepChecked = new AtomicBoolean();
+    private static volatile JepException jepException = null;
     private static final Map<Long, Jep> jepPerThread = new HashMap<>();
     private static volatile File lastInstalledScript;
     private static volatile IPEDSource ipedCase;
@@ -104,10 +108,11 @@ public class PythonTask extends AbstractTask {
             jep = new SharedInterpreter();
 
         } catch (UnsatisfiedLinkError e) {
-            if (!jepChecked.getAndSet(true)) {
-                LOGGER.error(
-                        "JEP not found, all python modules will be disabled. If you want to enable them see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules");
-                e.printStackTrace();
+            if (jepException == null) {
+                String msg = JEP_NOT_FOUND + SEE_MANUAL;
+                jepException = new JepException(msg, e);
+                LOGGER.error(msg);
+                jepException.printStackTrace();
             }
             isEnabled = false;
             return null;
@@ -192,6 +197,15 @@ public class PythonTask extends AbstractTask {
         this.confDir = confDir;
         try (Jep jep = getNewJep()) {
             loadScript(jep);
+
+        } catch (JepException e) {
+            if (jepException == null) {
+                String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
+                jepException = new JepException(msg, e);
+                LOGGER.error(msg);
+                jepException.printStackTrace();
+            }
+            isEnabled = false;
         }
         lastInstalledScript = scriptFile;
         numInstances++;
@@ -216,7 +230,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (getJep() != null && lastInstalledScript.equals(scriptFile)) {
+        if (jepException == null && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 
@@ -267,6 +281,9 @@ public class PythonTask extends AbstractTask {
 
     @Override
     public void process(IItem item) throws Exception {
+
+        if (jepException != null)
+            throw jepException;
 
         try {
             getJep().invoke(getModuleFunction("process"), item); //$NON-NLS-1$

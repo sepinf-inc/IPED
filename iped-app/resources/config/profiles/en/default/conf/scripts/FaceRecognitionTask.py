@@ -144,8 +144,14 @@ def process(item):
     # Load absolute path
     img_path = item.getTempFile().getAbsolutePath()
 
-    # Load image to find faces in
-    img = fr.load_image_file(img_path)
+    img = None
+    try:
+        # Load image to find faces in
+        img = fr.load_image_file(img_path)
+        
+    except:
+        logger.info("Error loading image {}", item.getPath())
+        return
 
     # Image rotation, when necessary
     if tiff_orient != 1 and tiff_orient != 2:
