@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.18</version>
+        <version>3.19-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -47,7 +47,7 @@
     	<dependency>
     		<groupId>black.ninia</groupId>
   			<artifactId>jep</artifactId>
-  			<version>3.8.2</version>
+  			<version>3.9.1</version>
   		</dependency>
     	<dependency>
             <groupId>iped</groupId>
@@ -125,6 +125,12 @@
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-backward-codecs</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
             <artifactId>lucene-highlighter</artifactId>
             <version>${lucene.version}</version>
             <type>jar</type>
@@ -136,9 +142,20 @@
             <type>jar</type>
         </dependency>
         <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-misc</artifactId>
+            <version>${lucene.version}</version>
+            <type>jar</type>
+        </dependency>
+        <dependency>
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>7.6.1-shaded</version>
+            <version>7.6.1-shaded3</version>
+        </dependency>
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>7.1.4-shaded</version>
         </dependency>
         <dependency>
             <groupId>postgresql</groupId>
@@ -218,6 +235,16 @@
   			<version>2.28</version>
   			<scope>runtime</scope>
 		</dependency>
+		<dependency>
+            <groupId>com.googlecode.libphonenumber</groupId>
+            <artifactId>libphonenumber</artifactId>
+            <version>8.9.14</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j</groupId>
+            <artifactId>neo4j</artifactId>
+            <version>3.4.10-shaded</version>
+        </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
 			<artifactId>bcpkix-jdk15on</artifactId>

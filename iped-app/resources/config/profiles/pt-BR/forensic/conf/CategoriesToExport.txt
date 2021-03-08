@@ -19,6 +19,7 @@
 #Contatos
 #Chats
 #Histórico de Internet
+#Favoritos Web
 #Atalhos para arquivos
 #Atalhos para URLs
 #Peer-to-peer
@@ -29,13 +30,46 @@
 #Imagens Temporárias Internet
 #Imagens em Pasta de Sistema
 #Outras Imagens
-#Vídeos
-#Áudios
-#Arquivos OLE
-#Arquivos Compactados
-#Caixas de Emails
+#Arquivos de Georeferenciamento
+#Atividades de Usuário
+#Arquivos Sincronizados GDrive
 #Registro do Windows
+#Áudios
+#Vídeos
+#Arquivos Compactados
+#Arquivos OLE
+#Caixas de Emails
 #Programas e Bibliotecas
-#Não Alocado
 #Outros Arquivos
 #Tamanho Zero
+#Discos ISO
+#Discos Virtuais
+#Outros Espelhos
+#Não Alocado
+#File Slacks
+
+#Resumo da Extração
+#Chamadas
+#Mensagens SMS
+#Mensagens MMS
+#Dispositivos Bluetooth
+#Dados SIM
+#Calendário
+#Logs
+#Usuários
+#Pesquisas
+#Anotações
+#Redes sem fio
+#Notificações
+#Localizações
+#Cookies
+#Configurações
+#Senhas
+#Autopreenchimento
+#Torres de célula
+#Eventos de Energia
+#Dicionário do usuário
+#Conexões IP
+#Gravações
+#Cartões Móveis
+#Uso de Aplicativos

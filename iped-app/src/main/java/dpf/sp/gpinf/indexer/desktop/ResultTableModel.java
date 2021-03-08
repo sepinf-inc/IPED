@@ -169,7 +169,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row), app.appCase);
+        app.appCase.getMultiMarcadores().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
@@ -236,38 +236,50 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
             }
 
-            SortedNumericDocValues sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues(field);
+            SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
             if (sndv == null)
-                sndv = App.get().appCase.getAtomicReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+                sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
 
             boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
+                boolean sorted = false;
                 if (mayBeNumeric && sndv != null) {
-                    Arrays.sort(values, new Comparator<String>() {
-                        @Override
-                        public int compare(String o1, String o2) {
-                            return Double.valueOf(o1).compareTo(Double.valueOf(o2));
-                        }
-                    });
-                } else
+                    try {
+                        Arrays.sort(values, new Comparator<String>() {
+                            @Override
+                            public int compare(String o1, String o2) {
+                                return Double.valueOf(o1).compareTo(Double.valueOf(o2));
+                            }
+                        });
+                        sorted = true;
+                    } catch (NumberFormatException e) {
+                    }
+                }
+                if (!sorted)
                     Arrays.sort(values, collator);
             }
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
                 try {
-                    //do not use scientific notation for longs
+                    // do not use scientific notation for longs
                     Double d = Double.valueOf(values[i]);
-                    if(d.doubleValue() == d.longValue()) {
+                    if (d.doubleValue() == d.longValue()) {
                         values[i] = Long.toString(d.longValue());
                     }
-                }catch(NumberFormatException e) {}
-                
+                } catch (NumberFormatException e) {
+                }
+
                 sb.append(values[i]);
-                if (i != values.length - 1)
+                if (i != values.length - 1) {
+                    if (i == 9) {
+                        sb.append(" ..."); //$NON-NLS-1$
+                        break;
+                    }
                     sb.append(" | "); //$NON-NLS-1$
+                }
             }
 
             value = sb.toString().trim();
@@ -287,9 +299,10 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 } catch (Exception e) {
                     // e.printStackTrace();
                 }
-            
-            if(Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
-                //it was stored lowercase because query parser converts range queries to lowercase
+
+            if (Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
+                // it was stored lowercase because query parser converts range queries to
+                // lowercase
                 value = value.toUpperCase();
             }
 

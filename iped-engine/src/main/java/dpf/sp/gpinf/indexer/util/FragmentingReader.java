@@ -20,7 +20,7 @@ public class FragmentingReader extends Reader {
     private long totalTextSize = 0;
     private long fragReadMark = 0;
     private int lastRead = 0;
-    
+
     private long knownSize = -1;
 
     public static void setTextSplitSize(long textSplitSize) {
@@ -32,22 +32,22 @@ public class FragmentingReader extends Reader {
     }
 
     public FragmentingReader(Reader reader) {
-        if(reader instanceof KnownSizeReader) {
-            knownSize = ((KnownSizeReader)reader).getSize();
+        if (reader instanceof KnownSizeReader) {
+            knownSize = ((KnownSizeReader) reader).getSize();
         }
         if (reader.markSupported())
             this.reader = reader;
         else
             this.reader = new BufferedReader(reader);
     }
-    
+
     public int estimateNumberOfFrags() {
-        if(knownSize > -1) {
+        if (knownSize > -1) {
             long size = knownSize;
-            if(size <= textSplitSize + textOverlapSize) {
+            if (size <= textSplitSize + textOverlapSize) {
                 return 1;
-            }else {
-                return (int)Math.ceil(((double)size - textOverlapSize) / textSplitSize);
+            } else {
+                return (int) Math.ceil(((double) size - textOverlapSize) / textSplitSize);
             }
         }
         return -1;

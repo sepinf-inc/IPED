@@ -73,6 +73,8 @@ import javax.swing.UIDefaults;
 import javax.swing.UIManager;
 import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.Border;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.text.JTextComponent;
 
 import org.apache.lucene.search.Query;
@@ -100,11 +102,9 @@ import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
-import bibliothek.gui.dock.common.event.CDockableStateListener;
-import bibliothek.gui.dock.common.intern.CDockable;
-import bibliothek.gui.dock.common.mode.ExtendedMode;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
@@ -122,9 +122,11 @@ import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IIPEDSource;
+import iped3.IItem;
+import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
-import iped3.desktop.IColumnsManager;
 import iped3.desktop.GUIProvider;
+import iped3.desktop.IColumnsManager;
 import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
@@ -161,6 +163,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JTable resultsTable;
     GalleryTable gallery;
     public HitsTable hitsTable;
+    AppGraphAnalytics appGraphAnalytics;
 
     HitsTable subItemTable, duplicatesTable;
     JTree tree, bookmarksTree, categoryTree;
@@ -175,8 +178,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
-    DefaultSingleCDockable tableTabDock, galleryTabDock;
+    DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
     public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
+    DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
@@ -186,9 +190,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultSelectedColor;
     private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
-    MenuClass menu;
     JPanel topPanel;
-    JPanel multiFilterAlert;
+    ClearFilterButton clearAllFilters;
     boolean disposicaoVertical = false;
 
     public ResultTableModel resultsModel;
@@ -204,7 +207,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private int zoomLevel;
 
-    File casesPathFile;
+    public SimilarImagesFilterPanel similarImageFilterPanel;
+    public IItem similarImagesQueryRefItem;
+    public List<? extends SortKey> similarImagesPrevSortKeys;
+
+    public File casesPathFile;
     boolean isMultiCase;
     public JLabel status;
 
@@ -228,6 +235,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private ResultSetViewerConfiguration resultSetViewerConfiguration;
 
+    public boolean useVideoThumbsInGallery = false;
+
     private App() {
         this.appSearchParams = new AppSearchParams();
         this.appSearchParams.mainFrame = (JFrame) this;
@@ -248,12 +257,24 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return app;
     }
 
+    public AppListener getAppListener() {
+        return appletListener;
+    }
+
     public AppSearchParams getSearchParams() {
         return this.appSearchParams;
     }
 
     public Manager getProcessingManager() {
         return processingManager;
+    }
+
+    public MenuClass getContextMenu() {
+        return new MenuClass();
+    }
+
+    public LogConfiguration getLogConfiguration() {
+        return this.logConfiguration;
     }
 
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
@@ -287,7 +308,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     }
                 });
             } catch (InvocationTargetException | InterruptedException e) {
-                // TODO Auto-generated catch block
                 e.printStackTrace();
             }
         }
@@ -323,23 +343,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     private void destroy() {
+        boolean processingFinished = processingManager == null || processingManager.isProcessingFinished();
         try {
-
-            if (this.resultsTable != null) {
-                ColumnsManager.getInstance().dispose();
-            }
             if (viewerController != null) {
                 viewerController.dispose();
             }
+            if (this.resultsTable != null) {
+                ColumnsManager.getInstance().dispose();
+            }
+
             appCase.close();
 
-            if (processingManager == null || processingManager.isProcessingFinished()) {
+            if (processingFinished) {
                 if (processingManager != null)
                     processingManager.deleteTempDir();
                 if (logConfiguration != null)
                     logConfiguration.closeConsoleLogFile();
-
-                System.exit(0);
 
             } else {
                 processingManager.setSearchAppOpen(false);
@@ -348,6 +367,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        if (processingFinished) {
+            System.exit(0);
         }
     }
 
@@ -413,19 +435,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.LINE_AXIS));
         topPanel.setAlignmentX(LEFT_ALIGNMENT);
 
-        JLabel alertLabel = new JLabel(Messages.getString("App.FilterWarn")); //$NON-NLS-1$
-        alertLabel.setForeground(Color.WHITE);
-        multiFilterAlert = new JPanel();
-        multiFilterAlert.add(alertLabel);
-        multiFilterAlert.setBackground(alertColor);
-        multiFilterAlert.setMaximumSize(new Dimension(100, 100));
-        // multiFilterAlert.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1,
-        // true));
-        multiFilterAlert.setVisible(false);
+        clearAllFilters = new ClearFilterButton();
+        clearAllFilters.setMaximumSize(new Dimension(100, 100));
+
+        similarImageFilterPanel = new SimilarImagesFilterPanel();
+        similarImageFilterPanel.setVisible(false);
 
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
-        topPanel.add(multiFilterAlert);
+        topPanel.add(clearAllFilters);
+        topPanel.add(similarImageFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(termo);
         topPanel.add(opcoes);
@@ -485,6 +504,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 }
             }
         });
+
+        appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController(appSearchParams);
         hitsTable = new HitsTable(new HitsTableModel(getTextViewer()));
@@ -567,6 +588,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             treeListener = new TreeListener();
             tree.addTreeSelectionListener(treeListener);
             tree.addTreeExpansionListener(treeListener);
+            tree.addMouseListener(treeListener);
 
             evidencePanel = new JPanel(new BorderLayout());
             evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
@@ -579,19 +601,21 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl = new CControl(this);
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
-        // This forces Eclipse theme to use rectangular tabs instead of curved ones, to save horizontal space. 
+        // This forces Eclipse theme to use rectangular tabs instead of curved ones, to
+        // save horizontal space.
         dockingControl.putProperty(EclipseTheme.TAB_PAINTER, new TabPainter() {
             public Border getFullBorder(BorderedComponent owner, DockController controller, Dockable dockable) {
                 return RectGradientPainter.FACTORY.getFullBorder(owner, controller, dockable);
             }
 
             public TabComponent createTabComponent(EclipseTabPane pane, Dockable dockable) {
-                //return RectGradientPainter.FACTORY.createTabComponent(pane, dockable);
+                // return RectGradientPainter.FACTORY.createTabComponent(pane, dockable);
                 return new RectGradientPainter(pane, dockable) {
                     private static final long serialVersionUID = -9020339124009415001L;
 
                     public void setLabelInsets(Insets labelInsets) {
-                        labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1, labelInsets.right - 3);
+                        labelInsets = new Insets(labelInsets.top - 1, labelInsets.left - 3, labelInsets.bottom - 1,
+                                labelInsets.right - 3);
                         super.setLabelInsets(labelInsets);
                     }
                 };
@@ -661,6 +685,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         resultsTable.addMouseListener(new ResultTableListener());
         resultsTable.addKeyListener(new ResultTableListener());
 
+        clearAllFilters.addClearListener(categoryListener);
+        clearAllFilters.addClearListener(bookmarksListener);
+        clearAllFilters.addClearListener(treeListener);
+        clearAllFilters.addClearListener(metadataPanel);
+        clearAllFilters.addClearListener(appletListener);
+        clearAllFilters.addClearListener(appGraphAnalytics);
+        clearAllFilters.addClearListener(similarImageFilterPanel);
+
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
         subItemTable.getSelectionModel().addListSelectionListener(subItemModel);
@@ -722,10 +754,58 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
+        graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
+
+        CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
+                IconUtil.getIcon("video", resPath));
+        galleryTabDock.addAction(butToggleVideoFramesMode);
+        galleryTabDock.addSeparator();
+        butToggleVideoFramesMode.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                galleryModel.clearVideoThumbsInCache();
+                useVideoThumbsInGallery = !useVideoThumbsInGallery;
+                gallery.repaint();
+            }
+        });
+
+        if (SimilarImagesFilterActions.isFeatureEnabled()) {
+            CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
+                    IconUtil.getIcon("find", resPath));
+            galleryTabDock.addAction(butSimSearch);
+            galleryTabDock.addSeparator();
+            butSimSearch.addActionListener(new ActionListener() {
+                public void actionPerformed(ActionEvent e) {
+                    SimilarImagesFilterActions.searchSimilarImages(false);
+                }
+            });
+            butSimSearch.setEnabled(false);
+            resultsTable.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+                public void valueChanged(ListSelectionEvent e) {
+                    if (e.getValueIsAdjusting()) {
+                        return;
+                    }
+                    boolean enabled = false;
+                    int selIdx = resultsTable.getSelectedRow();
+                    if (selIdx != -1) {
+                        IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                        if (itemId != null) {
+                            IItem item = appCase.getItemByItemId(itemId);
+                            if (item != null) {
+                                enabled = item.getImageSimilarityFeatures() != null;
+                            }
+                        }
+                    }
+                    butSimSearch.setEnabled(enabled);
+                }
+            });
+        }
+
         // Add buttons to control the thumbnails size / number of columns in the gallery
-        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"), IconUtil.getIcon("minus", resPath));
+        CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
+                IconUtil.getIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
-        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"), IconUtil.getIcon("plus", resPath));
+        CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"),
+                IconUtil.getIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -775,6 +855,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(bookmarksTabDock);
         dockingControl.addDockable(tableTabDock);
         dockingControl.addDockable(galleryTabDock);
+        if (graphDock != null) {
+            dockingControl.addDockable(graphDock);
+        }
 
         for (Iterator<DefaultSingleCDockable> iterator = rsTabDock.iterator(); iterator.hasNext();) {
             DefaultSingleCDockable tabDock = iterator.next();
@@ -789,7 +872,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         List<Viewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
         for (Viewer viewer : viewers) {
-            DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(), viewer.getPanel());
+            DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(),
+                    viewer.getPanel());
             viewerDocks.add(viewerDock);
             dockingControl.addDockable(viewerDock);
             viewerController.put(viewer, viewerDock);
@@ -797,9 +881,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         setDockablesColors();
     }
-    
+
     private void setupViewerDocks() {
-        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"), IconUtil.getIcon("pin", resPath)) {
+        CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"),
+                IconUtil.getIcon("pin", resPath)) {
             protected void changed() {
                 viewerController.setFixed(isSelected());
             }
@@ -818,19 +903,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                             if (newLocation != null) {
                                 newLocation = newLocation.getParent();
                             }
-                            if ((oldLocation == null && newLocation != null) || (oldLocation != null && !oldLocation.equals(newLocation))) {
+                            if ((oldLocation == null && newLocation != null)
+                                    || (oldLocation != null && !oldLocation.equals(newLocation))) {
                                 validated = viewerController.validateViewer(viewer);
                             }
                         }
                         if (!validated && event.isShowingChanged()) {
                             viewerController.updateViewer(viewer, false);
-                        } 
+                        }
                     }
                 }
             });
-            
-            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"), IconUtil.getIcon("prev", resPath));
-            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"), IconUtil.getIcon("next", resPath));
+
+            CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"),
+                    IconUtil.getIcon("prev", resPath));
+            CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"),
+                    IconUtil.getIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     viewer.scrollToNextHit(false);
@@ -849,7 +937,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             int toolbarSupport = viewer.getToolbarSupported();
             if (toolbarSupport >= 0) {
-                CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"), IconUtil.getIcon("down", resPath)) {
+                CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"),
+                        IconUtil.getIcon("down", resPath)) {
                     protected void changed() {
                         viewer.setToolbarVisible(isSelected());
                     }
@@ -897,8 +986,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private void removeAllDockables() {
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
-        docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, 
-                galleryTabDock, bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock));
+        docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
+                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -923,6 +1012,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     private boolean metadataDefaultColor = true;
     private boolean evidenceDefaultColor = true;
     private boolean bookmarksDefaultColor = true;
+    private boolean graphDefaultColor = true;
+
+    public void setGraphDefaultColor(boolean defaultColor) {
+        if (graphDefaultColor != defaultColor) {
+            graphDefaultColor = defaultColor;
+            setDockablesColors();
+        }
+    }
 
     public void setCategoriesDefaultColor(boolean defaultColor) {
         if (categoriesDefaultColor != defaultColor) {
@@ -957,6 +1054,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         setTabColor(metadataTabDock, metadataDefaultColor);
         setTabColor(evidenceTabDock, evidenceDefaultColor);
         setTabColor(bookmarksTabDock, bookmarksDefaultColor);
+        setTabColor(graphDock, graphDefaultColor);
     }
 
     private void setTabColor(DefaultSingleCDockable dock, boolean isDefault) {
@@ -1045,6 +1143,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 nextLocation = tabDock.getBaseLocation().aside();
             }
 
+            if (graphDock != null) {
+                graphDock.setLocation(nextLocation);
+                graphDock.setVisible(true);
+            }
+
             hitsDock.setLocation(CLocation.base().normalSouth(0.5).west(0.4));
             hitsDock.setVisible(true);
             nextLocation = hitsDock.getBaseLocation().aside();
@@ -1113,6 +1216,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 nextLocation = tabDock.getBaseLocation().aside();
             }
 
+            if (graphDock != null) {
+                graphDock.setLocation(nextLocation);
+                graphDock.setVisible(true);
+            }
+
             hitsDock.setLocation(CLocation.base().normalSouth(0.3));
             hitsDock.setVisible(true);
             nextLocation = hitsDock.getBaseLocation().aside();
@@ -1160,7 +1268,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
         }
-        
+
         setupViewerDocks();
         viewerController.validateViewers();
     }
@@ -1172,14 +1280,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowActivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowClosed(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
@@ -1191,26 +1295,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     @Override
     public void windowDeactivated(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowDeiconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowIconified(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void windowOpened(WindowEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     public IMultiSearchResult getResults() {

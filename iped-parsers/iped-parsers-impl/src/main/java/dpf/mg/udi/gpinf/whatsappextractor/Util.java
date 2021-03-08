@@ -13,7 +13,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
  */
 public class Util {
-    
+
     private static final String RESOURCE_PATH = "/dpf/mg/udi/gpinf/whatsappextractor/whatsapp/"; //$NON-NLS-1$
 
     public static String encodeBase64(byte[] data) {
@@ -35,18 +35,18 @@ public class Util {
         }
         return id;
     }
-    
+
     public static String readResourceAsString(String resource) {
-       byte[] bytes = readResourceAsBytes(resource);
-       String result = ""; //$NON-NLS-1$
-       if (bytes != null) {
+        byte[] bytes = readResourceAsBytes(resource);
+        String result = ""; //$NON-NLS-1$
+        if (bytes != null) {
             result = new String(bytes, StandardCharsets.UTF_8);
-       }
-       return result;
+        }
+        return result;
     }
-    
+
     private static byte[] readResourceAsBytes(String resource) {
-        byte [] result = null;
+        byte[] result = null;
         try {
             result = IOUtil.loadInputStream(Util.class.getResourceAsStream(RESOURCE_PATH + resource));
         } catch (IOException e) {
@@ -56,18 +56,18 @@ public class Util {
         }
         return result;
     }
-    
+
     public static String readResourceAsBase64String(String resource) {
-        byte [] bytes = readResourceAsBytes(resource);
+        byte[] bytes = readResourceAsBytes(resource);
         String result = ""; //$NON-NLS-1$
         if (bytes != null) {
             result = encodeBase64(bytes);
         }
         return result;
     }
-    
+
     public static String getImageResourceAsEmbedded(String resource) {
-        String ext = resource.substring(resource.lastIndexOf('.')+1);
+        String ext = resource.substring(resource.lastIndexOf('.') + 1);
         String type = "jpg"; //$NON-NLS-1$
         if (ext.length() > 0) {
             type = ext;

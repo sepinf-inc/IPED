@@ -26,9 +26,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.swing.SwingUtilities;
-import javax.swing.SwingWorker;
-
 import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,10 +53,10 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
  * separar demais funções em outra classe de entrada com nome mais intuitivo
  * para execuções via linha de comando.
  */
-public class IndexFiles extends SwingWorker<Boolean, Integer> {
+public class IndexFiles {
 
     private static Logger LOGGER = null;
-    
+
     String rootPath, configPath;
     String profile, locale;
     File palavrasChave;
@@ -71,9 +68,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
     private CmdLineArgsImpl cmdLineParams;
 
-    private ProgressFrame progressFrame;
-
     private Manager manager;
+
+    volatile boolean success = false;
 
     /**
      * Última instância criada deta classe.
@@ -100,16 +97,15 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      */
     public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList,
             Boolean ignore, List<String> bookmarksToOCR) {
-        super();
         lastInstance = this;
         this.dataSource = reports;
         this.output = output;
         this.palavrasChave = keywordList;
         this.configPath = configPath;
         this.logFile = logFile;
-        
+
         String list = "";
-        for(String o : bookmarksToOCR)
+        for (String o : bookmarksToOCR)
             list += o + OCRParser.SUBSET_SEPARATOR;
         System.setProperty(OCRParser.SUBSET_TO_OCR, list);
     }
@@ -118,7 +114,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
      * Contrutor utilizado pela execução via linha de comando
      */
     public IndexFiles(String[] args) {
-        super();
         lastInstance = this;
         cmdLineParams = new CmdLineArgsImpl();
         cmdLineParams.takeArgs(args);
@@ -138,7 +133,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
         URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 
         boolean isReportFromCaseFolder = false;
-        
+
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
         } else {
@@ -157,9 +152,9 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
 
         if (cmdLineParams.getProfile() != null) {
             profile = cmdLineParams.getProfile();
-        } else if (!locale.equals("en") && !isReportFromCaseFolder) //$NON-NLS-1$
+        } else if (!isReportFromCaseFolder) {
             profile = "default"; //$NON-NLS-1$
-
+        }
         if (profile != null)
             configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 
@@ -188,34 +183,20 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
             kff.init(Configuration.getInstance().properties, null, true);
             kff.importKFF(kffPath);
         } catch (IPEDException e) {
-        	System.out.println(e.toString());
-        	
+            System.out.println(e.toString());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Realiza o processamento numa worker thread.
-     *
-     * @see javax.swing.SwingWorker#doInBackground()
-     */
-    @Override
-    protected Boolean doInBackground() {
+    protected void startManager() {
         try {
-            WorkerProvider.setInstance(this);
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    WorkerProvider.getInstance().cancel(true);
-                }
-            });
-            
             manager = new Manager(dataSource, output, palavrasChave);
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
 
-            this.firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("{} finished.", Versao.APP_EXT); //$NON-NLS-1$
             success = true;
 
@@ -225,64 +206,66 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.error("Processing Error: " + e.getMessage()); //$NON-NLS-1$
             else
                 LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
-            
-            if(!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
-                LOGGER.error("It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
-                        + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
+
+            if (!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
+                LOGGER.error(
+                        "It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
+                                + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
 
         } finally {
-            done = true;
             if (manager != null)
                 manager.setProcessingFinished(true);
             if (manager == null || !manager.isSearchAppOpen())
                 logConfiguration.closeConsoleLogFile();
         }
-
-        return success;
     }
-
-    /**
-     * Chamado após processamento para liberar recursos.
-     *
-     * @see javax.swing.SwingWorker#done()
-     */
-    @Override
-    public void done() {
-        if (progressFrame != null) {
-            progressFrame.dispose();
-        }
-    }
-
-    volatile boolean done = false, success = false;
 
     /**
      * Instancia listener de progresso, executa o processamento e aguarda.
      */
-    public boolean executar() {
+    public boolean execute() {
+
+        WorkerProvider provider = WorkerProvider.getInstance();
+        provider.setExecutorThread(Thread.currentThread());
+
+        Object frame = null;
+
         if (!cmdLineParams.isNogui()) {
-            SwingUtilities.invokeLater(new Runnable() {
-                public void run() {
-                    progressFrame = new ProgressFrame(lastInstance);
-                    lastInstance.addPropertyChangeListener(progressFrame);
-                    progressFrame.setVisible(true);
-                }
-            });
+            ProgressFrame progressFrame = new ProgressFrame(provider);
+            progressFrame.setVisible(true);
+            provider.addPropertyChangeListener(progressFrame);
+            frame = progressFrame;
         } else {
             ProgressConsole console = new ProgressConsole();
-            this.addPropertyChangeListener(console);
+            provider.addPropertyChangeListener(console);
         }
 
-        this.execute();
+        Runtime.getRuntime().addShutdownHook(new Thread() {
+            @Override
+            public void run() {
+                provider.cancel(true);
+            }
+        });
 
-        while (!done) {
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
+        try {
+            startManager();
+
+        } finally {
+            if (frame != null) {
+                closeFrameinEDT(frame);
             }
         }
 
         return success;
+    }
+
+    private void closeFrameinEDT(Object frame) {
+        javax.swing.SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                ((ProgressFrame) frame).dispose();
+            }
+        });
     }
 
     /**
@@ -311,10 +294,6 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 LOGGER.info(Versao.APP_NAME);
 
             Configuration.getInstance().loadConfigurables(indexador.configPath);
-            
-            if(!indexador.locale.equals("en") && "default".equals(indexador.profile)) {
-                Configuration.getInstance().checkIfDefaultProfileWasChanged();
-            }
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();
@@ -339,7 +318,7 @@ public class IndexFiles extends SwingWorker<Boolean, Integer> {
                 return;
 
             } else {
-                success = indexador.executar();
+                success = indexador.execute();
             }
 
         } catch (Exception e) {

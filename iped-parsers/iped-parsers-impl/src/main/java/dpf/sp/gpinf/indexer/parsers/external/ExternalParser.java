@@ -274,7 +274,7 @@ public class ExternalParser extends AbstractParser {
         if (SystemUtils.IS_OS_WINDOWS && toolPath != null) {
             String separator = toolPath.endsWith("/") ? "" : "/";
             cmd[0] = getRootFolder() + "/" + toolPath + separator + cmd[0];
-        }else
+        } else
             workDir = new File(getRootFolder());
         // Execute
         Process process = null;
@@ -327,7 +327,7 @@ public class ExternalParser extends AbstractParser {
                 if (hasPatterns) {
                     extractMetadata(is, metadata);
                 } else {
-                    File tmpFile =  inputToStdIn ? null : stream.getFile();
+                    File tmpFile = inputToStdIn ? null : stream.getFile();
                     extractOutput(is, xhtml, metadata.get(Metadata.RESOURCE_NAME_KEY), tmpFile);
                 }
             }
@@ -391,7 +391,7 @@ public class ExternalParser extends AbstractParser {
             int line = 1;
             for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
                 String str = new String(buffer, 0, n);
-                if(tmpFile != null)
+                if (tmpFile != null)
                     str = str.replace(tmpFile.getName(), origFileName);
                 String[] lines = str.split("\n");
                 for (String s : lines) {

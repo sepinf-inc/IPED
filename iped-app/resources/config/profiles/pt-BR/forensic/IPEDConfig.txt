@@ -19,9 +19,20 @@ enableKff = true
 # Necessário utilizar hash md5 ou sha-1.
 enableLedWkff = false
  
+# Habilita consulta à base de hashes do ProjectVic. Necessita md5 ou sha-1 habilitado.
+# Arquivos com hits são anotados com atributos extas como projectvic_category, projectvic_victimIdentified, etc. 
+enableProjectVicHashLookup = false
+ 
 # Habilita detecção de nudez. Para cada imagem cria os atributos "scoreNudez" (1 a 1000)
 # e classeNudez (1 a 5) para ordenação e/ou filtro.
 enableLedDie = false
+
+# Habilita a detecção de nudez usando o algoritmo de deeplearning Yahoo OpenNSFW.
+# É OBRIGATÓRIO instalar o python e algumas dependências, consulte https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
+# Ele é aproximadamente 7,5x mais lento que o LedDie se utilizado na CPU, recomenda-se o uso de uma boa GPU.
+# A precisão para algumas imagens e vídeos é melhor, para outros é pior.
+# Um atributo nsfw_nudity_score de 0 a 100 é criado nos arquivos processados.
+enableYahooNSFWDetection = false
 
 # Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
 excludeKffIgnorable = false
@@ -51,13 +62,15 @@ enableRegexSearch = true
 # Habilita detecção de mais de 70 idiomas nos documentos.
 enableLanguageDetect = true
 
-# Função EXPERIMENTAL de reconhecimento de entidades mencionadas: nomes de pessoas, organizações e lugares.
-# É necessário baixar e colocar na pasta optional-libs os modelos de interesse em:
-# StanfordCoreNLP 3.8: https://stanfordnlp.github.io/CoreNLP/history.html
-# Ainda não foi treinado um modelo para o português, por isso os resultados podem não ser satisfatórios.
+# Função de reconhecimento de entidades mencionadas: nomes de pessoas, organizações e lugares.
+# Baixar o modelo de idioma StanfordCoreNLP 3.8 de https://stanfordnlp.github.io/CoreNLP/history.html e pôr na pasta optional_jars.
 # Esta função utiliza muita CPU, podendo aumentar o tempo de processamento em 4x.
 # Configurações avançadas podem ser alteradas em conf/NamedEntityRecognitionConfig.txt
 enableNamedEntityRecogniton = false
+
+# Função para geração de grafos de comunicações (emails, chamadas, mensagens...)
+# Opcionalmente gera nós e links a partir de hits de regex próximos (experimental). Pode ser habilitado em conf/GraphConfig.json 
+enableGraphGeneration = true
 
 # Indexa o conteúdo dos arquivos. Caso desabilitado, indexa apenas as propriedades.
 indexFileContents = true
@@ -103,6 +116,10 @@ enableKnownMetCarving = false
 # Habilita a geração de miniaturas das imagens durante o processamento.
 # Pode deixar o processamento bem mais lento, porém torna a visualização na galeria muito rápida.
 enableImageThumbs = true
+
+# [Experimental] Habilita a geração de características das imagens durante o processamento, permitindo 
+# a busca de imagens visualmente semelhantes. Necessário habilitar "enableImageThumbs".
+enableImageSimilarity = false
 
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt

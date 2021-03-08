@@ -36,6 +36,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     private GalleryCellEditor cellEditor;
     private static Logger logger = LoggerFactory.getLogger(ResultTableListener.class);
+
     @Override
     public void valueChanged(ListSelectionEvent e) {
 
@@ -79,28 +80,14 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     @Override
     public void mousePressed(MouseEvent evt) {
-        if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
-
-        }
 
     }
 
     @Override
     public void mouseReleased(MouseEvent evt) {
-
-        if (evt.getClickCount() == 2) {
-            int modelIdx = App.get().resultsTable
-                    .convertRowIndexToModel(App.get().resultsTable.getSelectionModel().getLeadSelectionIndex());
-            IItemId item = App.get().ipedResult.getItem(modelIdx);
-            int docId = App.get().appCase.getLuceneId(item);
-            ExternalFileOpen.open(docId);
-
-        } else if (evt.isPopupTrigger()) {
-            App.get().menu.show((Component) evt.getSource(), evt.getX(), evt.getY());
-
+        for (MouseListener ml : App.get().resultsTable.getListeners(MouseListener.class)) {
+            ml.mouseReleased(evt);
         }
-
     }
 
     @Override
@@ -111,7 +98,7 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
     @Override
     public void keyReleased(KeyEvent evt) {
         cellEditor.stopCellEditing();
-        for (KeyListener kl:App.get().resultsTable.getListeners(KeyListener.class)) {
+        for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class)) {
             kl.keyReleased(evt);
         }
     }

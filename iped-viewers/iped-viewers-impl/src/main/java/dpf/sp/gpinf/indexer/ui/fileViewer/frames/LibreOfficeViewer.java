@@ -110,19 +110,20 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.startsWith("application/vnd.oasis.opendocument") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.sun.xml") //$NON-NLS-1$
                 || contentType.startsWith("application/vnd.stardivision") //$NON-NLS-1$
-                // || contentType.startsWith("image/")
                 // contentType.startsWith("application/vnd.ms-works") ||
                 // contentType.startsWith("application/x-tika-msoffice") ||
                 // || contentType.startsWith("application/x-tika-ooxml")
+                // types commented below are rendered by ImageViewer:
+                // || contentType.startsWith("image/")
+                // || contentType.equals("image/emf") //$NON-NLS-1$
+                // || contentType.equals("image/vnd.adobe.photoshop") //$NON-NLS-1$
                 || contentType.startsWith("application/x-tika-ooxml-protected") //$NON-NLS-1$
                 || contentType.equals("application/vnd.visio") //$NON-NLS-1$
                 || contentType.equals("application/x-mspublisher") //$NON-NLS-1$
                 || contentType.equals("application/postscript") //$NON-NLS-1$
                 || contentType.equals("application/x-dbf") //$NON-NLS-1$
                 || contentType.equals("text/csv") //$NON-NLS-1$
-                || contentType.equals("image/emf") //$NON-NLS-1$
                 || contentType.equals("image/wmf") //$NON-NLS-1$
-                || contentType.equals("image/vnd.adobe.photoshop") //$NON-NLS-1$
                 || contentType.equals("image/x-portable-bitmap") //$NON-NLS-1$
                 || contentType.equals("image/svg+xml") //$NON-NLS-1$
                 || contentType.equals("image/x-pcx") //$NON-NLS-1$
@@ -130,8 +131,7 @@ public class LibreOfficeViewer extends Viewer {
                 || contentType.equals("image/cdr") //$NON-NLS-1$
                 || contentType.equals("application/coreldraw") //$NON-NLS-1$
                 || contentType.equals("application/x-vnd.corel.zcf.draw.document+zip") //$NON-NLS-1$
-                || isSpreadSheet(contentType) 
-                || isPresentation(contentType);
+                || isSpreadSheet(contentType) || isPresentation(contentType);
 
     }
 
@@ -399,16 +399,16 @@ public class LibreOfficeViewer extends Viewer {
                 }
             }
         }.start();
-    
+
     }
-    
+
     private void cleanDocument(DocumentDescriptor descriptor) {
         try {
             boolean isVisible = noaPanel.isVisible();
             noaPanel.setVisible(false);
             if (isVisible) {
-                document = officeApplication.getDocumentService().loadDocument(officeFrame,
-                        blankDoc.getAbsolutePath(), descriptor);
+                document = officeApplication.getDocumentService().loadDocument(officeFrame, blankDoc.getAbsolutePath(),
+                        descriptor);
                 adjustLayout();
                 noaPanel.revalidate();
             }
@@ -519,7 +519,8 @@ public class LibreOfficeViewer extends Viewer {
     }
 
     private void convertToPPTX() {
-        //Replaces the content type to convert from PPSX to PPTX, using fast (in-place) ZIP access
+        // Replaces the content type to convert from PPSX to PPTX, using fast (in-place)
+        // ZIP access
         String s1 = "presentationml.slideshow";
         String s2 = "presentationml.presentation";
         FileSystem fs = null;
@@ -527,7 +528,7 @@ public class LibreOfficeViewer extends Viewer {
         BufferedWriter out = null;
         try {
             Path zipFilePath = lastFile.toPath();
-            fs = FileSystems.newFileSystem(zipFilePath, null);
+            fs = FileSystems.newFileSystem(zipFilePath, (ClassLoader) null);
             Path source = fs.getPath("/[Content_Types].xml");
             Path temp = fs.getPath("/tmp.xml");
             Files.move(source, temp);
@@ -548,7 +549,7 @@ public class LibreOfficeViewer extends Viewer {
             out = null;
             Files.delete(temp);
         } catch (Exception e) {
-            //e.printStackTrace();
+            // e.printStackTrace();
         } finally {
             IOUtil.closeQuietly(in);
             IOUtil.closeQuietly(out);
@@ -888,7 +889,8 @@ public class LibreOfficeViewer extends Viewer {
                                 xSel.select(sheetHit[1]);
 
                             } else if (document instanceof IPresentationDocument) {
-                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class, officeFrame.getXFrame().getController());
+                                XDrawView drawView = UnoRuntime.queryInterface(XDrawView.class,
+                                        officeFrame.getXFrame().getController());
                                 drawView.setCurrentPage((XDrawPage) hits.get(--currentHit));
 
                             }

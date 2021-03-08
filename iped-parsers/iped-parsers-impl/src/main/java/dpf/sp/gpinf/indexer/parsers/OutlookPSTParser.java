@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
@@ -47,7 +48,6 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
@@ -88,6 +88,7 @@ public class OutlookPSTParser extends AbstractParser {
     private static Logger LOGGER = LoggerFactory.getLogger(OutlookPSTParser.class);
     private static final long serialVersionUID = 5552796814190294332L;
     public static final String OUTLOOK_MSG_MIME = "message/outlook-pst"; //$NON-NLS-1$
+    public static final String OUTLOOK_CONTACT_MIME = "application/outlook-contact"; //$NON-NLS-1$
 
     public static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("vnd.ms-outlook-pst")); //$NON-NLS-1$
 
@@ -274,6 +275,18 @@ public class OutlookPSTParser extends AbstractParser {
         }
     }
 
+    private void fillMetadata(Metadata metadata, String prop, String... values) {
+        HashSet<String> set = new HashSet<>();
+        for (String val : values) {
+            if (val != null && !val.isEmpty()) {
+                set.add(val);
+            }
+        }
+        for (String val : set) {
+            metadata.add(prop, val);
+        }
+    }
+
     private void processPSTObject(PSTObject obj, String path, long parent) {
 
         try {
@@ -286,7 +299,26 @@ public class OutlookPSTParser extends AbstractParser {
                     suffix = contact.getSMTPAddress();
                 if (suffix != null && !suffix.isEmpty())
                     objName += "-" + suffix; //$NON-NLS-1$
-                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/outlook-contact"); //$NON-NLS-1$
+                metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_CONTACT_MIME); // $NON-NLS-1$
+                metadata.set(ExtraProperties.USER_ACCOUNT_TYPE, "Outlook"); //$NON-NLS-1$
+                fillMetadata(metadata, ExtraProperties.USER_ACCOUNT, contact.getAccount());
+                fillMetadata(metadata, ExtraProperties.USER_NAME, contact.getDisplayName(), contact.getGivenName(),
+                        contact.getMiddleName(), contact.getSurname(), contact.getNickname());
+                fillMetadata(metadata, ExtraProperties.USER_EMAIL, contact.getEmailAddress(),
+                        contact.getEmail1EmailAddress(), contact.getEmail2EmailAddress(),
+                        contact.getEmail3EmailAddress());
+                fillMetadata(metadata, ExtraProperties.USER_PHONE, contact.getPrimaryTelephoneNumber(),
+                        contact.getCompanyMainPhoneNumber(), contact.getRadioTelephoneNumber(),
+                        contact.getCarTelephoneNumber(), contact.getBusinessTelephoneNumber(),
+                        contact.getBusiness2TelephoneNumber(), contact.getMobileTelephoneNumber(),
+                        contact.getHomeTelephoneNumber(), contact.getOtherTelephoneNumber());
+                fillMetadata(metadata, ExtraProperties.USER_ADDRESS, contact.getHomeAddress(), contact.getWorkAddress(),
+                        contact.getPostalAddress(), contact.getOtherAddress());
+                metadata.set(ExtraProperties.USER_BIRTH, contact.getBirthday());
+                fillMetadata(metadata, ExtraProperties.USER_ORGANIZATION, contact.getCompanyName());
+                fillMetadata(metadata, ExtraProperties.USER_URLS, contact.getPersonalHomePage(),
+                        contact.getBusinessHomePage());
+                fillMetadata(metadata, ExtraProperties.USER_NOTES, contact.getNote(), contact.getComment());
             } else
                 metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
 
@@ -356,19 +388,19 @@ public class OutlookPSTParser extends AbstractParser {
             return o1.getName().compareTo(o2.getName());
         }
     }
-    
+
     private static Pattern ignoreChars = Pattern.compile("[<>'\";]");//$NON-NLS-1$
-    
-    public static String formatNameAndAddress(String name, String address){
-        if(address == null)
+
+    public static String formatNameAndAddress(String name, String address) {
+        if (address == null)
             address = ""; //$NON-NLS-1$
         address = ignoreChars.matcher(address).replaceAll(" ").trim(); //$NON-NLS-1$
-        if(name == null)
+        if (name == null)
             return address;
         name = ignoreChars.matcher(name).replaceAll(" ").trim();//$NON-NLS-1$
-        if(name.isEmpty())
+        if (name.isEmpty())
             return address;
-        if(address.isEmpty())
+        if (address.isEmpty())
             return name;
         if (!name.contains(address)) {
             name += " <" + address + ">"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -422,8 +454,8 @@ public class OutlookPSTParser extends AbstractParser {
                     PSTRecipient recip = email.getRecipient(i);
                     if (recipTypes[k][0].equals(recip.getRecipientType())) {
                         String recipName = formatNameAndAddress(recip.getDisplayName(), recip.getEmailAddress());
-                        if(!recipName.isEmpty()) {
-                            recipients.add(recipName); //$NON-NLS-1$
+                        if (!recipName.isEmpty()) {
+                            recipients.add(recipName); // $NON-NLS-1$
                         }
                     }
                 }
@@ -431,7 +463,8 @@ public class OutlookPSTParser extends AbstractParser {
                     String key = metaRecips[k];
                     recipients.stream().forEach(r -> metadata.add(key, r));
                     preview.append("<b>" + recipTypes[k][1] + "</b> " //$NON-NLS-1$ //$NON-NLS-2$
-                            + SimpleHTMLEncoder.htmlEncode(recipients.stream().collect(Collectors.joining("; "))) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                            + SimpleHTMLEncoder.htmlEncode(recipients.stream().collect(Collectors.joining("; "))) //$NON-NLS-1$
+                            + "<br>"); //$NON-NLS-1$
                 }
             }
 
@@ -456,25 +489,28 @@ public class OutlookPSTParser extends AbstractParser {
             String bodyHtml = email.getBodyHTML();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
                 preview.append(bodyHtml);
-                metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(bodyHtml, true));
+                metadata.set(ExtraProperties.MESSAGE_BODY,
+                        Util.getContentPreview(bodyHtml, MediaType.TEXT_HTML.toString()));
             } else {
                 String text = email.getBody();
-                if(text == null || text.trim().isEmpty()) {
+                if (text == null || text.trim().isEmpty()) {
                     text = email.getRTFBody();
-                    if(text != null) {
+                    if (text != null) {
                         try {
                             RTFParser2 parser = new RTFParser2();
                             BodyContentHandler handler = new BodyContentHandler();
-                            parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(), context);
+                            parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(),
+                                    context);
                             text = handler.toString();
-                            
-                        }catch(Exception e) {
+
+                        } catch (Exception e) {
                             e.printStackTrace();
                         }
                     }
                 }
                 if (text != null && !text.trim().isEmpty()) {
-                    metadata.set(ExtraProperties.MESSAGE_BODY, Util.getContentPreview(text, false));
+                    metadata.set(ExtraProperties.MESSAGE_BODY,
+                            Util.getContentPreview(text, MediaType.TEXT_PLAIN.toString()));
                     text = SimpleHTMLEncoder.htmlEncode(text);
                     preview.append("<pre>"); //$NON-NLS-1$
                     preview.append(text);

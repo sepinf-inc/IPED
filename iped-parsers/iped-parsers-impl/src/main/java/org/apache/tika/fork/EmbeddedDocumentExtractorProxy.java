@@ -55,9 +55,9 @@ public class EmbeddedDocumentExtractorProxy implements EmbeddedDocumentExtractor
         // System.err.println(count++);
 
         try {
-            //needed to update progress
+            // needed to update progress
             handler.characters("".toCharArray(), 0, 0);
-            
+
             output.writeByte(ForkServer2.RESOURCE);
             output.writeByte(resource);
 

@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.MediaTypes;
 
 /**
  * Classe base de tarefas de carving. Centraliza contador de itens carveados e
@@ -38,7 +39,7 @@ import iped3.sleuthkit.ISleuthKitItem;
  */
 public abstract class BaseCarveTask extends AbstractTask {
 
-    public static MediaType UNALLOCATED_MIMETYPE = MediaType.parse("application/x-unallocated"); //$NON-NLS-1$
+    public static MediaType UNALLOCATED_MIMETYPE = MediaTypes.UNALLOCATED;
     protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
     protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
     protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
@@ -95,7 +96,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         offsetFile.setLength(len);
         offsetFile.setSumVolume(false);
         offsetFile.setParent(parentEvidence);
-        
+
         offsetFile.setDeleted(parentEvidence.isDeleted());
 
         if (mediaType != null)
@@ -108,21 +109,21 @@ public abstract class BaseCarveTask extends AbstractTask {
     }
 
     protected void addOffsetFile(IItem offsetFile, IItem parentEvidence) {
-        
+
         if (offsetFile.isCarved()) {
             incItensCarved();
         }
-        Integer numSubitems = (Integer)parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
-        if(numSubitems == null) {
+        Integer numSubitems = (Integer) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
+        if (numSubitems == null) {
             numSubitems = 0;
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, ++numSubitems);
-        
+
         // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
         // processa no worker atual
         boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
         ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
-        
+
         worker.processNewItem(offsetFile, time);
     }
 
@@ -170,7 +171,7 @@ public abstract class BaseCarveTask extends AbstractTask {
             }
         }
         parentItem.setHasChildren(true);
-        
+
         Util.generatePersistentId(Util.getPersistentId(parentItem), carvedItem);
     }
 

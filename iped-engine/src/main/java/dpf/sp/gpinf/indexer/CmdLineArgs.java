@@ -37,9 +37,9 @@ public interface CmdLineArgs {
     boolean isAddowner();
 
     boolean isAppendIndex();
-    
+
     boolean isContinue();
-    
+
     boolean isRestart();
 
     boolean isNogui();
@@ -57,5 +57,7 @@ public interface CmdLineArgs {
     Map<String, String> getExtraParams();
 
     String getDataSourceName(File datasource);
+
+    public String getEvidenceToRemove();
 
 }

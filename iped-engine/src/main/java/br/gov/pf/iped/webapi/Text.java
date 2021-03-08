@@ -42,7 +42,7 @@ public class Text {
         IIPEDSource source = Sources.getSource(sourceID);
         final IItem item = source.getItemByID(id);
         final IndexerDefaultParser parser = new IndexerDefaultParser();
-        final ParseContext context = getTikaContext(item, parser, (IPEDSource)source);
+        final ParseContext context = getTikaContext(item, parser, (IPEDSource) source);
         final Metadata metadata = new Metadata();
 
         ParsingTask.fillMetadata(item, metadata);

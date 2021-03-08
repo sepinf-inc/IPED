@@ -55,8 +55,7 @@ public class ImageViewPanel extends JPanel {
     private double zoomFactor = 1;
 
     /**
-     * Painel para exibição da imagem (inserido dentro do componente de
-     * rolagem).
+     * Painel para exibição da imagem (inserido dentro do componente de rolagem).
      */
     private JPanel imgPanel;
 
@@ -96,12 +95,13 @@ public class ImageViewPanel extends JPanel {
                 }
             }
         };
-        scrollPane = new JScrollPane(imgPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        scrollPane = new JScrollPane(imgPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
         add(BorderLayout.CENTER, scrollPane);
 
         MouseAdapter mouseListener = new MouseAdapter() {
             private Point refPos;
-            
+
             @Override
             public void mouseClicked(MouseEvent evt) {
                 if (image == null) {
@@ -136,7 +136,7 @@ public class ImageViewPanel extends JPanel {
                     imgPanel.scrollRectToVisible(view);
                 }
             }
-            
+
             @Override
             public void mouseWheelMoved(MouseWheelEvent evt) {
                 if (image == null) {
@@ -154,15 +154,15 @@ public class ImageViewPanel extends JPanel {
      * Altera imagem que está sendo exibida.
      *
      * @param img
-     *            Imagem a ser exibida. Valor nulo é aceito, indicando que
-     *            nenhuma imagem deve ser exibida.
+     *            Imagem a ser exibida. Valor nulo é aceito, indicando que nenhuma
+     *            imagem deve ser exibida.
      * @return Indicador se uma imagem válida foi carregada com sucesso.
      */
     public boolean setImage(BufferedImage img) {
         orgImage = image = img;
         zoomFactor = 1;
         if (image != null) {
-            updateZoomFactor(true, initialFitMode == 0, true);
+            updateZoomFactor(1.5, initialFitMode == 0, true);
             scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
             scrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
         } else {
@@ -177,16 +177,18 @@ public class ImageViewPanel extends JPanel {
      * Altera o fator de zoom da imagem.
      *
      * @param factor
-     *            Fator multiplicador de ampliação (se maior que 1) ou redução
-     *            (se menor que 1) a ser aplicado.
+     *            Fator multiplicador de ampliação (se maior que 1) ou redução (se
+     *            menor que 1) a ser aplicado.
      * @param reference
-     *            Ponto de referência que deve permanecer o mais próximo
-     *            possível da localização que se encontrava antes da aplicação
-     *            do zoom. Se for <code>null</code> considera o centro da área
-     *            visível como ponto de referência.
+     *            Ponto de referência que deve permanecer o mais próximo possível da
+     *            localização que se encontrava antes da aplicação do zoom. Se for
+     *            <code>null</code> considera o centro da área visível como ponto de
+     *            referência.
      */
     public void changeZoom(double factor, Point reference) {
-        Point pt = (reference == null) ? new Point((int) imgPanel.getVisibleRect().getCenterX(), (int) imgPanel.getVisibleRect().getCenterY()) : reference;
+        Point pt = (reference == null)
+                ? new Point((int) imgPanel.getVisibleRect().getCenterX(), (int) imgPanel.getVisibleRect().getCenterY())
+                : reference;
 
         int sbx = scrollPane.getHorizontalScrollBar().getValue();
         int sby = scrollPane.getVerticalScrollBar().getValue();
@@ -227,7 +229,8 @@ public class ImageViewPanel extends JPanel {
 
         sbx += (int) (pt.x * (f - 1));
         sby += (int) (pt.y * (f - 1));
-        imgPanel.scrollRectToVisible(new Rectangle(sbx, sby, imgPanel.getVisibleRect().width, imgPanel.getVisibleRect().height));
+        imgPanel.scrollRectToVisible(
+                new Rectangle(sbx, sby, imgPanel.getVisibleRect().width, imgPanel.getVisibleRect().height));
         imgPanel.repaint();
 
         scrollPane.getVerticalScrollBar().setUnitIncrement(d.height / 50 + 1);
@@ -250,7 +253,7 @@ public class ImageViewPanel extends JPanel {
     /**
      * Atualiza o fator de zoom.
      */
-    private void updateZoomFactor(boolean limit, boolean vert, boolean horiz) {
+    private void updateZoomFactor(double limit, boolean vert, boolean horiz) {
         if (image == null) {
             return;
         }
@@ -275,8 +278,8 @@ public class ImageViewPanel extends JPanel {
         } else {
             zoomFactor = 1;
         }
-        if (limit && zoomFactor > 1) {
-            zoomFactor = 1;
+        if (limit > 0 && zoomFactor > limit) {
+            zoomFactor = limit;
         }
         Dimension d = new Dimension((int) (image.getWidth() * zoomFactor), (int) (image.getHeight() * zoomFactor));
         imgPanel.setPreferredSize(d);
@@ -298,16 +301,16 @@ public class ImageViewPanel extends JPanel {
             }
         }
     }
-    
+
     public void fitToWindow() {
-        updateZoomFactor(false, true, true);
+        updateZoomFactor(0, true, true);
         imgPanel.revalidate();
         waitValid();
         imgPanel.repaint();
     }
 
     public void fitToWidth() {
-        updateZoomFactor(false, false, true);
+        updateZoomFactor(0, false, true);
         imgPanel.revalidate();
         waitValid();
         imgPanel.scrollRectToVisible(new Rectangle(0, 0, 1, 1));

@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 import org.apache.tika.fork.ForkParser2;
 
@@ -13,9 +13,11 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
-    
+
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
@@ -68,12 +70,14 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
         } else {
-            OCRConfig ocrconfig = (OCRConfig)ConfigurationManager.getInstance().findObjects(OCRConfig.class).iterator().next();
-            if(ocrconfig.isOCREnabled() == null)
-                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before " + AdvancedIPEDConfig.class.getSimpleName());
-            
-            int div = ocrconfig.isOCREnabled() ? 1 : 2; 
-            ForkParser2.SERVER_POOL_SIZE = (int)Math.ceil((float)Runtime.getRuntime().availableProcessors() / div);
+            OCRConfig ocrconfig = (OCRConfig) ConfigurationManager.getInstance().findObjects(OCRConfig.class).iterator()
+                    .next();
+            if (ocrconfig.isOCREnabled() == null)
+                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
+                        + AdvancedIPEDConfig.class.getSimpleName());
+
+            int div = ocrconfig.isOCREnabled() ? 1 : 2;
+            ForkParser2.SERVER_POOL_SIZE = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div);
         }
 
         value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
@@ -215,7 +219,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         FragmentingReader.setTextSplitSize(textSplitSize);
         FragmentingReader.setTextOverlapSize(textOverlapSize);
-        
+
         value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             storeTextCacheOnDisk = Boolean.valueOf(value.trim());
@@ -235,23 +239,36 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty()) {
             openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
         }
-        
+
         value = properties.getProperty("useNIOFSDirectory"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             useNIOFSDirectory = Boolean.valueOf(value.trim());
         }
-        
+
         value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             commitIntervalSeconds = Integer.parseInt(value.trim());
         }
-        
+
+        value = properties.getProperty("openWithDoubleClick"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            value = value.trim();
+            if (ExternalOpenEnum.ALWAYS.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ALWAYS);
+            else if (ExternalOpenEnum.ASK_ALWAYS.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ASK_ALWAYS);
+            else if (ExternalOpenEnum.ASK_IF_EXE.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.ASK_IF_EXE);
+            else if (ExternalOpenEnum.NEVER.toString().equalsIgnoreCase(value))
+                IOUtil.setExternalOpenConfig(ExternalOpenEnum.NEVER);
+        }
+
     }
-    
+
     public int getCommitIntervalSeconds() {
         return commitIntervalSeconds;
     }
-    
+
     public boolean isUseNIOFSDirectory() {
         return useNIOFSDirectory;
     }
@@ -331,7 +348,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     public int getOpenImagesCacheWarmUpThreads() {
         return openImagesCacheWarmUpThreads;
     }
-    
+
     public boolean isStoreTextCacheOnDisk() {
         return storeTextCacheOnDisk;
     }

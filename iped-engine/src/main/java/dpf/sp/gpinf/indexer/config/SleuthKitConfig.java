@@ -2,8 +2,8 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 public class SleuthKitConfig extends AbstractPropertiesConfigurable {
     public static final String CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
@@ -35,22 +35,22 @@ public class SleuthKitConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.isEmpty()) {
             robustImageReading = Boolean.valueOf(value);
         }
-        
+
         value = properties.getProperty("numImageReaders"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
         if (value != null && !"auto".equalsIgnoreCase(value)) {
             numImageReaders = Integer.valueOf(value);
-        }else
-            numImageReaders = (int) Math.ceil((float)Runtime.getRuntime().availableProcessors() / 2);
+        } else
+            numImageReaders = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / 4);
 
     }
 
     public boolean isRobustImageReading() {
         return robustImageReading;
     }
-    
+
     public int getNumImageReaders() {
         return numImageReaders;
     }

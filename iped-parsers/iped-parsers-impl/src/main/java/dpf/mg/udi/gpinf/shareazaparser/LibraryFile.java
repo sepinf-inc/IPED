@@ -20,15 +20,15 @@ package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
-import dpf.sp.gpinf.indexer.parsers.util.LedHashes;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
 /**
@@ -63,7 +63,7 @@ class LibraryFile extends ShareazaEntity {
     private boolean cachedPreview;
     private boolean bogus;
     private final LibraryFolder parentFolder;
-    private boolean kffHit = false;
+    private HashSet<String> hashSetHits = new HashSet<>();
 
     public LibraryFile(LibraryFolder parentFolder) {
         super("LIBRARY FILE"); //$NON-NLS-1$
@@ -206,15 +206,10 @@ class LibraryFile extends ShareazaEntity {
 
     public void printTableRow(XHTMLContentHandler html, String path, IItemSearcher searcher) throws SAXException {
 
-        if (LedHashes.hashMap != null) {
-            if ((md5 != null && md5.length() == 32
-                    && Arrays.binarySearch(LedHashes.hashMap.get("md5"), new HashValue(md5)) >= 0) || //$NON-NLS-1$
-                    (sha1 != null && sha1.length() == 40
-                            && Arrays.binarySearch(LedHashes.hashMap.get("sha-1"), new HashValue(sha1)) >= 0)) { //$NON-NLS-1$
-                html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                kffHit = true;
-            } else
-                html.startElement("tr"); //$NON-NLS-1$
+        hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
+        hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
+        if (!hashSetHits.isEmpty()) {
+            html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         } else
             html.startElement("tr"); //$NON-NLS-1$
 
@@ -227,21 +222,37 @@ class LibraryFile extends ShareazaEntity {
 
     private void printTd(XHTMLContentHandler html, IItemSearcher searcher, Object... tdtext) throws SAXException {
         int col = 0;
+        Boolean foundInCase = false;
         for (Object o : tdtext) {
             html.startElement("td"); //$NON-NLS-1$
-            if (o != null)
+            if (o != null) {
                 if (col != 1) {
                     html.characters(o.toString());
                 } else {
-                    KnownMetParser.printNameWithLink(html, searcher, name, "md5", md5); //$NON-NLS-1$
+                    IItemBase item = KnownMetParser.searchItemInCase(searcher, "md5", md5);
+                    if (item != null) {
+                        KnownMetParser.printNameWithLink(html, item, name);
+                        foundInCase = true;
+                    } else {
+                        html.characters(name);
+                    }
                 }
+            }
             html.endElement("td"); //$NON-NLS-1$
             col++;
         }
+        html.startElement("td"); //$NON-NLS-1$
+        if (!hashSetHits.isEmpty()) {
+            html.characters(hashSetHits.toString());
+        }
+        html.endElement("td"); //$NON-NLS-1$
+        html.startElement("td"); //$NON-NLS-1$
+        html.characters(foundInCase.toString());
+        html.endElement("td"); //$NON-NLS-1$
     }
 
     public boolean isKffHit() {
-        return kffHit;
+        return !hashSetHits.isEmpty();
     }
 
     public long getSize() {

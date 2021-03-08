@@ -236,6 +236,52 @@
         <glob pattern="msgstore*.db"/>
     </mime-type>
     
+    <mime-type type="application/x-whatsapp-db-f">
+        <sub-class-of type="application/x-whatsapp-db"/>
+    </mime-type>
+	
+	<mime-type type="application/x-usnjournal-$J">
+        <glob pattern="$UsnJrnl:$J*"/>
+		<glob pattern="$UsnJrnl$J*"/>
+    </mime-type>
+    
+	<mime-type type="application/x-usnjournal-report-html">
+		<sub-class-of type="text/html"/>		
+    </mime-type>
+    
+	<mime-type type="application/x-usnjournal-report-csv"> 
+		<sub-class-of type="text/csv"/>		
+    </mime-type>
+    
+	<mime-type type="application/x-usnjournal-registry">
+		<sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+	
+	<mime-type type="application/x-telegram-db">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="cache4.db"/>
+    </mime-type>
+    <mime-type type="application/x-telegram-db-ios">
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="db_sqlite"/>
+    </mime-type>
+	
+	<mime-type type="application/x-telegram-user-conf">
+        <sub-class-of type="application/dita+xml"/>
+        <glob pattern="userconfing.xml"/>
+    </mime-type>
+	
+     <mime-type type="application/x-telegram-chat">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	<mime-type type="contact/x-telegram-contact">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	
+	<mime-type type="application/x-telegram-account">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+	
     <mime-type type="application/x-whatsapp-chatstorage">
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ChatStorage.sqlite"/>
@@ -255,7 +301,11 @@
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="message/x-whatsapp-msg">
+    <mime-type type="application/x-whatsapp-account">
+        <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-chat">
         <sub-class-of type="text/html"/>
     </mime-type>
     
@@ -278,14 +328,18 @@
     </mime-type>
     
     <mime-type type="message/x-skype-message">     
-        <sub-class-of type="text/html"/>
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-skype-attachment">
+        <sub-class-of type="message/x-skype-message"/>
     </mime-type>
     
     <mime-type type="message/x-skype-filetransfer">     
         <sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="message/x-skype-conversation">     
+    <mime-type type="application/x-skype-conversation">     
         <sub-class-of type="text/html"/>
     </mime-type>
     
@@ -934,6 +988,14 @@
     	<sub-class-of type="application/x-preview-with-links"/>
     </mime-type>
     
+    <mime-type type="application/x-ufed-chat-whatsapp">
+    	<sub-class-of type="application/x-ufed-chat"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-chat-telegram">
+    	<sub-class-of type="application/x-ufed-chat"/>
+    </mime-type>
+    
     <mime-type type="application/x-win10-timeline">     
         <sub-class-of type="application/x-sqlite3"/>
         <glob pattern="ActivitiesCache.db"/>
@@ -941,6 +1003,66 @@
     
     <mime-type type="application/x-win10-timeline-registry">     
         <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-cloud-graph-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-snapshot-registry">     
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="application/x-gdrive-account-info">     
+        <sub-class-of type="application/x-sqlite3"/>
+        <glob pattern="sync_config.db"/>
+        <glob pattern="global.db"/>
+    </mime-type>
+    
+    <mime-type type="message/x-chat-message">
+        <sub-class-of type="application/x-metadata-entry"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-whatsapp-attachment">
+        <sub-class-of type="message/x-whatsapp-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-telegram-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="message/x-telegram-attachment">
+        <sub-class-of type="message/x-telegram-message"/>
+    </mime-type>
+    
+    <mime-type type="call/x-whatsapp-call">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type> 
+    
+    <mime-type type="call/x-telegram-call">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-user-xml">
+        <sub-class-of type="application/dita+xml"/>
+        <glob pattern="com.whatsapp_preferences.xml"/>
+    </mime-type>
+    
+    <mime-type type="application/x-whatsapp-user-plist">
+        <sub-class-of type="application/x-plist"/>
+        <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
+    </mime-type>
+    
+    <mime-type type="message/x-ufed-attachment">
+        <sub-class-of type="application/x-ufed-instantmessage"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ufed-instantmessage">
+        <sub-class-of type="message/x-chat-message"/>
     </mime-type>
    
 </mime-info>

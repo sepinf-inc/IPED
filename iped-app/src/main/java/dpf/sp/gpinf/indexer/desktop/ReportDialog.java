@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -29,7 +31,9 @@ import javax.swing.JTextField;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +48,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JDialog dialog = new JDialog(App.get());
     ReportInfoDialog caseInfo = new ReportInfoDialog(dialog);
     JLabel top = new JLabel(Messages.getString("ReportDialog.ChooseLabel")); //$NON-NLS-1$
-    Object[] header = { "", Messages.getString("ReportDialog.TableHeader1"), //$NON-NLS-1$ //$NON-NLS-2$
+    Object[] header = { Boolean.FALSE, Messages.getString("ReportDialog.TableHeader1"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ReportDialog.TableHeader2") }; //$NON-NLS-1$
     List<JCheckBox> checkboxes = new ArrayList<>();
     JPanel panel = new JPanel(new BorderLayout());
@@ -59,6 +63,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
     JCheckBox noAttachs = new JCheckBox(Messages.getString("ReportDialog.NoAttachments")); //$NON-NLS-1$
     JCheckBox noLinkedItems = new JCheckBox(Messages.getString("ReportDialog.noLinkedItems")); //$NON-NLS-1$
     JCheckBox append = new JCheckBox(Messages.getString("ReportDialog.AddToReport")); //$NON-NLS-1$
+    JCheckBox selectAll = new JCheckBox();
 
     HashSet<String> noContent = new HashSet<>();
 
@@ -90,6 +95,8 @@ public class ReportDialog implements ActionListener, TableModelListener {
         JPanel okPanel = new JPanel(new BorderLayout());
         okPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         okPanel.add(generate, BorderLayout.EAST);
+
+        append.setToolTipText(Messages.getString("ReportDialog.AppendWarning"));
 
         Box footer = Box.createVerticalBox();
         footer.add(noAttachs);
@@ -140,6 +147,31 @@ public class ReportDialog implements ActionListener, TableModelListener {
         tableModel.addTableModelListener(this);
         scrollPane = new JScrollPane(table);
 
+        table.getColumnModel().getColumn(0).setHeaderRenderer(new DefaultTableCellRenderer() {
+
+            private boolean listenerAdded = false;
+
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
+                    boolean hasFocus, int row, int col) {
+                JTableHeader header = table.getTableHeader();
+                if (!listenerAdded) {
+                    header.addMouseListener(new MouseAdapter() {
+                        @Override
+                        public void mouseClicked(MouseEvent e) {
+                            if (header.columnAtPoint(e.getPoint()) == 0) {
+                                selectAll.doClick();
+                            }
+                        }
+                    });
+                    listenerAdded = true;
+                }
+                return selectAll;
+            }
+        });
+
+        selectAll.addActionListener(this);
+
     }
 
     private class TableModel extends DefaultTableModel {
@@ -188,6 +220,12 @@ public class ReportDialog implements ActionListener, TableModelListener {
         if (e.getSource() == generate) {
             if (isInputOK())
                 generateReport();
+        }
+
+        if (e.getSource() == selectAll) {
+            for (int i = 0; i < table.getRowCount(); i++) {
+                table.setValueAt(selectAll.isSelected(), i, 0);
+            }
         }
 
     }

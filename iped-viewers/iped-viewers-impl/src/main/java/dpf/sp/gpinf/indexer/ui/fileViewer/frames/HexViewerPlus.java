@@ -118,6 +118,9 @@ import iped3.io.SeekableInputStream;
 
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
+    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
+            + File.separator + "default.hvp";
+
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
 
@@ -134,7 +137,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     String descricaoExtensoes = Messages.getString("HexViewerPlus.HvpFileSettings") + " (*" + extensao + ")";
 
     private ByteArraySeekData data;
-    private static Hits hits = new Hits();
+    private Hits hits = new Hits();
     private HighlightCodeAreaPainter painter;
 
     private HexSearcher hexSearcher;
@@ -187,7 +190,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     FilterComboBox fcbCharset;
 
     private HVPSettings defaultSettings = new HVPSettings();
-    String defaultSettingsPath = "";
     boolean defaultSettingsFileExists = false;
 
     private ActionListener menuListener;
@@ -213,7 +215,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 boolean ignoreCaseSearch, JLabel resultSearch, int max_hits) throws Exception;
     }
 
-    public HexViewerPlus(HexSearcher hexSearcher, String appPath) {
+    public HexViewerPlus(HexSearcher hexSearcher) {
 
         super(new GridBagLayout());
 
@@ -424,7 +426,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
         // Load Defaults
         defaultSettings = null;
-        defaultSettingsPath = appPath + File.separator + "default.hvp";
         File defaultSettingsFile = new File(defaultSettingsPath);
         if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile()) {
             if (defaultSettingsFile.canRead()) {
@@ -465,7 +466,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dispose() {
 
     }
-    
+
     @Override
     public int getHitsSupported() {
         return 1;
@@ -2927,7 +2928,7 @@ class ByteArraySeekData extends ByteArrayEditableData {
         if (file != null && file.equals(this.file)) {
             return;
         }
-        
+
         clear();
 
         this.file = file;
@@ -2983,7 +2984,7 @@ class ByteArraySeekData extends ByteArrayEditableData {
         }
 
     }
-    
+
     void fireReadError() {
         // do nothing by default
     }
@@ -3036,8 +3037,8 @@ class ByteArraySeekData extends ByteArrayEditableData {
 
 class Hits {
 
-    public static int currentHit = 0;
-    public static int totalHits = 0;
+    public int currentHit = 0;
+    public int totalHits = 0;
 
 }
 

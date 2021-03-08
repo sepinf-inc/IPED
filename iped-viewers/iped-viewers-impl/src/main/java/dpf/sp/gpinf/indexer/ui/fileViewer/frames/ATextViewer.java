@@ -63,7 +63,7 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
         textTable.addMouseListener(this);
         this.getPanel().add(viewerScroll);
     }
-    
+
     public void setHitsModel(AbstractTableModel hitsModel) {
         this.hitsModel = hitsModel;
     }
@@ -278,8 +278,8 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
 
     @Override
     public void mouseEntered(MouseEvent arg0) {
-        //This kind of dependency should be avoided!
-//WLAD        appSearchParams.viewerControl.releaseLibreOfficeFocus();
+        // This kind of dependency should be avoided!
+        // WLAD appSearchParams.viewerControl.releaseLibreOfficeFocus();
     }
 
     @Override

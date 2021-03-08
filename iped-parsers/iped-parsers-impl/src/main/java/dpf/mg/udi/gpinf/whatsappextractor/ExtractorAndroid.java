@@ -1,6 +1,34 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.*;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.APP_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.CONTACT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_FROM_SENDER;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.DELETED_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.ENCRIPTION_KEY_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GIF_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_CREATED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_DESCRIPTION_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.GROUP_ICON_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MESSAGES_NOW_ENCRYPTED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.MISSED_VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SHARE_LOCATION_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.STICKER_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.SUBJECT_CHANGED;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.TEXT_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.UNKNOWN_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_JOINED_GROUP_FROM_LINK;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_LEFT_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.USER_REMOVED_FROM_GROUP;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VIDEO_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.VOICE_CALL;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.WAITING_MESSAGE;
+import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.YOU_ADMIN;
 
 import java.io.File;
 import java.sql.Connection;
@@ -15,6 +43,7 @@ import java.util.Date;
 import java.util.List;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 
 /**
  *
@@ -23,19 +52,20 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
 public class ExtractorAndroid extends Extractor {
 
     private boolean hasThumbTable = false;
+    private boolean hasEditVersionCol = false;
 
-    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts) {
-        super(databaseFile, contacts);
+    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
+        super(databaseFile, contacts, account);
     }
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
 
-        try (Connection conn = getConnection();
-                Statement stmt = conn.createStatement()) {
+        try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
             hasThumbTable = databaseHashThumbnailsTable(conn);
+            hasEditVersionCol = SQLite3DBParser.checkIfColumnExists(conn, "messages", "edit_version");
             String selectChatQuery = hasSortTimestamp ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_SORTTIMESTAMP;
             try (ResultSet rs = stmt.executeQuery(selectChatQuery)) {
 
@@ -43,6 +73,7 @@ public class ExtractorAndroid extends Extractor {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
                     WAContact remote = contacts.getContact(contactId);
                     Chat c = new Chat(remote);
+                    c.setId(rs.getLong("id"));
                     c.setSubject(Util.getUTF8String(rs, "subject")); //$NON-NLS-1$
                     c.setGroupChat(contactId.endsWith("g.us")); //$NON-NLS-1$
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -52,13 +83,38 @@ public class ExtractorAndroid extends Extractor {
 
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat()));
+                    if (c.isGroupChat()) {
+                        setGroupMembers(c, conn);
+                    }
                 }
+
             }
         } catch (SQLException ex) {
             throw new WAExtractorException(ex);
         }
 
         return list;
+    }
+
+    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
+
+        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
+            stmt.setString(1, c.getRemote().getFullId());
+            try (ResultSet rs = stmt.executeQuery()) {
+
+                while (rs.next()) {
+                    String memberId = rs.getString("member");
+                    if (!memberId.trim().isEmpty()) {
+                        c.getGroupmembers().add(contacts.getContact(memberId));
+                    }
+                }
+
+            }
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+            throw new WAExtractorException(ex);
+        }
+
     }
 
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {
@@ -87,7 +143,8 @@ public class ExtractorAndroid extends Extractor {
     private List<Message> extractMessages(Connection conn, WAContact remote, boolean isGroupChat) throws SQLException {
         List<Message> messages = new ArrayList<>();
         try (PreparedStatement stmt = conn
-                .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE : SELECT_MESSAGES_NO_THUMBS_TABLE)) {
+                .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
+                        : hasEditVersionCol ? SELECT_MESSAGES_NO_THUMBS_TABLE : SELECT_MESSAGES_NO_EDIT_VERSION)) {
             stmt.setFetchSize(1000);
             String id = remote.getId();
             id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
@@ -95,13 +152,20 @@ public class ExtractorAndroid extends Extractor {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 Message m = new Message();
+                if (account != null)
+                    m.setLocalResource(account.getId());
                 int type = rs.getInt("messageType"); //$NON-NLS-1$
                 int status = rs.getInt("status"); //$NON-NLS-1$
                 String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
-                int edit_version = rs.getInt("edit_version"); //$NON-NLS-1$
-                int media_size = rs.getInt("mediaSize"); //$NON-NLS-1$
+                String str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
+                Integer edit_version = str != null ? Integer.parseInt(str) : null;
+                long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
                 m.setId(rs.getLong("id")); //$NON-NLS-1$
-                m.setRemoteResource(rs.getString("remoteResource")); //$NON-NLS-1$
+                String remoteResource = rs.getString("remoteResource");
+                if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
+                    remoteResource = remote.getFullId();
+                }
+                m.setRemoteResource(remoteResource); // $NON-NLS-1$
                 m.setStatus(status); // $NON-NLS-1$
                 m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
                 m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
@@ -114,7 +178,7 @@ public class ExtractorAndroid extends Extractor {
                 m.setMediaSize(media_size);
                 m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
                 m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, media_size));
+                m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
                 m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
                 if (m.getMessageType() == CONTACT_MESSAGE) {
                     m.setVcards(Arrays.asList(new String[] { m.getData() }));
@@ -149,7 +213,7 @@ public class ExtractorAndroid extends Extractor {
         return messages;
     }
 
-    protected Message.MessageType decodeMessageType(int messageType, int status, int edit_version, String caption,
+    protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
             int mediaSize) {
         Message.MessageType result = UNKNOWN_MESSAGE;
         switch (messageType) {
@@ -241,15 +305,19 @@ public class ExtractorAndroid extends Extractor {
                 result = GIF_MESSAGE;
                 break;
             case 15:
-                if (edit_version == 5) {
-                    result = DELETED_MESSAGE;
-                } else {
-                    result = DELETED_FROM_SENDER;
+                if (edit_version != null) {
+                    if (edit_version == 5) {
+                        result = DELETED_MESSAGE;
+                    } else {
+                        result = DELETED_FROM_SENDER;
+                    }
                 }
-                break;
+                break; 
             case 16:
                 result = SHARE_LOCATION_MESSAGE;
                 break;
+            case 20:
+            	result=STICKER_MESSAGE;
             default:
                 break;
         }
@@ -259,10 +327,10 @@ public class ExtractorAndroid extends Extractor {
     /**
      * ** static strings ***
      */
-    private static final String SELECT_CHAT_LIST = "SELECT key_remote_jid AS contact," //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation, sort_timestamp FROM chat_list ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
-    private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT key_remote_jid AS contact," //$NON-NLS-1$
+    private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation FROM chat_list ORDER BY creation DESC"; //$NON-NLS-1$
 
     /*
@@ -275,6 +343,14 @@ public class ExtractorAndroid extends Extractor {
             + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
             + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
             + "media_wa_type as messageType, null as thumbData, edit_version, latitude, longitude, media_duration, " //$NON-NLS-1$
+            + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
+            + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
+
+    private static final String SELECT_MESSAGES_NO_EDIT_VERSION = "SELECT _id AS id, key_remote_jid " //$NON-NLS-1$
+            + "as remoteId, remote_resource AS remoteResource, status, data, " //$NON-NLS-1$
+            + "key_from_me as fromMe, timestamp, media_url as mediaUrl, " //$NON-NLS-1$
+            + "media_mime_type as mediaMime, media_size as mediaSize, media_name as mediaName, " //$NON-NLS-1$
+            + "media_wa_type as messageType, null as thumbData, latitude, longitude, media_duration, " //$NON-NLS-1$
             + "media_caption as mediaCaption, media_hash as mediaHash, raw_data as rawData FROM " //$NON-NLS-1$
             + "messages WHERE remoteId=? and status!=-1 ORDER BY timestamp"; //$NON-NLS-1$
 
@@ -291,4 +367,8 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
+
+    private static final String SELECT_GROUP_MEMBERS = "select gjid as `group`,jid as member from chat_list cl "
+            + " inner join group_participants gp on cl.key_remote_jid=gp.gjid where `group`=?";
+
 }

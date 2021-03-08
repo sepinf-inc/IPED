@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-
 package org.apache.tika.parser.rtf;
 
 import java.io.ByteArrayInputStream;
@@ -60,19 +59,23 @@ class RTFObjDataParser {
     RTFObjDataParser(int memoryLimitInKb) {
         this.memoryLimitInKb = memoryLimitInKb;
     }
+
     /**
      * Parses the embedded object/pict string
      *
-     * @param bytes actual bytes (already converted from the 
-     *  hex pair string stored in the embedded object data into actual bytes or read
-     *  as raw binary bytes)
+     * @param bytes
+     *            actual bytes (already converted from the hex pair string stored in
+     *            the embedded object data into actual bytes or read as raw binary
+     *            bytes)
      * @return a SimpleRTFEmbObj or null
-     * @throws IOException if there are any surprise surprises during parsing
+     * @throws IOException
+     *             if there are any surprise surprises during parsing
      */
 
     /**
      * @param bytes
-     * @param metadata             incoming metadata
+     * @param metadata
+     *            incoming metadata
      * @param unknownFilenameCount
      * @return byte[] for contents of obj data
      * @throws IOException
@@ -84,7 +87,7 @@ class RTFObjDataParser {
         metadata.add(RTFMetadata.EMB_APP_VERSION, Long.toString(version));
 
         long formatId = readUInt(is);
-        //2 is an embedded object. 1 is a link.
+        // 2 is an embedded object. 1 is a link.
         if (formatId != 2L) {
             return null;
         }
@@ -104,13 +107,13 @@ class RTFObjDataParser {
 
         long dataSz = readUInt(is);
 
-        //readBytes tests for reading too many bytes
+        // readBytes tests for reading too many bytes
         byte[] embObjBytes = readBytes(is, dataSz);
 
         if (className.toLowerCase(Locale.ROOT).equals("package")) {
             return handlePackage(embObjBytes, metadata);
         } else if (className.toLowerCase(Locale.ROOT).equals("pbrush")) {
-            //simple bitmap bytes
+            // simple bitmap bytes
             return embObjBytes;
         } else {
             ByteArrayInputStream embIs = new ByteArrayInputStream(embObjBytes);
@@ -132,11 +135,9 @@ class RTFObjDataParser {
         return embObjBytes;
     }
 
-
-    //will throw IOException if not actually POIFS
-    //can return null byte[]
-    private byte[] handleEmbeddedPOIFS(InputStream is, Metadata metadata,
-                                       AtomicInteger unknownFilenameCount)
+    // will throw IOException if not actually POIFS
+    // can return null byte[]
+    private byte[] handleEmbeddedPOIFS(InputStream is, Metadata metadata, AtomicInteger unknownFilenameCount)
             throws IOException {
 
         byte[] ret = null;
@@ -157,7 +158,7 @@ class RTFObjDataParser {
                 IOUtils.copy(stream, out);
                 ret = out.toByteArray();
             } else {
-                //try poifs
+                // try poifs
                 POIFSDocumentType type = POIFSDocumentType.detectType(root);
                 if (type == POIFSDocumentType.OLE10_NATIVE) {
                     try {
@@ -186,7 +187,8 @@ class RTFObjDataParser {
                     is.reset();
                     IOUtils.copy(is, out);
                     ret = out.toByteArray();
-                    metadata.set(Metadata.RESOURCE_NAME_KEY, "file_" + unknownFilenameCount.getAndIncrement() + "." + type.getExtension());
+                    metadata.set(Metadata.RESOURCE_NAME_KEY,
+                            "file_" + unknownFilenameCount.getAndIncrement() + "." + type.getExtension());
                     metadata.set(Metadata.CONTENT_TYPE, type.getType().toString());
                 }
             }
@@ -194,37 +196,35 @@ class RTFObjDataParser {
         return ret;
     }
 
-
     /**
-     * can return null if there is a linked object
-     * instead of an embedded file
+     * can return null if there is a linked object instead of an embedded file
      */
     private byte[] handlePackage(byte[] pkgBytes, Metadata metadata) throws IOException, TikaException {
-        //now parse the package header
+        // now parse the package header
         ByteArrayInputStream is = new ByteArrayInputStream(pkgBytes);
         readUShort(is);
 
         String displayName = readAnsiString(is);
 
-        //should we add this to the metadata?
-        readAnsiString(is); //iconFilePath
+        // should we add this to the metadata?
+        readAnsiString(is); // iconFilePath
         try {
-            //iconIndex
+            // iconIndex
             EndianUtils.readUShortBE(is);
         } catch (EndianUtils.BufferUnderrunException e) {
             throw new IOException(e);
         }
-        int type = readUShort(is); //type
+        int type = readUShort(is); // type
 
-        //1 is link, 3 is embedded object
-        //this only handles embedded objects
+        // 1 is link, 3 is embedded object
+        // this only handles embedded objects
         if (type != 3) {
             return null;
         }
-        //should we really be ignoring this filePathLen?
-        readUInt(is); //filePathLen
+        // should we really be ignoring this filePathLen?
+        readUInt(is); // filePathLen
 
-        String ansiFilePath = readAnsiString(is); //filePath
+        String ansiFilePath = readAnsiString(is); // filePath
         long bytesLen = readUInt(is);
         byte[] objBytes = initByteArray(bytesLen);
         IOUtils.readFully(is, objBytes);
@@ -238,14 +238,14 @@ class RTFObjDataParser {
                 int hi = is.read();
                 int sum = lo + 256 * hi;
                 if (hi == -1 || lo == -1) {
-                    //stream ran out; empty SB and stop
+                    // stream ran out; empty SB and stop
                     unicodeFilePath.setLength(0);
                     break;
                 }
                 unicodeFilePath.append((char) sum);
             }
         } catch (IOException e) {
-            //swallow; the unicode file path is optional and might not happen
+            // swallow; the unicode file path is optional and might not happen
             unicodeFilePath.setLength(0);
         }
         String fileNameToUse = "";
@@ -264,7 +264,6 @@ class RTFObjDataParser {
 
         return objBytes;
     }
-
 
     private int readUShort(InputStream is) throws IOException {
         try {
@@ -301,14 +300,13 @@ class RTFObjDataParser {
         try {
             return new String(bytes, WIN_ASCII);
         } catch (UnsupportedEncodingException e) {
-            //shouldn't ever happen
+            // shouldn't ever happen
             throw new IOException("Unsupported encoding");
         }
     }
 
-
     private byte[] readBytes(InputStream is, long len) throws IOException, TikaException {
-        //initByteArray tests for "reading of too many bytes"
+        // initByteArray tests for "reading of too many bytes"
         byte[] bytes = initByteArray(len);
         IOUtils.readFully(is, bytes);
         return bytes;
@@ -317,13 +315,13 @@ class RTFObjDataParser {
     private byte[] initByteArray(long len) throws IOException, TikaException {
         if (len < 0) {
             throw new IOException("Requested length for reading bytes < 0?!: " + len);
-        } else if (memoryLimitInKb > -1 && len > memoryLimitInKb*1024) {
-            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len +
-                    ") bytes), but maximum allowed is ("+(memoryLimitInKb*1024)+")."+
-                    "If this is a valid RTF file, consider increasing the memory limit via TikaConfig.");
+        } else if (memoryLimitInKb > -1 && len > memoryLimitInKb * 1024) {
+            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len
+                    + ") bytes), but maximum allowed is (" + (memoryLimitInKb * 1024) + ")."
+                    + "If this is a valid RTF file, consider increasing the memory limit via TikaConfig.");
         } else if (len > Integer.MAX_VALUE) {
-            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len +
-                    ") bytes), but there is a hard limit of Integer.MAX_VALUE+");
+            throw new TikaMemoryLimitException("File embedded in RTF caused this (" + len
+                    + ") bytes), but there is a hard limit of Integer.MAX_VALUE+");
         }
 
         return new byte[(int) len];
@@ -334,4 +332,3 @@ class RTFObjDataParser {
         return FileMagic.valueOf(is) == FileMagic.OLE2;
     }
 }
-

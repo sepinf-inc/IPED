@@ -31,6 +31,8 @@ EMAIL , 0 , 0 , true = [0-9a-z][0-9a-z\+\.\_\%\-]{1,64}\@[0-9a-z\-]{2,64}(\.[0-9
 URL = ((https?|ftp|file):/{2,3}|www)[-a-z0-9\+\&\@\#\\/\%\?\=\~_\|!:,\.;]+
 			
 IP , 1 , 1 = [^0-9\.]([^0].?.?&<1-255>)(\.(([^0].?.?&<1-255>)|0)){3}[^0-9\.]
+
+MAC_ADDRESS , 0 , 0 , false = ([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F])
 			
 MONEY , 1 , 1 , false = [^0-9\.\,]((([^0].?.?&<1-999>)(((\.[0-9]{3}){1,4}\,[0-9]{2})|((\,[0-9]{3}){1,4}\.[0-9]{2})))|(\$\s{0,10}<1-999>(((\.[0-9]{3}){1,4}(\,[0-9]{2})?)|((\,[0-9]{3}){1,4}(\.[0-9]{2})?))))[^0-9\.\,]
 			
@@ -46,9 +48,17 @@ SWIFT, 1 , 1 , false = [^A-Z][A-Z]{4}[A-Z]{2}[A-Z0-9]{2}[a-zA-Z0-9]{3}[^a-zA-Z0-
 
 # IBAN, 1 , 1 , false = [^A-Z][A-Z]{2}[0-9]{2}[A-Z0-9]{5,30}[^A-Z0-9]
 
-# TELEFONE = (\\+[0-9]+[\\- \\.]*)?(\\([0-9]+\\)[\\- \\.]*)?([0-9][0-9\\- \\.]+[0-9])
+#PLACA = ((\r\n| |\	)([A-Z]{3})(()|-)([0-9]{4})( |\	|\r\n))|((Placa|Placas|PLACA|PLACAS)( |:|: )([A-Za-z]{3})( )([0-9]{4}))
+
+TELEFONE = ((()|(Tel|Telefone|Phone)(:| |: )| )(\+55 |\+55|())(\([1-9]{2}\)|[1-9]{2})( |\-|())(9[0-9]{4}|[3-5][0-9]{3})( |\-|\.)([0-9]{4})([^0-9]|()))|(((Tel|Telefone|Phone)(:| |: )| )(\+55 |\+55|())(\([1-9]{2}\)|[1-9]{2})( |\-|())(9[0-9]{4}|[3-5][0-9]{3})( |\-|\.|())([0-9]{4})([^0-9]|()))
 				
 CRIPTOCOIN_BITCOIN_ADDRESS, 1, 1, false = ([^0-9a-zA-Z][13][a-km-zA-HJ-NP-Z1-9]{25,34}[^0-9a-zA-Z])|([^0-9a-zA-Z]bc1[a-z0-9]{20,87}[^0-9a-zA-Z])
+# As seguintes expressoes regulares sobre Bitcoins foram copiadas e adaptadas de Zollner, Stephan & Choo, Kim-Kwang Raymond & Le-Khac, Nhien-An. (2019). An Automated Live Forensic and Postmortem Analysis tool for Bitcoin on Windows Systems. IEEE Access. PP. 10.1109/ACCESS.2019.2948774.
+CRIPTOCOIN_BITCOIN_BIP38_ENC_PRIV_K, 1, 1, false = [^0-9a-zA-Z]6P[a-km-zA-HJ-NP-Z1-9]{56}[^0-9a-zA-Z]
+CRIPTOCOIN_BITCOIN_WIF_PRIV_K_UNC_PUB_K, 1, 1, false = [^0-9a-zA-Z]5[a-km-zA-HJ-NP-Z1-9]{50}[^0-9a-zA-Z]
+CRIPTOCOIN_BITCOIN_WIF_PRIV_K_COMP_PUB_K, 1, 1, false = [^0-9a-zA-Z][KL][a-km-zA-HJ-NP-Z1-9]{51}[^0-9a-zA-Z]
+CRIPTOCOIN_BITCOIN_BIP32_HD_XPRV_KEY, 1, 1, false = [^0-9a-zA-Z]xprv[a-km-zA-HJ-NP-Z1-9]{107,108}[^0-9a-zA-Z]
+CRIPTOCOIN_BITCOIN_BIP32_HD_XPUB_KEY, 1, 1, false = [^0-9a-zA-Z]xpub[a-km-zA-HJ-NP-Z1-9]{107,108}[^0-9a-zA-Z]
 
 CRIPTOCOIN_MONERO, 1, 1, false = [^0-9a-zA-Z]4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}[^0-9a-zA-Z]
 

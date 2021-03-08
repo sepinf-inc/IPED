@@ -35,17 +35,17 @@ class GroupState {
     public int list;
     public int listLevel;
     public Charset fontCharset;
-    //in objdata
+    // in objdata
     public boolean objdata;
-    //depth in pict, 1 = at pict level
+    // depth in pict, 1 = at pict level
     public int pictDepth;
-    //in picprop key/value pair
+    // in picprop key/value pair
     public boolean sp;
-    //in picprop's name 
+    // in picprop's name
     public boolean sn;
-    //in picprop's value
+    // in picprop's value
     public boolean sv;
-    //in embedded object or not
+    // in embedded object or not
     public boolean object;
     public boolean annotation;
 
@@ -53,7 +53,8 @@ class GroupState {
     public GroupState() {
     }
 
-    // Create new GroupState, inheriting all properties from current one, adding 1 to the depth
+    // Create new GroupState, inheriting all properties from current one, adding 1
+    // to the depth
     public GroupState(GroupState other) {
         bold = other.bold;
         italic = other.italic;
@@ -64,7 +65,7 @@ class GroupState {
         fontCharset = other.fontCharset;
         depth = 1 + other.depth;
         pictDepth = other.pictDepth > 0 ? other.pictDepth + 1 : 0;
-        //do not inherit object, sn, sv, sp or annotation
+        // do not inherit object, sn, sv, sp or annotation
 
     }
 }

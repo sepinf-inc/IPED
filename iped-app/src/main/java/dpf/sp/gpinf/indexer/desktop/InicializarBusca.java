@@ -88,8 +88,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
 
             App.get().appCase.checkImagePaths();
+            App.get().appCase.getMultiMarcadores()
+                    .addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
 
             if (!updateItems) {
+                App.get().appGraphAnalytics.initGraphService();
+
                 LOGGER.info("Loading Columns"); //$NON-NLS-1$
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
@@ -126,13 +130,14 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-            	String msg = e.getMessage();
-            	if(msg == null && e.getCause() != null) {
-            		msg = e.getCause().getMessage();
-            	}
+                String msg = e.getMessage();
+                if (msg == null && e.getCause() != null) {
+                    msg = e.getCause().getMessage();
+                }
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
-                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, //$NON-NLS-1$
+                        + App.get().getLogConfiguration().getLogFile()
+                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
 
                 App.get().dialogBar.setVisible(false);
@@ -143,7 +148,6 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     @Override
     public void done() {
         CategoryTreeModel.install();
-        App.get().menu = new MenuClass();
         App.get().filterManager.loadFilters();
         MarcadoresController.get().atualizarGUIandHistory();
 

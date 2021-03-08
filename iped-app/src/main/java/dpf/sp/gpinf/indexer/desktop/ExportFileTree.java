@@ -26,7 +26,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 
 import javax.swing.JFileChooser;
@@ -44,9 +43,9 @@ import com.google.common.hash.HashingOutputStream;
 
 import dpf.sp.gpinf.indexer.desktop.TreeViewModel.Node;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -54,7 +53,6 @@ import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 import iped3.search.IIPEDSearcher;
 import iped3.search.LuceneSearchResult;
-import iped3.search.IMultiSearchResult;
 
 public class ExportFileTree extends CancelableWorker {
 
@@ -364,9 +362,19 @@ public class ExportFileTree extends CancelableWorker {
         if (hos != null && !error) {
             String hash = hos.hash().toString().toUpperCase();
             LOGGER.info("MD5 of " + baseDir.getAbsolutePath() + ": " + hash); //$NON-NLS-1$ //$NON-NLS-2$
+            appendHashSuffixIfTriageMode(hash, baseDir);
             HashDialog dialog = new HashDialog(hash, baseDir.getAbsolutePath());
             dialog.setVisible(true);
         }
+    }
+
+    public static void appendHashSuffixIfTriageMode(String hash, File file) {
+        if (!App.triageGui)
+            return;
+        String ext = ".zip";
+        int idx = file.getAbsolutePath().lastIndexOf(ext);
+        File newFile = new File(file.getAbsolutePath().substring(0, idx) + "_MD5_" + hash + ext);
+        file.renameTo(newFile);
     }
 
     public static void salvarArquivo(int baseDocId, boolean onlyChecked, boolean toZip) {

@@ -16,16 +16,18 @@ public class Download {
         this.id = id;
         this.urlFromDownload = urlFromDownload;
         this.downloadedLocalPath = downloadedLocalPath;
-        if(downloadedTime != null)
+        if (downloadedTime != null)
             this.downloadedDate = new Date(downloadedTime);
     }
-    
-    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath, Long totalBytes) {
+
+    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath,
+            Long totalBytes) {
         this(id, downloadedTime, urlFromDownload, downloadedLocalPath);
         this.totalBytes = totalBytes;
     }
-    
-    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath, Long totalBytes, Long receivedBytes) {
+
+    public Download(String id, Long downloadedTime, String urlFromDownload, String downloadedLocalPath, Long totalBytes,
+            Long receivedBytes) {
         this(id, downloadedTime, urlFromDownload, downloadedLocalPath, totalBytes);
         this.receivedBytes = receivedBytes;
     }
@@ -67,11 +69,11 @@ public class Download {
         format.setTimeZone(TimeZone.getTimeZone("UTC"));
         return format.format(downloadedDate);
     }
-    
+
     public Long getTotalBytes() {
         return totalBytes;
     }
-    
+
     public Long getReceivedBytes() {
         return receivedBytes;
     }

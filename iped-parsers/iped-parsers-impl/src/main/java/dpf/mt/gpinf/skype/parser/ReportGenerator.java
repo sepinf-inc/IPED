@@ -1,8 +1,6 @@
 package dpf.mt.gpinf.skype.parser;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -16,9 +14,9 @@ import org.xml.sax.ContentHandler;
 import dpf.mt.gpinf.skype.parser.v8.SkypeContactV8;
 import dpf.mt.gpinf.skype.parser.v8.SkypeConversationV14;
 import dpf.mt.gpinf.skype.parser.v8.SkypeMessageV12;
+import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
-import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -64,6 +62,7 @@ public class ReportGenerator {
                 + ".z { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: left; vertical-align: middle; word-wrap: break-word; word-break: break-all; width: 160px; } " //$NON-NLS-1$
                 + ".c { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: right; vertical-align: middle; word-wrap: break-word;  width: 110px; } " //$NON-NLS-1$
                 + ".h { display: table-cell; border: solid; border-width: thin; padding: 3px; text-align: center; vertical-align: middle; word-wrap: break-word; width: 110px; }" //$NON-NLS-1$
+                + ".check {vertical-align: top; }" //$NON-NLS-1$
                 + " TD:hover[onclick]{background-color:#F0F0F0; cursor:pointer} " //$NON-NLS-1$
                 + "</style>"); //$NON-NLS-1$
         out.println("</HEAD>"); //$NON-NLS-1$
@@ -104,9 +103,9 @@ public class ReportGenerator {
                 + "<TH>" + Messages.getString("SkypeReport.EditedDate") + "</TH>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 + "<TH>" + Messages.getString("SkypeReport.RemoteID") + "</TH>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
-        if(c instanceof SkypeConversationV14) {
+        if (c instanceof SkypeConversationV14) {
             out.println("<TH>JSON</TH>"); //$NON-NLS-1$
-        }                
+        }
 
         out.println("</TR>"); //$NON-NLS-1$
 
@@ -117,7 +116,7 @@ public class ReportGenerator {
             // boolean destaque=(i%2)==0;
             boolean destaque = sm.isFromMe();// skypeName.equals(sm.getAutor());
 
-            out.println("<TR class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            out.println("<TR id=\"" + sm.getId() + "\" class='" + (destaque ? "rb" : "rr") + "'>" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                     + "<TD>" + sm.getId() + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getData()) + "</TD>" //$NON-NLS-1$ //$NON-NLS-2$
                     + "<TD>" + FormatUtil.format(sm.getAutor()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -127,25 +126,32 @@ public class ReportGenerator {
                 try {
                     IItemBase item = sm.getAnexoUri().getCacheFile();
                     byte[] thumb = item.getThumb();
-                    String onclick = "app.open(\"" + BasicProps.HASH + ":" + item.getHash() + "\") ";
+                    String query = BasicProps.HASH + ":" + item.getHash();
                     String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(item);
-                    out.println("<a onclick=" + onclick); //$NON-NLS-1$
+                    out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"" + query
+                            + "\",this.checked) name=\"" + item.getHash() + "\" />");
+                    out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
                     out.println(" href=\"" + exportPath + "\">");
-                    if(thumb != null) {
+                    if (thumb != null) {
                         out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                                 + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
                     }
                     out.print("<div>" + Messages.getString("SkypeReport.ImageCacheMsg") + "</div>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    out.println("</a></TD>"); //$NON-NLS-1$
-                    
+                    out.println("</a>"); //$NON-NLS-1$
+                    List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
+                    if (!hashSets.isEmpty()) {
+                        out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                                + "</i></div>");
+                    }
                 } catch (Exception e) {
-                    out.print("</TD>"); //$NON-NLS-1$
                     e.printStackTrace();
+                } finally {
+                    out.print("</TD>"); //$NON-NLS-1$
                 }
             } else {
                 out.print("<TD>" + FormatUtil.format(sm.getConteudo()) + "</TD>"); //$NON-NLS-1$ //$NON-NLS-2$
             }
-            if(sm instanceof SkypeMessageV12) {
+            if (sm instanceof SkypeMessageV12) {
                 out.println("<td>"); //$NON-NLS-1$
                 out.println(((SkypeMessageV12) sm).getJSONdata());
                 out.println("</td>"); //$NON-NLS-1$
@@ -166,7 +172,7 @@ public class ReportGenerator {
 
         out.println("</TABLE>"); //$NON-NLS-1$
 
-        if(c instanceof SkypeConversationV14) {
+        if (c instanceof SkypeConversationV14) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
             out.println(((SkypeConversationV14) c).getJSONdata());
@@ -190,7 +196,7 @@ public class ReportGenerator {
             byte b[] = c.getAvatar();
             if (b != null) {
                 out.println("<P>" + Messages.getString("SkypeReport.Avatar") //$NON-NLS-1$ //$NON-NLS-2$
-                        + " <img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
+                        + "<br><img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
                         + "\" title=\"File\"/> </P>"); //$NON-NLS-1$
             }
         } catch (Exception e) {
@@ -213,7 +219,7 @@ public class ReportGenerator {
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.City") + NEW_COL + FormatUtil.format(c.getCity()) //$NON-NLS-1$
                 + CLOSE_ROW);
-        out.println(NEW_ROW + Messages.getString("SkypeReport.About") + NEW_COL + FormatUtil.format(c.getSobre()) //$NON-NLS-1$
+        out.println(NEW_ROW + Messages.getString("SkypeReport.About") + NEW_COL + FormatUtil.format(c.getAbout()) //$NON-NLS-1$
                 + CLOSE_ROW);
         out.println(NEW_ROW + Messages.getString("SkypeReport.PstnNum") + NEW_COL + FormatUtil.format(c.getPstnNumber()) //$NON-NLS-1$
                 + CLOSE_ROW);
@@ -230,13 +236,13 @@ public class ReportGenerator {
 
         out.println("</TABLE>"); //$NON-NLS-1$
 
-        if(c instanceof SkypeContactV8) {
+        if (c instanceof SkypeContactV8) {
             out.println("<p>JSON:</p>"); //$NON-NLS-1$
             out.println("<p>"); //$NON-NLS-1$
             out.println(((SkypeContactV8) c).getJSONdata());
             out.println("</p>"); //$NON-NLS-1$
         }
-        
+
         endDocument(out);
 
         out.flush();
@@ -361,10 +367,16 @@ public class ReportGenerator {
         IItemBase item = c.getItem();
         if (item != null) {
             String query = c.getItemQuery();
-            out.println("<p>" + Messages.getString("SkypeReport.LikelyFile")); //$NON-NLS-1$ //$NON-NLS-2$
-            out.println("<a onclick=\"app.open(" //$NON-NLS-1$
-                    + SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"") + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            out.println("<p>" + Messages.getString("SkypeReport.LikelyFile") + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+            String quotedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+            out.println(
+                    "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + quotedQuery + ",this.checked)\"");
             List<IItemBase> result = Util.getItems(query, searcher);
+            if (result != null && !result.isEmpty()) {
+                out.println(" name=\"" + result.get(0).getHash() + "\"");
+            }
+            out.println(" />");
+            out.println("<a onclick=\"app.open(" + quotedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));
                 if (!exportPath.isEmpty())
@@ -376,6 +388,12 @@ public class ReportGenerator {
                 out.println("<br><img height=\"300\" width=\"300\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                         + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
             out.println("</a></p>"); //$NON-NLS-1$
+
+            List<String> hashSets = ChildPornHashLookup.lookupHash(item.getHash());
+            if (!hashSets.isEmpty()) {
+                out.print("<div><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " " + hashSets.toString()
+                        + "</i></div>");
+            }
         }
     }
 
@@ -392,7 +410,7 @@ public class ReportGenerator {
             byte b[] = a.getAvatar();
             if (b != null) {
                 out.println("<P>" + Messages.getString("SkypeReport.Avatar") //$NON-NLS-1$ //$NON-NLS-2$
-                        + " <img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
+                        + "<br><img src=\"data:image/jpg;charset=utf-8;base64," + Base64.getEncoder().encodeToString(b) //$NON-NLS-1$
                         + "\" title=\"File\"/> </P>"); //$NON-NLS-1$
             }
         } catch (Exception e) {

@@ -17,6 +17,8 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ContentHandlerDecorator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -39,6 +41,8 @@ import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
 public class MakePreviewTask extends AbstractTask {
+
+    private static Logger LOGGER = LoggerFactory.getLogger(MakePreviewTask.class);
 
     public static final String viewFolder = "view"; //$NON-NLS-1$
 
@@ -136,6 +140,7 @@ public class MakePreviewTask extends AbstractTask {
         }
 
         try {
+            LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
             makeHtmlPreview(evidence, viewFile, mediaType);
 
         } catch (Throwable e) {
@@ -155,7 +160,7 @@ public class MakePreviewTask extends AbstractTask {
             final TikaInputStream tis = evidence.getTikaStream();
 
             final ParseContext context = new ParseContext();
-            IItemSearcher itemSearcher = (IItemSearcher)caseData.getCaseObject(IItemSearcher.class.getName());
+            IItemSearcher itemSearcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
             context.set(IItemSearcher.class, itemSearcher);
             context.set(IItemBase.class, evidence);
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));

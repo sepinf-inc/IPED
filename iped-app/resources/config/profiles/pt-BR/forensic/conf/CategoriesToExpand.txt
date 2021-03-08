@@ -13,11 +13,15 @@ Contatos
 Discos ISO
 Histórico de Internet
 Atividades de Usuário
+Arquivos Sincronizados GDrive
 Arquivos OLE
 Arquivos de Georeferenciamento
 
 # Gera relatórios de registro:
 Registro do Windows
+
+# Gera relatório do USN journal
+Journal USN
 
 #Documentos de Texto
 #Planilhas

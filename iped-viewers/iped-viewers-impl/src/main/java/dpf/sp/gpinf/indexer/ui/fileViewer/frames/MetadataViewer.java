@@ -89,7 +89,7 @@ public class MetadataViewer extends Viewer {
     public boolean isSupportedType(String contentType) {
         return true;
     }
-    
+
     public boolean isFixed() {
         return false;
     }
@@ -103,7 +103,7 @@ public class MetadataViewer extends Viewer {
         collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
     }
-    
+
     @SuppressWarnings("restriction")
     private void selectTab(int tabIdx) {
         Platform.runLater(new Runnable() {
@@ -113,7 +113,7 @@ public class MetadataViewer extends Viewer {
             }
         });
     }
-    
+
     public boolean isMetadataEntry(String contentType) {
         MediaType type = MediaType.parse(contentType);
         while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
@@ -129,7 +129,7 @@ public class MetadataViewer extends Viewer {
     public void loadFile(final IStreamSource content, final Set<String> terms) {
         loadFile(content, null, terms);
     }
-    
+
     @Override
     public void loadFile(final IStreamSource content, String contentType, final Set<String> terms) {
 
@@ -152,14 +152,14 @@ public class MetadataViewer extends Viewer {
                             Files.write(viewer.tmpFile.toPath(), preview.getBytes("UTF-8"), //$NON-NLS-1$
                                     StandardOpenOption.TRUNCATE_EXISTING);
                             webEngine.load(viewer.tmpFile.toURI().toURL().toString());
-    
+
                         } catch (IOException e) {
                             webEngine.loadContent(preview);
                         }
                     }
                 }
-                
-                if(!isFixed() && isMetadataEntry(contentType)) {
+
+                if (!isFixed() && isMetadataEntry(contentType)) {
                     selectTab(2);
                 }
 
@@ -237,6 +237,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());
         fillProp(sb, BasicProps.ID, item.getId());
         fillProp(sb, BasicProps.PARENTID, item.getParentId());
+        fillProp(sb, BasicProps.EVIDENCE_UUID, item.getDataSource());
         fillProp(sb, BasicProps.SUBITEM, item.isSubItem());
         fillProp(sb, BasicProps.SUBITEMID, item.getSubitemId());
         fillProp(sb, BasicProps.CARVED, item.isCarved());

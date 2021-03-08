@@ -1,32 +1,31 @@
 package dpf.sp.gpinf.indexer.util;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.net.URI;
 
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 
 public abstract class SeekableInputStreamFactory implements ISeekableInputStreamFactory {
 
-    protected Path dataSource;
+    protected URI dataSource;
 
-    public SeekableInputStreamFactory(Path dataSource) {
+    public SeekableInputStreamFactory(URI dataSource) {
         this.dataSource = dataSource;
-        checkIfDataSourceExists();
     }
-    
-    protected void checkIfDataSourceExists() {
-        if(dataSource != null && !Files.exists(dataSource)) {
-            SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(dataSource.toFile());
-            this.dataSource = siwd.askImagePathInGUI().toPath();
-        }
+
+    public boolean checkIfDataSourceExists() {
+        return true;
     }
 
     public abstract SeekableInputStream getSeekableInputStream(String identifier) throws IOException;
 
-    public Path getDataSourcePath() {
+    public URI getDataSourceURI() {
         return dataSource;
+    }
+
+    public void setDataSourceURI(URI dataSource) {
+        this.dataSource = dataSource;
     }
 
 }

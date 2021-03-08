@@ -64,7 +64,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(SAFARI_SQLITE);
 
     private static Logger LOGGER = LoggerFactory.getLogger(SafariSqliteParser.class);
-    
+
     private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     @Override
@@ -78,9 +78,9 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
         TemporaryResources tmp = new TemporaryResources();
         File historyFile = tmp.createTemporaryFile();
-        TikaInputStream tis = TikaInputStream.get(stream, tmp); 
+        TikaInputStream tis = TikaInputStream.get(stream, tmp);
 
-        try (Connection connection = getConnection(tis, metadata, context)){
+        try (Connection connection = getConnection(tis, metadata, context)) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
 
@@ -107,8 +107,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                 int i = 0;
 
                 for (SafariVisit h : history) {
-                    
-                    if(!extractEntries)
+
+                    if (!extractEntries)
                         break;
 
                     i++;
@@ -135,8 +135,8 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
 
     }
 
-    private void parseSafariResumedHistory(ContentHandler handler, Metadata metadata, ParseContext context, List<SafariResumedVisit> resumedHistory)
-            throws IOException, SAXException, TikaException {
+    private void parseSafariResumedHistory(ContentHandler handler, Metadata metadata, ParseContext context,
+            List<SafariResumedVisit> resumedHistory) throws IOException, SAXException, TikaException {
 
         XHTMLContentHandler xHandler = null;
 

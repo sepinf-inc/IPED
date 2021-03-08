@@ -14,14 +14,24 @@ public class LibreOfficeFinder {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeFinder.class);
 
-    private static File winPathLO = new File(System.getProperty("user.home") + "/.indexador/libreoffice6"); //$NON-NLS-1$ //$NON-NLS-2$
-    // private static File winPathLO = new File("C:\\Program Files\\LibreOffice");
+    private static final String targetName = "libreoffice6";
+
+    private static File winPathLO = getWinLOTarget();
 
     private static String libreofficeZip = "tools/libreoffice.zip";
 
     private static File baseDir;
 
     private static String detectedPath = null;
+
+    private static File getWinLOTarget() {
+        String userHome = System.getProperty("user.home"); //$NON-NLS-1$
+        File path = new File(userHome + "/.indexador/" + targetName); //$NON-NLS-1$
+        if (!path.exists()) {
+            path = new File(userHome + "/AppData/Local/iped/" + targetName); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return path;
+    }
 
     public LibreOfficeFinder(File baseFolder) {
         baseDir = baseFolder;

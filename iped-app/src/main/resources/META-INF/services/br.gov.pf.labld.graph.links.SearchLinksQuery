@@ -1,0 +1,6 @@
+br.gov.pf.labld.graph.links.EmailLinksQuery
+br.gov.pf.labld.graph.links.ContactsLinksQuery
+br.gov.pf.labld.graph.links.CallLinksQuery
+br.gov.pf.labld.graph.links.WirelessNetworksLinksQuery
+br.gov.pf.labld.graph.links.InstantMessagesLinksQuery
+br.gov.pf.labld.graph.links.DocumentsLinksQuery

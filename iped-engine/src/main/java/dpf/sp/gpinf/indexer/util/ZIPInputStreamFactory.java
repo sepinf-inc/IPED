@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -61,17 +62,18 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     };
 
     public ZIPInputStreamFactory(Path dataSource) {
-        super(dataSource);
+        super(dataSource.toUri());
     }
 
     private synchronized void init() throws ZipException {
         if (zip == null) {
-            zip = new ZipFile4j(this.dataSource.toFile());
+            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
         }
     }
 
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
+        Path tmp = null;
         byte[] bytes = null;
         synchronized (bytesCache) {
             bytes = bytesCache.get(path);
@@ -79,7 +81,6 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
         }
-        Path tmp = null;
         synchronized (filesCache) {
             tmp = filesCache.get(path);
         }
@@ -96,7 +97,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             throw new IOException(e1);
         }
         if(zae == null) {
-            return  new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
             if (zae.getUncompressedSize() <= MAX_BYTES_CACHED) {
@@ -125,16 +126,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
         }
-        final Path finalTmp = tmp;
-        return new SeekableFileInputStream(finalTmp.toFile());
+        return new SeekableFileInputStream(tmp.toFile());
     }
 
     @Override
     public void close() throws IOException {
-        if (zip != null) {
-            // is not closeable...
-            // zip.close();
-        }
+        // if(zip != null) zip.close();
         for (Path path : filesCache.values()) {
             try {
                 Files.deleteIfExists(path);

@@ -13,7 +13,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.util.IOUtils;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -33,6 +32,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
+import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -74,12 +74,32 @@ public class IndexTask extends AbstractTask {
         }
     }
 
+    public static boolean isTreeNodeOnly(IItem item) {
+        return (!item.isToAddToCase() && (item.isDir() || item.isRoot() || item.hasChildren()))
+                || item.getExtraAttribute(IndexItem.TREENODE) != null;
+    }
+
+    public static void configureTreeNodeAttributes(IItem item) {
+        if (item.isSubItem()) {
+            item.dispose();
+        }
+        if (item instanceof ISleuthKitItem) {
+            ((ISleuthKitItem) item).setSleuthId(null);
+        }
+        item.setFile(null);
+        item.setExportedFile(null);
+        item.setIdInDataSource(null);
+        item.setInputStreamFactory(null);
+        item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
+        item.getCategorySet().clear();
+    }
+
     public void process(IItem evidence) throws IOException {
         if (evidence.isQueueEnd()) {
             return;
         }
-        
-        if(SkipCommitedTask.isAlreadyCommited(evidence)) {
+
+        if (SkipCommitedTask.isAlreadyCommited(evidence)) {
             evidence.setToIgnore(true);
             return;
         }
@@ -87,23 +107,18 @@ public class IndexTask extends AbstractTask {
         Reader textReader = null;
 
         if (!evidence.isToAddToCase()) {
-            if (evidence.isDir() || evidence.isRoot() || evidence.hasChildren() || caseData.isIpedReport()) {
-                textReader = new StringReader(""); //$NON-NLS-1$
-                if (evidence instanceof ISleuthKitItem) {
-                    ((ISleuthKitItem) evidence).setSleuthId(null);
-                }
-                evidence.setExportedFile(null);
-                evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
-                evidence.getCategorySet().clear();
-            } else {
+            if (isTreeNodeOnly(evidence)) {
+                configureTreeNodeAttributes(evidence);
+                textReader = new StringReader("");
+            } else
                 return;
-            }
         }
 
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexFileContents && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexFileContents
+                    && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
                     LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
@@ -129,7 +144,7 @@ public class IndexTask extends AbstractTask {
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
         int fragments = fragReader.estimateNumberOfFrags();
-        if(fragments == -1) {
+        if (fragments == -1) {
             fragments = 1;
         }
         String origPersistentId = Util.getPersistentId(evidence);
@@ -138,13 +153,14 @@ public class IndexTask extends AbstractTask {
              * breaks very large texts in separate documents to be indexed
              */
             do {
-                //use fragName = 1 for all frags, except last, to check if last frag was indexed
-                //and to reuse same frag id when continuing an aborted processing
+                // use fragName = 1 for all frags, except last, to check if last frag was
+                // indexed
+                // and to reuse same frag id when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
-                
+
                 String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
                 evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
-                
+
                 if (fragments != 0) {
                     stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
@@ -153,7 +169,7 @@ public class IndexTask extends AbstractTask {
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
                 worker.writer.addDocument(doc);
-                
+
                 while (worker.state != STATE.RUNNING) {
                     try {
                         Thread.sleep(1000);
@@ -162,7 +178,7 @@ public class IndexTask extends AbstractTask {
                         e.printStackTrace();
                     }
                 }
-                
+
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } catch (IOException e) {
@@ -215,6 +231,14 @@ public class IndexTask extends AbstractTask {
             indexUnallocated = Boolean.valueOf(value);
         }
 
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
+            try (IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)) {
+                stats.setLastId(ipedSrc.getLastId());
+                Item.setStartID(ipedSrc.getLastId() + 1);
+            }
+        }
+
         textSizes = (List<IdLenPair>) caseData.getCaseObject(TEXT_SIZES);
         if (textSizes == null) {
             textSizes = Collections.synchronizedList(new ArrayList<IdLenPair>());
@@ -236,20 +260,12 @@ public class IndexTask extends AbstractTask {
                         textSizesArray[i++] = size * 1000L;
                 }
                 for (int i = 0; i < textSizesArray.length; i++) {
-                    if (textSizesArray[i] != 0) {
+                    if (textSizesArray[i] != 0 && i <= stats.getLastId()) {
                         textSizes.add(new IdLenPair(i, textSizesArray[i]));
                     }
                 }
                 in.close();
                 fileIn.close();
-            }
-            
-            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            if(args.isAppendIndex() || args.isContinue() || args.isRestart()) {
-                try(IPEDSource ipedSrc = new IPEDSource(output.getParentFile(), worker.writer)){
-                    stats.setLastId(ipedSrc.getLastId());
-                    Item.setStartID(ipedSrc.getLastId() + 1);
-                }
             }
         }
 
@@ -278,7 +294,7 @@ public class IndexTask extends AbstractTask {
         File extraAttributtesFile = new File(output, "data/" + extraAttrFilename); //$NON-NLS-1$
         Set<String> extraAttr = Item.getAllExtraAttributes();
         Util.writeObject(extraAttr, extraAttributtesFile.getAbsolutePath());
-        IOUtils.fsync(extraAttributtesFile, false);
+        Util.fsync(extraAttributtesFile.toPath());
     }
 
     private void loadExtraAttributes() throws ClassNotFoundException, IOException {

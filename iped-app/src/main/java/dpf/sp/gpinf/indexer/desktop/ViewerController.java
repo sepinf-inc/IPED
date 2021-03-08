@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Component;
+import java.awt.Container;
 import java.awt.KeyboardFocusManager;
 import java.io.File;
 import java.io.IOException;
@@ -17,10 +18,11 @@ import javax.swing.SwingUtilities;
 
 import org.apache.tika.Tika;
 
+import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
-import dpf.sp.gpinf.indexer.Configuration;
+import bibliothek.gui.dock.common.mode.ExtendedMode;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
@@ -35,6 +37,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
@@ -46,14 +49,15 @@ import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
 
 /**
- * Central controller for all viewers. 
- * To add a new viewer it should be added in createViewers() method.
+ * Central controller for all viewers. To add a new viewer it should be added in
+ * createViewers() method.
  * 
  * @author Wladimir
  */
 public class ViewerController {
     private final List<Viewer> viewers = new ArrayList<Viewer>();
     private final ATextViewer textViewer;
+    private final HtmlLinkViewer linkViewer;
     private final ViewersRepository viewersRepository;
     private final Map<Viewer, DefaultSingleCDockable> dockPerViewer = new HashMap<Viewer, DefaultSingleCDockable>();
     private final Set<Viewer> updatedViewers = new HashSet<Viewer>();
@@ -69,8 +73,8 @@ public class ViewerController {
     private final Object lock = new Object();
 
     public ViewerController(AppSearchParams params) {
-        //These viewers will have their own docking frame
-        viewers.add(new HexViewerPlus(new HexSearcherImpl(), Configuration.getInstance().configPath));
+        // These viewers will have their own docking frame
+        viewers.add(new HexViewerPlus(new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer(params));
         viewers.add(new MetadataViewer() {
             @Override
@@ -79,36 +83,38 @@ public class ViewerController {
             }
         });
         viewers.add(viewersRepository = new ViewersRepository());
-        
+
         boolean javaFX = new JarLoader().loadJavaFX();
 
-        //These are content-specific viewers (inside a single ViewersRepository)
+        // These are content-specific viewers (inside a single ViewersRepository)
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
         if (javaFX) {
             viewersRepository.addViewer(new HtmlViewer());
             viewersRepository.addViewer(new EmailViewer());
-            viewersRepository.addViewer(new HtmlLinkViewer(new AttachmentSearcherImpl()));
+            linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
+            viewersRepository.addViewer(linkViewer);
             viewersRepository.addViewer(new TikaHtmlViewer());
         } else {
             viewersRepository.addViewer(new NoJavaFXViewer());
+            linkViewer = null;
         }
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
+        viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
 
         new Thread() {
             public void run() {
-                
-                for (Viewer viewer : viewers) {
-                    viewer.init();
-                }
-                tika = new Tika();
+                try {
+                    for (Viewer viewer : viewers) {
+                        viewer.init();
+                    }
+                    tika = new Tika();
 
-                //LibreOffice viewer initialization
-                LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
-                final String pathLO = loFinder.getLOPath();
-                if (pathLO != null) {
-                    try {
+                    // LibreOffice viewer initialization
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
+                    final String pathLO = loFinder.getLOPath();
+                    if (pathLO != null) {
                         SwingUtilities.invokeAndWait(new Runnable() {
                             @Override
                             public void run() {
@@ -117,18 +123,19 @@ public class ViewerController {
                             }
                         });
                         officeViewer.init();
-                        
-                    } catch (NotSupported32BitPlatformExcepion e) {
-                        JOptionPane.showMessageDialog(null, Messages.getString("ViewerController.OfficeViewerUnSupported")); //$NON-NLS-1$
-                        viewersRepository.removeViewer(officeViewer);
-                    } catch (Exception e) {
-                        e.printStackTrace();
                     }
-                }
-                
-                synchronized (lock) {
-                    init = true;
-                    lock.notifyAll();
+
+                } catch (NotSupported32BitPlatformExcepion e) {
+                    JOptionPane.showMessageDialog(null, Messages.getString("ViewerController.OfficeViewerUnSupported")); //$NON-NLS-1$
+                    viewersRepository.removeViewer(officeViewer);
+                } catch (Throwable e) {
+                    // catches NoClassDefFoundError on Linux if libreoffice-java is not installed
+                    e.printStackTrace();
+                } finally {
+                    synchronized (lock) {
+                        init = true;
+                        lock.notifyAll();
+                    }
                 }
             }
         }.start();
@@ -152,6 +159,10 @@ public class ViewerController {
 
     public ViewersRepository getMultiViewer() {
         return viewersRepository;
+    }
+
+    public HtmlLinkViewer getHtmlLinkViewer() {
+        return linkViewer;
     }
 
     public void dispose() {
@@ -200,9 +211,9 @@ public class ViewerController {
             }
         }
     }
-    
+
     private boolean isInitialized() {
-        synchronized(lock) {
+        synchronized (lock) {
             return init;
         }
     }
@@ -223,13 +234,15 @@ public class ViewerController {
             Viewer bestViewer = getBestViewer(viewType);
             if (!bestViewer.getPanel().isShowing()) {
                 DefaultSingleCDockable viewerDock = dockPerViewer.get(bestViewer);
-                if (viewerDock != null) {
-                    bestViewer.loadFile(null);
-                    Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-                    viewerDock.toFront();
-                    requested = bestViewer;
-                    if (focus != null) {
-                        focus.requestFocusInWindow();
+                if (!viewerDock.getExtendedMode().equals(ExtendedMode.MINIMIZED) && isContainerVisibleTab(viewerDock)) {
+                    if (viewerDock != null) {
+                        bestViewer.loadFile(null);
+                        Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+                        viewerDock.toFront();
+                        requested = bestViewer;
+                        if (focus != null) {
+                            focus.requestFocusInWindow();
+                        }
                     }
                 }
             }
@@ -239,6 +252,20 @@ public class ViewerController {
                 updateViewer(viewer, true);
             }
         }
+    }
+
+    private boolean isContainerVisibleTab(DefaultSingleCDockable dock) {
+        Container cont = dock.getContentPane();
+        if (cont != null) {
+            Container parent;
+            while ((parent = cont.getParent()) != null) {
+                if (parent instanceof EclipseTabPaneContent) {
+                    return parent.isShowing();
+                }
+                cont = parent;
+            }
+        }
+        return false;
     }
 
     public void changeToViewer(Viewer viewer) {
@@ -258,11 +285,12 @@ public class ViewerController {
 
     public void updateViewer(Viewer viewer, boolean clean) {
         if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
-            if (isInitialized()) loadInViewer(viewer);
+            if (isInitialized())
+                loadInViewer(viewer);
             DefaultSingleCDockable dock = dockPerViewer.get(viewer);
             if (dock != null) {
-                boolean hitsEnabled = viewFile != null && 
-                        ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
+                boolean hitsEnabled = viewFile != null
+                        && ((hasHits() && viewer.getHitsSupported() == 0) || (viewer.getHitsSupported() == 1));
 
                 ((CButton) dock.getAction("prevHit")).setEnabled(hitsEnabled);
                 ((CButton) dock.getAction("nextHit")).setEnabled(hitsEnabled);
@@ -276,14 +304,16 @@ public class ViewerController {
             }
         } else {
             if (clean) {
-                if (isInitialized()) viewer.loadFile(null);
+                if (isInitialized())
+                    viewer.loadFile(null);
             }
         }
     }
 
     private void loadInViewer(Viewer viewer) {
         synchronized (updatedViewers) {
-            if (!updatedViewers.add(viewer)) return;
+            if (!updatedViewers.add(viewer))
+                return;
         }
         if (viewFile == null) {
             viewer.loadFile(null);
@@ -306,7 +336,8 @@ public class ViewerController {
     }
 
     private void updateViewType() {
-        if (viewType != null) return;
+        if (viewType != null)
+            return;
         if (!file.equals(viewFile)) {
             try {
                 viewType = tika.detect(viewFile.getFile());
@@ -323,10 +354,11 @@ public class ViewerController {
         for (Viewer viewer : viewers) {
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
-                    if(((MetadataViewer) viewer).isMetadataEntry(contentType)) {
+                    if (((MetadataViewer) viewer).isMetadataEntry(contentType)) {
                         result = viewer;
                     }
-                } else result = viewer;
+                } else
+                    result = viewer;
             }
         }
         return result;

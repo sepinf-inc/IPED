@@ -89,7 +89,7 @@ public class BitTorrentResumeDatParser extends AbstractParser {
                     continue;
                 }
                 BencodedDict torrentDict = dict.getDict(torrent);
-                if(torrentDict == null) {
+                if (torrentDict == null) {
                     continue;
                 }
                 xhtml.startElement("div", "class", a ? "ra" : "rb"); //$NON-NLS-1$ $NON-NLS-2$ $NON-NLS-3$ $NON-NLS-4$

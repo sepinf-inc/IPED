@@ -2,12 +2,11 @@ package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.ArrayList;
 import java.util.BitSet;
 
-import org.apache.lucene.index.AtomicReaderContext;
-import org.apache.lucene.search.Collector;
+import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.SimpleCollector;
 
 import iped3.search.LuceneSearchResult;
 
@@ -18,7 +17,7 @@ import iped3.search.LuceneSearchResult;
  * @author Nassif
  *
  */
-public class NoScoringCollector extends Collector {
+public class NoScoringCollector extends SimpleCollector {
 
     private int docBase = 0;
     private int totalHits = 0;
@@ -48,13 +47,8 @@ public class NoScoringCollector extends Collector {
     }
 
     @Override
-    public void setNextReader(AtomicReaderContext context) throws IOException {
+    public void doSetNextReader(LeafReaderContext context) throws IOException {
         docBase = context.docBase;
-    }
-
-    @Override
-    public boolean acceptsDocsOutOfOrder() {
-        return true;
     }
 
     public int getTotalHits() {
@@ -83,6 +77,11 @@ public class NoScoringCollector extends Collector {
                     docs[idx++] = (i << 6) | j;
 
         return results;
+    }
+
+    @Override
+    public boolean needsScores() {
+        return false;
     }
 
 }

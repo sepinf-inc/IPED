@@ -41,10 +41,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
-import javax.swing.SwingWorker;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.AppMain;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -69,7 +69,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     long rate = 0, instantRate;
     int volume, taskSize;
     long secsToEnd;
-    private SwingWorker task;
+    private WorkerProvider task;
     private Date indexStart;
     private Worker[] workers;
     private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
@@ -83,7 +83,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         }
     }
 
-    public ProgressFrame(SwingWorker task) {
+    public ProgressFrame(WorkerProvider task) {
         super(Versao.APP_NAME);
 
         this.setBounds(0, 0, 800, 400);

@@ -1,17 +1,24 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
+import javax.swing.JFrame;
 import javax.swing.ProgressMonitor;
 
 import org.mapdb.DB;
@@ -68,7 +75,7 @@ public class KFFTask extends AbstractTask {
     public static void setEnabled(boolean enabled) {
         taskEnabled = enabled;
     }
-    
+
     public void init(Properties confParams, File confDir, boolean importing) throws Exception {
         this.importing = importing;
         init(confParams, confDir);
@@ -96,11 +103,11 @@ public class KFFTask extends AbstractTask {
         String kffDbPath = confParams.getProperty("kffDb"); //$NON-NLS-1$
         if (kffDbPath == null) {
             String msg = "Configure hash database path (kffDb) on " + Configuration.LOCAL_CONFIG; //$NON-NLS-1$
-            if(importing) {
-            	throw new IPEDException(msg);
+            if (importing) {
+                throw new IPEDException(msg);
             }
-            if(taskEnabled) {
-            	LOGGER.error(msg);
+            if (taskEnabled) {
+                LOGGER.error(msg);
                 taskEnabled = false;
                 return;
             }
@@ -117,9 +124,9 @@ public class KFFTask extends AbstractTask {
             excluded = 0;
 
             File kffDb = new File(kffDbPath.trim());
-            if(importing)
+            if (importing)
                 kffDb.getParentFile().mkdirs();
-            
+
             if (!kffDb.exists() && !importing) {
                 String msg = "Invalid hash database path on " + kffDb.getAbsolutePath(); //$NON-NLS-1$
                 LOGGER.error(msg);
@@ -129,16 +136,17 @@ public class KFFTask extends AbstractTask {
 
             try {
                 DBMaker dbMaker = DBMaker.newFileDB(kffDb).transactionDisable().mmapFileEnableIfSupported();
-                if(importing) {
-                    dbMaker.asyncWriteEnable().asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000);
-                }else {
+                if (importing) {
+                    dbMaker.asyncWriteEnable().asyncWriteFlushDelay(1000).asyncWriteQueueSize(1024000)
+                            .commitFileSyncDisable();
+                } else {
                     dbMaker.readOnly();
                 }
-                db  = dbMaker.make();
+                db = dbMaker.make();
 
-            } catch (ArrayIndexOutOfBoundsException e) {
-                throw new Exception("Hash database seems corrupted. Import or copy again BOTH files " //$NON-NLS-1$
-                        + "kff.db and kff.db.p to database folder " + kffDb.getParent()); //$NON-NLS-1$
+            } catch (java.io.IOError | ArrayIndexOutOfBoundsException e) {
+                throw new Exception("Hash database " + kffDb.getParent() + " seems corrupted."
+                        + " Point kffDb to a clean database or delete it and import the hashes again.", e);
             }
 
             md5Map = db.getHashMap("md5Map"); //$NON-NLS-1$
@@ -153,8 +161,8 @@ public class KFFTask extends AbstractTask {
 
             if (confDir != null) {
                 alertProducts = new HashSet<String>();
-                File confFile = new File(kffDb.getParentFile(), CONF_FILE); 
-                if(!confFile.exists())
+                File confFile = new File(kffDb.getParentFile(), CONF_FILE);
+                if (!confFile.exists())
                     confFile = new File(confDir, CONF_FILE);
                 BufferedReader reader = new BufferedReader(new FileReader(confFile));
                 String line = reader.readLine();
@@ -176,8 +184,8 @@ public class KFFTask extends AbstractTask {
             LOGGER.info("Items ignored by hash database lookup: {}", excluded); //$NON-NLS-1$
         }
         excluded = -1;
-        
-        if(db != null) {
+
+        if (db != null) {
             db.close();
             db = null;
         }
@@ -189,62 +197,90 @@ public class KFFTask extends AbstractTask {
     public void importKFF(File kffDir) throws IOException {
 
         File NSRLProd = new File(kffDir, "NSRLProd.txt"); //$NON-NLS-1$
-        BufferedReader reader = new BufferedReader(new FileReader(NSRLProd));
-        String line = reader.readLine();
-        while ((line = reader.readLine()) != null) {
-            int idx = line.indexOf(',');
-            String key = line.substring(0, idx);
-            String[] values = line.substring(idx + 2).split("\",\""); //$NON-NLS-1$
-            String[] prod = { values[0], values[1] };
-            products.put(Integer.valueOf(key), prod);
+        try (BufferedReader reader = new BufferedReader(new FileReader(NSRLProd))) {
+            String line = reader.readLine();
+            while ((line = reader.readLine()) != null) {
+                int idx = line.indexOf(',');
+                String key = line.substring(0, idx);
+                String[] values = line.substring(idx + 2).split("\",\""); //$NON-NLS-1$
+                String[] prod = { values[0], values[1] };
+                products.put(Integer.valueOf(key), prod);
+            }
         }
-        reader.close();
         for (File kffFile : kffDir.listFiles()) {
-            if (!kffFile.getName().equals("NSRLFile.txt")) { //$NON-NLS-1$
+            Boolean isZip;
+            if (kffFile.getName().equals("NSRLFile.txt")) { //$NON-NLS-1$
+                isZip = false;
+            } else if (kffFile.getName().equals("NSRLFile.txt.zip")) { //$NON-NLS-1$
+                isZip = true;
+            } else {
                 continue;
             }
-            long length = kffFile.length();
-            long progress = 0;
-            int i = 0;
-            ProgressMonitor monitor = new ProgressMonitor(null, "", "Importing " + kffFile.getName(), 0, //$NON-NLS-1$ //$NON-NLS-2$
-                    (int) (length / 1000));
-            reader = new BufferedReader(new FileReader(kffFile));
-            line = reader.readLine();
-            String[] ignoreStrs = { "\"\"", "\"D\"" }; //$NON-NLS-1$ //$NON-NLS-2$
-            while ((line = reader.readLine()) != null) {
-                String[] values = line.split(","); //$NON-NLS-1$
-                KffAttr attr = new KffAttr();
-                attr.group = Integer.valueOf(values[values.length - 3]);
-                if (values[values.length - 1].equals(ignoreStrs[0])
-                        || values[values.length - 1].equals(ignoreStrs[1])) {
-                    attr.group *= -1;
-                }
-                // else
-                // System.out.println(line);
 
-                HashValue md5 = new HashValue(values[1].substring(1, 33));
-                HashValue sha1 = new HashValue(values[0].substring(1, 41));
-
-                Integer value = md5Map.get(md5);
-                if (value == null || (value > 0 && attr.group < 0)) {
-                    md5Map.put(md5, attr.group);
-                    sha1Map.put(sha1, attr.group);
-                }
-
-                progress += line.length() + 2;
-                if (progress > i * length / 1000) {
-                    if (monitor.isCanceled()) {
-                        return;
-                    }
-                    monitor.setProgress((int) (progress / 1000));
-                    i++;
-                }
-
+            BufferedReader reader = null;
+            long length;
+            if (!isZip) {
+                length = kffFile.length();
+                reader = new BufferedReader(new FileReader(kffFile));
+            } else {
+                ZipInputStream zis = new ZipInputStream(
+                        new BufferedInputStream(Files.newInputStream(kffFile.toPath())));
+                ZipEntry entry = zis.getNextEntry();
+                length = entry.getSize();
+                reader = new BufferedReader(new InputStreamReader(zis, StandardCharsets.ISO_8859_1));
             }
-            reader.close();
-            db.commit();
-            db.close();
-            monitor.close();
+
+            JFrame jframe = new JFrame();
+            jframe.setUndecorated(true);
+            jframe.setLocationRelativeTo(null);
+            jframe.setVisible(true);
+
+            int i = 0;
+            long progress = 0;
+            ProgressMonitor monitor = new ProgressMonitor(jframe, "", "Importing " + kffFile.getName(), 0, //$NON-NLS-1$ //$NON-NLS-2$
+                    (int) (length / 1000));
+            try {
+                String line = reader.readLine();
+                String[] ignoreStrs = { "\"\"", "\"D\"" }; //$NON-NLS-1$ //$NON-NLS-2$
+                while ((line = reader.readLine()) != null) {
+                    String[] values = line.split(","); //$NON-NLS-1$
+                    KffAttr attr = new KffAttr();
+                    attr.group = Integer.valueOf(values[values.length - 3]);
+                    if (values[values.length - 1].equals(ignoreStrs[0])
+                            || values[values.length - 1].equals(ignoreStrs[1])) {
+                        attr.group *= -1;
+                    }
+                    // else
+                    // System.out.println(line);
+
+                    HashValue md5 = new HashValue(values[1].substring(1, 33));
+                    HashValue sha1 = new HashValue(values[0].substring(1, 41));
+
+                    Integer value = md5Map.get(md5);
+                    if (value == null || (value > 0 && attr.group < 0)) {
+                        md5Map.put(md5, attr.group);
+                        sha1Map.put(sha1, attr.group);
+                    }
+
+                    progress += line.length() + 2;
+                    if (progress > i * length / 1000) {
+                        if (monitor.isCanceled()) {
+                            System.out.println("Canceling import...");
+                            return;
+                        }
+                        monitor.setProgress((int) (progress / 1000));
+                        i++;
+                    }
+                }
+                System.out.println("Commiting to database...");
+                db.commit();
+
+            } finally {
+                reader.close();
+                db.close();
+                monitor.close();
+                jframe.setVisible(false);
+            }
         }
     }
 

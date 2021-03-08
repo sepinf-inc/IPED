@@ -103,6 +103,8 @@ public class SeekableFileInputStream extends SeekableInputStream {
     @Override
     public void close() throws IOException {
         sbc.close();
+        // clear reference, possibly heavy one with bytes kept in memory
+        this.sbc = null;
     }
 
     @Override

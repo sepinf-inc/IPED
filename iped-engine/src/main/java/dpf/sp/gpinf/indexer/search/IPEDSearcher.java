@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.search;
 import java.io.InterruptedIOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.TreeMap;
 
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.BooleanClause.Occur;
@@ -34,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItemId;
+import iped3.exception.ParseException;
+import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
@@ -46,7 +47,6 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     IPEDSource ipedCase;
     Query query;
-    String queryText;
     boolean treeQuery, noScore;
     NoScoringCollector collector;
 
@@ -63,7 +63,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     public IPEDSearcher(IPEDSource ipedCase, String query) {
         this.ipedCase = ipedCase;
-        this.queryText = query;
+        setQuery(query);
     }
 
     public void setTreeQuery(boolean treeQuery) {
@@ -78,8 +78,13 @@ public class IPEDSearcher implements IIPEDSearcher {
         this.query = query;
     }
 
-    public void setQuery(String query) {
-        this.queryText = query;
+    public void setQuery(String queryText) {
+        try {
+            query = new QueryBuilder(ipedCase).getQuery(queryText);
+
+        } catch (ParseException | QueryNodeException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Query getQuery() {
@@ -107,15 +112,12 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
 
     public LuceneSearchResult luceneSearch() throws Exception {
-        return filtrarVersoes(filtrarFragmentos(searchAll()));
+        return filtrarFragmentos(searchAll());
     }
 
     public LuceneSearchResult searchAll() throws Exception {
 
         // System.out.println("searching");
-
-        if (query == null)
-            query = new QueryBuilder(ipedCase).getQuery(queryText);
 
         if (!treeQuery)
             query = getNonTreeQuery();
@@ -133,7 +135,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
         // obtém resultados calculando score
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
-        int maxResults = 1000000;
+        int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
         do {
             ScoreDoc lastScoreDoc = null;
@@ -150,10 +152,10 @@ public class IPEDSearcher implements IIPEDSearcher {
     }
 
     private Query getNonTreeQuery() {
-        BooleanQuery result = new BooleanQuery();
+        BooleanQuery.Builder result = new BooleanQuery.Builder();
         result.add(query, Occur.MUST);
         result.add(new TermQuery(new Term(IndexItem.TREENODE, "true")), Occur.MUST_NOT); //$NON-NLS-1$
-        return result;
+        return result.build();
     }
 
     public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {
@@ -230,43 +232,6 @@ public class IPEDSearcher implements IIPEDSearcher {
                         docs[i] = -1;
                     }
                 }
-            }
-        }
-
-        prevResult.clearResults();
-        return prevResult;
-
-    }
-
-    private LuceneSearchResult filtrarVersoes(LuceneSearchResult prevResult) throws Exception {
-        if (ipedCase.viewToRawMap.getMappings() == 0)
-            return prevResult;
-
-        int docs[] = prevResult.getLuceneIds();
-        float scores[] = prevResult.getScores();
-        TreeMap<Integer, Integer> addedMap = new TreeMap<Integer, Integer>();
-        for (int i = 0; i < prevResult.getLength(); i++) {
-            int id = ipedCase.getId(docs[i]);
-            Integer original = ipedCase.viewToRawMap.getRaw(id);
-            if (original == null) {
-                if (ipedCase.viewToRawMap.isRaw(id)) {
-                    if (!addedMap.containsKey(id)) {
-                        addedMap.put(id, i);
-                    } else {
-                        addedMap.remove(id);
-                        docs[i] = -1;
-                    }
-                }
-            } else {
-                Integer pos = addedMap.get(original);
-                if (pos != null) {
-                    docs[pos] = docs[i];
-                    scores[pos] = scores[i];
-                    docs[i] = -1;
-                    addedMap.remove(original);
-                } else
-                    addedMap.put(original, null);
-
             }
         }
 

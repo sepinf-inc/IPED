@@ -71,8 +71,8 @@ public class TaskInstaller {
         File script = new File(scriptDir, name);
         if (!script.exists())
             throw new IPEDException("Script File not found: " + script.getAbsolutePath()); //$NON-NLS-1$
-        
-        if(name.endsWith(".py"))
+
+        if (name.endsWith(".py"))
             return new PythonTask(script);
         else
             return new ScriptTask(script);
