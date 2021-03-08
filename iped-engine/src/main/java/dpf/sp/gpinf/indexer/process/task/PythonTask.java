@@ -209,7 +209,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (lastInstalledScript.equals(scriptFile)) {
+        if (getJep() != null && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 
