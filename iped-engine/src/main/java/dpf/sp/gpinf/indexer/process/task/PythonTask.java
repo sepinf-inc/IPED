@@ -138,6 +138,10 @@ public class PythonTask extends AbstractTask {
 
     private void loadScript(Jep jep) throws JepException {
 
+        if (jep == null) {
+            return;
+        }
+
         moduleName = (scriptFile.getName().replace(".py", "_in_worker_") + worker.id).toLowerCase();
 
         jep.eval("import importlib.util");
@@ -207,7 +211,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (lastInstalledScript.equals(scriptFile)) {
+        if (getJep() != null && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 
