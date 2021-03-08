@@ -72,6 +72,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String PORT_KEY = "port";
     private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
+    private static final String IGNORE_MALFORMED = "index.mapping.ignore_malformed";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
     private static final String INDEX_POLICY_KEY = "index.lifecycle.name";
@@ -236,7 +237,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
-                .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy);
+                .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy)
+                .put(IGNORE_MALFORMED, true);
 
         if (useCustomAnalyzer) {
             builder.put("analysis.tokenizer.latinExtB.type", "simple_pattern") //$NON-NLS-1$ //$NON-NLS-2$
