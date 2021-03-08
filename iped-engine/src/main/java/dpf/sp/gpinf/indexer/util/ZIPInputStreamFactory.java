@@ -136,11 +136,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             // zip.close();
         }
         for (Path path : filesCache.values()) {
-            try {
-                Files.deleteIfExists(path);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+            Files.deleteIfExists(path);
         }
         filesCache.clear();
         bytesCache.clear();

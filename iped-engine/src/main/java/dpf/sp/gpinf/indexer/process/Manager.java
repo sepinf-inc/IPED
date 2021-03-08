@@ -117,7 +117,7 @@ public class Manager {
     private List<File> sources;
     private File output, finalIndexDir, indexDir, palavrasChave;
 
-    private ItemProducer contador, produtor;
+    private ItemProducer counter, producer;
     private Worker[] workers;
     private IndexWriter writer;
 
@@ -219,19 +219,23 @@ public class Manager {
                 return;
 
             // apenas conta o número de arquivos a indexar
-            contador = new ItemProducer(this, caseData, true, sources, output);
-            contador.start();
+            counter = new ItemProducer(this, caseData, true, sources, output);
+            counter.start();
 
             // produz lista de arquivos e propriedades a indexar
-            produtor = new ItemProducer(this, caseData, false, sources, output);
-            produtor.start();
+            producer = new ItemProducer(this, caseData, false, sources, output);
+            producer.start();
 
             monitorarIndexacao();
+
             finalizarIndexacao();
 
         } catch (Exception e) {
             interromperIndexacao();
             throw e;
+
+        } finally {
+            closeItemProducers();
         }
 
         filtrarPalavrasChave();
@@ -250,6 +254,23 @@ public class Manager {
 
     }
 
+    private void closeItemProducers() {
+        if (counter != null) {
+            try {
+                counter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (producer != null) {
+            try {
+                producer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
     private void interromperIndexacao() throws Exception {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
@@ -264,12 +285,12 @@ public class Manager {
             writer.rollback();
         }
 
-        if (contador != null) {
-            contador.interrupt();
+        if (counter != null) {
+            counter.interrupt();
             // contador.join(5000);
         }
-        if (produtor != null) {
-            produtor.interrupt();
+        if (producer != null) {
+            producer.interrupt();
             // produtor.join(5000);
         }
     }
@@ -415,8 +436,8 @@ public class Manager {
                 exception = new IPEDException("Processing canceled!"); //$NON-NLS-1$
             }
 
-            String currentDir = contador.currentDirectory();
-            if (contador.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
+            String currentDir = counter.currentDirectory();
+            if (counter.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -435,7 +456,7 @@ public class Manager {
                  * detectado o problema no log de estatísticas e o usuario sera informado do
                  * erro.
                  */
-                if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || produtor.isAlive()) // if(workers[k].isAlive())
+                if (caseData.getItemQueue().size() > 0 || workers[k].evidence != null || producer.isAlive()) // if(workers[k].isAlive())
                     someWorkerAlive = true;
             }
 
@@ -716,6 +737,8 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
+            // copy default conf folder
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
                     true);
             IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
@@ -730,14 +753,6 @@ public class Manager {
                         .listFiles(new ExeFileFilter()))
                     IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
             }
-            // copia arquivo de assinaturas customizadas
-            IOUtil.copiaArquivo(
-                    new File(Configuration.getInstance().appRoot, "conf/" + Configuration.CUSTOM_MIMES_CONFIG), //$NON-NLS-1$
-                    new File(output, "conf/" + Configuration.CUSTOM_MIMES_CONFIG)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/" + IndexItem.attrTypesFilename), //$NON-NLS-1$
-                    new File(output, "conf/" + IndexItem.attrTypesFilename)); //$NON-NLS-1$
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, "conf/ResultSetViewersConf.xml"), //$NON-NLS-1$
-                    new File(output, "conf/ResultSetViewersConf.xml")); //$NON-NLS-1$
         }
 
         if (palavrasChave != null) {

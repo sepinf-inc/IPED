@@ -1267,4 +1267,16 @@ public class UfedXmlReader extends DataSourceReader {
 
     }
 
+    @Override
+    public void close() throws IOException {
+        if (uisf != null) {
+            uisf.close();
+        }
+        if (ufdr != null) {
+            // not needed by zip4j
+            // ufdr.close();
+        }
+
+    }
+
 }
