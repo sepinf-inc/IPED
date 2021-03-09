@@ -472,7 +472,7 @@ public class HashDBTool {
             config.setEncoding(Encoding.UTF8);
             config.setLockingMode(LockingMode.EXCLUSIVE);
             config.setSynchronous(SynchronousMode.NORMAL);
-            config.setJournalMode(JournalMode.WAL);
+            config.setJournalMode(JournalMode.DELETE);
             config.setOpenMode(SQLiteOpenMode.EXCLUSIVE);
             config.setTransactionMode(TransactionMode.EXCLUSIVE);
             config.enforceForeignKeys(false);
