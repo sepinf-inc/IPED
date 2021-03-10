@@ -5,11 +5,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -67,7 +64,7 @@ public class MinIOTask extends AbstractTask {
     private static String server = "http://127.0.0.1:9000";
     private static String accessKey;
     private static String secretKey;
-    private static String bucket;
+    private static String bucket = null;
 
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
@@ -91,8 +88,9 @@ public class MinIOTask extends AbstractTask {
         server = host + ":" + port;
 
         // case name is default bucket name
-        bucket = output.getParentFile().getName().toLowerCase();
-
+        if (bucket == null) {
+            bucket = output.getParentFile().getName().toLowerCase();
+        }
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
