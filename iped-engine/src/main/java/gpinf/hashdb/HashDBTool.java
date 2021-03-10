@@ -15,6 +15,7 @@ import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -23,14 +24,13 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Encoding;
@@ -512,18 +512,22 @@ public class HashDBTool {
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
         BufferedReader in = null;
-        ZipFile zipFile = null;
+        ZipInputStream zipInput = null;
         try {
             int setPropertyId = type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP ? getPropertyId(setPropertyName) : -1;
             long len = file.length();
             if (type == FileType.NSRL_MAIN_ZIP) {
-                zipFile = new ZipFile(file);
-                ZipEntry entry = zipFile.getEntry(nsrlMainFileName);
-                if (entry != null) {
-                    in = new BufferedReader(new InputStreamReader(zipFile.getInputStream(entry)), 1 << 20);
-                    len = entry.getSize();
-                } else {
-                    System.out.println("ERROR: Invalid NSRL ZIP file " + zipFile.getName() + ", NSRL text file entry not found.");
+                zipInput = new ZipInputStream(new FileInputStream(file));
+                ZipEntry entry = null;
+                while ((entry = zipInput.getNextEntry()) != null) {
+                    if (entry.getName().equalsIgnoreCase(nsrlMainFileName)) {
+                        len = entry.getSize();
+                        in = new BufferedReader(new InputStreamReader(zipInput, StandardCharsets.ISO_8859_1));
+                        break;
+                    }
+                }
+                if (in == null) {
+                    System.out.println("ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
                     return false;
                 }
             } else {
@@ -634,7 +638,7 @@ public class HashDBTool {
                 if (in != null) in.close();
             } catch (Exception e) {}
             try {
-                if (zipFile != null) zipFile.close();
+                if (zipInput != null) zipInput.close();
             } catch (Exception e) {}
         }
         return true;
@@ -944,15 +948,19 @@ public class HashDBTool {
 
     private boolean checkNSRLHeader(File file, FileType type) {
         BufferedReader in = null;
-        ZipFile zipFile = null;
+        ZipInputStream zipInput = null;
         try {
             if (type == FileType.NSRL_MAIN_ZIP) {
-                zipFile = new ZipFile(file);
-                ZipEntry entry = zipFile.getEntry(nsrlMainFileName);
-                if (entry != null) {
-                    in = new BufferedReader(new InputStreamReader(zipFile.getInputStream(entry)));
-                } else {
-                    System.out.println("ERROR: Invalid NSRL ZIP file " + zipFile.getName() + ", NSRL text file entry not found.");
+                zipInput = new ZipInputStream(new FileInputStream(file));
+                ZipEntry entry = null;
+                while ((entry = zipInput.getNextEntry()) != null) {
+                    if (entry.getName().equalsIgnoreCase(nsrlMainFileName)) {
+                        in = new BufferedReader(new InputStreamReader(zipInput, StandardCharsets.ISO_8859_1));
+                        break;
+                    }
+                }
+                if (in == null) {
+                    System.out.println("ERROR: Invalid NSRL ZIP file " + file.getPath() + ", NSRL text file entry not found.");
                     return false;
                 }
             } else {
@@ -989,7 +997,7 @@ public class HashDBTool {
                 if (in != null) in.close();
             } catch (Exception e) {}
             try {
-                if (zipFile != null) zipFile.close();
+                if (zipInput != null) zipInput.close();
             } catch (Exception e) {}
         }
         return true;
