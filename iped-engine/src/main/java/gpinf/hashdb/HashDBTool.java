@@ -1,11 +1,18 @@
 package gpinf.hashdb;
 
-import static gpinf.hashdb.HashDB.*;
+import static gpinf.hashdb.HashDB.hashBytesLen;
+import static gpinf.hashdb.HashDB.hashBytesToStr;
+import static gpinf.hashdb.HashDB.hashStrToBytes;
+import static gpinf.hashdb.HashDB.hashType;
+import static gpinf.hashdb.HashDB.hashTypes;
+import static gpinf.hashdb.HashDB.toSet;
+import static gpinf.hashdb.HashDB.toStr;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileReader;
+import java.io.InputStreamReader;
 import java.io.RandomAccessFile;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -16,11 +23,14 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
 
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Encoding;
@@ -36,6 +46,7 @@ import com.fasterxml.jackson.core.JsonToken;
 
 public class HashDBTool {
     private static final String nsrlMainFileName = "NSRLFile.txt";
+    private static final String nsrlMainZipFileName = "NSRLFile.txt.zip";
     private static final String nsrlProdFileName = "NSRLProd.txt";
     private static final String nsrlProductCode = "ProductCode";
     private static final String nsrlProductName = "ProductName";
@@ -501,10 +512,23 @@ public class HashDBTool {
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
         BufferedReader in = null;
+        ZipFile zipFile = null;
         try {
-            int setPropertyId = type == FileType.NSRL_MAIN ? getPropertyId(setPropertyName) : -1;
+            int setPropertyId = type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP ? getPropertyId(setPropertyName) : -1;
             long len = file.length();
-            in = new BufferedReader(new FileReader(file), 1 << 20);
+            if (type == FileType.NSRL_MAIN_ZIP) {
+                zipFile = new ZipFile(file);
+                ZipEntry entry = zipFile.getEntry(nsrlMainFileName);
+                if (entry != null) {
+                    in = new BufferedReader(new InputStreamReader(zipFile.getInputStream(entry)), 1 << 20);
+                    len = entry.getSize();
+                } else {
+                    System.out.println("ERROR: Invalid NSRL ZIP file " + zipFile.getName() + ", NSRL text file entry not found.");
+                    return false;
+                }
+            } else {
+                in = new BufferedReader(new FileReader(file), 1 << 20);
+            }
             String line = in.readLine();
             String prevLine = line;
             long pos = line.length() + 2;
@@ -522,7 +546,7 @@ public class HashDBTool {
                     colIdx[i] = h;
                     hashCols[numHashCols++] = i;
                 } else {
-                    if (type == FileType.NSRL_MAIN) {
+                    if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
                         if (!col.equals(nsrlProductCode) && !col.equals(nsrlSpecialCode)) continue;
                         if (col.equals(nsrlProductCode)) {
                             nsrlProductCodeCol = i;
@@ -608,6 +632,9 @@ public class HashDBTool {
         } finally {
             try {
                 if (in != null) in.close();
+            } catch (Exception e) {}
+            try {
+                if (zipFile != null) zipFile.close();
             } catch (Exception e) {}
         }
         return true;
@@ -835,7 +862,7 @@ public class HashDBTool {
         for (int i = 0; i < inputs.size(); i++) {
             File file = inputs.get(i);
             FileType type = getFileType(file);
-            if (type == FileType.NSRL_MAIN) {
+            if (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP) {
                 if (!checkNSRLHeader(file, type)) return false;
                 File prodFile = new File(file.getParentFile(), nsrlProdFileName);
                 if (!prodFile.exists() || !prodFile.isFile()) {
@@ -856,12 +883,31 @@ public class HashDBTool {
                 inputs.remove(i--);
             }
         }
+        for (int i = 0; i < inputs.size(); i++) {
+            File f1 = inputs.get(i);
+            FileType t1 = getFileType(f1);
+            if (t1 == FileType.NSRL_MAIN_ZIP && f1.getParentFile() != null) {
+                for (int j = 0; j < inputs.size(); j++) {
+                    File f2 = inputs.get(j);
+                    FileType t2 = getFileType(f2);
+                    if (t2 == FileType.NSRL_MAIN) {
+                        if (f1.getParentFile().equals(f2.getParentFile())) {
+                            //If both TXT and ZIP are present, process only the TXT file
+                            System.out.println("File " + f1.getPath() + " skipped.");
+                            inputs.remove(i--);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
         return true;
     }
 
     private FileType getFileType(File file) {
         String name = file.getName().toLowerCase();
         if (name.equalsIgnoreCase(nsrlMainFileName)) return FileType.NSRL_MAIN;
+        if (name.equalsIgnoreCase(nsrlMainZipFileName)) return FileType.NSRL_MAIN_ZIP;
         if (name.equalsIgnoreCase(nsrlProdFileName)) return FileType.NSRL_PROD;
         if (name.endsWith(".csv")) return FileType.CSV;
         if (name.endsWith(".json") && isProjectVicJson(file)) return FileType.PROJECT_VIC;
@@ -898,8 +944,20 @@ public class HashDBTool {
 
     private boolean checkNSRLHeader(File file, FileType type) {
         BufferedReader in = null;
+        ZipFile zipFile = null;
         try {
-            in = new BufferedReader(new FileReader(file));
+            if (type == FileType.NSRL_MAIN_ZIP) {
+                zipFile = new ZipFile(file);
+                ZipEntry entry = zipFile.getEntry(nsrlMainFileName);
+                if (entry != null) {
+                    in = new BufferedReader(new InputStreamReader(zipFile.getInputStream(entry)));
+                } else {
+                    System.out.println("ERROR: Invalid NSRL ZIP file " + zipFile.getName() + ", NSRL text file entry not found.");
+                    return false;
+                }
+            } else {
+                in = new BufferedReader(new FileReader(file));
+            }
             String line = in.readLine();
             List<String> header = splitLine(line);
             boolean hasHash = false;
@@ -910,7 +968,7 @@ public class HashDBTool {
                 else if (col.equalsIgnoreCase(nsrlProductCode)) hasProductCode = true;
                 else if (col.equalsIgnoreCase(nsrlProductName)) hasProductName = true;
             }
-            if (!hasHash && type == FileType.NSRL_MAIN) {
+            if (!hasHash && (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP)) {
                 System.out.println("ERROR: Invalid NSRL file " + file + ", no hash was found in its header.\n" + line);
                 return false;
             }
@@ -929,6 +987,9 @@ public class HashDBTool {
         } finally {
             try {
                 if (in != null) in.close();
+            } catch (Exception e) {}
+            try {
+                if (zipFile != null) zipFile.close();
             } catch (Exception e) {}
         }
         return true;
@@ -1271,6 +1332,6 @@ public class HashDBTool {
     }
 
     enum FileType {
-        CSV, NSRL_MAIN, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT;
+        CSV, NSRL_MAIN, NSRL_MAIN_ZIP, NSRL_PROD, PROJECT_VIC, UNKNOWN, INPUT;
     }
 }
