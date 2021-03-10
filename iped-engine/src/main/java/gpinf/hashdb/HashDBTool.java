@@ -81,7 +81,7 @@ public class HashDBTool {
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
     private int totIns, totRem, totUpd, totSkip, totComb;
-    private boolean dbExists, skipOpt, inputFolderUsed;
+    private boolean dbExists = true, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
         HashDBTool tool = new HashDBTool();
