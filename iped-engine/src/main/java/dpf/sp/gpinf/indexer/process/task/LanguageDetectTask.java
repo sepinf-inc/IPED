@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -8,9 +10,6 @@ import java.util.Properties;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.io.Reader;
 
 import com.optimaize.langdetect.DetectedLanguage;
 import com.optimaize.langdetect.LanguageDetector;
@@ -20,7 +19,6 @@ import com.optimaize.langdetect.profiles.LanguageProfile;
 import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.process.Worker;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 
@@ -67,6 +65,9 @@ public class LanguageDetectTask extends AbstractTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
+
+        if (!evidence.isToAddToCase())
+            return;
 
         if (evidence.getMediaType().equals(MediaType.OCTET_STREAM))
             return;

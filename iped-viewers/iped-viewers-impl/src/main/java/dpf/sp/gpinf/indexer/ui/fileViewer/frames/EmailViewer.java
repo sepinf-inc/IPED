@@ -44,7 +44,6 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,8 +121,10 @@ public class EmailViewer extends HtmlViewer {
         public void open(int attNum) {
             Object[] att = mch.attachs.get(attNum);
             File file = (File) att[0];
-            this.openFile(file);
-
+            String attachName = (String) att[2];
+            if (IOUtil.isToOpenExternally(attachName, IOUtil.getExtension(file))) {
+                this.openFile(file);
+            }
         }
     }
 
@@ -132,7 +133,7 @@ public class EmailViewer extends HtmlViewer {
         private boolean strictParsing = false;
 
         // private XHTMLContentHandler handler;
-        private Metadata metadata, submd;
+        private Metadata metadata;
         private boolean inPart = false;
 
         File previewFile, bodyFile;
@@ -141,7 +142,7 @@ public class EmailViewer extends HtmlViewer {
         String bodyCharset = "windows-1252"; //$NON-NLS-1$
 
         private String attachName, contentID;
-        private boolean textBody = false, htmlBody = false;
+        private boolean textBody = false, htmlBody = false, isAttach = false;
         private ArrayList<Object[]> attachs = new ArrayList<Object[]>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
@@ -329,7 +330,10 @@ public class EmailViewer extends HtmlViewer {
             Object[] obj = { attach, body.getMimeType(),
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName) }; //$NON-NLS-1$
 
-            if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
+            if (isAttach) {
+                attachs.add(obj);
+
+            } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
                 if (textBody || htmlBody || attachName != null) {
                     attachs.add(obj);
                 } else {
@@ -348,6 +352,7 @@ public class EmailViewer extends HtmlViewer {
                 }
 
             } else {
+                // images (inline or not) and other mimes as attachs
                 attachs.add(obj);
             }
 
@@ -428,7 +433,7 @@ public class EmailViewer extends HtmlViewer {
             if (!inPart) {
                 metadata = this.metadata;
             } else {
-                metadata = submd;
+                metadata = new Metadata();
             }
 
             try {
@@ -497,13 +502,11 @@ public class EmailViewer extends HtmlViewer {
 
                 } else if (fieldname.equalsIgnoreCase("Content-Disposition")) { //$NON-NLS-1$
                     ContentDispositionField ctField = (ContentDispositionField) parsedField;
-                    if (ctField.isAttachment() || ctField.isInline()) {
+                    isAttach = ctField.isAttachment();
+                    if (isAttach || ctField.isInline()) {
                         String name = ctField.getFilename();
                         if (name == null) {
                             name = getRFC2231Value("filename", ctField.getParameters()); //$NON-NLS-1$
-                        }
-                        if (name == null) {
-                            name = Messages.getString("EmailViewer.UnNamed"); //$NON-NLS-1$
                         }
                         if (this.attachName == null) {
                             attachName = name;
@@ -631,8 +634,8 @@ public class EmailViewer extends HtmlViewer {
 
         @Override
         public void startHeader() throws MimeException {
-            submd = new Metadata();
             attachName = null;
+            isAttach = false;
             contentID = null;
         }
 
@@ -661,7 +664,6 @@ public class EmailViewer extends HtmlViewer {
         public void endHeader() throws MimeException {
             if (attachName != null) {
                 attachName = decodeIfUtf8(DecoderUtil.decodeEncodedWords(attachName, DecodeMonitor.SILENT));
-                submd.set(TikaMetadataKeys.RESOURCE_NAME_KEY, attachName);
             }
 
         }

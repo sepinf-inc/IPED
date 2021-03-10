@@ -172,4 +172,33 @@ public class SQLite3DBParser extends AbstractDBParser {
     public JDBCTableReader getTableReader(Connection connection, String tableName, ParseContext context) {
         return new SQLite3TableReader(connection, tableName, context);
     }
+
+    public static boolean checkIfColumnExists(Connection connection, String table, String column) {
+        String query = "SELECT name FROM pragma_table_info('" + table + "')";
+        try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query);) {
+            while (rs.next()) {
+                if (rs.getString(1).equals(column)) {
+                    return true;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
+        int colIdx;
+        try {
+            colIdx = rs.findColumn(col);
+
+        } catch (SQLException e) {
+            // is there an error constant to check this?
+            if (e.toString().contains("no such column"))
+                return null;
+            else
+                throw e;
+        }
+        return rs.getString(colIdx);
+    }
 }

@@ -24,8 +24,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.sql.Connection;
+import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -68,6 +71,7 @@ import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -76,6 +80,7 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.BasicProps;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -83,7 +88,9 @@ public class SleuthkitReader extends DataSourceReader {
 
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
 
+    // TODO update @deleteDatasource() when updating TSK
     public static final String MIN_TSK_VER = "4.6.5";
+
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
     private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
@@ -310,7 +317,6 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.put(image, range);
                     idRangeMap.notify();
                 }
-
             } else if (image.getName().equals(DB_NAME)) {
                 firstId = 0L;
                 lastId = sleuthCase.getLastObjectId();
@@ -321,6 +327,10 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
             } else {
+                if (args.isContinue()) {
+                    deleteDatasource(image);
+                }
+
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("SleuthkitReader.WaitDecode") + image.getAbsolutePath()); //$NON-NLS-1$
                 LOGGER.info("Decoding image {}", image.getAbsolutePath()); //$NON-NLS-1$
@@ -406,6 +416,37 @@ public class SleuthkitReader extends DataSourceReader {
             waitLoadDbThread.join();
 
     }
+    
+    private void deleteDatasource(File image) throws TskCoreException, SQLException {
+        Long sourceId = null;
+        for(Image img : sleuthCase.getImages()) {
+            if(img.getName().equals(image.getName())) {
+                sourceId = img.getId();
+            }
+        }
+        if(sourceId != null) {
+            String queries[] = {
+                    "DELETE FROM tsk_files WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_vs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_vs_parts WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_image_names WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_image_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_fs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_file_layout WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_files_path WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM data_source_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_objects WHERE obj_id >= '" + sourceId + "';"
+            };
+            String dbPath = sleuthCase.getDbDirPath() + File.separator + DB_NAME;
+            try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + dbPath)) {
+                for (String query : queries) {
+                    try (Statement st = conn.createStatement()) {
+                        st.executeUpdate(query);
+                    }
+                }
+            }
+        }
+    }
 
     public int read(File image) throws Exception {
         read(image, null);
@@ -416,6 +457,9 @@ public class SleuthkitReader extends DataSourceReader {
         File file = new File(output, RANGE_ID_FILE);
         UTF8Properties props = new UTF8Properties();
         try {
+            if (file.exists()) {
+                props.load(file);
+            }
             props.setProperty(image.getCanonicalPath() + ":startid", start.toString());
             props.setProperty(image.getCanonicalPath() + ":lastid", last.toString());
             props.store(file);
@@ -544,7 +588,7 @@ public class SleuthkitReader extends DataSourceReader {
             if (id < last)
                 where.append(",");
         }
-        where.append(");");
+        where.append(") ORDER BY obj_id;");
 
         List<AbstractFile> absFiles = findFilesWhere(where.toString());
         where = null;
@@ -618,7 +662,10 @@ public class SleuthkitReader extends DataSourceReader {
     }
 
     private Integer getTskParentId(long id) throws TskCoreException, SQLException {
-        return tskParentIds.get((int) id);
+        Integer parent = tskParentIds.get((int) id);
+        if (parent == null)
+            throw new IPEDException("No parent found for tsk objectId " + id);
+        return parent;
     }
 
     private void cacheTskParentIds(long[] ids) throws TskCoreException, SQLException {
@@ -636,8 +683,12 @@ public class SleuthkitReader extends DataSourceReader {
                 long parId = rs.getLong(2);
                 while (objId >= tskParentIds.size())
                     tskParentIds.add(null);
-                if (parId != 0)
-                    tskParentIds.set((int) objId, (int) parId);
+
+                tskParentIds.set((int) objId, (int) parId);
+                if (parId > objId) {
+                    throw new IPEDException(
+                            "Sleuthkit parentId greater then objectId, please report this unexpected behaviour to iped project.");
+                }
             }
         } finally {
             dbQuery.close();
@@ -783,7 +834,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         boolean first = true;
         Integer tskId = (int) absFile.getId();
-        while ((tskId = getTskParentId(tskId)) != null) {
+        while ((tskId = getTskParentId(tskId)) != 0) {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
@@ -826,9 +877,33 @@ public class SleuthkitReader extends DataSourceReader {
         if (time != 0)
             evidence.setRecordDate(new Date(time * 1000));
 
+        if (absFile.getMetaAddr() != 0) {
+            evidence.setExtraAttribute(BasicProps.META_ADDRESS, Long.toString(absFile.getMetaAddr()));
+        }
+
+        if (absFile.getMetaSeq() != 0) {
+            evidence.setExtraAttribute(BasicProps.MFT_SEQUENCE, Long.toString(absFile.getMetaSeq()));
+        }
+        
+        long fileSystemId = getFileSystemId(absFile);
+        if (fileSystemId != -1) {
+            evidence.setExtraAttribute(BasicProps.FILESYSTEM_ID, Long.toString(fileSystemId));
+        }
+
         caseData.addItem(evidence);
 
         return evidence;
+    }
+
+    private long getFileSystemId(Content content) {
+        if (content instanceof FsContent) {
+            try {
+                return ((FsContent) content).getFileSystem().getId();
+            } catch (TskCoreException e) {
+                e.printStackTrace();
+            }
+        }
+        return -1;
     }
 
     private IItem addEvidenceFile(Content content) throws Exception {
@@ -902,7 +977,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         boolean first = true;
         Integer tskId = (int) content.getId();
-        while ((tskId = getTskParentId(tskId)) != null) {
+        while ((tskId = getTskParentId(tskId)) != 0) {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);

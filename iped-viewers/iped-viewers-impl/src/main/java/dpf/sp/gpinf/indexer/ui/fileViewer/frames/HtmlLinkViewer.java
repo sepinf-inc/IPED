@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.HashSet;
 import java.util.Set;
@@ -12,10 +13,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped3.IItem;
 import iped3.IItemId;
 import iped3.io.IStreamSource;
 import iped3.search.SelectionListener;
@@ -32,6 +36,7 @@ import netscape.javascript.JSObject;
  * @author Nassif
  *
  */
+
 @SuppressWarnings("restriction")
 public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
@@ -99,7 +104,8 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         return WhatsAppParser.WHATSAPP_CHAT.toString().equals(contentType)
                 || SkypeParser.CONVERSATION_MIME_TYPE.toString().equals(contentType)
                 || SkypeParser.FILETRANSFER_MIME_TYPE.toString().equals(contentType)
-                || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType);
+                || UFED_HTML_REPORT_MIME.equals(contentType) || PREVIEW_WITH_LINKS_MIME.equals(contentType)
+                ||TelegramParser.TELEGRAM_CHAT.toString().equals(contentType);
     }
 
     @Override
@@ -124,7 +130,16 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
 
         public void open(final String luceneQuery) {
 
-            File file = attachSearcher.getTmpFile(luceneQuery);
+            IItem item = attachSearcher.getItem(luceneQuery);
+            if (!IOUtil.isToOpenExternally(item.getName(), item.getTypeExt())) {
+                return;
+            }
+            File file = null;
+            try {
+                file = item.getTempFile();
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
             if (file == null) {
                 try {
                     SwingUtilities.invokeAndWait(new Runnable() {

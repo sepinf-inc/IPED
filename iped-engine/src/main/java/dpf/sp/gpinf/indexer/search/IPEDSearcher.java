@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItemId;
+import iped3.exception.ParseException;
+import iped3.exception.QueryNodeException;
 import iped3.search.IIPEDSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
@@ -45,7 +47,6 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     IPEDSource ipedCase;
     Query query;
-    String queryText;
     boolean treeQuery, noScore;
     NoScoringCollector collector;
 
@@ -62,7 +63,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     public IPEDSearcher(IPEDSource ipedCase, String query) {
         this.ipedCase = ipedCase;
-        this.queryText = query;
+        setQuery(query);
     }
 
     public void setTreeQuery(boolean treeQuery) {
@@ -77,8 +78,13 @@ public class IPEDSearcher implements IIPEDSearcher {
         this.query = query;
     }
 
-    public void setQuery(String query) {
-        this.queryText = query;
+    public void setQuery(String queryText) {
+        try {
+            query = new QueryBuilder(ipedCase).getQuery(queryText);
+
+        } catch (ParseException | QueryNodeException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public Query getQuery() {
@@ -112,9 +118,6 @@ public class IPEDSearcher implements IIPEDSearcher {
     public LuceneSearchResult searchAll() throws Exception {
 
         // System.out.println("searching");
-
-        if (query == null)
-            query = new QueryBuilder(ipedCase).getQuery(queryText);
 
         if (!treeQuery)
             query = getNonTreeQuery();

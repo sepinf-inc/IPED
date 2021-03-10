@@ -4,23 +4,22 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
+import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -35,6 +34,7 @@ import org.elasticsearch.client.RestClientBuilder.HttpClientConfigCallback;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.client.indices.CreateIndexRequest;
 import org.elasticsearch.client.indices.CreateIndexResponse;
+import org.elasticsearch.client.indices.GetIndexRequest;
 import org.elasticsearch.client.indices.PutMappingRequest;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.settings.Settings.Builder;
@@ -49,11 +49,19 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import repackaged.org.apache.http.HttpHost;
+import repackaged.org.apache.http.auth.AuthScope;
+import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
+import repackaged.org.apache.http.client.CredentialsProvider;
+import repackaged.org.apache.http.client.config.RequestConfig;
+import repackaged.org.apache.http.impl.client.BasicCredentialsProvider;
+import repackaged.org.apache.http.impl.nio.client.HttpAsyncClientBuilder;
 
 public class ElasticSearchIndexTask extends AbstractTask {
 
@@ -64,6 +72,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
+    private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
@@ -76,8 +85,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String CMD_FIELDS_KEY = "elastic";
     private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
 
+    private static final String INDEX_NAME_KEY = "indexName";
+    private static final String USER_KEY = "user";
+    private static final String PASSWORD_KEY = "password";
+
     private static boolean enabled = false;
     private static String host;
+    private static String protocol;
     private static int port = 9200;
     private static int max_fields = 10000;
     private static int min_bulk_size = 1 << 23;
@@ -96,9 +110,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static HashMap<String, String> cmdLineFields = new HashMap<>();
 
-    private static String user, password;
-
-    private String indexName;
+    private static String user, password, indexName;
 
     private BulkRequest bulkRequest = new BulkRequest();
 
@@ -120,8 +132,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         count.incrementAndGet();
 
-        indexName = output.getParentFile().getName();
-
         if (client != null) {
             return;
         }
@@ -138,7 +148,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
             parseCmdLineFields(cmdFields);
         }
 
-        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, "http"))
+        if (indexName == null) {
+            indexName = output.getParentFile().getName();
+        }
+
+        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
@@ -164,18 +178,33 @@ public class ElasticSearchIndexTask extends AbstractTask {
             throw new IOException("ElasticSearch cluster at " + host + ":" + port + " not responding to ping.");
         }
 
-        createIndex(indexName, args);
+        if (args.isRestart()) {
+            deleteIndex(indexName);
+        }
+        
+        if (!args.isAppendIndex() && !args.isContinue()) {
+            if (indexExists(indexName)) {
+                throw new IPEDException("ElasticSearch index already exists: " + indexName);
+            } else {
+                createIndex(indexName);
+            }
+        } else if (!indexExists(indexName)) {
+            throw new IPEDException("ElasticSearch index does not exist: " + indexName);
+        }
+
     }
 
     private void parseCmdLineFields(String cmdFields) {
         String[] entries = cmdFields.split(";");
         for (String entry : entries) {
             String[] pair = entry.split(":", 2);
-            if ("user".equals(pair[0]))
+            if (USER_KEY.equals(pair[0]))
                 user = pair[1];
-            else if ("password".equals(pair[0]))
+            else if (PASSWORD_KEY.equals(pair[0]))
                 password = pair[1];
-            else
+            else if (INDEX_NAME_KEY.equals(pair[0])) {
+                indexName = pair[1];
+            } else
                 cmdLineFields.put(pair[0], pair[1]);
         }
     }
@@ -187,6 +216,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();
         port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
+        protocol = props.getProperty(PROTOCOL_KEY);
         max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
         min_bulk_size = Integer.valueOf(props.getProperty(MIN_BULK_SIZE_KEY).trim());
         min_bulk_items = Integer.valueOf(props.getProperty(MIN_BULK_ITEMS_KEY).trim());
@@ -199,7 +229,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
 
-    private void createIndex(String indexName, CmdLineArgs args) throws IOException {
+    private boolean indexExists(String indexName) throws IOException {
+        GetIndexRequest request = new GetIndexRequest(indexName);
+        return client.indices().exists(request, RequestOptions.DEFAULT);
+    }
+
+    private void createIndex(String indexName) throws IOException {
+
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
                 .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy);
@@ -214,19 +250,21 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         request.settings(builder);
 
-        try {
-            CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
-            if (!response.isAcknowledged()) {
-                throw new IOException("Creation of index '" + indexName + "'failed!");
-            }
-            createFieldMappings(indexName);
-
-        } catch (ElasticsearchStatusException e) {
-            if (/* !args.isAppendIndex() || */ !e.getDetailedMessage().contains("resource_already_exists_exception")) { //$NON-NLS-1$
-                throw e;
-            }
+        CreateIndexResponse response = client.indices().create(request, RequestOptions.DEFAULT);
+        if (!response.isAcknowledged()) {
+            throw new IOException("Creation of index '" + indexName + "'failed!");
         }
+        createFieldMappings(indexName);
 
+    }
+
+    private void deleteIndex(String indexName) throws IOException {
+        DeleteIndexRequest request = new DeleteIndexRequest(indexName);
+        AcknowledgedResponse deleteIndexResponse = client.indices().delete(request, RequestOptions.DEFAULT);
+        boolean acknowledged = deleteIndexResponse.isAcknowledged();
+        if (!acknowledged) {
+            throw new IOException("Fail to delete index in ElasticSearch: " + indexName);
+        }
     }
 
     private String getLatinExtendedBPattern() {
@@ -244,6 +282,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void createFieldMappings(String indexName) throws IOException {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
+        properties.put(BasicProps.ID, Collections.singletonMap("type", "keyword"));
+        properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
+        properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
@@ -256,6 +297,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
+    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
+
     @Override
     public void finish() throws Exception {
 
@@ -266,13 +309,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
             sendBulkRequest();
         }
 
-        synchronized (lock) {
-            while (numRequests > 0) {
-                lock.wait();
-            }
-        }
+        taskInstances.add(this);
 
         if (count.decrementAndGet() == 0) {
+            for (ElasticSearchIndexTask instance : taskInstances) {
+                synchronized (instance.lock) {
+                    while (instance.numRequests > 0) {
+                        instance.lock.wait();
+                    }
+                }
+            }
+            taskInstances.clear();
             IOUtil.closeQuietly(client);
         }
     }
@@ -280,7 +327,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     protected void process(IItem item) throws Exception {
 
-        Reader textReader = item.getTextReader();
+        Reader textReader = null;
+
+        if (!item.isToAddToCase()) {
+            if (IndexTask.isTreeNodeOnly(item)) {
+                IndexTask.configureTreeNodeAttributes(item);
+                textReader = new StringReader("");
+            } else
+                return;
+        }
+
+        if (textReader == null) {
+            textReader = item.getTextReader();
+        }
+
         if (textReader == null) {
             LOGGER.warn("Null text reader: " + item.getPath() + " ("
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");
@@ -389,15 +449,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
+        String inputStreamSrcPath = getInputStreamSourcePath(item);
+
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field(BasicProps.SUBITEMID, item.getSubitemId())
                 .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
-                .field(IndexItem.SOURCE_PATH, getInputStreamSourcePath(item))
+                .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
                 .field(IndexItem.SOURCE_DECODER,
-                        item.getInputStreamFactory() != null ? item.getInputStreamFactory().getClass().getName() : null)
+                        inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
                 .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
@@ -415,7 +477,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         for (String key : getMetadataKeys(item)) {
-            builder.array(key, item.getMetadata().getValues(key));
+            if (key != null) {
+                builder.array(key, item.getMetadata().getValues(key));
+            }
         }
 
         for (Entry<String, String> entry : cmdLineFields.entrySet()) {
@@ -436,7 +500,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private String getInputStreamSourcePath(IItem item) {
         if (item.getInputStreamFactory() != null) {
-            return Util.getRelativePath(output, item.getInputStreamFactory().getDataSourcePath().toFile());
+            URI uri = item.getInputStreamFactory().getDataSourceURI();
+            if (uri != null) {
+                return Util.getRelativePath(output, uri);
+            }
         }
         return null;
     }

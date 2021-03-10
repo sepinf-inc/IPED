@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
@@ -22,12 +23,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     private ZipFile4j zip;
 
     public ZIPInputStreamFactory(Path dataSource) {
-        super(dataSource);
+        super(dataSource.toUri());
     }
 
     private synchronized void init() throws ZipException {
         if (zip == null) {
-            zip = new ZipFile4j(this.dataSource.toFile());
+            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
         }
     }
 

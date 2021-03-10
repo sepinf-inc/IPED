@@ -32,8 +32,11 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Reader;
+import java.net.URI;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -210,6 +213,14 @@ public class Util {
         else {
             prefix = prefix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
             return new File(prefix, suffix);
+        }
+    }
+
+    public static String getRelativePath(File baseFile, URI uri) {
+        try {
+            return Util.getRelativePath(baseFile, Paths.get(uri).toFile());
+        } catch (FileSystemNotFoundException e) {
+            return uri.toString();
         }
     }
 

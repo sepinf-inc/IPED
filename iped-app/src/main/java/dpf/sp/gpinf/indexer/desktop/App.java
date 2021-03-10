@@ -273,6 +273,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         return new MenuClass();
     }
 
+    public LogConfiguration getLogConfiguration() {
+        return this.logConfiguration;
+    }
+
     public void init(LogConfiguration logConfiguration, boolean isMultiCase, File casesPathFile,
             Manager processingManager) {
 
@@ -584,6 +588,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             treeListener = new TreeListener();
             tree.addTreeSelectionListener(treeListener);
             tree.addTreeExpansionListener(treeListener);
+            tree.addMouseListener(treeListener);
 
             evidencePanel = new JPanel(new BorderLayout());
             evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);

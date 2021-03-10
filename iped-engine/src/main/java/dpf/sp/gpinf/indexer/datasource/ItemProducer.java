@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.datasource;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -91,8 +90,10 @@ public class ItemProducer extends Thread {
 
     @Override
     public void run() {
+        File currSource = null;
         try {
             for (File source : datasources) {
+                currSource = source;
                 if (Thread.interrupted()) {
                     throw new InterruptedException(Thread.currentThread().getName() + " interrupted."); //$NON-NLS-1$
                 }
@@ -125,8 +126,9 @@ public class ItemProducer extends Thread {
             }
             if (!listOnly) {
                 Item evidence = new Item();
+                evidence.setPath("[queue-end]");
                 evidence.setQueueEnd(true);
-                // caseData.addEvidenceFile(evidence);
+                caseData.addItem(evidence);
 
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$
@@ -136,7 +138,8 @@ public class ItemProducer extends Thread {
 
         } catch (Throwable e) {
             if (manager.exception == null) {
-                Exception e1 = new Exception();
+                String source = currSource != null ? currSource.getAbsolutePath() : "";
+                Exception e1 = new Exception("Error decoding datasource " + source);
                 e1.initCause(e);
                 manager.exception = e1;
             }

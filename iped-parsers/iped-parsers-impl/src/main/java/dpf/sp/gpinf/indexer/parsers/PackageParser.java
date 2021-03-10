@@ -90,7 +90,7 @@ public class PackageParser extends AbstractParser {
     private static final MediaType ARJ = MediaType.application("x-arj"); //$NON-NLS-1$
     private static final MediaType OOXML = MediaType.application("x-tika-ooxml"); //$NON-NLS-1$
 
-    private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ, ARJ,
+    public static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(ZIP, JAR, AR, CPIO, DUMP, TAR, SEVENZ, ARJ,
             OOXML);
 
     static MediaType getMediaType(ArchiveInputStream stream) {

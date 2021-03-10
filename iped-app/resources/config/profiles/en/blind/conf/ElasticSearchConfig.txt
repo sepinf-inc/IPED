@@ -11,6 +11,9 @@ host = Sepinf-hpw03
 # Port where Elastic is listening
 port = 9200
 
+# Protocol to use: http or https
+protocol = http
+
 # Number of primary index shards (subindexes) in which each index is broken.
 # Often each index shard goes to a different cluster node. 
 index.number_of_shards = 1

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 
@@ -48,6 +49,7 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -89,13 +91,16 @@ public class UfedXmlReader extends DataSourceReader {
 
     private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
 
+    private static final Set<String> SUPPORTED_APPS = new HashSet<String>(
+            Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
+
     File root, ufdrFile;
     ZipFile4j ufdr;
     UFDRInputStreamFactory uisf;
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
-    boolean ignoreWAChats = false;
+    boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
 
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
@@ -156,7 +161,7 @@ public class UfedXmlReader extends DataSourceReader {
                 return ufdr.getInputStream(xml);
 
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Invalid UFDR file " + file.getAbsolutePath(), e);
             }
         }
         return null;
@@ -212,12 +217,20 @@ public class UfedXmlReader extends DataSourceReader {
         UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
                 .findObjects(UFEDReaderConfig.class).iterator().next();
 
+        // TODO enable TelegramParser for UFDR in next major release
+        if (!TelegramParser.isEnabledForUfdr()) {
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+            SUPPORTED_APPS.remove(TelegramParser.TELEGRAM);
+        }
+
         if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
-            ignoreWAChats = true;
+            ignoreSupportedChats = true;
 
-        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) //$NON-NLS-1$
+        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) { //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
+            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+        }
     }
 
     private void addRootItem(IItem parent) throws InterruptedException {
@@ -299,9 +312,11 @@ public class UfedXmlReader extends DataSourceReader {
 
         HashMap<String, String> extractionInfoMap = new HashMap<String, String>();
 
-        String df2Pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS"; //$NON-NLS-1$
         DateFormat df1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX"); //$NON-NLS-1$
-        DateFormat df2 = new SimpleDateFormat(df2Pattern);
+        DateFormat df2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS"); //$NON-NLS-1$
+        DateFormat df3 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX"); //$NON-NLS-1$
+        DateFormat[] dfs = { df1, df2, df3 };
+
         DateFormat out = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
 
         ArrayList<XmlNode> nodeSeq = new ArrayList<>();
@@ -371,9 +386,31 @@ public class UfedXmlReader extends DataSourceReader {
         @Override
         public void startDocument() throws SAXException {
             // TODO remover timezone da exibição? obter da linha de comando?
-            df2.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
-            df1.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            for (DateFormat df : dfs) {
+                df.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+            }
             out.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
+        }
+
+        private DateFormat lastDateFormat = null;
+
+        private Date parseDate(String value) throws ParseException {
+            if (lastDateFormat != null) {
+                try {
+                    return lastDateFormat.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            for (DateFormat df : dfs) {
+                try {
+                    lastDateFormat = df;
+                    return df.parse(value);
+                } catch (ParseException e) {
+                    // ignore
+                }
+            }
+            throw new ParseException("No dateformat configured for value " + value, 0);
         }
 
         @Override
@@ -633,15 +670,12 @@ public class UfedXmlReader extends DataSourceReader {
                 try {
                     String value = chars.toString().trim();
                     if (!value.isEmpty()) {
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
                         if (nameAttr.equals("CreationTime")) //$NON-NLS-1$
-                            item.setCreationDate(df.parse(value));
+                            item.setCreationDate(parseDate(value));
                         else if (nameAttr.equals("ModifyTime")) //$NON-NLS-1$
-                            item.setModificationDate(df.parse(value));
+                            item.setModificationDate(parseDate(value));
                         else if (nameAttr.equals("AccessTime")) //$NON-NLS-1$
-                            item.setAccessDate(df.parse(value));
+                            item.setAccessDate(parseDate(value));
                         else
                             item.getMetadata().add(ExtraProperties.UFED_META_PREFIX + nameAttr, value);
                     }
@@ -656,19 +690,16 @@ public class UfedXmlReader extends DataSourceReader {
                         String meta = ExtraProperties.UFED_META_PREFIX + parentNameAttr;
                         String type = currentNode.atts.get("type"); //$NON-NLS-1$
                         String value = chars.toString().trim();
-                        DateFormat df = df1;
-                        if (df2Pattern.length() - 2 == value.length())
-                            df = df2;
                         if (type.equals("TimeStamp") && !value.isEmpty()) //$NON-NLS-1$
                             try {
-                                item.getMetadata().add(meta, out.format(df.parse(value)));
+                                item.getMetadata().add(meta, out.format(parseDate(value)));
                             } catch (ParseException e) {
                                 throw new SAXException(e);
                             }
                         else if (item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
-                            if (inChat && ignoreWAChats && parentNameAttr.equals("Source")
-                                    && value.equals("WhatsApp")) {
+                            if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
+                                    && SUPPORTED_APPS.contains(value)) {
                                 ignoreItems = true;
                             }
                         }
@@ -720,8 +751,11 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 } else if ("Chat".equals(type)) { //$NON-NLS-1$
                     String source = item.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Source"); //$NON-NLS-1$
-                    if ("whatsapp".equalsIgnoreCase(source)) //$NON-NLS-1$
+                    if (WhatsAppParser.WHATSAPP.equalsIgnoreCase(source)) // $NON-NLS-1$
                         item.setMediaType(UFEDChatParser.UFED_CHAT_WA_MIME);
+                    if (TelegramParser.TELEGRAM.equalsIgnoreCase(source)) // $NON-NLS-1$
+                        item.setMediaType(UFEDChatParser.UFED_CHAT_TELEGRAM);
+
                     item.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 }
                 if ("InstantMessage".equals(type) || "Email".equals(type) || "Call".equals(type) || "SMS".equals(type) //$NON-NLS-4$

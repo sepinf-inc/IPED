@@ -7,14 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.text.SimpleDateFormat;
 import java.util.Collections;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
-import java.util.TimeZone;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
@@ -95,8 +92,7 @@ public class EdgeWebCacheParser extends AbstractParser {
 
             } catch (Throwable e) {
                 LOGGER.error("Libesedb dll not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
-                        + " will be disabled.");
-                LOGGER.debug("", e);
+                        + " will be disabled.", e);
                 SUPPORTED_TYPES = Collections.EMPTY_SET;
             }
         }
@@ -107,8 +103,7 @@ public class EdgeWebCacheParser extends AbstractParser {
 
             } catch (Throwable e) {
                 LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
-                        + " will be disabled.");
-                LOGGER.debug("", e);
+                        + " will be disabled.", e);
                 SUPPORTED_TYPES = Collections.EMPTY_SET;
             }
     }

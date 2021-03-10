@@ -9,6 +9,8 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.inc.sepinf.UsnJrnl.UsnJrnlParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -45,23 +47,33 @@ public class MimeTypesProcessingOrder {
 
         // must be after sqlite processing to find storage_db.db
         mediaTypes.put(SkypeParser.SKYPE_MIME, 2);
+        
+        //must be processed after all files to link the attachments
+        mediaTypes.put(TelegramParser.TELEGRAM_USER_CONF, 1);
+        mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
+        mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
 
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 1);
-
+       
         mediaTypes.put(WhatsAppParser.WA_DB, 1);
         mediaTypes.put(WhatsAppParser.MSG_STORE, 2);
+        mediaTypes.put(WhatsAppParser.MSG_STORE_2, 3);
         mediaTypes.put(WhatsAppParser.CONTACTS_V2, 1);
         mediaTypes.put(WhatsAppParser.CHAT_STORAGE, 2);
 
         mediaTypes.put(UFEDChatParser.UFED_CHAT_MIME, 1);
-        mediaTypes.put(UFEDChatParser.UFED_CHAT_WA_MIME, 1);
+
+        // avoid NPE when the parser gets the item from parseContext when external
+        // parsing is on
+        mediaTypes.put(UsnJrnlParser.USNJRNL_$J, 1);
 
         return mediaTypes;
     }
 
     private static synchronized void setMediaRegistry() {
+        
         if (mediaRegistry == null) {
             mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
         }

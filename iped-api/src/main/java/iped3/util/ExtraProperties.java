@@ -33,13 +33,17 @@ public class ExtraProperties {
 
     public static final Property MESSAGE_DATE = Property.internalDate(MESSAGE_PREFIX + "Date"); //$NON-NLS-1$
 
+    public static final String PARTICIPANTS = "Participants";
+
+    public static final String CHAT_RECOVERED = "ChatRecovered";
+
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
     public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
 
     public static final String PST_EMAIL_HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
 
-    public static final String WKFF_HITS = "ledKffHits"; //$NON-NLS-1$
+    public static final String CSAM_HASH_HITS = "childPornHashHits"; //$NON-NLS-1$
 
     public static final String P2P_REGISTRY_COUNT = "p2pHistoryEntries"; //$NON-NLS-1$
 

@@ -16,25 +16,29 @@ import dpf.sp.gpinf.indexer.util.FilterOutputStream;
 public class LogConfiguration {
 
     File logFile;
-    String configPath;
+    String rootPath;
     private PrintStream log, out, err;
     private SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss"); //$NON-NLS-1$
 
     public LogConfiguration(String configPath, File log) {
-        this.configPath = configPath;
+        this.rootPath = configPath;
         logFile = log;
     }
 
     public LogConfiguration(IndexFiles indexador, String logPath) {
-        configPath = indexador.configPath;
+        rootPath = indexador.rootPath;
         if (logPath != null) {
             logFile = new File(logPath);
         } else {
             logFile = indexador.logFile;
             if (logFile == null)
-                logFile = new File(indexador.rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
+                logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         indexador.logFile = logFile;
+    }
+
+    public File getLogFile() {
+        return this.logFile;
     }
 
     private boolean setConsoleLogFile(boolean createLogInTemp) {
@@ -80,9 +84,9 @@ public class LogConfiguration {
         System.setProperty("logFileDate", df.format(new Date())); //$NON-NLS-1$
         File configFile = null;
         if (noLog)
-            configFile = new File(configPath, "conf/Log4j2ConfigurationConsoleOnly.xml"); //$NON-NLS-1$
+            configFile = new File(rootPath, "conf/Log4j2ConfigurationConsoleOnly.xml"); //$NON-NLS-1$
         else {
-            configFile = new File(configPath, "conf/Log4j2ConfigurationFile.xml"); //$NON-NLS-1$
+            configFile = new File(rootPath, "conf/Log4j2ConfigurationFile.xml"); //$NON-NLS-1$
             System.setProperty("logFileNamePath", logFile.getPath()); //$NON-NLS-1$
         }
 

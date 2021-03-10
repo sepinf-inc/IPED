@@ -100,6 +100,16 @@ div.viewed {
 	z-index:100;
 }
 
+#topbar.telegram
+{
+	position:fixed;
+	background:#5682a3;
+	border:1px solid #394d4d;
+	width:640px;
+	z-index:100;
+}
+
+
 #topbar .left
 {
 	float: left;
@@ -237,6 +247,13 @@ div.viewed {
 	color: 92998b;
 	float: right;
 	padding-left: 12px;
+	font-size: small;
+}
+#conversation .recovered
+{
+	color: #FF0000;
+	float: left;
+	padding-right: 12px;
 	font-size: small;
 }
 

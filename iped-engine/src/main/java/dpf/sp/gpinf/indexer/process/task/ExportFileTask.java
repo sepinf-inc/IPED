@@ -27,8 +27,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -68,6 +70,7 @@ import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
 
@@ -90,14 +93,12 @@ public class ExportFileTask extends AbstractTask {
 
     private static final byte DB_SUFFIX_BITS = 4; // current impl maximum is 8
 
-    private static final String CREATE_TABLE = "CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB, thumb BLOB, text TEXT);";
+    private static final String CREATE_TABLE1 = "CREATE TABLE IF NOT EXISTS thumbs(id TEXT PRIMARY KEY, thumb BLOB);";
+    private static final String CREATE_TABLE2 = "CREATE TABLE IF NOT EXISTS t1(id TEXT PRIMARY KEY, data BLOB);";
 
     private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
-
-    private static final int MAX_SUBITEM_COMPRESSION = 100;
-    private static final int ZIPBOMB_MIN_SIZE = 10 * 1024 * 1024;
 
     private static HashSet<String> categoriesToExtract = new HashSet<String>();
     public static int subDirCounter = 0, itensExtracted = 0;
@@ -176,9 +177,11 @@ public class ExportFileTask extends AbstractTask {
             try {
                 Connection con = getSQLiteConnection(db);
                 try (Statement stmt = con.createStatement()) {
-                    stmt.executeUpdate(CREATE_TABLE);
+                    stmt.executeUpdate(CREATE_TABLE1);
                 }
-
+                try (Statement stmt = con.createStatement()) {
+                    stmt.executeUpdate(CREATE_TABLE2);
+                }
                 tempStorageCon.put(i, con);
 
             } catch (SQLException e) {
@@ -249,7 +252,8 @@ public class ExportFileTask extends AbstractTask {
                     ((ISleuthKitItem) evidence).setSleuthId(null);
                 }
                 evidence.setExportedFile(null);
-            } else {
+
+            } else if (!MinIOTask.isTaskEnabled() || caseData.isIpedReport()) {
                 extract(evidence);
             }
 
@@ -264,7 +268,7 @@ public class ExportFileTask extends AbstractTask {
                 && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticFileExtractionOn)) {
 
             evidence.setToExtract(true);
-            if (!doNotExport(evidence)) {
+            if (!doNotExport(evidence) && !MinIOTask.isTaskEnabled()) {
                 renameToHash(evidence);
             } else {
                 // just clear path to be indexed, continues to point to file for processing
@@ -274,7 +278,7 @@ public class ExportFileTask extends AbstractTask {
             incItensExtracted();
         }
 
-        if ((hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn()) && !evidence.isToExtract()) {
+        if (isAutomaticFileExtractionOn && !evidence.isToExtract()) {
             evidence.setAddToCase(false);
         }
 
@@ -311,7 +315,6 @@ public class ExportFileTask extends AbstractTask {
         try {
             is = evidence.getBufferedStream();
             extractFile(is, evidence, null);
-            evidence.setFileOffset(-1);
 
         } catch (IOException e) {
             LOGGER.warn("{} Error exporting {} \t{}", Thread.currentThread().getName(), evidence.getPath(), //$NON-NLS-1$
@@ -323,6 +326,9 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void copyViewFile(IItem evidence) {
+        if (!caseData.isIpedReport()) {
+            return;
+        }
         File viewFile = evidence.getViewFile();
         if (viewFile != null) {
             String viewName = viewFile.getName();
@@ -396,6 +402,16 @@ public class ExportFileTask extends AbstractTask {
             }
 
         }
+        if (hash != null && !hash.isEmpty() && !hash.equalsIgnoreCase(evidence.getIdInDataSource())
+                && evidence.getInputStreamFactory() instanceof SQLiteInputStreamFactory) {
+            SQLiteInputStreamFactory sisf = (SQLiteInputStreamFactory) evidence.getInputStreamFactory();
+            try {
+                sisf.renameToHash(evidence.getIdInDataSource(), hash);
+                evidence.setIdInDataSource(hash);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
     }
 
@@ -403,6 +419,7 @@ public class ExportFileTask extends AbstractTask {
         String relativePath = Util.getRelativePath(output, file);
         evidence.setExportedFile(relativePath);
         evidence.setFile(file);
+        evidence.setFileOffset(-1);
         file.setReadOnly();
     }
 
@@ -483,9 +500,10 @@ public class ExportFileTask extends AbstractTask {
                         if (exception != null)
                             throw exception;
 
-                        if (parentSize != null && total >= ZIPBOMB_MIN_SIZE
-                                && total > parentSize * MAX_SUBITEM_COMPRESSION)
-                            throw new IOException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
+                        if (ZipBombException.isZipBomb(parentSize, total)) {
+                            throw new ZipBombException("Potential zip bomb while extracting subitem!"); //$NON-NLS-1$
+                        }
+
                     }
 
                     // must catch generic Exception because of Runtime exceptions while extracting
@@ -517,20 +535,34 @@ public class ExportFileTask extends AbstractTask {
 
     private void insertIntoStorage(IItem evidence, byte[] buf, int len)
             throws InterruptedException, IOException, SQLException, CompressorException {
-        byte[] hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
+        byte[] hash = null;
+        String hashString = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
+        if (hashString != null) {
+            hash = new HashValue(hashString).getBytes();
+        } else {
+            hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
+        }
         int k = getStorageSuffix(hash);
-        HashValue md5 = new HashValue(hash);
+        String id;
         boolean alreadyInDB = false;
-        try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
-            ps.setString(1, md5.toString());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                alreadyInDB = true;
+        // uses id instead of hash if subitems could be ignored and deleted, to not
+        // delete content referenced by other items with same hash
+        if (evidence.isSubItem() && !caseData.isIpedReport() && (MinIOTask.isTaskEnabled() || caseData.containsReport()
+                || DuplicateTask.isIgnoreDuplicatesEnabled())) {
+            id = Integer.toString(evidence.getId());
+        } else {
+            id = hashString != null ? hashString : new HashValue(hash).toString();
+            try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
+                ps.setString(1, id);
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    alreadyInDB = true;
+                }
             }
         }
         if (!alreadyInDB) {
             try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(INSERT_DATA)) {
-                ps.setString(1, md5.toString());
+                ps.setString(1, id);
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 OutputStream gzippedOut = new GzipCompressorOutputStream(baos, getGzipParams());
                 // OutputStream gzippedOut = new LZ4BlockOutputStream(baos);
@@ -543,9 +575,11 @@ public class ExportFileTask extends AbstractTask {
                 ps.executeUpdate();
             }
         }
-        evidence.setIdInDataSource(md5.toString());
+        evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setFile(null);
+        evidence.setFileOffset(-1);
         evidence.setLength((long) len);
     }
 
@@ -559,14 +593,18 @@ public class ExportFileTask extends AbstractTask {
 
         private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
 
+        private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
+
+        private static final String RENAME_ID = "UPDATE t1 SET id=? WHERE id=?;";
+
         private Connection conn;
 
         public SQLiteInputStreamFactory(Path datasource) {
-            super(datasource);
+            super(datasource.toUri());
         }
 
         public SQLiteInputStreamFactory(Path datasource, Connection conn) {
-            super(datasource);
+            super(datasource.toUri());
             this.conn = conn;
         }
 
@@ -578,12 +616,35 @@ public class ExportFileTask extends AbstractTask {
             return false;
         }
 
+        public void renameToHash(String identifier, String hash) throws IOException {
+            try (PreparedStatement ps = conn.prepareStatement(RENAME_ID)) {
+                ps.setString(1, hash);
+                ps.setString(2, identifier);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                if (e.toString().contains("UNIQUE")) {
+                    deleteItemInDataSource(identifier);
+                } else
+                    throw new IOException(e);
+            }
+        }
+
+        @Override
+        public void deleteItemInDataSource(String identifier) throws IOException {
+            try (PreparedStatement ps = conn.prepareStatement(CLEAR_DATA)) {
+                ps.setString(1, identifier);
+                ps.executeUpdate();
+            } catch (SQLException e) {
+                throw new IOException(e);
+            }
+        }
+
         @Override
         public SeekableInputStream getSeekableInputStream(String identifier) throws IOException {
             try {
                 byte[] bytes = null;
                 if (conn == null || conn.isClosed()) {
-                    conn = getSQLiteStorageCon(getDataSourcePath().toFile());
+                    conn = getSQLiteStorageCon(Paths.get(getDataSourceURI()).toFile());
                 }
                 try (PreparedStatement ps = conn.prepareStatement(SELECT_DATA)) {
                     ps.setString(1, identifier);

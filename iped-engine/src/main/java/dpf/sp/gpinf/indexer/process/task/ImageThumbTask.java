@@ -38,6 +38,8 @@ public class ImageThumbTask extends ThumbTask {
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
 
     private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
+    
+    private static final int TIMEOUT_DELTA = 5;
 
     private static final int samplingRatio = 3;
 
@@ -72,11 +74,11 @@ public class ImageThumbTask extends ThumbTask {
 
         String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
-            if (!value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
-                GraphicsMagicConverter.USE_GM = false;
+            if (value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
+                GraphicsMagicConverter.setUseGM(true);
             }
         } else {
-            GraphicsMagicConverter.enabled = false;
+            GraphicsMagicConverter.setEnabled(false);
         }
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -85,7 +87,12 @@ public class ImageThumbTask extends ThumbTask {
 
         value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.TIMEOUT = Integer.valueOf(value.trim());
+            GraphicsMagicConverter.setMinTimeout(Integer.valueOf(value.trim()));
+        }
+
+        value = properties.getProperty("imgConvTimeoutPerMB"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setTimeoutPerMB(Integer.valueOf(value.trim()));
         }
 
         value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
@@ -218,7 +225,8 @@ public class ImageThumbTask extends ThumbTask {
 
         Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
         try {
-            future.get(GraphicsMagicConverter.TIMEOUT + 10, TimeUnit.SECONDS);
+            int timeout = TIMEOUT_DELTA + GraphicsMagicConverter.getTotalTimeout(evidence.getLength());
+            future.get(timeout, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
             future.cancel(true);
@@ -291,7 +299,8 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, true);
+                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, evidence.getLength(),
+                            true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                     dimension = null;

@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -8,17 +10,18 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.io.IOUtils;
+
 import com.beust.jcommander.DynamicParameter;
 import com.beust.jcommander.IParameterValidator;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
-import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
@@ -46,6 +49,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
+
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    private String evidenceToRemove;
 
     @Parameter(names = { "-r",
             "-report" }, description = "FTK3+ report folder", validateWith = FTKReportValidator.class)
@@ -247,6 +253,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         return extraParams;
     }
 
+    public String getEvidenceToRemove() {
+        return evidenceToRemove;
+    }
+
     @Override
     public String getDataSourceName(File datasource) {
         for (int i = 0; i < allArgs.size(); i++) {
@@ -311,13 +321,39 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         try {
             jc.parse(args);
             if (help)
-                printUsageAndExit(jc, null);
+                printUsageAndExit(jc);
 
             allArgs = Arrays.asList(args);
             handleSpecificArgs();
+            checkIfAppendingToCompatibleCase();
 
         } catch (Exception e) {
-            printUsageAndExit(jc, e);
+            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
+            System.exit(1);
+        }
+    }
+
+    private void checkIfAppendingToCompatibleCase() {
+        if (this.isAppendIndex()) {
+            String classpath = outputDir.getAbsolutePath() + "/indexador/lib/iped-search-app.jar"; //$NON-NLS-1$
+            List<String> cmd = new ArrayList<>();
+            cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.redirectErrorStream(true);
+            String line;
+            try {
+                Process process = pb.start();
+                line = IOUtils.readLines(process.getInputStream(), Charset.defaultCharset()).get(0);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            String thisVersion = Versao.APP_VERSION.substring(0, Versao.APP_VERSION.lastIndexOf('.'));
+            String fullVersion = line.replace(Versao.APP_NAME_PREFIX, "").trim();
+            String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
+            if (!version.equals(thisVersion)) {
+                throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");
+            }
         }
     }
 
@@ -330,13 +366,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
     }
 
-    private void printUsageAndExit(JCommander jc, Exception e) {
+    private void printUsageAndExit(JCommander jc) {
         System.out.println(Versao.APP_NAME);
         jc.usage();
-        if (e != null) {
-            System.out.println("Error: " + e.getMessage() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        System.exit(1);
+        System.exit(0);
     }
 
     /**
@@ -355,7 +388,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             System.exit(0);
         }
 
-        if (reportDir == null && (datasources == null || datasources.isEmpty())) {
+        if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 
@@ -410,8 +443,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        System.setProperty("IPED_OUTPUT_DIR", IndexFiles.getInstance().output.getPath().toString()); //$NON-NLS-1$
-        System.setProperty("IPED_IS_PORTABLE", "" + isPortable()); //$NON-NLS-1$
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 
     }

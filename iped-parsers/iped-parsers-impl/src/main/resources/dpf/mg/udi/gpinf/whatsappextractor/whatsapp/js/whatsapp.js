@@ -1,8 +1,9 @@
-function openIfExists(url1, url2){
+function openIfExists(url2, url1){
+    if (navigator.userAgent.search("JavaFX") >= 0) return;
     var img1 = new Image();
     img1.onload = () => window.location = url1;
     img1.onerror = () => window.location = url2;
-    img1.src = url1
+    img1.src = url1;
 }
 
 function createMediaElement(elementType, imgElement) {

@@ -13,7 +13,10 @@
 externalConversionTool = imagemagick
 
 # Timeout(s) para aguardar conversão externa entre formatos de imagem via imagemagick.
-imgConvTimeout = 10
+imgConvTimeout = 20
+
+# Tempo adicional de timeout em segundos por megabyte do arquivo
+imgConvTimeoutPerMB = 2
 
 # Tamanho das miniaturas das imagens geradas no processamento, caso habilitado.
 imgThumbSize = 160

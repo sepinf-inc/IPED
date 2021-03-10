@@ -59,7 +59,9 @@ public class SkypeMessageUrlFile {
     }
 
     public void setCacheFile(IItemBase cacheFile) {
-        this.cacheFile = cacheFile;
+        if (cacheFile.getLength() != null && cacheFile.getLength() > 0) {
+            this.cacheFile = cacheFile;
+        }
     }
 
     public String getUri() {
@@ -78,7 +80,9 @@ public class SkypeMessageUrlFile {
     }
 
     public void setThumbFile(IItemBase thumbFile) {
-        this.thumbFile = thumbFile;
+        if (thumbFile.getLength() != null && thumbFile.getLength() > 0) {
+            this.thumbFile = thumbFile;
+        }
     }
 
 }

@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
 import iped3.io.IStreamSource;
+import iped3.io.SeekableInputStream;
 
 public class ImageViewer extends Viewer implements ActionListener {
 
@@ -105,8 +106,9 @@ public class ImageViewer extends Viewer implements ActionListener {
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
-                    in = new BufferedInputStream(content.getStream());
-                    image = graphicsMagicConverter.getImage(in, 1000);
+                    SeekableInputStream sis = content.getStream();
+                    in = new BufferedInputStream(sis);
+                    image = graphicsMagicConverter.getImage(in, 1000, sis.size());
                 }
 
                 if (image != null) {
@@ -155,6 +157,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void init() {
         graphicsMagicConverter = new GraphicsMagicConverter();
+        graphicsMagicConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
     }
 
     @Override

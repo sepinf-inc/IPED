@@ -19,14 +19,17 @@ import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.LockingMode;
+import org.sqlite.SQLiteOpenMode;
 
+import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.browsers.parsers.ChromeSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser;
 import dpf.inc.sepinf.browsers.parsers.SafariSqliteParser;
+import dpf.inc.sepinf.gdrive.parsers.GDriveMainParser;
 import dpf.inc.sepinf.winx.parsers.WinXTimelineParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 
 /**
  * Detects subtypes of SQLite based on table names.
@@ -54,8 +57,7 @@ public class SQLiteContainerDetector implements Detector {
             header = headerStr.getBytes("UTF-8"); //$NON-NLS-1$
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
-            // avoid creating -wal and -shm files
-            config.setLockingMode(LockingMode.EXCLUSIVE);
+            config.setOpenMode(SQLiteOpenMode.MAIN_DB);
             sqliteConnectionProperties = config.toProperties();
         } catch (UnsupportedEncodingException e) {
             header = headerStr.getBytes();
@@ -69,6 +71,7 @@ public class SQLiteContainerDetector implements Detector {
             return MediaType.OCTET_STREAM;
 
         TemporaryResources tmp = new TemporaryResources();
+        File dbFile = null;
         try {
             TikaInputStream tis = TikaInputStream.get(input, tmp);
 
@@ -81,10 +84,15 @@ public class SQLiteContainerDetector implements Detector {
                 if (prefix[i] != header[i])
                     return MediaType.OCTET_STREAM;
 
-            return detectSQLiteFormat(tis.getFile());
+            dbFile = tis.getFile();
+            return detectSQLiteFormat(dbFile);
 
         } finally {
             tmp.close();
+            if (dbFile != null && IOUtil.isTemporaryFile(dbFile)) {
+                new File(dbFile.getAbsolutePath() + "-wal").delete();
+                new File(dbFile.getAbsolutePath() + "-shm").delete();
+            }
         }
 
     }
@@ -162,6 +170,30 @@ public class SQLiteContainerDetector implements Detector {
         if (tableNames.contains("Activity") && tableNames.contains("Activity_PackageId")
                 && tableNames.contains("ActivityOperation"))
             return WinXTimelineParser.WIN10_TIMELINE;
+        
+        if (tableNames.contains("cloud_graph_entry") &&
+                tableNames.contains("cloud_relations"))
+            return GDriveMainParser.GDRIVE_CLOUD_GRAPH;
+        
+        if (tableNames.contains("cloud_entry") &&
+                tableNames.contains("mapping") &&
+                tableNames.contains("cloud_relations") &&
+                tableNames.contains("local_entry") &&
+                tableNames.contains("local_relations") &&
+                tableNames.contains("volume_info"))
+            return GDriveMainParser.GDRIVE_SNAPSHOT;
+        
+        if (tableNames.contains("global_preferences") ||
+                tableNames.contains("data"))
+            return GDriveMainParser.GDRIVE_ACCOUNT_INFO;
+
+        if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
+                && tableNames.contains("messages") && tableNames.contains("media_v2"))
+            return TelegramParser.TELEGRAM_DB;
+        
+        if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
+                && tableNames.contains("ft41") && tableNames.contains("t18"))
+            return TelegramParser.TELEGRAM_DB_IOS;
 
         return SQLITE_MIME;
 
