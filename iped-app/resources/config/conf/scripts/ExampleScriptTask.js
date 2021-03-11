@@ -12,6 +12,7 @@ function getName(){
 
 /* Do some task initialization, like reading options and cofiguration files.
  * This method is executed before starting the processing of items.
+ * It is executed by each processing thread.
  * @Params
  * confProps:    java properties file with general configuration options
  * configFolder: extra configuration folder, where task can place and load its custom configuration file
@@ -21,6 +22,7 @@ function init(confProps, configFolder){
 }
 
 /* Finish task, maybe cleaning resources. It is executed after processing all items in case.
+ * It is executed by each processing thread.
  * Objects "ipedCase" and "searcher" are shared, so case can be queried for items and bookmarks can be created, for example.
  * TODO: document methods of those objects.
  */
