@@ -18,6 +18,8 @@ Maximum number of face recognition processes to run simultaneously. You can set 
 '''
 maxProcesses = None
 
+numCreatedProcs = 0
+numCreatedProcsLock = threading.Lock()
 
 terminate = fp.terminate
 imgError = fp.imgError
@@ -25,6 +27,7 @@ ping = fp.ping
 
 processQueue = None
 cache = {}
+
 timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
@@ -35,9 +38,6 @@ def createProcessQueue(configDir):
         if maxProcesses is None:
             maxProcesses = numThreads
         processQueue = queue.Queue(maxProcesses)
-        for i in range(maxProcesses):
-            proc = createExternalProcess(configDir)
-            processQueue.put(proc)
 
 # Start external process, check if it is alive and ping to test communication
 def createExternalProcess(configDir):
@@ -139,7 +139,19 @@ class FaceRecognitionTask:
             # If item has no tiff:Orientation attribute
             tiff_orient = 1
 
-            
+        
+        # creates process in parallel
+        numCreatedProcsLock.acquire()
+        global numCreatedProcs
+        if numCreatedProcs < maxProcesses:
+            numCreatedProcs += 1
+            numCreatedProcsLock.release()
+            proc = createExternalProcess(self.configDir)
+            processQueue.put(proc, block=True)
+        else:
+            numCreatedProcsLock.release()
+        
+        
         try:
             proc = processQueue.get(block=True)
             if not pingExternalProcess(proc):
