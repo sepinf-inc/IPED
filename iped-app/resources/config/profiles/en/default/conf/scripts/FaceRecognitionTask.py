@@ -100,11 +100,11 @@ class FaceRecognitionTask:
         
         with timeLock:
             global detectTime, featureTime
-            if detectTime + featureTime > 0:
+            if detectTime + featureTime >= 0:
                 logger.info('Time(s) to detect faces: ' + str(detectTime / maxProcesses))
                 logger.info('Time(s) to get face features: ' + str(featureTime / maxProcesses))
-                detectTime = 0
-                featureTime = 0
+                detectTime = -1
+                featureTime = -1
     
     # Needed because tuples cause ClassNotFoundException on java side later
     def convertTuplesToList(self, tuples):
@@ -142,11 +142,7 @@ class FaceRecognitionTask:
         except:
             # If item has no tiff:Orientation attribute
             tiff_orient = 1
-        
-        
-        #if getExternalProcess() == False:
-        #    logger.error("Error pinging external face recognition process")
-        #    return
+
             
         try:
             proc = processQueue.get(block=True)
