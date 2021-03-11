@@ -26,8 +26,6 @@
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
     
-    <task script="FaceRecognitionTask.py"></task>
-    
     <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.NamedEntityTask"></task>
@@ -40,6 +38,7 @@
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
     <task script="NSFWNudityDetectTask.py"></task>
+    <task script="FaceRecognitionTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>

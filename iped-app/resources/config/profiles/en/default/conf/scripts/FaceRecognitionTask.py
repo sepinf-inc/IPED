@@ -5,9 +5,8 @@
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 '''
 
-import face_recognition as fr
+#import face_recognition as fr
 import os
-import cv2
 import time
 import subprocess
 import numpy as np
@@ -25,7 +24,7 @@ imgError = fp.imgError
 ping = fp.ping
 
 processQueue = None
-cache = None
+cache = {}
 timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
@@ -76,13 +75,9 @@ class FaceRecognitionTask:
     # This method is executed before starting the processing of items.
     def init(self, confProps, configFolder):
         self.enabled = confProps.getProperty('enableFaceRecognition').lower() == 'true'
+        self.configDir = configFolder.getAbsolutePath()
         if not self.enabled:
             return
-        self.configDir = configFolder.getAbsolutePath()
-        global cache
-        if cache is None:
-            from java.util.concurrent import ConcurrentHashMap
-            cache = ConcurrentHashMap()
         createProcessQueue(self.configDir)
         return
             
@@ -113,20 +108,21 @@ class FaceRecognitionTask:
             result.append(list(i))
         return result
     
-    def cacheResults(self, item, locations, encodings):
-        cache.put(item.getHash() + '_locations', locations)
-        cache.put(item.getHash() + '_encodings', encodings)
+    def cacheResults(self, hash, locations, encodings):
+        cache[hash + '_locations'] = locations
+        cache[hash + '_encodings'] = encodings
     
     # This function is executed on all case items
     def process(self, item):
     
+        hash = item.getHash()
         # Only image type items are processed
-        if item.getHash() is None or not item.getMediaType().toString().startswith('image'):
+        if hash is None or not item.getExtraAttribute('hasThumb') or not item.getMediaType().toString().startswith('image'):
             return
         
         #reuse cached results
-        face_locations = cache.get(item.getHash() + '_locations')
-        face_encodings = cache.get(item.getHash() + '_encodings')
+        face_locations = cache.get(hash + '_locations')
+        face_encodings = cache.get(hash + '_encodings')
         if face_locations is not None and face_encodings is not None:
             if len(face_locations) > 0 and len(face_encodings) > 0:
                 item.setExtraAttribute("face_locations", face_locations)
@@ -159,12 +155,18 @@ class FaceRecognitionTask:
             line = proc.stdout.readline().strip()
             if line == imgError:
                 logger.info("Error loading image {} ({} bytes)", item.getPath(), item.getLength())
-                self.cacheResults(item, [], [])
+                self.cacheResults(hash, [], [])
                 return
                 
             num_faces = int(line)
+            
+            t2 = time.time()
+            with timeLock:
+                global detectTime
+                detectTime += t2 - t1
+            
             if num_faces == 0:
-                self.cacheResults(item, [], [])
+                self.cacheResults(hash, [], [])
                 return
             
             face_locations = []
@@ -173,7 +175,6 @@ class FaceRecognitionTask:
                 face_locations.append(eval(line))
             #print('locations ' + str(face_locations))
             
-            t2 = time.time()
             #face_encodings = fr.face_encodings(img, face_locations)
             
             face_encodings = []
@@ -188,18 +189,16 @@ class FaceRecognitionTask:
             #print('encodings ' + str(face_encodings))
             
             t3 = time.time()
+            with timeLock:
+                global featureTime
+                featureTime += t3 - t2
         
         finally:
             processQueue.put(proc, block=True)
-            
-        global detectTime, featureTime
-        with timeLock:
-            detectTime += t2 - t1
-            featureTime += t3 - t2
         
         face_locations = self.convertTuplesToList(face_locations)
         
         item.setExtraAttribute("face_locations", face_locations)
         item.setExtraAttribute("face_encodings", face_encodings)
         
-        self.cacheResults(item, face_locations, face_encodings)
+        self.cacheResults(hash, face_locations, face_encodings)
