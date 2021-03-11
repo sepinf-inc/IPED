@@ -5,6 +5,7 @@
 import face_recognition as fr
 import PIL
 import numpy as np
+import sys
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -14,6 +15,9 @@ ping = "ping"
 
 detection_model = 'hog'
 max_size = 1024
+
+max_files = 2000
+processed_files = 0
 
 # Image rotation, when necessary
 def rotateImg(img, tiff_orient):
@@ -36,12 +40,19 @@ Multiprocessing module does not work with jep-3.9.1.
 '''
 def main():
     while True:
+        global processed_files
+        if processed_files >= max_files:
+            #print("Restarting face recognition process to clean possible resource leaks", file=sys.stderr)
+            break
+        
         line = input()
         if line == terminate:
             break
         if line == ping:
             print(ping, flush=True)
             continue
+        
+        processed_files += 1
         
         tiff_orient = input()
         # library default, double size of image

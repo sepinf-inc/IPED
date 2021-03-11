@@ -52,7 +52,7 @@ def createExternalProcess(configDir):
             proc.kill()
             proc = None
             
-    return None
+    raise Exception("Error creating external face recognition process!")
 
 def pingExternalProcess(proc):
     try:
@@ -61,7 +61,7 @@ def pingExternalProcess(proc):
         if line == ping:
             return True
     except:
-        return False
+        pass
     return False
 
 class FaceRecognitionTask:
