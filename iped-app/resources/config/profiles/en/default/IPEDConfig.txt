@@ -122,7 +122,7 @@ enableImageThumbs = true
 # for visually similar images. "enableImageThumbs" must be enabled.
 enableImageSimilarity = false
 
-# Enables face recognition feature.
+# [Experimental] Enables face recognition feature.
 # You MUST install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
 # Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
