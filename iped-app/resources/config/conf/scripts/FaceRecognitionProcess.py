@@ -13,9 +13,6 @@ terminate = 'terminate_process'
 imgError = "image_error"
 ping = "ping"
 
-detection_model = 'hog'
-max_size = 1024
-
 max_files = 2000
 processed_files = 0
 
@@ -39,6 +36,10 @@ It is executed out of process to workaroung python GIL bottleneck.
 Multiprocessing module does not work with jep-3.9.1.
 '''
 def main():
+    max_size = int(sys.argv[1])
+    detection_model = sys.argv[2]
+    up_sampling = int(sys.argv[3])
+    
     while True:
         global processed_files
         if processed_files >= max_files:
@@ -55,8 +56,7 @@ def main():
         processed_files += 1
         
         tiff_orient = input()
-        # library default, double size of image
-        upsample = 1
+
         scale = 1
         try:
             img = PIL.Image.open(line)
@@ -71,7 +71,7 @@ def main():
                     new_size = (int(size[0] * scale), max_size)
                     
                 img0 = img
-                img = img.resize(new_size, resample=PIL.Image.NEAREST)
+                img = img.resize(new_size, resample=PIL.Image.BILINEAR)
                 upsample = 0
             
         except Exception:
@@ -81,7 +81,7 @@ def main():
         img = np.array(img)
         img = rotateImg(img, int(tiff_orient))
                 
-        face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
+        face_locations = fr.face_locations(img, number_of_times_to_upsample=up_sampling, model=detection_model)
         
         num_faces = len(face_locations)
         print(str(num_faces), flush=True)

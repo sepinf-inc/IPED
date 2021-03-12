@@ -124,7 +124,7 @@ enableImageSimilarity = false
 
 # Enables face recognition feature.
 # You MUST install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
-# It is recommended to use a GPU to speed up the processing time. 
+# Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
 # If enabled, you can search for faces from the analysis interface, check the options menu.
 enableFaceRecognition = false
 

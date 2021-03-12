@@ -15,20 +15,32 @@ import FaceRecognitionProcess as fp
 import traceback
 import platform
 
-'''
-Maximum number of face recognition processes to run simultaneously. You can set if you are having GPU memory problems.
-'''
+# configuration properties
+enableProp = 'enableFaceRecognition'
+configFile = 'FaceRecognitionConfig.txt'
+numFaceRecognitionProcessesProp = 'numFaceRecognitionProcesses'
+maxResolutionProp = 'maxResolution'
+faceDetectionModelProp = 'faceDetectionModel'
+upSamplingProp = 'upSampling'
+
+# External process script
+processScript = 'FaceRecognitionProcess.py'
+
+# Maximum number of face recognition processes to run simultaneously
 maxProcesses = None
-
-numFaceRecognitionProcesses = 'numFaceRecognitionProcesses'
-
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
 
+bin = 'python'
 terminate = fp.terminate
 imgError = fp.imgError
 ping = fp.ping
 
+detection_model = 'hog'
+max_size = 1024
+up_sampling = 1
+
+firstInstance = True
 processQueue = None
 cache = {}
 
@@ -48,10 +60,8 @@ def createExternalProcess(configDir):
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            bin = 'python'
-            if platform.system() == 'Windows':
-                bin = 'pythonw'
-            proc = subprocess.Popen([bin, os.path.join(configDir, 'scripts', 'FaceRecognitionProcess.py')], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+            proc = subprocess.Popen([bin, os.path.join(configDir, 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
+                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
             return proc
@@ -80,15 +90,42 @@ class FaceRecognitionTask:
         return self.enabled
     
     # This method is executed before starting the processing of items.
-    def init(self, confProps, configFolder):
-        self.enabled = confProps.getProperty('enableFaceRecognition').lower() == 'true'
+    def init(self, mainProps, configFolder):
+        self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
         self.configDir = configFolder.getAbsolutePath()
         if not self.enabled:
             return
-        numProcs = confProps.getProperty(numFaceRecognitionProcesses)
-        if numProcs is not None:
-            global maxProcesses
+        
+        # check if was called from gui the first time
+        global maxProcesses, firstInstance
+        numProcs = mainProps.getProperty(numFaceRecognitionProcessesProp)
+        if firstInstance and numProcs is not None:
             maxProcesses = int(numProcs)
+            # hides the terminal on windows gui
+            if platform.system().lower() == 'windows':
+                global bin
+                bin = 'pythonw'
+        firstInstance = False
+        
+        #load configs
+        from java.io import File
+        from dpf.sp.gpinf.indexer.util import UTF8Properties
+        extraProps = UTF8Properties()
+        extraProps.load(File(configFolder, configFile))
+        numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
+        if maxProcesses is None and numProcs is not None:
+            maxProcesses = int(numProcs)
+        maxResolution = extraProps.getProperty(maxResolutionProp)
+        global max_size, detection_model, up_sampling
+        if maxResolution is not None:
+            max_size = int(maxResolution)
+        faceDetectionModel = extraProps.getProperty(faceDetectionModelProp)
+        if faceDetectionModel is not None:
+            detection_model = faceDetectionModel
+        upSampling = extraProps.getProperty(upSamplingProp)
+        if upSampling is not None:
+            up_sampling = int(upSampling)
+        
         createProcessQueue()
         return
             
@@ -103,6 +140,9 @@ class FaceRecognitionTask:
                     proc.wait(2)
                 except:
                     proc.kill()
+                with numCreatedProcsLock:
+                    global numCreatedProcs
+                    numCreatedProcs -= 1
         
         with timeLock:
             global detectTime, featureTime
