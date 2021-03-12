@@ -18,6 +18,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
 import javax.swing.JDialog;
@@ -202,6 +204,25 @@ public class SimilarFacesFilterActions {
 
         protected abstract void onFinish();
 
+        private static void dispose() {
+            if (task != null) {
+                Future<Void> future = executor.submit(new Callable<Void>() {
+                    @Override
+                    public Void call() throws Exception {
+                        // must be called on executor thread
+                        task.finish();
+                        return null;
+                    }
+                });
+                try {
+                    future.get(5, TimeUnit.SECONDS);
+                } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                    e.printStackTrace();
+                }
+            }
+
+        }
+
         @Override
         public byte[] call() throws Exception {
 
@@ -212,6 +233,11 @@ public class SimilarFacesFilterActions {
                     task.setCaseData(new CaseData(0));
                     Configuration.getInstance().properties.setProperty(NUM_PROCESSES, "1");
                     task.init(Configuration.getInstance().properties, new File(moduleDir, "conf"));
+                    Runtime.getRuntime().addShutdownHook(new Thread() {
+                        public void run() {
+                            dispose();
+                        }
+                    });
                 }
 
                 // populate info used by task
