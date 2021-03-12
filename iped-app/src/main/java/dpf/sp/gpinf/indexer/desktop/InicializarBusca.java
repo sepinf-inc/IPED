@@ -83,7 +83,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                     singleCase = new IPEDSource(App.get().casesPathFile);
                 else
                     singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
-                App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
+
+                App.get().appCase = new IPEDMultiSource(singleCase);
             } else
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
 
