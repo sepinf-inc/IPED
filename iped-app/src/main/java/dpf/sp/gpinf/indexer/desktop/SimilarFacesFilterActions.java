@@ -4,11 +4,13 @@ import java.awt.Color;
 import java.awt.Dialog;
 import java.awt.Frame;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -27,10 +29,17 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
+import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.Parser;
+import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.PythonTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
@@ -90,7 +99,15 @@ public class SimilarFacesFilterActions {
                 app.similarFacesRefItem = new Item();
                 app.similarFacesRefItem.setName(file.getName());
                 app.similarFacesRefItem.setFile(file);
-                app.similarFacesRefItem.setMediaType(MediaType.image("unknown"));
+
+                // populates tif orientation if rotated
+                try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
+                    ((Parser) App.get().getAutoParser()).parse(bis, new IgnoreContentHandler(),
+                            app.similarFacesRefItem.getMetadata(), new ParseContext());
+                } catch (IOException | SAXException | TikaException e2) {
+                    e2.printStackTrace();
+                }
+
                 try (InputStream is = new FileInputStream(file)) {
                     BufferedImage img = ImageUtil.getSubSampledImage(is, 100, 100);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -172,6 +189,7 @@ public class SimilarFacesFilterActions {
     private abstract static class FaceFeatureExtractor implements Callable<byte[]> {
 
         private static final String SCRIPT_PATH = TaskInstaller.SCRIPT_BASE + "/FaceRecognitionTask.py";
+        private static final String NUM_PROCESSES = "numFaceRecognitionProcesses";
 
         private static volatile PythonTask task;
         private IItem item;
@@ -189,10 +207,17 @@ public class SimilarFacesFilterActions {
 
             try {
                 if (task == null) {
-                    task = new PythonTask(new File(moduleDir, SCRIPT_PATH));
+                    File script = new File(moduleDir, SCRIPT_PATH);
+                    task = new PythonTask(script);
                     task.setCaseData(new CaseData(0));
+                    Configuration.getInstance().properties.setProperty(NUM_PROCESSES, "1");
                     task.init(Configuration.getInstance().properties, new File(moduleDir, "conf"));
                 }
+
+                // populate info used by task
+                item.setMediaType(MediaType.image("unknown"));
+                item.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
+                item.setHash(DigestUtils.md5Hex(Files.readAllBytes(item.getFile().toPath())));
 
                 task.process(item);
                 // TODO enable when queue end is handled

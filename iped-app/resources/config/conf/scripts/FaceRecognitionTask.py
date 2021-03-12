@@ -12,11 +12,15 @@ import subprocess
 import numpy as np
 import threading, queue
 import FaceRecognitionProcess as fp
+import traceback
+import platform
 
 '''
 Maximum number of face recognition processes to run simultaneously. You can set if you are having GPU memory problems.
 '''
 maxProcesses = None
+
+numFaceRecognitionProcesses = 'numFaceRecognitionProcesses'
 
 numCreatedProcs = 0
 numCreatedProcsLock = threading.Lock()
@@ -32,7 +36,7 @@ timeLock = threading.Lock()
 detectTime = 0
 featureTime = 0
 
-def createProcessQueue(configDir):
+def createProcessQueue():
     global processQueue, maxProcesses
     if processQueue is None:
         if maxProcesses is None:
@@ -44,7 +48,10 @@ def createExternalProcess(configDir):
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen(['python', os.path.join(configDir, 'scripts', 'FaceRecognitionProcess.py')], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+            bin = 'python'
+            if platform.system() == 'Windows':
+                bin = 'pythonw'
+            proc = subprocess.Popen([bin, os.path.join(configDir, 'scripts', 'FaceRecognitionProcess.py')], stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
             return proc
@@ -61,7 +68,7 @@ def pingExternalProcess(proc):
         if line == ping:
             return True
     except:
-        pass
+        traceback.print_exc()
     return False
 
 class FaceRecognitionTask:
@@ -78,7 +85,11 @@ class FaceRecognitionTask:
         self.configDir = configFolder.getAbsolutePath()
         if not self.enabled:
             return
-        createProcessQueue(self.configDir)
+        numProcs = confProps.getProperty(numFaceRecognitionProcesses)
+        if numProcs is not None:
+            global maxProcesses
+            maxProcesses = int(numProcs)
+        createProcessQueue()
         return
             
     # It is executed after processing all items in case.
