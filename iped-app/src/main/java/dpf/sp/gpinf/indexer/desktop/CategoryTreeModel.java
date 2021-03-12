@@ -99,6 +99,7 @@ public class CategoryTreeModel implements TreeModel {
             } else {
                 String query = IndexItem.CATEGORY + ":\"" + name + "\""; //$NON-NLS-1$ //$NON-NLS-2$
                 IPEDSearcher searcher = new IPEDSearcher(App.get().appCase, query);
+                searcher.setNoScoring(true);
                 try {
                     numItems = searcher.multiSearch().getLength();
 
