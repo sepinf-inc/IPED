@@ -25,7 +25,7 @@ def rotateImg(img, tiff_orient):
     elif tiff_orient == 6 or tiff_orient == 7:
         img = np.rot90(img, 3)
     if tiff_orient == 5 or tiff_orient == 7:
-        img = np.flipup(img)
+        img = np.flipud(img)
     elif tiff_orient == 2 or tiff_orient == 4:
         img = np.fliplr(img)
     return img
