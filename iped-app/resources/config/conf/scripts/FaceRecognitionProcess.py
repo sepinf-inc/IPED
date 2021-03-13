@@ -58,6 +58,7 @@ def main():
         tiff_orient = input()
 
         scale = 1
+        upsample = up_sampling
         try:
             img = PIL.Image.open(line)
             img = img.convert('RGB')
@@ -81,7 +82,7 @@ def main():
         img = np.array(img)
         img = rotateImg(img, int(tiff_orient))
                 
-        face_locations = fr.face_locations(img, number_of_times_to_upsample=up_sampling, model=detection_model)
+        face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
         
         num_faces = len(face_locations)
         print(str(num_faces), flush=True)
