@@ -12,6 +12,7 @@ PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 terminate = 'terminate_process'
 imgError = "image_error"
 ping = "ping"
+video = "video"
 
 max_files = 2000
 processed_files = 0
@@ -55,7 +56,14 @@ def main():
         
         processed_files += 1
         
-        tiff_orient = input()
+        code = input()
+        if code == video:
+            isVideo = True
+            tiff_orient = 1
+        else:
+            isVideo = False
+            tiff_orient = int(code)
+            
 
         scale = 1
         upsample = up_sampling
@@ -63,24 +71,25 @@ def main():
             img = PIL.Image.open(line)
             img = img.convert('RGB')
             
-            size = img.size
-            if max(size[0], size[1]) * 2 > max_size:
-                scale = max_size / max(size[0], size[1])
-                if size[0] > size[1]:
-                    new_size = (max_size, int(size[1] * scale))
-                else:
-                    new_size = (int(size[0] * scale), max_size)
-                    
-                img0 = img
-                img = img.resize(new_size, resample=PIL.Image.BILINEAR)
-                upsample = 0
+            if not isVideo:
+                size = img.size
+                if max(size[0], size[1]) * 2 > max_size:
+                    scale = max_size / max(size[0], size[1])
+                    if size[0] > size[1]:
+                        new_size = (max_size, int(size[1] * scale))
+                    else:
+                        new_size = (int(size[0] * scale), max_size)
+                        
+                    img0 = img
+                    img = img.resize(new_size, resample=PIL.Image.BILINEAR)
+                    upsample = 0
             
         except Exception:
             print(imgError, flush=True)
             continue
         
         img = np.array(img)
-        img = rotateImg(img, int(tiff_orient))
+        img = rotateImg(img, tiff_orient)
                 
         face_locations = fr.face_locations(img, number_of_times_to_upsample=upsample, model=detection_model)
         
@@ -96,7 +105,7 @@ def main():
         
         if scale != 1:
             img = np.array(img0)
-            img = rotateImg(img, int(tiff_orient))
+            img = rotateImg(img, tiff_orient)
         
         face_encodings = fr.face_encodings(img, face_locations)
         

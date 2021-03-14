@@ -168,7 +168,7 @@ class FaceRecognitionTask:
     
         hash = item.getHash()
         # Only image type items are processed
-        if hash is None or not item.getExtraAttribute('hasThumb') or not item.getMediaType().toString().startswith('image'):
+        if hash is None or not item.getExtraAttribute('hasThumb'):
             return
         
         #reuse cached results
@@ -181,7 +181,15 @@ class FaceRecognitionTask:
                 return
     
         # Load absolute path
-        img_path = item.getTempFile().getAbsolutePath()
+        isVideo = False
+        mediaType = item.getMediaType().toString()
+        if mediaType.startswith('image'):
+            img_path = item.getTempFile().getAbsolutePath()
+        elif mediaType.startswith('video'):
+            img_path = item.getViewFile().getAbsolutePath()
+            isVideo = True
+        else:
+            return
     
         try:
             # Get tiff:Orientation attribute
@@ -210,7 +218,10 @@ class FaceRecognitionTask:
                 proc = createExternalProcess(self.configDir)
             
             print(img_path, file=proc.stdin, flush=True)
-            print(str(tiff_orient), file=proc.stdin, flush=True)
+            if not isVideo:
+                print(str(tiff_orient), file=proc.stdin, flush=True)
+            else:
+                print(fp.video, file=proc.stdin, flush=True)
                     
             t1 = time.time()
             #face_locations = fr.face_locations(img)

@@ -136,19 +136,25 @@ public class ImageViewer extends Viewer implements ActionListener {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     int orientation = ImageUtil.getOrientation(in);
+                    boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
                     } else {
                         String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
+                            isVideo = true;
+                            if (!highlightTerms.isEmpty()) {
+                                drawRectangles(image, sampling, highlightTerms);
+                            }
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());
                         }
                     }
+                    if (!isVideo && !highlightTerms.isEmpty()) {
+                        drawRectangles(image, sampling, highlightTerms);
+                    }
                 }
-                if (image != null && !highlightTerms.isEmpty()) {
-                    drawRectangles(image, sampling, highlightTerms);
-                }
+
             } catch (IOException e) {
                 e.printStackTrace();
 
