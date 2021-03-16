@@ -77,8 +77,8 @@ def main():
         scale = 1
         upsample = up_sampling
         try:
-            with PIL.Image.open(line) as im:
-                img = convertToRGB(im)
+            img = PIL.Image.open(line)
+            img = convertToRGB(img)
             
             if not isVideo:
                 size = img.size
