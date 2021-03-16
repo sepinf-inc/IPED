@@ -6,7 +6,9 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -21,13 +23,13 @@ public class IPEDCrawler {
         String query = "name:(\"logs.db\" \"contacts.db\" \"contacts2.db\") OR nome:(\"logs.db\" \"contacts.db\" \"contacts2.db\")";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\android-calllogs");
+        File exportFolder = new File("F:\\teste-files\\android-calllogs2");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
         System.out.println("Cases found: " + cases.size());
         AtomicInteger exported = new AtomicInteger(), caseNum = new AtomicInteger();
-        Executor executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
+        ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         if (cases.isEmpty()) {
             System.out.println("No cases found!!!");
             System.exit(0);
@@ -78,6 +80,13 @@ public class IPEDCrawler {
                 }
             });
 
+        }
+        try {
+            executor.shutdown();
+            executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
     }
