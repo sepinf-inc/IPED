@@ -55,15 +55,26 @@ def createProcessQueue():
             maxProcesses = numThreads
         processQueue = queue.Queue(maxProcesses)
 
+def log_stderr(proc):
+    for line in iter(proc.stderr.readline, b''):
+        line = line.strip()
+        if line:
+            logger.info("[FaceRecognitionProcess-" + str(proc.pid) + "] "+ line)
+    proc.stderr.close()
+
 # Start external process, check if it is alive and ping to test communication
 def createExternalProcess(configDir):
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
             proc = subprocess.Popen([bin, os.path.join(configDir, 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
-                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, universal_newlines=True)
+                                    stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
+            from threading import Thread
+            t = Thread(target=log_stderr, args=(proc,))
+            t.daemon = True
+            t.start()
             return proc
         else:
             proc.kill()
