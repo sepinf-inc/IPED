@@ -18,12 +18,14 @@
  */
 package dpf.sp.gpinf.indexer.util;
 
+import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -34,11 +36,13 @@ import java.util.concurrent.TimeoutException;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.io.IOUtils;
+
 import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class GraphicsMagicConverter implements Closeable {
 
-    private static final String RESOLUTION = "resolution"; //$NON-NLS-1$
+    private static final String WIDTH = "width"; //$NON-NLS-1$
     private static final String THREADS = "threads"; //$NON-NLS-1$
     private static final String NUM_THREADS = "numThreads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
@@ -47,7 +51,7 @@ public class GraphicsMagicConverter implements Closeable {
     private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
 
     private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", "96", "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-            RESOLUTION, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$
+            WIDTH, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
@@ -173,7 +177,7 @@ public class GraphicsMagicConverter implements Closeable {
         this.numThreads = threads;
     }
 
-    private String[] getCmd(int resolution) {
+    private String[] getCmd(int width) {
 
         if (!useGM && !imageMagickConfigured) {
             configureImageMagick();
@@ -184,8 +188,8 @@ public class GraphicsMagicConverter implements Closeable {
             if (!toolPath.isEmpty() && i == 0) {
                 cmd[0] = toolPath + "/" + cmd[0]; //$NON-NLS-1$
             }
-            if (cmd[i].equals(RESOLUTION)) {
-                cmd[i] = String.valueOf(resolution);
+            if (cmd[i].equals(WIDTH)) {
+                cmd[i] = String.valueOf(width);
             }
             if (cmd[i].equals(NUM_THREADS)) {
                 cmd[i] = String.valueOf(numThreads);
@@ -194,16 +198,43 @@ public class GraphicsMagicConverter implements Closeable {
         return cmd;
     }
 
-    public BufferedImage getImage(final InputStream in, final int resolution, Long imageSize) {
+    public BufferedImage getImage(final InputStream in, final int width, Long imageSize) {
         try {
-            return getImage(in, resolution, imageSize, false);
+            return getImage(in, width, imageSize, false);
 
         } catch (TimeoutException e) {
             return null;
         }
     }
 
-    public BufferedImage getImage(InputStream in, int resolution, Long imageSize, boolean throwTimeout)
+    public Dimension getDimension(InputStream in) {
+        configureImageMagick();
+
+        ProcessBuilder pb = new ProcessBuilder();
+        pb.environment().put(GM_TEMP_PATH, tmpDir.getAbsolutePath());
+        pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
+        pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
+
+        String[] cmd = { CMD[0], "identify", "-ping", "-format", "%w %h", "-" };
+        if (!toolPath.isEmpty()) {
+            cmd[0] = toolPath + "/" + cmd[0];
+        }
+        try {
+            pb.command(cmd);
+            Process p = pb.start();
+            sendInputStream(in, p);
+            String[] d = IOUtils.readLines(p.getInputStream(), StandardCharsets.ISO_8859_1).get(0).split(" ");
+            Dimension dim = new Dimension(Integer.parseInt(d[0]), Integer.parseInt(d[1]));
+            return dim;
+
+        } catch (IOException e) {
+            e.printStackTrace();
+
+        }
+        return null;
+    }
+
+    public BufferedImage getImage(InputStream in, int width, Long imageSize, boolean throwTimeout)
             throws TimeoutException {
 
         if (!enabled) {
@@ -215,7 +246,7 @@ public class GraphicsMagicConverter implements Closeable {
         pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
 
-        pb.command(getCmd(resolution));
+        pb.command(getCmd(width));
         Process p = null;
         try {
             p = pb.start();
