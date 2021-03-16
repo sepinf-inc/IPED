@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.search;
 
+import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -97,25 +98,25 @@ public class IPEDSearcher implements IIPEDSearcher {
             collector.cancel();
     }
 
-    public SearchResult search() throws Exception {
+    public SearchResult search() throws IOException {
         if (ipedCase instanceof IPEDMultiSource)
-            throw new Exception("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
+            throw new UnsupportedOperationException("Use multiSearch() method for IPEDMultiSource!"); //$NON-NLS-1$
 
         return SearchResult.get(ipedCase, luceneSearch());
     }
 
-    public MultiSearchResult multiSearch() throws Exception {
+    public MultiSearchResult multiSearch() throws IOException {
         if (!(ipedCase instanceof IPEDMultiSource))
-            throw new Exception("Use search() method for only one IPEDSource!"); //$NON-NLS-1$
+            throw new UnsupportedOperationException("Use search() method for only one IPEDSource!"); //$NON-NLS-1$
 
         return MultiSearchResult.get((IPEDMultiSource) ipedCase, luceneSearch());
     }
 
-    public LuceneSearchResult luceneSearch() throws Exception {
+    public LuceneSearchResult luceneSearch() throws IOException {
         return filtrarFragmentos(searchAll());
     }
 
-    public LuceneSearchResult searchAll() throws Exception {
+    public LuceneSearchResult searchAll() throws IOException {
 
         // System.out.println("searching");
 
@@ -158,7 +159,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         return result.build();
     }
 
-    public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) throws Exception {
+    public LuceneSearchResult filtrarFragmentos(LuceneSearchResult prevResult) {
 
         // System.out.println("fragments");
 
@@ -183,8 +184,7 @@ public class IPEDSearcher implements IIPEDSearcher {
 
     }
 
-    private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult)
-            throws Exception {
+    private LuceneSearchResult filtrarFragmentosMulti(IPEDMultiSource ipedCase, LuceneSearchResult prevResult) {
         HashMap<Integer, HashSet<Integer>> duplicates = new HashMap<Integer, HashSet<Integer>>();
         int[] docs = prevResult.getLuceneIds();
         if (prevResult.getLength() <= MAX_SIZE_TO_SCORE) {

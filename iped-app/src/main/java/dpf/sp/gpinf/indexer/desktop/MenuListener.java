@@ -338,6 +338,12 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.similarImagesExternal) {
             SimilarImagesFilterActions.searchSimilarImages(true);
 
+        } else if (e.getSource() == menu.similarFacesCurrent) {
+            SimilarFacesFilterActions.searchSimilarImages(false);
+
+        } else if (e.getSource() == menu.similarFacesExternal) {
+            SimilarFacesFilterActions.searchSimilarImages(true);
+
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();
             if (selIdx != -1) {
