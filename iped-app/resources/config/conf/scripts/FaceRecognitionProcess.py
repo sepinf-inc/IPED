@@ -6,6 +6,7 @@ import face_recognition as fr
 import PIL
 import numpy as np
 import sys
+import traceback
 
 PIL.ImageFile.LOAD_TRUNCATED_IMAGES = True
 
@@ -30,6 +31,14 @@ def rotateImg(img, tiff_orient):
     elif tiff_orient == 2 or tiff_orient == 4:
         img = np.fliplr(img)
     return img
+
+# handles Palette images with Transparency expressed in bytes
+def convertToRGB(image):
+    if image.mode in ("L", "RGB", "P"):
+        t = image.info.get("transparency")
+        if isinstance(t, bytes):
+            image = image.convert('RGBA')
+    return image.convert('RGB')
 
 '''
 Main function of external process which will detect and encode faces.
@@ -68,8 +77,8 @@ def main():
         scale = 1
         upsample = up_sampling
         try:
-            img = PIL.Image.open(line)
-            img = img.convert('RGB')
+            with PIL.Image.open(line) as im:
+                img = convertToRGB(im)
             
             if not isVideo:
                 size = img.size
@@ -86,6 +95,7 @@ def main():
             
         except Exception:
             print(imgError, flush=True)
+            #traceback.print_exc()
             continue
         
         img = np.array(img)
