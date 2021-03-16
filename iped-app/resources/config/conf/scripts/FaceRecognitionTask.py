@@ -59,7 +59,7 @@ def log_stderr(proc):
     for line in iter(proc.stderr.readline, b''):
         line = line.strip()
         if line:
-            logger.info("[FaceRecognitionProcess-" + str(proc.pid) + "] "+ line)
+            logger.info("[FaceRecognitionTask] Process-" + str(proc.pid) + " stderr: " + line)
     proc.stderr.close()
 
 # Start external process, check if it is alive and ping to test communication
@@ -158,8 +158,8 @@ class FaceRecognitionTask:
         with timeLock:
             global detectTime, featureTime
             if detectTime + featureTime >= 0:
-                logger.info('Time(s) to detect faces: ' + str(detectTime / maxProcesses))
-                logger.info('Time(s) to get face features: ' + str(featureTime / maxProcesses))
+                logger.info('[FaceRecognitionTask] Time(s) to detect faces: ' + str(detectTime / maxProcesses))
+                logger.info('[FaceRecognitionTask] Time(s) to get face features: ' + str(featureTime / maxProcesses))
                 detectTime = -1
                 featureTime = -1
     
@@ -239,7 +239,7 @@ class FaceRecognitionTask:
             
             line = proc.stdout.readline().strip()
             if line == imgError:
-                logger.info("Error loading image {} ({} bytes)", item.getPath(), item.getLength())
+                logger.info("[FaceRecognitionTask] Error loading image {} ({} bytes)", item.getPath(), item.getLength())
                 self.cacheResults(hash, [], [])
                 return
                 
