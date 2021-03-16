@@ -333,6 +333,9 @@ public class ExportFileTask extends AbstractTask {
         if (viewFile != null) {
             String viewName = viewFile.getName();
             File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            if (destFile.equals(viewFile)) {
+                return;
+            }
             destFile.getParentFile().mkdirs();
             try {
                 IOUtil.copiaArquivo(viewFile, destFile);
