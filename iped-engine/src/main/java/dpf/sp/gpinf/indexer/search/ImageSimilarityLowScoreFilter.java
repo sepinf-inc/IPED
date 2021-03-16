@@ -1,20 +1,24 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.sp.gpinf.indexer.search;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 
 public class ImageSimilarityLowScoreFilter {
+
     public static MultiSearchResult filter(IMultiSearchResult result) {
+        return filter(result, 1);
+    }
+
+    public static MultiSearchResult filter(IMultiSearchResult result, float minScore) {
         ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int len = result.getLength();
         for (int i = 0; i < len; i++) {
             float score = result.getScore(i);
-            if (score > 1) {
+            if (score > minScore) {
                 filteredItems.add(result.getItem(i));
                 scores.add(score);
             }

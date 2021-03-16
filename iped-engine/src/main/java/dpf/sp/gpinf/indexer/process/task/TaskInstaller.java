@@ -27,7 +27,7 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 public class TaskInstaller {
 
     private static final String TASKS_CONFIG_XML = "conf/TaskInstaller.xml"; //$NON-NLS-1$
-    private static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
+    public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
 
     private File scriptDir;
 

@@ -211,6 +211,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public IItem similarImagesQueryRefItem;
     public List<? extends SortKey> similarImagesPrevSortKeys;
 
+    public SimilarFacesFilterPanel similarFacesFilterPanel;
+    public IItem similarFacesRefItem;
+    public List<? extends SortKey> similarFacesPrevSortKeys;
+
     public File casesPathFile;
     boolean isMultiCase;
     public JLabel status;
@@ -440,11 +444,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         similarImageFilterPanel = new SimilarImagesFilterPanel();
         similarImageFilterPanel.setVisible(false);
+        
+        similarFacesFilterPanel = new SimilarFacesFilterPanel();
+        similarFacesFilterPanel.setVisible(false);
 
         topPanel.add(filtro);
         topPanel.add(filterDuplicates);
         topPanel.add(clearAllFilters);
         topPanel.add(similarImageFilterPanel);
+        topPanel.add(similarFacesFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
         topPanel.add(termo);
         topPanel.add(opcoes);

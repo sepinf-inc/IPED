@@ -104,6 +104,18 @@ public class ImageUtil {
         public boolean value;
     }
 
+    public static final int getSamplingFactor(int w0, int h0, int w, int h) {
+        int sampling = 1;
+        if (w0 > w || h0 > h) {
+            if (w * h0 < w0 * h) {
+                sampling = w0 / w;
+            } else {
+                sampling = h0 / h;
+            }
+        }
+        return sampling;
+    }
+
     // Contribuição do PCF Wladimir e Nassif
     public static BufferedImage getSubSampledImage(InputStream source, int w, int h, BooleanWrapper renderException) {
         ImageInputStream iis = null;
@@ -119,13 +131,8 @@ public class ImageUtil {
 
             int w0 = reader.getWidth(0);
             int h0 = reader.getHeight(0);
-            int sampling = 1;
-            if (w0 > w || h0 > h)
-                if (w * h0 < w0 * h) {
-                    sampling = w0 / w;
-                } else {
-                    sampling = h0 / h;
-                }
+            int sampling = getSamplingFactor(w0, h0, w, h);
+
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
 

@@ -1,9 +1,12 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Toolkit;
 import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
@@ -47,6 +50,8 @@ public class ImageViewer extends Viewer implements ActionListener {
     private JSlider sliderBrightness;
 
     private GraphicsMagicConverter graphicsMagicConverter;
+
+    public static final String HIGHLIGHT_LOCATION = ImageViewer.class.getName() + "HighlightLocation:";
 
     private static final String actionRotLeft = "rotate-left";
     private static final String actionRotRight = "rotate-right";
@@ -97,34 +102,59 @@ public class ImageViewer extends Viewer implements ActionListener {
             InputStream in = null;
             try {
                 in = new BufferedInputStream(content.getStream());
-                image = ImageUtil.getSubSampledImage(in, 2000, 2000);
+
+                Dimension d = null;
+                try (InputStream is = content.getStream()) {
+                    d = ImageUtil.getImageFileDimension(is);
+                }
+                if (d == null) {
+                    try (InputStream is = content.getStream()) {
+                        d = graphicsMagicConverter.getDimension(is);
+                    }
+                }
+
+                int maxDim = 2000;
+                int sampling = d == null ? 1 : ImageUtil.getSamplingFactor(d.width, d.height, maxDim, maxDim);
+                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     image = ImageUtil.getThumb(in);
+                    if (image != null && d != null) {
+                        sampling = ImageUtil.getSamplingFactor(d.width, d.height, image.getWidth(), image.getHeight());
+                    }
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    image = graphicsMagicConverter.getImage(in, 1000, sis.size());
+                    int width = d != null ? d.width / sampling : maxDim;
+                    image = graphicsMagicConverter.getImage(in, width, sis.size());
                 }
-
                 if (image != null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     int orientation = ImageUtil.getOrientation(in);
+                    boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
                     } else {
                         String videoComment = ImageUtil.readJpegMetaDataComment(content.getStream());
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
+                            isVideo = true;
+                            if (!highlightTerms.isEmpty()) {
+                                drawRectangles(image, sampling, highlightTerms);
+                            }
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());
                         }
                     }
+                    if (!isVideo && !highlightTerms.isEmpty()) {
+                        drawRectangles(image, sampling, highlightTerms);
+                    }
                 }
+
             } catch (IOException e) {
                 e.printStackTrace();
 
@@ -134,6 +164,24 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
         toolBar.setVisible(image != null && isToolbarVisible());
         updatePanel(image);
+    }
+
+    private void drawRectangles(BufferedImage img, int sampling, Set<String> highlights) {
+        Graphics2D graph = img.createGraphics();
+        graph.setColor(Color.RED);
+        graph.setStroke(new BasicStroke(4));
+        for (String str : highlights) {
+            if (str.startsWith(HIGHLIGHT_LOCATION + "[") && str.endsWith("]")) {
+                String[] vals = str.substring(HIGHLIGHT_LOCATION.length() + 1, str.length() - 1).split(", ");
+                int top = Integer.parseInt(vals[0]) / sampling;
+                int right = Integer.parseInt(vals[1]) / sampling;
+                int bottom = Integer.parseInt(vals[2]) / sampling;
+                int left = Integer.parseInt(vals[3]) / sampling;
+                graph.drawRect(left, top, right - left, bottom - top);
+            }
+        }
+        graph.dispose();
+
     }
 
     protected void updatePanel(final BufferedImage img) {

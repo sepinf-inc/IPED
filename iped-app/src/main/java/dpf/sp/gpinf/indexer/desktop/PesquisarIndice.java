@@ -38,9 +38,11 @@ import org.slf4j.LoggerFactory;
 import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
@@ -252,6 +254,11 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
                     result = duplicateFilter.filter(result);
                     numFilters++;
+                }
+
+                if (App.get().similarFacesRefItem != null) {
+                    SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
+                    result = sfs.filter(result);
                 }
 
                 saveHighlightTerms();
