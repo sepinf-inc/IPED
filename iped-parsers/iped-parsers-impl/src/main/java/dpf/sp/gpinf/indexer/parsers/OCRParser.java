@@ -62,6 +62,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Pragma;
+import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -236,7 +237,7 @@ public class OCRParser extends AbstractParser {
         db.getParentFile().mkdirs();
         try {
             SQLiteConfig config = new SQLiteConfig();
-            config.setPragma(Pragma.SYNCHRONOUS, "0");
+            config.setSynchronous(SynchronousMode.NORMAL);
             config.setBusyTimeout(3600000);
             conn = config.createConnection("jdbc:sqlite:" + db.getAbsolutePath());
             connMap.put(db, conn);
