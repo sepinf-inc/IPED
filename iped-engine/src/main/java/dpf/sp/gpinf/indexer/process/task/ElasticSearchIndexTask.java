@@ -517,7 +517,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field("extraAttributes", item.getExtraAttributeMap());
 
         for (String key : getMetadataKeys(item)) {
-            if (key != null) {
+            if ("previewInDataSource".equals(key)) {
+                HashMap<String, String> previewInDataSource = new HashMap<>();
+                for (String preview : item.getMetadata().getValues(key)) {
+                    String[] prevIt = preview.split(":");
+                    if (prevIt.length == 2) {
+                        previewInDataSource.put(prevIt[0], prevIt[1]);
+                    }
+                }
+                builder.field(key, previewInDataSource);
+
+            } else if (key != null) {
                 builder.array(key, item.getMetadata().getValues(key));
             }
         }

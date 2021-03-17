@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
@@ -11,6 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,19 +150,8 @@ public class MinIOTask extends AbstractTask {
         
     }
 
-    @Override
-    protected void process(IItem item) throws Exception {
-
-        if (caseData.isIpedReport() || !item.isToAddToCase())
-            return;
-
-        String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
-            return;
-
-        // disable blocking proxy possibly enabled by HtmlViewer
-        ProxySever.get().disable();
-
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -174,11 +165,14 @@ public class MinIOTask extends AbstractTask {
         }
 
         String bucketPath = buildPath(hash);
+        // if preview saves in a preview folder
+        if (preview) {
+            bucketPath = "preview/" + hash;
+        }
         String fullPath = bucket + "/" + bucketPath;
 
         if (exists) {
-            updateDataSource(item, fullPath);
-            return;
+            return fullPath;
         }
 
         // create directory structure
@@ -189,16 +183,70 @@ public class MinIOTask extends AbstractTask {
         }
 
         try {
-            // Upload the file to the bucket with putObject
-            try (InputStream is = item.getBufferedStream()) {
-                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath)
-                        .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
 
-            }
-            updateDataSource(item, fullPath);
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
+                    .contentType(mediatype).build());
+
+            return fullPath;
 
         } catch (Exception e) {
-            logger.error("Error when uploading object " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            throw new Exception("Error when uploading object ");
+        }
+
+
+    }
+
+    public String getMimeType(String name) {
+        String ext = FilenameUtils.getExtension(name).toLowerCase();
+        if (ext.equals("html") || ext.equals("htm")) {
+            return "text/html";
+        }
+        if (ext.equals("jpg") || ext.equals("jpeg")) {
+            return "image/jpeg";
+        }
+
+        // default HTML
+        return "text/html";
+    }
+
+    @Override
+    protected void process(IItem item) throws Exception {
+
+        if (caseData.isIpedReport() || !item.isToAddToCase())
+            return;
+
+        String hash = item.getHash();
+        if (hash == null || hash.isEmpty() || item.getLength() == null)
+            return;
+
+        // disable blocking proxy possibly enabled by HtmlViewer
+        ProxySever.get().disable();
+
+        try (InputStream is = item.getBufferedStream()) {
+            String fullPath = insertItem(hash, is, item.getLength(), item.getMediaType().toString(), false);
+            if (fullPath != null) {
+                updateDataSource(item, fullPath);
+            }
+        }catch (Exception e) {
+            // TODO: handle exception
+            logger.error(e.getMessage() + "File" + item.getPath() + " (" + item.getLength() + " bytes)", e);
+        }
+        if (item.getViewFile() != null) {
+
+            try (InputStream is = new FileInputStream(item.getViewFile())) {
+                String fullPath = insertItem(hash, is, item.getViewFile().length(),
+                        getMimeType(item.getViewFile().getName()), true);
+                if (fullPath != null) {
+                    item.getMetadata().add("previewInDataSource", "idInDataSource:"+fullPath);
+                    item.getMetadata().add("previewInDataSource",
+                            "type:" + getMimeType(item.getViewFile().getName()));
+                }
+            }
+            catch (Exception e) {
+                // TODO: handle exception
+                logger.error(e.getMessage() + "Preview" + item.getViewFile().getPath() + " ("
+                        + item.getViewFile().length() + " bytes)", e);
+            }
         }
 
     }
