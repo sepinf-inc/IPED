@@ -21,7 +21,7 @@ import net.lingala.zip4j.model.FileHeader;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 
-    private static final int MAX_BYTES_CACHED = 1 << 28;
+    private static final int MAX_BYTES_CACHED = 1 << 27;
     
     private static final int MAX_FILES_CACHED = 1 << 9;
     
