@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.dev.data.Item;
 import iped3.IItem;
@@ -159,8 +160,12 @@ public class NamedEntityTask extends AbstractTask {
             if (langScore != null && langScore >= minLangScore)
                 nerParser = nerParserPerLang.get(lang);
         }
-        if (nerParser == null)
+        if (nerParser == null) {
             nerParser = nerParserPerLang.get("default"); //$NON-NLS-1$
+            if (nerParser == null) {
+                throw new IPEDException("No 'default' NER language model configured in " + CONF_FILE);
+            }
+        }
 
         Metadata metadata = evidence.getMetadata();
         String originalContentType = metadata.get(Metadata.CONTENT_TYPE);
@@ -183,6 +188,9 @@ public class NamedEntityTask extends AbstractTask {
                 }
 
                 metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
+                // try to solve #329
+                metadata.remove(null);
+
                 try (InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))) {
 
                     nerParser.parse(is, new IgnoreContentHandler(), metadata, new ParseContext());
