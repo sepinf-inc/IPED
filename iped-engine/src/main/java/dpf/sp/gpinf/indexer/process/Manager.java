@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -133,6 +134,8 @@ public class Manager {
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
 
+    private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
+    
     public static Manager getInstance() {
         return instance;
     }
@@ -272,7 +275,12 @@ public class Manager {
     }
 
     public void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        SleuthkitClient.initSleuthkitServers(dbPath);
+        synchronized (initSleuthkitServers) {
+            if (!initSleuthkitServers.get()) {
+                SleuthkitClient.initSleuthkitServers(dbPath);
+                initSleuthkitServers.set(true);
+            }
+        }
     }
 
     private void shutDownSleuthkitServers() {
