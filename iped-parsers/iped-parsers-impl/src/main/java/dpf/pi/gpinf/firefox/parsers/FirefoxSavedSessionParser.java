@@ -26,6 +26,8 @@ import org.apache.tika.sax.XHTMLContentHandler;
 public class FirefoxSavedSessionParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     private static final MediaType X_FIREFOX_SAVEDSESSION_MIME_TYPE = MediaType.application("x-firefox-savedsession");
+    private static final int MAX_MEM_BYTES = 1 << 27;
+    private static final String MAX_MEM_WARNING = "Byte data exceeds max size allowed to load on memory.";
     private static LZ4Factory factory = null;
     private static Logger LOGGER = LoggerFactory.getLogger(FirefoxSavedSessionParser.class);
 
@@ -173,6 +175,9 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             while ((srcLen = stream.read(streamBuffer)) != -1) {
                 fileContent.write(streamBuffer, 0, srcLen);
                 compressedLength += srcLen;
+                if (compressedLength > MAX_MEM_BYTES) {
+                    throw new TikaException(MAX_MEM_WARNING);
+                }
             }
             compressedFile = fileContent.toByteArray();
 
@@ -195,6 +200,10 @@ public class FirefoxSavedSessionParser extends AbstractParser {
              */
             uncompressedLength = ((int) compressedFile[8] & 0xff) + (((int) compressedFile[9] & 0xff) * (1 << 8))
                     + (((int) compressedFile[10] & 0xff) * (1 << 16)) + (((int) compressedFile[11] & 0xff) * (1 << 24));
+
+            if (uncompressedLength > MAX_MEM_BYTES) {
+                throw new TikaException(MAX_MEM_WARNING);
+            }
             buffer = new byte[uncompressedLength];
 
             /*
