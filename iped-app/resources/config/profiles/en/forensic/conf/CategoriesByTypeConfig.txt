@@ -81,6 +81,8 @@ Virtual disks = application/x-wim-image; application/x-vmdk; application/x-vhd; 
 
 Other disks = application/x-disk-image;
 
+Mozilla Firefox Saved Session = application/x-firefox-savedsession
+
 # UFED
 
 Extraction Summary = application/x-ufed-html-summary

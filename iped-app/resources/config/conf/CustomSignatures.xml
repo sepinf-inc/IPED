@@ -141,6 +141,19 @@
         <sub-class-of type="application/x-browser-registry"/>
     </mime-type>
     
+    <mime-type type="application/x-firefox-mozlz40">
+    	<magic priority="50">
+    		<match value="\x6D\x6F\x7A\x4C\x7A\x34\x30" type="string" offset="0"/>
+    	</magic>
+    </mime-type>
+
+    <mime-type type="application/x-firefox-savedsession">
+        <glob pattern="recovery*.jsonlz4*"/>
+        <glob pattern="previous*.jsonlz4*"/>
+        <glob pattern="upgrade*.jsonlz4*"/>	
+        <sub-class-of type="application/x-firefox-mozlz40"/>	
+    </mime-type>
+    
     <mime-type type="application/x-safari-history-registry">
         <sub-class-of type="application/x-browser-registry"/>
     </mime-type>
