@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 import java.io.ByteArrayOutputStream;
@@ -24,9 +25,10 @@ import org.apache.tika.sax.XHTMLContentHandler;
 
 public class FirefoxSavedSessionParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
-    private static final String X_FIREFOX_SAVEDSESSION_MIME_TYPE = "x-firefox-savedsession";
+    private static final MediaType X_FIREFOX_SAVEDSESSION_MIME_TYPE = MediaType.application("x-firefox-savedsession");
     private static LZ4Factory factory = null;
     private static Logger LOGGER = LoggerFactory.getLogger(FirefoxSavedSessionParser.class);
+
     private final int BLOCK_SIZE = 4096;
     private final short HEADER_OFFSET = 12;
     private final String HEADER_TABLE_HOST = "Host";
@@ -34,14 +36,15 @@ public class FirefoxSavedSessionParser extends AbstractParser {
     private final String HEADER_TABLE_NAME = "Name";
     private final String HEADER_TABLE_COOKIE = "Cookie";
 
+    static {
+        factory = LZ4Factory.safeInstance();
+    }
+
     public FirefoxSavedSessionParser() {
-        if (this.factory == null) {
-            this.factory = LZ4Factory.safeInstance();
-        }
     }
 
     public Set<MediaType> getSupportedTypes(ParseContext context) {
-        return MediaType.set(MediaType.application(X_FIREFOX_SAVEDSESSION_MIME_TYPE));
+        return MediaType.set(X_FIREFOX_SAVEDSESSION_MIME_TYPE);
     }
 
     @Override
@@ -56,19 +59,15 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         try {
             // LOGGER.info("Found a Mozilla JSON LZ4 session file. Trying to parse it...");
             data = decompressLZ4Data(stream, metadata);
-            if (data == null) {
-                LOGGER.info("Couldn't decompress LZ4 file. Null buffer returned.");
-                return;
-            }
-            json = new String(data, "UTF-8");
+            json = new String(data, StandardCharsets.UTF_8);
             jobj = parseMozillaJSON(json);
             xHandler = new XHTMLContentHandler(handler, metadata);
             populateTextTabContent(xHandler, jobj);
 
+        } catch (TikaException | IOException | SAXException e) {
+            throw e;
         } catch (Exception e) {
-            // TODO: handle exception
-            e.printStackTrace();
-            // LOGGER.error("Firefox Parser error: " + e.printStackTrace());
+            throw new TikaException("Could not decode Mozilla JSON LZ4 session file", e);
         }
     }
 
@@ -159,14 +158,13 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         return obj;
     }
 
-    private byte[] decompressLZ4Data(InputStream stream, Metadata metadata) throws IOException {
+    private byte[] decompressLZ4Data(InputStream stream, Metadata metadata) throws IOException, TikaException {
         byte[] buffer = null;
         byte[] compressedFile;
         byte[] streamBuffer = new byte[BLOCK_SIZE];
-        int count = 0;
         int srcLen, compressedLength = 0, uncompressedLength;
         ByteArrayOutputStream fileContent = new ByteArrayOutputStream();
-        LZ4SafeDecompressor myDecompressor = this.factory.safeDecompressor();
+        LZ4SafeDecompressor myDecompressor = factory.safeDecompressor();
         try {
             // -- Thales - Input Stream can block and provide just a part of the content
             // for a single read() call, so let's iterate until we get all the content.
@@ -184,9 +182,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
              * Tika type detection mechanism or Maybe using Detector()...
              */
             if (compressedFile[0] != 0x6D || compressedFile[1] != 0x6F || compressedFile[2] != 0x7A) {
-                LOGGER.info("*** Possible false positive LZ4 Mozilla Firefox file: "
-                        + metadata.get(Metadata.RESOURCE_NAME_KEY));
-                return null;
+                throw getTikaException(metadata, null);
             }
 
             /*
@@ -210,16 +206,25 @@ public class FirefoxSavedSessionParser extends AbstractParser {
              */
             myDecompressor.decompress(compressedFile, HEADER_OFFSET, compressedLength - HEADER_OFFSET, buffer, 0);
 
-        } catch (LZ4Exception lz4Exception) {
-            LOGGER.error("*** Possible false positive LZ4 Mozilla Firefox file: "
-                    + metadata.get(Metadata.RESOURCE_NAME_KEY));
-            lz4Exception.printStackTrace();
-        } catch (Exception e) {
+            return buffer;
+
+        } catch (LZ4Exception | IOException e) {
+            if (e instanceof LZ4Exception) {
+                e.printStackTrace();
+                throw getTikaException(metadata, e);
+            }
             throw e;
-        } finally {
-            myDecompressor = null;
         }
-        return buffer;
+
+    }
+
+    private TikaException getTikaException(Metadata metadata, Exception cause) {
+        TikaException e = new TikaException(
+                "Possible false positive LZ4 Mozilla Firefox file: " + metadata.get(Metadata.RESOURCE_NAME_KEY));
+        if (cause != null) {
+            e.initCause(cause);
+        }
+        return e;
     }
 
 }
