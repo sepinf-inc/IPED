@@ -153,6 +153,8 @@ public class MetadataUtil {
     }
 
     public static final void normalizeMetadata(Metadata metadata) {
+        // remove possible null key (#329)
+        metadata.remove(null);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
         removeIgnorable(metadata);
