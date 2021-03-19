@@ -1063,7 +1063,7 @@
     </mime-type>
 	
 	<mime-type type="html/x-database-table">
-    	<sub-class-of type="html/text"/>
+    	<sub-class-of type="text/html"/>
     </mime-type>
     
    
