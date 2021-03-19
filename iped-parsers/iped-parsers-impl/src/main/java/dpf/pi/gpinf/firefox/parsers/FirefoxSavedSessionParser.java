@@ -180,6 +180,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
                 }
             }
             compressedFile = fileContent.toByteArray();
+            fileContent = null;
 
             /*
              * -- Thales - Work around for false positive. False positive can cause
