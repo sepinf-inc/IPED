@@ -16,10 +16,19 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  * limitations under the License.
  */
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
@@ -28,8 +37,10 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.IOExceptionWithCause;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
@@ -38,6 +49,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
 /**
  * Abstract class that handles iterating through tables within a database.
@@ -51,6 +63,87 @@ abstract class AbstractDBParser extends AbstractParser {
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return null;
+    }
+
+    private static final String newCol(String value, String tag) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<").append(tag).append(">");
+        if (value != null) {
+            sb.append(SimpleHTMLEncoder.htmlEncode(value));
+        }
+        sb.append("</").append(tag).append(">");
+        return sb.toString();
+    }
+
+    private static final String newCol(String value) {
+        return newCol(value, "td");
+    }
+
+    private Metadata parseTables(ContentHandler handler, ParseContext context, String tableName)
+            throws SAXException, IOException, SQLException {
+
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
+        Metadata tableM = new Metadata();
+
+        int nrows = 0, ncols = 0;
+        try (TemporaryResources tmp = new TemporaryResources()) {
+            Path path = tmp.createTempFile();
+            try (OutputStream os = Files.newOutputStream(path);
+                    Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                    PrintWriter out = new PrintWriter(writer);) {
+                JDBCTableReader tableReader = getTableReader(connection, tableName, context);
+                ncols = tableReader.getHeaders().size();
+                out.print("<head>"); //$NON-NLS-1$
+                out.print("<style>"); //$NON-NLS-1$
+                out.print("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
+                out.print("</style>"); //$NON-NLS-1$
+                out.print("</head>"); //$NON-NLS-1$
+
+                out.print("<body>");
+                out.print("<b>");
+                out.print(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName());
+                out.print("</b>");
+                
+                out.print("<table name=\"" + tableReader.getTableName() + "\" >");
+                out.print("<thead>");
+                out.print("<tr>"); //$NON-NLS-1$
+                for (String header : tableReader.getHeaders()) {
+                    out.print(newCol(header, "th"));
+                }
+                out.print("</tr>"); //$NON-NLS-1$
+
+                out.print("</thead>");
+
+                out.print("<tbody>");
+                ResultSet r = tableReader.getTableData();
+                while (r != null && r.next()) {
+                    nrows++;
+                    out.print("<tr>");
+                    for (int i = 1; i <= ncols; i++) {
+                        String text = tableReader.handleCell(r, r.getMetaData(), i, handler, context, false, nrows);
+                        out.print(newCol(text));
+                    }
+                    out.print("</tr>");
+                }
+                out.print("</tbody>");
+                out.print("</table>");
+                out.print("</body>");
+                out.close();
+                tableReader.closeReader();
+
+            }
+            tableM.set(TikaCoreProperties.TITLE, tableName);
+            tableM.set(Database.TABLE_NAME, tableName);
+            tableM.set(Database.COLUMN_COUNT, Integer.toString(ncols));
+            tableM.set(Database.ROW_COUNT, Integer.toString(nrows));
+            InputStream is = new BufferedInputStream(Files.newInputStream(path));
+            extractor.parseEmbedded(is, handler, tableM, false);
+
+            return tableM;
+
+        }
+
     }
 
     @Override
@@ -78,34 +171,44 @@ abstract class AbstractDBParser extends AbstractParser {
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
 
+            xHandler.startElement("table");
+            xHandler.startElement("theader");
+
+            xHandler.startElement("tr");
+
+            xHandler.startElement("th");
+            xHandler.characters("Name");
+            xHandler.endElement("th");
+
+            xHandler.startElement("th");
+            xHandler.characters("Cols");
+            xHandler.endElement("th");
+
+            xHandler.startElement("th");
+            xHandler.characters("Rows");
+            xHandler.endElement("th");
+
+            xHandler.endElement("tr");
+
+            xHandler.endElement("theader");
+
             for (String tableName : tableNames) {
-                JDBCTableReader tableReader = getTableReader(connection, tableName, context);
+                Metadata t = parseTables(xHandler, context, tableName);
+                xHandler.startElement("tr");
 
-                xHandler.startElement("b"); //$NON-NLS-1$
-                xHandler.characters(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName() + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-                xHandler.endElement("b"); //$NON-NLS-1$
+                xHandler.startElement("td");
+                xHandler.characters(tableName);
+                xHandler.endElement("td");
 
-                xHandler.startElement("table", "name", tableReader.getTableName()); //$NON-NLS-1$ //$NON-NLS-2$
-                xHandler.startElement("thead"); //$NON-NLS-1$
-                xHandler.startElement("tr"); //$NON-NLS-1$
-                for (String header : tableReader.getHeaders()) {
-                    xHandler.startElement("th"); //$NON-NLS-1$
-                    xHandler.characters(header);
-                    xHandler.endElement("th"); //$NON-NLS-1$
-                }
-                xHandler.endElement("tr"); //$NON-NLS-1$
-                xHandler.endElement("thead"); //$NON-NLS-1$
-                xHandler.startElement("tbody"); //$NON-NLS-1$
-                while (tableReader.nextRow(xHandler, context)) {
-                    // no-op
-                }
-                xHandler.endElement("tbody"); //$NON-NLS-1$
-                xHandler.endElement("table"); //$NON-NLS-1$
+                xHandler.startElement("td");
+                xHandler.characters(t.get(Database.COLUMN_COUNT));
+                xHandler.endElement("td");
 
-                xHandler.startElement("br"); //$NON-NLS-1$
-                xHandler.endElement("br"); //$NON-NLS-1$
+                xHandler.startElement("td");
+                xHandler.characters(t.get(Database.ROW_COUNT));
+                xHandler.endElement("td");
 
-                tableReader.closeReader();
+                xHandler.endElement("tr");
             }
         } catch (SQLException e) {
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$
