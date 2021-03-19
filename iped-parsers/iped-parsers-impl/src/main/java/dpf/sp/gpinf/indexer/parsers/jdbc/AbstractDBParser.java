@@ -48,6 +48,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
@@ -57,6 +58,8 @@ import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 abstract class AbstractDBParser extends AbstractParser {
 
     private final static byte[] EMPTY_BYTE_ARR = new byte[0];
+
+    public static final MediaType TABLE_REPORT = MediaType.parse("html/x-database-table");
 
     private Connection connection;
 
@@ -133,6 +136,7 @@ abstract class AbstractDBParser extends AbstractParser {
                 tableReader.closeReader();
 
             }
+            tableM.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
             tableM.set(TikaCoreProperties.TITLE, tableName);
             tableM.set(Database.TABLE_NAME, tableName);
             tableM.set(Database.COLUMN_COUNT, Integer.toString(ncols));
