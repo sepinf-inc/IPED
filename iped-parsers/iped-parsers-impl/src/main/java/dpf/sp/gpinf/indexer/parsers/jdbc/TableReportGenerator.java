@@ -55,58 +55,55 @@ public class TableReportGenerator {
     }
 
     public InputStream createHtmlReport(int maxRows, ContentHandler handler,
-            ParseContext context)
+            ParseContext context, TemporaryResources tmp)
             throws IOException, SQLException, SAXException {
         rows = 0;
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            Path path = tmp.createTempFile();
-            try (OutputStream os = Files.newOutputStream(path);
-                    Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-                    PrintWriter out = new PrintWriter(writer);) {
-                cols = tableReader.getHeaders().size();
+        Path path = tmp.createTempFile();
+        try (OutputStream os = Files.newOutputStream(path);
+                Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
+                PrintWriter out = new PrintWriter(writer);) {
+            cols = tableReader.getHeaders().size();
 
-                out.print("<head>"); //$NON-NLS-1$
-                out.print("<style>"); //$NON-NLS-1$
-                out.print("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
-                out.print("</style>"); //$NON-NLS-1$
-                out.print("</head>"); //$NON-NLS-1$
+            out.print("<head>"); //$NON-NLS-1$
+            out.print("<style>"); //$NON-NLS-1$
+            out.print("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
+            out.print("</style>"); //$NON-NLS-1$
+            out.print("</head>"); //$NON-NLS-1$
 
-                out.print("<body>");
-                out.print("<b>");
-                out.print(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName());
-                out.print("</b>");
-                
-                out.print("<table name=\"" + tableReader.getTableName() + "\" >");
-                out.print("<thead>");
-                out.print("<tr>"); //$NON-NLS-1$
-                for (String header : tableReader.getHeaders()) {
-                    out.print(newCol(header, "th"));
-                }
-                out.print("</tr>"); //$NON-NLS-1$
+            out.print("<body>");
+            out.print("<b>");
+            out.print(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName());
+            out.print("</b>");
 
-                out.print("</thead>");
-
-                out.print("<tbody>");
-
-                while (data != null && data.next() && rows < maxRows) {
-                    rows++;
-                    out.print("<tr>");
-                    for (int i = 1; i <= cols; i++) {
-                        String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, false,
-                                rows);
-                        out.print(newCol(text));
-                    }
-                    out.print("</tr>");
-                }
-                totRows += rows;
-                out.print("</tbody>");
-                out.print("</table>");
-                out.print("</body>");
-                out.close();
-
+            out.print("<table name=\"" + tableReader.getTableName() + "\" >");
+            out.print("<thead>");
+            out.print("<tr>"); //$NON-NLS-1$
+            for (String header : tableReader.getHeaders()) {
+                out.print(newCol(header, "th"));
             }
-            return Files.newInputStream(path);
+            out.print("</tr>"); //$NON-NLS-1$
+
+            out.print("</thead>");
+
+            out.print("<tbody>");
+
+            while (data != null && data.next() && rows < maxRows) {
+                rows++;
+                out.print("<tr>");
+                for (int i = 1; i <= cols; i++) {
+                    String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, false, rows);
+                    out.print(newCol(text));
+                }
+                out.print("</tr>");
+            }
+            totRows += rows;
+            out.print("</tbody>");
+            out.print("</table>");
+            out.print("</body>");
+            out.close();
+
         }
+        return Files.newInputStream(path);
 
     }
 
