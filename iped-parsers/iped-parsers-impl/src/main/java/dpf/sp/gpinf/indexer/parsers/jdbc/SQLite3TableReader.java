@@ -53,6 +53,8 @@ class SQLite3TableReader extends JDBCTableReader {
 
     DateFormat df = new SimpleDateFormat(Messages.getString("SQLite3TableReader.DateFormat"), Locale.ROOT); //$NON-NLS-1$
 
+    private boolean dateGuessed = false;
+
     public SQLite3TableReader(Connection connection, String tableName, ParseContext context) {
         super(connection, tableName, context);
         df.setTimeZone(TimeZone.getTimeZone("UTC")); //$NON-NLS-1$
@@ -199,6 +201,7 @@ class SQLite3TableReader extends JDBCTableReader {
 
             if (val > 0 && dateFormats[col] != 0) {
                 text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
+                dateGuessed = true;
             }
         }
 
@@ -214,5 +217,10 @@ class SQLite3TableReader extends JDBCTableReader {
         java.sql.Date d = new java.sql.Date(Long.parseLong(longString));
         return df.format(d);
 
+    }
+
+    @Override
+    public boolean hasDateGuessed() {
+        return dateGuessed;
     }
 }

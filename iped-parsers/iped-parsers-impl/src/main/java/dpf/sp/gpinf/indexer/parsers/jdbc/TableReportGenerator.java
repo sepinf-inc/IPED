@@ -108,6 +108,11 @@ public class TableReportGenerator {
             totRows += rows;
             out.print("</tbody>");
             out.print("</table>");
+
+            if (tableReader.hasDateGuessed()) {
+                out.print(Messages.getString("AbstractDBParser.ProbableDate")); //$NON-NLS-1$
+            }
+
             out.print("</body>");
             
             out.close();

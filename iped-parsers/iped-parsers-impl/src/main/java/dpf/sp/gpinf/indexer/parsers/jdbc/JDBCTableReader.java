@@ -78,6 +78,10 @@ class JDBCTableReader {
         this.ex = AbstractDBParser.getEmbeddedDocumentExtractor(context);
     }
 
+    public boolean hasDateGuessed() {
+        return false;
+    }
+
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
         // lazy initialization
         if (results == null) {
