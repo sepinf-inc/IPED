@@ -28,6 +28,7 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.io.IOExceptionWithCause;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Database;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -66,20 +67,21 @@ abstract class AbstractDBParser extends AbstractParser {
 
         TableReportGenerator trg = new TableReportGenerator(reader);
         int table_fragment = 0;
+        TemporaryResources tmp = new TemporaryResources();
         do {
-
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             Metadata tableM = new Metadata();
-            InputStream is = trg.createHtmlReport(HTML_MAX_ROWS, handler, context);
-            ++table_fragment;
-            tableM.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
-            tableM.set(TikaCoreProperties.TITLE, reader.getTableName() + "_" + table_fragment);
-            tableM.set(Database.TABLE_NAME, reader.getTableName());
-            tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
-            tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
+            try (InputStream is = trg.createHtmlReport(HTML_MAX_ROWS, handler, context, tmp)) {
+                ++table_fragment;
+                tableM.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
+                tableM.set(TikaCoreProperties.TITLE, reader.getTableName() + "_" + table_fragment);
+                tableM.set(Database.TABLE_NAME, reader.getTableName());
+                tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
+                tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
 
-            extractor.parseEmbedded(is, handler, tableM, false);
+                extractor.parseEmbedded(is, handler, tableM, false);
+            }
 
         } while (trg.getRows() == HTML_MAX_ROWS);
         return trg.getTotRows();
