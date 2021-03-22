@@ -95,10 +95,6 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             xHandler.startElement("tr"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters(""); //$NON-NLS-1$
-            xHandler.endElement("th"); //$NON-NLS-1$
-
-            xHandler.startElement("th"); //$NON-NLS-1$
             xHandler.characters(HEADER_TABLE_HOST); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
