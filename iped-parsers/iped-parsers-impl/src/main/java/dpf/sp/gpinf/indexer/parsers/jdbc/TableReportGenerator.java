@@ -24,6 +24,7 @@ public class TableReportGenerator {
 
     private ResultSet data;
     private int cols, rows, totRows;
+    private Boolean hasNext;
 
     public int getCols() {
         return cols;
@@ -87,19 +88,28 @@ public class TableReportGenerator {
 
             out.print("<tbody>");
 
-            while (data != null && data.next() && rows < maxRows) {
-                rows++;
-                out.print("<tr>");
-                for (int i = 1; i <= cols; i++) {
-                    String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, false, rows);
-                    out.print(newCol(text));
-                }
-                out.print("</tr>");
+            if (totRows == 0) {
+                next();
             }
+
+            if (hasNext) {
+                do {
+                    rows++;
+                    out.print("<tr>");
+                    for (int i = 1; i <= cols; i++) {
+                        String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, false,
+                                rows);
+                        out.print(newCol(text));
+                    }
+                    out.print("</tr>");
+                } while (next() && rows < maxRows);
+            }
+
             totRows += rows;
             out.print("</tbody>");
             out.print("</table>");
             out.print("</body>");
+            
             out.close();
 
         }
@@ -110,4 +120,13 @@ public class TableReportGenerator {
     public int getTotRows() {
         return totRows;
     }
+
+    public Boolean hasNext() {
+        return hasNext;
+    }
+
+    private boolean next() throws SQLException {
+        return hasNext = data != null && data.next();
+    }
+
 }
