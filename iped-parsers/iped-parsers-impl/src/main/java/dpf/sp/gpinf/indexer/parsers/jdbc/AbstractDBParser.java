@@ -118,10 +118,6 @@ abstract class AbstractDBParser extends AbstractParser {
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
 
-            xHandler.characters(Messages.getString("AbstractDBParser.ProbableDate")); //$NON-NLS-1$
-            xHandler.startElement("br"); //$NON-NLS-1$
-            xHandler.startElement("br"); //$NON-NLS-1$
-
             xHandler.startElement("table");
             xHandler.startElement("theader");
 
