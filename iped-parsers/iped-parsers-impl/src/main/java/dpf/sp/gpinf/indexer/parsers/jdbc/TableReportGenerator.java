@@ -97,8 +97,7 @@ public class TableReportGenerator {
                     rows++;
                     out.print("<tr>");
                     for (int i = 1; i <= cols; i++) {
-                        String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, false,
-                                rows);
+                        String text = tableReader.handleCell(data, data.getMetaData(), i, handler, context, rows);
                         out.print(newCol(text));
                     }
                     out.print("</tr>");

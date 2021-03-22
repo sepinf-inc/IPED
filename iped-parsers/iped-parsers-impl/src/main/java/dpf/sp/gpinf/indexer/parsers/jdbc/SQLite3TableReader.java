@@ -76,7 +76,7 @@ class SQLite3TableReader extends JDBCTableReader {
      */
     @Override
     protected String handleClob(String tableName, String fieldName, int rowNum, ResultSet resultSet, int columnIndex,
-            ContentHandler handler, ParseContext context, boolean insertHMTL)
+            ContentHandler handler, ParseContext context)
             throws SQLException, IOException, SAXException {
         // no-op for now.
         return null;
@@ -179,8 +179,7 @@ class SQLite3TableReader extends JDBCTableReader {
     }
 
     @Override
-    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int col, ContentHandler handler,
-            boolean insertHMTL)
+    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int col, ContentHandler handler)
             throws SQLException, SAXException {
 
         String text = null;
@@ -203,10 +202,6 @@ class SQLite3TableReader extends JDBCTableReader {
                 text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
                 dateGuessed = true;
             }
-        }
-
-        if (insertHMTL) {
-            addAllCharacters(text, handler);
         }
 
         return text;
