@@ -198,7 +198,7 @@ class SQLite3TableReader extends JDBCTableReader {
             text = Long.toString(val);
 
             if (val > 0 && dateFormats[col] != 0) {
-                text += text = Long.toString(val);
+                text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
             }
         }
 
