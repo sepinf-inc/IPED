@@ -16,19 +16,10 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  * limitations under the License.
  */
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
-import java.io.Writer;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.sql.Connection;
 import java.sql.DriverManager;
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 import java.util.Set;
@@ -50,7 +41,6 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
 /**
  * Abstract class that handles iterating through tables within a database.
@@ -59,7 +49,9 @@ abstract class AbstractDBParser extends AbstractParser {
 
     private final static byte[] EMPTY_BYTE_ARR = new byte[0];
 
-    public static final MediaType TABLE_REPORT = MediaType.parse("html/x-database-table");
+    public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
+
+    public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
 
     private Connection connection;
 
@@ -68,87 +60,42 @@ abstract class AbstractDBParser extends AbstractParser {
         return null;
     }
 
-    private static final String newCol(String value, String tag) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<").append(tag).append(">");
-        if (value != null) {
-            sb.append(SimpleHTMLEncoder.htmlEncode(value));
-        }
-        sb.append("</").append(tag).append(">");
-        return sb.toString();
-    }
 
-    private static final String newCol(String value) {
-        return newCol(value, "td");
-    }
 
-    private Metadata parseTables(ContentHandler handler, ParseContext context, String tableName)
+    private int parseTables(ContentHandler handler, ParseContext context, JDBCTableReader reader)
             throws SAXException, IOException, SQLException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-        Metadata tableM = new Metadata();
-
-        int nrows = 0, ncols = 0;
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            Path path = tmp.createTempFile();
-            try (OutputStream os = Files.newOutputStream(path);
-                    Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8);
-                    PrintWriter out = new PrintWriter(writer);) {
-                JDBCTableReader tableReader = getTableReader(connection, tableName, context);
-                ncols = tableReader.getHeaders().size();
-                out.print("<head>"); //$NON-NLS-1$
-                out.print("<style>"); //$NON-NLS-1$
-                out.print("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
-                out.print("</style>"); //$NON-NLS-1$
-                out.print("</head>"); //$NON-NLS-1$
-
-                out.print("<body>");
-                out.print("<b>");
-                out.print(Messages.getString("AbstractDBParser.Table") + tableReader.getTableName());
-                out.print("</b>");
-                
-                out.print("<table name=\"" + tableReader.getTableName() + "\" >");
-                out.print("<thead>");
-                out.print("<tr>"); //$NON-NLS-1$
-                for (String header : tableReader.getHeaders()) {
-                    out.print(newCol(header, "th"));
+        TableReportGenerator trg = new TableReportGenerator(reader);
+        int table_fragment = 0;
+        TemporaryResources tmp = new TemporaryResources();
+        boolean hasNext = true;
+        do {
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            Metadata tableM = new Metadata();
+            try (InputStream is = trg.createHtmlReport(HTML_MAX_ROWS, handler, context, tmp)) {
+                ++table_fragment;
+                hasNext = trg.hasNext();
+                String title = reader.getTableName();
+                if (hasNext || table_fragment > 1) {
+                    title += "_" + table_fragment;
                 }
-                out.print("</tr>"); //$NON-NLS-1$
+                tableM.set(TikaCoreProperties.TITLE, title);
+                tableM.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
+                tableM.set(Database.TABLE_NAME, reader.getTableName());
+                tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
+                tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
 
-                out.print("</thead>");
-
-                out.print("<tbody>");
-                ResultSet r = tableReader.getTableData();
-                while (r != null && r.next()) {
-                    nrows++;
-                    out.print("<tr>");
-                    for (int i = 1; i <= ncols; i++) {
-                        String text = tableReader.handleCell(r, r.getMetaData(), i, handler, context, false, nrows);
-                        out.print(newCol(text));
-                    }
-                    out.print("</tr>");
-                }
-                out.print("</tbody>");
-                out.print("</table>");
-                out.print("</body>");
-                out.close();
-                tableReader.closeReader();
-
+                extractor.parseEmbedded(is, handler, tableM, false);
             }
-            tableM.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TABLE_REPORT.toString());
-            tableM.set(TikaCoreProperties.TITLE, tableName);
-            tableM.set(Database.TABLE_NAME, tableName);
-            tableM.set(Database.COLUMN_COUNT, Integer.toString(ncols));
-            tableM.set(Database.ROW_COUNT, Integer.toString(nrows));
-            InputStream is = new BufferedInputStream(Files.newInputStream(path));
-            extractor.parseEmbedded(is, handler, tableM, false);
 
-            return tableM;
+        } while (hasNext);
 
-        }
+        return trg.getTotRows();
 
     }
+
+
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
@@ -170,10 +117,6 @@ abstract class AbstractDBParser extends AbstractParser {
             xHandler.characters("table {border-collapse: collapse;} table, td, th {border: 1px solid black;}"); //$NON-NLS-1$
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
-
-            xHandler.characters(Messages.getString("AbstractDBParser.ProbableDate")); //$NON-NLS-1$
-            xHandler.startElement("br"); //$NON-NLS-1$
-            xHandler.startElement("br"); //$NON-NLS-1$
 
             xHandler.startElement("table");
             xHandler.startElement("theader");
@@ -197,7 +140,8 @@ abstract class AbstractDBParser extends AbstractParser {
             xHandler.endElement("theader");
 
             for (String tableName : tableNames) {
-                Metadata t = parseTables(xHandler, context, tableName);
+                JDBCTableReader reader = getTableReader(connection, tableName, context);
+                int row_count = parseTables(xHandler, context, reader);
                 xHandler.startElement("tr");
 
                 xHandler.startElement("td");
@@ -205,14 +149,15 @@ abstract class AbstractDBParser extends AbstractParser {
                 xHandler.endElement("td");
 
                 xHandler.startElement("td");
-                xHandler.characters(t.get(Database.COLUMN_COUNT));
+                xHandler.characters(Integer.toString(reader.getHeaders().size()));
                 xHandler.endElement("td");
 
                 xHandler.startElement("td");
-                xHandler.characters(t.get(Database.ROW_COUNT));
+                xHandler.characters(Integer.toString(row_count));
                 xHandler.endElement("td");
 
                 xHandler.endElement("tr");
+                reader.closeReader();
             }
         } catch (SQLException e) {
             throw new TikaException("SQLite parsing exception", e); //$NON-NLS-1$

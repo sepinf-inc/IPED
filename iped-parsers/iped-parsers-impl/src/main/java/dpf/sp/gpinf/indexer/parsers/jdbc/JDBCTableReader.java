@@ -78,6 +78,10 @@ class JDBCTableReader {
         this.ex = AbstractDBParser.getEmbeddedDocumentExtractor(context);
     }
 
+    public boolean hasDateGuessed() {
+        return false;
+    }
+
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
         // lazy initialization
         if (results == null) {
@@ -111,53 +115,44 @@ class JDBCTableReader {
 
     private String handleCell(ResultSetMetaData rsmd, int i, ContentHandler handler, ParseContext context)
             throws SQLException, IOException, SAXException {
-        return handleCell(results, rsmd, i, handler, context, true, rows);
+        String text = handleCell(results, rsmd, i, handler, context, rows);
+        addAllCharacters(text, handler);
+        return text;
     }
 
     public String handleCell(ResultSet results, ResultSetMetaData rsmd, int i, ContentHandler handler,
-            ParseContext context,
-            boolean insertHMTL, int rows)
+            ParseContext context, int rows)
             throws SQLException, IOException, SAXException {
         String text = null;
         switch (rsmd.getColumnType(i)) {
             case Types.BLOB:
-                text = handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context, insertHMTL);
+                text = handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
             case Types.CLOB:
-                text = handleClob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context, insertHMTL);
+                text = handleClob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
             case Types.BOOLEAN:
-                text = handleBoolean(results.getBoolean(i), handler, insertHMTL);
+                text = handleBoolean(results.getBoolean(i), handler);
                 break;
             case Types.DATE:
-                text = handleDate(results, i, handler, insertHMTL);
+                text = handleDate(results, i, handler);
                 break;
             case Types.TIMESTAMP:
-                text = handleTimeStamp(results, i, handler, insertHMTL);
+                text = handleTimeStamp(results, i, handler);
                 break;
             case Types.INTEGER:
-                text = handleInteger(rsmd, results, i, handler, insertHMTL);
+                text = handleInteger(rsmd, results, i, handler);
                 break;
             case Types.FLOAT:
                 // this is necessary to handle rounding issues in presentation
                 // Should we just use getString(i)?
                 text = Float.toString(results.getFloat(i));
-                if (insertHMTL) {
-                    addAllCharacters(text, handler);
-                }
-
                 break;
             case Types.DOUBLE:
                 text = Double.toString(results.getDouble(i));
-                if (insertHMTL) {
-                    addAllCharacters(text, handler);
-                }
                 break;
             default:
                 text = results.getString(i);
-                if (insertHMTL) {
-                    addAllCharacters(text, handler);
-                }
                 break;
         }
         return text;
@@ -181,27 +176,17 @@ class JDBCTableReader {
         return headers;
     }
 
-    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler,
-            boolean insertHMTL)
+    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler)
             throws SQLException, SAXException {
-        String text = Integer.toString(rs.getInt(columnIndex));
-        if (insertHMTL) {
-            addAllCharacters(text, handler);
-        }
-        return text;
+        return Integer.toString(rs.getInt(columnIndex));
     }
 
-    private String handleBoolean(boolean aBoolean, ContentHandler handler, boolean insertHMTL) throws SAXException {
-        String text = Boolean.toString(aBoolean);
-        if (insertHMTL) {
-            addAllCharacters(text, handler);
-        }
-        return text;
+    private String handleBoolean(boolean aBoolean, ContentHandler handler) throws SAXException {
+        return Boolean.toString(aBoolean);
     }
 
     protected String handleClob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
-            ContentHandler handler, ParseContext context, boolean insertHMTL) throws SQLException, IOException, SAXException {
-        String text = null;
+            ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
         Clob clob = resultSet.getClob(columnIndex);
         boolean truncated = clob.length() > Integer.MAX_VALUE || clob.length() > maxClobLength;
 
@@ -218,25 +203,20 @@ class JDBCTableReader {
         // just in case something screwy is going on with the column name
         String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + ".txt")); //$NON-NLS-1$ //$NON-NLS-2$
         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
-        text = name;
-        if (insertHMTL) {
-            addAllCharacters(name, handler);
-        }
         // is there a more efficient way to go from a Reader to an InputStream?
         String s = clob.getSubString(0, readSize);
         // EmbeddedDocumentExtractor ex =
         // AbstractDBParser.getEmbeddedDocumentExtractor(context);
         ex.parseEmbedded(new ByteArrayInputStream(s.getBytes("UTF-8")), handler, m, false); //$NON-NLS-1$
         
-        return text;
+        return name;
     }
 
     protected String handleBlob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
-            ContentHandler handler, ParseContext context, boolean insertHMTL)
+            ContentHandler handler, ParseContext context)
             throws SQLException, IOException, SAXException {
         Blob blob = null;
         Metadata m = new Metadata();
-        String text=null;
         /*
          * m.set(Database.TABLE_NAME, tableName); m.set(Database.COLUMN_NAME,
          * columnName); m.set(Database.PREFIX + "ROW_NUM", Integer.toString(rowNum));
@@ -263,24 +243,17 @@ class JDBCTableReader {
 
                 int MIN_SIZE = 32;
                 if (is.getLength() > MIN_SIZE) {
-                    String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     if (context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)) {
+                        String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
                         ex.parseEmbedded(is, handler, m, false);
-                    } else {
-                        if (insertHMTL) {
-                            addAllCharacters(name, handler);
-                        }
-                        text = name;
-
                     }
+                    return "[BLOB]";
+
                 } else {
                     byte[] bytes = new byte[(int) is.getLength()];
                     is.read(bytes);
-                    text = "0x" + Hex.encodeHexString(bytes);
-                    if (insertHMTL) {
-                        addAllCharacters(text, handler); // $NON-NLS-1$
-                    }
+                    return "0x" + Hex.encodeHexString(bytes);
                 }
 
             } finally {
@@ -293,8 +266,7 @@ class JDBCTableReader {
                 }
                 IOUtils.closeQuietly(is);
             }
-        return text;
-        // handler.endElement("", "span", "span");
+        return null;
     }
 
     protected TikaInputStream getInputStreamFromBlob(ResultSet resultSet, int columnIndex, Blob blob, Metadata metadata)
@@ -302,22 +274,14 @@ class JDBCTableReader {
         return TikaInputStream.get(blob, metadata);
     }
 
-    protected String handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler, boolean insertHMTL)
+    protected String handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler)
             throws SAXException, SQLException {
-        String text = resultSet.getString(columnIndex);
-        if (insertHMTL) {
-            addAllCharacters(resultSet.getString(columnIndex), handler);
-        }
-        return text;
+        return resultSet.getString(columnIndex);
     }
 
-    protected String handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler, boolean insertHMTL)
+    protected String handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler)
             throws SAXException, SQLException {
-        String text = resultSet.getString(columnIndex);
-        if (insertHMTL) {
-            addAllCharacters(resultSet.getString(columnIndex), handler);
-        }
-        return text;
+        return resultSet.getString(columnIndex);
     }
 
     protected void addAllCharacters(String s, ContentHandler handler) throws SAXException {
