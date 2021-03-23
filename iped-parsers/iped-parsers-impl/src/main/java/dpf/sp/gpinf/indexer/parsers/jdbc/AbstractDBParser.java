@@ -49,7 +49,7 @@ abstract class AbstractDBParser extends AbstractParser {
 
     private final static byte[] EMPTY_BYTE_ARR = new byte[0];
 
-    public static final MediaType TABLE_REPORT = MediaType.parse("html/x-database-table");
+    public static final MediaType TABLE_REPORT = MediaType.application("x-database-table");
 
     public static final int HTML_MAX_ROWS = Integer.MAX_VALUE;
 
