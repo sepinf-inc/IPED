@@ -40,7 +40,7 @@ Arquivos Sincronizados GDrive = application/x-gdrive-cloud-graph; application/x-
 
 Registros de Arquivos GDrive = application/x-gdrive-cloud-graph-registry; application/x-gdrive-snapshot-registry;
 
-Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db; application/x-mssql-data;
+Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db; application/x-mssql-data; application/x-database-table;
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli; application/zstd; application/deflate64; image/x-emf-compressed 
 
