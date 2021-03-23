@@ -1062,7 +1062,7 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
 	
-	<mime-type type="html/x-database-table">
+	<mime-type type="application/x-database-table">
     	<sub-class-of type="text/html"/>
     </mime-type>
     
