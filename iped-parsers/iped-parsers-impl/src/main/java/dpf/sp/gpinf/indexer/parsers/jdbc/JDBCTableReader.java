@@ -243,14 +243,13 @@ class JDBCTableReader {
 
                 int MIN_SIZE = 32;
                 if (is.getLength() > MIN_SIZE) {
-                    String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     if (context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)) {
+                        String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
                         ex.parseEmbedded(is, handler, m, false);
-                    } else {
-                        return name;
-
                     }
+                    return "[BLOB]";
+
                 } else {
                     byte[] bytes = new byte[(int) is.getLength()];
                     is.read(bytes);
