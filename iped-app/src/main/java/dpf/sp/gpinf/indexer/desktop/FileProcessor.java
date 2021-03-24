@@ -69,9 +69,15 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             try {
                 doc = App.get().appCase.getSearcher().doc(docId);
 
-                String status = doc.get(IndexItem.PATH);
-                if (status.length() > STATUS_LENGTH) {
-                    status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
+                String path = doc.get(IndexItem.PATH);
+                if (path.length() > STATUS_LENGTH) {
+                    path = "..." + path.substring(path.length() - STATUS_LENGTH); //$NON-NLS-1$
+                }
+                String status = path;
+                if (App.get().appCase.getAtomicSources().size() > 1) {
+                    String casePath = App.get().appCase.getAtomicSource(docId).getCaseDir().getCanonicalPath();
+                    String separator = !path.startsWith("/") && !path.startsWith("\\") ? "/" : "";
+                    status = (casePath + separator + path).replace("\\", "/");
                 }
                 App.get().status.setText(status);
 
