@@ -1,3 +1,28 @@
+03/XX/2020: IPED-3.18.5
+News:
+#360: NTFS USN Journal parser (João Hauck and Luis Nassif)
+#136: Create memory and file cache for UFDR compressed files (Luis Nassif)
+#391: Faster item count per category (Wladimir Leite)
+#376: Optimize --continue option starting (Luis Nassif)
+#305: Handle Windows10 1703/1709 user activities ActivitiesCache.db (Matheus Bichara)
+#353: Populate CategoriesToExport.txt config with phone categories (Luis Nassif)
+#363: Uncompress NSRL.txt.zip automatically and show progress window icon on task bar (Luis Nassif)
+#359: IPEDSearcher should be reusable after first search (Luis Nassif)
+Fixes:
+#397: Too many Sleuthkit processes with multiple evidences (Wladimir Leite)
+#352: Infinite processing caused by ZipBomb files (Luis Nassif)
+#375: --restart option is not working properly (Luis Nassif)
+#330: Some inline text/html EML bodies are wrongly extracted as attachments (Luis Nassif)
+#411: Diffs between EML parser and viewer when raw emails are forwarded inline (Luis Nassif)
+#389: JBIG2 images in PDFs not being rendered in preview (Luis Nassif)
+#329: Aborting NullPointerException in NamedEntityTask (Luis Nassif)
+#393: Abrupt power off could corrupt OCR results database while processing (Luis Nassif)
+#381: ClassLoader is loading gui related classes with --nogui option (Luis Nassif)
+#374: Multicase graph and log in readonly cases not working (Luis Nassif)
+#346: Carved item content sometimes is less than its size (Luis Nassif)
+#328: NullPointerException and "too many -1 (EOFs)" with some emails (Luis Nassif)
+#382: NullPointerException when indexing UFDR reports to ElasticSearch (Luis Nassif)
+
 11/27/2020: IPED-3.18.4
 News:
 #280 Load and look up ProjectVIC photoDNA hashes (Luis Nassif)
