@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -139,11 +140,13 @@ public class Marcadores implements Serializable, IMarcadores {
 
     public List<String> getLabelList(int itemId) {
         ArrayList<Integer> labelIds = getLabelIds(itemId);
-        ArrayList<String> result = new ArrayList<>();
+        TreeSet<String> result = new TreeSet<>();
         for (Integer labelId : labelIds) {
             result.add(labelNames.get(labelId));
         }
-        return result;
+        ArrayList<String> list = new ArrayList<>(result.size());
+        list.addAll(result);
+        return list;
     }
 
     public ArrayList<Integer> getLabelIds(int id) {
