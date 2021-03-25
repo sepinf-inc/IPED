@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -243,15 +244,16 @@ public class Util {
     }
 
     public static String concatStrings(List<String> strings) {
-        if (strings == null)
+        if (strings == null) {
             return null;
-        StringBuilder result = new StringBuilder();
-        for (int i = 0; i < strings.size(); i++) {
-            result.append(strings.get(i));
-            if (i < strings.size() - 1)
-                result.append(" | "); //$NON-NLS-1$
         }
-        return result.toString();
+        if (strings.isEmpty()) {
+            return "";
+        }
+        if (strings.size() == 1) {
+            return strings.get(0);
+        }
+        return strings.stream().collect(Collectors.joining(" | "));
     }
 
     public static String getNameWithTrueExt(IItem item) {
