@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -62,11 +63,14 @@ public class IPEDCrawler {
                             } else {
                                 idx = target.getName().length();
                             }
-                            while (target.exists()) {
-                                target = new File(parentDir, target.getName().substring(0, idx) + (++suffix) + ext);
+                            synchronized (exported) {
+                                while (target.exists()) {
+                                    target = new File(parentDir, target.getName().substring(0, idx) + (++suffix) + ext);
+                                }
+                                target.createNewFile();
                             }
                             try (InputStream in = item.getBufferedStream()) {
-                                Files.copy(in, target.toPath());
+                                Files.copy(in, target.toPath(), StandardCopyOption.REPLACE_EXISTING);
                                 exported.getAndIncrement();
                             } catch (Exception e0) {
                                 e0.printStackTrace();
