@@ -110,6 +110,7 @@ public class Manager {
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static int QUEUE_SIZE = 100000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
+    private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private ICaseData caseData;
@@ -189,6 +190,8 @@ public class Manager {
 
         stats.printSystemInfo();
 
+        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
+
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -252,6 +255,16 @@ public class Manager {
 
         stats.logarEstatisticas(this);
 
+        Files.createFile(getFinishedFileFlag(output).toPath());
+
+    }
+
+    private static File getFinishedFileFlag(File output) {
+        return new File(output, FINISHED_FLAG);
+    }
+
+    public static boolean isProcessingFinishedOK(File moduleDir) {
+        return getFinishedFileFlag(moduleDir).exists();
     }
 
     private void closeItemProducers() {
