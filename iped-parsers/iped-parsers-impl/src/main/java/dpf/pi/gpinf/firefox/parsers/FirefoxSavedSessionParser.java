@@ -32,10 +32,14 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
     private final int BLOCK_SIZE = 4096;
     private final short HEADER_OFFSET = 12;
-    private final String HEADER_TABLE_HOST = "Host";
-    private final String HEADER_TABLE_PATH = "Path";
-    private final String HEADER_TABLE_NAME = "Name";
-    private final String HEADER_TABLE_COOKIE = "Cookie";
+    private final String HEADER_TABS_TABLE = "Mozilla Firefox Tabs From Saved Sessions";
+    private final String HEADER_TABS_TABLE_URL = "URL";
+    private final String HEADER_TABS_TABLE_TITLE = "Title";
+    private final String HEADER_COOKIES_TABLE = "Mozilla Firefox Cookies From Saved Sessions";
+    private final String HEADER_COOKIES_TABLE_HOST = "Host";
+    private final String HEADER_COOKIES_TABLE_PATH = "Path";
+    private final String HEADER_COOKIES_TABLE_NAME = "Name";
+    private final String HEADER_COOKIES_TABLE_COOKIE = "Cookie";
     private static ObjectMapper mapper;
 
     static {
@@ -75,7 +79,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
     }
 
     private void populateTextTabContent(XHTMLContentHandler xHandler, JsonNode rootNode) throws SAXException {
-        JsonNode cookies;
+        JsonNode tabs, cookies;
         try {
             xHandler.startDocument();
 
@@ -85,9 +89,61 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             xHandler.endElement("style"); //$NON-NLS-1$
             xHandler.endElement("head"); //$NON-NLS-1$
 
-            xHandler.startElement("h2 align=center"); //$NON-NLS-1$
-            xHandler.characters("Mozilla Firefox Cookies From Saved Sessions"); //$NON-NLS-1$
-            xHandler.endElement("h2"); //$NON-NLS-1$
+            /* TABS */
+            xHandler.startElement("h3 align=center"); //$NON-NLS-1$
+            xHandler.characters(HEADER_TABS_TABLE); //$NON-NLS-1$
+            xHandler.endElement("h3"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+            xHandler.startElement("br"); //$NON-NLS-1$
+            xHandler.startElement("table"); //$NON-NLS-1$
+
+            xHandler.startElement("tr"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters(HEADER_TABS_TABLE_URL); // $NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+
+            xHandler.startElement("th"); //$NON-NLS-1$
+            xHandler.characters(HEADER_TABS_TABLE_TITLE); // $NON-NLS-1$
+            xHandler.endElement("th"); //$NON-NLS-1$
+            xHandler.endElement("tr"); //$NON-NLS-1$
+            
+            tabs = rootNode.findPath("tabs");
+            if (tabs != null && tabs.isArray()) {
+                for (JsonNode tab : tabs) {
+                    JsonNode entries = tab.get("entries");
+                    if (entries != null && entries.isArray()) {
+                        for (JsonNode entry : entries) {
+                            xHandler.startElement("tr"); //$NON-NLS-1$
+
+                            xHandler.startElement("th"); //$NON-NLS-1$
+                            xHandler.characters(entry.get("url") != null ? entry.get("url").toString() : "-"); // $NON-NLS-1$
+                            xHandler.endElement("th"); //$NON-NLS-1$
+
+                            xHandler.startElement("th"); //$NON-NLS-1$
+                            xHandler.characters(entry.get("title") != null ? entry.get("title").toString() : "-"); // $NON-NLS-1$
+                            xHandler.endElement("th"); //$NON-NLS-1$
+                            xHandler.endElement("tr"); //$NON-NLS-1$
+                        }
+                    }
+                }
+            } else {
+                xHandler.startElement("tr"); //$NON-NLS-1$
+                xHandler.startElement("th"); //$NON-NLS-1$
+                xHandler.characters("-"); // $NON-NLS-1$
+                xHandler.endElement("th"); //$NON-NLS-1$
+
+                xHandler.startElement("th"); //$NON-NLS-1$
+                xHandler.characters("-"); // $NON-NLS-1$
+                xHandler.endElement("th"); //$NON-NLS-1$
+                xHandler.endElement("tr"); //$NON-NLS-1$
+            }
+            xHandler.endElement("table"); // End of Tabs list
+           /* -- COOKIES */ 
+            xHandler.startElement("hr"); //$NON-NLS-1$
+            xHandler.startElement("h3 align=center"); //$NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE); //$NON-NLS-1$
+            xHandler.endElement("h3"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
 
@@ -96,19 +152,19 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             xHandler.startElement("tr"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters(HEADER_TABLE_HOST); // $NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE_HOST); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters(HEADER_TABLE_PATH); // $NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE_PATH); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters(HEADER_TABLE_NAME); // $NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE_NAME); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.startElement("th"); //$NON-NLS-1$
-            xHandler.characters(HEADER_TABLE_COOKIE); // $NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE_COOKIE); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
 
             xHandler.endElement("tr"); //$NON-NLS-1$
@@ -133,6 +189,15 @@ public class FirefoxSavedSessionParser extends AbstractParser {
                 }
             } else {
                 xHandler.startElement("tr"); //$NON-NLS-1$
+                xHandler.startElement("th"); //$NON-NLS-1$
+                xHandler.characters("-"); //$NON-NLS-1$
+                xHandler.endElement("th"); //$NON-NLS-1$
+                xHandler.startElement("th"); //$NON-NLS-1$
+                xHandler.characters("-"); //$NON-NLS-1$
+                xHandler.endElement("th"); //$NON-NLS-1$
+                xHandler.startElement("th"); //$NON-NLS-1$
+                xHandler.characters("-"); //$NON-NLS-1$
+                xHandler.endElement("th"); //$NON-NLS-1$
                 xHandler.startElement("th"); //$NON-NLS-1$
                 xHandler.characters("-"); //$NON-NLS-1$
                 xHandler.endElement("th"); //$NON-NLS-1$
