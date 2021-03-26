@@ -1095,7 +1095,7 @@ public class Item implements ISleuthKitItem {
     public void setName(String name) {
         this.name = name;
         int p = name.lastIndexOf("."); //$NON-NLS-1$
-        extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase(); //$NON-NLS-1$
+        extension = (p < 0) ? "" : name.substring(p + 1).toLowerCase().trim(); //$NON-NLS-1$
     }
 
     public void setSubitemId(Integer subitemId) {
