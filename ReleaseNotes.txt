@@ -1,14 +1,17 @@
-03/XX/2020: IPED-3.18.5
+03/26/2020: IPED-3.18.5
 News:
 #360: NTFS USN Journal parser (João Hauck and Luis Nassif)
 #136: Create memory and file cache for UFDR compressed files (Luis Nassif)
 #391: Faster item count per category (Wladimir Leite)
 #376: Optimize --continue option starting (Luis Nassif)
 #399: Break tables extracted from SQLite files in multiple html subitems (João Hauck and Luis Nassif)
+#413: Show warning in GUI if case processing has not finished successfully (Luis Nassif)
 #305: Handle Windows10 1703/1709 user activities ActivitiesCache.db (Matheus Bichara)
 #353: Populate CategoriesToExport.txt config with phone categories (Luis Nassif)
 #363: Uncompress NSRL.txt.zip automatically and show progress window icon on task bar (Luis Nassif)
 #412: Identify source case when selecting file in multicase analysis (Luis Nassif)
+#394: Non ascii chars in extension of exported files could be inconvenient (Luis Nassif)
+#417: Sort bookmark labels inside the "Bookmark" column (Luis Nassif)
 #359: IPEDSearcher should be reusable after first search (Luis Nassif)
 Fixes:
 #397: Too many Sleuthkit processes with multiple evidences (memory leak) (Wladimir Leite)
@@ -16,6 +19,7 @@ Fixes:
 #375: --restart option is not working properly (Luis Nassif)
 #330: Some inline text/html EML bodies are wrongly extracted as attachments (Luis Nassif)
 #411: Diffs between EML parser and viewer when raw emails are forwarded inline (Luis Nassif)
+#418: Bookmark disappearing from the bookmark manager when changing capitalization (Luis Nassif)
 #389: JBIG2 images in PDFs not being rendered in preview (Luis Nassif)
 #329: Aborting NullPointerException in NamedEntityTask (Luis Nassif)
 #393: Abrupt power off could corrupt OCR results database while processing (Luis Nassif)
