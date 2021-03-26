@@ -1,12 +1,12 @@
 package dpf.pi.gpinf.firefox.parsers;
 
 import org.slf4j.Logger;
+
 import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Set;
-
 import java.io.ByteArrayOutputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -18,10 +18,9 @@ import org.xml.sax.SAXException;
 import net.jpountz.lz4.LZ4Factory;
 import net.jpountz.lz4.LZ4SafeDecompressor;
 import net.jpountz.lz4.LZ4Exception;
-import org.json.simple.JSONObject;
-import org.json.simple.JSONArray;
-import org.json.simple.parser.JSONParser;
 import org.apache.tika.sax.XHTMLContentHandler;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class FirefoxSavedSessionParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
@@ -37,9 +36,11 @@ public class FirefoxSavedSessionParser extends AbstractParser {
     private final String HEADER_TABLE_PATH = "Path";
     private final String HEADER_TABLE_NAME = "Name";
     private final String HEADER_TABLE_COOKIE = "Cookie";
+    private static ObjectMapper mapper;
 
     static {
         factory = LZ4Factory.safeInstance();
+        mapper = new ObjectMapper();
     }
 
     public FirefoxSavedSessionParser() {
@@ -55,16 +56,16 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         // TODO Auto-generated method stub
         byte[] data;
         String json;
-        JSONObject jobj;
+        JsonNode rootNode;
         XHTMLContentHandler xHandler;
 
         try {
             // LOGGER.info("Found a Mozilla JSON LZ4 session file. Trying to parse it...");
             data = decompressLZ4Data(stream, metadata);
             json = new String(data, StandardCharsets.UTF_8);
-            jobj = parseMozillaJSON(json);
+            rootNode = parseMozillaJSON(json);
             xHandler = new XHTMLContentHandler(handler, metadata);
-            populateTextTabContent(xHandler, jobj);
+            populateTextTabContent(xHandler, rootNode);
 
         } catch (TikaException | IOException | SAXException e) {
             throw e;
@@ -73,8 +74,8 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         }
     }
 
-    private void populateTextTabContent(XHTMLContentHandler xHandler, JSONObject jobj) throws SAXException {
-        JSONArray cookies;
+    private void populateTextTabContent(XHTMLContentHandler xHandler, JsonNode rootNode) throws SAXException {
+        JsonNode cookies;
         try {
             xHandler.startDocument();
 
@@ -112,10 +113,9 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
             xHandler.endElement("tr"); //$NON-NLS-1$
 
-            cookies = (JSONArray) jobj.get("cookies");
-            if (cookies != null) {
-                for (int j = 0; j < cookies.size(); j++) {
-                    JSONObject tmp = (JSONObject) cookies.get(j);
+            cookies = rootNode.path("cookies");
+            if (cookies != null && cookies.isArray()) {
+                for (JsonNode tmp : cookies) {
                     xHandler.startElement("tr"); //$NON-NLS-1$
                     xHandler.startElement("th"); //$NON-NLS-1$
                     xHandler.characters(tmp.get("host") != null ? tmp.get("host").toString() : "-"); //$NON-NLS-1$
@@ -145,15 +145,14 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         }
     }
 
-    private JSONObject parseMozillaJSON(String json) {
-        JSONParser parser = new JSONParser();
-        JSONObject obj = null;
+    private JsonNode parseMozillaJSON(String json) {
+        JsonNode node = null;
         try {
-            obj = (JSONObject) parser.parse(json);
+            node = mapper.readTree(json);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return obj;
+        return node;
     }
 
     private byte[] decompressLZ4Data(InputStream stream, Metadata metadata) throws IOException, TikaException {
