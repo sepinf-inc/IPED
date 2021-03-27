@@ -4,21 +4,27 @@ import time
 import cv2 as cv
 import numpy as np
 from java.lang import System
-
+import jep;
 def convertTuplesToList(tuples):
     result = []
     for i in tuples:
         result.append(list(i))
     return result
 
-
+enableProp = 'enableAgeDetection'
 class AgeDetectionTask:
     def isEnabled(self):
-        return True
+        return self.enabled
     
 
     def init(self, mainProps, configFolder):
-        #self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
+        
+        self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
+        
+        if jep.JEP_NUMPY_ENABLED!=1:
+            self.enabled
+            raise "Error JEP does not support numpy"
+        
         self.configDir = configFolder.getAbsolutePath()
         
         
@@ -59,10 +65,8 @@ class AgeDetectionTask:
     
     def collectFaces(self,img, face_boxes):
         faces = []
-        print(face_boxes)
         # Process faces
         for box in face_boxes:
-            print(box)
             # Convert box coordinates from resized img_bgr back to original img
             box_orig = [
                 int(box[3]),
@@ -70,7 +74,6 @@ class AgeDetectionTask:
                 int(box[1]),
                 int(box[2]),
             ]
-            print(box_orig)
             # Extract face box from original frame
             face_bgr = img[
                 max(0, box_orig[1]):min(box_orig[3] + 1, height - 1),
@@ -116,9 +119,11 @@ class AgeDetectionTask:
             
         # Detect faces
         face_boxes = item.getExtraAttribute('face_locations')
-
         
-        if (len(face_boxes) > 0):
+        if face_boxes==None:
+            return;
+        
+        if ( len(face_boxes) > 0):
             
             # Collect all faces into matrix
             faces = self.collectFaces(img, face_boxes)

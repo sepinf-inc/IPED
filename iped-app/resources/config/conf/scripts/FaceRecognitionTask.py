@@ -103,6 +103,9 @@ class FaceRecognitionTask:
     # This method is executed before starting the processing of items.
     def init(self, mainProps, configFolder):
         self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
+        if jep.JEP_NUMPY_ENABLED!=1:
+            self.enabled=False
+            raise "Error JEP does not support numpy"
         self.configDir = configFolder.getAbsolutePath()
         if not self.enabled:
             return
