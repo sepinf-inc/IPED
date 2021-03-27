@@ -3,6 +3,7 @@ import math
 import time
 import cv2 as cv
 import numpy as np
+from java.lang import System
 
 def convertTuplesToList(tuples):
     result = []
@@ -34,7 +35,7 @@ class AgeDetectionTask:
         
         global max_size, age_model, up_sampling
         
-        rootfolder='C:\\Users\HAUCK\\git\\agender\\'
+        rootfolder= System.getProperty('iped.root')+'/models/'
         
         # Initialize gender detector
         global gender_net
@@ -124,9 +125,10 @@ class AgeDetectionTask:
         
             # Get age and gender
             gendersL,agesL,genders,ages = self.predictAgeGender(faces)
-            i=0
+            
             item.setExtraAttribute("face_ages",agesL)
-            item.setExtraAttribute("face_ages_weigths",convertTuplesToList(ages))
             item.setExtraAttribute("face_gender",gendersL)
+            item.setExtraAttribute("face_ages_weigths",convertTuplesToList(ages))
+            
                 
             
