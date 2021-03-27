@@ -34,7 +34,7 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
         String tooltipDescExternal = Messages.getString("ImageSimilarity.FilterTipExternal");
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
-                SimilarImagesFilterActions.clear();
+                clearFilterAndUpdate();
             }
         });
         addMouseMotionListener(new MouseMotionAdapter() {
@@ -102,6 +102,10 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
             g2.drawLine(x - closeSize, y - closeSize, x + closeSize, y + closeSize);
             g2.drawLine(x + closeSize, y - closeSize, x - closeSize, y + closeSize);
         }
+    }
+
+    protected void clearFilterAndUpdate() {
+        SimilarImagesFilterActions.clear(true);
     }
 
     @Override

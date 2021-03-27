@@ -150,7 +150,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
         this.iw = iw;
 
         // return if multicase
-        if (casePath == null)
+        if (this instanceof IPEDMultiSource)
             return;
 
         if (!index.exists() && iw == null) {

@@ -107,15 +107,6 @@ public class UfedXmlReader extends DataSourceReader {
         super(caseData, output, listOnly);
     }
 
-    private void reset() {
-        root = null;
-        ufdrFile = null;
-        ufdr = null;
-        uisf = null;
-        rootItem = null;
-        decodedFolder = null;
-    }
-
     @Override
     public boolean isSupported(File datasource) {
 
@@ -208,7 +199,6 @@ public class UfedXmlReader extends DataSourceReader {
             xmlReader.parse(new InputSource(new UFEDXMLWrapper(xmlStream)));
         } finally {
             IOUtil.closeQuietly(xmlStream);
-            reset();
         }
     }
 
@@ -1263,6 +1253,18 @@ public class UfedXmlReader extends DataSourceReader {
         public void skippedEntity(String name) throws SAXException {
             // TODO Auto-generated method stub
 
+        }
+
+    }
+
+    @Override
+    public void close() throws IOException {
+        if (uisf != null) {
+            uisf.close();
+        }
+        if (ufdr != null) {
+            // not needed by zip4j
+            // ufdr.close();
         }
 
     }

@@ -132,6 +132,7 @@ public class MakePreviewTask extends AbstractTask {
         File viewFile = Util.getFileFromHash(new File(output, viewFolder), evidence.getHash(), ext);
 
         if (viewFile.exists()) {
+            evidence.setViewFile(viewFile);
             return;
         }
 
@@ -142,6 +143,7 @@ public class MakePreviewTask extends AbstractTask {
         try {
             LOGGER.debug("Generating preview of {} ({} bytes)", evidence.getPath(), evidence.getLength());
             makeHtmlPreview(evidence, viewFile, mediaType);
+            evidence.setViewFile(viewFile);
 
         } catch (Throwable e) {
             Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString()); //$NON-NLS-1$//$NON-NLS-2$

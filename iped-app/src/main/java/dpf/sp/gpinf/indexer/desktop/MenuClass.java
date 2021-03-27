@@ -32,6 +32,7 @@ import org.apache.tika.metadata.Metadata;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
 import iped3.util.MediaTypes;
 
@@ -46,7 +47,7 @@ public class MenuClass extends JPopupMenu {
             navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal;
+            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -93,7 +94,8 @@ public class MenuClass extends JPopupMenu {
          * deslerSelecionados.addActionListener(menuListener);
          * this.add(deslerSelecionados);
          */
-        // this.addSeparator();
+        this.addSeparator();
+
         carregarMarcadores = new JMenuItem(Messages.getString("MenuClass.LoadBookmarks")); //$NON-NLS-1$
         carregarMarcadores.addActionListener(menuListener);
         this.add(carregarMarcadores);
@@ -237,6 +239,23 @@ public class MenuClass extends JPopupMenu {
         similarImagesExternal.addActionListener(menuListener);
         similarImagesExternal.setEnabled(submenu.isEnabled());
         submenu.add(similarImagesExternal);
+
+        submenu = new JMenu(Messages.getString("MenuClass.FindSimilarFaces")); //$NON-NLS-1$
+        submenu.setEnabled(SimilarFacesFilterActions.isFeatureEnabled());
+        this.add(submenu);
+
+        similarFacesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.Current")); //$NON-NLS-1$
+        similarFacesCurrent.addActionListener(menuListener);
+        similarFacesCurrent
+                .setEnabled(item != null && item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES) != null);
+        submenu.add(similarFacesCurrent);
+
+        similarFacesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarFaces.External")); //$NON-NLS-1$
+        similarFacesExternal.addActionListener(menuListener);
+        similarFacesExternal.setEnabled(submenu.isEnabled());
+        submenu.add(similarFacesExternal);
+
+        this.addSeparator();
 
         openViewfile = new JMenuItem(Messages.getString("MenuClass.OpenViewFile")); //$NON-NLS-1$
         openViewfile.addActionListener(menuListener);

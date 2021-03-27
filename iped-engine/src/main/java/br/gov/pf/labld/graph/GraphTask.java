@@ -123,7 +123,7 @@ public class GraphTask extends AbstractTask {
             }
 
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-            if (args.isAppendIndex()) {
+            if (args.isAppendIndex() || args.isRestart() || args.isContinue()) {
                 File graphDbOutput = new File(output, GraphTask.DB_PATH);
                 if (graphDbOutput.exists()) {
                     // TODO test if LOAD CSV Cypher command is faster than rebuilding all database
