@@ -14,7 +14,7 @@ import threading, queue
 import FaceRecognitionProcess as fp
 import traceback
 import platform
-
+import jep;
 # configuration properties
 enableProp = 'enableFaceRecognition'
 configFile = 'FaceRecognitionConfig.txt'
