@@ -6,6 +6,7 @@ import numpy as np
 from java.lang import System
 import jep;
 import tensorflow as tf
+from SSRNET_model import SSR_net_general, SSR_net
 from scipy.misc.common import face
 def convertTuplesToList(tuples):
     result = []
@@ -48,7 +49,39 @@ class Predictor_6:
             convAges.append(self.Ages[age.argmax()])
         #labels = ['{},{}'.format(Genders[gender.argmax()], Ages[age.argmax()]) for (gender, age) in zip(genders, ages)]
         return convGenders, convAges,genders,ages
-    
+
+
+class Predictor_4:
+    def __init__(self,rootfolder):
+        # Setup global parameters
+        self.face_size = 64
+        self.face_padding_ratio = 0.10
+        # Default parameters for SSR-Net
+        self.stage_num = [3, 3, 3]
+        self.lambda_local = 1
+        self.lambda_d = 1
+        # Initialize gender net
+        self.gender_net = SSR_net_general(self.face_size, self.stage_num, self.lambda_local, self.lambda_d)()
+        self.gender_net.load_weights(rootfolder+'ssrnet_gender_3_3_3_64_1.0_1.0.h5')
+        # Initialize age net
+        self.age_net = SSR_net(self.face_size, self.stage_num, self.lambda_local, self.lambda_d)()
+        self.age_net.load_weights(rootfolder+'ssrnet_age_3_3_3_64_1.0_1.0.h5')
+    def predict(self,faces):
+        blob = np.empty((len(faces), self.face_size, self.face_size, 3))
+        for i, face_bgr in enumerate(faces):
+            blob[i, :, :, :] = cv.resize(face_bgr, (64, 64))
+            blob[i, :, :, :] = cv.normalize(blob[i, :, :, :], None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX)
+        # Predict gender and age
+        genders = self.gender_net.predict(blob)
+        ages = self.age_net.predict(blob)
+        gendersL=[]
+        agesL=[]
+        #  Construct labels
+        for (gender, age) in zip(genders, ages):
+            gendersL.append('Male' if (gender >= 0.5) else 'Female')
+            agesL=int(age)
+        return gendersL, agesL, genders, ages
+
 class Predictor_9:
 
     def __init__(self,rootfolder):
@@ -76,7 +109,8 @@ class Predictor_9:
         age_class = np.arange(0, 101).reshape(101, 1)
         for gender,age in zip(results[0],results[1]):
             convGenders.append(self.Genders[gender.argmax()])
-            convAges.append(int(age.dot(age_class)))
+            #convAges.append(int(age.dot(age_class)))
+            convAges.append(age.argmax())
             genders.append(gender)
             ages.append(age)
         
@@ -95,6 +129,7 @@ class AgeDetectionTask:
 
     def init(self, mainProps, configFolder):
         
+        self.padding=0.1
         self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
         
         if jep.JEP_NUMPY_ENABLED!=1:
@@ -108,7 +143,7 @@ class AgeDetectionTask:
         
         rootfolder= System.getProperty('iped.root')+'/models/'
         if self.model==None:
-            self.model=Predictor_9(rootfolder)
+            self.model=Predictor_4(rootfolder)
         
         return
 
@@ -119,6 +154,8 @@ class AgeDetectionTask:
     
     def collectFaces(self,img, face_boxes):
         faces = []
+        height = img.shape[0]
+        width = img.shape[1]
         # Process faces
         for box in face_boxes:
             # Convert box coordinates from resized img_bgr back to original img
@@ -128,6 +165,12 @@ class AgeDetectionTask:
                 int(box[1]),
                 int(box[2]),
             ]
+            
+            padding_h = int(math.floor(0.5 + (box[3] - box[1]) * self.padding))
+            padding_w = int(math.floor(0.5 + (box[2] - box[0]) * self.padding))
+            box[0],box[1]=max(0, box[0] - padding_w), max(0, box[1] - padding_h)
+            box[2], box[3] = min(box[2] + padding_w, width - 1), min(box[3] +padding_h, height - 1)
+            
             # Extract face box from original frame
             face_bgr = img[
                 max(0, box_orig[1]):min(box_orig[3] + 1, height - 1),
