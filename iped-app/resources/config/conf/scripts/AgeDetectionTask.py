@@ -26,7 +26,7 @@ class Predictor_6:
         self.age_net = cv.dnn.readNetFromCaffe(rootfolder+'age_gender_net/deploy_age.prototxt', rootfolder+'age_gender_net/age_net.caffemodel')
         #size of face
         self.face_size = 227
-        self.face_padding_ratio = 0.0
+        self.padding = 0.0
         
         self.Genders = ['Male', 'Female']
         self.Ages = ['(0-2)', '(4-6)', '(8-12)', '(15-20)', '(25-32)', '(38-43)', '(48-53)', '(60-100)']
@@ -55,7 +55,7 @@ class Predictor_4:
     def __init__(self,rootfolder):
         # Setup global parameters
         self.face_size = 64
-        self.face_padding_ratio = 0.10
+        self.padding = 0.10
         # Default parameters for SSR-Net
         self.stage_num = [3, 3, 3]
         self.lambda_local = 1
@@ -87,7 +87,7 @@ class Predictor_9:
     def __init__(self,rootfolder):
         
         weight_file = rootfolder+"EfficientNetB3_224_weights.11-3.44.hdf5"
-        
+        self.padding=0.4
         self.face_size=224
         
         self.model=tf.keras.models.load_model(weight_file)
@@ -129,7 +129,7 @@ class AgeDetectionTask:
 
     def init(self, mainProps, configFolder):
         
-        self.padding=0.1
+        
         self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
         
         if jep.JEP_NUMPY_ENABLED!=1:
@@ -144,6 +144,8 @@ class AgeDetectionTask:
         rootfolder= System.getProperty('iped.root')+'/models/'
         if self.model==None:
             self.model=Predictor_4(rootfolder)
+        
+        self.padding=self.model.padding
         
         return
 
