@@ -8,6 +8,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -94,8 +96,6 @@ public class MsgViewer extends HtmlViewer {
 
         attachs = new ArrayList<Object[]>();
 
-        InputStream in = new FileInputStream(msgFile);
-
         StringBuilder preview = new StringBuilder();
 
         Charset charset = Charset.forName("windows-1252");
@@ -107,15 +107,13 @@ public class MsgViewer extends HtmlViewer {
         preview.append(
                 "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">");
 
-        PrintWriter out = null;
+
         org.apache.poi.hsmf.MAPIMessage msg = null;
 
         Index index = new Index();
 
         try {
-
-            out = new PrintWriter(new BufferedWriter(new FileWriter(emailHtmlFile)), true);
-            msg = new org.apache.poi.hsmf.MAPIMessage(in);
+            msg = new org.apache.poi.hsmf.MAPIMessage(msgFile);
             parseMsg(msg, preview, attachs, index);
 
         } catch (Exception e) {
@@ -126,14 +124,12 @@ public class MsgViewer extends HtmlViewer {
         preview.append("</body>");
         preview.append("</html>");
 
-        out.write(preview.toString());
-        out.close();
-        out = null;
+        Files.write(emailHtmlFile.toPath(), preview.toString().getBytes(charset));
 
     }
 
     public void parseMsg(org.apache.poi.hsmf.MAPIMessage msg, StringBuilder preview, ArrayList<Object[]> attachs,
-            Index index) throws Exception {
+            Index index) throws IOException {
 
         String attachmentList;
 
@@ -150,19 +146,32 @@ public class MsgViewer extends HtmlViewer {
 
         ArrayList<Object[]> RecipientList = new ArrayList<Object[]>();
 
-        value = msg.getSubject();
+        try {
+            value = msg.getSubject();
+        } catch (ChunkNotFoundException e) {
+            value = null;
+        }
         value = (value == null || value.isEmpty()) ? Messages.getString("EmailViewer.UnNamed") : value;
         preview.append("<b>" + Messages.getString("EmailViewer.Subject") + ": "
                 + SimpleHTMLEncoder.htmlEncode(value.trim()) + "</b><br>");
 
         value = "";
-        for (String header : msg.getHeaders()) {
-            if (header.startsWith("From: ")) {
-                value = header.replace("From: ", "");
+        try {
+            for (String header : msg.getHeaders()) {
+                if (header.startsWith("From: ")) {
+                    value = header.replace("From: ", "");
+                }
             }
+        } catch (ChunkNotFoundException e) {
+            // ignore
         }
 
-        from[0] = (msg.getDisplayFrom() != null) ? msg.getDisplayFrom() : "";
+
+        try {
+            from[0] = (msg.getDisplayFrom() != null) ? msg.getDisplayFrom() : "";
+        } catch (ChunkNotFoundException e) {
+            from[0] = "";
+        }
         from[1] = parserEmail(value, "<?([a-z0-9.-]+\\@[a-z0-9.-]+)>?", 1);
 
         if (!from[1].isEmpty() && from[1].compareTo(from[0]) != 0) {
@@ -171,11 +180,15 @@ public class MsgViewer extends HtmlViewer {
                             + SimpleHTMLEncoder.htmlEncode(" <" + from[1] + ">") + "<br>");
         } else {
             preview.append("<b>" + Messages.getString("EmailViewer.From") + ":</b> "
-                    + SimpleHTMLEncoder.htmlEncode(from[0]) + "<br>");
+                    + SimpleHTMLEncoder.htmlEncode(!from[0].isEmpty() ? from[0] : from[1]) + "<br>");
         }
 
         i = 0;
-        value = msg.getDisplayTo();
+        try {
+            value = msg.getDisplayTo();
+        } catch (ChunkNotFoundException e) {
+            value = null;
+        }
         if (value != null && !value.isEmpty()) {
             split = value.split(";");
             if (split != null && split.length > 0) {
@@ -188,7 +201,11 @@ public class MsgViewer extends HtmlViewer {
         }
 
         i = 0;
-        value = msg.getDisplayCC();
+        try {
+            value = msg.getDisplayCC();
+        } catch (ChunkNotFoundException e) {
+            value = null;
+        }
         if (value != null && !value.isEmpty()) {
             split = value.split(";");
             if (split != null && split.length > 0) {
@@ -201,7 +218,11 @@ public class MsgViewer extends HtmlViewer {
         }
 
         i = 0;
-        value = msg.getDisplayBCC();
+        try {
+            value = msg.getDisplayBCC();
+        } catch (ChunkNotFoundException e) {
+            value = null;
+        }
         if (value != null && !value.isEmpty()) {
             split = value.split(";");
             if (split != null && split.length > 0) {
@@ -213,7 +234,12 @@ public class MsgViewer extends HtmlViewer {
             }
         }
 
-        String values[] = msg.getRecipientEmailAddressList();
+        String values[];
+        try {
+            values = msg.getRecipientEmailAddressList();
+        } catch (ChunkNotFoundException e) {
+            values = null;
+        }
         if (values != null && values.length > 0) {
             i = 0;
             for (int j = 0; to != null && j < to.length; j++) {
@@ -278,8 +304,13 @@ public class MsgViewer extends HtmlViewer {
             preview.append("<b>" + Messages.getString("EmailViewer.Bcc") + ":</b> "
                     + SimpleHTMLEncoder.htmlEncode(bccValue) + "<br>");
 
-        if (msg.getMessageDate() != null)
-            date = msg.getMessageDate().getTime();
+        date = null;
+        try {
+            if (msg.getMessageDate() != null)
+                date = msg.getMessageDate().getTime();
+        } catch (ChunkNotFoundException e) {
+            // ignore
+        }
         if (date != null)
             preview.append(
                     "<b>" + Messages.getString("EmailViewer.Date") + ":</b> " + dateFormat.format(date) + "<br>");
@@ -328,14 +359,17 @@ public class MsgViewer extends HtmlViewer {
             } else {
 
                 org.apache.poi.hsmf.MAPIMessage msgEmbedded = att.getEmbeddedMessage();
-
-                if (msgEmbedded != null && msgEmbedded.getSubject() != null) {
-                    if (attachmentList.isEmpty())
-                        attachmentList = "<a href=\"#" + msgEmbedded.getSubject() + "\">" + msgEmbedded.getSubject()
-                                + ".msg" + "</a>";
-                    else
-                        attachmentList += separator + "<a href=\"#" + msgEmbedded.getSubject() + "\">"
-                                + msgEmbedded.getSubject() + ".msg" + "</a>";
+                try {
+                    if (msgEmbedded != null && msgEmbedded.getSubject() != null) {
+                        if (attachmentList.isEmpty())
+                            attachmentList = "<a href=\"#" + msgEmbedded.getSubject() + "\">" + msgEmbedded.getSubject()
+                                    + ".msg" + "</a>";
+                        else
+                            attachmentList += separator + "<a href=\"#" + msgEmbedded.getSubject() + "\">"
+                                    + msgEmbedded.getSubject() + ".msg" + "</a>";
+                    }
+                } catch (ChunkNotFoundException e) {
+                    // ignore
                 }
 
             }
@@ -408,15 +442,18 @@ public class MsgViewer extends HtmlViewer {
             if (att.isEmbeddedMessage()) {
 
                 org.apache.poi.hsmf.MAPIMessage msgEmbedded = att.getEmbeddedMessage();
-                if (msgEmbedded != null && msgEmbedded.getSubject() != null) {
+                try {
+                    if (msgEmbedded != null && msgEmbedded.getSubject() != null) {
 
-                    String titulo = msgEmbedded.getSubject() + ".msg";
+                        String titulo = msgEmbedded.getSubject() + ".msg";
 
-                    preview.append("<B><a id=\"" + msgEmbedded.getSubject() + "\"></a>--- Embedded MSG Attachment: '"
-                            + titulo + "' ---</B></BR>");
+                        preview.append("<B><a id=\"" + msgEmbedded.getSubject()
+                                + "\"></a>--- Embedded MSG Attachment: '" + titulo + "' ---</B></BR>");
 
-                    parseMsg(msgEmbedded, preview, attachs, index);
-
+                        parseMsg(msgEmbedded, preview, attachs, index);
+                    }
+                } catch (ChunkNotFoundException e) {
+                    // ignore
                 }
             }
         }
