@@ -3,11 +3,12 @@ import math
 import time
 import cv2 as cv
 import numpy as np
-from java.lang import System
+
 import jep;
-import tensorflow as tf
+
 from SSRNET_model import SSR_net_general, SSR_net
-from scipy.misc.common import face
+
+
 def convertTuplesToList(tuples):
     result = []
     for i in tuples:
@@ -53,9 +54,10 @@ class Predictor_6:
 
 class Predictor_4:
     def __init__(self,rootfolder):
+        import tensorflow as tf
         # Setup global parameters
         self.face_size = 64
-        self.padding = 0.10
+        self.padding = 0.1
         # Default parameters for SSR-Net
         self.stage_num = [3, 3, 3]
         self.lambda_local = 1
@@ -68,8 +70,8 @@ class Predictor_4:
         self.age_net.load_weights(rootfolder+'ssrnet_age_3_3_3_64_1.0_1.0.h5')
     def predict(self,faces):
         blob = np.empty((len(faces), self.face_size, self.face_size, 3))
-        for i, face_bgr in enumerate(faces):
-            blob[i, :, :, :] = cv.resize(face_bgr, (64, 64))
+        for i, face in enumerate(faces):
+            blob[i, :, :, :] = cv.resize(face, (self.face_size, self.face_size))
             blob[i, :, :, :] = cv.normalize(blob[i, :, :, :], None, alpha=0, beta=255, norm_type=cv.NORM_MINMAX)
         # Predict gender and age
         genders = self.gender_net.predict(blob)
@@ -79,7 +81,7 @@ class Predictor_4:
         #  Construct labels
         for (gender, age) in zip(genders, ages):
             gendersL.append('Male' if (gender >= 0.5) else 'Female')
-            agesL=int(age)
+            agesL.append(int(age))
         return gendersL, agesL, genders, ages
 
 class Predictor_9:
@@ -141,18 +143,36 @@ class AgeDetectionTask:
         
                
         
+        
+        if not self.model==None:
+            return
+        
+        from java.lang import System
+        
         rootfolder= System.getProperty('iped.root')+'/models/'
-        if self.model==None:
-            self.model=Predictor_4(rootfolder)
+        
+        self.model=Predictor_4(rootfolder)
         
         self.padding=self.model.padding
-        
+        print(self)
         return
 
     def finish(self):
 
         return
     
+    def convertBoxCoordinates(self,box):
+        box= [
+                int(box[3]),
+                int(box[0]),
+                int(box[1]),
+                int(box[2]),
+            ]
+        padding_h = int(math.floor(0.5 + (box[3] - box[1]) * self.padding))
+        padding_w = int(math.floor(0.5 + (box[2] - box[0]) * self.padding))
+        box[0],box[1]=max(0, box[0] - padding_w), max(0, box[1] - padding_h)
+        box[2], box[3] = min(box[2] + padding_w, width - 1), min(box[3] +padding_h, height - 1)
+        return box
     
     def collectFaces(self,img, face_boxes):
         faces = []
@@ -161,22 +181,15 @@ class AgeDetectionTask:
         # Process faces
         for box in face_boxes:
             # Convert box coordinates from resized img_bgr back to original img
-            box_orig = [
-                int(box[3]),
-                int(box[0]),
-                int(box[1]),
-                int(box[2]),
-            ]
             
-            padding_h = int(math.floor(0.5 + (box[3] - box[1]) * self.padding))
-            padding_w = int(math.floor(0.5 + (box[2] - box[0]) * self.padding))
-            box[0],box[1]=max(0, box[0] - padding_w), max(0, box[1] - padding_h)
-            box[2], box[3] = min(box[2] + padding_w, width - 1), min(box[3] +padding_h, height - 1)
+            box=self.convertBoxCoordinates(box)           
+            
+            
             
             # Extract face box from original frame
             face_bgr = img[
-                max(0, box_orig[1]):min(box_orig[3] + 1, height - 1),
-                max(0, box_orig[0]):min(box_orig[2] + 1, width - 1),
+                max(0, box[1]):min(box[3] + 1, height - 1),
+                max(0, box[0]):min(box[2] + 1, width - 1),
                 :
             ]
             faces.append(face_bgr)
@@ -208,6 +221,7 @@ class AgeDetectionTask:
         
         if ( len(face_boxes) > 0):
             
+           
             # Collect all faces into matrix
             faces = self.collectFaces(img, face_boxes)
         
@@ -217,6 +231,15 @@ class AgeDetectionTask:
             item.setExtraAttribute("face_ages",agesL)
             item.setExtraAttribute("face_gender",gendersL)
             item.setExtraAttribute("face_ages_weigths",convertTuplesToList(ages))
+            
+            #img_cpy=img.copy()
+            #for genderL,ageL,face in zip(gendersL,agesL,face_boxes):
+            #    box=self.convertBoxCoordinates(face)
+            #    cv.rectangle(img_cpy, (box[0], box[1]), (box[2], box[3]), color=(0, 255, 0), thickness=1, lineType=8)
+            #    cv.putText(img_cpy, genderL+", "+str(ageL), org=(box[0], box[1] - 10), fontFace=cv.FONT_HERSHEY_PLAIN,
+            #           fontScale=1, color=(0, 64, 255), thickness=1, lineType=cv.LINE_AA)
+            #    
+            #cv.imwrite("f:\\"+item.getHash()+".jpg", img_cpy)
             
                 
             
