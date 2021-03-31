@@ -56,6 +56,7 @@ public class MsgViewer extends HtmlViewer {
 
     private HtmlEncodingDetector detector = new HtmlEncodingDetector();
     private Charset win1252 = Charset.forName("windows-1252");
+    private Pattern emaillPattern = Pattern.compile("<?([0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[a-zA-Z0-9.-]+)>?");
 
     private ArrayList<Object[]> attachs = new ArrayList<>();
     private final DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat"));
@@ -186,7 +187,7 @@ public class MsgViewer extends HtmlViewer {
         } catch (ChunkNotFoundException e) {
             from[0] = "";
         }
-        from[1] = parserEmail(value, "<?([a-z0-9.-]+\\@[a-z0-9.-]+)>?", 1);
+        from[1] = parserEmail(value, 1);
 
         if (!from[1].isEmpty() && from[1].compareTo(from[0]) != 0) {
             preview.append(
@@ -341,6 +342,9 @@ public class MsgViewer extends HtmlViewer {
             if (!att.isEmbeddedMessage()) {
 
                 StringChunk attachChunk = att.getAttachLongFileName();
+                if (attachChunk == null || attachChunk.getValue().isEmpty()) {
+                    attachChunk = att.getAttachFileName();
+                }
                 String attachName = ((attachChunk == null || attachChunk.getValue().isEmpty())
                         ? Messages.getString("EmailViewer.UnNamed")
                         : attachChunk.getValue());
@@ -403,11 +407,7 @@ public class MsgViewer extends HtmlViewer {
         try {
             corpo = msg.getHtmlBody().trim();
             corpo = fixUTF8AsWin1252(corpo);
-            corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
-            corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
-            for (String cid : cids.keySet()) {
-                corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
-            }
+            corpo = adjustBody(corpo, cids);
             preview.append(corpo);
             for (String cid : cids.keySet()) {
                 preview.append("<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">");
@@ -428,11 +428,7 @@ public class MsgViewer extends HtmlViewer {
                     corpo = "<pre>" + corpo + "</pre>";
                     // corpo = getTikaRTFToHTML(msg);
                 }
-                corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
-                corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
-                for (String cid : cids.keySet()) {
-                    corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
-                }
+                corpo = adjustBody(corpo, cids);
                 preview.append(corpo);
                 for (String cid : cids.keySet()) {
                     preview.append("<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">");
@@ -482,6 +478,15 @@ public class MsgViewer extends HtmlViewer {
 
     }
 
+    private String adjustBody(String corpo, Map<String, String> cids) {
+        corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
+        corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
+        for (String cid : cids.keySet()) {
+            corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
+        }
+        return corpo;
+    }
+
     private String fixUTF8AsWin1252(String body) throws IOException {
         byte[] win1252Bytes = body.getBytes(win1252);
         Charset charset = detector.detect(new ByteArrayInputStream(win1252Bytes), new Metadata());
@@ -515,10 +520,9 @@ public class MsgViewer extends HtmlViewer {
         return "";
     }
 
-    public String parserEmail(String texto, String regexp, int grupo) {
+    public String parserEmail(String texto, int grupo) {
 
-        Pattern modelPattern = Pattern.compile(regexp);
-        Matcher matcher = modelPattern.matcher(texto);
+        Matcher matcher = emaillPattern.matcher(texto);
         String found = "";
 
         if (matcher.find() && grupo >= 0) {
