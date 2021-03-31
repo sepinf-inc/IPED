@@ -9,10 +9,12 @@ import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -57,6 +59,7 @@ public class MsgViewer extends HtmlViewer {
     private HtmlEncodingDetector detector = new HtmlEncodingDetector();
     private Charset win1252 = Charset.forName("windows-1252");
     private Pattern emaillPattern = Pattern.compile("<?([0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[a-zA-Z0-9.-]+)>?");
+    private TreeSet<String> imageExts = new TreeSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".bmp", ".gif"));
 
     private ArrayList<Object[]> attachs = new ArrayList<>();
     private final DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat"));
@@ -371,7 +374,9 @@ public class MsgViewer extends HtmlViewer {
 
                     index.index++;
 
-                    if (att.getAttachMimeTag() != null && att.getAttachMimeTag().getValue().startsWith("image")) {
+                    if ((att.getAttachMimeTag() != null && att.getAttachMimeTag().getValue().startsWith("image"))
+                            || (att.getAttachExtension() != null
+                                    && imageExts.contains(att.getAttachExtension().getValue()))) {
                         cids.put(attachName, attach.getName());
                     }
                 }
