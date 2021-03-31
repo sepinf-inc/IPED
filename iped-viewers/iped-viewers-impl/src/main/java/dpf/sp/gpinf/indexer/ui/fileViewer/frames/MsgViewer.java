@@ -1,12 +1,8 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,15 +17,24 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.hmef.attribute.MAPIRtfAttribute;
+import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
 import org.apache.poi.hsmf.datatypes.ByteChunk;
+import org.apache.poi.hsmf.datatypes.MAPIProperty;
 import org.apache.poi.hsmf.datatypes.StringChunk;
+import org.apache.poi.hsmf.datatypes.Types;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.html.HtmlEncodingDetector;
+import org.apache.tika.parser.rtf.RTFParser2;
 import org.bbottema.rtftohtml.RTF2HTMLConverter;
 import org.bbottema.rtftohtml.impl.RTF2HTMLConverterRFCCompliant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -48,6 +53,9 @@ public class MsgViewer extends HtmlViewer {
      *
      */
     private static final long serialVersionUID = 12L;
+
+    private HtmlEncodingDetector detector = new HtmlEncodingDetector();
+    private Charset win1252 = Charset.forName("windows-1252");
 
     private ArrayList<Object[]> attachs = new ArrayList<>();
     private final DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat"));
@@ -110,7 +118,7 @@ public class MsgViewer extends HtmlViewer {
 
         StringBuilder preview = new StringBuilder();
 
-        Charset charset = Charset.forName("windows-1252");
+        Charset charset = StandardCharsets.UTF_8;
 
         preview.append("<html>");
         preview.append("<head>");
@@ -119,13 +127,9 @@ public class MsgViewer extends HtmlViewer {
         preview.append(
                 "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">");
 
-
-        org.apache.poi.hsmf.MAPIMessage msg = null;
-
         Index index = new Index();
-
         try {
-            msg = new org.apache.poi.hsmf.MAPIMessage(msgFile);
+            MAPIMessage msg = new MAPIMessage(msgFile);
             parseMsg(msg, preview, attachs, index);
 
         } catch (Exception e) {
@@ -394,20 +398,20 @@ public class MsgViewer extends HtmlViewer {
 
         preview.append("<hr>");
 
-        preview.append("<pre>");
-
         boolean noHtml = false;
         String corpo = "";
         try {
-            corpo = msg.getHtmlBody();
-            corpo = corpo.trim();
+            corpo = msg.getHtmlBody().trim();
+            corpo = fixUTF8AsWin1252(corpo);
             corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
             corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
             for (String cid : cids.keySet()) {
                 corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
-                corpo += "<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">";
             }
             preview.append(corpo);
+            for (String cid : cids.keySet()) {
+                preview.append("<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">");
+            }
             cids.clear();
             cids = null;
         } catch (ChunkNotFoundException cnfe) {
@@ -420,13 +424,19 @@ public class MsgViewer extends HtmlViewer {
                 RTF2HTMLConverter converter = RTF2HTMLConverterRFCCompliant.INSTANCE;
                 corpo = msg.getRtfBody().trim();
                 corpo = converter.rtf2html(corpo);
+                if (!corpo.toLowerCase().contains("<br>")) {
+                    corpo = "<pre>" + corpo + "</pre>";
+                    // corpo = getTikaRTFToHTML(msg);
+                }
                 corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
                 corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
                 for (String cid : cids.keySet()) {
                     corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
-                    corpo += "<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">";
                 }
                 preview.append(corpo);
+                for (String cid : cids.keySet()) {
+                    preview.append("<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">");
+                }
                 cids.clear();
                 cids = null;
             } catch (ChunkNotFoundException cnfe) {
@@ -434,19 +444,20 @@ public class MsgViewer extends HtmlViewer {
             }
         }
 
+
         if (noRtf) {
             try {
                 corpo = msg.getTextBody().trim();
                 corpo = SimpleHTMLEncoder.htmlEncode(corpo);
+                preview.append("<pre>");
                 preview.append(corpo);
+                preview.append("</pre>");
                 cids.clear();
                 cids = null;
             } catch (ChunkNotFoundException cnfe) {
                 // ignore
             }
         }
-
-        preview.append("</pre>");
 
         for (AttachmentChunks att : atts) {
 
@@ -469,6 +480,39 @@ public class MsgViewer extends HtmlViewer {
             }
         }
 
+    }
+
+    private String fixUTF8AsWin1252(String body) throws IOException {
+        byte[] win1252Bytes = body.getBytes(win1252);
+        Charset charset = detector.detect(new ByteArrayInputStream(win1252Bytes), new Metadata());
+        if (StandardCharsets.UTF_8.equals(charset)) {
+            return new String(win1252Bytes, StandardCharsets.UTF_8);
+        }
+        return body;
+    }
+
+    private byte[] getRTFData(MAPIMessage msg) throws IOException, ChunkNotFoundException {
+        ByteChunk chunk = msg.getMainChunks().getRtfBodyChunk();
+        if (chunk == null) {
+            throw new ChunkNotFoundException();
+        }
+        MAPIRtfAttribute rtf = new MAPIRtfAttribute(MAPIProperty.RTF_COMPRESSED, Types.BINARY.getId(),
+                chunk.getValue());
+        return rtf.getData();
+    }
+
+    private String getTikaRTFToHTML(MAPIMessage msg) {
+        try {
+            RTFParser2 parser = new RTFParser2();
+            ToXMLContentHandler handler = new ToXMLContentHandler();
+            parser.parse(new ByteArrayInputStream(getRTFData(msg)), handler, new Metadata(),
+                    new ParseContext());
+            return handler.toString();
+
+        } catch (Exception e) {
+            // ignore
+        }
+        return "";
     }
 
     public String parserEmail(String texto, String regexp, int grupo) {
