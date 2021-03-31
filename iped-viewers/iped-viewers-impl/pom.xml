@@ -132,8 +132,12 @@
             <version>${icepdf.version}</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>com.github.bbottema</groupId>
+            <artifactId>rtf-to-html</artifactId>
+            <version>1.0.1</version>
+        </dependency>
         
-       
 	</dependencies>
 
 </project>
