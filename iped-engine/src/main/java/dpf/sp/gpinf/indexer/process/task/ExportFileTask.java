@@ -62,7 +62,6 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -460,6 +459,11 @@ public class ExportFileTask extends AbstractTask {
 
         if (extractDir == null) {
             setExtractLocation();
+        }
+        
+        InputStream poiInputStream = Util.getPOIFSInputStream(inputStream);
+        if(poiInputStream != null) {
+            inputStream = poiInputStream;
         }
 
         if (!computeHash) {
