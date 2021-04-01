@@ -115,6 +115,7 @@ div.viewed {
 	float: left;
 	display:block;
 	margin:0.5em;
+	background:#475959;
 	color: #ffffff;
 	font-family: 'Roboto-Medium';
 }
@@ -177,6 +178,7 @@ div.viewed {
 {
 	width: 640px;
 	font-family: 'Roboto-Light';
+	color: #000000;
 }
 
 #conversation .linha
@@ -208,7 +210,7 @@ div.viewed {
 #conversation .date
 {
 	background-color: #d7f5ff;
-	color: 92998b;
+	color: #000000;
 	width: 160px;
 	margin: 0 auto;
 	text-align: center;
@@ -219,7 +221,7 @@ div.viewed {
 #conversation .systemmessage
 {
 	background-color: #f7f76e;
-	color: 92998b;
+	color: #333333;
 	margin: 0 auto;
 	text-align: center;
 	margin-top: 8px;
@@ -234,7 +236,7 @@ div.viewed {
 #conversation .pages
 {
 	background-color: #f4fa58;
-	color: 92998b;
+	color: #333333;
 	width: 300px;
 	margin: 0 auto;
 	text-align: center;
@@ -244,7 +246,7 @@ div.viewed {
 
 #conversation .time
 {
-	color: 92998b;
+	color: #888888;
 	float: right;
 	padding-left: 12px;
 	font-size: small;
@@ -252,6 +254,7 @@ div.viewed {
 
 #conversation .incoming
 {
+	color: #000000;
 	background-color: #fcfbf6;
 }
 
@@ -283,6 +286,7 @@ div.viewed {
 
 #conversation .specialmessage
 {
+	color: #333333;
 	background-color: #66ccff;
 }
 
@@ -347,6 +351,7 @@ div.viewed {
 {
 	float: right;    
 	margin: 5px 20px 5px 45px;         
+	text-align: right;
 }
 
 #conversation .to::before
