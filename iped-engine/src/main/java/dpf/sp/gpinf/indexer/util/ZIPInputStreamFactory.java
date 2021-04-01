@@ -131,12 +131,32 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
 
     @Override
     public void close() throws IOException {
-        // if(zip != null) zip.close();
-        for (Path path : filesCache.values()) {
-            Files.deleteIfExists(path);
+        if (zip != null) {
+            // is not closeable...
+            // zip.close();
         }
-        filesCache.clear();
-        bytesCache.clear();
+        synchronized (bytesCache) {
+            bytesCache.clear();
+        }
+        Path[] paths;
+        synchronized (filesCache) {
+            paths = filesCache.values().toArray(new Path[0]);
+            filesCache.clear();
+        }
+        IOException exception = null;
+        for (Path path : paths) {
+            try {
+                Files.deleteIfExists(path);
+            }catch(IOException e) {
+                if(exception == null) {
+                    exception = new IOException("Fail to delete file(s)");
+                }
+                exception.addSuppressed(e);
+            }
+        }
+        if(exception != null) {
+            throw exception;
+        }
     }
 
 }
