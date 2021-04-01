@@ -22,6 +22,8 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -46,6 +48,14 @@ import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.util.IOUtils;
+import org.apache.poi.poifs.filesystem.DirectoryEntry;
+import org.apache.poi.poifs.filesystem.DocumentEntry;
+import org.apache.poi.poifs.filesystem.DocumentInputStream;
+import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.tika.io.TikaInputStream;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.microsoft.POIFSContainerDetector;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -586,6 +596,66 @@ public class Util {
             }
         }
         return null;
+    }
+    
+    public static InputStream getPOIFSInputStream(InputStream is) throws IOException {
+        try(TikaInputStream tin = TikaInputStream.get(is)){
+            POIFSContainerDetector oleDetector = new POIFSContainerDetector();
+            MediaType mime = oleDetector.detect(tin, new Metadata());
+            if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null && tin.getOpenContainer() instanceof DirectoryEntry) {
+                try(POIFSFileSystem fs = new POIFSFileSystem()){
+                    copy((DirectoryEntry) tin.getOpenContainer(), fs.getRoot());
+                    LimitedByteArrayOutputStream baos = new LimitedByteArrayOutputStream();
+                    fs.writeFilesystem(baos);
+                    return new ByteArrayInputStream(baos.toByteArray());
+                }
+            }
+        }
+        return null;
+    }
+    
+    private static class LimitedByteArrayOutputStream extends ByteArrayOutputStream{
+        
+        private void checkLimit(int len) {
+            int limit = 1 << 27;
+            if(this.size() + len > limit) {
+                throw new RuntimeException("Reached max memory limit of " + limit + " bytes.");
+            }
+        }
+        
+        @Override
+        public void write(byte[] b, int off, int len) {
+            checkLimit(len);
+            super.write(b, off, len);
+        }
+        
+        @Override
+        public void write(byte[] b) {
+            this.write(b, 0, b.length);
+        }
+        
+        @Override
+        public void write(int b) {
+           checkLimit(1);
+           super.write(b); 
+        }
+    }
+    
+    protected static void copy(DirectoryEntry sourceDir, DirectoryEntry destDir)
+            throws IOException {
+        for (org.apache.poi.poifs.filesystem.Entry entry : sourceDir) {
+            if (entry instanceof DirectoryEntry) {
+                // Need to recurse
+                DirectoryEntry newDir = destDir.createDirectory(entry.getName());
+                copy((DirectoryEntry) entry, newDir);
+            } else {
+                // Copy entry
+                try (InputStream contents =
+                        new DocumentInputStream((DocumentEntry) entry)) {
+                    destDir.createDocument(entry.getName(), contents);
+                }
+            }
+        }
     }
 
 }

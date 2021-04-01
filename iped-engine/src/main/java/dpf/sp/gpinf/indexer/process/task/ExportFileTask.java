@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -64,7 +63,6 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -482,6 +480,11 @@ public class ExportFileTask extends AbstractTask {
 
         if (extractDir == null) {
             setExtractLocation();
+        }
+        
+        InputStream poiInputStream = Util.getPOIFSInputStream(inputStream);
+        if(poiInputStream != null) {
+            inputStream = poiInputStream;
         }
 
         if (!computeHash) {
