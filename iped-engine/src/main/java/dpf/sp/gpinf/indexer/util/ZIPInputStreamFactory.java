@@ -135,11 +135,28 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
             // is not closeable...
             // zip.close();
         }
-        for (Path path : filesCache.values()) {
-            Files.deleteIfExists(path);
+        synchronized (bytesCache) {
+            bytesCache.clear();
         }
-        filesCache.clear();
-        bytesCache.clear();
+        Path[] paths;
+        synchronized (filesCache) {
+            paths = filesCache.values().toArray(new Path[0]);
+            filesCache.clear();
+        }
+        IOException exception = null;
+        for (Path path : paths) {
+            try {
+                Files.deleteIfExists(path);
+            }catch(IOException e) {
+                if(exception == null) {
+                    exception = new IOException("Fail to delete file(s)");
+                }
+                exception.addSuppressed(e);
+            }
+        }
+        if(exception != null) {
+            throw exception;
+        }
     }
 
 }
