@@ -481,9 +481,9 @@ public class ExportFileTask extends AbstractTask {
         if (extractDir == null) {
             setExtractLocation();
         }
-        
+
         InputStream poiInputStream = Util.getPOIFSInputStream(inputStream);
-        if(poiInputStream != null) {
+        if (poiInputStream != null) {
             inputStream = poiInputStream;
         }
 
