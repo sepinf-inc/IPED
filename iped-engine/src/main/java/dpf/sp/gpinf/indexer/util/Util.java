@@ -52,6 +52,7 @@ import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.DocumentEntry;
 import org.apache.poi.poifs.filesystem.DocumentInputStream;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
+import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -599,7 +600,8 @@ public class Util {
     }
     
     public static InputStream getPOIFSInputStream(InputStream is) throws IOException {
-        try(TikaInputStream tin = TikaInputStream.get(is)){
+        try (TemporaryResources tmp = new TemporaryResources()){
+            TikaInputStream tin = TikaInputStream.get(is, tmp);
             POIFSContainerDetector oleDetector = new POIFSContainerDetector();
             MediaType mime = oleDetector.detect(tin, new Metadata());
             if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null && tin.getOpenContainer() instanceof DirectoryEntry) {
