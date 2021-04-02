@@ -59,10 +59,14 @@ public class ImageUtil {
         return set;
     }
 
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+        return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
+    }
+
     /**
      * Redimensiona um imagem, mantendo sua proporção original.
      */
-    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int imageType) {
         int imgW = img.getWidth();
         int imgH = img.getHeight();
         if (imgW * maxH > imgH * maxW) {
@@ -78,14 +82,14 @@ public class ImageUtil {
         if (imgH <= 0) {
             imgH = 1;
         }
-        return resizeImageFixed(img, imgW, imgH);
+        return resizeImageFixed(img, imgW, imgH, imageType);
     }
 
     /**
      * Redimensiona um imagem numa área determinada.
      */
-    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH) {
-        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH, int imageType) {
+        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, imageType);
         Graphics2D graphics2D = bufferedImage.createGraphics();
         // graphics2D.setComposite(AlphaComposite.Src);
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
