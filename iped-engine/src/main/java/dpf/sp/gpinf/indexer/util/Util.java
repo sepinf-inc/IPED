@@ -587,14 +587,15 @@ public class Util {
         }
         return null;
     }
-    
+
     public static InputStream getPOIFSInputStream(InputStream is) throws IOException {
-        try (TemporaryResources tmp = new TemporaryResources()){
+        try (TemporaryResources tmp = new TemporaryResources()) {
             TikaInputStream tin = TikaInputStream.get(is, tmp);
             POIFSContainerDetector oleDetector = new POIFSContainerDetector();
             MediaType mime = oleDetector.detect(tin, new Metadata());
-            if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null && tin.getOpenContainer() instanceof DirectoryEntry) {
-                try(POIFSFileSystem fs = new POIFSFileSystem()){
+            if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null
+                    && tin.getOpenContainer() instanceof DirectoryEntry) {
+                try (POIFSFileSystem fs = new POIFSFileSystem()) {
                     copy((DirectoryEntry) tin.getOpenContainer(), fs.getRoot());
                     LimitedByteArrayOutputStream baos = new LimitedByteArrayOutputStream();
                     fs.writeFilesystem(baos);
@@ -604,36 +605,35 @@ public class Util {
         }
         return null;
     }
-    
-    private static class LimitedByteArrayOutputStream extends ByteArrayOutputStream{
-        
+
+    private static class LimitedByteArrayOutputStream extends ByteArrayOutputStream {
+
         private void checkLimit(int len) {
             int limit = 1 << 27;
-            if(this.size() + len > limit) {
+            if (this.size() + len > limit) {
                 throw new RuntimeException("Reached max memory limit of " + limit + " bytes.");
             }
         }
-        
+
         @Override
         public void write(byte[] b, int off, int len) {
             checkLimit(len);
             super.write(b, off, len);
         }
-        
+
         @Override
         public void write(byte[] b) {
             this.write(b, 0, b.length);
         }
-        
+
         @Override
         public void write(int b) {
-           checkLimit(1);
-           super.write(b); 
+            checkLimit(1);
+            super.write(b);
         }
     }
-    
-    protected static void copy(DirectoryEntry sourceDir, DirectoryEntry destDir)
-            throws IOException {
+
+    protected static void copy(DirectoryEntry sourceDir, DirectoryEntry destDir) throws IOException {
         for (org.apache.poi.poifs.filesystem.Entry entry : sourceDir) {
             if (entry instanceof DirectoryEntry) {
                 // Need to recurse
@@ -641,8 +641,7 @@ public class Util {
                 copy((DirectoryEntry) entry, newDir);
             } else {
                 // Copy entry
-                try (InputStream contents =
-                        new DocumentInputStream((DocumentEntry) entry)) {
+                try (InputStream contents = new DocumentInputStream((DocumentEntry) entry)) {
                     destDir.createDocument(entry.getName(), contents);
                 }
             }

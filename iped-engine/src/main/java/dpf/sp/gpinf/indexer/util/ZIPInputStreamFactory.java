@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.nio.channels.ClosedChannelException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -21,13 +22,13 @@ import net.lingala.zip4j.model.FileHeader;
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 
     private static final int MAX_BYTES_CACHED = 1 << 27;
-    
+
     private static final int MAX_FILES_CACHED = 1 << 9;
-    
+
     private ZipFile4j zip;
 
     private int bytesCached = 0;
-    
+
     private Map<String, byte[]> bytesCache = new LinkedHashMap<String, byte[]>(128, 0.75f, true);
 
     private void removeEldestBytes() {
@@ -61,17 +62,18 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     };
 
     public ZIPInputStreamFactory(Path dataSource) {
-        super(dataSource);
+        super(dataSource.toUri());
     }
 
     private synchronized void init() throws ZipException {
         if (zip == null) {
-            zip = new ZipFile4j(this.dataSource.toFile());
+            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
         }
     }
 
     @Override
     public SeekableInputStream getSeekableInputStream(String path) throws IOException {
+        Path tmp = null;
         byte[] bytes = null;
         synchronized (bytesCache) {
             bytes = bytesCache.get(path);
@@ -79,14 +81,13 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
         }
-        Path tmp = null;
         synchronized (filesCache) {
             tmp = filesCache.get(path);
         }
         if (tmp != null) {
             return new SeekableFileInputStream(tmp.toFile());
         }
-        
+
         FileHeader zae;
         try {
             if (zip == null)
@@ -95,8 +96,8 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         } catch (ZipException e1) {
             throw new IOException(e1);
         }
-        if(zae == null) {
-            return  new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
+        if (zae == null) {
+            return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
             if (zae.getUncompressedSize() <= MAX_BYTES_CACHED) {
@@ -125,8 +126,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (bytes != null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(bytes));
         }
-        final Path finalTmp = tmp;
-        return new SeekableFileInputStream(finalTmp.toFile());
+        return new SeekableFileInputStream(tmp.toFile());
     }
 
     @Override
@@ -147,14 +147,14 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         for (Path path : paths) {
             try {
                 Files.deleteIfExists(path);
-            }catch(IOException e) {
-                if(exception == null) {
+            } catch (IOException e) {
+                if (exception == null) {
                     exception = new IOException("Fail to delete file(s)");
                 }
                 exception.addSuppressed(e);
             }
         }
-        if(exception != null) {
+        if (exception != null) {
             throw exception;
         }
     }
