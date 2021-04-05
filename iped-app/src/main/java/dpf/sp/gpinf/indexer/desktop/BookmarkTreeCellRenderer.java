@@ -16,14 +16,19 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
             int row, boolean hasFocus) {
 
         if (App.get().appCase != null) {
-            String comment = App.get().appCase.getMultiMarcadores().getLabelComment((String) value);
+            String name = (String) value;
+            
+            String comment = App.get().appCase.getMultiMarcadores().getLabelComment(name);
             if (comment != null && !comment.trim().isEmpty())
                 setToolTipText(comment.trim());
             else
                 setToolTipText(null);
-            int count = App.get().appCase.getMultiMarcadores().getLabelCount((String) value);
-            if (count > 0) {
-                value = (String) value + " (" + count + ")";
+
+            if (name != null && !name.equals(BookmarksTreeModel.ROOT) && !name.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
+                int count = App.get().appCase.getMultiMarcadores().getLabelCount(name);
+                if (count > 0) {
+                    value = (String) value + " (" + count + ")";
+                }
             }
         }
         return super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
