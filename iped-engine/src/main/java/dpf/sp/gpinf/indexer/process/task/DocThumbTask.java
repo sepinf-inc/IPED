@@ -210,9 +210,10 @@ public class DocThumbTask extends ThumbTask {
 
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || evidence.getHash() == null || evidence.getThumb() != null || !evidence.isToAddToCase()
+        if (!taskEnabled || !evidence.isToAddToCase()
                 || ((!pdfEnabled || !isPdfType(evidence.getMediaType())) &&
-                        (!loEnabled || !isLibreOfficeType(evidence.getMediaType())))) {
+                        (!loEnabled || !isLibreOfficeType(evidence.getMediaType())))
+                || evidence.getHash() == null || evidence.getThumb() != null) {
             return;
         }
         File thumbFile = getThumbFile(evidence);
