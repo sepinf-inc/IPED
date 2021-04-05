@@ -82,6 +82,8 @@ Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd
 
 Outros Espelhos = application/x-disk-image;
 
+Sessões Salvas do Mozilla Firefox = application/x-firefox-savedsession
+
 # UFED
 
 Resumo da Extração = application/x-ufed-html-summary
