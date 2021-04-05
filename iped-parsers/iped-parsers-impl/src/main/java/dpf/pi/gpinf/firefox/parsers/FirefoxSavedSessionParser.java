@@ -44,6 +44,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
     static {
         factory = LZ4Factory.safeInstance();
+        //ObjectMapper is thread-safe when no configuration is done 
         mapper = new ObjectMapper();
     }
 
@@ -210,13 +211,9 @@ public class FirefoxSavedSessionParser extends AbstractParser {
         }
     }
 
-    private JsonNode parseMozillaJSON(String json) {
+    private JsonNode parseMozillaJSON(String json) throws IOException {
         JsonNode node = null;
-        try {
-            node = mapper.readTree(json);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        node = mapper.readTree(json);
         return node;
     }
 
