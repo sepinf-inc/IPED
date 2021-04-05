@@ -22,6 +22,8 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
+
 public class FirefoxSavedSessionParser extends AbstractParser {
     private static final long serialVersionUID = 1L;
     private static final MediaType X_FIREFOX_SAVEDSESSION_MIME_TYPE = MediaType.application("x-firefox-savedsession");
@@ -32,14 +34,14 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
     private final int BLOCK_SIZE = 4096;
     private final short HEADER_OFFSET = 12;
-    private final String HEADER_TABS_TABLE = "Mozilla Firefox Tabs From Saved Sessions";
-    private final String HEADER_TABS_TABLE_URL = "URL";
-    private final String HEADER_TABS_TABLE_TITLE = "Title";
-    private final String HEADER_COOKIES_TABLE = "Mozilla Firefox Cookies From Saved Sessions";
-    private final String HEADER_COOKIES_TABLE_HOST = "Host";
-    private final String HEADER_COOKIES_TABLE_PATH = "Path";
-    private final String HEADER_COOKIES_TABLE_NAME = "Name";
-    private final String HEADER_COOKIES_TABLE_COOKIE = "Cookie";
+    private final String HEADER_TABS_TABLE = Messages.getString("FirefoxSessions.TabsHeader");
+    private final String HEADER_TABS_TABLE_URL = Messages.getString("FirefoxSessions.TabsURL");
+    private final String HEADER_TABS_TABLE_TITLE = Messages.getString("FirefoxSessions.TabsTitle");
+    private final String HEADER_COOKIES_TABLE = Messages.getString("FirefoxSessions.CookiesHeader");
+    private final String HEADER_COOKIES_TABLE_HOST = Messages.getString("FirefoxSessions.CookiesHost");
+    private final String HEADER_COOKIES_TABLE_PATH = Messages.getString("FirefoxSessions.CookiesPath");
+    private final String HEADER_COOKIES_TABLE_NAME = Messages.getString("FirefoxSessions.CookiesName");
+    private final String HEADER_COOKIES_TABLE_COOKIE = Messages.getString("FirefoxSessions.CookiesCookie");
     private static ObjectMapper mapper;
 
     static {
