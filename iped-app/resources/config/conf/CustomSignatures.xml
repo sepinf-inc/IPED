@@ -466,6 +466,7 @@
         </magic> 
         <glob pattern="*.sqlite"/>
     </mime-type>
+	
     
     <mime-type type="application/windows-adress-book">
         <magic priority="50">
@@ -1077,6 +1078,11 @@
     <mime-type type="application/x-ufed-instantmessage">
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
+	
+	<mime-type type="application/x-database-table">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    
    
 </mime-info>
 

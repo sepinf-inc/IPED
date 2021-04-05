@@ -20,6 +20,7 @@ import java.io.IOException;
 
 import org.apache.lucene.analysis.TokenFilter;
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.tokenattributes.PositionIncrementAttribute;
 import org.apache.lucene.util.ArrayUtil;
@@ -74,6 +75,8 @@ import org.apache.lucene.util.RamUsageEstimator;
  * For example, '&agrave;' will be replaced by 'a'.
  */
 public final class FastASCIIFoldingFilter extends TokenFilter {
+
+    private static final char[][] map = initializeMap();
 
     private final CharTermAttribute termAtt = addAttribute(CharTermAttribute.class);
     private final PositionIncrementAttribute posIncAttr = addAttribute(PositionIncrementAttribute.class);
@@ -165,13 +168,14 @@ public final class FastASCIIFoldingFilter extends TokenFilter {
         outputPos = foldToASCII(input, 0, output, 0, length);
     }
 
-    private static final char[] map = initializeMap();
-
-    private static char[] initializeMap() {
-        char[] map = new char[256 * 256];
+    private static char[][] initializeMap() {
+        char[][] map = new char[256 * 256][];
         for (int i = 0; i < map.length; i++) {
             char[] c = { (char) i };
-            foldToASCII1(c, 0, map, i, 1);
+            char[] out = new char[4];
+            int len = ASCIIFoldingFilter.foldToASCII(c, 0, out, 0, 1);
+            map[i] = new char[len];
+            System.arraycopy(out, 0, map[i], 0, len);
         }
         return map;
     }
@@ -179,135 +183,12 @@ public final class FastASCIIFoldingFilter extends TokenFilter {
     public static final int foldToASCII(char input[], int inputPos, char output[], int outputPos, int length) {
         final int end = inputPos + length;
         for (int pos = inputPos; pos < end; ++pos) {
-            output[outputPos++] = map[input[pos]];
-        }
-
-        return outputPos;
-    }
-
-    /**
-     * Converts characters above ASCII to their ASCII equivalents. For example,
-     * accents are removed from accented characters.
-     *
-     * @param input
-     *            The characters to fold
-     * @param inputPos
-     *            Index of the first character to fold
-     * @param output
-     *            The result of the folding. Should be of size &gt;=
-     *            {@code length * 4}.
-     * @param outputPos
-     *            Index of output where to put the result of the folding
-     * @param length
-     *            The number of characters to fold
-     * @return length of output
-     * @lucene.internal
-     */
-    private static final int foldToASCII1(char input[], int inputPos, char output[], int outputPos, int length) {
-        final int end = inputPos + length;
-        for (int pos = inputPos; pos < end; ++pos) {
-            final char c = input[pos];
-
-            switch (c) {
-                case 'Á':
-                case 'À':
-                case 'Ã':
-                case 'Â':
-                    // case 'Ä':
-                    // case 'Å':
-                    // case 'Æ':
-                    output[outputPos++] = 'A';
-                    break;
-                case 'á':
-                case 'à':
-                case 'ã':
-                case 'â':
-                    // case 'ä':
-                    // case 'å':
-                    // case 'æ':
-                    output[outputPos++] = 'a';
-                    break;
-
-                case 'É':
-                case 'Ê':
-                    // case 'È':
-                    // case 'Ë':
-                    output[outputPos++] = 'E';
-                    break;
-
-                case 'é':
-                case 'ê':
-                    // case 'è':
-                    // case 'ë':
-                    output[outputPos++] = 'e';
-                    break;
-
-                case 'Í':
-                    // case 'Î':
-                    // case 'Ì':
-                    // case 'Ï':
-                    output[outputPos++] = 'I';
-                    break;
-
-                case 'í':
-                    // case 'ì':
-                    // case 'î':
-                    // case 'ï':
-                    output[outputPos++] = 'i';
-                    break;
-
-                case 'Ó':
-                    // case 'Ò':
-                case 'Õ':
-                case 'Ô':
-                    // case 'Ö':
-                    output[outputPos++] = 'O';
-                    break;
-
-                case 'ó':
-                    // case 'ò':
-                case 'õ':
-                case 'ô':
-                    // case 'ö':
-                    output[outputPos++] = 'o';
-                    break;
-
-                case 'Ú':
-                    // case 'Ù':
-                    // case 'Û':
-                case 'Ü':
-                    output[outputPos++] = 'U';
-                    break;
-
-                case 'ú':
-                    // case 'ù':
-                    // case 'û':
-                case 'ü':
-                    output[outputPos++] = 'u';
-                    break;
-
-                case 'Ç':
-                    output[outputPos++] = 'C';
-                    break;
-
-                case 'ç':
-                    output[outputPos++] = 'c';
-                    break;
-
-                case 'Ñ':
-                    output[outputPos++] = 'N';
-                    break;
-
-                case 'ñ':
-                    output[outputPos++] = 'n';
-                    break;
-
-                default:
-                    output[outputPos++] = c;
-                    break;
+            char[] chars = map[input[pos]];
+            for (char c : chars) {
+                output[outputPos++] = c;
             }
         }
-
         return outputPos;
     }
+
 }

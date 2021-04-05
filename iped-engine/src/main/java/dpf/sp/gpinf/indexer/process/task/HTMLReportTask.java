@@ -33,6 +33,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.text.Collator;
@@ -422,7 +423,7 @@ public class HTMLReportTask extends AbstractTask {
             if (!entriesByLabel.isEmpty() && !entriesNoLabel.isEmpty())
                 entriesByLabel.put(NO_LABEL_NAME, entriesNoLabel);
 
-            modeloPerito = EncodedFile.readFile(new File(templateSubFolder, "perito.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+            modeloPerito = EncodedFile.readFile(new File(templateSubFolder, "perito.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
             processBookmarks(templateSubFolder);
             if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
                 createThumbsPage();
@@ -551,7 +552,7 @@ public class HTMLReportTask extends AbstractTask {
     }
 
     private void processCaseInfo(File src, File target) throws Exception {
-        EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1"); //$NON-NLS-1$
+        EncodedFile arq = EncodedFile.readFile(src, StandardCharsets.UTF_8); //$NON-NLS-1$
         replace(arq.content, "%REPORT%", info.reportNumber); //$NON-NLS-1$
         replace(arq.content, "%REPORT_DATE%", info.reportDate); //$NON-NLS-1$
         replace(arq.content, "%EXAMINERS%", formatPeritos()); //$NON-NLS-1$
@@ -635,7 +636,7 @@ public class HTMLReportTask extends AbstractTask {
             sb.append(Messages.getString("HTMLReportTask.GalleryLink") + "</a></b></p>\n"); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        EncodedFile arq = EncodedFile.readFile(src, "iso-8859-1"); //$NON-NLS-1$
+        EncodedFile arq = EncodedFile.readFile(src, StandardCharsets.UTF_8); //$NON-NLS-1$
         replace(arq.content, "%BOOKMARKS%", sb.toString()); //$NON-NLS-1$
 
         arq.file = target;
@@ -644,9 +645,9 @@ public class HTMLReportTask extends AbstractTask {
 
     private void processBookmarks(File templatesFolder) throws Exception {
         sortRegs();
-        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "arq.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "arq.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
         replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
-        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), "utf-8").content; //$NON-NLS-1$//$NON-NLS-2$
+        StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
         int idx = 1;
         for (String marcador : entriesByLabel.keySet()) {
             String id = String.format("arq%06d", idx); //$NON-NLS-1$
@@ -1188,8 +1189,7 @@ class EncodedFile {
         this.charset = charset;
     }
 
-    public static EncodedFile readFile(File f, String charset) throws Exception {
-        Charset cs = Charset.forName(charset);
+    public static EncodedFile readFile(File f, Charset cs) throws Exception {
         InputStreamReader in = new InputStreamReader(new FileInputStream(f), cs);
         char[] buf = new char[(int) f.length()];
         int size = in.read(buf);

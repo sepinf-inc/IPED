@@ -138,8 +138,8 @@ public class QueryBuilder implements IQueryBuilder {
             if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
                 char[] input = texto.toCharArray();
                 char[] output = new char[input.length * 4];
-                FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-                texto = (new String(output)).trim();
+                int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+                texto = (new String(output, 0, len)).trim();
             }
 
             try {

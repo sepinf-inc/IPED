@@ -209,9 +209,9 @@ public class IndexItem extends BasicProps {
         if (toLowerCase)
             value = value.toLowerCase();
         char[] input = value.toCharArray();
-        char[] output = new char[input.length];
-        FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-        return new String(output).trim();
+        char[] output = new char[input.length * 4];
+        int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+        return new String(output, 0, len).trim();
     }
 
     public static Document Document(IItem evidence, Reader reader, File output) {

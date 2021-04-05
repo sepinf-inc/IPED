@@ -27,6 +27,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.detector.SQLiteContainerDetector;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
@@ -87,6 +88,15 @@ public class WinXTimelineParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
+
+        // Checks if the db schema contains the tables Activity, Activity_PackageId and
+        // ActivityOperation (Windows 10 update v1803 and up)
+        // Otherwise sends older versions of ActivitiesCache.db to the the default
+        // SQLite parser
+        if (new SQLiteContainerDetector().detect(stream, metadata) != WinXTimelineParser.WIN10_TIMELINE) {
+            sqliteParser.parse(stream, handler, metadata, context);
+            return;
+        }
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));

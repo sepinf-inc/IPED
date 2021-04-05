@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MsgViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
@@ -92,6 +93,7 @@ public class ViewerController {
         if (javaFX) {
             viewersRepository.addViewer(new HtmlViewer());
             viewersRepository.addViewer(new EmailViewer());
+            viewersRepository.addViewer(new MsgViewer());
             linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
             viewersRepository.addViewer(linkViewer);
             viewersRepository.addViewer(new TikaHtmlViewer());
