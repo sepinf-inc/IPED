@@ -21,15 +21,15 @@ public class IPEDCrawler {
 
     public static void main(String[] args) {
 
-        String query = "name:(\"logs.db\" \"contacts.db\" \"contacts2.db\") OR nome:(\"logs.db\" \"contacts.db\" \"contacts2.db\")";
+        String query = "contentType:\"message/rfc822\"";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\android-calllogs2");
+        File exportFolder = new File("F:\\teste-files\\EML-sard");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
         System.out.println("Cases found: " + cases.size());
-        AtomicInteger exported = new AtomicInteger(), caseNum = new AtomicInteger();
+        AtomicInteger exported = new AtomicInteger(), counter = new AtomicInteger();
         ExecutorService executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
         if (cases.isEmpty()) {
             System.out.println("No cases found!!!");
@@ -42,14 +42,14 @@ public class IPEDCrawler {
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
-                    System.out.println("Searching in case " + file.getAbsolutePath());
+                    int caseNum = counter.incrementAndGet();
+                    System.out.println("Searching in case "  + caseNum + ": " + file.getAbsolutePath());
                     try (IPEDSource ipedCase = new IPEDSource(file)) {
                         IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
                         List<Integer> itemIds = searcher.search().getIds();
                         System.out.println("Found " + itemIds.size() + " files.");
                         if (!itemIds.isEmpty()) {
                             System.out.println("Exporting...");
-                            caseNum.getAndIncrement();
                         }
                         for (Integer id : itemIds) {
                             IItem item = ipedCase.getItemByID(id);
