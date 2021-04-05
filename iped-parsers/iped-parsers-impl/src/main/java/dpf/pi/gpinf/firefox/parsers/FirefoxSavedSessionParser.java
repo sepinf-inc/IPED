@@ -44,7 +44,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
     static {
         factory = LZ4Factory.safeInstance();
-        //ObjectMapper is thread-safe when no configuration is done 
+        // ObjectMapper is thread-safe when no configuration is done
         mapper = new ObjectMapper();
     }
 
@@ -92,7 +92,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
             /* TABS */
             xHandler.startElement("h3 align=center"); //$NON-NLS-1$
-            xHandler.characters(HEADER_TABS_TABLE); //$NON-NLS-1$
+            xHandler.characters(HEADER_TABS_TABLE); // $NON-NLS-1$
             xHandler.endElement("h3"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
@@ -108,7 +108,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             xHandler.characters(HEADER_TABS_TABLE_TITLE); // $NON-NLS-1$
             xHandler.endElement("th"); //$NON-NLS-1$
             xHandler.endElement("tr"); //$NON-NLS-1$
-            
+
             tabs = rootNode.findPath("tabs");
             if (tabs != null && tabs.isArray()) {
                 for (JsonNode tab : tabs) {
@@ -140,10 +140,10 @@ public class FirefoxSavedSessionParser extends AbstractParser {
                 xHandler.endElement("tr"); //$NON-NLS-1$
             }
             xHandler.endElement("table"); // End of Tabs list
-           /* -- COOKIES */ 
+            /* -- COOKIES */
             xHandler.startElement("hr"); //$NON-NLS-1$
             xHandler.startElement("h3 align=center"); //$NON-NLS-1$
-            xHandler.characters(HEADER_COOKIES_TABLE); //$NON-NLS-1$
+            xHandler.characters(HEADER_COOKIES_TABLE); // $NON-NLS-1$
             xHandler.endElement("h3"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
             xHandler.startElement("br"); //$NON-NLS-1$
