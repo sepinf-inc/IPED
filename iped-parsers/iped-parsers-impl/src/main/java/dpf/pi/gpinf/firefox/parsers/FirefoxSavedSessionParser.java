@@ -111,6 +111,7 @@ public class FirefoxSavedSessionParser extends AbstractParser {
             xHandler.endElement("th"); //$NON-NLS-1$
             xHandler.endElement("tr"); //$NON-NLS-1$
 
+            boolean empty = true;
             tabs = rootNode.findPath("tabs");
             if (tabs != null && tabs.isArray()) {
                 for (JsonNode tab : tabs) {
@@ -119,29 +120,24 @@ public class FirefoxSavedSessionParser extends AbstractParser {
                         for (JsonNode entry : entries) {
                             xHandler.startElement("tr"); //$NON-NLS-1$
 
-                            xHandler.startElement("th"); //$NON-NLS-1$
+                            xHandler.startElement("td"); //$NON-NLS-1$
                             xHandler.characters(entry.get("url") != null ? entry.get("url").toString() : "-"); // $NON-NLS-1$
-                            xHandler.endElement("th"); //$NON-NLS-1$
+                            xHandler.endElement("td"); //$NON-NLS-1$
 
-                            xHandler.startElement("th"); //$NON-NLS-1$
+                            xHandler.startElement("td"); //$NON-NLS-1$
                             xHandler.characters(entry.get("title") != null ? entry.get("title").toString() : "-"); // $NON-NLS-1$
-                            xHandler.endElement("th"); //$NON-NLS-1$
+                            xHandler.endElement("td"); //$NON-NLS-1$
                             xHandler.endElement("tr"); //$NON-NLS-1$
+                            empty = false;
                         }
                     }
                 }
-            } else {
-                xHandler.startElement("tr"); //$NON-NLS-1$
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); // $NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); // $NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-                xHandler.endElement("tr"); //$NON-NLS-1$
+            }
+            if(empty) {
+                printEmptyLine(xHandler, 2);
             }
             xHandler.endElement("table"); // End of Tabs list
+            
             /* -- COOKIES */
             xHandler.startElement("hr"); //$NON-NLS-1$
             xHandler.startElement("h3 align=center"); //$NON-NLS-1$
@@ -172,45 +168,46 @@ public class FirefoxSavedSessionParser extends AbstractParser {
 
             xHandler.endElement("tr"); //$NON-NLS-1$
 
+            empty = true;
             cookies = rootNode.path("cookies");
             if (cookies != null && cookies.isArray()) {
                 for (JsonNode tmp : cookies) {
                     xHandler.startElement("tr"); //$NON-NLS-1$
-                    xHandler.startElement("th"); //$NON-NLS-1$
+                    xHandler.startElement("td"); //$NON-NLS-1$
                     xHandler.characters(tmp.get("host") != null ? tmp.get("host").toString() : "-"); //$NON-NLS-1$
-                    xHandler.endElement("th"); //$NON-NLS-1$
-                    xHandler.startElement("th"); //$NON-NLS-1$
+                    xHandler.endElement("td"); //$NON-NLS-1$
+                    xHandler.startElement("td"); //$NON-NLS-1$
                     xHandler.characters(tmp.get("path") != null ? tmp.get("path").toString() : "-"); //$NON-NLS-1$
-                    xHandler.endElement("th"); //$NON-NLS-1$
-                    xHandler.startElement("th"); //$NON-NLS-1$
+                    xHandler.endElement("td"); //$NON-NLS-1$
+                    xHandler.startElement("td"); //$NON-NLS-1$
                     xHandler.characters(tmp.get("name") != null ? tmp.get("name").toString() : "-"); //$NON-NLS-1$
-                    xHandler.endElement("th"); //$NON-NLS-1$
-                    xHandler.startElement("th"); //$NON-NLS-1$
+                    xHandler.endElement("td"); //$NON-NLS-1$
+                    xHandler.startElement("td"); //$NON-NLS-1$
                     xHandler.characters(tmp.get("value") != null ? tmp.get("value").toString() : "-"); //$NON-NLS-1$
-                    xHandler.endElement("th"); //$NON-NLS-1$
+                    xHandler.endElement("td"); //$NON-NLS-1$
                     xHandler.endElement("tr"); //$NON-NLS-1$
+                    empty = false;
                 }
-            } else {
-                xHandler.startElement("tr"); //$NON-NLS-1$
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); //$NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); //$NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); //$NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-                xHandler.startElement("th"); //$NON-NLS-1$
-                xHandler.characters("-"); //$NON-NLS-1$
-                xHandler.endElement("th"); //$NON-NLS-1$
-                xHandler.endElement("tr"); //$NON-NLS-1$
             }
+            if(empty) {
+                printEmptyLine(xHandler, 4);
+            }
+            
             xHandler.endElement("table"); //$NON-NLS-1$
             xHandler.endDocument();
         } catch (SAXException e) {
             throw e;
         }
+    }
+    
+    private void printEmptyLine(XHTMLContentHandler xHandler, int cols) throws SAXException {
+        xHandler.startElement("tr"); //$NON-NLS-1$
+        for(int i = 0; i < cols; i++) {
+            xHandler.startElement("td"); //$NON-NLS-1$
+            xHandler.characters("-"); //$NON-NLS-1$
+            xHandler.endElement("td"); //$NON-NLS-1$
+        }
+        xHandler.endElement("tr"); //$NON-NLS-1$
     }
 
     private JsonNode parseMozillaJSON(String json) throws IOException {
