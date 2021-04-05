@@ -23,6 +23,7 @@
     	<!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
 
         <parser class="org.apache.tika.parser.apple.AppleSingleFileParser"></parser>
+        <parser class="org.apache.tika.parser.apple.PListParser"></parser>
         <!--<parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser>
