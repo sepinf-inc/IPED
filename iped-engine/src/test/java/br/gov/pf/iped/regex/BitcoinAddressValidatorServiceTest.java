@@ -7,10 +7,10 @@ import org.junit.Test;
 
 public class BitcoinAddressValidatorServiceTest {
 
-    @Test
-    public void testValidateAddresses() {
         BitcoinAddressValidatorService service = new BitcoinAddressValidatorService();
 
+        @Test
+        public void testValidAddresses() {
         assertTrue(service.validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62i"));
         assertTrue(service.validate("1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nK9"));
         assertTrue(service.validate("1BvBMSEYstWetqTFn5Au4m4GFg7xJaNVN2"));
