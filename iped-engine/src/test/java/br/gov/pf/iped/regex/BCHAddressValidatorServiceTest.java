@@ -8,7 +8,7 @@ public class BCHAddressValidatorServiceTest {
 
     @Test
     public void testValidBHCAddressService() {
-        
+
         BCHAddressValidatorService service = new BCHAddressValidatorService();
 
         assertTrue(service.validate("bitcoincash:pqkh9ahfj069qv8l6eysyufazpe4fdjq3u4hna323j"));
@@ -26,7 +26,7 @@ public class BCHAddressValidatorServiceTest {
         assertFalse(service.validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62izz"));
         assertFalse(service.validate("1Q1pE5vPGEEMqRcVRMbtBK842Y6Pzo6nJ9"));
         assertFalse(service.validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62I"));
-        
+
         assertTrue(service.validateBitcoinCashAddress("qr4wp5humgezrr302vcarrpscawzesunav7tgsc2xl"));
         assertTrue(service.validateBitcoinCashAddress("qrsp7hvfsatc7763cdwwzd8jrjpa55r3gqeldy3gcy"));
         assertTrue(service.validateBitcoinCashAddress("qqpjhzesn9eaj028h9wj6ped9dqvev6w5yj57jwk9n"));

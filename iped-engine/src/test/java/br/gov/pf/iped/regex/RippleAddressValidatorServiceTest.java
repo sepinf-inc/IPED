@@ -6,7 +6,7 @@ import org.junit.Test;
 
 public class RippleAddressValidatorServiceTest {
     RippleAddressValidatorService service = new RippleAddressValidatorService();
-    
+
     @Test
     public void testValidRippleAddressService() {
         assertTrue(service.validate("rMCa3o92WJDHDw7GLZiP85Pp3ZRkb87xUp"));
@@ -25,6 +25,5 @@ public class RippleAddressValidatorServiceTest {
         assertFalse(service.validate("rM!@GLZiP85Pp3ZRkb87xUp"));
         assertFalse(service.validate("1AGNa15ZQXAZUgFiqJ2i7Z2DPU2J6hW62I"));
     }
-    
 
 }
