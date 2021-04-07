@@ -137,3 +137,5 @@ Gravações = application/x-ufed-html-recordings; application/x-ufed-recording
 Cartões Móveis = application/x-ufed-mobilecard
 
 Uso de Aplicativos = application/x-ufed-applicationusage
+
+Informações do Dispositivo = application/x-ufed-deviceinfo

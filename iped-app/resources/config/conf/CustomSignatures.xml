@@ -1075,6 +1075,10 @@
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
 	
+    <mime-type type="application/x-ufed-deviceinfo">
+    	<sub-class-of type="text/html"/>
+    </mime-type>
+    	
 	<mime-type type="application/x-database-table">
     	<sub-class-of type="text/html"/>
     </mime-type>
