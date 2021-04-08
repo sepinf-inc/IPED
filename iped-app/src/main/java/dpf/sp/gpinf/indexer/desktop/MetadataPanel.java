@@ -34,10 +34,12 @@ import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
@@ -56,6 +58,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
+    private static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
 
     private volatile static LeafReader reader;
 
@@ -318,6 +321,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 || !IndexItem.getMetadataTypes().get(field).equals(String.class);
     }
 
+    private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventGroup) {
+        String[] events = eventGroup.split(EVENT_SEPARATOR);
+        long[] ords = new long[events.length];
+        for (int i = 0; i < ords.length; i++) {
+            long ord = eventDocValues.lookupTerm(new BytesRef(events[i]));
+            ords[i] = ord;
+        }
+        return ords;
+    }
+
     private List<IItemId> getIdsWithOrd(String field, int ordToGet, int valueCount) {
 
         boolean mayBeNumeric = mayBeNumeric(field);
@@ -396,13 +409,25 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             }
         } else if (docValuesSet != null) {
             for (IItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                docValuesSet.setDocument(doc);
-                long ord;
-                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                    if (ord == ordToGet) {
-                        items.add(item);
-                        break;
+                if (item instanceof TimeItemId) {
+                    TimeItemId timeId = (TimeItemId) item;
+                    String eventSet = timeId.getTimeEventValue();
+                    long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
+                    for (long ord : ords) {
+                        if (ord == ordToGet) {
+                            items.add(item);
+                            break;
+                        }
+                    }
+                } else {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    docValuesSet.setDocument(doc);
+                    long ord;
+                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (ord == ordToGet) {
+                            items.add(item);
+                            break;
+                        }
                     }
                 }
             }
@@ -589,13 +614,22 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         } else if (docValuesSet != null) {
             valueCount = new int[(int) docValuesSet.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                docValuesSet.setDocument(doc);
-                long ord, prevOrd = -1;
-                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                    if (prevOrd != ord)
+                if (item instanceof TimeItemId) {
+                    TimeItemId timeId = (TimeItemId) item;
+                    String eventSet = timeId.getTimeEventValue();
+                    long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
+                    for (long ord : ords) {
                         valueCount[(int) ord]++;
-                    prevOrd = ord;
+                    }
+                } else {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    docValuesSet.setDocument(doc);
+                    long ord, prevOrd = -1;
+                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (prevOrd != ord)
+                            valueCount[(int) ord]++;
+                        prevOrd = ord;
+                    }
                 }
             }
         }

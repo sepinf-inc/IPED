@@ -117,6 +117,9 @@ public class IndexItem extends BasicProps {
 
     private static final int MAX_DOCVALUE_SIZE = 4096;
 
+    public static final String EVENT_IDX_SEPARATOR = ",";
+    public static final String EVENT_SEPARATOR = " | ";
+
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
     private static volatile boolean guessMetaTypes = false;
@@ -494,7 +497,7 @@ public class IndexItem extends BasicProps {
         StringBuilder indexes = new StringBuilder();
         for (String events : sortedList) {
             if (indexes.length() > 0) {
-                indexes.append(",");
+                indexes.append(EVENT_IDX_SEPARATOR);
             }
             indexes.append(eventsList.indexOf(events));
         }
@@ -502,7 +505,7 @@ public class IndexItem extends BasicProps {
     }
 
     private static void addTimeStampEventGroup(Document doc, Set<String> eventsSet, List<String> eventsList) {
-        String events = eventsSet.stream().collect(Collectors.joining(" | "));
+        String events = eventsSet.stream().collect(Collectors.joining(EVENT_SEPARATOR));
         doc.add(new SortedSetDocValuesField(ExtraProperties.TIME_EVENT_GROUPS, new BytesRef(events)));
         eventsList.add(events);
     }

@@ -7,6 +7,7 @@ import java.util.List;
 import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.IIPEDSource;
@@ -56,7 +57,7 @@ public class TimelineResults {
             timeEventGroupValues.setDocument(luceneId);
             String eventsInDocStr = eventsInDocOrdsValues.get(luceneId).utf8ToString();
             int i = 0, j = 0, k = 0;
-            while ((j = eventsInDocStr.indexOf(',', i)) != -1) {
+            while ((j = eventsInDocStr.indexOf(IndexItem.EVENT_IDX_SEPARATOR, i)) != -1) {
                 eventsInDocOrds[k++] = Short.parseShort(eventsInDocStr.substring(i, j));
                 i = j + 1;
             }
@@ -114,6 +115,15 @@ public class TimelineResults {
 
         public String getTimeEventValue() {
             return timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
+        }
+
+        @Override
+        public int compareTo(IItemId o) {
+            int ret = super.compareTo(o);
+            if (ret != 0 || !(o instanceof TimeItemId)) {
+                return ret;
+            }
+            return Integer.compare(timeStampOrd, ((TimeItemId) o).timeStampOrd);
         }
 
     }

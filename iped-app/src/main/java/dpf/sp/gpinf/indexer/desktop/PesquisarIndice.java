@@ -211,6 +211,12 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 
                 }
 
+                if (App.get().timelineTableView) {
+                    long t = System.currentTimeMillis();
+                    result = new TimelineResults().expandTimestamps(result);
+                    LOGGER.info("Toggle table timeline took {}ms" + (System.currentTimeMillis() - t));
+                }
+
                 Set<IItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
                 if (itemsWithValuesSelected != null) {
                     numFilters++;
@@ -259,12 +265,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 if (App.get().similarFacesRefItem != null) {
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
-                }
-
-                if (App.get().timelineTableView) {
-                    long t = System.currentTimeMillis();
-                    result = new TimelineResults().expandTimestamps(result);
-                    LOGGER.info("Toggle table timeline took {}ms" + (System.currentTimeMillis() - t));
                 }
 
                 saveHighlightTerms();
