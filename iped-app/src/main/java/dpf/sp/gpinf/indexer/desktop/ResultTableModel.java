@@ -239,14 +239,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
             }
 
-            boolean isTimeEvent = field.equals(BasicProps.TIME_EVENT);
             if (item instanceof TimeItemId) {
                 TimeItemId timeItem = (TimeItemId) item;
-                boolean isTimeStamp = field.equals(BasicProps.TIMESTAMP);
-                if (isTimeStamp) {
+                if (field.equals(BasicProps.TIMESTAMP)) {
                     return timeItem.getTimeStampValue();
                 }
-                if (isTimeEvent) {
+                if (field.equals(BasicProps.TIME_EVENT)) {
                     return timeItem.getTimeEventValue();
                 }
             }
@@ -272,7 +270,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     } catch (NumberFormatException e) {
                     }
                 }
-                if (!sorted && !isTimeEvent) {
+                if (!sorted) {
                     Arrays.sort(values, collator);
                 }
             }
