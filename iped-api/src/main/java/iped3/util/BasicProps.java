@@ -38,6 +38,9 @@ public class BasicProps {
     public static final String META_ADDRESS = "metaAddress";
     public static final String MFT_SEQUENCE = "MFTSequence";
     public static final String FILESYSTEM_ID = "fileSystemId";
+    public static final String TIMESTAMP = "timeStamp";
+    public static final String TIME_EVENT = "timeEvent";
+    
 
     public static final Set<String> SET = getBasicProps();
 
@@ -73,6 +76,8 @@ public class BasicProps {
         basicProps.add(TREENODE);
         basicProps.add(THUMB);
         basicProps.add(SIMILARITY_FEATURES);
+        basicProps.add(TIMESTAMP);
+        basicProps.add(TIME_EVENT);
         return basicProps;
     }
 
