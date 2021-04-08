@@ -52,6 +52,8 @@ import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IMultiSearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
 
@@ -78,6 +80,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     volatile SortedNumericDocValues numValuesSet;
     volatile SortedDocValues docValues;
     volatile SortedSetDocValues docValuesSet;
+    volatile SortedSetDocValues eventDocValuesSet;
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
 
     volatile IMultiSearchResult ipedResult;
@@ -311,7 +314,9 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         docValuesSet = reader.getSortedSetDocValues(field);
         if (docValuesSet == null)
             docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
-
+        if (eventDocValuesSet == null && BasicProps.TIME_EVENT.equals(field)) {
+            eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+        }
         eventSetToOrdsCache.clear();
     }
 
@@ -433,7 +438,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             for (IItemId item : result.getIterator()) {
                 if (item instanceof TimeItemId) {
                     TimeItemId timeId = (TimeItemId) item;
-                    String eventSet = timeId.getTimeEventValue();
+                    String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
                     long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
                     for (long ord : ords) {
                         if (ordsToGet.contains((int) ord)) {
@@ -644,7 +649,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             for (IItemId item : ipedResult.getIterator()) {
                 if (item instanceof TimeItemId) {
                     TimeItemId timeId = (TimeItemId) item;
-                    String eventSet = timeId.getTimeEventValue();
+                    String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
                     long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
                     for (long ord : ords) {
                         valueCount[(int) ord]++;

@@ -122,6 +122,11 @@ public class TimelineResults {
             return this.timeStampOrd;
         }
 
+        /**
+         * This is not thread-safe.
+         * 
+         * @return
+         */
         public String getTimeStampValue() {
             return timeStampValues.lookupOrd(timeStampOrd).utf8ToString();
         }
@@ -130,8 +135,17 @@ public class TimelineResults {
             return this.timeEventOrd;
         }
 
+        /**
+         * This is not thread-safe.
+         * 
+         * @return
+         */
         public String getTimeEventValue() {
             return timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
+        }
+
+        public String getTimeEventValue(SortedSetDocValues ssdv) {
+            return ssdv.lookupOrd(timeEventOrd).utf8ToString();
         }
 
         @Override
