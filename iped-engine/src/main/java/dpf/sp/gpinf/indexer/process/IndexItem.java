@@ -473,6 +473,8 @@ public class IndexItem extends BasicProps {
             if (tse.timeStamp == null || tse.timeStamp.isEmpty()) {
                 continue;
             }
+            tse.timeEvent = tse.timeEvent.toLowerCase();
+
             doc.add(new StringField(TIMESTAMP, tse.timeStamp, Field.Store.YES));
             doc.add(new SortedSetDocValuesField(TIMESTAMP, new BytesRef(tse.timeStamp)));
             doc.add(new Field(TIME_EVENT, tse.timeEvent, storedTokenizedNoNormsField));
@@ -488,8 +490,7 @@ public class IndexItem extends BasicProps {
             }
             prevTimeStamp = tse.timeStamp;
         }
-        List<String> sortedList = new ArrayList<>(eventsList);
-        Collections.sort(sortedList);
+        TreeSet<String> sortedList = new TreeSet<>(eventsList);
         StringBuilder indexes = new StringBuilder();
         for (String events : sortedList) {
             if (indexes.length() > 0) {
@@ -501,8 +502,7 @@ public class IndexItem extends BasicProps {
     }
 
     private static void addTimeStampEventGroup(Document doc, Set<String> eventsSet, List<String> eventsList) {
-        String events = eventsSet.stream().collect(Collectors.joining(" "));
-        doc.add(new Field(ExtraProperties.TIME_EVENT_GROUPS, events, storedTokenizedNoNormsField));
+        String events = eventsSet.stream().collect(Collectors.joining(" | "));
         doc.add(new SortedSetDocValuesField(ExtraProperties.TIME_EVENT_GROUPS, new BytesRef(events)));
         eventsList.add(events);
     }

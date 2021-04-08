@@ -247,7 +247,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     return timeItem.getTimeStampValue();
                 }
                 if (isTimeEvent) {
-                    return doc.getValues(ExtraProperties.TIME_EVENT_GROUPS)[timeItem.getTimeEventPos()];
+                    return timeItem.getTimeEventValue();
                 }
             }
 

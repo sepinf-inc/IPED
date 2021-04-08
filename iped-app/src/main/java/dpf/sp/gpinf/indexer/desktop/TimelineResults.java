@@ -70,7 +70,7 @@ public class TimelineResults {
                 if (ord > Integer.MAX_VALUE) {
                     throw new RuntimeException("Integer overflow when converting timestamp ord to int");
                 }
-                ids.add(new TimeItemId(id.getSourceId(), id.getId(), (int) ord, eventOrd[pos], pos++));
+                ids.add(new TimeItemId(id.getSourceId(), id.getId(), (int) ord, eventOrd[pos++]));
                 scores.add(items.getScore(idx));
             }
             idx++;
@@ -93,13 +93,11 @@ public class TimelineResults {
     public static class TimeItemId extends ItemId {
 
         private int timeStampOrd, timeEventOrd = -1;
-        private short timeEventPos;
 
-        public TimeItemId(int sourceId, int id, int timeStampOrd, int timeEventOrd, short timeEventPos) {
+        public TimeItemId(int sourceId, int id, int timeStampOrd, int timeEventOrd) {
             super(sourceId, id);
             this.timeStampOrd = timeStampOrd;
             this.timeEventOrd = timeEventOrd;
-            this.timeEventPos = timeEventPos;
         }
 
         public int getTimeStampOrd() {
@@ -114,8 +112,8 @@ public class TimelineResults {
             return this.timeEventOrd;
         }
 
-        public int getTimeEventPos() {
-            return this.timeEventPos;
+        public String getTimeEventValue() {
+            return timeEventGroupValues.lookupOrd(timeEventOrd).utf8ToString();
         }
 
     }

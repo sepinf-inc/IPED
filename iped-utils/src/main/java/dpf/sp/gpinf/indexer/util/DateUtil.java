@@ -103,7 +103,7 @@ public class DateUtil {
     private static final ThreadLocal<DateFormat> threadLocal = new ThreadLocal<DateFormat>() {
         @Override
         protected DateFormat initialValue() {
-            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss'Z'"); //$NON-NLS-1$
+            SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'"); //$NON-NLS-1$
             df.setTimeZone(UTC);
             return df;
         }
