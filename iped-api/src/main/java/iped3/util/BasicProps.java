@@ -40,7 +40,6 @@ public class BasicProps {
     public static final String FILESYSTEM_ID = "fileSystemId";
     public static final String TIMESTAMP = "timeStamp";
     public static final String TIME_EVENT = "timeEvent";
-    
 
     public static final Set<String> SET = getBasicProps();
 

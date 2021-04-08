@@ -260,8 +260,8 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
                 }
-                
-                if(App.get().timelineTableView) {
+
+                if (App.get().timelineTableView) {
                     long t = System.currentTimeMillis();
                     result = new TimelineResults().expandTimestamps(result);
                     LOGGER.info("Toggle table timeline took {}ms" + (System.currentTimeMillis() - t));

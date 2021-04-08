@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -300,7 +299,7 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(LENGTH, length));
             doc.add(new NumericDocValuesField(LENGTH, length));
         }
-        
+
         Set<TimeStampEvent> timeEventSet = new TreeSet<>();
 
         Date date = evidence.getCreationDate();
@@ -457,29 +456,29 @@ public class IndexItem extends BasicProps {
                 addMetadataToDoc(doc, evidence.getMetadata(), timeEventSet);
             }
         }
-        
+
         storeTimeStamps(doc, timeEventSet);
 
         return doc;
     }
-    
+
     private static void storeTimeStamps(Document doc, Set<TimeStampEvent> timeEventSet) {
-        
+
         String prevTimeStamp = null;
         Set<String> eventsSet = new TreeSet<>();
         List<String> eventsList = new ArrayList<>();
         int i = 0;
-        for(TimeStampEvent tse : timeEventSet) {
+        for (TimeStampEvent tse : timeEventSet) {
             i++;
-            if(tse.timeStamp == null || tse.timeStamp.isEmpty()) {
+            if (tse.timeStamp == null || tse.timeStamp.isEmpty()) {
                 continue;
             }
             doc.add(new StringField(TIMESTAMP, tse.timeStamp, Field.Store.YES));
             doc.add(new SortedSetDocValuesField(TIMESTAMP, new BytesRef(tse.timeStamp)));
             doc.add(new Field(TIME_EVENT, tse.timeEvent, storedTokenizedNoNormsField));
             doc.add(new SortedSetDocValuesField(TIME_EVENT, new BytesRef(tse.timeEvent)));
-            
-            if(prevTimeStamp != null && !tse.timeStamp.equals(prevTimeStamp)) {
+
+            if (prevTimeStamp != null && !tse.timeStamp.equals(prevTimeStamp)) {
                 addTimeStampEventGroup(doc, eventsSet, eventsList);
                 eventsSet.clear();
             }
@@ -492,15 +491,15 @@ public class IndexItem extends BasicProps {
         List<String> sortedList = new ArrayList<>(eventsList);
         Collections.sort(sortedList);
         StringBuilder indexes = new StringBuilder();
-        for(String events : sortedList) {
-            if(indexes.length() > 0) {
+        for (String events : sortedList) {
+            if (indexes.length() > 0) {
                 indexes.append(",");
             }
             indexes.append(eventsList.indexOf(events));
         }
         doc.add(new BinaryDocValuesField(ExtraProperties.TIME_EVENT_ORDS, new BytesRef(indexes.toString())));
     }
-    
+
     private static void addTimeStampEventGroup(Document doc, Set<String> eventsSet, List<String> eventsList) {
         String events = eventsSet.stream().collect(Collectors.joining(" "));
         doc.add(new Field(ExtraProperties.TIME_EVENT_GROUPS, events, storedTokenizedNoNormsField));
@@ -511,7 +510,7 @@ public class IndexItem extends BasicProps {
     private static class TimeStampEvent implements Comparable<TimeStampEvent> {
 
         private String timeStamp, timeEvent;
-        
+
         private TimeStampEvent(String timestamp, String timeEvent) {
             this.timeStamp = timestamp;
             this.timeEvent = timeEvent;
@@ -532,7 +531,7 @@ public class IndexItem extends BasicProps {
                     return 1;
                 } else {
                     int ret = timeStamp.compareTo(o.timeStamp);
-                    if(ret == 0) {
+                    if (ret == 0) {
                         ret = timeEvent.compareTo(o.timeEvent);
                     }
                     return ret;
@@ -562,7 +561,7 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedDocValuesField(key, new BytesRef(value)));
             else
                 doc.add(new SortedSetDocValuesField(key, new BytesRef(value)));
-            
+
             timeEventSet.add(new TimeStampEvent(value, key));
 
         } else if (oValue instanceof Byte) {

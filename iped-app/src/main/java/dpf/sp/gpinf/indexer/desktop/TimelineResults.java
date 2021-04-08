@@ -26,15 +26,17 @@ public class TimelineResults {
             synchronized (TimelineResults.class) {
                 if (timeStampValues == null) {
                     timeStampValues = App.get().appCase.getAtomicReader().getSortedSetDocValues(BasicProps.TIMESTAMP);
-                    timeEventGroupValues = App.get().appCase.getAtomicReader().getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
-                    eventsInDocOrdsValues = App.get().appCase.getAtomicReader().getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
+                    timeEventGroupValues = App.get().appCase.getAtomicReader()
+                            .getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+                    eventsInDocOrdsValues = App.get().appCase.getAtomicReader()
+                            .getBinaryDocValues(ExtraProperties.TIME_EVENT_ORDS);
                 }
             }
         }
     }
 
     public TimelineResults() throws IOException {
-        if(lastCase != App.get().getIPEDSource()) {
+        if (lastCase != App.get().getIPEDSource()) {
             timeStampValues = null;
             lastCase = App.get().getIPEDSource();
         }
@@ -54,7 +56,7 @@ public class TimelineResults {
             timeEventGroupValues.setDocument(luceneId);
             String eventsInDocStr = eventsInDocOrdsValues.get(luceneId).utf8ToString();
             int i = 0, j = 0, k = 0;
-            while((j = eventsInDocStr.indexOf(',', i)) != -1) {
+            while ((j = eventsInDocStr.indexOf(',', i)) != -1) {
                 eventsInDocOrds[k++] = Short.parseShort(eventsInDocStr.substring(i, j));
                 i = j + 1;
             }
@@ -76,7 +78,7 @@ public class TimelineResults {
         return new MultiSearchResult(ids.toArray(new IItemId[ids.size()]), toPrimitive(scores));
 
     }
-    
+
     private static float[] toPrimitive(List<Float> list) {
         if (list == null) {
             return null;
@@ -111,7 +113,7 @@ public class TimelineResults {
         public int getTimeEventOrd() {
             return this.timeEventOrd;
         }
-        
+
         public int getTimeEventPos() {
             return this.timeEventPos;
         }

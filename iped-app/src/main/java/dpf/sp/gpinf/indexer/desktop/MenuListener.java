@@ -110,7 +110,7 @@ public class MenuListener implements ActionListener {
         LOGGER.debug("MenuListener Aktion Event Performed " + e.toString() + " " + e.getSource());
         if (e.getSource() == menu.toggleTimelineView) {
             App.get().toggleTimelineTableView();
-        
+
         } else if (e.getSource() == menu.disposicao) {
             App.get().alterarDisposicao();
 

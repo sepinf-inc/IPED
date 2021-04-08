@@ -243,7 +243,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             if (item instanceof TimeItemId) {
                 TimeItemId timeItem = (TimeItemId) item;
                 boolean isTimeStamp = field.equals(BasicProps.TIMESTAMP);
-                if(isTimeStamp) {
+                if (isTimeStamp) {
                     return timeItem.getTimeStampValue();
                 }
                 if (isTimeEvent) {

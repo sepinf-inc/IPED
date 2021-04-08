@@ -194,7 +194,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     ClearFilterButton clearAllFilters;
     boolean disposicaoVertical = false;
     boolean timelineTableView = false;
-    
+
     public ResultTableModel resultsModel;
     List resultSortKeys;
     SubitemTableModel subItemModel = new SubitemTableModel();
@@ -445,7 +445,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         similarImageFilterPanel = new SimilarImagesFilterPanel();
         similarImageFilterPanel.setVisible(false);
-        
+
         similarFacesFilterPanel = new SimilarFacesFilterPanel();
         similarFacesFilterPanel.setVisible(false);
 
@@ -761,8 +761,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 bookmarksPanel);
 
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
-        CButton timeButton = new CButton(Messages.get("App.ToggleTimelineView"),
-                IconUtil.getIcon("time", resPath));
+        CButton timeButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getIcon("time", resPath));
         timeButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 toggleTimelineTableView();
@@ -770,7 +769,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
         tableTabDock.addAction(timeButton);
         tableTabDock.addSeparator();
-        
+
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
 
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
@@ -900,13 +899,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         setDockablesColors();
     }
-    
+
     public void toggleTimelineTableView() {
         timelineTableView = !timelineTableView;
         App.get().appletListener.updateFileListing();
-        if(timelineTableView) {
+        if (timelineTableView) {
             ColumnsManager.getInstance().moveTimelineColumns(5);
-        }else {
+        } else {
             ColumnsManager.getInstance().moveTimelineColumns(14);
         }
     }

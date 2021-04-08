@@ -180,7 +180,7 @@ public class MenuClass extends JPopupMenu {
         this.add(exportTerms);
 
         this.addSeparator();
-        
+
         toggleTimelineView = new JMenuItem(Messages.getString("App.ToggleTimelineView")); //$NON-NLS-1$
         toggleTimelineView.addActionListener(menuListener);
         this.add(toggleTimelineView);

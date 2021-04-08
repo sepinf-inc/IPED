@@ -23,9 +23,6 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.HashSet;
 
-import javax.swing.JOptionPane;
-import javax.swing.SwingUtilities;
-
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
@@ -105,10 +102,10 @@ public class RowComparator implements Comparator<Integer> {
                 || Long.class.equals(IndexItem.getMetadataTypes().get(field));
         isDoubleField = Float.class.equals(IndexItem.getMetadataTypes().get(field))
                 || Double.class.equals(IndexItem.getMetadataTypes().get(field));
-        
+
         isTimeStamp = BasicProps.TIMESTAMP.equals(field);
         isTimeEvent = BasicProps.TIME_EVENT.equals(field);
-        
+
         if (!loadDocValues)
             return;
 
@@ -260,15 +257,15 @@ public class RowComparator implements Comparator<Integer> {
                     .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
 
         } else if (isTimeStamp && itemA instanceof TimeItemId) {
-            int ordA = ((TimeItemId)itemA).getTimeStampOrd();
-            int ordB = ((TimeItemId)itemB).getTimeStampOrd();
+            int ordA = ((TimeItemId) itemA).getTimeStampOrd();
+            int ordB = ((TimeItemId) itemB).getTimeStampOrd();
             return Integer.compare(ordA, ordB);
-            
+
         } else if (isTimeEvent && itemA instanceof TimeItemId) {
-            int ordA = ((TimeItemId)itemA).getTimeEventOrd();
-            int ordB = ((TimeItemId)itemB).getTimeEventOrd();
+            int ordA = ((TimeItemId) itemA).getTimeEventOrd();
+            int ordB = ((TimeItemId) itemB).getTimeEventOrd();
             return Integer.compare(ordA, ordB);
-            
+
         } else if (sdv != null) {
             SortedDocValues sdv = localSDV.get();
             return sdv.getOrd(a) - sdv.getOrd(b);
@@ -291,7 +288,7 @@ public class RowComparator implements Comparator<Integer> {
             } while (result == 0 && ordA != SortedSetDocValues.NO_MORE_ORDS && ordB != SortedSetDocValues.NO_MORE_ORDS);
 
             return result;
-            
+
         } else if (sndv != null) {
             SortedNumericDocValues lsndv = localSNDV.get();
             int result, k = 0, countA = 0, countB = 0;
@@ -317,7 +314,7 @@ public class RowComparator implements Comparator<Integer> {
             } while (result == 0 && (k < countA || k < countB));
 
             return result;
-        
+
         } else if (ndv != null) {
             Bits docsWithField = localDocsWithField.get();
             if (docsWithField.get(a)) {
@@ -330,9 +327,9 @@ public class RowComparator implements Comparator<Integer> {
                 return -1;
             else
                 return 0;
-        
+
         }
-        
+
         // On demand sorting if DocValues does not exist for this field (much slower)
         try {
             Document doc1 = app.appCase.getReader().document(a, fieldsToLoad);
