@@ -20,24 +20,34 @@ import java.io.InputStream;
 import junit.framework.TestCase;
 
 
-public class SevenZipParserTest extends TestCase {
+public class SevenZipParserTest  extends AbstractPkgTest {
     
 
     @Test
-    public void testSevenZipParsing()  throws Exception {
-       //stream receiving null???
-        Parser parser = new AutoDetectParser(); 
-        ContentHandler handler = new BodyContentHandler();
-        Metadata metadata = new Metadata();
-        ParseContext context = new ParseContext();
-        InputStream stream = SevenZipParserTest.class.getResourceAsStream(
-                "/test-files/mockrar.zip");
-        try {
-            parser.parse(stream, handler, metadata, context);
-        } finally {
-            stream.close();
-        }
-    }
+
+        public void testSevenZipParsing() throws Exception {
+            Parser parser = new AutoDetectParser();
+            ContentHandler handler = new BodyContentHandler();
+            Metadata metadata = new Metadata();
+
+            InputStream stream = SevenZipParserTest.class.getResourceAsStream(
+                    "/test-files/mockrar.rar");
+            try {
+                parser.parse(stream, handler, metadata, recursingContext);
+            } finally {
+                stream.close();
+            }
+            
+            assertEquals("application/x-rar-compressed", metadata.get(Metadata.CONTENT_TYPE));
+            String content = handler.toString();
+            assertTrue(content.contains("mocktext1.txt"));
+            assertTrue(content.contains("mocktext2.txt"));
+            assertTrue(content.contains("mocktext3.txt"));
+            }
 }
+
+
+    
+
 
 
