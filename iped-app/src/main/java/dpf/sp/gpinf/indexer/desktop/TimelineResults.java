@@ -49,18 +49,17 @@ public class TimelineResults {
         ArrayList<IItemId> ids = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int[] eventOrd = new int[Short.MAX_VALUE];
-        short[] eventsInDocOrds = new short[Short.MAX_VALUE];
+        int[] eventsInDocOrds = new int[Short.MAX_VALUE];
         int idx = 0;
         for (IItemId id : items.getIterator()) {
             int luceneId = App.get().appCase.getLuceneId(id);
+            String eventsInDocStr = eventsInDocOrdsValues.get(luceneId).utf8ToString();
+            if (loadOrdsFromString(eventsInDocStr, eventsInDocOrds) == 0) {
+                continue;
+            }
             timeStampValues.setDocument(luceneId);
             timeEventGroupValues.setDocument(luceneId);
-            String eventsInDocStr = eventsInDocOrdsValues.get(luceneId).utf8ToString();
-            int i = 0, j = 0, k = 0;
-            while ((j = eventsInDocStr.indexOf(IndexItem.EVENT_IDX_SEPARATOR, i)) != -1) {
-                eventsInDocOrds[k++] = Short.parseShort(eventsInDocStr.substring(i, j));
-                i = j + 1;
-            }
+
             long ord;
             short pos = 0;
             while ((ord = timeEventGroupValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
@@ -78,6 +77,24 @@ public class TimelineResults {
         }
         return new MultiSearchResult(ids.toArray(new IItemId[ids.size()]), toPrimitive(scores));
 
+    }
+
+    private static final int loadOrdsFromString(String string, int[] ret) {
+        int i = 0, j = 0, k = 0;
+        int len = string.length();
+        do {
+            j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR, i);
+            if (j == -1) {
+                if (i == 0) {
+                    return 0;
+                }
+                j = len;
+            }
+            ret[k++] = Integer.parseInt(string.substring(i, j));
+            i = j + 1;
+        } while (j < len);
+
+        return k;
     }
 
     private static float[] toPrimitive(List<Float> list) {
