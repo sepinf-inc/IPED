@@ -54,9 +54,10 @@ public class TimelineResults {
         for (IItemId id : items.getIterator()) {
             int luceneId = App.get().appCase.getLuceneId(id);
             String eventsInDocStr = eventsInDocOrdsValues.get(luceneId).utf8ToString();
-            if (loadOrdsFromString(eventsInDocStr, eventsInDocOrds) == 0) {
+            if (eventsInDocStr.isEmpty()) {
                 continue;
             }
+            loadOrdsFromString(eventsInDocStr, eventsInDocOrds);
             timeStampValues.setDocument(luceneId);
             timeEventGroupValues.setDocument(luceneId);
 
@@ -79,22 +80,17 @@ public class TimelineResults {
 
     }
 
-    private static final int loadOrdsFromString(String string, int[] ret) {
-        int i = 0, j = 0, k = 0;
+    private static final void loadOrdsFromString(String string, int[] ret) {
         int len = string.length();
+        int i = 0, j = 0, k = 0;
         do {
             j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR, i);
             if (j == -1) {
-                if (i == 0) {
-                    return 0;
-                }
                 j = len;
             }
             ret[k++] = Integer.parseInt(string.substring(i, j));
             i = j + 1;
         } while (j < len);
-
-        return k;
     }
 
     private static float[] toPrimitive(List<Float> list) {
