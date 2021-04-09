@@ -895,7 +895,7 @@ public class UfedXmlReader extends DataSourceReader {
             if ("Device Info".equals(currentNode.atts.get("section"))) {
                 if (!deviceInfoData.isEmpty()) {
                     item = new Item();
-                    String name = "DeviceInfo";
+                    String name = Messages.getString("UfedXmlReader.DeviceInfo");
                     item.setName(name);
                     item.setParent(rootItem);
                     item.setPath(rootItem.getPath() + "/" + name);
@@ -910,8 +910,11 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
             } else if (parentNode != null && parentNode.atts != null && "Device Info".equals(parentNode.atts.get("section"))) {
-                String extName = extractionInfoMap.get(currentNode.atts.get("sourceExtraction"));
-                deviceInfoData.add(new String[] {nameAttr, chars.toString().trim(), extName});
+                String value = chars.toString().trim();
+                if (!value.isEmpty()) {
+                    String extractiontName = extractionInfoMap.get(currentNode.atts.get("sourceExtraction"));
+                    deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
+                }
             }
             
             chars = new StringBuilder();
