@@ -353,6 +353,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         boolean mayBeNumeric = mayBeNumeric(field);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
+        boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         ArrayList<IItemId> items = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
@@ -436,7 +437,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             }
         } else if (docValuesSet != null) {
             for (IItemId item : result.getIterator()) {
-                if (item instanceof TimeItemId) {
+                if (isTimeEvent && item instanceof TimeItemId) {
                     TimeItemId timeId = (TimeItemId) item;
                     String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
                     long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
@@ -488,6 +489,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
+        boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -647,7 +649,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         } else if (docValuesSet != null) {
             valueCount = new int[(int) docValuesSet.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
-                if (item instanceof TimeItemId) {
+                if (isTimeEvent && item instanceof TimeItemId) {
                     TimeItemId timeId = (TimeItemId) item;
                     String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
                     long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
