@@ -583,6 +583,7 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(md5.toString());
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setExportedFile(null);
         evidence.setFile(null);
         evidence.setFileOffset(-1);
         evidence.setLength((long) len);
