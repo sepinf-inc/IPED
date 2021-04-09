@@ -125,44 +125,46 @@ public class SevenZipParserTest  extends AbstractPkgTest {
 
 
     
-//    public void testSevenZipRAR5Parsing() throws Exception {
-//        Parser parser = new SevenZipParser();
-//        ContentHandler handler = new BodyContentHandler();
-//        Metadata mockedMetadata = mock(Metadata.class);
-//        
-//        
-//        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar5.rar");
-//        try {
-//            String mimetype = "application/x-rar-compressed";
-//            when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
-//            parser.parse(stream, handler, mockedMetadata, recursingContext);
-//            } finally {
-//                stream.close();
-//                }
-//            
-//        assertEquals("application/x-rar-compressed", mockedMetadata.get(Metadata.CONTENT_TYPE));
-//        String content = handler.toString();
-//        assertTrue(content.contains("mocktext1.txt"));
-//        assertTrue(content.contains("mocktext2.txt"));
-//        assertTrue(content.contains("mocktext3.txt"));
-//        assertTrue(content.contains("mocktext4.txt"));
-//        assertTrue(content.contains("mocktext5.txt"));
-//        assertTrue(content.contains("mockdoc1.docx"));
-//        assertTrue(content.contains("mockdoc2.docx"));
-//        assertTrue(content.contains("mockdoc3.docx"));
-//        assertTrue(content.contains("mockdoc4.docx"));
-//        assertTrue(content.contains("mockdoc5.docx"));
-//        assertTrue(content.contains("mocksheets1.xlsx"));
-//        assertTrue(content.contains("mocksheets2.xlsx"));
-//        assertTrue(content.contains("mocksheets3.xlsx"));
-//        assertTrue(content.contains("mocksheets4.xlsx"));
-//        assertTrue(content.contains("mocksheets5.xlsx"));
-//        assertTrue(content.contains("mockfolder/mocktext5.txt"));
-//        assertTrue(content.contains("mockfolder/mockdoc5.docx"));
-//        assertTrue(content.contains("mockfolder/mocksheets5.xlsx"));
-//            
-//            
-//        }
+    public void testSevenZipRAR5Parsing() throws Exception {
+        Parser parser = new SevenZipParser();
+        ContentHandler handler = new BodyContentHandler();
+        Metadata mockedMetadata = spy(new Metadata());
+
+        
+        
+        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar5.rar");
+        try {
+            String mimetype = "application/x-rar-compressed";
+
+            when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
+            parser.parse(stream, handler, mockedMetadata, recursingContext);
+            } finally {
+                stream.close();
+                }
+            
+        assertEquals("application/x-rar-compressed", mockedMetadata.get(Metadata.CONTENT_TYPE));
+        String content = handler.toString();
+        assertTrue(content.contains("mocktext1.txt"));
+        assertTrue(content.contains("mocktext2.txt"));
+        assertTrue(content.contains("mocktext3.txt"));
+        assertTrue(content.contains("mocktext4.txt"));
+        assertTrue(content.contains("mocktext5.txt"));
+        assertTrue(content.contains("mockdoc1.docx"));
+        assertTrue(content.contains("mockdoc2.docx"));
+        assertTrue(content.contains("mockdoc3.docx"));
+        assertTrue(content.contains("mockdoc4.docx"));
+        assertTrue(content.contains("mockdoc5.docx"));
+        assertTrue(content.contains("mocksheets1.xlsx"));
+        assertTrue(content.contains("mocksheets2.xlsx"));
+        assertTrue(content.contains("mocksheets3.xlsx"));
+        assertTrue(content.contains("mocksheets4.xlsx"));
+        assertTrue(content.contains("mocksheets5.xlsx"));
+        assertTrue(content.contains("mockfolder/mocktext5.txt"));
+        assertTrue(content.contains("mockfolder/mockdoc5.docx"));
+        assertTrue(content.contains("mockfolder/mocksheets5.xlsx"));
+            
+            
+        }
 }
 
 
