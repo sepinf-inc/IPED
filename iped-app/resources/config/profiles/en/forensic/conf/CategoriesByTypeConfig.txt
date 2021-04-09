@@ -136,3 +136,5 @@ Recordings = application/x-ufed-html-recordings; application/x-ufed-recording
 Mobile Cards = application/x-ufed-mobilecard
 
 Application Usage = application/x-ufed-applicationusage
+
+Device Information = application/x-ufed-deviceinfo
