@@ -64,13 +64,12 @@ public class TimelineResults {
             long ord;
             short pos = 0;
             while ((ord = timeEventGroupValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                for (int k : eventsInDocOrds[pos]) {
+                for (int k : eventsInDocOrds[pos++]) {
                     if (k == -1) {
                         break;
                     }
                     eventOrd[k] = (int) ord;
                 }
-                pos++;
             }
             pos = 0;
             while ((ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
@@ -94,14 +93,22 @@ public class TimelineResults {
             if (j == -1) {
                 j = len;
             }
-            String[] strs = string.substring(i, j).split(IndexItem.EVENT_IDX_SEPARATOR2);
-            int l = 0;
-            for (; l < strs.length; l++) {
-                ret[k][l] = Integer.parseInt(strs[l]);
-            }
-            ret[k++][l] = -1;
+            loadOrdsFromStringInner(string.substring(i, j), j - i, ret[k++]);
             i = j + 1;
         } while (j < len);
+    }
+
+    private static final void loadOrdsFromStringInner(String string, int len, int[] ret) {
+        int i = 0, j = 0, k = 0;
+        do {
+            j = string.indexOf(IndexItem.EVENT_IDX_SEPARATOR2, i);
+            if (j == -1) {
+                j = len;
+            }
+            ret[k++] = Integer.parseInt(string.substring(i, j));
+            i = j + 1;
+        } while (j < len);
+        ret[k] = -1;
     }
 
     private static float[] toPrimitive(List<Float> list) {

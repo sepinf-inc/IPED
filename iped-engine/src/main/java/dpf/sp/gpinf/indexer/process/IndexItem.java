@@ -119,7 +119,7 @@ public class IndexItem extends BasicProps {
     private static final int MAX_DOCVALUE_SIZE = 4096;
 
     public static final char EVENT_IDX_SEPARATOR = ';';
-    public static final String EVENT_IDX_SEPARATOR2 = ",";
+    public static final char EVENT_IDX_SEPARATOR2 = ',';
     public static final String EVENT_SEPARATOR = " | ";
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
