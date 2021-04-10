@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -117,7 +118,8 @@ public class IndexItem extends BasicProps {
 
     private static final int MAX_DOCVALUE_SIZE = 4096;
 
-    public static final String EVENT_IDX_SEPARATOR = ",";
+    public static final char EVENT_IDX_SEPARATOR = ';';
+    public static final String EVENT_IDX_SEPARATOR2 = ",";
     public static final String EVENT_SEPARATOR = " | ";
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
@@ -485,7 +487,6 @@ public class IndexItem extends BasicProps {
 
             if (prevTimeStamp != null && !tse.timeStamp.equals(prevTimeStamp)) {
                 addTimeStampEventGroup(doc, eventsSet, eventsList);
-                eventsSet.clear();
             }
             eventsSet.add(tse.timeEvent);
             if (i == timeEventSet.size()) {
@@ -493,21 +494,39 @@ public class IndexItem extends BasicProps {
             }
             prevTimeStamp = tse.timeStamp;
         }
-        TreeSet<String> sortedList = new TreeSet<>(eventsList);
+        // some date metadata could have multiple timestamps
+        List<String> sortedList = new ArrayList<>(eventsList);
+        Collections.sort(sortedList);
         StringBuilder indexes = new StringBuilder();
-        for (String events : sortedList) {
+        String prevEvent = null;
+        for (String event : sortedList) {
             if (indexes.length() > 0) {
-                indexes.append(EVENT_IDX_SEPARATOR);
+                if (event.equals(prevEvent)) {
+                    indexes.append(EVENT_IDX_SEPARATOR2);
+                } else {
+                    indexes.append(EVENT_IDX_SEPARATOR);
+                }
             }
-            indexes.append(eventsList.indexOf(events));
+            indexes.append(indexOfObject(eventsList, event));
+            prevEvent = event;
         }
         doc.add(new BinaryDocValuesField(ExtraProperties.TIME_EVENT_ORDS, new BytesRef(indexes.toString())));
+    }
+
+    private static int indexOfObject(List<String> list, String o) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == o) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private static void addTimeStampEventGroup(Document doc, Set<String> eventsSet, List<String> eventsList) {
         String events = eventsSet.stream().collect(Collectors.joining(EVENT_SEPARATOR));
         doc.add(new SortedSetDocValuesField(ExtraProperties.TIME_EVENT_GROUPS, new BytesRef(events)));
         eventsList.add(events);
+        eventsSet.clear();
     }
 
     private static class TimeStampEvent implements Comparable<TimeStampEvent> {

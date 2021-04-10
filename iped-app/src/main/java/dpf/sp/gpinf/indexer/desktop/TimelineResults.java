@@ -49,7 +49,7 @@ public class TimelineResults {
         ArrayList<IItemId> ids = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int[] eventOrd = new int[Short.MAX_VALUE];
-        int[] eventsInDocOrds = new int[Short.MAX_VALUE];
+        int[][] eventsInDocOrds = new int[Short.MAX_VALUE][1 << 9];
         int idx = 0;
         for (IItemId id : items.getIterator()) {
             int luceneId = App.get().appCase.getLuceneId(id);
@@ -64,7 +64,13 @@ public class TimelineResults {
             long ord;
             short pos = 0;
             while ((ord = timeEventGroupValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                eventOrd[eventsInDocOrds[pos++]] = (int) ord;
+                for (int k : eventsInDocOrds[pos]) {
+                    if (k == -1) {
+                        break;
+                    }
+                    eventOrd[k] = (int) ord;
+                }
+                pos++;
             }
             pos = 0;
             while ((ord = timeStampValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
@@ -80,7 +86,7 @@ public class TimelineResults {
 
     }
 
-    private static final void loadOrdsFromString(String string, int[] ret) {
+    private static final void loadOrdsFromString(String string, int[][] ret) {
         int len = string.length();
         int i = 0, j = 0, k = 0;
         do {
@@ -88,7 +94,12 @@ public class TimelineResults {
             if (j == -1) {
                 j = len;
             }
-            ret[k++] = Integer.parseInt(string.substring(i, j));
+            String[] strs = string.substring(i, j).split(IndexItem.EVENT_IDX_SEPARATOR2);
+            int l = 0;
+            for (; l < strs.length; l++) {
+                ret[k][l] = Integer.parseInt(strs[l]);
+            }
+            ret[k++][l] = -1;
             i = j + 1;
         } while (j < len);
     }
