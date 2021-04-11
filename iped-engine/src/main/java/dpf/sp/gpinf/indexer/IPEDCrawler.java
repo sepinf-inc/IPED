@@ -12,6 +12,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.tika.mime.MediaType;
+
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -21,10 +23,35 @@ public class IPEDCrawler {
 
     public static void main(String[] args) {
 
-        String query = "contentType:\"message/rfc822\"";
+        String queryStr = "contentType:(";
+        MediaType[] mimes = { 
+                MediaType.application("pkcs7-mime"), 
+                MediaType.application("pkcs7-signature"), 
+                MediaType.application("timestamped-data"),
+                MediaType.application("x-hwp-v5"), 
+                MediaType.image("heif"), 
+                MediaType.image("heif-sequence"),
+                MediaType.image("heic"), 
+                MediaType.image("heic-sequence"),
+                MediaType.image("emf"), 
+                MediaType.application("onenote"),
+                MediaType.application("vnd.mif"),
+                MediaType.application("x-maker"),
+                MediaType.application("x-mif"),
+                MediaType.application("vnd.oasis.opendocument.tika.flat.document"),
+                MediaType.application("vnd.oasis.opendocument.flat.text"),
+                MediaType.application("vnd.oasis.opendocument.flat.presentation"),
+                MediaType.application("vnd.oasis.opendocument.flat.spreadsheet"),
+                MediaType.application("x-sas-data"),
+                MediaType.application("vnd.adobe.indesign-idml-package") };
+        for (MediaType mime : mimes) {
+            queryStr += "\"" + mime.toString() + "\" ";
+        }
+        queryStr += ")";
+        final String query = queryStr;
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\EML-sard");
+        File exportFolder = new File("F:\\teste-files\\tika-1.26-newparsers");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
