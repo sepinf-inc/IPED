@@ -157,5 +157,17 @@
         <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
 		
     </parsers>
+	<detectors>		
+		<!-- From DefaultDetector -->
+		<detector class="org.apache.tika.detect.OverrideDetector"></detector>
+		<detector class="org.apache.tika.parser.microsoft.POIFSContainerDetector"></detector>
+		<detector class="org.apache.tika.parser.pkg.ZipContainerDetector"></detector>
+		<detector class="org.gagravarr.tika.OggDetector"></detector>
+
+		<!-- SQLiteContainerDetector -->
+		<detector class="dpf.sp.gpinf.detector.SQLiteContainerDetector"></detector>
+	    <!-- Define custom MimeTypes detector -->
+	    <detector class="org.apache.tika.mime.MimeTypesIPED"></detector>
+	</detectors>
 
 </properties>
