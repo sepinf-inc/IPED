@@ -13,6 +13,7 @@ import java.util.TreeSet;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -87,7 +88,7 @@ public class MultipleParser extends AbstractParser {
         EmbeddedContentHandler embeddedHandler = new EmbeddedContentHandler(handler);
         embeddedHandler.startDocument();
         try {
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            TikaInputStream tis = TikaInputStream.get(new CloseShieldInputStream(stream), tmp);
             Path tempPath = null;
             for (Parser parser : parsers) {
                 if (tis != null && (tis.hasFile() || source == null)) {
