@@ -100,9 +100,9 @@
         <parser class="org.apache.tika.parser.video.FLVParser"></parser> -->
         <parser class="org.apache.tika.parser.wordperfect.QuattroProParser"></parser>
         <parser class="org.apache.tika.parser.wordperfect.WordPerfectParser"></parser>
-        <!-- we have our own impl for xml, maybe could be updated to merge these too
-        <parser class="org.apache.tika.parser.xml.DcXMLParser"></parser>
-        <parser class="org.apache.tika.parser.dif.DIFParser"></parser>-->
+        <!-- We have our own XMLParser that uses this internally
+        <parser class="org.apache.tika.parser.xml.DcXMLParser"></parser>-->
+        <parser class="org.apache.tika.parser.dif.DIFParser"></parser>
         <parser class="org.apache.tika.parser.xml.FictionBookParser"></parser>
         <parser class="org.apache.tika.parser.chm.ChmParser"></parser>
         <!-- we uses strings parser for this
