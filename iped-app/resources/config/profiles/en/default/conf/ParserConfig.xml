@@ -27,12 +27,13 @@
         <parser class="org.apache.tika.parser.asm.ClassParser"></parser>
         <parser class="org.apache.tika.parser.audio.AudioParser"></parser>
         <parser class="org.apache.tika.parser.audio.MidiParser"></parser>
-        <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser>
+        <!--throws exception on most files
+        <parser class="org.apache.tika.parser.crypto.Pkcs7Parser"></parser-->
         <parser class="org.apache.tika.parser.crypto.TSDParser"></parser>
         <parser class="org.apache.tika.parser.csv.TextAndCSVParser"></parser>
         <parser class="org.apache.tika.parser.dwg.DWGParser"></parser>
         <parser class="org.apache.tika.parser.epub.EpubParser"></parser>
-        <!-- TODO: merge this with RawStringParser to extract strings and metadata
+        <!--Just extracts metadata. Used below in MultipleParser
         <parser class="org.apache.tika.parser.executable.ExecutableParser"></parser>-->
         <parser class="org.apache.tika.parser.feed.FeedParser"></parser>
         <!-- Disabled, I "think" font parsers caused crashes a long time ago, anyway, we don't need them
@@ -53,7 +54,8 @@
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
         <parser class="org.apache.tika.parser.mbox.OutlookPSTParser"></parser>-->
-        <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser>
+        <!--Returns empty content for some EMFs. Used below in MultipleParser
+        <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
         <parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>
         <!--TODO: compare to our old MDB parser and possibly switch to this 
         <parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser>-->
@@ -142,6 +144,32 @@
         <parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
         <parser class="org.gagravarr.tika.VorbisParser"></parser>
+        
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/emf</mime>
+            <params>
+                <param name="parsers" type="string">
+                    org.apache.tika.parser.microsoft.EMFParser;
+                    dpf.sp.gpinf.indexer.parsers.RawStringParser;
+                </param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>application/x-msdownload</mime>
+            <mime>application/x-elf</mime>
+            <mime>application/x-object</mime>
+            <mime>application/x-executable</mime>
+            <mime>application/x-sharedlib</mime>
+            <mime>application/x-coredump</mime>
+            <params>
+                <param name="parsers" type="string">
+                    org.apache.tika.parser.executable.ExecutableParser;
+                    dpf.sp.gpinf.indexer.parsers.RawStringParser;
+                </param>
+            </params>
+        </parser>
         
         <parser class="dpf.inc.sepinf.browsers.parsers.FirefoxSqliteParser">
             <params>
