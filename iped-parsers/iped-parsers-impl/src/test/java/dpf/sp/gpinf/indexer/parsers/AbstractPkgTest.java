@@ -26,6 +26,7 @@ import junit.framework.TestCase;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.AutoDetectParser;
@@ -33,6 +34,8 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import iped3.util.ExtraProperties;
 
 /**
  * Parent class for all Package based Test cases
@@ -60,16 +63,15 @@ public abstract class AbstractPkgTest extends TestCase {
    @SuppressWarnings("serial")
    protected static class EmbeddedTrackingParser extends AbstractParser {
       protected List<String> filenames = new ArrayList<String>();
-      protected List<String> mediatypes = new ArrayList<String>();
-      protected byte[] lastSeenStart;
+      protected List<String> modifieddate = new ArrayList<String>();
       
       public void reset() {
          filenames.clear();
-         mediatypes.clear();
+         modifieddate.clear();
+
       }
       
       public Set<MediaType> getSupportedTypes(ParseContext context) {
-         // Cheat!
          return (new AutoDetectParser()).getSupportedTypes(context);
       }
 
@@ -77,10 +79,8 @@ public abstract class AbstractPkgTest extends TestCase {
             Metadata metadata, ParseContext context) throws IOException,
             SAXException, TikaException {
          filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
-         mediatypes.add(metadata.get(Metadata.CONTENT_TYPE));
-         
-         lastSeenStart = new byte[32];
-         stream.read(lastSeenStart);
+         modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
+
       }
 
    }
