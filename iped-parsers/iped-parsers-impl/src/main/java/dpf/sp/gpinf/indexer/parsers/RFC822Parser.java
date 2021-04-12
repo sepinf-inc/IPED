@@ -310,6 +310,11 @@ public class RFC822Parser extends AbstractParser {
                             this.attachName = attachName;
 
                     }
+                } else {
+                    /* Issue #65 - Store all email headers as metadata */
+                    String headerValue = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
+                    metadata.add(fieldname, headerValue);
+                    /* Issue #65 - End */
                 }
 
             } catch (RuntimeException me) {

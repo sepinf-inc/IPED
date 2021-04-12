@@ -28,6 +28,7 @@ import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -38,6 +39,7 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.EncryptedDocumentException;
@@ -530,6 +532,26 @@ public class OutlookPSTParser extends AbstractParser {
                 extractor.parseEmbedded(stream, xhtml, metadata, true);
 
             stream.close();
+            
+            /* Issue #65 - Store all email headers as metadata */
+            switch (email.getImportance()) {
+                case PSTMessage.IMPORTANCE_NORMAL:
+                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+                case PSTMessage.IMPORTANCE_HIGH:
+                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceHigh"));
+                    break;
+                case PSTMessage.IMPORTANCE_LOW:
+                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceLow"));
+                    break;
+                default:
+                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+            }
+            
+            populateMetadataWithEmailHeaders(email, metadata);
+            
+            /* Issue #65 - End */
 
         } catch (Exception e) {
             LOGGER.warn("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
@@ -551,6 +573,33 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
             }
             preview.append("</div>"); //$NON-NLS-1$
+        }
+    }
+    
+    /* Issue #65 */
+    private void populateMetadataWithEmailHeaders (PSTMessage email, Metadata metadata) {
+        /* From, Subject, To, Bcc, Cc fields already added as Metadata before, so ignore them here...
+         *  TODO: Values of this list needs to be reevaluated.
+         *  If you want to exclude a specific header from being printed out,
+         *  just put it on the list 'headersBlackList'
+         */
+        List<String> headersBlackList = Stream.of("From", "Subject", "To", "Bcc", "Cc").collect(Collectors.toList());
+        String headers = email.getTransportMessageHeaders();
+        if (!headers.isEmpty()){
+            String[] lines = headers.split("\n");
+            for (String line : lines) {
+                line = line.trim();
+                if (!line.isEmpty())
+                {
+                    String[] h = line.split(": ", 2);
+                    if (h.length < 2) // Didn't match...
+                        continue;
+                    if (headersBlackList.contains(h[0]))
+                        continue;
+                    
+                    metadata.add(h[0], h[1]);
+                }
+            }
         }
     }
 
