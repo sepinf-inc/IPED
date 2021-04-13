@@ -158,6 +158,7 @@ public class MetadataUtil {
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
         removeIgnorable(metadata);
+        removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
@@ -175,6 +176,24 @@ public class MetadataUtil {
                 for (Property p : prop.getSecondaryExtractProperties())
                     metadata.remove(p.getName());
             }
+        }
+    }
+
+    private static void removeInvalidGPSMeta(Metadata metadata) {
+        String lat = metadata.get(Metadata.LATITUDE);
+        String lon = metadata.get(Metadata.LONGITUDE);
+        boolean remove = false;
+        try {
+            if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
+                remove = true;
+            }
+        } catch (NumberFormatException e) {
+            remove = true;
+        }
+        if (remove) {
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(Metadata.ALTITUDE.getName());
         }
     }
 
