@@ -344,8 +344,14 @@ public class MetadataUtil {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
     }
 
+    public static boolean isVideoType(MediaType mediaType) {
+        return mediaType.getType().equals("video") //$NON-NLS-1$
+                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+    }
+
     private static void prefixVideoMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("video")) //$NON-NLS-1$
+        if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
+                || isVideoType(MediaType.parse(metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE))))
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
     }
 
