@@ -314,7 +314,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         docValuesSet = reader.getSortedSetDocValues(field);
         if (docValuesSet == null)
             docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
-        if (eventDocValuesSet == null && BasicProps.TIME_EVENT.equals(field)) {
+        if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
         eventSetToOrdsCache.clear();
