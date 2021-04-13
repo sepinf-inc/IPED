@@ -44,6 +44,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMP;
 import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,6 +193,8 @@ public class VideoThumbTask extends ThumbTask {
     private static final HashMap<String, VideoProcessResult> processedVideos = new HashMap<String, VideoProcessResult>();
 
     private static final Map<String, String> videoToTikaMetadata = getVideoToTikaMetadata();
+
+    private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
     private static final Map<String, String> getVideoToTikaMetadata() {
         Map<String, String> map = new HashMap<>();
@@ -517,7 +520,11 @@ public class VideoThumbTask extends ThumbTask {
         for (Entry<String, String> meta : r.getClipInfos().entrySet()) {
             String key = meta.getKey();
             key = videoToTikaMetadata.getOrDefault(key, key);
-            metadata.set(key, meta.getValue());
+            if ("location".equals(key)) {
+                iso6709Converter.populateLocation(metadata, meta.getValue());
+            } else {
+                metadata.add(key, meta.getValue());
+            }
         }
 
     }
