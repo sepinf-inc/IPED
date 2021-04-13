@@ -4,22 +4,24 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class BasicProps {
-
+    //Why Messages.getString() is not working when trying to parse. The changes in this file
+    //are just for testing, not intended to maintain this way. Testing files should not 
+    //change class files.
     public static final String ID = "id"; //$NON-NLS-1$
     public static final String PARENTID = "parentId"; //$NON-NLS-1$
     public static final String PARENTIDs = "parentIds"; //$NON-NLS-1$
     public static final String EVIDENCE_UUID = "evidenceUUID"; //$NON-NLS-1$
-    public static final String NAME = Messages.getString("BasicProps.name"); //$NON-NLS-1$
-    public static final String TYPE = Messages.getString("BasicProps.type"); //$NON-NLS-1$
-    public static final String LENGTH = Messages.getString("BasicProps.size"); //$NON-NLS-1$
-    public static final String CREATED = Messages.getString("BasicProps.created"); //$NON-NLS-1$
-    public static final String ACCESSED = Messages.getString("BasicProps.accessed"); //$NON-NLS-1$
-    public static final String MODIFIED = Messages.getString("BasicProps.modified"); //$NON-NLS-1$
-    public static final String RECORDDATE = Messages.getString("BasicProps.recordDate"); //$NON-NLS-1$
-    public static final String PATH = Messages.getString("BasicProps.path"); //$NON-NLS-1$
-    public static final String CATEGORY = Messages.getString("BasicProps.category"); //$NON-NLS-1$
-    public static final String DELETED = Messages.getString("BasicProps.deleted"); //$NON-NLS-1$
-    public static final String CONTENT = Messages.getString("BasicProps.content"); //$NON-NLS-1$
+    public static final String NAME = "BasicProps.name"; //$NON-NLS-1$
+    public static final String TYPE ="BasicProps.type"; //$NON-NLS-1$
+    public static final String LENGTH = "BasicProps.size"; //$NON-NLS-1$
+    public static final String CREATED = "BasicProps.created"; //$NON-NLS-1$
+    public static final String ACCESSED = "BasicProps.accessed"; //$NON-NLS-1$
+    public static final String MODIFIED = "BasicProps.modified"; //$NON-NLS-1$
+    public static final String RECORDDATE ="BasicProps.recordDate"; //$NON-NLS-1$
+    public static final String PATH = "BasicProps.path"; //$NON-NLS-1$
+    public static final String CATEGORY = "BasicProps.category"; //$NON-NLS-1$
+    public static final String DELETED = "BasicProps.deleted"; //$NON-NLS-1$
+    public static final String CONTENT = "BasicProps.content"; //$NON-NLS-1$
     public static final String EXPORT = "export"; //$NON-NLS-1$
     public static final String HASH = "hash"; //$NON-NLS-1$
     public static final String ISDIR = "isDir"; //$NON-NLS-1$

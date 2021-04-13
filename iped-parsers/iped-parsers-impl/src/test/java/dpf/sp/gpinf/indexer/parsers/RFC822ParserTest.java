@@ -8,6 +8,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -15,6 +16,7 @@ import java.io.InputStream;
 
 import junit.framework.TestCase;
 
+import org.apache.james.mime4j.parser.MimeStreamParser;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -27,6 +29,12 @@ import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
+
+import dpf.sp.gpinf.indexer.parsers.RFC822Parser.MailContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
+
 import org.junit.Test;
 
 public class RFC822ParserTest extends TestCase {
@@ -39,82 +47,68 @@ public class RFC822ParserTest extends TestCase {
     @Test
     public void testSimple() throws IOException, SAXException, TikaException{
         Parser parser = new RFC822Parser();
-        Metadata metadata = new Metadata();
-        ContentHandler handler = new DefaultHandler();
+        Metadata metadata = spy(new Metadata());
+        ContentHandler handler = spy(new DefaultHandler());
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/testRFC822");
-
+        
         parser.parse(stream, handler, metadata, context);
-//        verify(handler).startDocument();
-//        //just one body
-//        verify(handler).startElement(eq(XHTMLContentHandler.XHTML), eq("p"), eq("p"), any(Attributes.class));
-//        verify(handler).endElement(XHTMLContentHandler.XHTML, "p", "p");
-//        //no multi-part body parts
-//        verify(handler, never()).startElement(eq(XHTMLContentHandler.XHTML), eq("div"), eq("div"), any(Attributes.class));
-//        verify(handler, never()).endElement(XHTMLContentHandler.XHTML, "div", "div");
-//        verify(handler).endDocument();
-        //note no leading spaces, and no quotes
+        
+        verify(handler).startDocument();
+        verify(handler, never()).startElement(eq(XHTMLContentHandler.XHTML), eq("div"), eq("div"), any(Attributes.class));
+        verify(handler, never()).endElement(XHTMLContentHandler.XHTML, "div", "div");
+        verify(handler).endDocument();
         assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(TikaCoreProperties.CREATOR));
-        assertEquals("[Test] Commented: Testing RFC822 parsing", metadata.get(TikaCoreProperties.TITLE));
-        assertEquals("[Test] Commented: Testing RFC822 parsing", metadata.get(Metadata.SUBJECT));
+        assertEquals("[Test] Commented: Testing RFC822 parsing", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+        assertEquals("[ https://test.test.org/test/test/test-test?page=com.test.test.test.test.test:test-test&"
+                + "test=test#test ] Guilherme Andreuce com(...)", metadata.get(ExtraProperties.MESSAGE_BODY));
+        assertEquals("2021-04-12T08:25:34Z", metadata.get(ExtraProperties.MESSAGE_DATE));
+        assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(Metadata.AUTHOR));
+        assertEquals("test@test.pf.gov", metadata.get(Metadata.MESSAGE_TO));
        
     }
-//
-//    @Test
-//    public void testMultipart() {
-//        Parser parser = new RFC822Parser();
-//        Metadata metadata = new Metadata();
-//        InputStream stream = getStream("test-files/testRFC822-multipart");
-//        ContentHandler handler = mock(XHTMLContentHandler.class);
-//
-//        try {
-//            parser.parse(stream, handler, metadata, new ParseContext());
-//            verify(handler).startDocument();
-//            //4 body-part divs -- two outer bodies and two inner bodies
-//            verify(handler, times(4)).startElement(eq(XHTMLContentHandler.XHTML), eq("div"), eq("div"), any(Attributes.class));
-//            verify(handler, times(4)).endElement(XHTMLContentHandler.XHTML, "div", "div");
-//            //5 paragraph elements, 4 for body-parts and 1 for encompassing message
-//            verify(handler, times(5)).startElement(eq(XHTMLContentHandler.XHTML), eq("p"), eq("p"), any(Attributes.class));
-//            verify(handler, times(5)).endElement(XHTMLContentHandler.XHTML, "p", "p");
-//            verify(handler).endDocument();
-//        } catch (Exception e) {
-//            fail("Exception thrown: " + e.getMessage());
-//        }
-//        
-//        //repeat, this time looking at content
-//        parser = new RFC822Parser();
-//        metadata = new Metadata();
-//        stream = getStream("test-files/testRFC822-multipart");
-//        handler = new BodyContentHandler();
-//        try {
-//            parser.parse(stream, handler, metadata, new ParseContext());
-//            //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
-//            String bodyText = handler.toString();
-//            assertTrue(bodyText.contains("body 1"));
-//            assertTrue(bodyText.contains("body 2"));
-//            assertFalse(bodyText.contains("R0lGODlhNgE8AMQAA")); //part of encoded gif
-//        } catch (Exception e) {
-//            fail("Exception thrown: " + e.getMessage());
-//        }
-//    }
-//    
-//    @Test
-//    public void testQuotedPrintable() throws IOException, SAXException, TikaException {
-//        Parser parser = new RFC822Parser();
-//        Metadata metadata = new Metadata();
-//        InputStream stream = getStream("test-files/testRFC822_quoted");
-//        ContentHandler handler = new BodyContentHandler();
-//
-//
-//            parser.parse(stream, handler, metadata, new ParseContext());
-//            //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
-//            String bodyText = handler.toString();
-//            assertTrue(bodyText.contains("D\u00FCsseldorf has non-ascii."));
-//            assertTrue(bodyText.contains("Lines can be split like this."));
-//            assertTrue(bodyText.contains("Spaces at the end of a line \r\nmust be encoded.\r\n"));
-//            assertFalse(bodyText.contains("=")); //there should be no escape sequences
-//
-//    }
+
+    @Test
+    public void testMultipart() throws IOException, SAXException, TikaException {
+        Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/testRFC822-multipart");
+        ContentHandler handler = mock(XHTMLContentHandler.class);
+
+        parser.parse(stream, handler, metadata, new ParseContext());
+        verify(handler).startDocument();
+        verify(handler).endDocument();
+
+        
+        //repeat, this time looking at content
+        parser = new RFC822Parser();
+        metadata = new Metadata();
+        stream = getStream("test-files/testRFC822-multipart");
+        handler = new BodyContentHandler();
+        parser.parse(stream, handler, metadata, new ParseContext());
+        
+        //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
+        String bodyText = handler.toString();
+        assertTrue(bodyText.contains("logo.gif"));
+
+    }
+    
+    @Test
+    public void testQuotedPrintable() throws IOException, SAXException, TikaException {
+        Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/testRFC822_quoted");
+        ParseContext context = new ParseContext();
+        ContentHandler handler = new BodyContentHandler();
+        parser.parse(stream, handler, metadata, context);
+        stream.close();
+        //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
+        String bodyText = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
+        assertTrue(bodyText.contains("Düsseldorf has non-ascii."));
+        assertTrue(bodyText.contains("Lines can be split like this."));
+        assertFalse(bodyText.contains("=")); //there should be no escape sequences
+
+    }
 //
 //    @Test
 //    public void testBase64() throws IOException, SAXException, TikaException{
