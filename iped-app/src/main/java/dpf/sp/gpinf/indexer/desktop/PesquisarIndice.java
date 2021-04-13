@@ -244,9 +244,10 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     result = sfs.filter(result);
                 }
 
-                if (App.get().timelineTableView) {
+                if (App.get().timelineListener.isTimelineViewEnabled()) {
                     long t = System.currentTimeMillis();
                     result = new TimelineResults().expandTimestamps(result);
+                    numFilters++;
                     LOGGER.info("Toggle table timeline took {}ms", (System.currentTimeMillis() - t));
                 }
 

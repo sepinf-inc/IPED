@@ -173,6 +173,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     TreeListener treeListener;
     CategoryTreeListener categoryListener;
     BookmarksTreeListener bookmarksListener;
+    TimelineListener timelineListener;
     HitsTable parentItemTable;
     CControl dockingControl;
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
@@ -184,6 +185,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private List<DefaultSingleCDockable> viewerDocks;
     private ViewerController viewerController;
+    private CButton timelineButton;
 
     Color defaultColor;
     Color defaultFocusedColor;
@@ -193,7 +195,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
     boolean disposicaoVertical = false;
-    boolean timelineTableView = false;
 
     public ResultTableModel resultsModel;
     List resultSortKeys;
@@ -646,6 +647,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
+        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getIcon("time", resPath));
+        timelineListener = new TimelineListener(timelineButton, IconUtil.getIcon("timeon", resPath));
+        timelineButton.addActionListener(timelineListener);
+
         if (triageGui) {
             disposicaoVertical = true;
             exportToZip.setVisible(true);
@@ -701,6 +706,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(appletListener);
         clearAllFilters.addClearListener(appGraphAnalytics);
         clearAllFilters.addClearListener(similarImageFilterPanel);
+        clearAllFilters.addClearListener(timelineListener);
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));
         subItemTable.addMouseListener(subItemModel);
@@ -761,13 +767,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 bookmarksPanel);
 
         tableTabDock = createDockable("tabletab", Messages.getString("App.Table"), resultsScroll); //$NON-NLS-1$ //$NON-NLS-2$
-        CButton timeButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getIcon("time", resPath));
-        timeButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                toggleTimelineTableView();
-            }
-        });
-        tableTabDock.addAction(timeButton);
+        tableTabDock.addAction(timelineButton);
         tableTabDock.addSeparator();
 
         galleryTabDock = createDockable("galleryscroll", Messages.getString("App.Gallery"), galleryScroll); //$NON-NLS-1$ //$NON-NLS-2$
@@ -898,16 +898,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         setDockablesColors();
-    }
-
-    public void toggleTimelineTableView() {
-        timelineTableView = !timelineTableView;
-        App.get().appletListener.updateFileListing();
-        if (timelineTableView) {
-            ColumnsManager.getInstance().moveTimelineColumns(5);
-        } else {
-            ColumnsManager.getInstance().moveTimelineColumns(14);
-        }
     }
 
     private void setupViewerDocks() {
