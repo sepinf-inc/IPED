@@ -35,7 +35,6 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import iped3.util.ExtraProperties;
 
 /**
  * Parent class for all Package based Test cases

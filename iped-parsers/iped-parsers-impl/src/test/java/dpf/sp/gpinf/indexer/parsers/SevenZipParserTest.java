@@ -97,75 +97,75 @@ public class SevenZipParserTest  extends AbstractPkgTest {
         
         assertEquals("mockdoc3.docx", tracker.filenames.get(0));
         assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
-        assertEquals("12:25:20", tracker.modifieddate.get(0).substring(11,19));
+        assertEquals("09:25:20", tracker.modifieddate.get(0).substring(11,19));
         
         assertEquals("mockdoc4.docx", tracker.filenames.get(1));
         assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
-        assertEquals("12:25:10", tracker.modifieddate.get(1).substring(11,19));
+        assertEquals("09:25:10", tracker.modifieddate.get(1).substring(11,19));
         
         assertEquals("mockdoc5.docx", tracker.filenames.get(2));
         assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
-        assertEquals("12:24:58", tracker.modifieddate.get(2).substring(11,19));
+        assertEquals("09:24:58", tracker.modifieddate.get(2).substring(11,19));
         
         assertEquals("mocksheets1.xlsx", tracker.filenames.get(3));
         assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
-        assertEquals("12:24:22", tracker.modifieddate.get(3).substring(11,19));
+        assertEquals("09:24:22", tracker.modifieddate.get(3).substring(11,19));
         
         assertEquals("mocksheets2.xlsx", tracker.filenames.get(4));
         assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
-        assertEquals("12:24:12", tracker.modifieddate.get(4).substring(11,19));
+        assertEquals("09:24:12", tracker.modifieddate.get(4).substring(11,19));
         
         assertEquals("mocksheets3.xlsx", tracker.filenames.get(5));
         assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
-        assertEquals("12:24:00", tracker.modifieddate.get(5).substring(11,19));
+        assertEquals("09:24:00", tracker.modifieddate.get(5).substring(11,19));
         
         assertEquals("mocksheets4.xlsx", tracker.filenames.get(6));
         assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
-        assertEquals("12:23:48", tracker.modifieddate.get(6).substring(11,19));
+        assertEquals("09:23:48", tracker.modifieddate.get(6).substring(11,19));
         
         assertEquals("mocksheets5.xlsx", tracker.filenames.get(7));
         assertEquals("2021-04-09", tracker.modifieddate.get(7).substring(0,10));
-        assertEquals("12:23:30", tracker.modifieddate.get(7).substring(11,19));
+        assertEquals("09:23:30", tracker.modifieddate.get(7).substring(11,19));
         
         assertEquals("mocktext1.txt", tracker.filenames.get(8));
         assertEquals("2021-04-09", tracker.modifieddate.get(8).substring(0,10));
-        assertEquals("12:23:02", tracker.modifieddate.get(8).substring(11,19));
+        assertEquals("09:23:02", tracker.modifieddate.get(8).substring(11,19));
         
         assertEquals("mocktext2.txt", tracker.filenames.get(9));
         assertEquals("2021-04-09", tracker.modifieddate.get(9).substring(0,10));
-        assertEquals("12:22:54", tracker.modifieddate.get(9).substring(11,19));
+        assertEquals("09:22:54", tracker.modifieddate.get(9).substring(11,19));
         
         assertEquals("mocktext3.txt", tracker.filenames.get(10));
         assertEquals("2021-04-09", tracker.modifieddate.get(10).substring(0,10));
-        assertEquals("12:22:40", tracker.modifieddate.get(10).substring(11,19));
+        assertEquals("09:22:40", tracker.modifieddate.get(10).substring(11,19));
         
         assertEquals("mocktext4.txt", tracker.filenames.get(11));
         assertEquals("2021-04-09", tracker.modifieddate.get(11).substring(0,10));
-        assertEquals("12:22:46", tracker.modifieddate.get(11).substring(11,19));
+        assertEquals("09:22:46", tracker.modifieddate.get(11).substring(11,19));
         
         assertEquals("mocktext5.txt", tracker.filenames.get(12));
         assertEquals("2021-04-09", tracker.modifieddate.get(12).substring(0,10));
-        assertEquals("12:22:06", tracker.modifieddate.get(12).substring(11,19));
+        assertEquals("09:22:06", tracker.modifieddate.get(12).substring(11,19));
         
         assertEquals("mockdoc1.docx", tracker.filenames.get(13));
         assertEquals("2021-04-09", tracker.modifieddate.get(13).substring(0,10));
-        assertEquals("12:25:42", tracker.modifieddate.get(13).substring(11,19));
+        assertEquals("09:25:42", tracker.modifieddate.get(13).substring(11,19));
         
         assertEquals("mockdoc2.docx", tracker.filenames.get(14));
         assertEquals("2021-04-09", tracker.modifieddate.get(14).substring(0,10));
-        assertEquals("12:25:30", tracker.modifieddate.get(14).substring(11,19));
+        assertEquals("09:25:30", tracker.modifieddate.get(14).substring(11,19));
         
         assertEquals("mockfolder/mocktext5.txt", tracker.filenames.get(15));
         assertEquals("2021-04-09", tracker.modifieddate.get(15).substring(0,10));
-        assertEquals("12:26:00", tracker.modifieddate.get(15).substring(11,19));
+        assertEquals("09:26:00", tracker.modifieddate.get(15).substring(11,19));
         
         assertEquals("mockfolder/mockdoc5.docx", tracker.filenames.get(16));
         assertEquals("2021-04-09", tracker.modifieddate.get(16).substring(0,10));
-        assertEquals("12:26:28", tracker.modifieddate.get(16).substring(11,19));
+        assertEquals("09:26:28", tracker.modifieddate.get(16).substring(11,19));
         
         assertEquals("mockfolder/mocksheets5.xlsx", tracker.filenames.get(17));
         assertEquals("2021-04-09", tracker.modifieddate.get(17).substring(0,10));
-        assertEquals("12:26:16", tracker.modifieddate.get(17).substring(11,19));
+        assertEquals("09:26:16", tracker.modifieddate.get(17).substring(11,19));
         
     }
     
@@ -254,79 +254,79 @@ public class SevenZipParserTest  extends AbstractPkgTest {
         
         assertEquals("mockfolder", tracker.filenames.get(0));
         assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
-        assertEquals("13:19:21", tracker.modifieddate.get(0).substring(11,19));
+        assertEquals("10:19:21", tracker.modifieddate.get(0).substring(11,19));
         
         assertEquals("mockdoc3.docx", tracker.filenames.get(1));
         assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
-        assertEquals("12:25:20", tracker.modifieddate.get(1).substring(11,19));
+        assertEquals("09:25:20", tracker.modifieddate.get(1).substring(11,19));
         
         assertEquals("mockdoc4.docx", tracker.filenames.get(2));
         assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
-        assertEquals("12:25:10", tracker.modifieddate.get(2).substring(11,19));
+        assertEquals("09:25:10", tracker.modifieddate.get(2).substring(11,19));
         
         assertEquals("mockdoc5.docx", tracker.filenames.get(3));
         assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
-        assertEquals("12:24:58", tracker.modifieddate.get(3).substring(11,19));
+        assertEquals("09:24:58", tracker.modifieddate.get(3).substring(11,19));
         
         assertEquals("mocksheets1.xlsx", tracker.filenames.get(4));
         assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
-        assertEquals("12:24:22", tracker.modifieddate.get(4).substring(11,19));
+        assertEquals("09:24:22", tracker.modifieddate.get(4).substring(11,19));
         
         assertEquals("mocksheets2.xlsx", tracker.filenames.get(5));
         assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
-        assertEquals("12:24:12", tracker.modifieddate.get(5).substring(11,19));
+        assertEquals("09:24:12", tracker.modifieddate.get(5).substring(11,19));
         
         assertEquals("mocksheets3.xlsx", tracker.filenames.get(6));
         assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
-        assertEquals("12:24:01", tracker.modifieddate.get(6).substring(11,19));
+        assertEquals("09:24:01", tracker.modifieddate.get(6).substring(11,19));
         
         assertEquals("mocksheets4.xlsx", tracker.filenames.get(7));
         assertEquals("2021-04-09", tracker.modifieddate.get(7).substring(0,10));
-        assertEquals("12:23:49", tracker.modifieddate.get(7).substring(11,19));
+        assertEquals("09:23:49", tracker.modifieddate.get(7).substring(11,19));
         
         assertEquals("mocksheets5.xlsx", tracker.filenames.get(8));
         assertEquals("2021-04-09", tracker.modifieddate.get(8).substring(0,10));
-        assertEquals("12:23:30", tracker.modifieddate.get(8).substring(11,19));
+        assertEquals("09:23:30", tracker.modifieddate.get(8).substring(11,19));
         
         assertEquals("mocktext1.txt", tracker.filenames.get(9));
         assertEquals("2021-04-09", tracker.modifieddate.get(9).substring(0,10));
-        assertEquals("12:23:02", tracker.modifieddate.get(9).substring(11,19));
+        assertEquals("09:23:02", tracker.modifieddate.get(9).substring(11,19));
         
         assertEquals("mocktext2.txt", tracker.filenames.get(10));
         assertEquals("2021-04-09", tracker.modifieddate.get(10).substring(0,10));
-        assertEquals("12:22:54", tracker.modifieddate.get(10).substring(11,19));
+        assertEquals("09:22:54", tracker.modifieddate.get(10).substring(11,19));
         
         assertEquals("mocktext3.txt", tracker.filenames.get(11));
         assertEquals("2021-04-09", tracker.modifieddate.get(11).substring(0,10));
-        assertEquals("12:22:41", tracker.modifieddate.get(11).substring(11,19));
+        assertEquals("09:22:41", tracker.modifieddate.get(11).substring(11,19));
         
         assertEquals("mocktext4.txt", tracker.filenames.get(12));
         assertEquals("2021-04-09", tracker.modifieddate.get(12).substring(0,10));
-        assertEquals("12:22:47", tracker.modifieddate.get(12).substring(11,19));
+        assertEquals("09:22:47", tracker.modifieddate.get(12).substring(11,19));
         
         assertEquals("mocktext5.txt", tracker.filenames.get(13));
         assertEquals("2021-04-09", tracker.modifieddate.get(13).substring(0,10));
-        assertEquals("12:22:06", tracker.modifieddate.get(13).substring(11,19));
+        assertEquals("09:22:06", tracker.modifieddate.get(13).substring(11,19));
         
         assertEquals("mockfolder/mockdoc5.docx", tracker.filenames.get(14));
         assertEquals("2021-04-09", tracker.modifieddate.get(14).substring(0,10));
-        assertEquals("12:26:28", tracker.modifieddate.get(14).substring(11,19));
+        assertEquals("09:26:28", tracker.modifieddate.get(14).substring(11,19));
         
         assertEquals("mockfolder/mocksheets5.xlsx", tracker.filenames.get(15));
         assertEquals("2021-04-09", tracker.modifieddate.get(15).substring(0,10));
-        assertEquals("12:26:17", tracker.modifieddate.get(15).substring(11,19));
+        assertEquals("09:26:17", tracker.modifieddate.get(15).substring(11,19));
         
         assertEquals("mockfolder/mocktext5.txt", tracker.filenames.get(16));
         assertEquals("2021-04-09", tracker.modifieddate.get(16).substring(0,10));
-        assertEquals("12:26:01", tracker.modifieddate.get(16).substring(11,19));
+        assertEquals("09:26:01", tracker.modifieddate.get(16).substring(11,19));
         
         assertEquals("mockdoc1.docx", tracker.filenames.get(17));
         assertEquals("2021-04-09", tracker.modifieddate.get(17).substring(0,10));
-        assertEquals("12:25:42", tracker.modifieddate.get(17).substring(11,19));
+        assertEquals("09:25:42", tracker.modifieddate.get(17).substring(11,19));
         
         assertEquals("mockdoc2.docx", tracker.filenames.get(18));
         assertEquals("2021-04-09", tracker.modifieddate.get(18).substring(0,10));
-        assertEquals("12:25:30", tracker.modifieddate.get(18).substring(11,19));
+        assertEquals("09:25:30", tracker.modifieddate.get(18).substring(11,19));
     }
 }
 
