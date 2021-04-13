@@ -209,6 +209,14 @@ public class VideoThumbTask extends ThumbTask {
         return map;
     }
 
+    private static String normalizeMetadata(String meta) {
+        meta = videoToTikaMetadata.getOrDefault(meta, meta);
+        if (meta.endsWith("-eng") || meta.endsWith("-por")) {
+            meta = meta.substring(0, meta.length() - 4);
+        }
+        return meta;
+    }
+
     /**
      * Inicializa a tarefa de processamento de vídeos. Carrega configurações sobre o
      * tamanho/layout a ser gerado e camimnho do MPlayer, que é o programa
@@ -519,7 +527,7 @@ public class VideoThumbTask extends ThumbTask {
         }
         for (Entry<String, String> meta : r.getClipInfos().entrySet()) {
             String key = meta.getKey();
-            key = videoToTikaMetadata.getOrDefault(key, key);
+            key = normalizeMetadata(key);
             if ("location".equals(key)) {
                 iso6709Converter.populateLocation(metadata, meta.getValue());
             } else {
