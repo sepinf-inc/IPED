@@ -82,8 +82,7 @@
         <parser class="org.apache.tika.parser.microsoft.xml.SpreadsheetMLParser"></parser>
         <parser class="org.apache.tika.parser.mif.MIFParser"></parser>
         <parser class="org.apache.tika.parser.mp3.Mp3Parser"></parser>
-        <!-- this caused OOME in the past, was fixed, but now we extract metadata using mplayer
-        <parser class="org.apache.tika.parser.mp4.MP4Parser"></parser>-->
+        <parser class="org.apache.tika.parser.mp4.MP4Parser"></parser>
         <!-- we use strings parser instead of these scientific data parsers
         <parser class="org.apache.tika.parser.hdf.HDFParser"></parser>
         <parser class="org.apache.tika.parser.netcdf.NetCDFParser"></parser>-->
