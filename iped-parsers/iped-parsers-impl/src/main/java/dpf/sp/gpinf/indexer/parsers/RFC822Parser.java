@@ -269,7 +269,7 @@ public class RFC822Parser extends AbstractParser {
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
                     String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    // metadata.set(TikaCoreProperties.TITLE, subject);
+                    metadata.set(TikaCoreProperties.TITLE, subject);
                     metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
                 } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$

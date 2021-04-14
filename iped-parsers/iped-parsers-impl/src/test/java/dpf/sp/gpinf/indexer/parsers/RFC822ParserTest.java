@@ -13,6 +13,7 @@ import java.io.InputStream;
 import junit.framework.TestCase;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.DublinCore;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
@@ -100,119 +101,74 @@ public class RFC822ParserTest extends TestCase {
         assertFalse(bodyText.contains("=")); //there should be no escape sequences
 
     }
-//
-//    @Test
-//    public void testBase64() throws IOException, SAXException, TikaException{
-//        Parser parser = new RFC822Parser();
-//        Metadata metadata = new Metadata();
-//        InputStream stream = getStream("test-files/testRFC822_base64");
-//        ContentHandler handler = new BodyContentHandler();
-//        parser.parse(stream, handler, metadata, new ParseContext());
-//        //tests correct decoding of base64 text, including ISO-8859-1 bytes into Unicode
-//        assertTrue(handler.toString().contains("Here is some text, with international characters, voil\u00E0!"));
-//
-//    }
-//    
-//    @Test
-//    public void testI18NHeaders() {
-//        Parser parser = new RFC822Parser();
-//        Metadata metadata = new Metadata();
-//        InputStream stream = getStream("test-files/testRFC822_i18nheaders");
-//        ContentHandler handler = mock(DefaultHandler.class);
-//
-//        try {
-//            parser.parse(stream, handler, metadata, new ParseContext());
-//            //tests correct decoding of internationalized headers, both
-//            //quoted-printable (Q) and Base64 (B).
-//            assertEquals("Keld J\u00F8rn Simonsen <keld@dkuug.dk>", 
-//                    metadata.get(TikaCoreProperties.CREATOR));
-//            assertEquals("If you can read this you understand the example.", 
-//                    metadata.get(TikaCoreProperties.TITLE));
-//            assertEquals("If you can read this you understand the example.", 
-//                    metadata.get(Metadata.SUBJECT));
-//        } catch (Exception e) {
-//            fail("Exception thrown: " + e.getMessage());
-//        }
-//    }
-//    
-//    /**
-//     * The from isn't in the usual form.
-//     * See TIKA-618
-//     */
-//    @Test
-//    public void testUnusualFromAddress() throws Exception {
-//       Parser parser = new RFC822Parser();
-//       Metadata metadata = new Metadata();
-//       InputStream stream = getStream("test-files/testRFC822_oddfrom");
-//       ContentHandler handler = mock(DefaultHandler.class);
-//
-//       parser.parse(stream, handler, metadata, new ParseContext());
-//       assertEquals("Saved by Windows Internet Explorer 7", 
-//               metadata.get(TikaCoreProperties.CREATOR));
-//       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
-//               metadata.get(TikaCoreProperties.TITLE));
-//       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
-//               metadata.get(Metadata.SUBJECT));
-//    }
-//
-//    /**
-//     * Test for TIKA-640, increase header max beyond 10k bytes
-//     */
-//    @Test
-//    public void testLongHeader() throws Exception {
-//        StringBuilder inputBuilder = new StringBuilder();
-//        for (int i = 0; i < 2000; ++i) {
-//            inputBuilder.append( //len > 50
-//                    "really really really really really really long name ");
-//        }
-//        String name = inputBuilder.toString();
-//        byte[] data = ("From: " + name + "\r\n\r\n").getBytes("US-ASCII");
-//
-//        Parser parser = new RFC822Parser();
-//        ContentHandler handler = new DefaultHandler();
-//        Metadata metadata = new Metadata();
-//        ParseContext context = new ParseContext();
-//
-//        try {
-//            parser.parse(
-//                    new ByteArrayInputStream(data), handler, metadata, context);
-//            fail();
-//        } catch (TikaException expected) {
-//        }
-//
-//        MimeConfig config = new MimeConfig();
-//        config.setMaxHeaderLen(-1);
-//        config.setMaxLineLen(-1);
-//        context.set(MimeConfig.class, config);
-//        parser.parse(
-//                new ByteArrayInputStream(data), handler, metadata, context);
-//        assertEquals(name.trim(), metadata.get(TikaCoreProperties.CREATOR));
-//    }
-//    
-//    /**
-//     * Test for TIKA-678 - not all headers may be present
-//     */
-//    @Test
-//    public void testSomeMissingHeaders() throws Exception {
-//       Parser parser = new RFC822Parser();
-//       Metadata metadata = new Metadata();
-//       InputStream stream = getStream("test-files/testRFC822-limitedheaders");
-//       ContentHandler handler = new BodyContentHandler();
-//
-//       parser.parse(stream, handler, metadata, new ParseContext());
-//       assertEquals(true, metadata.isMultiValued(TikaCoreProperties.CREATOR));
-//       assertEquals("xyz", metadata.getValues(TikaCoreProperties.CREATOR)[0]);
-//       assertEquals("abc", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
-//       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_FROM));
-//       assertEquals("xyz", metadata.getValues(Metadata.MESSAGE_FROM)[0]);
-//       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_FROM)[1]);
-//       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_TO));
-//       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_TO)[0]);
-//       assertEquals("def", metadata.getValues(Metadata.MESSAGE_TO)[1]);
-//       assertEquals("abcd", metadata.get(TikaCoreProperties.TITLE));
-//       assertEquals("abcd", metadata.get(Metadata.SUBJECT));
-//       assertTrue(handler.toString().contains("bar biz bat"));
-//    }
+
+    @Test
+    public void testBase64() throws IOException, SAXException, TikaException{
+        Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/testRFC822_base64");
+        ContentHandler handler = new BodyContentHandler();
+        parser.parse(stream, handler, metadata, new ParseContext());
+        //tests correct decoding of base64 text, including ISO-8859-1 bytes into Unicode
+        String bodyText = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
+        assertTrue(bodyText.contains("Here is some text, with international characters, voil\u00E0!"));
+
+    }
+    
+    @Test
+    public void testI18NHeaders() throws IOException, SAXException, TikaException {
+        Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/testRFC822_i18nheaders");
+        ContentHandler handler = new BodyContentHandler();
+
+
+            parser.parse(stream, handler, metadata, new ParseContext());
+            assertEquals("Keld J\u00F8rn Simonsen <keld@dkuug.dk>", 
+                    metadata.get(TikaCoreProperties.CREATOR));
+            assertEquals("If you can read this you understand the example.", 
+                    metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+    }
+
+    @Test
+    public void testUnusualFromAddress() throws Exception {
+       Parser parser = new RFC822Parser();
+       Metadata metadata = new Metadata();
+       InputStream stream = getStream("test-files/testRFC822_oddfrom");
+       ContentHandler handler = new BodyContentHandler();
+
+       parser.parse(stream, handler, metadata, new ParseContext());
+       assertEquals("Saved by Windows Internet Explorer 7", 
+               metadata.get(TikaCoreProperties.CREATOR));
+       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
+               metadata.get(TikaCoreProperties.TITLE));
+       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
+               metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+    }
+
+
+
+
+    @Test
+    public void testSomeMissingHeaders() throws Exception {
+       Parser parser = new RFC822Parser();
+       Metadata metadata = new Metadata();
+       InputStream stream = getStream("test-files/testRFC822-limitedheaders");
+       ContentHandler handler = new BodyContentHandler();
+
+       parser.parse(stream, handler, metadata, new ParseContext());
+       assertEquals(true, metadata.isMultiValued(TikaCoreProperties.CREATOR));
+       assertEquals("xyz", metadata.getValues(TikaCoreProperties.CREATOR)[0]);
+       assertEquals("abc", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
+       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_FROM));
+       assertEquals("xyz", metadata.getValues(Metadata.MESSAGE_FROM)[0]);
+       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_FROM)[1]);
+       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_TO));
+       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_TO)[0]);
+       assertEquals("def", metadata.getValues(Metadata.MESSAGE_TO)[1]);
+       assertEquals("abcd", metadata.get(DublinCore.TITLE));
+       assertEquals("abcd", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+    }
 
 
 
