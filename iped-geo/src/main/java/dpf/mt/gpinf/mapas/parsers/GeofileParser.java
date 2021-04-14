@@ -48,10 +48,6 @@ public class GeofileParser extends AbstractParser {
     public static final MediaType KML_MIME = MediaType.application("vnd.google-earth.kml+xml");
     public static final MediaType JSON_GOOGLE_MIME = MediaType.application("json-location");
 
-    public static final Property LATITUDE = Property.internalReal("GeoRef:lat");
-    public static final Property LONGITUDE = Property.internalReal("GeoRef:long");
-    public static final Property ALTITUDE = Property.internalReal("GeoRef:alt");
-
     private static final Set<MediaType> SUPPORTED_TYPES = MediaType.set(GPX_MIME, KML_MIME);
 
     HashMap<String, EmbeddedParent> parentMap = new HashMap<String, EmbeddedParent>();
@@ -191,10 +187,10 @@ public class GeofileParser extends AbstractParser {
                 lat = coords[0].y;
                 alt = coords[0].z;
 
-                kmeta.set(LATITUDE, lat);
-                kmeta.set(LONGITUDE, lon);
+                kmeta.set(Metadata.LATITUDE, lat);
+                kmeta.set(Metadata.LONGITUDE, lon);
                 if (alt != null) {
-                    kmeta.set(ALTITUDE, alt);
+                    kmeta.set(Metadata.ALTITUDE, alt);
                 }
 
                 extractor.parseEmbedded(featureStream, handler, kmeta, false);

@@ -30,7 +30,7 @@ import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlEncodingDetector;
-import org.apache.tika.parser.rtf.RTFParser2;
+import org.apache.tika.parser.rtf.RTFParser;
 import org.bbottema.rtftohtml.RTF2HTMLConverter;
 import org.bbottema.rtftohtml.impl.RTF2HTMLConverterRFCCompliant;
 import org.slf4j.Logger;
@@ -504,7 +504,7 @@ public class MsgViewer extends HtmlViewer {
 
     private String getTikaRTFToHTML(MAPIMessage msg) {
         try {
-            RTFParser2 parser = new RTFParser2();
+            RTFParser parser = new RTFParser();
             ToXMLContentHandler handler = new ToXMLContentHandler();
             parser.parse(new ByteArrayInputStream(getRTFData(msg)), handler, new Metadata(),
                     new ParseContext());
