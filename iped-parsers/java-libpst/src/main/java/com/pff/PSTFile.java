@@ -109,6 +109,8 @@ public class PSTFile {
 
     private RandomAccessFile in;
 
+    private AutoCharsetDetector autoCharsetDetector;
+
     /**
      * constructor
      * 
@@ -879,6 +881,18 @@ public class PSTFile {
             PSTObject.printHexFormatted(temp, true);
             throw new PSTException("Unable to read descriptor node, is not a descriptor");
         }
+    }
+
+    public void close() throws IOException {
+        this.in.close();
+    }
+
+    public AutoCharsetDetector getAutoCharsetDetector() {
+        return autoCharsetDetector;
+    }
+
+    public void setAutoCharsetDetector(AutoCharsetDetector provider) {
+        this.autoCharsetDetector = provider;
     }
 
 }

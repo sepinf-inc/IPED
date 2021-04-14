@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.pff.AutoCharsetDetector;
 import com.pff.PSTAttachment;
 import com.pff.PSTContact;
 import com.pff.PSTException;
@@ -150,7 +151,9 @@ public class OutlookPSTParser extends AbstractParser {
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
+
             pstFile = new PSTFile(tmpFile);
+            pstFile.setAutoCharsetDetector(new TikaAutoCharsetDetector());
 
             if (extractor.shouldParseEmbedded(metadata))
                 walkFolder(pstFile.getRootFolder(), "", -1); //$NON-NLS-1$
@@ -194,6 +197,15 @@ public class OutlookPSTParser extends AbstractParser {
         }
 
         xhtml.endDocument();
+
+    }
+
+    public static class TikaAutoCharsetDetector implements AutoCharsetDetector {
+
+        @Override
+        public String decodeString(byte[] data) {
+            return Util.decodeUnknownCharsetTika(data);
+        }
 
     }
 
