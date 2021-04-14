@@ -4,12 +4,25 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -20,6 +33,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +45,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.util.PDFToThumb;
+import iped3.IEvidenceFileType;
 import iped3.IItem;
 
 public class DocThumbTask extends ThumbTask {
@@ -40,9 +56,10 @@ public class DocThumbTask extends ThumbTask {
 
     private static boolean taskEnabled;
 
-    private static int pdfTimeout = 30;
-    private static int loTimeout = 60;
-    private static int timeoutIncPerMB = 1;
+    private static int pdfTimeout = 45;
+    private static int loTimeout = 90;
+    private static int loBatchSize = 10;
+    private static int timeoutIncPerMB = 2;
     private static int thumbSize = 480;
     private static boolean externalPdfConversion;
     private static int maxPdfExternalMemory = 256;
@@ -70,6 +87,12 @@ public class DocThumbTask extends ThumbTask {
     private File loOutDir;
     private String loOutPath;
     private Process loEnvCreateProcess;
+    private Process convertProcess;
+    private boolean tempSet;
+
+    private boolean queued;
+    private final List<IItem> itemList = Collections.synchronizedList(new ArrayList<IItem>());
+    private final TemporaryResources tmpResources = new TemporaryResources();
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -110,6 +133,11 @@ public class DocThumbTask extends ThumbTask {
                             pdfTimeout = Integer.parseInt(value);
                         }
 
+                        value = properties.getProperty("libreOfficeBatchSize");
+                        if (value != null && !value.trim().isEmpty()) {
+                            loBatchSize = Integer.parseInt(value);
+                        }
+
                         value = properties.getProperty("libreOfficeTimeout");
                         if (value != null && !value.trim().isEmpty()) {
                             loTimeout = Integer.parseInt(value);
@@ -131,22 +159,23 @@ public class DocThumbTask extends ThumbTask {
                         }
 
                         logger.info("Thumb Size: " + thumbSize);
-                        logger.info("LibreOffice Conversion: " + (loEnabled ? "enabled" : "disabled") + ".");
+                        logger.info("LibreOffice Conversion: " + (loEnabled ? "enabled" : "disabled"));
                         if (loEnabled) {
                             URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
                             File jarDir = new File(url.toURI()).getParentFile();
                             LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
                             loPath = loFinder.getLOPath();
                             logger.info("LibreOffice Path: " + loPath);
+                            logger.info("LibreOffice Batch Size: " + loBatchSize);
                         }
 
-                        logger.info("PDF Conversion: " + (pdfEnabled ? "enabled" : "disabled") + ".");
+                        logger.info("PDF Conversion: " + (pdfEnabled ? "enabled" : "disabled"));
                         if (pdfEnabled) {
                             logger.info("External PDF Conversion: " + externalPdfConversion);
                         }
                     }
                 }
-                logger.info("Task" + (taskEnabled ? "enabled" : "disabled") + ".");
+                logger.info("Task " + (taskEnabled ? "enabled" : "disabled"));
                 init.set(true);
             }
         }
@@ -167,6 +196,34 @@ public class DocThumbTask extends ThumbTask {
             pb.redirectErrorStream();
             Util.ignoreStream(loEnvCreateProcess.getInputStream());
         }
+    }
+
+    @Override
+    protected boolean processQueueEnd() {
+        return true;
+    }
+
+    @Override
+    protected void sendToNextTask(IItem item) throws Exception {
+        if (!item.isQueueEnd() && !queued) {
+            super.sendToNextTask(item);
+            return;
+        }
+        if (isToProcessBatch(item)) {
+            for (IItem it : itemList) {
+                super.sendToNextTask(it);
+            }
+            itemList.clear();
+            return;
+        }
+        if (item.isQueueEnd()) {
+            super.sendToNextTask(item);
+        }
+    }
+
+    private boolean isToProcessBatch(IItem item) {
+        int size = itemList.size();
+        return size >= loBatchSize || (size > 0 && item.isQueueEnd());
     }
 
     @Override
@@ -209,32 +266,115 @@ public class DocThumbTask extends ThumbTask {
     }
 
     @Override
-    protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || !evidence.isToAddToCase()
-                || ((!pdfEnabled || !isPdfType(evidence.getMediaType())) &&
-                        (!loEnabled || !isLibreOfficeType(evidence.getMediaType())))
-                || evidence.getHash() == null || evidence.getThumb() != null) {
+    protected void process(IItem item) throws Exception {
+        queued = false;
+        if (!item.isQueueEnd() && (!taskEnabled || !item.isToAddToCase()
+                || ((!pdfEnabled || !isPdfType(item.getMediaType())) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
+                || item.getHash() == null || item.getThumb() != null
+                || item.getExtraAttribute("fileFragment") != null)) {
             return;
         }
-        File thumbFile = getThumbFile(evidence);
-        if (hasThumb(evidence, thumbFile)) {
-            return;
+        if (!item.isQueueEnd()) {
+            File thumbFile = getThumbFile(item);
+            if (hasThumb(item, thumbFile)) {
+                return;
+            }
+            if (isPdfType(item.getMediaType())) {
+                Future<?> future = executor.submit(new PDFThumbCreator(item, thumbFile));
+                try {
+                    int timeout = pdfTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
+                    future.get(timeout, TimeUnit.SECONDS);
+                } catch (TimeoutException e) {
+                    future.cancel(true);
+                    stats.incTimeouts();
+                    item.setExtraAttribute(thumbTimeout, "true");
+                    logger.warn("Timeout creating thumb: " + item);
+                    totalPdfTimeout.incrementAndGet();
+                }
+                return;
+            }
+            Metadata metadata = item.getMetadata();
+            if (metadata != null) {
+                String pe = metadata.get("parserException");
+                if (pe != null && pe.equalsIgnoreCase("true")) {
+                    return;
+                }
+            }
+            itemList.add(item);
+            queued = true;
         }
+        if (isToProcessBatch(item)) {
+            processBatch();
+        }
+    }
 
-        Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
+    protected void processBatch() throws Exception {
+        Future<?> future = executor.submit(new LOThumbCreator(itemList));
+        boolean hasTimeout = false;
         try {
-            int timeout = isPdfType(evidence.getMediaType()) ? pdfTimeout : loTimeout;
-            timeout += (int) ((evidence.getLength() * timeoutIncPerMB) >>> 20);
+            int timeout = loTimeout * itemList.size();
+            for (IItem it : itemList) {
+                timeout += (int) ((it.getLength() * timeoutIncPerMB) >>> 20);
+            }
             future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);
-            stats.incTimeouts();
-            evidence.setExtraAttribute(thumbTimeout, "true");
-            logger.warn("Timeout creating thumb: " + evidence);
-            if (isPdfType(evidence.getMediaType())) {
-                totalPdfTimeout.incrementAndGet();
-            } else {
-                totalLoTimeout.incrementAndGet();
+            hasTimeout = true;
+        }
+        for (IItem item : itemList) {
+            try {
+                ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
+                File inFile = getHashTempFile(loOutDir, item);
+                String name = inFile.getName();
+                int pos = name.lastIndexOf('.');
+                if (pos >= 0) name = name.substring(0, pos);
+                name += ".png";
+                File outDir = new File(loOutDir, name);
+                boolean success = false;
+                if (outDir.exists()) {
+                    BufferedImage img = ImageIO.read(outDir);
+                    if (img != null) {
+                        if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
+                            img = ImageUtil.resizeImage(img, thumbSize, thumbSize, BufferedImage.TYPE_INT_BGR);
+                        }
+                        Graphics2D g = img.createGraphics();
+                        g.setColor(Color.black);
+                        g.drawRect(0, 0, img.getWidth() - 1, img.getHeight() - 1);
+                        g.dispose();
+                        ImageIO.write(img, "jpg", baos);
+                        success = true;
+                    }
+                }
+                if (success && baos.size() > 0) {
+                    item.setThumb(baos.toByteArray());
+                }
+                File thumbFile = getThumbFile(item);
+                saveThumb(item, thumbFile);
+            } catch (Throwable e) {
+                logger.warn(item.toString(), e);
+            } finally {
+                boolean hasThumb = updateHasThumb(item);
+                (hasThumb ? totalLoProcessed : totalLoFailed).incrementAndGet();
+                if (!hasThumb && hasTimeout) {
+                    item.setExtraAttribute(thumbTimeout, "true");
+                    logger.warn("Timeout creating thumb: " + item);
+                    totalLoTimeout.incrementAndGet();
+                    stats.incTimeouts();
+                }
+            }
+        }
+        for (IItem item : itemList) {
+            File inFile = getHashTempFile(loOutDir, item);
+            String name = inFile.getName();
+            int pos = name.lastIndexOf('.');
+            if (pos >= 0) name = name.substring(0, pos);
+            name += ".png";
+            File outFile = new File(loOutDir, name);
+            if (inFile.exists()) {
+                inFile.delete();
+            }
+            if (outFile.exists()) {
+                outFile.delete();
             }
         }
     }
@@ -271,130 +411,230 @@ public class DocThumbTask extends ThumbTask {
                 || m.startsWith("application/vnd.oasis.opendocument.spreadsheet");
     }
 
-    private class ThumbCreator implements Runnable {
-        private IItem evidence;
+    private class PDFThumbCreator implements Runnable {
+        private IItem item;
         private File thumbFile;
 
-        public ThumbCreator(IItem evidence, File thumbFile) {
-            this.evidence = evidence;
+        public PDFThumbCreator(IItem item, File thumbFile) {
+            this.item = item;
             this.thumbFile = thumbFile;
         }
 
         @Override
         public void run() {
-            createImageThumb(evidence, thumbFile);
+            createPDFThumb(item, thumbFile);
         }
     }
 
-    private void createImageThumb(IItem evidence, File thumbFile) {
+    private class LOThumbCreator implements Runnable {
+        private List<IItem> items;
+
+        public LOThumbCreator(List<IItem> items) {
+            this.items = items;
+        }
+
+        @Override
+        public void run() {
+            createLOThumb(items);
+        }
+    }
+
+    private void createPDFThumb(IItem item, File thumbFile) {
         long t = System.currentTimeMillis();
         boolean success = false;
         ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
-        boolean isPdf = false;
         try {
-            if (isPdfType(evidence.getMediaType())) {
-                isPdf = true;
-                if (externalPdfConversion) {
-                    URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-                    String jarDir = new File(url.toURI()).getParent();
-                    String classpath = jarDir + "/*";
-                    File file = evidence.getTempFile();
-                    String[] cmd = {"java","-cp",classpath,"-Xmx" + maxPdfExternalMemory + "M",PDFToThumb.class.getCanonicalName(),file.getAbsolutePath(),
-                            String.valueOf(thumbSize)};
+            if (externalPdfConversion) {
+                URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                String jarDir = new File(url.toURI()).getParent();
+                String classpath = jarDir + "/*";
+                File file = item.getTempFile();
+                String[] cmd = {"java","-cp",classpath,"-Xmx" + maxPdfExternalMemory + "M",PDFToThumb.class.getCanonicalName(),file.getAbsolutePath(),
+                        String.valueOf(thumbSize)};
 
-                    ProcessBuilder pb = new ProcessBuilder(cmd);
-                    Process process = pb.start();
-                    Util.ignoreStream(process.getErrorStream());
-                    byte[] buf = new byte[65536];
-                    try {
-                        int read = 0;
-                        BufferedInputStream pis = new BufferedInputStream(process.getInputStream());
-                        while ((read = pis.read(buf)) >= 0) {
-                            baos.write(buf, 0, read);
-                        }
-                        pis.close();
-                        process.waitFor();
-                        success = process.exitValue() == 0;
-                    } catch (InterruptedException e) {
-                        process.destroyForcibly();
-                        Thread.currentThread().interrupt();
-                    }
-                } else {
-                    File file = evidence.getTempFile();
-                    BufferedImage img = PDFToThumb.getPdfThumb(file, thumbSize);
-                    if (img != null) {
-                        ImageIO.write(img, "jpg", baos);
-                        success = true;
-                    }
-                }
-            } else {
-                if (loEnvCreateProcess != null) {
-                    try {
-                        loEnvCreateProcess.waitFor(30, TimeUnit.SECONDS);
-                    } catch (Exception e) {}
-                    if (loEnvCreateProcess.isAlive()) {
-                        loEnvCreateProcess.destroyForcibly();
-                    }
-                    loEnvCreateProcess = null;
-                }
-
-                File inFile = evidence.getTempFile();
-                String[] cmd = {loPath + "/program/soffice.bin",
-                        "--convert-to",
-                        "png",
-                        inFile.getAbsolutePath(),
-                        "--quickstart",
-                        "--norestore",
-                        "--nolockcheck",
-                        "-env:UserInstallation=file://" + loOutPath,
-                        "-outdir",
-                        loOutDir.getAbsolutePath()};
                 ProcessBuilder pb = new ProcessBuilder(cmd);
-                Process process = pb.start();
-                pb.redirectErrorStream();
-                Util.ignoreStream(process.getInputStream());
+                convertProcess = pb.start();
+                Util.ignoreStream(convertProcess.getErrorStream());
+                byte[] buf = new byte[65536];
                 try {
-                    process.waitFor();
+                    int read = 0;
+                    BufferedInputStream pis = new BufferedInputStream(convertProcess.getInputStream());
+                    while ((read = pis.read(buf)) >= 0) {
+                        baos.write(buf, 0, read);
+                    }
+                    pis.close();
+                    convertProcess.waitFor();
+                    success = convertProcess.exitValue() == 0;
                 } catch (InterruptedException e) {
-                    process.destroyForcibly();
+                    convertProcess.destroyForcibly();
                     Thread.currentThread().interrupt();
                 }
-                String name = inFile.getName();
-                int pos = name.lastIndexOf('.');
-                if (pos >= 0) name = name.substring(0, pos);
-                name += ".png";
-                File dest = new File(loOutDir, name);
-                if (dest.exists()) {
-                    BufferedImage img = ImageIO.read(dest);
-                    dest.delete();
-                    if (img != null) {
-                        if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
-                            img = ImageUtil.resizeImage(img, thumbSize, thumbSize, BufferedImage.TYPE_INT_BGR);
-                        }
-                        Graphics2D g = img.createGraphics();
-                        g.setColor(Color.black);
-                        g.drawRect(0, 0, img.getWidth() - 1, img.getHeight() - 1);
-                        g.dispose();
-                        ImageIO.write(img, "jpg", baos);
-                        success = true;
-                    }
+            } else {
+                File file = item.getTempFile();
+                BufferedImage img = PDFToThumb.getPdfThumb(file, thumbSize);
+                if (img != null) {
+                    ImageIO.write(img, "jpg", baos);
+                    success = true;
                 }
             }
             if (success && baos.size() > 0) {
-                evidence.setThumb(baos.toByteArray());
+                item.setThumb(baos.toByteArray());
             }
-            saveThumb(evidence, thumbFile);
+            saveThumb(item, thumbFile);
         } catch (Throwable e) {
-            logger.warn(evidence.toString(), e);
+            logger.warn(item.toString(), e);
         } finally {
-            boolean hasThumb = updateHasThumb(evidence);
-            if (isPdf) {
-                (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
-            } else {
-                (hasThumb ? totalLoProcessed : totalLoFailed).incrementAndGet();
-            }
+            finishProcess(convertProcess);
+            convertProcess = null;
+            boolean hasThumb = updateHasThumb(item);
+            (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
         }
-        t = System.currentTimeMillis() - t;
-        (isPdf ? totalPdfTime : totalLoTime).addAndGet(t);
+        totalPdfTime.addAndGet(System.currentTimeMillis() - t);
+    }
+
+    private void createLOThumb(List<IItem> items) {
+        long t = System.currentTimeMillis();
+        try {
+            if (loEnvCreateProcess != null) {
+                try {
+                    loEnvCreateProcess.waitFor(60, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                }
+                finishProcess(loEnvCreateProcess);
+                loEnvCreateProcess = null;
+            }
+            if (!tempSet) {
+                setLOTemp();
+                tempSet = true;
+            }
+            Set<String> hashes = new HashSet<String>();
+            List<String> cmd = new ArrayList<String>();
+            cmd.add(loPath + "/program/soffice.bin");
+            cmd.add("--convert-to");
+            cmd.add("png");
+            for (IItem item : items) {
+                if (hashes.add(item.getHash())) {
+                    File inFile = createHashTempFile(loOutDir, item);
+                    cmd.add(inFile.getAbsolutePath());
+                }
+            }
+            cmd.add("--headless");
+            cmd.add("--quickstart");
+            cmd.add("--norestore");
+            cmd.add("--nolockcheck");
+            cmd.add("-env:UserInstallation=file://" + loOutPath);
+            cmd.add("--outdir");
+            cmd.add(loOutDir.getAbsolutePath());
+            ProcessBuilder pb = new ProcessBuilder(cmd.toArray(new String[0]));
+            convertProcess = pb.start();
+            pb.redirectErrorStream();
+            Util.ignoreStream(convertProcess.getInputStream());
+            try {
+                convertProcess.waitFor();
+            } catch (InterruptedException e) {
+                convertProcess.destroyForcibly();
+                Thread.currentThread().interrupt();
+            }
+        } catch (Throwable e) {
+            logger.warn(items.toString(), e);
+        } finally {
+            finishProcess(convertProcess);
+            convertProcess = null;
+        }
+        totalLoTime.addAndGet(System.currentTimeMillis() - t);
+    }
+
+    private File getHashTempFile(File dir, IItem item) throws IOException {
+        String ext = ".tmp";
+        IEvidenceFileType type = item.getType();
+        if (type != null && !type.toString().isEmpty()) {
+            ext = dpf.sp.gpinf.indexer.util.Util.getValidFilename("." + type.toString());
+        }
+        return new File(dir, item.getHash() + ext);
+    }
+
+    private File createHashTempFile(File dir, IItem item) throws IOException {
+        File file = getHashTempFile(dir, item);
+        final Path path = Files.createFile(file.toPath());
+        tmpResources.addResource(new Closeable() {
+            public void close() throws IOException {
+                Files.delete(path);
+            }
+        });
+        try (InputStream in = item.getBufferedStream()) {
+            Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
+        }
+        return file;
+    }
+
+    private void finishProcess(Process process) {
+        try {
+            if (process != null) {
+                if (process.isAlive()) {
+                    process.destroyForcibly();
+                }
+            }
+        } catch (Throwable e) {}
+    }
+
+    @Override
+    public void interrupted() {
+        finishProcess(loEnvCreateProcess);
+        finishProcess(convertProcess);
+    }
+
+    private void setLOTemp() {
+        try {
+            File cfgIn = new File(loOutDir, "user/registrymodifications.xcu");
+            File cfgOut = new File(loOutDir, "user/registrymodifications.tmp");
+            if (cfgIn.exists()) {
+                BufferedReader in = new BufferedReader(new FileReader(cfgIn));
+                BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut));
+                String line = null;
+                int cnt = 0;
+                while ((line = in.readLine()) != null) {
+                    if (line.contains("UseOpenCL")) {
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseOpenCL\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        continue;
+                    }
+                    out.write(line);
+                    out.newLine();
+                    if (++cnt == 2) {
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Drawinglayer\"><prop oor:name=\"AntiAliasing\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"FirstRun\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseLocking\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"AutoSave\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"LoadPrinter\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"CreateBackup\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Impress/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Writer/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Calc/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Current\"><prop oor:name=\"Temp\" oor:op=\"fuse\"><value xsi:nil=\"true\"/></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Info\"><prop oor:name=\"WorkPathChanged\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.newLine();
+                        out.write("<item oor:path=\"/org.openoffice.Office.Paths/Paths/org.openoffice.Office.Paths:NamedPath['Temp']\"><prop oor:name=\"WritePath\" oor:op=\"fuse\"><value>file://"
+                                + loOutPath + "</value></prop></item>");
+                        out.newLine();
+                    }
+                }
+                in.close();
+                out.close();
+            }
+            cfgIn.delete();
+            cfgOut.renameTo(cfgIn);
+        } catch (Exception e) {
+            logger.warn("Error setting LibreOffice temp directory!", e);
+        }
     }
 }
