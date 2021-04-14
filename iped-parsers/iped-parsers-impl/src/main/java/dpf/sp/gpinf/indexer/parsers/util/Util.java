@@ -4,6 +4,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.Reader;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -11,6 +12,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -110,6 +112,21 @@ public class Util {
             return new String(data);
         }
 
+    }
+
+    public static String decodeUnknownCharsetTika(byte[] data) {
+        try (Reader reader = new AutoDetectReader(new ByteArrayInputStream(data))) {
+            int i = 0;
+            char[] cbuf = new char[1 << 12];
+            StringBuilder sb = new StringBuilder();
+            while ((i = reader.read(cbuf)) != -1) {
+                sb.append(cbuf, 0, i);
+            }
+            return sb.toString();
+
+        } catch (IOException | TikaException e) {
+            return decodeUnknowCharset(data);
+        }
     }
 
     public static String decodeMixedCharset(byte[] data) {
