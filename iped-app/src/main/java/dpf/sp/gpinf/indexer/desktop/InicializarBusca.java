@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped3.IIPEDSource;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -83,9 +84,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                     singleCase = new IPEDSource(App.get().casesPathFile);
                 else
                     singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
-                App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
+
+                App.get().appCase = new IPEDMultiSource(singleCase);
             } else
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+
+            checkIfProcessingFinished(App.get().appCase);
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiMarcadores()
@@ -124,6 +128,18 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         }
 
         return null;
+    }
+
+    private void checkIfProcessingFinished(IIPEDSource source) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
+                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ProcessingNotFinished.message"),
+                            Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
     }
 
     private void showErrorDialog(final Throwable e) {

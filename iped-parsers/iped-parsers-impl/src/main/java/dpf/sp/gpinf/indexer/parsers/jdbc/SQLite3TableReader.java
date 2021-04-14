@@ -17,7 +17,6 @@ package dpf.sp.gpinf.indexer.parsers.jdbc;
  */
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.sql.Blob;
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -28,15 +27,12 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Locale;
 import java.util.TimeZone;
 
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -56,6 +52,8 @@ import dpf.sp.gpinf.indexer.util.TimeConverter;
 class SQLite3TableReader extends JDBCTableReader {
 
     DateFormat df = new SimpleDateFormat(Messages.getString("SQLite3TableReader.DateFormat"), Locale.ROOT); //$NON-NLS-1$
+
+    private boolean dateGuessed = false;
 
     public SQLite3TableReader(Connection connection, String tableName, ParseContext context) {
         super(connection, tableName, context);
@@ -77,9 +75,11 @@ class SQLite3TableReader extends JDBCTableReader {
      * @throws org.xml.sax.SAXException
      */
     @Override
-    protected void handleClob(String tableName, String fieldName, int rowNum, ResultSet resultSet, int columnIndex,
-            ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
+    protected String handleClob(String tableName, String fieldName, int rowNum, ResultSet resultSet, int columnIndex,
+            ContentHandler handler, ParseContext context)
+            throws SQLException, IOException, SAXException {
         // no-op for now.
+        return null;
     }
 
     /**
@@ -179,8 +179,10 @@ class SQLite3TableReader extends JDBCTableReader {
     }
 
     @Override
-    protected void handleInteger(ResultSetMetaData rsmd, ResultSet rs, int col, ContentHandler handler)
+    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int col, ContentHandler handler)
             throws SQLException, SAXException {
+
+        String text = null;
 
         if (dateFormats == null)
             detectDateFormat();
@@ -190,15 +192,19 @@ class SQLite3TableReader extends JDBCTableReader {
         // the
         // value is a string representing a Long.
         if (rsmd.getColumnTypeName(col).equals("TIMESTAMP")) { //$NON-NLS-1$
-            addAllCharacters(parseDateFromLongString(rs.getString(col)), handler);
+            text = parseDateFromLongString(rs.getString(col));
 
         } else {
             long val = rs.getLong(col);
-            addAllCharacters(Long.toString(val), handler);
+            text = Long.toString(val);
 
-            if (val > 0 && dateFormats[col] != 0)
-                addAllCharacters(" (*" + df.format(decodeDate(val, dateFormats[col])) + ")", handler); //$NON-NLS-1$ //$NON-NLS-2$
+            if (val > 0 && dateFormats[col] != 0) {
+                text += " (*" + df.format(decodeDate(val, dateFormats[col])) + ")";
+                dateGuessed = true;
+            }
         }
+
+        return text;
 
     }
 
@@ -206,5 +212,10 @@ class SQLite3TableReader extends JDBCTableReader {
         java.sql.Date d = new java.sql.Date(Long.parseLong(longString));
         return df.format(d);
 
+    }
+
+    @Override
+    public boolean hasDateGuessed() {
+        return dateGuessed;
     }
 }

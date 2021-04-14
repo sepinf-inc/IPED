@@ -25,6 +25,7 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.logging.log4j.Level;
@@ -110,6 +111,7 @@ public class Manager {
     private static long commitIntervalMillis = 30 * 60 * 1000;
     private static int QUEUE_SIZE = 100000;
     private static Logger LOGGER = LogManager.getLogger(Manager.class);
+    private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
     private ICaseData caseData;
@@ -117,7 +119,7 @@ public class Manager {
     private List<File> sources;
     private File output, finalIndexDir, indexDir, palavrasChave;
 
-    private ItemProducer contador, produtor;
+    private ItemProducer counter, producer;
     private Worker[] workers;
     private IndexWriter writer;
 
@@ -134,6 +136,8 @@ public class Manager {
     private Thread commitThread = null;
     AtomicLong partialCommitsTime = new AtomicLong();
 
+    private final AtomicBoolean initSleuthkitServers = new AtomicBoolean(false);
+    
     public static Manager getInstance() {
         return instance;
     }
@@ -187,6 +191,8 @@ public class Manager {
 
         stats.printSystemInfo();
 
+        Files.deleteIfExists(getFinishedFileFlag(output).toPath());
+
         output = output.getCanonicalFile();
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
@@ -217,19 +223,23 @@ public class Manager {
                 return;
 
             // apenas conta o número de arquivos a indexar
-            contador = new ItemProducer(this, caseData, true, sources, output);
-            contador.start();
+            counter = new ItemProducer(this, caseData, true, sources, output);
+            counter.start();
 
             // produz lista de arquivos e propriedades a indexar
-            produtor = new ItemProducer(this, caseData, false, sources, output);
-            produtor.start();
+            producer = new ItemProducer(this, caseData, false, sources, output);
+            producer.start();
 
             monitorarIndexacao();
+
             finalizarIndexacao();
 
         } catch (Exception e) {
             interromperIndexacao();
             throw e;
+
+        } finally {
+            closeItemProducers();
         }
 
         filtrarPalavrasChave();
@@ -246,6 +256,33 @@ public class Manager {
 
         stats.logarEstatisticas(this);
 
+        Files.createFile(getFinishedFileFlag(output).toPath());
+
+    }
+
+    private static File getFinishedFileFlag(File output) {
+        return new File(output, FINISHED_FLAG);
+    }
+
+    public static boolean isProcessingFinishedOK(File moduleDir) {
+        return getFinishedFileFlag(moduleDir).exists();
+    }
+
+    private void closeItemProducers() {
+        if (counter != null) {
+            try {
+                counter.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        if (producer != null) {
+            try {
+                producer.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private void interromperIndexacao() throws Exception {
@@ -262,18 +299,20 @@ public class Manager {
             writer.rollback();
         }
 
-        if (contador != null) {
-            contador.interrupt();
+        if (counter != null) {
+            counter.interrupt();
             // contador.join(5000);
         }
-        if (produtor != null) {
-            produtor.interrupt();
+        if (producer != null) {
+            producer.interrupt();
             // produtor.join(5000);
         }
     }
 
     public void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        SleuthkitClient.initSleuthkitServers(dbPath);
+        if (!initSleuthkitServers.getAndSet(true)) {
+            SleuthkitClient.initSleuthkitServers(dbPath);
+        }
     }
 
     private void shutDownSleuthkitServers() {
@@ -411,8 +450,8 @@ public class Manager {
                 exception = new IPEDException("Processing canceled!"); //$NON-NLS-1$
             }
 
-            String currentDir = contador.currentDirectory();
-            if (contador.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
+            String currentDir = counter.currentDirectory();
+            if (counter.isAlive() && currentDir != null && !currentDir.trim().isEmpty()) {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", 0, //$NON-NLS-1$
                         Messages.getString("Manager.Adding") + currentDir.trim() + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -438,7 +477,7 @@ public class Manager {
             IItem queueEnd = caseData.getItemQueue().peek();
             boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
 
-            if (!justQueueEndLeft || produtor.isAlive())
+            if (!justQueueEndLeft || producer.isAlive())
                 someWorkerAlive = true;
 
             if (!someWorkerAlive) {

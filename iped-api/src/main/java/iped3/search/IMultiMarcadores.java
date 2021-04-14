@@ -78,6 +78,8 @@ public interface IMultiMarcadores extends Serializable {
 
     public String getLabelComment(String labelName);
 
+    public int getLabelCount(String labelName);
+
     void setLabelComment(String texto, String comment);
 
     boolean isInReport(String label);

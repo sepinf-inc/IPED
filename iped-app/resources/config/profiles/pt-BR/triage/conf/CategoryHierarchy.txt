@@ -10,7 +10,7 @@ Atalhos = Atalhos para arquivos; Atalhos para URLs
 Emails e Caixas = Emails; Caixas de Emails
 Multimídia = Áudios; Vídeos; Imagens
 Espelhos de Discos = Discos ISO; Outros Espelhos; Discos Virtuais
-Vestígios de Navegadores = Histórico de Internet; Registros de Histórico de Internet; Favoritos Web;
+Vestígios de Navegadores = Histórico de Internet; Registros de Histórico de Internet; Favoritos Web; Sessões Salvas do Mozilla Firefox
 Windows 10 = Atividades de Usuário; Registros de Atividades de Usuário;
 Google Drive = Arquivos Sincronizados GDrive; Registros de Arquivos GDrive;
 

@@ -35,6 +35,7 @@
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
     <task script="NSFWNudityDetectTask.py"></task>
+    <task script="FaceRecognitionTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
     <task class="dpf.sp.gpinf.indexer.process.task.LedCarveTask"></task>

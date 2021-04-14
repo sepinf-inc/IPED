@@ -25,5 +25,6 @@ indexUnallocated = false
 enableCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
+enableFaceRecognition = false
 enableVideoThumbs = false
 enableHTMLReport = false

@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -27,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -51,6 +51,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
+import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -333,6 +334,9 @@ public class ExportFileTask extends AbstractTask {
         if (viewFile != null) {
             String viewName = viewFile.getName();
             File destFile = new File(output, "view/" + viewName.charAt(0) + "/" + viewName.charAt(1) + "/" + viewName); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            if (destFile.equals(viewFile)) {
+                return;
+            }
             destFile.getParentFile().mkdirs();
             try {
                 IOUtil.copiaArquivo(viewFile, destFile);
@@ -356,10 +360,13 @@ public class ExportFileTask extends AbstractTask {
         if (hash != null && !hash.isEmpty() && evidence.getFile() != null) {
             File file = evidence.getFile();
             String ext = evidence.getType().getLongDescr();
-            if (!ext.isEmpty()) {
-                ext = "." + ext; //$NON-NLS-1$
+            if (evidence.getLength() == null || evidence.getLength() == 0) {
+                ext = "";
             }
-            ext = Util.removeNonLatin1Chars(ext);
+            if (!ext.isEmpty()) {
+                ext = convertCharsToASCII(ext);
+                ext = "." + Util.removeNonLatin1Chars(ext);
+            }
 
             File hashFile = getHashFile(hash, ext);
             if (!hashFile.getParentFile().exists()) {
@@ -423,6 +430,31 @@ public class ExportFileTask extends AbstractTask {
         file.setReadOnly();
     }
 
+    private boolean isMarkSupportedInputStreamEmpty(InputStream inputStream) {
+        inputStream.mark(1);
+        try {
+            if (inputStream.read() == -1) {
+                return true;
+            }
+        } catch (Exception e) {
+            // ignore even runtime exceptions
+        } finally {
+            try {
+                inputStream.reset();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return false;
+    }
+
+    private static final String convertCharsToASCII(String str) {
+        char[] input = str.toCharArray();
+        char[] output = new char[input.length * 4];
+        int length = ASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+        return new String(output, 0, length);
+    }
+
     public void extractFile(InputStream inputStream, IItem evidence, Long parentSize) throws IOException {
 
         String hash = null;
@@ -434,13 +466,25 @@ public class ExportFileTask extends AbstractTask {
             ext = evidence.getType().getLongDescr();
         }
         if (!ext.isEmpty()) {
-            ext = "." + ext; //$NON-NLS-1$
+            if (!inputStream.markSupported()) {
+                inputStream = new BufferedInputStream(inputStream);
+            }
+            if (isMarkSupportedInputStreamEmpty(inputStream)) {
+                ext = "";
+            }
         }
-
-        ext = Util.removeNonLatin1Chars(ext);
+        if (!ext.isEmpty()) {
+            ext = convertCharsToASCII(ext);
+            ext = "." + Util.removeNonLatin1Chars(ext);
+        }
 
         if (extractDir == null) {
             setExtractLocation();
+        }
+
+        InputStream poiInputStream = Util.getPOIFSInputStream(inputStream);
+        if (poiInputStream != null) {
+            inputStream = poiInputStream;
         }
 
         if (!computeHash) {
@@ -547,8 +591,8 @@ public class ExportFileTask extends AbstractTask {
         boolean alreadyInDB = false;
         // uses id instead of hash if subitems could be ignored and deleted, to not
         // delete content referenced by other items with same hash
-        if (evidence.isSubItem() && !caseData.isIpedReport()
-                && (caseData.containsReport() || DuplicateTask.isIgnoreDuplicatesEnabled())) {
+        if (evidence.isSubItem() && !caseData.isIpedReport() && (MinIOTask.isTaskEnabled() || caseData.containsReport()
+                || DuplicateTask.isIgnoreDuplicatesEnabled())) {
             id = Integer.toString(evidence.getId());
         } else {
             id = hashString != null ? hashString : new HashValue(hash).toString();
@@ -578,6 +622,7 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setExportedFile(null);
         evidence.setFile(null);
         evidence.setFileOffset(-1);
         evidence.setLength((long) len);

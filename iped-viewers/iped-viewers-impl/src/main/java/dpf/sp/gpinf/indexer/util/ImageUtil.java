@@ -37,8 +37,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.drew.imaging.jpeg.JpegMetadataReader;
+import com.drew.imaging.jpeg.JpegSegmentMetadataReader;
+import com.drew.imaging.jpeg.JpegSegmentType;
+import com.drew.lang.annotations.NotNull;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
+import com.drew.metadata.exif.ExifReader;
 import com.drew.metadata.exif.ExifThumbnailDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 
@@ -49,6 +54,55 @@ public class ImageUtil {
 
     public static final Set<String> jdkImagesSupported = getjdkImageMimesSupported();
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    
+    private static int TAG_THUMBNAIL_DATA = 0x10000;
+
+    static {
+        updateExifReaderToLoadThumbData();
+    }
+    
+    public static final void updateExifReaderToLoadThumbData() {
+        List<JpegSegmentMetadataReader> allReaders = (List<JpegSegmentMetadataReader>) JpegMetadataReader.ALL_READERS;
+        for (int n = 0, cnt = allReaders.size(); n < cnt; n++) {
+            if (allReaders.get(n).getClass() != ExifReader.class) {
+                continue;
+            }
+
+            allReaders.set(n, new ExifReader() {
+                @Override
+                public void readJpegSegments(@NotNull final Iterable<byte[]> segments, @NotNull final Metadata metadata,
+                        @NotNull final JpegSegmentType segmentType) {
+                    super.readJpegSegments(segments, metadata, segmentType);
+
+                    for (byte[] segmentBytes : segments) {
+                        // Filter any segments containing unexpected preambles
+                        if (!startsWithJpegExifPreamble(segmentBytes)) {
+                            continue;
+                        }
+
+                        // Extract the thumbnail
+                        try {
+                            ExifThumbnailDirectory tnDirectory = metadata
+                                    .getFirstDirectoryOfType(ExifThumbnailDirectory.class);
+                            if (tnDirectory != null
+                                    && tnDirectory.containsTag(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET)) {
+                                int offset = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
+                                int length = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
+
+                                byte[] tnData = new byte[length];
+                                System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
+                                        length);
+                                tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                            }
+                        } catch (MetadataException e) {
+                            //ignore
+                        }
+                    }
+                }
+            });
+            break;
+        }
+    }
 
     private static final Set<String> getjdkImageMimesSupported() {
         HashSet<String> set = new HashSet<String>();
@@ -104,6 +158,18 @@ public class ImageUtil {
         public boolean value;
     }
 
+    public static final int getSamplingFactor(int w0, int h0, int w, int h) {
+        int sampling = 1;
+        if (w0 > w || h0 > h) {
+            if (w * h0 < w0 * h) {
+                sampling = w0 / w;
+            } else {
+                sampling = h0 / h;
+            }
+        }
+        return sampling;
+    }
+
     // Contribuição do PCF Wladimir e Nassif
     public static BufferedImage getSubSampledImage(InputStream source, int w, int h, BooleanWrapper renderException) {
         ImageInputStream iis = null;
@@ -119,13 +185,8 @@ public class ImageUtil {
 
             int w0 = reader.getWidth(0);
             int h0 = reader.getHeight(0);
-            int sampling = 1;
-            if (w0 > w || h0 > h)
-                if (w * h0 < w0 * h) {
-                    sampling = w0 / w;
-                } else {
-                    sampling = h0 / h;
-                }
+            int sampling = getSamplingFactor(w0, h0, w, h);
+
             int finalW = (int) Math.ceil((float) w0 / sampling);
             int finalH = (int) Math.ceil((float) h0 / sampling);
 
@@ -549,7 +610,8 @@ public class ImageUtil {
             if (metadata != null) {
                 ExifThumbnailDirectory dir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
                 if (dir != null) {
-                    byte[] imgBytes = dir.getThumbnailData();
+                    byte[] imgBytes = (byte[]) dir.getObject(TAG_THUMBNAIL_DATA);
+                    if(imgBytes == null) return null;
                     BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
                     try {
                         JpegDirectory dj = metadata.getFirstDirectoryOfType(JpegDirectory.class);

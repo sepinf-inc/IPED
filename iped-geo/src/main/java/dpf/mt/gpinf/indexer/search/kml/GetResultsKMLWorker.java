@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.TimeZone;
 
 import org.apache.lucene.document.Document;
+import org.apache.tika.metadata.Metadata;
 
-import dpf.mt.gpinf.mapas.parsers.GeofileParser;
 import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -83,18 +83,23 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             progress.setMaximum(results.getLength());
         }
 
-        String metaPrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
+        String imagePrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
+        String videoPrefix = ExtraProperties.VIDEO_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
         String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String query = "(" + metaPrefix + "GPS\\ Latitude:* AND " + metaPrefix + "GPS\\ Longitude:*) " + //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                "(" + ufedPrefix + "Latitude:[-90 TO 90] AND " + ufedPrefix + "Longitude:[-180 TO 180])"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-
-        query += "(" + GeofileParser.LATITUDE.getName().replace(":", "\\:") + ":[-90 TO 90] AND "
-                + GeofileParser.LONGITUDE.getName().replace(":", "\\:") + ":[-180 TO 180])";
-
-        query += "(" + ExtraProperties.LOCATIONS + ":*" + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+        String latKey = Metadata.LATITUDE.getName().replace(":", "\\:");
+        String longKey = Metadata.LONGITUDE.getName().replace(":", "\\:");
+        String range1 = ":[-90 TO 90]";
+        String range2 = ":[-180 TO 180]";
+        
+        StringBuilder sb = new StringBuilder();
+        sb.append("(" + latKey + range1 + " && " + longKey + range2 + ") ");
+        sb.append("(" + imagePrefix + latKey + range1 + " && " + imagePrefix + longKey + range2 + ") ");
+        sb.append("(" + videoPrefix + latKey + range1 + " && " + videoPrefix + longKey + range2 + ") ");
+        sb.append("(" + ufedPrefix + "Latitude" + range1 + " && " + ufedPrefix + "Longitude" + range2 + ") ");
+        sb.append("(" + ExtraProperties.LOCATIONS + ":*)");
 
         /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(query);
+        IIPEDSearcher searcher = app.createNewSearch(sb.toString());
         IMultiSearchResult multiResult = searcher.multiSearch();
 
         kmlResult.gpsItems = new HashMap<>();
@@ -256,31 +261,36 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
     }
 
     static public String resolveLatitude(Document doc) {
-        String lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + "geo:lat"); //$NON-NLS-1$
+        String lat = doc.get(Metadata.LATITUDE.getName());
+        if (lat == null)
+            lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LATITUDE.getName());
+        if (lat == null)
+            lat = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LATITUDE.getName());
         if (lat == null)
             lat = doc.get(ExtraProperties.UFED_META_PREFIX + "Latitude"); //$NON-NLS-1$
-        if (lat == null)
-            lat = doc.get(GeofileParser.LATITUDE.getName()); // $NON-NLS-1$
         return lat;
 
     }
 
     static public String resolveLongitude(Document doc) {
-        String longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + "geo:long"); //$NON-NLS-1$
+        String longit = doc.get(Metadata.LONGITUDE.getName());
+        if (longit == null)
+            longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LONGITUDE.getName());
+        if (longit == null)
+            longit = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LONGITUDE.getName());
         if (longit == null)
             longit = doc.get(ExtraProperties.UFED_META_PREFIX + "Longitude"); //$NON-NLS-1$
-        if (longit == null)
-            longit = doc.get(GeofileParser.LONGITUDE.getName()); // $NON-NLS-1$
         return longit;
     }
 
     static public String resolveAltitude(Document doc) {
-        String alt = doc.get(ExtraProperties.IMAGE_META_PREFIX + "geo:alt"); //$NON-NLS-1$
+        String alt = doc.get(Metadata.ALTITUDE.getName());
+        if (alt == null)
+            alt = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.ALTITUDE.getName());
+        if (alt == null)
+            alt = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.ALTITUDE.getName());
         if (alt == null)
             alt = doc.get(ExtraProperties.UFED_META_PREFIX + "Altitude"); //$NON-NLS-1$
-        if (alt == null)
-            alt = doc.get(GeofileParser.ALTITUDE.getName()); // $NON-NLS-1$
-
         return alt;
     }
 

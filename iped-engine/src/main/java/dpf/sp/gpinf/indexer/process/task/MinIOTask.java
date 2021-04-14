@@ -157,7 +157,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         String hash = item.getHash();
-        if (hash == null || hash.isEmpty())
+        if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
         // disable blocking proxy possibly enabled by HtmlViewer
@@ -200,7 +200,7 @@ public class MinIOTask extends AbstractTask {
             updateDataSource(item, fullPath);
 
         } catch (Exception e) {
-            logger.error("Error when uploading object " + item.getPath(), e);
+            logger.error("Error when uploading object " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
 
     }
@@ -220,9 +220,11 @@ public class MinIOTask extends AbstractTask {
 
     private void updateDataSource(IItem item, String id) {
         if (item.isSubItem()) {
+            // deletes local sqlite content after sent to minio
             item.setDeleteFile(true);
             ((Item) item).dispose(false);
         }
+
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFile(null);

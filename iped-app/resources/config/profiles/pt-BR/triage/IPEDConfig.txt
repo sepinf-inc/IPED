@@ -111,6 +111,12 @@ enableImageThumbs = false
 # a busca de imagens visualmente semelhantes. Necessário habilitar "enableImageThumbs".
 enableImageSimilarity = false
 
+# [Experimental] Habilita detecção e reconhecimento de faces.
+# É OBRIGATÓRIO instalar o python e algumas dependências, veja em https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
+# Configurações avançadas podem ser encontradas em conf/FaceRecognitionConfig.txt.
+# Se habilitado, é possível pesquisar por faces a partir da interface, consulte o menu de opções.
+enableFaceRecognition = false
+
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = false
