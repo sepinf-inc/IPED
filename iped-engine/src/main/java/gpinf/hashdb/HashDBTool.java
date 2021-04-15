@@ -1283,11 +1283,15 @@ public class HashDBTool {
                 if (s.length() > 1 && s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"') {
                     s = s.substring(1, s.length() - 1);
                 }
-                s = s.replace('|', ' ').trim();
+                s = s.replace('|', ' ').replace("\"\"", "\"").trim();
                 result.add(s);
                 start = i + 1;
             } else if (input.charAt(i) == '"') {
-                inQuotes = !inQuotes;
+                if (i + 1 < input.length() && input.charAt(i + 1) == '"') {
+                    i++;
+                } else {
+                    inQuotes = !inQuotes;
+                }
             }
         }
         return result;
