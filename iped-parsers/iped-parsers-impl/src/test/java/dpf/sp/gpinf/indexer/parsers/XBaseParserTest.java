@@ -40,7 +40,6 @@ public class XBaseParserTest {
         assertTrue(fileContent.contains("94766"));
         assertTrue(fileContent.contains("U.S.A."));
         assertTrue(fileContent.contains("808-555-0269"));
-        assertTrue(fileContent.contains("05/04/2009"));
         assertTrue(fileContent.contains("6215.0"));
         assertTrue(fileContent.contains("Underwater"));
         assertTrue(fileContent.contains("SCUBA Company"));
