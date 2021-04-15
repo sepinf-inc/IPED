@@ -135,7 +135,7 @@ public class HashDBTool {
             while (rs.next()) {
                 int id = rs.getInt(1);
                 String name = rs.getString(2);
-                propertyNameToId.put(name, id);
+                propertyNameToId.put(name.toLowerCase(), id);
             }
             System.out.println("Properties loaded = " + propertyNameToId.size());
             rs.close();
@@ -852,9 +852,9 @@ public class HashDBTool {
     }
 
     private int getPropertyId(String name) throws Exception {
-        Integer id = propertyNameToId.get(name);
+        Integer id = propertyNameToId.get(name.toLowerCase());
         if (id == null) {
-            propertyNameToId.put(name, id = ++lastPropertyId);
+            propertyNameToId.put(name.toLowerCase(), id = ++lastPropertyId);
             stmtInsertProperty.setInt(1, id);
             stmtInsertProperty.setString(2, name);
             stmtInsertProperty.executeUpdate();
