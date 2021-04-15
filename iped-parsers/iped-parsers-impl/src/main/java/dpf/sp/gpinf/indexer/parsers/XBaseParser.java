@@ -18,9 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.io.BufferedWriter;
-import java.io.FileInputStream;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.DateFormat;
@@ -29,13 +26,10 @@ import java.util.Date;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -92,24 +86,24 @@ public class XBaseParser extends AbstractParser {
 
     }
 
-    public static void main(String[] args) {
-
-        try {
-            String filepath = "E:/dbfs/x 238459.DBF"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            XBaseParser parser = new XBaseParser();
-            ParseContext context = new ParseContext();
-            BodyContentHandler handler = new BodyContentHandler(
-                    new BufferedWriter(new FileWriter("E:/dbfs/saida.txt"))); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//            String filepath = "E:/dbfs/x 238459.DBF"; //$NON-NLS-1$
+//            InputStream input = new FileInputStream(filepath);
+//            XBaseParser parser = new XBaseParser();
+//            ParseContext context = new ParseContext();
+//            BodyContentHandler handler = new BodyContentHandler(
+//                    new BufferedWriter(new FileWriter("E:/dbfs/saida.txt"))); //$NON-NLS-1$
+//            Metadata metadata = new Metadata();
+//            context.set(Parser.class, parser);
+//
+//            parser.parse(input, handler, metadata, context);
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 
 }
