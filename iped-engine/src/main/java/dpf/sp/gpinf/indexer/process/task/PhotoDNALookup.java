@@ -34,13 +34,13 @@ public class PhotoDNALookup extends AbstractTask {
 
     private static final String cachePath = System.getProperty("user.home") + "/.indexador/photodnalookup.cache";
 
-    public static final String PHOTO_DNA_HIT = "photoDnaHit"; 
+    public static final String PHOTO_DNA_HIT_PREFIX = "photoDnaDb:";
 
-    public static final String PHOTO_DNA_DIST = "photoDnaDistance";
+    public static final String PHOTO_DNA_HIT = PHOTO_DNA_HIT_PREFIX + "hit";
 
-    public static final String PHOTO_DNA_NEAREAST_HASH = "photoDnaNearestHash";
+    public static final String PHOTO_DNA_DIST = PHOTO_DNA_HIT_PREFIX + "distance";
 
-    public static final String PHOTO_DNA_HIT_PREFIX = "photoDnaHit:";
+    public static final String PHOTO_DNA_NEAREAST_HASH = PHOTO_DNA_HIT_PREFIX + "nearestHash";
 
     public static int MAX_DISTANCE = 50000;
 

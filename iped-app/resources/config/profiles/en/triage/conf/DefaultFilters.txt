@@ -3,10 +3,10 @@
 ############################
 
 OST Mailboxes (not processed) = type:ost
-Filter Known Hashes = *:* -hash\\:status:known
-Hash Alert = hash\\:status:alert
-Hash Alert (Child Porn) = hash\\:status:pedo
-PhotoDNA Alert (Child Porn) = photoDnaHit\\:status:pedo
+Filter Known Hashes = *:* -hashDb\\:status:known
+Hash Alert = hashDb\\:status:alert
+Hash Alert (Child Porn) = hashDb\\:status:pedo
+PhotoDNA Alert (Child Porn) = photoDnaDb\\:status:pedo
 Encrypted Files = encrypted:true
 Possibly encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 Parsing Error = parserException:true
