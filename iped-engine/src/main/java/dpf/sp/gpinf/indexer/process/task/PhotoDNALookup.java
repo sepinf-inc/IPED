@@ -124,8 +124,8 @@ public class PhotoDNALookup extends AbstractTask {
         @Override
         public double getDistance(PhotoDnaItem o1, PhotoDnaItem o2) {
             int distance = 0;
-            byte[] b1 = o1.getHash().getBytes();
-            byte[] b2 = o2.getHash().getBytes();
+            byte[] b1 = o1.getBytes();
+            byte[] b2 = o2.getBytes();
             for (int i = 0; i < b1.length; i++) {
                 int diff = (0xff & b1[i]) - (0xff & b2[i]);
                 distance += diff * diff;
@@ -170,7 +170,7 @@ public class PhotoDNALookup extends AbstractTask {
         boolean flip = false;
         while (rot == 0 || (rotateAndFlip && rot < 4)) {
             int degree = 90 * rot++;
-            PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, new HashValue(transforms.rot(photodna.getBytes(), degree, flip)));
+            PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, transforms.rot(photodna.getBytes(), degree, flip));
             List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot, MAX_DISTANCE);
 
             PhotoDnaItem nearest = null;
@@ -221,7 +221,7 @@ public class PhotoDNALookup extends AbstractTask {
             os.writeInt(photoDNAHashSet.size());
             for (PhotoDnaItem v : photoDNAHashSet) {
                 os.writeInt(v.getHashId());
-                byte[] b = v.getHash().getBytes();
+                byte[] b = v.getBytes();
                 os.write(b);
             }
             ret = true;
@@ -257,7 +257,7 @@ public class PhotoDNALookup extends AbstractTask {
                         int hashId = is.readInt();
                         byte[] b = new byte[PhotoDNATask.HASH_SIZE];
                         is.read(b);
-                        photoDNAHashSet.add(new PhotoDnaItem(hashId, new HashValue(b)));
+                        photoDNAHashSet.add(new PhotoDnaItem(hashId, b));
                     }
                     ret = true;
                 }

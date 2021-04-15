@@ -148,7 +148,7 @@ public class HashDBDataSource {
             String value = rs.getString(2);
             if (value.length() == photoDnaBase64Len) {
                 byte[] bytes = decoderBase64.decode(value);
-                photoDNAHashSet.add(new PhotoDnaItem(hashId, new HashValue(bytes)));
+                photoDNAHashSet.add(new PhotoDnaItem(hashId, bytes));
             }
         }
         rs.close();

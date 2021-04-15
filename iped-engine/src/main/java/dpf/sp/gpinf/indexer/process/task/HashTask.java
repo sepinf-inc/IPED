@@ -211,15 +211,4 @@ public class HashTask extends AbstractTask {
         return result.toString();
     }
 
-    @Deprecated
-    public static class HashValue extends dpf.sp.gpinf.indexer.util.HashValue {
-
-        private static final long serialVersionUID = 1L;
-
-        public HashValue(String hash) {
-            super(hash);
-        }
-
-    }
-
 }
