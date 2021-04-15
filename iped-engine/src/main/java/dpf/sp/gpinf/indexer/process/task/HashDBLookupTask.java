@@ -185,7 +185,9 @@ public class HashDBLookupTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
         if (!isEnabled()) return;
-        if (evidence.isDir() || evidence.isRoot()) return;
+        if (evidence.isDir() || evidence.isRoot() || evidence.getLength() == null || evidence.getLength() == 0) {
+            return;
+        }
         long t = System.nanoTime();
         Arrays.fill(hashes, null);
         boolean hasHash = false;
