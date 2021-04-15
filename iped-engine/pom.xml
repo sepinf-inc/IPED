@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
     
     <artifactId>iped-engine</artifactId>
@@ -189,20 +189,10 @@
             <artifactId>c3p0</artifactId>
             <version>0.9.5.4</version>
         </dependency>
-        <dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox</artifactId>
-  			<version>2.0.17</version>
-		</dependency>
-		<dependency>
-  			<groupId>org.apache.pdfbox</groupId>
-  			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.17</version>
-		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>jbig2-imageio</artifactId>
-  			<version>3.0.2</version>
+  			<version>3.0.3_1</version>
 		</dependency>
         <dependency>
 	    	<groupId>com.optimaize.languagedetector</groupId>
