@@ -145,10 +145,15 @@ public class HashDBDataSource {
         Decoder decoderBase64 = Base64.getDecoder();
         while (rs.next()) {
             int hashId = rs.getInt(1);
-            String value = rs.getString(2);
-            if (value.length() == photoDnaBase64Len) {
-                byte[] bytes = decoderBase64.decode(value);
-                photoDNAHashSet.add(new PhotoDnaItem(hashId, bytes));
+            String[] values = rs.getString(2).split("\\|");
+            for(String value : values) {
+                if (value.length() == photoDnaBase64Len) {
+                    try {
+                        byte[] bytes = decoderBase64.decode(value);
+                        photoDNAHashSet.add(new PhotoDnaItem(hashId, bytes));
+                    } catch (IllegalArgumentException e) {
+                    }
+                }
             }
         }
         rs.close();
