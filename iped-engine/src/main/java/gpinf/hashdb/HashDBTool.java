@@ -26,12 +26,16 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVParser;
+import org.apache.commons.csv.CSVRecord;
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.Encoding;
 import org.sqlite.SQLiteConfig.JournalMode;
@@ -534,10 +538,12 @@ public class HashDBTool {
             } else {
                 in = new BufferedReader(new FileReader(file), 1 << 20);
             }
-            String line = in.readLine();
-            String prevLine = line;
-            long pos = line.length() + 2;
-            List<String> header = splitLine(line);
+            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            List<String> header = new ArrayList<String>(parser.getHeaderNames());
+            if (header == null || header.isEmpty()) {
+                System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
+                return false;
+            }
             int[] colIdx = new int[header.size()];
             int nsrlProductCodeCol = -1;
             int photoDnaCol = -1;
@@ -576,20 +582,20 @@ public class HashDBTool {
             int cnt = 0;
             int numCols = header.size();
             Map<Integer, Set<String>> properties = new HashMap<Integer, Set<String>>();
-            while ((line = in.readLine()) != null) {
-                pos += line.length() + 2;
+            Iterator<CSVRecord> it = parser.iterator();
+            CSVRecord prevRecord = null;
+            while (it.hasNext()) {
+                CSVRecord record = it.next();
                 cnt++;
-                if ((cnt & 8191) == 0) updatePercentage(pos / (double) len);
-                if (line.charAt(0) == '#') continue;
-                List<String> cols = splitLine(line);
-                if (cols.size() != numCols) {
+                if ((cnt & 8191) == 0) updatePercentage(record.getCharacterPosition() / (double) len);
+                if (!record.isConsistent()) {
                     in.close();
-                    throw new RuntimeException("Line #" + cnt + ": number of columns does not match header columns " + cols.size() + "/" + numCols + ".\n" + line);
+                    throw new RuntimeException("Record #" + cnt + ": number of columns does not match header columns " + record.size() + "/" + numCols + ".\n" + record.toString());
                 }
                 Arrays.fill(hashes, null);
                 for (int i : hashCols) {
                     int idx = colIdx[i];
-                    hashes[idx] = hashStrToBytes(cols.get(i), hashBytesLen[idx]);
+                    hashes[idx] = hashStrToBytes(record.get(i).trim(), hashBytesLen[idx]);
                 }
                 boolean sameHashes = true;
                 for (int i = 0; i < hashes.length; i++) {
@@ -607,20 +613,20 @@ public class HashDBTool {
                         properties.clear();
                     }
                 } else {
-                    if (!process(prevHashes, properties)) {
+                    if (prevRecord != null && !process(prevHashes, properties)) {
                         in.close();
-                        throw new RuntimeException("Line #" + (cnt - 1) + ": invalid content:\n" + prevLine);
+                        throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content:\n" + prevRecord);
                     }
                     properties.clear();
                     System.arraycopy(hashes, 0, prevHashes, 0, hashes.length);
                 }
                 for (int i : propCols) {
-                    String val = cols.get(i);
+                    String val = record.get(i).trim();
                     if (!val.isEmpty()) {
                         if (i == photoDnaCol) {
                             if (val.length() != photoDnaBase64Len) {
                                 in.close();
-                                throw new RuntimeException("Line #" + cnt + ": invalid PhotoDna size content:\n" + prevLine);
+                                throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
                             }
                         } else if (i == nsrlProductCodeCol) {
                             val = nsrlProdCodeToName.get(Integer.parseInt(val));
@@ -632,11 +638,11 @@ public class HashDBTool {
                 if (setPropertyId != -1) {
                     merge(properties, setPropertyId, nsrlSetPropertyValue);
                 }
-                prevLine = line;
+                prevRecord = record;
             }
             if (!process(prevHashes, properties)) {
                 in.close();
-                throw new RuntimeException("Line #" + (cnt - 1) + ": invalid content:\n" + prevLine);
+                throw new RuntimeException("Record #" + (cnt - 1) + ": invalid content:\n" + prevRecord);
             }
             updatePercentage(-1);
             System.out.println("\r" + cnt + " line" + (cnt == 1 ? "" : "s") + " read in " + endTime(t));
@@ -796,8 +802,12 @@ public class HashDBTool {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file), 1 << 20);
-            String line = in.readLine();
-            List<String> header = splitLine(line);
+            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            List<String> header = parser.getHeaderNames();
+            if (header == null || header.isEmpty()) {
+                System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
+                return false;
+            }
             int colProdCode = -1;
             int colProdName = -1;
             for (int i = 0; i < header.size(); i++) {
@@ -812,16 +822,16 @@ public class HashDBTool {
             int cnt = 0;
             int numCols = header.size();
             nsrlProdCodeToName = new HashMap<Integer, String>();
-            while ((line = in.readLine()) != null) {
-                if (line.charAt(0) == '#') continue;
+            Iterator<CSVRecord> it = parser.iterator();
+            while (it.hasNext()) {
+                CSVRecord record = it.next();
                 cnt++;
-                List<String> cols = splitLine(line);
-                if (cols.size() != numCols) {
+                if (!record.isConsistent()) {
                     in.close();
-                    throw new RuntimeException("Error: Line #" + cnt + ": number of columns does not match header columns " + cols.size() + "/" + numCols + ".\n" + line);
+                    throw new RuntimeException("Error: Record #" + cnt + ": number of columns does not match header columns " + record.size() + "/" + numCols + ".\n" + record);
                 }
-                int code = Integer.parseInt(cols.get(colProdCode));
-                String name = cols.get(colProdName);
+                int code = Integer.parseInt(record.get(colProdCode));
+                String name = record.get(colProdName);
                 nsrlProdCodeToName.put(code, name);
             }
             System.out.println(cnt + " lines read.");
@@ -978,8 +988,12 @@ public class HashDBTool {
             } else {
                 in = new BufferedReader(new FileReader(file));
             }
-            String line = in.readLine();
-            List<String> header = splitLine(line);
+            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            List<String> header = parser.getHeaderNames();
+            if (header == null || header.isEmpty()) {
+                System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
+                return false;
+            }
             boolean hasHash = false;
             boolean hasProductCode = false;
             boolean hasProductName = false;
@@ -989,15 +1003,15 @@ public class HashDBTool {
                 else if (col.equalsIgnoreCase(nsrlProductName)) hasProductName = true;
             }
             if (!hasHash && (type == FileType.NSRL_MAIN || type == FileType.NSRL_MAIN_ZIP)) {
-                System.out.println("ERROR: Invalid NSRL file " + file + ", no hash was found in its header.\n" + line);
+                System.out.println("ERROR: Invalid NSRL file " + file + ", no hash was found in its header.");
                 return false;
             }
             if (!hasProductCode) {
-                System.out.println("ERROR: Invalid NSRL file " + file + ", no product code was found in its header.\n" + line);
+                System.out.println("ERROR: Invalid NSRL file " + file + ", no product code was found in its header.");
                 return false;
             }
             if (!hasProductName && type == FileType.NSRL_PROD) {
-                System.out.println("ERROR: Invalid NSRL file " + file + ", no product name was found in its header.\n" + line);
+                System.out.println("ERROR: Invalid NSRL file " + file + ", no product name was found in its header.");
                 return false;
             }
         } catch (Exception e) {
@@ -1019,8 +1033,12 @@ public class HashDBTool {
         BufferedReader in = null;
         try {
             in = new BufferedReader(new FileReader(file));
-            String line = in.readLine();
-            List<String> header = splitLine(line);
+            CSVParser parser = CSVFormat.DEFAULT.withFirstRecordAsHeader().parse(in);
+            List<String> header = parser.getHeaderNames();
+            if (header == null || header.isEmpty()) {
+                System.out.println("ERROR: Invalid file " + file.getPath() + ", header not found.");
+                return false;
+            }
             boolean hasHash = false;
             boolean hasProperty = false;
             for (String col : header) {
@@ -1028,11 +1046,11 @@ public class HashDBTool {
                 else hasProperty = true;
             }
             if (!hasHash) {
-                System.out.println("ERROR: File " + file + " header must contain at least one hash column.\n" + line);
+                System.out.println("ERROR: File " + file + " header must contain at least one hash column.");
                 return false;
             }
             if (!hasProperty) {
-                System.out.println("ERROR: File " + file + " header must contain at least one property column.\n" + line);
+                System.out.println("ERROR: File " + file + " header must contain at least one property column.");
                 return false;
             }
         } catch (Exception e) {
@@ -1283,30 +1301,6 @@ public class HashDBTool {
         }
         if (mode == ProcessMode.UNDEFINED) mode = ProcessMode.MERGE;
         return true;
-    }
-
-    private static List<String> splitLine(String input) {
-        List<String> result = new ArrayList<String>();
-        int start = 0;
-        boolean inQuotes = false;
-        for (int i = 0; i <= input.length(); i++) {
-            if (i == input.length() || (input.charAt(i) == ',' && !inQuotes)) {
-                String s = input.substring(start, i).trim();
-                if (s.length() > 1 && s.charAt(0) == '"' && s.charAt(s.length() - 1) == '"') {
-                    s = s.substring(1, s.length() - 1);
-                }
-                s = s.replace('|', ' ').replace("\"\"", "\"").trim();
-                result.add(s);
-                start = i + 1;
-            } else if (input.charAt(i) == '"') {
-                if (i + 1 < input.length() && input.charAt(i + 1) == '"') {
-                    i++;
-                } else {
-                    inQuotes = !inQuotes;
-                }
-            }
-        }
-        return result;
     }
 
     private void usage() {
