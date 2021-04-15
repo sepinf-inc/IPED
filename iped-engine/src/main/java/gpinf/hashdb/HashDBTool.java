@@ -62,6 +62,7 @@ public class HashDBTool {
     private static final String[] vicStatusPropertyValues = new String[] {"known","pedo","pedo"};
     private static final String vicPrefix = "vic";
     private static final String photoDnaPropertyName = "photoDna";
+    private static final int photoDnaBase64Len = 192;    
 
     private final List<File> inputs = new ArrayList<File>();
     private File output;
@@ -539,6 +540,7 @@ public class HashDBTool {
             List<String> header = splitLine(line);
             int[] colIdx = new int[header.size()];
             int nsrlProductCodeCol = -1;
+            int photoDnaCol = -1;
             int numHashCols = 0;
             int numPropCols = 0;
             int[] hashCols = new int[header.size()];
@@ -557,6 +559,9 @@ public class HashDBTool {
                             col = nsrlProductName;
                         }
                         header.set(i, col = nsrlPrefix + col);
+                    } 
+                    if (col.equalsIgnoreCase(photoDnaPropertyName)) {
+                        photoDnaCol = i;
                     }
                     colIdx[i] = getPropertyId(col);
                     propCols[numPropCols++] = i;
@@ -612,7 +617,14 @@ public class HashDBTool {
                 for (int i : propCols) {
                     String val = cols.get(i);
                     if (!val.isEmpty()) {
-                        if (i == nsrlProductCodeCol) val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                        if (i == photoDnaCol) {
+                            if (val.length() != photoDnaBase64Len) {
+                                in.close();
+                                throw new RuntimeException("Line #" + cnt + ": invalid PhotoDna size content:\n" + prevLine);
+                            }
+                        } else if (i == nsrlProductCodeCol) {
+                            val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                        }
                         int idx = colIdx[i];
                         merge(properties, idx, val);
                     }
@@ -746,7 +758,7 @@ public class HashDBTool {
                                 String value = jp.nextTextValue();
                                 if (value != null) {
                                     value = value.trim();
-                                    if (!value.isEmpty()) {
+                                    if (value.length() == photoDnaBase64Len) {
                                         merge(properties, photoDnaPropertyId, value);
                                     }
                                 }
