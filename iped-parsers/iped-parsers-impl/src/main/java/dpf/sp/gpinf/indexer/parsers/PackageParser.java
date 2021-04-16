@@ -63,6 +63,7 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 
@@ -130,7 +131,7 @@ public class PackageParser extends AbstractParser {
         if (!stream.markSupported()) {
             stream = new BufferedInputStream(stream);
         }
-        stream.mark(10000000);
+        stream.mark(1 << 24);
 
         TemporaryResources tmp = new TemporaryResources();
         ArchiveInputStream ais = null;
@@ -204,8 +205,7 @@ public class PackageParser extends AbstractParser {
                 throw new EncryptedDocumentException(zfe);
             }
             if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
-                stream.reset();
-                new SevenZipParser().parse(stream, handler, metadata, context);
+                alternativeParse(stream, handler, metadata, context);
             } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
 
@@ -226,6 +226,31 @@ public class PackageParser extends AbstractParser {
             if (encrypted.bool)
                 throw new EncryptedDocumentException();
         }
+    }
+
+    private void alternativeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
+        InputStream is = null;
+        IStreamSource streamFactory = null;
+        try {
+            stream.reset();
+            is = stream;
+        } catch (IOException e) {
+            streamFactory = context.get(IStreamSource.class);
+            if (streamFactory != null) {
+                is = streamFactory.getStream();
+            }
+        }
+        if (is != null) {
+            try {
+                new SevenZipParser().parse(is, handler, metadata, context);
+            } finally {
+                if (streamFactory != null) {
+                    is.close();
+                }
+            }
+        }
+
     }
 
     private String getEntryName(ArchiveEntry entry) throws TikaException, UnsupportedEncodingException {

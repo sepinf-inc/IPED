@@ -109,7 +109,7 @@ public class RegexTask extends AbstractTask {
         for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {
             Set<Character> ws = new HashSet<Character>();
             char[] input = { c1 };
-            char[] output = new char[1];
+            char[] output = new char[4];
             FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
             char c2 = output[0];
             ws.add(c1);

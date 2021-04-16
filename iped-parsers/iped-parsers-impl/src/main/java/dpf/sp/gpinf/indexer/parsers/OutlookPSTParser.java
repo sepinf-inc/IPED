@@ -52,7 +52,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFParser2;
+import org.apache.tika.parser.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -497,7 +497,7 @@ public class OutlookPSTParser extends AbstractParser {
                     text = email.getRTFBody();
                     if (text != null) {
                         try {
-                            RTFParser2 parser = new RTFParser2();
+                            RTFParser parser = new RTFParser();
                             BodyContentHandler handler = new BodyContentHandler();
                             parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(),
                                     context);

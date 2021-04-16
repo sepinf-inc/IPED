@@ -31,6 +31,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -39,11 +40,16 @@ import java.util.concurrent.atomic.AtomicLong;
 import javax.imageio.ImageIO;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
+import org.apache.tika.metadata.XMP;
+import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.mp4.ISO6709Converter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -185,6 +191,31 @@ public class VideoThumbTask extends ThumbTask {
      * Mapa com resultado do processamento dos vídeos
      */
     private static final HashMap<String, VideoProcessResult> processedVideos = new HashMap<String, VideoProcessResult>();
+
+    private static final Map<String, String> videoToTikaMetadata = getVideoToTikaMetadata();
+
+    private ISO6709Converter iso6709Converter = new ISO6709Converter();
+
+    private static final Map<String, String> getVideoToTikaMetadata() {
+        Map<String, String> map = new HashMap<>();
+        map.put("creation_time", TikaCoreProperties.CREATED.getName());
+        map.put("title", TikaCoreProperties.TITLE.getName());
+        map.put("artist", XMPDM.ARTIST.getName());
+        map.put("album", XMPDM.ALBUM.getName());
+        map.put("album_artist", XMPDM.ALBUM_ARTIST.getName());
+        map.put("comment", XMPDM.LOG_COMMENT.getName());
+        map.put("encoder", XMP.CREATOR_TOOL.getName());
+        map.put("genre", XMPDM.GENRE.getName());
+        return map;
+    }
+
+    private static String normalizeMetadata(String meta) {
+        meta = videoToTikaMetadata.getOrDefault(meta, meta);
+        if (meta.endsWith("-eng") || meta.endsWith("-por")) {
+            meta = meta.substring(0, meta.length() - 4);
+        }
+        return meta;
+    }
 
     /**
      * Inicializa a tarefa de processamento de vídeos. Carrega configurações sobre o
@@ -474,30 +505,36 @@ public class VideoThumbTask extends ThumbTask {
     private void saveMetadata(VideoProcessResult r, Metadata metadata) {
         long bitrate = r.getBitRate();
         if (bitrate != -1)
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "bitrate", Long.toString(bitrate)); //$NON-NLS-1$
+            metadata.set("bitrate", Long.toString(bitrate)); //$NON-NLS-1$
         float fps = r.getFPS();
         if (fps != -1)
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "framerate", Float.toString(fps)); //$NON-NLS-1$
+            metadata.set("framerate", Float.toString(fps)); //$NON-NLS-1$
         String codec = r.getVideoCodec();
         if (codec != null && !codec.isEmpty())
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "codec", codec); //$NON-NLS-1$
+            metadata.set("codec", codec); //$NON-NLS-1$
         String format = r.getVideoFormat();
         if (format != null && !format.isEmpty())
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "format", format); //$NON-NLS-1$
+            metadata.set("format", format); //$NON-NLS-1$
         double duration = r.getVideoDuration();
         if (duration != -1)
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "duration", Double.toString(duration / 1000)); //$NON-NLS-1$
+            metadata.set(XMPDM.DURATION.getName(), Double.toString(duration / 1000)); // $NON-NLS-1$
         Dimension d = r.getDimension();
         if (d != null) {
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "width", Integer.toString(d.width)); //$NON-NLS-1$
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "height", Integer.toString(d.height)); //$NON-NLS-1$
+            metadata.set(Metadata.IMAGE_WIDTH.getName(), Integer.toString(d.width)); // $NON-NLS-1$
+            metadata.set(Metadata.IMAGE_LENGTH.getName(), Integer.toString(d.height)); // $NON-NLS-1$
         }
         int rot = r.getRotation();
         if (rot > 0) {
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + "rotation", Integer.toString(rot)); //$NON-NLS-1$
+            metadata.set("rotation", Integer.toString(rot)); //$NON-NLS-1$
         }
         for (Entry<String, String> meta : r.getClipInfos().entrySet()) {
-            metadata.set(ExtraProperties.VIDEO_META_PREFIX + meta.getKey(), meta.getValue());
+            String key = meta.getKey();
+            key = normalizeMetadata(key);
+            if ("location".equals(key)) {
+                iso6709Converter.populateLocation(metadata, meta.getValue());
+            } else {
+                metadata.add(key, meta.getValue());
+            }
         }
 
     }
@@ -506,7 +543,6 @@ public class VideoThumbTask extends ThumbTask {
      * Verifica se é vídeo.
      */
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return MetadataUtil.isVideoType(mediaType);
     }
 }

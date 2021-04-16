@@ -5,7 +5,7 @@
 	<parent>
 		<groupId>iped</groupId>
 		<artifactId>iped-viewers</artifactId>
-		<version>3.19-snapshot</version>
+		<version>4.0.0-snapshot</version>
 	</parent>
 	<artifactId>iped-viewers-impl</artifactId>
 
@@ -132,8 +132,12 @@
             <version>${icepdf.version}</version>
             <type>jar</type>
         </dependency>
+        <dependency>
+            <groupId>com.github.bbottema</groupId>
+            <artifactId>rtf-to-html</artifactId>
+            <version>1.0.1</version>
+        </dependency>
         
-       
 	</dependencies>
 
 </project>

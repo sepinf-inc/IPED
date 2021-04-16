@@ -468,7 +468,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
 
         if (e.getSource().equals(openApp)) {
             if (!App.get().isVisible()) {
-                JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.IncompleteTreeWarn")); //$NON-NLS-1$
+                JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.IncompleteProcessing")); //$NON-NLS-1$
                 new AppMain().start(workers[0].output.getParentFile(), workers[0].manager, null);
             } else
                 JOptionPane.showMessageDialog(this, Messages.getString("ProgressFrame.AlreadyOpen")); //$NON-NLS-1$
