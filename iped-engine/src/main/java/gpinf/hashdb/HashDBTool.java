@@ -85,7 +85,7 @@ public class HashDBTool {
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
-    private int totIns, totRem, totUpd, totSkip, totComb;
+    private int totIns, totRem, totUpd, totSkip, totComb, totIgn;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
@@ -154,6 +154,10 @@ public class HashDBTool {
 
     private boolean process(byte[][] newHashes, Map<Integer, Set<String>> newProperties) throws Exception {
         if (newProperties.isEmpty()) return true;
+        if (isZeroLength(newHashes)) {
+            totIgn++;
+            return true;
+        }
         int mask = 0;
         for (int i = 0; i < newHashes.length; i++) {
             if (newHashes[i] != null) mask |= 1 << i;
@@ -300,6 +304,16 @@ public class HashDBTool {
                 a[i] = b[i];
             }
         }
+    }
+    
+    private boolean isZeroLength(byte[][] hashes) {
+        for (int i = 0; i < hashes.length; i++) {
+            byte[] h = hashes[i];
+            if (h != null && Arrays.equals(h, HashDB.zeroLengthHash[i])) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private boolean equalsHashes(byte[][] a, byte[][] b) {
@@ -512,7 +526,7 @@ public class HashDBTool {
 
     private boolean readFile(File file) {
         FileType type = getFileType(file);
-        totIns = totRem = totUpd = totSkip = totComb = 0;
+        totIns = totRem = totUpd = totSkip = totComb = totIgn = 0;
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
@@ -852,7 +866,8 @@ public class HashDBTool {
         if (totRem > 0) System.out.println(totRem + " hash" + (totRem == 1 ? "" : "es") + " removed.");
         if (totUpd > 0) System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
         if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
-        if (totComb > 0) System.out.println(totComb + " line" + (totComb == 1 ? "" : "s") + " combined.");
+        if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
+        if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
     }
 
     private static void updatePercentage(double pct) {
