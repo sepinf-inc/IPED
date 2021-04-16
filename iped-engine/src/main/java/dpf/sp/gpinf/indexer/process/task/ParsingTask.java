@@ -592,6 +592,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             checkRecursiveZipBomb(subItem);
 
+            if ("".equals(metadata.get(BasicProps.LENGTH))) {
+                subItem.setLength(null);
+            }
+
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);

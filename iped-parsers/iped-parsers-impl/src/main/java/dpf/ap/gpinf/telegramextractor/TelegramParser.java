@@ -292,7 +292,7 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
             }
 
-            meta.set(BasicProps.HASH, "");
+            meta.set(BasicProps.LENGTH, "");
             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
         }
     }

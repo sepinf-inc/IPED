@@ -140,7 +140,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataBookmark.set(TikaCoreProperties.MODIFIED, b.getLastModified());
                     metadataBookmark.add(ExtraProperties.URL, b.getUrl());
                     metadataBookmark.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
-                    metadataBookmark.add((BasicProps.HASH), "");
+                    metadataBookmark.add((BasicProps.LENGTH), "");
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataBookmark, true);
                 }
@@ -178,7 +178,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.set(ExtraProperties.VISIT_DATE, h.getVisitDate());
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
-                    metadataHistory.add((BasicProps.HASH), "");
+                    metadataHistory.add((BasicProps.LENGTH), "");
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
@@ -220,7 +220,7 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
                     if (d.getReceivedBytes() != null)
                         metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(2));
-                    metadataDownload.add((BasicProps.HASH), "");
+                    metadataDownload.add((BasicProps.LENGTH), "");
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                 }

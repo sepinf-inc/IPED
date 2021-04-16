@@ -145,7 +145,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         // show times in UTC
         metadataCloudGraphItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getModified()));
         
-        metadataCloudGraphItem.add((BasicProps.HASH), "");
+        metadataCloudGraphItem.add((BasicProps.LENGTH), "");
 
         // CloudGraph data
         metadataCloudGraphItem.add("parent", entry.getParent());

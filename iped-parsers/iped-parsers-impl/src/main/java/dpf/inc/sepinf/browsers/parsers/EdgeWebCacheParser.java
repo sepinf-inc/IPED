@@ -183,7 +183,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         metadataHistory.set(ExtraProperties.VISIT_DATE, ev.getAccessedDate());
                         metadataHistory.add(ExtraProperties.URL, ev.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
-                        metadataHistory.add((BasicProps.HASH), "");
+                        metadataHistory.add((BasicProps.LENGTH), "");
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }

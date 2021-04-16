@@ -135,7 +135,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.set(TikaCoreProperties.MODIFIED, GDriveCloudGraphParser.convertStringToDate(entry.getModified()));
         
         //.add(TikaCoreProperties.TITLE, h.getTitle());
-        metadataSnapshotItem.add((BasicProps.HASH), "");
+        metadataSnapshotItem.add((BasicProps.LENGTH), "");
 
         // Snapshot data
         metadataSnapshotItem.add("acl_role", entry.getAclRole());
