@@ -1064,6 +1064,11 @@
     <mime-type type="application/x-ufed-instantmessage">
         <sub-class-of type="message/x-chat-message"/>
     </mime-type>
+	
+	<mimes-name-detection>		
+		<mime-name-detection type="message/rfc822"></mime-name-detection>
+		<mime-name-detection type="multipart/related"></mime-name-detection>
+	</mimes-name-detection>
    
 </mime-info>
 
