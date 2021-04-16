@@ -110,6 +110,14 @@ public class HashDB {
         return false;
     }
 
+    public static boolean containsIgnoreCase(String propertyValue, Set<String> find) {
+        String[] c = propertyValue.split("\\|");
+        for (String a : c) {
+            if (find.contains(a.toLowerCase())) return true;
+        }
+        return false;
+    }
+
     public static String mergeProperties(String a, String b) {
         if (a.equals(b)) return a;
         Set<String> all = toSet(a);

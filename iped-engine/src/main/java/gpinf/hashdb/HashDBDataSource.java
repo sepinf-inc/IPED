@@ -123,13 +123,23 @@ public class HashDBDataSource {
         return null;
     }
 
-    public synchronized ArrayList<PhotoDnaItem> readPhotoDNA() throws Exception {
+    public synchronized ArrayList<PhotoDnaItem> readPhotoDNA(Set<String> statusFilter) throws Exception {
+        if (statusFilter != null) {
+            Set<String> statusFilterLowerCase = new HashSet<String>();
+            for (String s : statusFilter) {
+                statusFilterLowerCase.add(s.toLowerCase());
+            }
+            statusFilter.clear();
+            statusFilter.addAll(statusFilterLowerCase);
+        }
         StringBuilder sb = new StringBuilder();
-        sb.append("select HASH_ID, VALUE from HASHES_PROPERTIES where PROPERTY_ID in (");
+        sb.append("select HASH_ID, PROPERTY_ID, VALUE from HASHES_PROPERTIES where PROPERTY_ID in (");
         boolean first = true;
+        int propIdPhotoDna = -1;
         for (int propId : propertyIdToName.keySet()) {
             String propName = propertyIdToName.get(propId);
-            if (propName.equalsIgnoreCase(photoDna)) {
+            if (propName.equalsIgnoreCase(photoDna) || (statusFilter != null && propName.equalsIgnoreCase(propertyStatus))) {
+                if (propName.equalsIgnoreCase(photoDna)) propIdPhotoDna = propId; 
                 if (first) first = false;
                 else sb.append(',');
                 sb.append(propId);
@@ -143,21 +153,38 @@ public class HashDBDataSource {
         stmt.setFetchSize(1024);
         ResultSet rs = stmt.executeQuery(sb.toString());
         Decoder decoderBase64 = Base64.getDecoder();
+        Set<Integer> setHashIds = new HashSet<Integer>();
         while (rs.next()) {
             int hashId = rs.getInt(1);
-            String[] values = rs.getString(2).split("\\|");
-            for(String value : values) {
-                if (value.length() == photoDnaBase64Len) {
-                    try {
-                        byte[] bytes = decoderBase64.decode(value);
-                        photoDNAHashSet.add(new PhotoDnaItem(hashId, bytes));
-                    } catch (IllegalArgumentException e) {
+            int propId = rs.getInt(2);
+            String propValue = rs.getString(3);
+            if (propId == propIdPhotoDna) {
+                String[] values = propValue.split("\\|");
+                for(String photoDna : values) {
+                    if (photoDna.length() == photoDnaBase64Len) {
+                        try {
+                            byte[] bytes = decoderBase64.decode(photoDna);
+                            photoDNAHashSet.add(new PhotoDnaItem(hashId, bytes));
+                        } catch (IllegalArgumentException e) {
+                        }
                     }
                 }
+            } else if (statusFilter != null && HashDB.containsIgnoreCase(propValue, statusFilter)) {
+                setHashIds.add(hashId);
             }
         }
         rs.close();
         stmt.close();
+        
+        if (statusFilter != null) {
+            for (int i = 0; i < photoDNAHashSet.size(); i++) {
+                PhotoDnaItem item = photoDNAHashSet.get(i);
+                if (!setHashIds.contains(item.getHashId())) {
+                    Collections.swap(photoDNAHashSet, i, photoDNAHashSet.size() - 1);
+                    photoDNAHashSet.remove(photoDNAHashSet.size() - 1);
+                }
+            }
+        }
         return photoDNAHashSet;
     }
 

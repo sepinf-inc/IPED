@@ -32,6 +32,8 @@ public class PhotoDNATask extends AbstractTask {
 
     public static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
 
+    public static final String STATUS_HASH_DB_FILTER = "statusHashDBFilter";
+
     public static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
 
     public static final String TEST_ROTATED_FLIPPED = "searchRotatedAndFlipped";
@@ -71,6 +73,10 @@ public class PhotoDNATask extends AbstractTask {
         value = config.getProperty(SKIP_HASH_DB_FILES);
         if (value != null && !value.trim().isEmpty())
             skipHashDBFiles = Boolean.valueOf(value.trim());
+
+        value = config.getProperty(STATUS_HASH_DB_FILTER);
+        if (value != null && !value.trim().isEmpty())
+            PhotoDNALookup.statusHashDBFilter = value.trim();
 
         value = config.getProperty(MAX_SIMILARITY_DISTANCE);
         if (value != null && !value.trim().isEmpty())

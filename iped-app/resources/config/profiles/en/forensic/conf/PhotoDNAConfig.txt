@@ -11,6 +11,11 @@ minFileSize = 4000
 # Do not compute photoDNA of files present in hashes database
 skipHashDBFiles = true
 
+# Use in the lookup only PhotoDNA from HashDB entries with specific "status". 
+# Empty means that all PhotoDNA entries will be loaded.
+# Commas can be used to separate multiple status, e.g. "pedo, alert".
+statusHashDBFilter = pedo
+
 # Maximum distance between photoDNA hashes to consider two images as similar.
 # It is used to look up for photoDNA hashes in a hash database.
 # The bigger the number, the look up will be SLOWER and you'll get more false positives and less false negatives.

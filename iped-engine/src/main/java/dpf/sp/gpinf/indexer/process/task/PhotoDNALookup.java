@@ -8,9 +8,11 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.slf4j.Logger;
@@ -45,7 +47,9 @@ public class PhotoDNALookup extends AbstractTask {
     public static int MAX_DISTANCE = 50000;
 
     public static boolean rotateAndFlip = true;
-    
+
+    public static String statusHashDBFilter = "";
+
     private static final AtomicBoolean init = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
@@ -93,18 +97,29 @@ public class PhotoDNALookup extends AbstractTask {
                     }
                     long t = System.currentTimeMillis();
                     hashDBDataSource = new HashDBDataSource(hashDBFile);
-                    ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile);
+                    ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile, statusHashDBFilter);
                     if (photoDNAHashSet != null) {
                         LOGGER.info("Load from cache file {}.", cachePath);
                     } else {
-                        photoDNAHashSet = hashDBDataSource.readPhotoDNA();
+                        Set<String> statusFilter = null;
+                        if (!statusHashDBFilter.isEmpty()) {
+                            statusFilter = new HashSet<String>();
+                            String[] s = statusHashDBFilter.split(",");
+                            for(String a : s) {
+                                a = a.trim();
+                                if (!a.isEmpty()) {
+                                    statusFilter.add(a);
+                                }
+                            }
+                        }
+                        photoDNAHashSet = hashDBDataSource.readPhotoDNA(statusFilter);
                         if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
                             LOGGER.error("PhotoDNA hashes must be loaded into IPED hash database to enable PhotoDNALookup.");
                             taskEnabled = false;
                             init.set(true);
                             return;
                         }
-                        if (writeCache(hashDBFile, photoDNAHashSet)) {
+                        if (writeCache(hashDBFile, photoDNAHashSet, statusHashDBFilter)) {
                             LOGGER.info("Cache file {} was created.", cachePath);
                         }
                     }
@@ -207,7 +222,7 @@ public class PhotoDNALookup extends AbstractTask {
         }
     }
 
-    private boolean writeCache(File hashDBFile, ArrayList<PhotoDnaItem> photoDNAHashSet) {
+    private boolean writeCache(File hashDBFile, ArrayList<PhotoDnaItem> photoDNAHashSet, String filter) {
         File cacheFile = new File(cachePath);
         boolean ret = false;
         DataOutputStream os = null;
@@ -218,6 +233,8 @@ public class PhotoDNALookup extends AbstractTask {
             os = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(cacheFile)));
             os.writeLong(hashDBFile.length());
             os.writeLong(hashDBFile.lastModified());
+            os.writeInt(filter.length());
+            os.writeChars(filter);
             os.writeInt(photoDNAHashSet.size());
             for (PhotoDnaItem v : photoDNAHashSet) {
                 os.writeInt(v.getHashId());
@@ -239,7 +256,7 @@ public class PhotoDNALookup extends AbstractTask {
         return ret;
     }
 
-    private ArrayList<PhotoDnaItem> readCache(File hashDBFile) {
+    private ArrayList<PhotoDnaItem> readCache(File hashDBFile, String filter) {
         File cacheFile = new File(cachePath);
         if (!cacheFile.exists()) return null;
         DataInputStream is = null;
@@ -251,15 +268,24 @@ public class PhotoDNALookup extends AbstractTask {
             if (fileLen == hashDBFile.length()) {
                 long fileLastModified = is.readLong();
                 if (fileLastModified == hashDBFile.lastModified()) {
-                    int len = is.readInt();
-                    photoDNAHashSet = new ArrayList<PhotoDnaItem>(len);
-                    for (int i = 0; i < len; i++) {
-                        int hashId = is.readInt();
-                        byte[] b = new byte[PhotoDNATask.HASH_SIZE];
-                        is.read(b);
-                        photoDNAHashSet.add(new PhotoDnaItem(hashId, b));
+                    int filterLen = is.readInt();
+                    if (filterLen == filter.length()) {
+                        char[] c = new char[filterLen];
+                        for (int i = 0; i < filterLen; i++) {
+                            c[i] = is.readChar();
+                        }
+                        if (filter.equals(new String(c))) {
+                            int len = is.readInt();
+                            photoDNAHashSet = new ArrayList<PhotoDnaItem>(len);
+                            for (int i = 0; i < len; i++) {
+                                int hashId = is.readInt();
+                                byte[] b = new byte[PhotoDNATask.HASH_SIZE];
+                                is.read(b);
+                                photoDNAHashSet.add(new PhotoDnaItem(hashId, b));
+                            }
+                            ret = true;
+                        }
                     }
-                    ret = true;
                 }
             }
         } catch (Exception e) {
