@@ -185,7 +185,17 @@ public class HashDBLookupTask extends AbstractTask {
     @Override
     protected void process(IItem evidence) throws Exception {
         if (!isEnabled()) return;
-        if (evidence.isDir() || evidence.isRoot() || evidence.getLength() == null || evidence.getLength() == 0) {
+        if (evidence.isDir() || evidence.isRoot() || evidence.getLength() == null) {
+            return;
+        }
+        if (evidence.getLength() == 0) {
+            // ignore zero sized files
+            if (excludeKnown) {
+                evidence.setToIgnore(true);
+                synchronized (init) {
+                    excluded++;
+                }
+            }
             return;
         }
         long t = System.nanoTime();

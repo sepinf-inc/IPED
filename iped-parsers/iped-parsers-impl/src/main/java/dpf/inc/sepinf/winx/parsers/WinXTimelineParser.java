@@ -154,7 +154,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
         metadataTimelineItem.set(TikaCoreProperties.CREATED, convertStringToDate(entry.getStartTime()));
         metadataTimelineItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getLastModified()));
 
-        metadataTimelineItem.add((BasicProps.HASH), "");
+        metadataTimelineItem.add((BasicProps.LENGTH), "");
 
         // Timeline data
         metadataTimelineItem.add("etag", entry.getEtag());

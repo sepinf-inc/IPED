@@ -112,6 +112,11 @@ public class HashTask extends AbstractTask {
             return;
         }
 
+        if (evidence.getLength() == null) {
+            evidence.setHash("");
+            return;
+        }
+
         InputStream in = null;
         try {
             in = evidence.getBufferedStream();

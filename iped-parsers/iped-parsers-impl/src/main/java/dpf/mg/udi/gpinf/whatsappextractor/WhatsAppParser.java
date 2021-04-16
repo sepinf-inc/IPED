@@ -561,7 +561,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                             meta, false);
                 }
             } else {
-                meta.set(BasicProps.HASH, "");
+                meta.set(BasicProps.LENGTH, "");
                 extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
             }
         }

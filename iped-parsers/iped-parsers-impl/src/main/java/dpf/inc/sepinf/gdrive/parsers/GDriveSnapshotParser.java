@@ -135,7 +135,7 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.set(TikaCoreProperties.MODIFIED, GDriveCloudGraphParser.convertStringToDate(entry.getModified()));
         
         //.add(TikaCoreProperties.TITLE, h.getTitle());
-        metadataSnapshotItem.add((BasicProps.HASH), "");
+        metadataSnapshotItem.add((BasicProps.LENGTH), "");
 
         // Snapshot data
         metadataSnapshotItem.add("acl_role", entry.getAclRole());
@@ -159,9 +159,9 @@ public class GDriveSnapshotParser extends SQLite3DBParser {
         metadataSnapshotItem.add("child_volume", entry.getChildVolume());
         metadataSnapshotItem.add("parent_volume", entry.getParentVolume());
         if (!hashSets.isEmpty()) {
-            metadataSnapshotItem.set("hash:status", "pedo");
+            metadataSnapshotItem.set("hashDb:status", "pedo");
             for (String set : hashSets) {
-                metadataSnapshotItem.add("hash:set", set);
+                metadataSnapshotItem.add("hashDb:set", set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {

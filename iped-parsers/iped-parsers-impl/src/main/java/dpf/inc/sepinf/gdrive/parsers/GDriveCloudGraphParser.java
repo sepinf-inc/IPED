@@ -145,7 +145,7 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         // show times in UTC
         metadataCloudGraphItem.set(TikaCoreProperties.MODIFIED, convertStringToDate(entry.getModified()));
         
-        metadataCloudGraphItem.add((BasicProps.HASH), "");
+        metadataCloudGraphItem.add((BasicProps.LENGTH), "");
 
         // CloudGraph data
         metadataCloudGraphItem.add("parent", entry.getParent());
@@ -162,9 +162,9 @@ public class GDriveCloudGraphParser extends SQLite3DBParser {
         metadataCloudGraphItem.add("doc_id", entry.getDoc_id());
         metadataCloudGraphItem.add("parent_doc_id", entry.getParent_doc_id());
         if (!hashSets.isEmpty()) {
-            metadataCloudGraphItem.set("hash:status", "pedo");
+            metadataCloudGraphItem.set("hashDb:status", "pedo");
             for (String set : hashSets) {
-                metadataCloudGraphItem.add("hash:set", set);
+                metadataCloudGraphItem.add("hashDb:set", set);
             }
         }
         if("yes".equalsIgnoreCase(entry.getShared()) || Boolean.valueOf(entry.getShared())) {
