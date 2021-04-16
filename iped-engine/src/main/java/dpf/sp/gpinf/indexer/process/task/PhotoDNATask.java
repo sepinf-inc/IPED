@@ -1,16 +1,21 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.dpf.sepinf.photodna.api.PhotoDNA;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
@@ -109,17 +114,21 @@ public class PhotoDNATask extends AbstractTask {
         if (!evidence.isToAddToCase())
             return;
 
-        if (evidence.getThumb() == null || !evidence.getMediaType().getType().equals("image"))
+        byte[] thumb = evidence.getThumb(); 
+        if (thumb == null || !evidence.getMediaType().getType().equals("image"))
             return;
 
         if (evidence.getLength() != null && evidence.getLength() < minFileSize)
+            return;
+
+        if (useThumbnail && thumb.length == 0)
             return;
 
         if (skipKffFiles && evidence.getExtraAttribute(KFFTask.KFF_STATUS) != null)
             return;
 
         byte[] hash;
-        try (InputStream is = useThumbnail ? new ByteArrayInputStream(evidence.getThumb())
+        try (InputStream is = useThumbnail ? new ByteArrayInputStream(thumb)
                 : evidence.getBufferedStream()) {
 
             photodna.reset();
@@ -128,7 +137,27 @@ public class PhotoDNATask extends AbstractTask {
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
 
         } catch (Throwable e) {
-            // e.printStackTrace();
+            if (useThumbnail) {
+                // Retry for thumbs if they are valid images but were rejected by computePhotoDNA().
+                BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
+                if (img != null) {
+                    img = ImageUtil.resizeImage(img, 160, 160, 64, 64, BufferedImage.TYPE_INT_BGR);
+                    ByteArrayOutputStream os = new ByteArrayOutputStream(4096);
+                    ImageIO.write(img, "jpg", os);
+                    thumb = os.toByteArray();
+                    try (InputStream is = new ByteArrayInputStream(thumb)) {
+                        photodna.reset();
+                        hash = photodna.computePhotoDNA(is);
+                        String hashStr = new String(Hex.encodeHex(hash, false));
+                        evidence.setExtraAttribute(PHOTO_DNA, hashStr);
+                        return;
+                    } catch (Exception e2) {
+                        LOGGER.info("Error computing PhotoDNA for " + evidence.getPath() + ": " + e2.toString());
+                        evidence.setExtraAttribute("photodna_exception", e.toString());
+                        return;
+                    }
+                }
+            }
             LOGGER.info("Error computing photoDNA for " + evidence.getPath() + ": " + e.toString());
             evidence.setExtraAttribute("photodna_exception", e.toString());
             return;
