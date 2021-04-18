@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
@@ -24,11 +26,13 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
@@ -76,6 +80,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     JComboBox<String> props = new JComboBox<String>();
     JComboBox<String> scale = new JComboBox<String>();
     JButton update = new JButton(Messages.getString("MetadataPanel.Update")); //$NON-NLS-1$
+    JTextField listFilter = new JTextField();
+    JButton copyResultToClipboard = new JButton(Messages.getString("MetadataPanel.CopyClipboard"));
 
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -146,7 +152,18 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         l3.add(label, BorderLayout.WEST);
         l3.add(sort, BorderLayout.CENTER);
         l3.add(update, BorderLayout.EAST);
+        
+        JPanel l5 = new JPanel(new BorderLayout());
+        label = new JLabel(Messages.getString("MetadataPanel.Filter"));
+        label.setPreferredSize(new Dimension(90, 20));
+        l5.add(label, BorderLayout.WEST);
+        l5.add(listFilter, BorderLayout.CENTER);
+        
+        JPanel l6 = new JPanel(new BorderLayout());
+        l6.add(copyResultToClipboard, BorderLayout.CENTER);
 
+        listFilter.addActionListener(this);
+        copyResultToClipboard.addActionListener(this);
         update.addActionListener(this);
 
         JPanel top = new JPanel();
@@ -155,6 +172,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         top.add(l2);
         top.add(l4);
         top.add(l3);
+        top.add(l5);
+        top.add(l6);
 
         this.add(top, BorderLayout.NORTH);
         this.add(scrollList, BorderLayout.CENTER);
@@ -275,6 +294,36 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 props.addItem(f);
         }
         updatingProps = false;
+    }
+    
+    private void filterResults() {
+    	if(StringUtils.isEmpty(this.listFilter.getText())) {
+    		populateList();
+    	} else {
+    		if (array == null)
+                return;
+    		ArrayList<ValueCount> filtered = new ArrayList<MetadataPanel.ValueCount>();
+            String searchValue = this.listFilter.getText();
+            for (ValueCount valueCount : array) {
+				String val = (valueCount.getVal()!=null?valueCount.getVal():"").toLowerCase();
+				if(val.contains(searchValue)) {
+					filtered.add(valueCount);
+				}
+			}
+            ValueCount[] filteredArray = filtered.toArray(new ValueCount[] {});
+            updateList(filteredArray);
+    	}
+    }
+    
+    private void copyResultsToClipboard() {
+		StringBuffer strBuffer = new StringBuffer();
+		for (int i=0;i<list.getModel().getSize();i++) {
+			ValueCount item = list.getModel().getElementAt(i);
+			String val = (item.getVal() != null ? item.getVal() : "");
+			strBuffer.append(val.toString());
+			strBuffer.append(System.lineSeparator());
+		}
+		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()), null);
     }
 
     private void populateList() {
@@ -775,6 +824,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         else if (e.getSource() == groups)
             updateProps();
+        
+        else if(e.getSource() == listFilter)
+        	filterResults();
+        
+        else if(e.getSource()==copyResultToClipboard)
+        	copyResultsToClipboard();
 
     }
 

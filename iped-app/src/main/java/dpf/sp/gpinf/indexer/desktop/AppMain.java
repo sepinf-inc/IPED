@@ -88,6 +88,7 @@ public class AppMain {
 
         if ("true".equals(System.getProperty("Debugging"))) {
             casePath = new File(System.getProperty("user.dir"));
+            libDir = new File(System.getProperty("user.dir")+"/indexador/lib/");
             return;
         }
 
