@@ -27,7 +27,7 @@ import iped3.IItem;
 
 public class HashDBLookupTask extends AbstractTask {
     private static final String ENABLE_PARAM = "enableHashDBLookup";
-    private static final String ATTRIBUTES_PREFIX = "hashDb:";
+    public static final String ATTRIBUTES_PREFIX = "hashDb:";
     private static final String STATUS_PROPERTY = "status";
     public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
     private static final String KNOWN_VALUE = "known";
