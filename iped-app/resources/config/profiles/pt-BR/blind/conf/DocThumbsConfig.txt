@@ -1,0 +1,36 @@
+###########################################################################
+# Configuração da extração de miniaturas de documentos
+###########################################################################
+
+# Define a extração de miniaturas para PDF.
+# Configurações possíveis são:
+# internal : Executada no processo principal do IPED, podendo geral erros fatais memória 
+#            em arquivos corrompidos bem específicos. 
+# external : Executada em processo externo, iniciado para cada conversão, isolando eventuais problemas de 
+#            memória, mas deixando a geração da miniatura muito mais lenta.
+# off      : Desabilita geração.
+pdfThumbs = internal
+
+# Define a extração de miniaturas para formatos suportados pelo LibreOffice.
+# Configurações possíveis são:
+# external : Executada em processo externo, iniciado para cada conversão.
+# off      : Desabilita geração. 
+libreOfficeThumbs = external
+
+# Timeout para aguardar conversão de PDFs.
+pdfTimeout = 60
+
+# Timeout para aguardar conversão de documentos tratados pelos LibreOffice.
+libreOfficeTimeout = 120
+
+# Tempo adicional de timeout em segundos por megabyte do arquivo (para ambos os tipos de extração PDF/LibreOffice)
+timeoutIncPerMB = 2
+
+# Tamanho em pixels das miniaturas de documentos geradas.
+thumbSize = 480
+
+# Máximo de memória utilizada (em megabytes), no caso de utilização de processos de extração externos de PDFs.
+maxPdfExternalMemory = 256
+
+# Número máximo de itens processados em cada chamada ao LibreOffice
+libreOfficeBatchSize = 10
