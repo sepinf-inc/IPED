@@ -38,7 +38,7 @@ public class RFC822ParserTest extends TestCase {
     @SuppressWarnings("deprecation")
     @Test
     public void testSimple() throws IOException, SAXException, TikaException{
-        Parser parser = new RFC822Parser();
+        RFC822Parser parser = new RFC822Parser();
         Metadata metadata = spy(new Metadata());
         ContentHandler handler = spy(new DefaultHandler());
         ParseContext context = new ParseContext();
@@ -62,7 +62,7 @@ public class RFC822ParserTest extends TestCase {
 
     @Test
     public void testMultipart() throws IOException, SAXException, TikaException {
-        Parser parser = new RFC822Parser();
+        RFC822Parser parser = new RFC822Parser();
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/testRFC822-multipart");
         ContentHandler handler = mock(XHTMLContentHandler.class);
@@ -87,7 +87,7 @@ public class RFC822ParserTest extends TestCase {
     
     @Test
     public void testQuotedPrintable() throws IOException, SAXException, TikaException {
-        Parser parser = new RFC822Parser();
+        RFC822Parser parser = new RFC822Parser();
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/testRFC822_quoted");
         ParseContext context = new ParseContext();
@@ -104,7 +104,7 @@ public class RFC822ParserTest extends TestCase {
 
     @Test
     public void testBase64() throws IOException, SAXException, TikaException{
-        Parser parser = new RFC822Parser();
+        RFC822Parser parser = new RFC822Parser();
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/testRFC822_base64");
         ContentHandler handler = new BodyContentHandler();
@@ -117,7 +117,7 @@ public class RFC822ParserTest extends TestCase {
     
     @Test
     public void testI18NHeaders() throws IOException, SAXException, TikaException {
-        Parser parser = new RFC822Parser();
+        RFC822Parser parser = new RFC822Parser();
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/testRFC822_i18nheaders");
         ContentHandler handler = new BodyContentHandler();
@@ -132,7 +132,7 @@ public class RFC822ParserTest extends TestCase {
 
     @Test
     public void testUnusualFromAddress() throws Exception {
-       Parser parser = new RFC822Parser();
+       RFC822Parser parser = new RFC822Parser();
        Metadata metadata = new Metadata();
        InputStream stream = getStream("test-files/testRFC822_oddfrom");
        ContentHandler handler = new BodyContentHandler();
@@ -151,7 +151,7 @@ public class RFC822ParserTest extends TestCase {
 
     @Test
     public void testSomeMissingHeaders() throws Exception {
-       Parser parser = new RFC822Parser();
+       RFC822Parser parser = new RFC822Parser();
        Metadata metadata = new Metadata();
        InputStream stream = getStream("test-files/testRFC822-limitedheaders");
        ContentHandler handler = new BodyContentHandler();

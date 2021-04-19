@@ -35,7 +35,6 @@ import junit.framework.TestCase;
 
 public class MBoxParserTest extends TestCase{
 
-    static int numMails = 0;
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
@@ -45,7 +44,7 @@ public class MBoxParserTest extends TestCase{
     @Test
     public void testMboxParsing() throws IOException, SAXException, TikaException{
 
-            Parser parser = new MboxParser();
+            MboxParser parser = new MboxParser();
             Metadata metadata = new Metadata();
             ContentHandler handler = new DefaultHandler();
             ParseContext context = new ParseContext();

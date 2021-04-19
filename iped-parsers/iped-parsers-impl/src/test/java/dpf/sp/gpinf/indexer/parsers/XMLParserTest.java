@@ -21,7 +21,7 @@ public class XMLParserTest extends TestCase {
     @Test
     public void testXMLParserAsciiChars() throws Exception {
 
-            Parser parser = new XMLParser();
+            XMLParser parser = new XMLParser();
             Metadata metadata = new Metadata();
             ContentHandler handler = new BodyContentHandler();
             ParseContext context = new ParseContext();
@@ -49,7 +49,7 @@ public class XMLParserTest extends TestCase {
     public void testXMLParserNonAsciiChars() throws Exception {
         InputStream stream = getStream("test-files/testXML.xml");
         Metadata metadata = new Metadata();
-        Parser parser = new XMLParser();
+        XMLParser parser = new XMLParser();
         ParseContext context = new ParseContext();
         ContentHandler handler = new BodyContentHandler();
 
