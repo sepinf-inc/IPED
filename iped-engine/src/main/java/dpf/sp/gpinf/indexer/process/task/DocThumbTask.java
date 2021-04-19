@@ -593,16 +593,9 @@ public class DocThumbTask extends ThumbTask {
                 String line = null;
                 int cnt = 0;
                 while ((line = in.readLine()) != null) {
-                    if (line.contains("UseOpenCL")) {
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseOpenCL\" oor:op=\"fuse\"><value>true</value></prop></item>");
-                        out.newLine();
-                        continue;
-                    }
                     out.write(line);
                     out.newLine();
                     if (++cnt == 2) {
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Drawinglayer\"><prop oor:name=\"AntiAliasing\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
                         out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"FirstRun\" oor:op=\"fuse\"><value>false</value></prop></item>");
                         out.newLine();
                         out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseLocking\" oor:op=\"fuse\"><value>false</value></prop></item>");
