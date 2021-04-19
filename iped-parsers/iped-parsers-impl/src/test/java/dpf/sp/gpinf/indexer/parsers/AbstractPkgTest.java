@@ -63,11 +63,12 @@ public abstract class AbstractPkgTest extends TestCase {
    protected static class EmbeddedTrackingParser extends AbstractParser {
       protected List<String> filenames = new ArrayList<String>();
       protected List<String> modifieddate = new ArrayList<String>();
+      protected List<String> itensmd5 = new ArrayList<String>();
       
       public void reset() {
          filenames.clear();
          modifieddate.clear();
-
+         itensmd5.clear();
       }
       
       public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -79,6 +80,7 @@ public abstract class AbstractPkgTest extends TestCase {
             SAXException, TikaException {
          filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
          modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
+         itensmd5.add(metadata.get(Metadata.CONTENT_MD5));
 
       }
 

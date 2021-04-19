@@ -271,6 +271,7 @@ public class SevenZipParser extends AbstractParser {
                 entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
                 entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
                 entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
+                entrydata.set(Metadata.CONTENT_MD5, Integer.toHexString(item.getCRC()));
 
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$

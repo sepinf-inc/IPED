@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.spy;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
@@ -9,7 +7,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Collections;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -18,6 +15,7 @@ import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.XHTMLContentHandler;
@@ -48,8 +46,19 @@ public class MBoxParserTest extends TestCase{
             Metadata metadata = new Metadata();
             ContentHandler handler = new DefaultHandler();
             ParseContext context = new ParseContext();
+            context.set(Parser.class, new AbstractParser(){
+                 public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context) throws IOException, SAXException, TikaException {
+                 }
+
+                @Override
+                public Set<MediaType> getSupportedTypes(ParseContext context) {
+                    // TODO Auto-generated method stub
+                    return null;
+                }
+             });
             InputStream stream = getStream("test-files/testMBOX.mbox");
             parser.parse(stream, handler, metadata, context);
+            
 
 
     }

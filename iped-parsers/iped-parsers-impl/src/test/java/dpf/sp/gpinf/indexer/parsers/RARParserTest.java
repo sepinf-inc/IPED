@@ -4,7 +4,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
-import static org.mockito.Mockito.*;
 
 
 
