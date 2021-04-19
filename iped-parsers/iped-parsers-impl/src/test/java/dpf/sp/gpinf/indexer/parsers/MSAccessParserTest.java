@@ -37,7 +37,7 @@ public class MSAccessParserTest extends TestCase{
     }
     
     @Test
-    public void testMboxMetadata() throws IOException, SAXException, TikaException{
+    public void testMSAccessMetadata() throws IOException, SAXException, TikaException{
             
             String filepath = "test-files/testMDBCampaign_Template.mdb";
             MSAccessParser parser = new MSAccessParser();
@@ -57,7 +57,7 @@ public class MSAccessParserTest extends TestCase{
     }
     
     @Test
-    public void testMboxHandler() throws IOException, SAXException, TikaException{
+    public void testMSAccessHandler() throws IOException, SAXException, TikaException{
             
             String filepath = "test-files/testMDBCampaign_Template.mdb";
             MSAccessParser parser = new MSAccessParser();
@@ -104,11 +104,6 @@ public class MSAccessParserTest extends TestCase{
             assertTrue(bodyText.contains("brazil"));
             assertTrue(bodyText.contains("uniao dos estados do brazil"));
             assertTrue(bodyText.contains("federação brasileira"));
-
-            assertTrue(bodyText.contains("Date_Added"));
-            assertTrue(bodyText.contains("11/11/2011"));
-            assertTrue(bodyText.contains("01/12/2000"));
-            assertTrue(bodyText.contains("22/12/2042"));
     
     }    
     
