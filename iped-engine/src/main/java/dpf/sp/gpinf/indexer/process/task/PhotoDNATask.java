@@ -137,37 +137,11 @@ public class PhotoDNATask extends AbstractTask {
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
 
         } catch (Throwable e) {
-            if (useThumbnail) {
-                // Retry for thumbs if they are valid images but were rejected by computePhotoDNA().
-                BufferedImage img = ImageIO.read(new ByteArrayInputStream(thumb));
-                if (img != null) {
-                    img = ImageUtil.resizeImage(img, 160, 160, 64, 64, BufferedImage.TYPE_INT_BGR);
-                    ByteArrayOutputStream os = new ByteArrayOutputStream(4096);
-                    ImageIO.write(img, "jpg", os);
-                    thumb = os.toByteArray();
-                    try (InputStream is = new ByteArrayInputStream(thumb)) {
-                        photodna.reset();
-                        hash = photodna.computePhotoDNA(is);
-                        String hashStr = new String(Hex.encodeHex(hash, false));
-                        evidence.setExtraAttribute(PHOTO_DNA, hashStr);
-                        return;
-                    } catch (Exception e2) {
-                        LOGGER.info("Error computing PhotoDNA for " + evidence.getPath() + ": " + e2.toString());
-                        evidence.setExtraAttribute("photodna_exception", e.toString());
-                        return;
-                    }
-                }
-            }
-            LOGGER.info("Error computing photoDNA for " + evidence.getPath() + ": " + e.toString());
+            LOGGER.info("Error computing photoDNA for " + evidence.getPath(), e);
             evidence.setExtraAttribute("photodna_exception", e.toString());
             return;
         }
 
-        /*
-         * int distance = new
-         * br.dpf.sepinf.photodna.PhotoDNAComparator().compare(thumbHash, fileHash);
-         * evidence.setExtraAttribute("photodna_diff", distance);
-         */
     }
 
 }
