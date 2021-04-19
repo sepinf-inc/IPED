@@ -106,9 +106,9 @@ public class MSAccessParserTest extends TestCase{
             assertTrue(bodyText.contains("federação brasileira"));
 
             assertTrue(bodyText.contains("Date_Added"));
-            assertTrue(bodyText.contains("11/11/2011 00:00:00"));
-            assertTrue(bodyText.contains("01/12/2000 00:00:00"));
-            assertTrue(bodyText.contains("22/12/2042 00:00:00"));
+            assertTrue(bodyText.contains("11/11/2011"));
+            assertTrue(bodyText.contains("01/12/2000"));
+            assertTrue(bodyText.contains("22/12/2042"));
     
     }    
     
