@@ -18,28 +18,19 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 public class PDFToThumb {
-    /*
-    private static final DefaultResourceCache rc = new DefaultResourceCache() {
-        @Override
-        public void put(COSObject indirect, PDXObject xobject) throws IOException {
-        }
-    };
-    */
-
     public static BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
         BufferedImage img = null;
         PDDocument document = null;
         try {
             document = PDDocument.load(file, MemoryUsageSetting.setupMixed(1 << 24, 1 << 28));
-//            document.setResourceCache(rc);
             PDPage page = document.getPage(0);
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             pdfRenderer.setSubsamplingAllowed(true);
             PDRectangle rc = page.getCropBox();
             double maxDimension = Math.max(rc.getWidth(), rc.getHeight());
             double zoom = maxDimension <= 0 ? 0.5 : targetSize / maxDimension;
-            int w = Math.min(targetSize, (int) Math.ceil(zoom * rc.getWidth()));
-            int h = Math.min(targetSize, (int) Math.ceil(zoom * rc.getHeight()));
+            int w = Math.max(targetSize / 10, Math.min(targetSize, (int) Math.ceil(zoom * rc.getWidth())));
+            int h = Math.max(targetSize / 10, Math.min(targetSize, (int) Math.ceil(zoom * rc.getHeight())));
             img = new BufferedImage(w, h, BufferedImage.TYPE_INT_BGR);
             Graphics2D g = img.createGraphics();
             Shape clip = g.getClip();
