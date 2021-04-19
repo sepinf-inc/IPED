@@ -594,7 +594,7 @@ public class DocThumbTask extends ThumbTask {
                 int cnt = 0;
                 while ((line = in.readLine()) != null) {
                     if (line.contains("UseOpenCL")) {
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseOpenCL\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseOpenCL\" oor:op=\"fuse\"><value>true</value></prop></item>");
                         out.newLine();
                         continue;
                     }
