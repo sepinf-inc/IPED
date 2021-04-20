@@ -371,7 +371,7 @@ public class ReportGenerator {
         out.println("<br/>");
 
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("TelegramReport.LEDKFF") + " "
+            out.print("<p><i>" + Messages.getString("TelegramReport.FoundInPedoHashDB") + " "
                     + message.getChildPornSets().toString() + "</i></p>");
         }
 
