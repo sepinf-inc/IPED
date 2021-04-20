@@ -25,6 +25,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -35,6 +36,8 @@ import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import iped3.util.ExtraProperties;
+
 
 /**
  * Parent class for all Package based Test cases
@@ -42,12 +45,19 @@ import org.xml.sax.SAXException;
 public abstract class AbstractPkgTest extends TestCase {
    protected ParseContext trackingContext;
    protected ParseContext recursingContext;
+   protected ParseContext mboxContext;
    
    protected Parser autoDetectParser;
    protected EmbeddedTrackingParser tracker;
+   protected EmbeddedMboxParser mboxtracker;
 
    protected void setUp() throws Exception {
       super.setUp();
+      
+      mboxtracker = new EmbeddedMboxParser();
+      mboxContext = new ParseContext();
+      mboxContext.set(Parser.class, mboxtracker);
+      
       
       tracker = new EmbeddedTrackingParser();
       trackingContext = new ParseContext();
@@ -81,6 +91,41 @@ public abstract class AbstractPkgTest extends TestCase {
          filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
          modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
          itensmd5.add(metadata.get(Metadata.CONTENT_MD5));
+
+      }
+
+   }
+   @SuppressWarnings("serial")
+   protected static class EmbeddedMboxParser extends AbstractParser {
+      protected List<String> messageto = new ArrayList<String>();
+      protected List<String> messagefrom = new ArrayList<String>();
+      protected List<String> messagesubject = new ArrayList<String>();
+      protected List<String> messagebody = new ArrayList<String>();
+      protected List<String> messagedate = new ArrayList<String>();
+      protected List<String> contenttype = new ArrayList<String>();
+      
+      public void reset() {
+         messageto.clear();
+         messagefrom.clear();
+         messagesubject.clear();
+         messagebody.clear();
+         messagedate.clear();
+         contenttype.clear();
+      }
+      
+      public Set<MediaType> getSupportedTypes(ParseContext context) {
+         return (new AutoDetectParser()).getSupportedTypes(context);
+      }
+
+      public void parse(InputStream stream, ContentHandler handler,
+            Metadata metadata, ParseContext context) throws IOException,
+            SAXException, TikaException {
+         messageto.add(metadata.get(Metadata.MESSAGE_TO));
+         messagefrom.add(metadata.get(Metadata.MESSAGE_FROM));
+         messagesubject.add(metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+         messagebody.add(metadata.get(ExtraProperties.MESSAGE_BODY));
+         messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
+         contenttype.add(metadata.get(HttpHeaders.CONTENT_TYPE));
 
       }
 

@@ -148,6 +148,7 @@ public class RARParser extends AbstractParser {
             entrydata.set(ExtraProperties.ACCESSED, header.getATime());
             entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, header.getFileNameString());
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
+            entrydata.set(Metadata.CONTENT_MD5, Integer.toHexString(header.getFileCRC()));
 
             if (extractor.shouldParseEmbedded(entrydata))
                 extractor.parseEmbedded(subFile, handler, entrydata, true);
