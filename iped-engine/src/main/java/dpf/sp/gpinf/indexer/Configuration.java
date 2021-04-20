@@ -33,6 +33,7 @@ import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -131,7 +132,7 @@ public class Configuration {
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
                 appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
-
+        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
         System.setProperty("iped.configPath", configPath);
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$

@@ -2,7 +2,6 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,6 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -21,17 +21,14 @@ import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
-import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask {
 
-    private static final String JEP_NOT_FOUND = Messages.getString("PythonTask.JepNotFound");
     private static final String DISABLED = Messages.getString("PythonTask.ModuleDisabled");
     private static final String SEE_MANUAL = Messages.getString("PythonTask.SeeManual");
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
     private static volatile JepException jepException = null;
-    private static final Map<Long, Jep> jepPerThread = new HashMap<>();
     private static volatile File lastInstalledScript;
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
@@ -88,40 +85,15 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
-        synchronized (jepPerThread) {
-            Jep jep = jepPerThread.get(Thread.currentThread().getId());
-            if (jep == null) {
-                jep = getNewJep();
-                jepPerThread.put(Thread.currentThread().getId(), jep);
-            }
-            if (!scriptLoaded) {
-                loadScript(jep);
-                scriptLoaded = true;
-            }
-            return jep;
+        Jep jep = PythonParser.getJep();
+        if (!scriptLoaded) {
+            loadScript(jep);
+            scriptLoaded = true;
         }
+        return jep;
     }
 
-    private Jep getNewJep() throws JepException {
-
-        Jep jep;
-        try {
-            jep = new SharedInterpreter();
-
-        } catch (UnsatisfiedLinkError e) {
-            if (jepException == null) {
-                String msg = JEP_NOT_FOUND + SEE_MANUAL;
-                jepException = new JepException(msg, e);
-                LOGGER.error(msg);
-                jepException.printStackTrace();
-            }
-            isEnabled = false;
-            return null;
-        }
-
-        jep.eval("from jep import redirect_streams");
-        jep.eval("redirect_streams.setup()");
-
+    private void setGlobalVars(Jep jep) throws JepException {
         setGlobalVar(jep, "caseData", this.caseData); //$NON-NLS-1$
         setGlobalVar(jep, "moduleDir", this.output); //$NON-NLS-1$
         setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
@@ -133,11 +105,6 @@ public class PythonTask extends AbstractTask {
         LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
                 .iterator().next();
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
-
-        jep.eval("import sys");
-        jep.eval("sys.path.append('" + scriptFile.getParentFile().getAbsolutePath().replace("\\", "\\\\") + "')");
-
-        return jep;
     }
 
     private void setGlobalVar(Jep jep, String name, Object obj) throws JepException {
@@ -155,6 +122,11 @@ public class PythonTask extends AbstractTask {
         if (jep == null) {
             return;
         }
+
+        setGlobalVars(jep);
+
+        jep.eval("import sys");
+        jep.eval("sys.path.append('" + scriptFile.getParentFile().getAbsolutePath().replace("\\", "\\\\") + "')");
 
         String className = scriptFile.getName().replace(".py","");
         moduleName = className;
@@ -215,7 +187,8 @@ public class PythonTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         this.confParams = confParams;
         this.confDir = confDir;
-        try (Jep jep = getNewJep()) {
+        try {
+            Jep jep = PythonParser.getJep();
             loadScript(jep);
 
         } catch (JepException e) {
