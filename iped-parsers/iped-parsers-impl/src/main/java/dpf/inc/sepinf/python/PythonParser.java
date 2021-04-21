@@ -8,6 +8,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -43,8 +44,8 @@ public class PythonParser extends AbstractParser {
 
     private static final Map<Long, Jep> jepPerThread = new HashMap<>();
     private static final Set<String> instancetPerThread = new HashSet<>();
-
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
+    private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
 
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
@@ -66,11 +67,27 @@ public class PythonParser extends AbstractParser {
                     }
                     PythonParser parser = new PythonParser(file);
                     try {
-                        Collection<MediaType> mediaTypes = (Collection<MediaType>) parser.getJep()
+                        Collection<String> mediaTypes = (Collection<String>) getJep()
                                 .invoke(parser.getInstanceMethod("getSupportedTypes"), new ParseContext());
 
-                        for (MediaType mt : mediaTypes) {
-                            mediaToParserMap.put(mt, parser);
+                        for (String mt : mediaTypes) {
+                            mediaToParserMap.put(MediaType.parse(mt), parser);
+                        }
+
+                        try {
+                            Map<String, Number> map = (Map<String, Number>) getJep()
+                                    .invoke(parser.getInstanceMethod("getSupportedTypesQueueOrder"));
+                            for (Entry<String, Number> entry : map.entrySet()) {
+                                mediaTypesToQueueOrder.put(MediaType.parse(entry.getKey()),
+                                        entry.getValue().intValue());
+                            }
+
+                        } catch (JepException e) {
+                            if (e.toString().contains(" has no attribute ")) {
+                                // ignore
+                            } else {
+                                throw e;
+                            }
                         }
 
                     } catch (JepException e) {
@@ -80,6 +97,10 @@ public class PythonParser extends AbstractParser {
             }
         }
 
+    }
+
+    public static final Map<MediaType, Integer> getMediaTypesToQueueOrder() {
+        return mediaTypesToQueueOrder;
     }
 
     public PythonParser(File script) {

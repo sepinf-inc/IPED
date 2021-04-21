@@ -5,7 +5,6 @@ Save your parser in 'parsers' folder. The class name must be equal to the script
 For more info about general parser api, see https://github.com/sepinf-inc/IPED/wiki/Contributing
 '''
 
-from org.apache.tika.mime import MediaType
 from org.apache.tika.sax import XHTMLContentHandler
 from org.apache.tika.io import TemporaryResources
 
@@ -20,7 +19,23 @@ class PythonParserExample:
         Returns:
             list of supported media types handled by this parser
         '''
-        return [MediaType.parse("application/xxxxxx")]
+        return ["application/xxxxxx"]
+    
+    
+    # def getSupportedTypesQueueOrder(self):
+        '''
+        This method is optional. You only need to implement it if your parser
+        needs to access other case items different from the item being processed.
+        E.G. you want to access case multimedia files while processing a chat database
+        to insert the attachments in the chats being decoded. To work, you need to
+        process the database mediaType after the attachments, in a later queue,
+        so the attachments will be already indexed and ready to be searched for.
+        Default queue number is 0 (first queue) if not defined for a mediaType.
+        
+        Returns:
+            dictionary mapping mediaTypes to a queue number
+        '''    
+        # return {"application/xxxxxx" : 1}
     
     
     def parse(self, stream, handler, metadata, context):
