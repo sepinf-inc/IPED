@@ -5,11 +5,9 @@
 
 indexTemp = default
 indexTempOnSSD = false
-enableKff = false
-enableLedWkff = false
-enableProjectVicHashLookup = false
+enableHashDBLookup = false
 enableLedDie = false
-excludeKffIgnorable = false
+excludeKnown = false
 ignoreDuplicates = false
 exportFileProps = false
 processFileSignatures = false

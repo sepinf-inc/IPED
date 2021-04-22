@@ -37,8 +37,13 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.drew.imaging.jpeg.JpegMetadataReader;
+import com.drew.imaging.jpeg.JpegSegmentMetadataReader;
+import com.drew.imaging.jpeg.JpegSegmentType;
+import com.drew.lang.annotations.NotNull;
 import com.drew.metadata.Metadata;
+import com.drew.metadata.MetadataException;
 import com.drew.metadata.exif.ExifIFD0Directory;
+import com.drew.metadata.exif.ExifReader;
 import com.drew.metadata.exif.ExifThumbnailDirectory;
 import com.drew.metadata.jpeg.JpegDirectory;
 
@@ -49,6 +54,55 @@ public class ImageUtil {
 
     public static final Set<String> jdkImagesSupported = getjdkImageMimesSupported();
     private static final int[] orientations = new int[] { 1, 5, 3, 7 };
+    
+    private static int TAG_THUMBNAIL_DATA = 0x10000;
+
+    static {
+        updateExifReaderToLoadThumbData();
+    }
+    
+    public static final void updateExifReaderToLoadThumbData() {
+        List<JpegSegmentMetadataReader> allReaders = (List<JpegSegmentMetadataReader>) JpegMetadataReader.ALL_READERS;
+        for (int n = 0, cnt = allReaders.size(); n < cnt; n++) {
+            if (allReaders.get(n).getClass() != ExifReader.class) {
+                continue;
+            }
+
+            allReaders.set(n, new ExifReader() {
+                @Override
+                public void readJpegSegments(@NotNull final Iterable<byte[]> segments, @NotNull final Metadata metadata,
+                        @NotNull final JpegSegmentType segmentType) {
+                    super.readJpegSegments(segments, metadata, segmentType);
+
+                    for (byte[] segmentBytes : segments) {
+                        // Filter any segments containing unexpected preambles
+                        if (!startsWithJpegExifPreamble(segmentBytes)) {
+                            continue;
+                        }
+
+                        // Extract the thumbnail
+                        try {
+                            ExifThumbnailDirectory tnDirectory = metadata
+                                    .getFirstDirectoryOfType(ExifThumbnailDirectory.class);
+                            if (tnDirectory != null
+                                    && tnDirectory.containsTag(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET)) {
+                                int offset = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
+                                int length = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
+
+                                byte[] tnData = new byte[length];
+                                System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
+                                        length);
+                                tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                            }
+                        } catch (MetadataException e) {
+                            //ignore
+                        }
+                    }
+                }
+            });
+            break;
+        }
+    }
 
     private static final Set<String> getjdkImageMimesSupported() {
         HashSet<String> set = new HashSet<String>();
@@ -59,10 +113,36 @@ public class ImageUtil {
         return set;
     }
 
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+        return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
+    }
+
+    /**
+     * Redimensiona um imagem, mantendo sua proporção original se possível, mas utilizando mantendo dimensões mínimas.
+     */
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int minW, int minH, int imageType) {
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW * maxH > imgH * maxW) {
+            imgH = imgH * maxW / imgW;
+            imgW = maxW;
+        } else {
+            imgW = imgW * maxH / imgH;
+            imgH = maxH;
+        }
+        if (imgW <= minW) {
+            imgW = minW;
+        }
+        if (imgH <= minH) {
+            imgH = minH;
+        }
+        return resizeImageFixed(img, imgW, imgH, imageType);
+    }
+
     /**
      * Redimensiona um imagem, mantendo sua proporção original.
      */
-    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int imageType) {
         int imgW = img.getWidth();
         int imgH = img.getHeight();
         if (imgW * maxH > imgH * maxW) {
@@ -78,14 +158,14 @@ public class ImageUtil {
         if (imgH <= 0) {
             imgH = 1;
         }
-        return resizeImageFixed(img, imgW, imgH);
+        return resizeImageFixed(img, imgW, imgH, imageType);
     }
 
     /**
      * Redimensiona um imagem numa área determinada.
      */
-    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH) {
-        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH, int imageType) {
+        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, imageType);
         Graphics2D graphics2D = bufferedImage.createGraphics();
         // graphics2D.setComposite(AlphaComposite.Src);
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
@@ -556,7 +636,8 @@ public class ImageUtil {
             if (metadata != null) {
                 ExifThumbnailDirectory dir = metadata.getFirstDirectoryOfType(ExifThumbnailDirectory.class);
                 if (dir != null) {
-                    byte[] imgBytes = dir.getThumbnailData();
+                    byte[] imgBytes = (byte[]) dir.getObject(TAG_THUMBNAIL_DATA);
+                    if(imgBytes == null) return null;
                     BufferedImage img = ImageIO.read(new ByteArrayInputStream(imgBytes));
                     try {
                         JpegDirectory dj = metadata.getFirstDirectoryOfType(JpegDirectory.class);

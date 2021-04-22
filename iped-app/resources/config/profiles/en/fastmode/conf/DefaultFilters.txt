@@ -2,10 +2,10 @@
 # Default Filters
 ############################
 
-Filter KFF Ignorable = *:* -kffstatus:ignore
-Hash Alert = kffstatus:alert
-Hash Alert (Child Porn) = kffstatus:pedo
-Hash Alert (PhotoDNA) = photoDnaKffHit:true -projectvic\_category:0
+Filter Known Hashes = *:* -hashDb\\:status:known
+Hash Alert = hashDb\\:status:alert
+Hash Alert (Child Porn) = hashDb\\:status:pedo
+PhotoDNA Alert (Child Porn) = photoDnaDb\\:status:pedo
 Encrypted Files = encrypted:true
 Possibly encrypted (entropy) = compressRatioLZ4:[1,0039 TO *] && (parserException:true || X-Parsed-By:(RawStringParser EmptyParser) || contentType:video) && tamanho:[100000000 TO *]
 Parsing Error = parserException:true
@@ -14,7 +14,7 @@ Timeout = timeout:true OR thumbTimeout:true
 Actual Files = subitem:false && carved:false && deleted:false -fileFragment:true
 Deleted Files = deleted:true
 Carved Files = carved:true
-Geo-referenced Files = (image\\:GPS\ Latitude:* AND image\\:GPS\ Longitude:*) OR (ufed\\:Latitude:[-90 TO 90] AND ufed\\:Longitude:[-180 TO 180]) OR (GeoRef\\:lat:[-90 TO 90] AND GeoRef\\:long:[-180 TO 180]) OR (locations:*)
+Geo-referenced Files = (geo\\:lat:[* TO *] AND geo\\:long:[* TO *]) OR (image\\:geo\\:lat:[* TO *] AND image\\:geo\\:long:[* TO *]) OR (video\\:geo\\:lat:[* TO *] AND video\\:geo\\:long:[* TO *]) OR (ufed\\:Latitude:[* TO *] AND ufed\\:Longitude:[* TO *]) OR (locations:*)
 Container Subitems = subitem:true
 Containers not Expanded = category:("Mailboxes" "Compressed Archives" "ISO disks" "Other disks" "Virtual disks") -hasSubitem:true -fileFragment:true -isRoot:true
 Explicit Images & Videos = scoreNudez:[500 TO *]

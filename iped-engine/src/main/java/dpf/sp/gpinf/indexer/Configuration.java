@@ -37,7 +37,6 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.config.KFFConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
@@ -228,9 +227,6 @@ public class Configuration {
 
         IPEDConfig ipedConfig = new IPEDConfig();
         configManager.addObject(ipedConfig);
-
-        KFFConfig kffConfig = new KFFConfig();
-        configManager.addObject(kffConfig);
 
         OCRConfig ocrConfig = new OCRConfig();
         configManager.addObject(ocrConfig);

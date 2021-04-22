@@ -67,6 +67,10 @@
           			<groupId>com.google.guava</groupId>
           			<artifactId>guava</artifactId>
         		</exclusion>
+        		<exclusion>
+                    <groupId>xerces</groupId>
+                    <artifactId>xercesImpl</artifactId>
+                </exclusion>
       		</exclusions> 
         </dependency>
         <dependency>
@@ -124,11 +128,6 @@
 					<artifactId>jackson-core</artifactId>
 				</exclusion>
 			</exclusions>
-        </dependency>
-        <dependency>
-            <groupId>com.googlecode.plist</groupId>
-            <artifactId>dd-plist</artifactId>
-            <version>1.3</version>
         </dependency>
         <dependency>
             <groupId>com.dampcake</groupId>

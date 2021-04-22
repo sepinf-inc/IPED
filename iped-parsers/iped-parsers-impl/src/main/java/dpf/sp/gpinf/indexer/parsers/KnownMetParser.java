@@ -79,7 +79,7 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.AcceptedRequests"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.BytesSent"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.TempFile"), //$NON-NLS-1$
-            Messages.getString("KnownMetParser.FoundInKff"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.FoundInPedoHashDB"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
     private static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
@@ -127,7 +127,7 @@ public class KnownMetParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("p");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
         
@@ -137,7 +137,7 @@ public class KnownMetParser extends AbstractParser {
         long totReq = 0;
         long accReq = 0;
         long bytTrf = 0;
-        int kffHit = 0;
+        int hashDBHits = 0;
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$
         colClass[0] = "s"; //$NON-NLS-1$
@@ -186,7 +186,7 @@ public class KnownMetParser extends AbstractParser {
                     hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
                 }
                 if (!hashSets.isEmpty()) {
-                    kffHit++;
+                    hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
@@ -228,8 +228,8 @@ public class KnownMetParser extends AbstractParser {
             xhtml.newline();
         }
 
-        if (kffHit > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHit));
+        if (hashDBHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
