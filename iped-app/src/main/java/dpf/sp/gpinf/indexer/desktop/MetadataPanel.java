@@ -65,6 +65,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
     private static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
+    private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
 
     private volatile static LeafReader reader;
 
@@ -831,8 +832,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
-        for (ValueCount item : list.getSelectedValuesList())
+        for (ValueCount item : list.getSelectedValuesList()) {
             highlightTerms.add(item.getVal());
+            if (highlightTerms.size() >= MAX_TERMS_TO_HIGHLIGHT) {
+                break;
+            }
+        }
 
         return highlightTerms;
 
@@ -840,15 +845,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     public Query getHighlightQuery() throws ParseException, QueryNodeException {
 
-        String field = (String) props.getSelectedItem();
-        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX))
-                || list.isSelectionEmpty())
+        Set<String> terms = getHighlightTerms();
+        if (terms.isEmpty()) {
             return null;
+        }
 
         StringBuilder str = new StringBuilder();
         str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (ValueCount item : list.getSelectedValuesList())
-            str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        for (String term : terms) {
+            str.append("\"" + escape(term) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         str.append(")"); //$NON-NLS-1$
 
         return new QueryBuilder(App.get().appCase).getQuery(str.toString());
