@@ -428,12 +428,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
         }
 
-        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
-        if (hashSetStatus != null) {
-            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
-            metadata.remove(KFFTask.KFF_STATUS);
-        }
-
         String prevMediaType = evidence.getMediaType().toString();
         String parsedMediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         if (!prevMediaType.equals(parsedMediaType)) {
@@ -602,6 +596,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             extractor.extractFile(inputStream, subItem, evidence.getLength());
 
             checkRecursiveZipBomb(subItem);
+
+            if ("".equals(metadata.get(BasicProps.LENGTH))) {
+                subItem.setLength(null);
+            }
 
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);

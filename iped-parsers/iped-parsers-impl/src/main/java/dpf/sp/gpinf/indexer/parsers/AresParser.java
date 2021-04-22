@@ -65,7 +65,7 @@ public class AresParser extends AbstractParser {
             Messages.getString("AresParser.Corrupted"), Messages.getString("AresParser.Artist"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Album"), Messages.getString("AresParser.Category"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("AresParser.FoundInAlertDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.FoundInPedoHashDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
     private static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
@@ -114,7 +114,7 @@ public class AresParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("p");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
 
@@ -154,7 +154,7 @@ public class AresParser extends AbstractParser {
                 present[i] = true;
         }
 
-        int hashAlertHit = 0;
+        int hashAlertHits = 0;
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$        
         colClass[0] = "s"; //$NON-NLS-1$
@@ -182,7 +182,7 @@ public class AresParser extends AbstractParser {
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 List<String> hashSets = ChildPornHashLookup.lookupHash("sha-1", hash);
                 if (!hashSets.isEmpty()) {
-                    hashAlertHit++;
+                    hashAlertHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
@@ -234,8 +234,8 @@ public class AresParser extends AbstractParser {
             xhtml.newline();
         }
 
-        if (hashAlertHit > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashAlertHit));
+        if (hashAlertHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashAlertHits));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();
