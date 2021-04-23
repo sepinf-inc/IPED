@@ -152,13 +152,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         l3.add(label, BorderLayout.WEST);
         l3.add(sort, BorderLayout.CENTER);
         l3.add(update, BorderLayout.EAST);
-        
+
         JPanel l5 = new JPanel(new BorderLayout());
         label = new JLabel(Messages.getString("MetadataPanel.Filter"));
         label.setPreferredSize(new Dimension(90, 20));
         l5.add(label, BorderLayout.WEST);
         l5.add(listFilter, BorderLayout.CENTER);
-        
+
         JPanel l6 = new JPanel(new BorderLayout());
         l6.add(copyResultToClipboard, BorderLayout.CENTER);
 
@@ -295,35 +295,35 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }
         updatingProps = false;
     }
-    
+
     private void filterResults() {
-    	if(StringUtils.isEmpty(this.listFilter.getText())) {
-    		populateList();
-    	} else {
-    		if (array == null)
+        if (StringUtils.isEmpty(this.listFilter.getText())) {
+            populateList();
+        } else {
+            if (array == null)
                 return;
-    		ArrayList<ValueCount> filtered = new ArrayList<MetadataPanel.ValueCount>();
+            ArrayList<ValueCount> filtered = new ArrayList<MetadataPanel.ValueCount>();
             String searchValue = this.listFilter.getText();
             for (ValueCount valueCount : array) {
-				String val = (valueCount.getVal()!=null?valueCount.getVal():"").toLowerCase();
-				if(val.contains(searchValue)) {
-					filtered.add(valueCount);
-				}
-			}
+                String val = (valueCount.getVal() != null ? valueCount.getVal() : "").toLowerCase();
+                if (val.contains(searchValue)) {
+                    filtered.add(valueCount);
+                }
+            }
             ValueCount[] filteredArray = filtered.toArray(new ValueCount[] {});
             updateList(filteredArray);
-    	}
+        }
     }
-    
+
     private void copyResultsToClipboard() {
-		StringBuffer strBuffer = new StringBuffer();
-		for (int i=0;i<list.getModel().getSize();i++) {
-			ValueCount item = list.getModel().getElementAt(i);
-			String val = (item.getVal() != null ? item.getVal() : "");
-			strBuffer.append(val.toString());
-			strBuffer.append(System.lineSeparator());
-		}
-		Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()), null);
+        StringBuffer strBuffer = new StringBuffer();
+        for (int i = 0; i < list.getModel().getSize(); i++) {
+            ValueCount item = list.getModel().getElementAt(i);
+            String val = (item.getVal() != null ? item.getVal() : "");
+            strBuffer.append(val.toString());
+            strBuffer.append(System.lineSeparator());
+        }
+        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()), null);
     }
 
     private void populateList() {
@@ -824,12 +824,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         else if (e.getSource() == groups)
             updateProps();
-        
-        else if(e.getSource() == listFilter)
-        	filterResults();
-        
-        else if(e.getSource()==copyResultToClipboard)
-        	copyResultsToClipboard();
+
+        else if (e.getSource() == listFilter)
+            filterResults();
+
+        else if (e.getSource() == copyResultToClipboard)
+            copyResultsToClipboard();
 
     }
 
