@@ -9,6 +9,7 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
 
 import java.io.InputStream;
+import java.security.MessageDigest;
 
 
 public class SevenZipParserTest  extends AbstractPkgTest {
@@ -90,6 +91,12 @@ public class SevenZipParserTest  extends AbstractPkgTest {
         when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
         parser.parse(stream, handler, mockedMetadata, trackingContext);
         stream.close();
+        
+//        MessageDigest md = MessageDigest.getInstance("MD5");
+//        md.reset();
+//        md.update(stream.toString().getBytes());
+//        byte[] digest = md.digest();
+        
         
         assertEquals(19, tracker.filenames.size());
         assertEquals(19, tracker.modifieddate.size());
