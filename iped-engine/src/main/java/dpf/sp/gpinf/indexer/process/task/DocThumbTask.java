@@ -7,22 +7,15 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -33,7 +26,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -45,7 +37,6 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.util.PDFToThumb;
-import iped3.IEvidenceFileType;
 import iped3.IItem;
 
 public class DocThumbTask extends ThumbTask {
@@ -56,9 +47,8 @@ public class DocThumbTask extends ThumbTask {
 
     private static boolean taskEnabled;
 
-    private static int pdfTimeout = 45;
-    private static int loTimeout = 90;
-    private static int loBatchSize = 10;
+    private static int pdfTimeout = 60;
+    private static int loTimeout = 180;
     private static int timeoutIncPerMB = 2;
     private static int thumbSize = 480;
     private static boolean externalPdfConversion;
@@ -89,10 +79,6 @@ public class DocThumbTask extends ThumbTask {
     private Process loEnvCreateProcess;
     private Process convertProcess;
     private boolean tempSet;
-
-    private boolean queued;
-    private final List<IItem> itemList = Collections.synchronizedList(new ArrayList<IItem>());
-    private final TemporaryResources tmpResources = new TemporaryResources();
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -133,11 +119,6 @@ public class DocThumbTask extends ThumbTask {
                             pdfTimeout = Integer.parseInt(value);
                         }
 
-                        value = properties.getProperty("libreOfficeBatchSize");
-                        if (value != null && !value.trim().isEmpty()) {
-                            loBatchSize = Integer.parseInt(value);
-                        }
-
                         value = properties.getProperty("libreOfficeTimeout");
                         if (value != null && !value.trim().isEmpty()) {
                             loTimeout = Integer.parseInt(value);
@@ -166,7 +147,6 @@ public class DocThumbTask extends ThumbTask {
                             LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
                             loPath = loFinder.getLOPath();
                             logger.info("LibreOffice Path: " + loPath);
-                            logger.info("LibreOffice Batch Size: " + loBatchSize);
                         }
 
                         logger.info("PDF Conversion: " + (pdfEnabled ? "enabled" : "disabled"));
@@ -196,34 +176,6 @@ public class DocThumbTask extends ThumbTask {
             pb.redirectErrorStream();
             Util.ignoreStream(loEnvCreateProcess.getInputStream());
         }
-    }
-
-    @Override
-    protected boolean processQueueEnd() {
-        return true;
-    }
-
-    @Override
-    protected void sendToNextTask(IItem item) throws Exception {
-        if (!item.isQueueEnd() && !queued) {
-            super.sendToNextTask(item);
-            return;
-        }
-        if (isToProcessBatch(item)) {
-            for (IItem it : itemList) {
-                super.sendToNextTask(it);
-            }
-            itemList.clear();
-            return;
-        }
-        if (item.isQueueEnd()) {
-            super.sendToNextTask(item);
-        }
-    }
-
-    private boolean isToProcessBatch(IItem item) {
-        int size = itemList.size();
-        return size >= loBatchSize || (size > 0 && item.isQueueEnd());
     }
 
     @Override
@@ -267,115 +219,49 @@ public class DocThumbTask extends ThumbTask {
 
     @Override
     protected void process(IItem item) throws Exception {
-        queued = false;
-        if (!item.isQueueEnd() && (!taskEnabled || !item.isToAddToCase()
-                || ((!pdfEnabled || !isPdfType(item.getMediaType())) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
-                || item.getHash() == null || item.getThumb() != null
+        if (!taskEnabled 
+                || !item.isToAddToCase()
+                || ((!pdfEnabled || !isPdfType(item.getMediaType()) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
+                || item.getHash() == null 
+                || item.getThumb() != null
                 || item.getExtraAttribute("fileFragment") != null)) {
             return;
         }
-        if (!item.isQueueEnd()) {
-            File thumbFile = getThumbFile(item);
-            if (hasThumb(item, thumbFile)) {
+        File thumbFile = getThumbFile(item);
+        if (hasThumb(item, thumbFile)) {
+            return;
+        }
+        if (isPdfType(item.getMediaType())) {
+            Future<?> future = executor.submit(new PDFThumbCreator(item, thumbFile));
+            try {
+                int timeout = pdfTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
+                future.get(timeout, TimeUnit.SECONDS);
+            } catch (TimeoutException e) {
+                future.cancel(true);
+                stats.incTimeouts();
+                item.setExtraAttribute(thumbTimeout, "true");
+                logger.warn("Timeout creating thumb: " + item);
+                totalPdfTimeout.incrementAndGet();
+            }
+            return;
+        }
+        Metadata metadata = item.getMetadata();
+        if (metadata != null) {
+            String pe = metadata.get("parserException");
+            if (pe != null && pe.equalsIgnoreCase("true")) {
                 return;
             }
-            if (isPdfType(item.getMediaType())) {
-                Future<?> future = executor.submit(new PDFThumbCreator(item, thumbFile));
-                try {
-                    int timeout = pdfTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
-                    future.get(timeout, TimeUnit.SECONDS);
-                } catch (TimeoutException e) {
-                    future.cancel(true);
-                    stats.incTimeouts();
-                    item.setExtraAttribute(thumbTimeout, "true");
-                    logger.warn("Timeout creating thumb: " + item);
-                    totalPdfTimeout.incrementAndGet();
-                }
-                return;
-            }
-            Metadata metadata = item.getMetadata();
-            if (metadata != null) {
-                String pe = metadata.get("parserException");
-                if (pe != null && pe.equalsIgnoreCase("true")) {
-                    return;
-                }
-            }
-            itemList.add(item);
-            queued = true;
         }
-        if (isToProcessBatch(item)) {
-            processBatch();
-        }
-    }
-
-    protected void processBatch() throws Exception {
-        Future<?> future = executor.submit(new LOThumbCreator(itemList));
-        boolean hasTimeout = false;
+        Future<?> future = executor.submit(new LOThumbCreator(item, thumbFile));
         try {
-            int timeout = loTimeout * itemList.size();
-            for (IItem it : itemList) {
-                timeout += (int) ((it.getLength() * timeoutIncPerMB) >>> 20);
-            }
+            int timeout = loTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
             future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);
-            hasTimeout = true;
-        }
-        for (IItem item : itemList) {
-            try {
-                ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
-                File inFile = getHashTempFile(loOutDir, item);
-                String name = inFile.getName();
-                int pos = name.lastIndexOf('.');
-                if (pos >= 0) name = name.substring(0, pos);
-                name += ".png";
-                File outDir = new File(loOutDir, name);
-                boolean success = false;
-                if (outDir.exists()) {
-                    BufferedImage img = ImageIO.read(outDir);
-                    if (img != null) {
-                        if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
-                            img = ImageUtil.resizeImage(img, thumbSize, thumbSize, BufferedImage.TYPE_INT_BGR);
-                        }
-                        Graphics2D g = img.createGraphics();
-                        g.setColor(Color.black);
-                        g.drawRect(0, 0, img.getWidth() - 1, img.getHeight() - 1);
-                        g.dispose();
-                        ImageIO.write(img, "jpg", baos);
-                        success = true;
-                    }
-                }
-                if (success && baos.size() > 0) {
-                    item.setThumb(baos.toByteArray());
-                }
-                File thumbFile = getThumbFile(item);
-                saveThumb(item, thumbFile);
-            } catch (Throwable e) {
-                logger.warn(item.toString(), e);
-            } finally {
-                boolean hasThumb = updateHasThumb(item);
-                (hasThumb ? totalLoProcessed : totalLoFailed).incrementAndGet();
-                if (!hasThumb && hasTimeout) {
-                    item.setExtraAttribute(thumbTimeout, "true");
-                    logger.warn("Timeout creating thumb: " + item);
-                    totalLoTimeout.incrementAndGet();
-                    stats.incTimeouts();
-                }
-            }
-        }
-        for (IItem item : itemList) {
-            File inFile = getHashTempFile(loOutDir, item);
-            String name = inFile.getName();
-            int pos = name.lastIndexOf('.');
-            if (pos >= 0) name = name.substring(0, pos);
-            name += ".png";
-            File outFile = new File(loOutDir, name);
-            if (inFile.exists()) {
-                inFile.delete();
-            }
-            if (outFile.exists()) {
-                outFile.delete();
-            }
+            stats.incTimeouts();
+            item.setExtraAttribute(thumbTimeout, "true");
+            logger.warn("Timeout creating thumb: " + item);
+            totalLoTimeout.incrementAndGet();
         }
     }
 
@@ -427,15 +313,17 @@ public class DocThumbTask extends ThumbTask {
     }
 
     private class LOThumbCreator implements Runnable {
-        private List<IItem> items;
+        private IItem item;
+        private File thumbFile;
 
-        public LOThumbCreator(List<IItem> items) {
-            this.items = items;
+        public LOThumbCreator(IItem item, File thumbFile) {
+            this.item = item;
+            this.thumbFile = thumbFile;
         }
 
         @Override
         public void run() {
-            createLOThumb(items);
+            createLOThumb(item, thumbFile);
         }
     }
 
@@ -484,15 +372,17 @@ public class DocThumbTask extends ThumbTask {
         } catch (Throwable e) {
             logger.warn(item.toString(), e);
         } finally {
-            finishProcess(convertProcess);
-            convertProcess = null;
+            if (externalPdfConversion) {
+                finishProcess(convertProcess);
+                convertProcess = null;
+            }
             boolean hasThumb = updateHasThumb(item);
             (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
         }
         totalPdfTime.addAndGet(System.currentTimeMillis() - t);
     }
 
-    private void createLOThumb(List<IItem> items) {
+    private void createLOThumb(IItem item, File thumbFile) {
         long t = System.currentTimeMillis();
         try {
             if (loEnvCreateProcess != null) {
@@ -507,17 +397,12 @@ public class DocThumbTask extends ThumbTask {
                 setLOTemp();
                 tempSet = true;
             }
-            Set<String> hashes = new HashSet<String>();
+            File inFile = item.getTempFile();
             List<String> cmd = new ArrayList<String>();
             cmd.add(loPath + "/program/soffice.bin");
             cmd.add("--convert-to");
             cmd.add("png");
-            for (IItem item : items) {
-                if (hashes.add(item.getHash())) {
-                    File inFile = createHashTempFile(loOutDir, item);
-                    cmd.add(inFile.getAbsolutePath());
-                }
-            }
+            cmd.add(inFile.getAbsolutePath());
             cmd.add("--headless");
             cmd.add("--quickstart");
             cmd.add("--norestore");
@@ -535,36 +420,40 @@ public class DocThumbTask extends ThumbTask {
                 convertProcess.destroyForcibly();
                 Thread.currentThread().interrupt();
             }
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
+            String name = inFile.getName();
+            int pos = name.lastIndexOf('.');
+            if (pos >= 0) name = name.substring(0, pos);
+            name += ".png";
+            File outFile = new File(loOutDir, name);
+            boolean success = false;
+            if (outFile.exists()) {
+                BufferedImage img = ImageIO.read(outFile);
+                if (img != null) {
+                    if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
+                        img = ImageUtil.resizeImage(img, thumbSize, thumbSize, BufferedImage.TYPE_INT_BGR);
+                    }
+                    Graphics2D g = img.createGraphics();
+                    g.setColor(Color.black);
+                    g.drawRect(0, 0, img.getWidth() - 1, img.getHeight() - 1);
+                    g.dispose();
+                    ImageIO.write(img, "jpg", baos);
+                    success = true;
+                }
+            }
+            if (success && baos.size() > 0) {
+                item.setThumb(baos.toByteArray());
+            }
+            saveThumb(item, thumbFile);
         } catch (Throwable e) {
-            logger.warn(items.toString(), e);
+            logger.warn(item.toString(), e);
         } finally {
             finishProcess(convertProcess);
             convertProcess = null;
+            boolean hasThumb = updateHasThumb(item);
+            (hasThumb ? totalLoProcessed : totalLoFailed).incrementAndGet();
         }
         totalLoTime.addAndGet(System.currentTimeMillis() - t);
-    }
-
-    private File getHashTempFile(File dir, IItem item) throws IOException {
-        String ext = ".tmp";
-        IEvidenceFileType type = item.getType();
-        if (type != null && !type.toString().isEmpty()) {
-            ext = dpf.sp.gpinf.indexer.util.Util.getValidFilename("." + type.toString());
-        }
-        return new File(dir, item.getHash() + ext);
-    }
-
-    private File createHashTempFile(File dir, IItem item) throws IOException {
-        File file = getHashTempFile(dir, item);
-        final Path path = Files.createFile(file.toPath());
-        tmpResources.addResource(new Closeable() {
-            public void close() throws IOException {
-                Files.delete(path);
-            }
-        });
-        try (InputStream in = item.getBufferedStream()) {
-            Files.copy(in, path, StandardCopyOption.REPLACE_EXISTING);
-        }
-        return file;
     }
 
     private void finishProcess(Process process) {

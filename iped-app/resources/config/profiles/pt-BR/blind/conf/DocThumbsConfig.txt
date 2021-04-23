@@ -1,36 +1,29 @@
 ###########################################################################
-# Configuração da extração de miniaturas de documentos
+# Configuration for documents thumbnail creation
 ###########################################################################
 
-# Define a extração de miniaturas para PDF.
-# Configurações possíveis são:
-# internal : Executada no processo principal do IPED, podendo geral erros fatais memória 
-#            em arquivos corrompidos bem específicos. 
-# external : Executada em processo externo, iniciado para cada conversão, isolando eventuais problemas de 
-#            memória, mas deixando a geração da miniatura muito mais lenta.
-# off      : Desabilita geração.
+# Configuration for PDFs. Valid configurations:
+# internal : Run in IPED main process. Can cause out-of-memory and other fatal errors with corrupted files. 
+# external : Run as an external process, started for each file to be processed, isolating any memory issues, but much slower. 
+# off      : Disabled.
 pdfThumbs = internal
 
-# Define a extração de miniaturas para formatos suportados pelo LibreOffice.
-# Configurações possíveis são:
-# external : Executada em processo externo, iniciado para cada conversão.
-# off      : Desabilita geração. 
+# Configuration for LibreOffice supported formats. Valid configurations:
+# external : Run as an external process, started for each file to be processed.
+# off      : Disabled. 
 libreOfficeThumbs = external
 
-# Timeout para aguardar conversão de PDFs.
+# Time limit (in seconds) for each PDF item.
 pdfTimeout = 60
 
-# Timeout para aguardar conversão de documentos tratados pelos LibreOffice.
-libreOfficeTimeout = 120
+# Time limit (in seconds) for each item of the file formats supported by LibreOffice.
+libreOfficeTimeout = 180
 
-# Tempo adicional de timeout em segundos por megabyte do arquivo (para ambos os tipos de extração PDF/LibreOffice)
+# Additional time allowed based on the file length (in MBytes/second), used both for PDFs and LibreOffice supported files.
 timeoutIncPerMB = 2
 
-# Tamanho em pixels das miniaturas de documentos geradas.
+# Maximum dimensions (in pixels) of generated thumbnails.
 thumbSize = 480
 
-# Máximo de memória utilizada (em megabytes), no caso de utilização de processos de extração externos de PDFs.
+# Memory limit (in MBytes) used for each conversion process, if "external" PDF conversion is used.
 maxPdfExternalMemory = 256
-
-# Número máximo de itens processados em cada chamada ao LibreOffice
-libreOfficeBatchSize = 10

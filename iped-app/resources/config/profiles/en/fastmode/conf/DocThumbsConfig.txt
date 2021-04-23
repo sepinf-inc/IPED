@@ -17,7 +17,7 @@ libreOfficeThumbs = external
 pdfTimeout = 60
 
 # Time limit (in seconds) for each item of the file formats supported by LibreOffice.
-libreOfficeTimeout = 120
+libreOfficeTimeout = 180
 
 # Additional time allowed based on the file length (in MBytes/second), used both for PDFs and LibreOffice supported files.
 timeoutIncPerMB = 2
@@ -27,7 +27,3 @@ thumbSize = 480
 
 # Memory limit (in MBytes) used for each conversion process, if "external" PDF conversion is used.
 maxPdfExternalMemory = 256
-
-# Maximum number of items processed in each call to LibreOffice (used to speed up the conversion, instead of a single
-# document for each call).
-libreOfficeBatchSize = 10
