@@ -18,8 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -129,12 +131,24 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         return null;
     }
 
-    private void checkIfProcessingFinished(IIPEDSource source) {
+    private void checkIfProcessingFinished(IPEDMultiSource multiSource) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
-                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ProcessingNotFinished.message"),
+                List<String> casesWithError = new ArrayList<>();
+                for (IPEDSource source : multiSource.getAtomicSources()) {
+                    if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
+                        casesWithError.add(source.getCaseDir().getAbsolutePath());
+                    }
+                }
+                if (!casesWithError.isEmpty()) {
+                    String casesList = "";
+                    if (multiSource.getAtomicSources().size() > 1) {
+                        casesList = Messages.getString("ProcessingNotFinished.cases");
+                        casesList += casesWithError.stream().collect(Collectors.joining("\n"));
+                    }
+                    JOptionPane.showMessageDialog(App.get(),
+                            Messages.getString("ProcessingNotFinished.message") + casesList,
                             Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
                 }
             }
