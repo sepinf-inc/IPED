@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -19,6 +20,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -26,8 +28,11 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -52,6 +57,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -59,10 +65,12 @@ import iped3.search.IMultiSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
-public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
+public class MetadataPanel extends JPanel
+        implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
+    private static final String RES_PATH = "/dpf/sp/gpinf/indexer/desktop/";
     private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
     private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
@@ -75,13 +83,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
-    JComboBox<String> sort = new JComboBox<String>();
+    JSlider sort = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
-    JComboBox<String> scale = new JComboBox<String>();
-    JButton update = new JButton(Messages.getString("MetadataPanel.Update")); //$NON-NLS-1$
+    JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
+    JButton update = new JButton();
     JTextField listFilter = new JTextField();
-    JButton copyResultToClipboard = new JButton(Messages.getString("MetadataPanel.CopyClipboard"));
+    JButton copyResultToClipboard = new JButton();
 
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -115,14 +123,22 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         props.setMaximumRowCount(30);
         props.addActionListener(this);
 
-        scale.addItem(LINEAR_SCALE);
-        scale.addItem(LOG_SCALE);
+        scale.setToolTipText(LINEAR_SCALE + " / " + LOG_SCALE);
+        scale.setPreferredSize(new Dimension(30, 15));
         scale.setEnabled(false);
-        scale.addActionListener(this);
+        scale.addChangeListener(this);
 
-        sort.addItem(SORT_COUNT);
-        sort.addItem(SORT_ALFANUM);
-        sort.addActionListener(this);
+        sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
+        sort.setPreferredSize(new Dimension(30, 15));
+        sort.addChangeListener(this);
+
+        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 15));
+        update.setToolTipText(Messages.getString("MetadataPanel.Update"));
+        update.setPreferredSize(new Dimension(25, 25));
+
+        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 15));
+        copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
+        copyResultToClipboard.setPreferredSize(new Dimension(25, 25));
 
         list.setFixedCellHeight(18);
         list.setFixedCellWidth(2000);
@@ -140,27 +156,21 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         l2.add(label, BorderLayout.WEST);
         l2.add(props, BorderLayout.CENTER);
 
-        JPanel l4 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(90, 20));
-        l4.add(label, BorderLayout.WEST);
-        l4.add(scale, BorderLayout.CENTER);
-
         JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Sort")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(90, 20));
-        l3.add(label, BorderLayout.WEST);
-        l3.add(sort, BorderLayout.CENTER);
-        l3.add(update, BorderLayout.EAST);
-
-        JPanel l5 = new JPanel(new BorderLayout());
         label = new JLabel(Messages.getString("MetadataPanel.Filter"));
         label.setPreferredSize(new Dimension(90, 20));
-        l5.add(label, BorderLayout.WEST);
-        l5.add(listFilter, BorderLayout.CENTER);
+        l3.add(label, BorderLayout.WEST);
+        l3.add(listFilter, BorderLayout.CENTER);
 
-        JPanel l6 = new JPanel(new BorderLayout());
-        l6.add(copyResultToClipboard, BorderLayout.CENTER);
+        JPanel l4 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 1));
+        l4.add(new JLabel(Messages.getString("MetadataPanel.Sort")));
+        l4.add(sort);
+        l4.add(Box.createRigidArea(new Dimension(10, 0)));
+        l4.add(new JLabel(Messages.getString("MetadataPanel.Scale")));
+        l4.add(scale);
+        l4.add(Box.createRigidArea(new Dimension(10, 0)));
+        l4.add(copyResultToClipboard);
+        l4.add(update);
 
         listFilter.addActionListener(this);
         copyResultToClipboard.addActionListener(this);
@@ -170,10 +180,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.add(l1);
         top.add(l2);
-        top.add(l4);
         top.add(l3);
-        top.add(l5);
-        top.add(l6);
+        top.add(l4);
 
         this.add(top, BorderLayout.NORTH);
         this.add(scrollList, BorderLayout.CENTER);
@@ -335,7 +343,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }
         ipedResult = App.get().ipedResult;
 
-        logScale = scale.getSelectedItem().equals(LOG_SCALE);
+        logScale = scale.getValue() == 1;
 
         new Thread() {
             @Override
@@ -770,7 +778,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         long time = System.currentTimeMillis();
 
         ValueCount[] sortedArray = array;
-        if (sort.getSelectedItem().equals(SORT_COUNT)) {
+        if (sort.getValue() == 0) {
             sortedArray = array.clone();
             Arrays.sort(sortedArray, new CountComparator());
 
@@ -816,11 +824,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if (updatingProps)
             return;
 
-        if (e.getSource() == update || e.getSource() == props || e.getSource() == scale)
+        if (e.getSource() == update || e.getSource() == props)
             populateList();
-
-        else if (e.getSource() == sort)
-            sortAndUpdateList();
 
         else if (e.getSource() == groups)
             updateProps();
@@ -932,6 +937,18 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         clearing = true;
         list.setListData(new ValueCount[0]);
         clearing = false;
+    }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+
+        if (e.getSource() == sort) {
+            sortAndUpdateList();
+            
+        } else if (e.getSource() == scale) {
+            populateList();
+        }
+
     }
 
 }
