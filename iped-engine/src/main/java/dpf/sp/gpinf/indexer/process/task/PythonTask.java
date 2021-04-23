@@ -189,8 +189,11 @@ public class PythonTask extends AbstractTask {
         this.confDir = confDir;
         try {
             Jep jep = PythonParser.getJep();
-            loadScript(jep);
-
+            if (jep == null) {
+                isEnabled = false;
+            } else {
+                loadScript(jep);
+            }
         } catch (JepException e) {
             if (jepException == null) {
                 String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
@@ -223,7 +226,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (jepException == null && lastInstalledScript.equals(scriptFile)) {
+        if (getJep() != null && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 

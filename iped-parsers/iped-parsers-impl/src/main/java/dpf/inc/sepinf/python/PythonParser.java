@@ -46,6 +46,7 @@ public class PythonParser extends AbstractParser {
     private static final Set<String> instancetPerThread = new HashSet<>();
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
+    private static boolean inited = false;
 
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
@@ -55,9 +56,10 @@ public class PythonParser extends AbstractParser {
     public PythonParser(){
 
         synchronized (this.getClass()) {
-            if (!mediaToParserMap.isEmpty()) {
+            if (inited) {
                 return;
             }
+            inited = true;
             File pythonParsersFolder = new File(System.getProperty(PYTHON_PARSERS_FOLDER));
             File[] scripts = pythonParsersFolder.listFiles();
             if (scripts != null) {
@@ -67,7 +69,11 @@ public class PythonParser extends AbstractParser {
                     }
                     PythonParser parser = new PythonParser(file);
                     try {
-                        Collection<String> mediaTypes = (Collection<String>) getJep()
+                        Jep jep = getJep();
+                        if (jep == null) {
+                            return;
+                        }
+                        Collection<String> mediaTypes = (Collection<String>) jep
                                 .invoke(parser.getInstanceMethod("getSupportedTypes"), new ParseContext());
 
                         for (String mt : mediaTypes) {
@@ -75,7 +81,7 @@ public class PythonParser extends AbstractParser {
                         }
 
                         try {
-                            Map<String, Number> map = (Map<String, Number>) getJep()
+                            Map<String, Number> map = (Map<String, Number>) jep
                                     .invoke(parser.getInstanceMethod("getSupportedTypesQueueOrder"));
                             for (Entry<String, Number> entry : map.entrySet()) {
                                 mediaTypesToQueueOrder.put(MediaType.parse(entry.getKey()),
