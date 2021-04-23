@@ -302,16 +302,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         } else {
             if (array == null)
                 return;
-            ArrayList<ValueCount> filtered = new ArrayList<MetadataPanel.ValueCount>();
-            String searchValue = this.listFilter.getText();
+            ArrayList<ValueCount> filtered = new ArrayList<>();
+            String searchValue = this.listFilter.getText().toLowerCase();
             for (ValueCount valueCount : array) {
-                String val = (valueCount.getVal() != null ? valueCount.getVal() : "").toLowerCase();
-                if (val.contains(searchValue)) {
+                String val = valueCount.getVal();
+                if (val != null && val.toLowerCase().contains(searchValue)) {
                     filtered.add(valueCount);
                 }
             }
-            ValueCount[] filteredArray = filtered.toArray(new ValueCount[] {});
-            updateList(filteredArray);
+            array = filtered.toArray(new ValueCount[] {});
+            sortAndUpdateList();
         }
     }
 
@@ -528,7 +528,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if (field == null) {
             updatingResult = false;
             array = new ValueCount[0];
-            sortList();
+            sortAndUpdateList();
             return;
         }
         field = field.trim();
@@ -759,10 +759,10 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         LOGGER.info("Metadata value counting took {}ms", (System.currentTimeMillis() - time));
 
-        sortList();
+        sortAndUpdateList();
     }
 
-    private void sortList() {
+    private void sortAndUpdateList() {
 
         if (array == null)
             return;
@@ -820,7 +820,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             populateList();
 
         else if (e.getSource() == sort)
-            sortList();
+            sortAndUpdateList();
 
         else if (e.getSource() == groups)
             updateProps();
