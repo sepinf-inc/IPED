@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -23,6 +24,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import jep.Jep;
 import jep.JepException;
 import jep.SharedInterpreter;
@@ -36,19 +38,19 @@ public class PythonParser extends AbstractParser {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonParser.class);
 
-    private static final String JEP_NOT_FOUND = "JEP not found!";
-    private static final String SEE_MANUAL = "See the manual.";
     public static final String PYTHON_PARSERS_FOLDER = "PYTHON_PARSERS_FOLDER";
 
-    private static volatile JepException jepException = null;
+    public static final String JEP_NOT_FOUND = Messages.getString("PythonModule.JepNotFound");
+    public static final String DISABLED = Messages.getString("PythonModule.ModuleDisabled");
+    public static final String SEE_MANUAL = Messages.getString("PythonModule.SeeManual");
 
     private static final Map<Long, Jep> jepPerThread = new HashMap<>();
     private static final Set<String> instancetPerThread = new HashSet<>();
     private static final Map<MediaType, PythonParser> mediaToParserMap = new ConcurrentHashMap<>();
     private static final Map<MediaType, Integer> mediaTypesToQueueOrder = new ConcurrentHashMap<>();
+    private static final AtomicBoolean jepNotFoundPrinted = new AtomicBoolean();
     private static boolean inited = false;
 
-    private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
 
 
@@ -68,8 +70,9 @@ public class PythonParser extends AbstractParser {
                         continue;
                     }
                     PythonParser parser = new PythonParser(file);
+                    Jep jep = null;
                     try {
-                        Jep jep = getJep();
+                        jep = getJep();
                         if (jep == null) {
                             return;
                         }
@@ -80,24 +83,29 @@ public class PythonParser extends AbstractParser {
                             mediaToParserMap.put(MediaType.parse(mt), parser);
                         }
 
-                        try {
-                            Map<String, Number> map = (Map<String, Number>) jep
-                                    .invoke(parser.getInstanceMethod("getSupportedTypesQueueOrder"));
-                            for (Entry<String, Number> entry : map.entrySet()) {
-                                mediaTypesToQueueOrder.put(MediaType.parse(entry.getKey()),
-                                        entry.getValue().intValue());
-                            }
-
-                        } catch (JepException e) {
-                            if (e.toString().contains(" has no attribute ")) {
-                                // ignore
-                            } else {
-                                throw e;
-                            }
+                    } catch (JepException e) {
+                        if (e.toString().contains("ModuleNotFoundError")) {
+                            String msg = e.getMessage() + ". " + file.getName() + DISABLED + SEE_MANUAL;
+                            LOGGER.error(msg);
+                            e.printStackTrace();
+                            continue;
+                        } else {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                    try {
+                        Map<String, Number> map = (Map<String, Number>) jep
+                                .invoke(parser.getInstanceMethod("getSupportedTypesQueueOrder"));
+                        for (Entry<String, Number> entry : map.entrySet()) {
+                            mediaTypesToQueueOrder.put(MediaType.parse(entry.getKey()), entry.getValue().intValue());
                         }
 
                     } catch (JepException e) {
-                        throw new RuntimeException(e);
+                        if (e.toString().contains(" has no attribute ")) {
+                            // optional method, ignore.
+                        } else {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
@@ -136,11 +144,10 @@ public class PythonParser extends AbstractParser {
             jep = new SharedInterpreter();
 
         } catch (UnsatisfiedLinkError e) {
-            if (jepException == null) {
+            if (!jepNotFoundPrinted.getAndSet(true)) {
                 String msg = JEP_NOT_FOUND + SEE_MANUAL;
-                jepException = new JepException(msg, e);
                 LOGGER.error(msg);
-                jepException.printStackTrace();
+                e.printStackTrace();
             }
             return null;
         }
@@ -170,10 +177,6 @@ public class PythonParser extends AbstractParser {
         String instanceName = getInstanceName();
         String eval = instanceName + " = " + moduleName + "." + className + "()";
         jep.eval(eval);
-
-        for (String global : globals) {
-            jep.eval(moduleName + "." + global + " = " + global);
-        }
 
     }
 
@@ -212,9 +215,6 @@ public class PythonParser extends AbstractParser {
 
     private void pythonParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-
-        if (jepException != null)
-            throw new TikaException("JEPException", jepException);
 
         try {
             getJep().invoke(getInstanceMethod("parse"), stream, handler, metadata, context);

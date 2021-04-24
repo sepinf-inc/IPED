@@ -24,11 +24,11 @@ import jep.NDArray;
 
 public class PythonTask extends AbstractTask {
 
-    private static final String DISABLED = Messages.getString("PythonTask.ModuleDisabled");
-    private static final String SEE_MANUAL = Messages.getString("PythonTask.SeeManual");
+    private static final String DISABLED = PythonParser.DISABLED;
+    private static final String SEE_MANUAL = PythonParser.SEE_MANUAL;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
-    private static volatile JepException jepException = null;
+    private static Map<File, JepException> jepExceptionPerScript = new ConcurrentHashMap<>();
     private static volatile File lastInstalledScript;
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
@@ -41,6 +41,7 @@ public class PythonTask extends AbstractTask {
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
     private boolean scriptLoaded = false;
+    private boolean sendToNextTaskExists = true;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -195,11 +196,11 @@ public class PythonTask extends AbstractTask {
                 loadScript(jep);
             }
         } catch (JepException e) {
-            if (jepException == null) {
+            if (jepExceptionPerScript.get(scriptFile) == null) {
                 String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
-                jepException = new JepException(msg, e);
                 LOGGER.error(msg);
-                jepException.printStackTrace();
+                e.printStackTrace();
+                jepExceptionPerScript.put(scriptFile, e);
             }
             isEnabled = false;
         }
@@ -226,7 +227,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (getJep() != null && lastInstalledScript.equals(scriptFile)) {
+        if (isEnabled && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 
@@ -236,12 +237,10 @@ public class PythonTask extends AbstractTask {
         super.sendToNextTask(item);
     }
     
-    private boolean methodExists = true;
-    
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
 
-        if (!isEnabled || !methodExists) {
+        if (!isEnabled || !sendToNextTaskExists) {
             super.sendToNextTask(item);
             return;
         }
@@ -250,7 +249,7 @@ public class PythonTask extends AbstractTask {
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute ")) {
-                methodExists = false;
+                sendToNextTaskExists = false;
                 super.sendToNextTask(item);
             } else {
                 throw e;
@@ -277,9 +276,6 @@ public class PythonTask extends AbstractTask {
 
     @Override
     public void process(IItem item) throws Exception {
-
-        if (jepException != null)
-            throw jepException;
 
         try {
             getJep().invoke(getInstanceMethod("process"), item); //$NON-NLS-1$
