@@ -103,7 +103,8 @@ public class EdgeWebCacheParser extends AbstractParser {
 
             } catch (Throwable e) {
                 LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
-                        + " will be disabled.", e);
+                        + " will be disabled.");
+                e.printStackTrace();
                 SUPPORTED_TYPES = Collections.EMPTY_SET;
             }
     }
