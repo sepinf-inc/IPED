@@ -104,7 +104,7 @@ public class MetadataPanel extends JPanel
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
 
     volatile IMultiSearchResult ipedResult;
-    ValueCount[] array;
+    ValueCount[] array, filteredArray;
 
     boolean updatingProps = false, updatingList = false, clearing = false;
     volatile boolean updatingResult = false;
@@ -316,28 +316,31 @@ public class MetadataPanel extends JPanel
     }
 
     private void filterResults() {
-        if (StringUtils.isEmpty(this.listFilter.getText())) {
-            populateList();
-        } else {
-            if (array == null) {
-                return;
-            }
-            App.get().dialogBar.setVisible(true);
-            new Thread() {
-                public void run() {
-                    ArrayList<ValueCount> filtered = new ArrayList<>();
-                    String searchValue = listFilter.getText().toLowerCase();
-                    for (ValueCount valueCount : array) {
-                        String val = valueCount.getVal();
-                        if (val != null && val.toLowerCase().contains(searchValue)) {
-                            filtered.add(valueCount);
-                        }
-                    }
-                    array = filtered.toArray(new ValueCount[] {});
-                    sortAndUpdateList();
-                }
-            }.start();
+        if (array == null) {
+            return;
         }
+        App.get().dialogBar.setVisible(true);
+        new Thread() {
+            public void run() {
+                filteredArray = filter(array);
+                sortAndUpdateList(filteredArray);
+            }
+        }.start();
+    }
+
+    private ValueCount[] filter(ValueCount[] values) {
+        if (StringUtils.isEmpty(this.listFilter.getText())) {
+            return values;
+        }
+        ArrayList<ValueCount> filtered = new ArrayList<>();
+        String searchValue = listFilter.getText().toLowerCase();
+        for (ValueCount valueCount : values) {
+            String val = valueCount.getVal();
+            if (val != null && val.toLowerCase().contains(searchValue)) {
+                filtered.add(valueCount);
+            }
+        }
+        return filtered.toArray(new ValueCount[filtered.size()]);
     }
 
     private void copyResultsToClipboard() {
@@ -559,8 +562,8 @@ public class MetadataPanel extends JPanel
         String field = (String) props.getSelectedItem();
         if (field == null) {
             updatingResult = false;
-            array = new ValueCount[0];
-            sortAndUpdateList();
+            filteredArray = array = new ValueCount[0];
+            sortAndUpdateList(filteredArray);
             return;
         }
         field = field.trim();
@@ -789,12 +792,14 @@ public class MetadataPanel extends JPanel
 
         array = list.toArray(new ValueCount[0]);
 
+        filteredArray = filter(array);
+
         LOGGER.info("Metadata value counting took {}ms", (System.currentTimeMillis() - time));
 
-        sortAndUpdateList();
+        sortAndUpdateList(filteredArray);
     }
 
-    private void sortAndUpdateList() {
+    private void sortAndUpdateList(ValueCount[] array) {
 
         if (array == null)
             return;
@@ -968,7 +973,7 @@ public class MetadataPanel extends JPanel
 
         if (e.getSource() == sort) {
             setStateChanged(sort);
-            sortAndUpdateList();
+            sortAndUpdateList(filteredArray);
 
         } else if (e.getSource() == scale) {
             setStateChanged(scale);
