@@ -1,12 +1,16 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -20,6 +24,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
@@ -127,18 +132,24 @@ public class MetadataPanel extends JPanel
         scale.setPreferredSize(new Dimension(30, 15));
         scale.setEnabled(false);
         scale.addChangeListener(this);
+        scale.addMouseListener(new SliderMouseListener(scale));
 
         sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
         sort.setPreferredSize(new Dimension(30, 15));
         sort.addChangeListener(this);
+        sort.addMouseListener(new SliderMouseListener(sort));
 
         update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 15));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
-        update.setPreferredSize(new Dimension(25, 25));
+        update.setPreferredSize(new Dimension(20, 20));
+        update.setContentAreaFilled(false);
+        update.addMouseListener(new ButtonMouseListener(update));
 
         copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 15));
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
-        copyResultToClipboard.setPreferredSize(new Dimension(25, 25));
+        copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
+        copyResultToClipboard.setContentAreaFilled(false);
+        copyResultToClipboard.addMouseListener(new ButtonMouseListener(copyResultToClipboard));
 
         list.setFixedCellHeight(18);
         list.setFixedCellWidth(2000);
@@ -308,30 +319,43 @@ public class MetadataPanel extends JPanel
         if (StringUtils.isEmpty(this.listFilter.getText())) {
             populateList();
         } else {
-            if (array == null)
+            if (array == null) {
                 return;
-            ArrayList<ValueCount> filtered = new ArrayList<>();
-            String searchValue = this.listFilter.getText().toLowerCase();
-            for (ValueCount valueCount : array) {
-                String val = valueCount.getVal();
-                if (val != null && val.toLowerCase().contains(searchValue)) {
-                    filtered.add(valueCount);
-                }
             }
-            array = filtered.toArray(new ValueCount[] {});
-            sortAndUpdateList();
+            App.get().dialogBar.setVisible(true);
+            new Thread() {
+                public void run() {
+                    ArrayList<ValueCount> filtered = new ArrayList<>();
+                    String searchValue = listFilter.getText().toLowerCase();
+                    for (ValueCount valueCount : array) {
+                        String val = valueCount.getVal();
+                        if (val != null && val.toLowerCase().contains(searchValue)) {
+                            filtered.add(valueCount);
+                        }
+                    }
+                    array = filtered.toArray(new ValueCount[] {});
+                    sortAndUpdateList();
+                }
+            }.start();
         }
     }
 
     private void copyResultsToClipboard() {
-        StringBuffer strBuffer = new StringBuffer();
-        for (int i = 0; i < list.getModel().getSize(); i++) {
-            ValueCount item = list.getModel().getElementAt(i);
-            String val = (item.getVal() != null ? item.getVal() : "");
-            strBuffer.append(val.toString());
-            strBuffer.append(System.lineSeparator());
-        }
-        Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()), null);
+        App.get().dialogBar.setVisible(true);
+        new Thread() {
+            public void run() {
+                StringBuffer strBuffer = new StringBuffer();
+                for (int i = 0; i < list.getModel().getSize(); i++) {
+                    ValueCount item = list.getModel().getElementAt(i);
+                    String val = (item.getVal() != null ? item.getVal() : "");
+                    strBuffer.append(val.toString());
+                    strBuffer.append(System.lineSeparator());
+                }
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
+                        null);
+                App.get().dialogBar.setVisible(false);
+            }
+        }.start();
     }
 
     private void populateList() {
@@ -943,12 +967,69 @@ public class MetadataPanel extends JPanel
     public void stateChanged(ChangeEvent e) {
 
         if (e.getSource() == sort) {
+            setStateChanged(sort);
             sortAndUpdateList();
-            
+
         } else if (e.getSource() == scale) {
+            setStateChanged(scale);
             populateList();
         }
 
     }
+    
+    private void setStateChanged(JSlider slider) {
+        for (MouseListener l : slider.getMouseListeners()) {
+            if (l instanceof SliderMouseListener) {
+                ((SliderMouseListener) l).stateChanged = true;
+            }
+        }
+    }
+
+    private class SliderMouseListener extends MouseAdapter {
+
+        private boolean stateChanged = false;
+        private JSlider slider;
+
+        private SliderMouseListener(JSlider slider) {
+            this.slider = slider;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (!stateChanged) {
+                slider.setValue(1 - slider.getValue());
+            }
+            stateChanged = false;
+        }
+
+    }
+
+    private class ButtonMouseListener extends MouseAdapter {
+        
+        private JButton button;
+        
+        private ButtonMouseListener(JButton button) {
+            this.button = button;
+        }
+        
+        @Override
+        public void mouseEntered(MouseEvent e){
+            button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+        }
+        @Override
+        public void mouseExited(MouseEvent e){
+            button.setBorder(null);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            button.setContentAreaFilled(true);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            button.setContentAreaFilled(false);
+        }
+    };
 
 }
