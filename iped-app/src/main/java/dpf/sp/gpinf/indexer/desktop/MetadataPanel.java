@@ -212,7 +212,11 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String lookupOrd(int ord) {
-            return sdv.lookupOrd(ord).utf8ToString();
+            BytesRef ref;
+            synchronized (sdv) {
+                ref = sdv.lookupOrd(ord);
+            }
+            return ref.utf8ToString();
         }
     }
 
@@ -226,7 +230,11 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String lookupOrd(int ord) {
-            return ssdv.lookupOrd(ord).utf8ToString();
+            BytesRef ref;
+            synchronized (ssdv) {
+                ref = ssdv.lookupOrd(ord);
+            }
+            return ref.utf8ToString();
         }
     }
 
@@ -245,8 +253,8 @@ public class MetadataPanel extends JPanel
                 return lo.lookupOrd(ord);
 
             } catch (Exception e) {
-                // LookupOrd fica inválido (IndexReader fechado) ao atualizar interface durante
-                // processamento
+                // LookupOrd get invalid if UI is updated when processing (IndexReader closed)
+                // e.printStackTrace();
                 return Messages.getString("MetadataPanel.UpdateWarn"); //$NON-NLS-1$
             }
         }
@@ -350,9 +358,11 @@ public class MetadataPanel extends JPanel
                 StringBuffer strBuffer = new StringBuffer();
                 for (int i = 0; i < list.getModel().getSize(); i++) {
                     ValueCount item = list.getModel().getElementAt(i);
-                    String val = (item.getVal() != null ? item.getVal() : "");
-                    strBuffer.append(val.toString());
-                    strBuffer.append(System.lineSeparator());
+                    String val = item.getVal();
+                    if (val != null && !val.isEmpty()) {
+                        strBuffer.append(val);
+                        strBuffer.append(System.lineSeparator());
+                    }
                 }
                 Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
                         null);
