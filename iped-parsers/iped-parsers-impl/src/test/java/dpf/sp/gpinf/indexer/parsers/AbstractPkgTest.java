@@ -16,6 +16,8 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
+import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -24,6 +26,7 @@ import java.util.Set;
 
 import junit.framework.TestCase;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
@@ -90,9 +93,11 @@ public abstract class AbstractPkgTest extends TestCase {
       public void parse(InputStream stream, ContentHandler handler,
             Metadata metadata, ParseContext context) throws IOException,
             SAXException, TikaException {
+
+         String hdigest = new DigestUtils(MD5).digestAsHex(stream);         
          filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
          modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
-         itensmd5.add(metadata.get(Metadata.CONTENT_MD5));
+         itensmd5.add(hdigest.toUpperCase());
          if(metadata.get(ExtraProperties.EMBEDDED_FOLDER)!= null)
                  isfolder.add(metadata.get(ExtraProperties.EMBEDDED_FOLDER));
          isfolder.add("false");
@@ -108,6 +113,7 @@ public abstract class AbstractPkgTest extends TestCase {
       protected List<String> messagebody = new ArrayList<String>();
       protected List<String> messagedate = new ArrayList<String>();
       protected List<String> contenttype = new ArrayList<String>();
+      protected List<String> contentmd5 = new ArrayList<String>();
       
       public void reset() {
          messageto.clear();
@@ -116,6 +122,7 @@ public abstract class AbstractPkgTest extends TestCase {
          messagebody.clear();
          messagedate.clear();
          contenttype.clear();
+         contentmd5.clear();
       }
       
       public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -125,12 +132,15 @@ public abstract class AbstractPkgTest extends TestCase {
       public void parse(InputStream stream, ContentHandler handler,
             Metadata metadata, ParseContext context) throws IOException,
             SAXException, TikaException {
+
+         String hdigest = new DigestUtils(MD5).digestAsHex(stream);          
          messageto.add(metadata.get(Metadata.MESSAGE_TO));
          messagefrom.add(metadata.get(Metadata.MESSAGE_FROM));
          messagesubject.add(metadata.get(ExtraProperties.MESSAGE_SUBJECT));
          messagebody.add(metadata.get(ExtraProperties.MESSAGE_BODY));
          messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
          contenttype.add(metadata.get(HttpHeaders.CONTENT_TYPE));
+         contentmd5.add(hdigest.toUpperCase());
 
       }
 

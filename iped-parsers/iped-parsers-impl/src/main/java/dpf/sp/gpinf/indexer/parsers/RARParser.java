@@ -18,7 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
-import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,7 +25,6 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.TreeMap;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -140,7 +138,6 @@ public class RARParser extends AbstractParser {
         InputStream subFile = null;
         try {
             subFile = rar.getInputStream(header);
-            String hdigest = new DigestUtils(MD5).digestAsHex(subFile);
             Metadata entrydata = new Metadata();
             if (header.isDirectory())
                 entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
@@ -151,7 +148,6 @@ public class RARParser extends AbstractParser {
             entrydata.set(ExtraProperties.ACCESSED, header.getATime());
             entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, header.getFileNameString());
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
-            entrydata.set(Metadata.CONTENT_MD5, hdigest.toUpperCase());
             
             if (extractor.shouldParseEmbedded(entrydata))
                 extractor.parseEmbedded(subFile, handler, entrydata, true);

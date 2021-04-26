@@ -24,58 +24,58 @@ public class RARParserTest  extends AbstractPkgTest {
             
         String content = handler.toString();
         assertTrue(content.contains("mockdoc3.docx"));
-//        assertTrue(content.contains("Mockdoc3:"));
+        assertTrue(content.contains("Mockdoc3:"));
         
         assertTrue(content.contains("mockdoc4.docx"));
-//        assertTrue(content.contains("Mockdoc4:"));
+        assertTrue(content.contains("Mockdoc4:"));
         
         assertTrue(content.contains("mockdoc5.docx"));
-//        assertTrue(content.contains("Mockdoc5:"));
+        assertTrue(content.contains("Mockdoc5:"));
         
         assertTrue(content.contains("mocksheets1.xls"));
-//        assertTrue(content.contains("mocksheets1:"));
+        assertTrue(content.contains("mocksheets1:"));
         
         assertTrue(content.contains("mocksheets2.xls"));
-//        assertTrue(content.contains("mocksheets2:"));
+        assertTrue(content.contains("mocksheets2:"));
         
         assertTrue(content.contains("mocksheets3.xls"));
-//        assertTrue(content.contains("mocksheets3:"));
+        assertTrue(content.contains("mocksheets3:"));
         
         assertTrue(content.contains("mocksheets4.xls"));
-//        assertTrue(content.contains("mocksheets4:"));
+        assertTrue(content.contains("mocksheets4:"));
         
         assertTrue(content.contains("mocksheets5.xls"));
-//        assertTrue(content.contains("mocksheets5:"));
+        assertTrue(content.contains("mocksheets5:"));
         
         assertTrue(content.contains("mocktext1.txt"));
-//        assertTrue(content.contains("MOCKTEXT1:"));
+        assertTrue(content.contains("MOCKTEXT1:"));
         
         assertTrue(content.contains("mocktext2.txt"));
-//        assertTrue(content.contains("MOCKTEXT2:"));
+        assertTrue(content.contains("MOCKTEXT2:"));
         
         assertTrue(content.contains("mocktext3.txt"));
-//        assertTrue(content.contains("MOCKTEXT3:"));
+        assertTrue(content.contains("MOCKTEXT3:"));
         
         assertTrue(content.contains("mocktext4.txt"));
-//        assertTrue(content.contains("MOCKTEXT4:"));
+        assertTrue(content.contains("MOCKTEXT4:"));
         
         assertTrue(content.contains("mocktext5.txt"));
-//        assertTrue(content.contains("MOCKTEXT5:"));
+        assertTrue(content.contains("MOCKTEXT5:"));
         
         assertTrue(content.contains("mockdoc1.docx"));
-//        assertTrue(content.contains("Mockdoc1:"));
+        assertTrue(content.contains("Mockdoc1:"));
         
         assertTrue(content.contains("mockdoc2.docx"));
-//        assertTrue(content.contains("Mockdoc2:"));
+        assertTrue(content.contains("Mockdoc2:"));
         
         assertTrue(content.contains("mockfolder/mocktext5.txt"));
-//        assertTrue(content.contains("Mocktext5/Folder:"));
+        assertTrue(content.contains("Mocktext5/Folder:"));
         
         assertTrue(content.contains("mockfolder/mockdoc5.docx"));
-//        assertTrue(content.contains("Mockdoc5/folder"));
+        assertTrue(content.contains("Mockdoc5/folder"));
         
         assertTrue(content.contains("mockfolder/mocksheets5.xlsx"));
-//        assertTrue(content.contains("Mocksheets5/Folder"));
+        assertTrue(content.contains("Mocksheets5/Folder"));
         
     }
     
