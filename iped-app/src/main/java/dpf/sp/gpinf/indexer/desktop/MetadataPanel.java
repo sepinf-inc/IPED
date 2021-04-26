@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +28,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
@@ -34,18 +36,24 @@ import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IMultiSearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
 
@@ -56,6 +64,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
+    private static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
+    private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
 
     private volatile static LeafReader reader;
 
@@ -71,6 +81,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     volatile SortedNumericDocValues numValuesSet;
     volatile SortedDocValues docValues;
     volatile SortedSetDocValues docValuesSet;
+    volatile SortedSetDocValues eventDocValuesSet;
+    volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
 
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array;
@@ -303,6 +315,10 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         docValuesSet = reader.getSortedSetDocValues(field);
         if (docValuesSet == null)
             docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
+        if (BasicProps.TIME_EVENT.equals(field)) {
+            eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
+        }
+        eventSetToOrdsCache.clear();
     }
 
     public static final boolean isFloat(String field) {
@@ -318,13 +334,31 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 || !IndexItem.getMetadataTypes().get(field).equals(String.class);
     }
 
-    private List<IItemId> getIdsWithOrd(String field, int ordToGet, int valueCount) {
+    private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) {
+        long[] ords = eventSetToOrdsCache.get(eventSet);
+        if (ords != null) {
+            return ords;
+        }
+        String[] events = eventSet.split(EVENT_SEPARATOR);
+        ords = new long[events.length];
+        for (int i = 0; i < ords.length; i++) {
+            long ord = eventDocValues.lookupTerm(new BytesRef(events[i]));
+            ords[i] = ord;
+        }
+        eventSetToOrdsCache.put(eventSet, ords);
+        return ords;
+    }
+
+    private MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet) {
 
         boolean mayBeNumeric = mayBeNumeric(field);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
+        boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
-        ArrayList<IItemId> items = new ArrayList<IItemId>();
+        ArrayList<IItemId> items = new ArrayList<>();
+        ArrayList<Float> scores = new ArrayList<>();
+        int k = 0;
         if (mayBeNumeric && numValues != null) {
             Bits docsWithField = null;
             try {
@@ -332,7 +366,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            for (IItemId item : ipedResult.getIterator()) {
+            for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 if (docsWithField != null && docsWithField.get(doc)) {
                     double val = numValues.get(doc);
@@ -354,12 +388,15 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                         if (val == max && min != max)
                             ord--;
                     }
-                    if (ord == ordToGet)
+                    if (ordsToGet.contains(ord)) {
                         items.add(item);
+                        scores.add(result.getScore(k));
+                    }
                 }
+                k++;
             }
         } else if (mayBeNumeric && numValuesSet != null) {
-            for (IItemId item : ipedResult.getIterator()) {
+            for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
                 for (int i = 0; i < numValuesSet.count(); i++) {
@@ -382,36 +419,59 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                         if (val == max && min != max)
                             ord--;
                     }
-                    if (ord == ordToGet) {
+                    if (ordsToGet.contains(ord)) {
                         items.add(item);
+                        scores.add(result.getScore(k));
                         break;
                     }
                 }
+                k++;
             }
         } else if (docValues != null) {
-            for (IItemId item : ipedResult.getIterator()) {
+            for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
-                if (ordToGet == docValues.getOrd(doc))
+                if (ordsToGet.contains(docValues.getOrd(doc))) {
                     items.add(item);
+                    scores.add(result.getScore(k));
+                }
+                k++;
             }
         } else if (docValuesSet != null) {
-            for (IItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                docValuesSet.setDocument(doc);
-                long ord;
-                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                    if (ord == ordToGet) {
-                        items.add(item);
-                        break;
+            for (IItemId item : result.getIterator()) {
+                if (isTimeEvent && item instanceof TimeItemId) {
+                    TimeItemId timeId = (TimeItemId) item;
+                    String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
+                    long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
+                    for (long ord : ords) {
+                        if (ordsToGet.contains((int) ord)) {
+                            items.add(item);
+                            scores.add(result.getScore(k));
+                            break;
+                        }
+                    }
+                } else {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    docValuesSet.setDocument(doc);
+                    long ord;
+                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (ordsToGet.contains((int) ord)) {
+                            items.add(item);
+                            scores.add(result.getScore(k));
+                            break;
+                        }
                     }
                 }
+                k++;
             }
         }
 
-        return items;
+        return new MultiSearchResult(items.toArray(new ItemId[0]),
+                ArrayUtils.toPrimitive(scores.toArray(new Float[scores.size()])));
     }
 
     private void countValues(boolean updateResult) throws IOException {
+
+        long time = System.currentTimeMillis();
 
         reader = App.get().appCase.getLeafReader();
 
@@ -430,6 +490,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
         boolean isFloat = isFloat(field);
         boolean isDouble = isDouble(field);
+        boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -589,13 +650,22 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         } else if (docValuesSet != null) {
             valueCount = new int[(int) docValuesSet.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
-                int doc = App.get().appCase.getLuceneId(item);
-                docValuesSet.setDocument(doc);
-                long ord, prevOrd = -1;
-                while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                    if (prevOrd != ord)
+                if (isTimeEvent && item instanceof TimeItemId) {
+                    TimeItemId timeId = (TimeItemId) item;
+                    String eventSet = timeId.getTimeEventValue(eventDocValuesSet);
+                    long[] ords = getEventOrdsFromEventSet(docValuesSet, eventSet);
+                    for (long ord : ords) {
                         valueCount[(int) ord]++;
-                    prevOrd = ord;
+                    }
+                } else {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    docValuesSet.setDocument(doc);
+                    long ord, prevOrd = -1;
+                    while ((ord = docValuesSet.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                        if (prevOrd != ord)
+                            valueCount[(int) ord]++;
+                        prevOrd = ord;
+                    }
                 }
             }
         }
@@ -638,6 +708,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         array = list.toArray(new ValueCount[0]);
 
+        LOGGER.info("Metadata value counting took {}ms", (System.currentTimeMillis() - time));
+
         sortList();
     }
 
@@ -646,7 +718,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if (array == null)
             return;
 
-        // System.out.println("sorting");
+        long time = System.currentTimeMillis();
 
         ValueCount[] sortedArray = array;
         if (sort.getSelectedItem().equals(SORT_COUNT)) {
@@ -656,7 +728,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         } else if (array.length > 0 && array[0] instanceof MoneyCount) {
             Arrays.sort(array);
         }
-        // System.out.println("Sorted");
+
+        LOGGER.info("Metadata value sorting took {}ms", (System.currentTimeMillis() - time));
 
         updateList(sortedArray);
 
@@ -725,20 +798,29 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             App.get().setMetadataDefaultColor(true);
     }
 
-    public Set<IItemId> getFilteredItemIds() throws ParseException, QueryNodeException {
-
+    public boolean isFiltering() {
         String field = (String) props.getSelectedItem();
-        if (field == null || list.isSelectionEmpty() || updatingResult)
-            return null;
-        field = field.trim();
+        if (field == null || list.isSelectionEmpty() || updatingResult) {
+            return false;
+        } else {
+            return true;
+        }
+    }
 
-        Set<IItemId> items = new HashSet<IItemId>();
-        for (ValueCount value : list.getSelectedValuesList()) {
-            List<IItemId> ids = getIdsWithOrd(field, value.ord, value.count);
-            items.addAll(ids);
+    public MultiSearchResult getFilteredItemIds(MultiSearchResult result) throws ParseException, QueryNodeException {
+
+        if (!isFiltering()) {
+            return result;
         }
 
-        return items;
+        String field = (String) props.getSelectedItem();
+        field = field.trim();
+
+        Set<Integer> ords = new HashSet<>();
+        for (ValueCount value : list.getSelectedValuesList()) {
+            ords.add(value.ord);
+        }
+        return getIdsWithOrd(result, field, ords);
 
     }
 
@@ -750,8 +832,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
-        for (ValueCount item : list.getSelectedValuesList())
+        for (ValueCount item : list.getSelectedValuesList()) {
             highlightTerms.add(item.getVal());
+            if (highlightTerms.size() >= MAX_TERMS_TO_HIGHLIGHT) {
+                break;
+            }
+        }
 
         return highlightTerms;
 
@@ -759,15 +845,16 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     public Query getHighlightQuery() throws ParseException, QueryNodeException {
 
-        String field = (String) props.getSelectedItem();
-        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX))
-                || list.isSelectionEmpty())
+        Set<String> terms = getHighlightTerms();
+        if (terms.isEmpty()) {
             return null;
+        }
 
         StringBuilder str = new StringBuilder();
         str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (ValueCount item : list.getSelectedValuesList())
-            str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        for (String term : terms) {
+            str.append("\"" + escape(term) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        }
         str.append(")"); //$NON-NLS-1$
 
         return new QueryBuilder(App.get().appCase).getQuery(str.toString());
