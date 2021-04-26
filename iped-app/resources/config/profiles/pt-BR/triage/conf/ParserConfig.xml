@@ -249,6 +249,9 @@
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
         <parser class="dpf.inc.sepinf.gdrive.parsers.GDriveMainParser"></parser>
         <parser class="dpf.pi.gpinf.firefox.parsers.FirefoxSavedSessionParser"></parser>
+        
+        <!--parser class="dpf.inc.sepinf.python.PythonParser"></parser-->
+        
     </parsers>
 
 </properties>
