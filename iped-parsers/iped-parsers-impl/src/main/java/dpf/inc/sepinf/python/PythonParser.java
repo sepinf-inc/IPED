@@ -3,7 +3,6 @@ package dpf.inc.sepinf.python;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -200,8 +199,9 @@ public class PythonParser extends AbstractParser {
         return ret;
     }
 
-    public String getName() {
-        return scriptFile.getName();
+    public String getName(String contentType) {
+        MediaType type = MediaType.parse(contentType);
+        return mediaToParserMap.get(type).getClassName();
     }
 
     @Override
@@ -220,7 +220,7 @@ public class PythonParser extends AbstractParser {
             getJep().invoke(getInstanceMethod("parse"), stream, handler, metadata, context);
 
         } catch (JepException e) {
-            throw new TikaException("Error from " + getName(), e);
+            throw new TikaException("Error from " + getClassName(), e);
         }
 
     }
