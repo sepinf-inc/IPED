@@ -1,9 +1,16 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -17,6 +24,8 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -24,11 +33,16 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSlider;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
@@ -48,6 +62,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -55,10 +70,12 @@ import iped3.search.IMultiSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
-public class MetadataPanel extends JPanel implements ActionListener, ListSelectionListener, ClearFilterListener {
+public class MetadataPanel extends JPanel
+        implements ActionListener, ListSelectionListener, ClearFilterListener, ChangeListener {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MetadataPanel.class);
 
+    private static final String RES_PATH = "/dpf/sp/gpinf/indexer/desktop/";
     private static final String SORT_COUNT = Messages.getString("MetadataPanel.Hits"); //$NON-NLS-1$
     private static final String SORT_ALFANUM = Messages.getString("MetadataPanel.AlphaNumeric"); //$NON-NLS-1$
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
@@ -71,11 +88,13 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
-    JComboBox<String> sort = new JComboBox<String>();
+    JSlider sort = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
-    JComboBox<String> scale = new JComboBox<String>();
-    JButton update = new JButton(Messages.getString("MetadataPanel.Update")); //$NON-NLS-1$
+    JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
+    JButton update = new JButton();
+    JTextField listFilter = new JTextField();
+    JButton copyResultToClipboard = new JButton();
 
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -85,7 +104,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
 
     volatile IMultiSearchResult ipedResult;
-    ValueCount[] array;
+    ValueCount[] array, filteredArray;
 
     boolean updatingProps = false, updatingList = false, clearing = false;
     volatile boolean updatingResult = false;
@@ -109,14 +128,28 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         props.setMaximumRowCount(30);
         props.addActionListener(this);
 
-        scale.addItem(LINEAR_SCALE);
-        scale.addItem(LOG_SCALE);
+        scale.setToolTipText(LINEAR_SCALE + " / " + LOG_SCALE);
+        scale.setPreferredSize(new Dimension(30, 15));
         scale.setEnabled(false);
-        scale.addActionListener(this);
+        scale.addChangeListener(this);
+        scale.addMouseListener(new SliderMouseListener(scale));
 
-        sort.addItem(SORT_COUNT);
-        sort.addItem(SORT_ALFANUM);
-        sort.addActionListener(this);
+        sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
+        sort.setPreferredSize(new Dimension(30, 15));
+        sort.addChangeListener(this);
+        sort.addMouseListener(new SliderMouseListener(sort));
+
+        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 15));
+        update.setToolTipText(Messages.getString("MetadataPanel.Update"));
+        update.setPreferredSize(new Dimension(20, 20));
+        update.setContentAreaFilled(false);
+        update.addMouseListener(new ButtonMouseListener(update));
+
+        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 15));
+        copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
+        copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
+        copyResultToClipboard.setContentAreaFilled(false);
+        copyResultToClipboard.addMouseListener(new ButtonMouseListener(copyResultToClipboard));
 
         list.setFixedCellHeight(18);
         list.setFixedCellWidth(2000);
@@ -134,27 +167,32 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         l2.add(label, BorderLayout.WEST);
         l2.add(props, BorderLayout.CENTER);
 
-        JPanel l4 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(90, 20));
-        l4.add(label, BorderLayout.WEST);
-        l4.add(scale, BorderLayout.CENTER);
-
         JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Sort")); //$NON-NLS-1$
+        label = new JLabel(Messages.getString("MetadataPanel.Filter"));
         label.setPreferredSize(new Dimension(90, 20));
         l3.add(label, BorderLayout.WEST);
-        l3.add(sort, BorderLayout.CENTER);
-        l3.add(update, BorderLayout.EAST);
+        l3.add(listFilter, BorderLayout.CENTER);
 
+        JPanel l4 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 1));
+        l4.add(new JLabel(Messages.getString("MetadataPanel.Sort")));
+        l4.add(sort);
+        l4.add(Box.createRigidArea(new Dimension(10, 0)));
+        l4.add(new JLabel(Messages.getString("MetadataPanel.Scale")));
+        l4.add(scale);
+        l4.add(Box.createRigidArea(new Dimension(10, 0)));
+        l4.add(copyResultToClipboard);
+        l4.add(update);
+
+        listFilter.addActionListener(this);
+        copyResultToClipboard.addActionListener(this);
         update.addActionListener(this);
 
         JPanel top = new JPanel();
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.add(l1);
         top.add(l2);
-        top.add(l4);
         top.add(l3);
+        top.add(l4);
 
         this.add(top, BorderLayout.NORTH);
         this.add(scrollList, BorderLayout.CENTER);
@@ -174,7 +212,11 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         @Override
         public String lookupOrd(int ord) {
-            return sdv.lookupOrd(ord).utf8ToString();
+            BytesRef ref;
+            synchronized (sdv) {
+                ref = sdv.lookupOrd(ord);
+            }
+            return ref.utf8ToString();
         }
     }
 
@@ -188,7 +230,11 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         @Override
         public String lookupOrd(int ord) {
-            return ssdv.lookupOrd(ord).utf8ToString();
+            BytesRef ref;
+            synchronized (ssdv) {
+                ref = ssdv.lookupOrd(ord);
+            }
+            return ref.utf8ToString();
         }
     }
 
@@ -207,8 +253,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
                 return lo.lookupOrd(ord);
 
             } catch (Exception e) {
-                // LookupOrd fica inválido (IndexReader fechado) ao atualizar interface durante
-                // processamento
+                // LookupOrd get invalid if UI is updated when processing (IndexReader closed)
+                // e.printStackTrace();
                 return Messages.getString("MetadataPanel.UpdateWarn"); //$NON-NLS-1$
             }
         }
@@ -277,6 +323,54 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         updatingProps = false;
     }
 
+    private void filterResults() {
+        if (array == null) {
+            return;
+        }
+        App.get().dialogBar.setVisible(true);
+        new Thread() {
+            public void run() {
+                filteredArray = filter(array);
+                sortAndUpdateList(filteredArray);
+            }
+        }.start();
+    }
+
+    private ValueCount[] filter(ValueCount[] values) {
+        if (StringUtils.isEmpty(this.listFilter.getText())) {
+            return values;
+        }
+        ArrayList<ValueCount> filtered = new ArrayList<>();
+        String searchValue = listFilter.getText().toLowerCase();
+        for (ValueCount valueCount : values) {
+            String val = valueCount.getVal();
+            if (val != null && val.toLowerCase().contains(searchValue)) {
+                filtered.add(valueCount);
+            }
+        }
+        return filtered.toArray(new ValueCount[filtered.size()]);
+    }
+
+    private void copyResultsToClipboard() {
+        App.get().dialogBar.setVisible(true);
+        new Thread() {
+            public void run() {
+                StringBuffer strBuffer = new StringBuffer();
+                for (int i = 0; i < list.getModel().getSize(); i++) {
+                    ValueCount item = list.getModel().getElementAt(i);
+                    String val = item.getVal();
+                    if (val != null && !val.isEmpty()) {
+                        strBuffer.append(val);
+                        strBuffer.append(System.lineSeparator());
+                    }
+                }
+                Toolkit.getDefaultToolkit().getSystemClipboard().setContents(new StringSelection(strBuffer.toString()),
+                        null);
+                App.get().dialogBar.setVisible(false);
+            }
+        }.start();
+    }
+
     private void populateList() {
         App.get().dialogBar.setVisible(true);
         final boolean updateResult = !list.isSelectionEmpty();
@@ -286,7 +380,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         }
         ipedResult = App.get().ipedResult;
 
-        logScale = scale.getSelectedItem().equals(LOG_SCALE);
+        logScale = scale.getValue() == 1;
 
         new Thread() {
             @Override
@@ -478,8 +572,8 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         String field = (String) props.getSelectedItem();
         if (field == null) {
             updatingResult = false;
-            array = new ValueCount[0];
-            sortList();
+            filteredArray = array = new ValueCount[0];
+            sortAndUpdateList(filteredArray);
             return;
         }
         field = field.trim();
@@ -708,12 +802,14 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
         array = list.toArray(new ValueCount[0]);
 
+        filteredArray = filter(array);
+
         LOGGER.info("Metadata value counting took {}ms", (System.currentTimeMillis() - time));
 
-        sortList();
+        sortAndUpdateList(filteredArray);
     }
 
-    private void sortList() {
+    private void sortAndUpdateList(ValueCount[] array) {
 
         if (array == null)
             return;
@@ -721,7 +817,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         long time = System.currentTimeMillis();
 
         ValueCount[] sortedArray = array;
-        if (sort.getSelectedItem().equals(SORT_COUNT)) {
+        if (sort.getValue() == 0) {
             sortedArray = array.clone();
             Arrays.sort(sortedArray, new CountComparator());
 
@@ -767,14 +863,17 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         if (updatingProps)
             return;
 
-        if (e.getSource() == update || e.getSource() == props || e.getSource() == scale)
+        if (e.getSource() == update || e.getSource() == props)
             populateList();
-
-        else if (e.getSource() == sort)
-            sortList();
 
         else if (e.getSource() == groups)
             updateProps();
+
+        else if (e.getSource() == listFilter)
+            filterResults();
+
+        else if (e.getSource() == copyResultToClipboard)
+            copyResultsToClipboard();
 
     }
 
@@ -878,5 +977,74 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         list.setListData(new ValueCount[0]);
         clearing = false;
     }
+
+    @Override
+    public void stateChanged(ChangeEvent e) {
+
+        if (e.getSource() == sort) {
+            setStateChanged(sort);
+            sortAndUpdateList(filteredArray);
+
+        } else if (e.getSource() == scale) {
+            setStateChanged(scale);
+            populateList();
+        }
+
+    }
+    
+    private void setStateChanged(JSlider slider) {
+        for (MouseListener l : slider.getMouseListeners()) {
+            if (l instanceof SliderMouseListener) {
+                ((SliderMouseListener) l).stateChanged = true;
+            }
+        }
+    }
+
+    private class SliderMouseListener extends MouseAdapter {
+
+        private boolean stateChanged = false;
+        private JSlider slider;
+
+        private SliderMouseListener(JSlider slider) {
+            this.slider = slider;
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            if (!stateChanged) {
+                slider.setValue(1 - slider.getValue());
+            }
+            stateChanged = false;
+        }
+
+    }
+
+    private class ButtonMouseListener extends MouseAdapter {
+        
+        private JButton button;
+        
+        private ButtonMouseListener(JButton button) {
+            this.button = button;
+        }
+        
+        @Override
+        public void mouseEntered(MouseEvent e){
+            button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
+        }
+        @Override
+        public void mouseExited(MouseEvent e){
+            button.setBorder(null);
+        }
+
+        @Override
+        public void mousePressed(MouseEvent e) {
+            button.setContentAreaFilled(true);
+        }
+
+        @Override
+        public void mouseReleased(MouseEvent e) {
+            button.setContentAreaFilled(false);
+        }
+    };
 
 }
