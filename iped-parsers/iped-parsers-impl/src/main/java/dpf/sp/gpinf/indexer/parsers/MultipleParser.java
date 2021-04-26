@@ -52,6 +52,13 @@ public class MultipleParser extends AbstractParser {
     @Field
     private boolean stopAfterSomeParserWorks = false;
 
+    @Field
+    private String parserName = MultipleParser.class.getSimpleName();
+
+    public String getParserName() {
+        return parserName;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return supportedTypes;
