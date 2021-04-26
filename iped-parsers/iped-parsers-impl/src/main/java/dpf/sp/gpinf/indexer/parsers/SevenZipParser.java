@@ -14,6 +14,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -46,6 +47,8 @@ import net.sf.sevenzipjbinding.SevenZipException;
 import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
+
+import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;;
 
 public class SevenZipParser extends AbstractParser {
 
@@ -261,6 +264,7 @@ public class SevenZipParser extends AbstractParser {
 
         private void parseSubitem(InputStream is) throws SAXException, IOException {
 
+            String hdigest = new DigestUtils(MD5).digestAsHex(is);
             String subitemPath = ""; //$NON-NLS-1$
             try {
                 final Metadata entrydata = new Metadata();
@@ -271,7 +275,7 @@ public class SevenZipParser extends AbstractParser {
                 entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
                 entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
                 entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
-                entrydata.set(Metadata.CONTENT_MD5, Integer.toHexString(item.getCRC()));
+                entrydata.set(Metadata.CONTENT_MD5, hdigest.toUpperCase());
 
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
@@ -279,6 +283,9 @@ public class SevenZipParser extends AbstractParser {
                 if (extractor.shouldParseEmbedded(entrydata))
                     extractor.parseEmbedded(is, handler, entrydata, true);
 
+
+                
+                
             } catch (SevenZipException e) {
                 LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
             }
