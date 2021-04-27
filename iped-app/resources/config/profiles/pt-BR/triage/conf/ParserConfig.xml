@@ -150,6 +150,7 @@
         <!--parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/emf</mime>
             <params>
+                <param name="parserName" type="string">EMFParser</param>
                 <param name="parsers" type="string">
                     org.apache.tika.parser.microsoft.EMFParser;
                     dpf.sp.gpinf.indexer.parsers.RawStringParser;
@@ -165,6 +166,7 @@
             <mime>application/x-sharedlib</mime>
             <mime>application/x-coredump</mime>
             <params>
+                <param name="parserName" type="string">EXEParser</param>
                 <param name="parsers" type="string">
                     org.apache.tika.parser.executable.ExecutableParser;
                     dpf.sp.gpinf.indexer.parsers.RawStringParser;
