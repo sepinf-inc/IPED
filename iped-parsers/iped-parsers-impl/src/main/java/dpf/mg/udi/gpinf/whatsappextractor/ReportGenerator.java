@@ -290,10 +290,17 @@ public class ReportGenerator {
                         name = contact == null ? null : contact.getName();
                     }
                 }
-                if (name == null)
+                if (name == null) {
                     name = number;
-                else
-                    name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                } else {
+                	if(name.trim().length()==0) {
+                		if(number==null || number.trim().length()==0){
+                			name = "";
+                		}else {
+                			name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                		}
+                	}
+                }
                 out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
                         + name + "</span><br/>"); //$NON-NLS-1$
 

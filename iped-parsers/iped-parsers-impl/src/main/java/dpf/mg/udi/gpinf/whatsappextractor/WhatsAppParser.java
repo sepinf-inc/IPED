@@ -303,7 +303,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
+<<<<<<< 3.18.x
         while ((path = new File(path).getParent()) != null) {
+=======
+    	while ((path = new File(path).getParent()) != null) {
+>>>>>>> f55e3b4 Making getBestItem more restrictive - also, adjusting the visible name to be just empty string, when no account can be found
             for (IItemBase item : result) {
                 if (item.getPath().startsWith(path)) {
                     return item;
