@@ -527,8 +527,10 @@ public class LibpffPSTParser extends AbstractParser {
                         } else if (l[0].trim().equals("Sent representing email address")) { //$NON-NLS-1$
                             if (fromAddr.isEmpty())
                                 fromAddr = value;
-                        } else
+                        } else {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                            metadata.add(l[0], value);
+                        }
                     }
                 }
             }
