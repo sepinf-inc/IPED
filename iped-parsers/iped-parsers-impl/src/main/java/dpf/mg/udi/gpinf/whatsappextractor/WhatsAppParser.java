@@ -202,7 +202,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator(searcher);
-            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
+            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
             while (bytes != null) {
                 Metadata chatMetadata = new Metadata();
                 int nextMsg = reportGenerator.getNextMsgNum();
@@ -212,7 +212,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 storeLocations(msgSubset, chatMetadata);
 
                 firstMsg = nextMsg;
-                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts);
+                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
 
                 String chatName = c.getTitle();
                 if (frag > 0 || nextBytes != null)
@@ -224,11 +224,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
-                
+				if (account != null) {
+					String local = formatContact(account, cache);
+					chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+				}
                 if(c.isGroupChat()) {
-                    for(WAContact member:c.getGroupmembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
-                    }
+	                for(WAContact member:c.getGroupmembers()) {
+	                	chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+	                }
+                } else {
+	                if(c.getRemote()!=null) {
+	                	chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+	                }
                 }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
