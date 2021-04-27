@@ -65,6 +65,7 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
@@ -336,6 +337,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private String getParserName(Parser parser) {
         if (parser instanceof ExternalParser)
             return ((ExternalParser) parser).getParserName();
+        else if (parser instanceof MultipleParser)
+            return ((MultipleParser) parser).getParserName();
         else
             return parser.getClass().getSimpleName();
     }

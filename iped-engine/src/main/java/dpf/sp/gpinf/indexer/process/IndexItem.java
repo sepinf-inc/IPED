@@ -24,13 +24,12 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.nio.file.FileSystemException;
-import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -42,7 +41,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.document.BinaryDocValuesField;
 import org.apache.lucene.document.Document;
@@ -116,6 +117,10 @@ public class IndexItem extends BasicProps {
     private static final String NEW_DATASOURCE_PATH_FILE = "data/newDataSourceLocations.txt";
 
     private static final int MAX_DOCVALUE_SIZE = 4096;
+
+    public static final char EVENT_IDX_SEPARATOR = ';';
+    public static final char EVENT_IDX_SEPARATOR2 = ',';
+    public static final String EVENT_SEPARATOR = " | ";
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
@@ -300,6 +305,8 @@ public class IndexItem extends BasicProps {
             doc.add(new NumericDocValuesField(LENGTH, length));
         }
 
+        Set<TimeStampEvent> timeEventSet = new TreeSet<>();
+
         Date date = evidence.getCreationDate();
         if (date != null) {
             value = DateUtil.dateToString(date);
@@ -308,6 +315,7 @@ public class IndexItem extends BasicProps {
         }
         doc.add(new StringField(CREATED, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(CREATED, new BytesRef(value)));
+        timeEventSet.add(new TimeStampEvent(value, CREATED));
 
         date = evidence.getAccessDate();
         if (date != null) {
@@ -317,6 +325,7 @@ public class IndexItem extends BasicProps {
         }
         doc.add(new StringField(ACCESSED, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(ACCESSED, new BytesRef(value)));
+        timeEventSet.add(new TimeStampEvent(value, ACCESSED));
 
         date = evidence.getModDate();
         if (date != null) {
@@ -326,6 +335,7 @@ public class IndexItem extends BasicProps {
         }
         doc.add(new StringField(MODIFIED, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
+        timeEventSet.add(new TimeStampEvent(value, MODIFIED));
 
         date = evidence.getRecordDate();
         if (date != null) {
@@ -335,6 +345,7 @@ public class IndexItem extends BasicProps {
         }
         doc.add(new StringField(RECORDDATE, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
+        timeEventSet.add(new TimeStampEvent(value, RECORDDATE));
 
         value = evidence.getPath();
         if (value == null) {
@@ -432,12 +443,12 @@ public class IndexItem extends BasicProps {
                 for (Object val : (Collection<?>) entry.getValue()) {
                     if (!typesMap.containsKey(entry.getKey()))
                         typesMap.put(entry.getKey(), val.getClass());
-                    addExtraAttributeToDoc(doc, entry.getKey(), val, false, true);
+                    addExtraAttributeToDoc(doc, entry.getKey(), val, false, true, timeEventSet);
                 }
             } else {
                 if (!typesMap.containsKey(entry.getKey()))
                     typesMap.put(entry.getKey(), entry.getValue().getClass());
-                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false);
+                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false, timeEventSet);
             }
         }
 
@@ -447,15 +458,113 @@ public class IndexItem extends BasicProps {
             if (guessMetaTypes) {
                 guessMetadataTypes(evidence.getMetadata());
             } else {
-                addMetadataToDoc(doc, evidence.getMetadata());
+                addMetadataToDoc(doc, evidence.getMetadata(), timeEventSet);
             }
         }
+
+        storeTimeStamps(doc, timeEventSet);
 
         return doc;
     }
 
+    private static void storeTimeStamps(Document doc, Set<TimeStampEvent> timeEventSet) {
+
+        String prevTimeStamp = null;
+        Set<String> eventsSet = new TreeSet<>();
+        List<String> eventsList = new ArrayList<>();
+        int i = 0;
+        for (TimeStampEvent tse : timeEventSet) {
+            i++;
+            if (tse.timeStamp == null || tse.timeStamp.isEmpty()) {
+                continue;
+            }
+            tse.timeEvent = tse.timeEvent.toLowerCase();
+
+            doc.add(new StringField(TIMESTAMP, tse.timeStamp, Field.Store.YES));
+            doc.add(new SortedSetDocValuesField(TIMESTAMP, new BytesRef(tse.timeStamp)));
+            doc.add(new Field(TIME_EVENT, tse.timeEvent, storedTokenizedNoNormsField));
+            doc.add(new SortedSetDocValuesField(TIME_EVENT, new BytesRef(tse.timeEvent)));
+
+            if (prevTimeStamp != null && !tse.timeStamp.equals(prevTimeStamp)) {
+                addTimeStampEventGroup(doc, eventsSet, eventsList);
+            }
+            eventsSet.add(tse.timeEvent);
+            if (i == timeEventSet.size()) {
+                addTimeStampEventGroup(doc, eventsSet, eventsList);
+            }
+            prevTimeStamp = tse.timeStamp;
+        }
+        // some date metadata could have multiple timestamps
+        List<String> sortedList = new ArrayList<>(eventsList);
+        Collections.sort(sortedList);
+        StringBuilder indexes = new StringBuilder();
+        String prevEvent = null;
+        for (String event : sortedList) {
+            if (indexes.length() > 0) {
+                if (event.equals(prevEvent)) {
+                    indexes.append(EVENT_IDX_SEPARATOR2);
+                } else {
+                    indexes.append(EVENT_IDX_SEPARATOR);
+                }
+            }
+            indexes.append(indexOfObject(eventsList, event));
+            prevEvent = event;
+        }
+        doc.add(new BinaryDocValuesField(ExtraProperties.TIME_EVENT_ORDS, new BytesRef(indexes.toString())));
+    }
+
+    private static int indexOfObject(List<String> list, String o) {
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) == o) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static void addTimeStampEventGroup(Document doc, Set<String> eventsSet, List<String> eventsList) {
+        String events = eventsSet.stream().collect(Collectors.joining(EVENT_SEPARATOR));
+        doc.add(new SortedSetDocValuesField(ExtraProperties.TIME_EVENT_GROUPS, new BytesRef(events)));
+        eventsList.add(events);
+        eventsSet.clear();
+    }
+
+    private static class TimeStampEvent implements Comparable<TimeStampEvent> {
+
+        private String timeStamp, timeEvent;
+
+        private TimeStampEvent(String timestamp, String timeEvent) {
+            this.timeStamp = timestamp;
+            this.timeEvent = timeEvent;
+        }
+
+        @Override
+        public int compareTo(TimeStampEvent o) {
+            boolean t1Empty = timeStamp == null || timeStamp.isEmpty();
+            boolean t2Empty = o.timeStamp == null || o.timeStamp.isEmpty();
+            if (t1Empty) {
+                if (t2Empty) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else {
+                if (t2Empty) {
+                    return 1;
+                } else {
+                    int ret = timeStamp.compareTo(o.timeStamp);
+                    if (ret == 0) {
+                        ret = timeEvent.compareTo(o.timeEvent);
+                    }
+                    return ret;
+                }
+            }
+        }
+
+    }
+
     private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey,
-            boolean isMultiValued) {
+            boolean isMultiValued, Set<TimeStampEvent> timeEventSet) {
         boolean isString = false;
 
         /*
@@ -474,6 +583,8 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedDocValuesField(key, new BytesRef(value)));
             else
                 doc.add(new SortedSetDocValuesField(key, new BytesRef(value)));
+
+            timeEventSet.add(new TimeStampEvent(value, key));
 
         } else if (oValue instanceof Byte) {
             doc.add(new IntPoint(key, (Byte) oValue));
@@ -554,7 +665,7 @@ public class IndexItem extends BasicProps {
         return buffer.array();
     }
 
-    private static void addMetadataToDoc(Document doc, Metadata metadata) {
+    private static void addMetadataToDoc(Document doc, Metadata metadata, Set<TimeStampEvent> timeEventSet) {
         MediaType mimetype = MediaType.parse(metadata.get(Metadata.CONTENT_TYPE));
         if (mimetype != null)
             mimetype = mimetype.getBaseType();
@@ -576,14 +687,14 @@ public class IndexItem extends BasicProps {
             boolean isMultiValued = true;// metadata.getValues(key).length > 1;
             for (String val : metadata.getValues(key)) {
                 if (val != null && !(val = val.trim()).isEmpty())
-                    addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype);
+                    addMetadataKeyToDoc(doc, key, val, isMultiValued, mimetype, timeEventSet);
             }
 
         }
     }
 
     private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued,
-            MediaType mimetype) {
+            MediaType mimetype, Set<TimeStampEvent> timeEventSet) {
         Object oValue = value;
         Class type = typesMap.get(key);
 
@@ -620,7 +731,7 @@ public class IndexItem extends BasicProps {
             typesMap.put(key, Date.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued);
+        addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued, timeEventSet);
     }
 
     private static void guessMetadataTypes(Metadata metadata) {
