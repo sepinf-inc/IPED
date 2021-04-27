@@ -445,14 +445,10 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
-        if (result.size() == 1) {
-            return result.get(0);
-        } else if (result.size() > 1) {
-            while ((path = new File(path).getParent()) != null) {
-                for (IItemBase item : result) {
-                    if (item.getPath().startsWith(path)) {
-                        return item;
-                    }
+    	while ((path = new File(path).getParent()) != null) {
+            for (IItemBase item : result) {
+                if (item.getPath().startsWith(path)) {
+                    return item;
                 }
             }
         }
