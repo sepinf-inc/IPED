@@ -116,7 +116,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory) {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account) {
 
         if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
@@ -142,7 +142,7 @@ public class ReportGenerator {
                             + thisDate + "</div></div>"); //$NON-NLS-1$
                     lastDate = thisDate;
                 }
-                printMessage(out, m, c.isGroupChat(), contactsDirectory);
+                printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
                 currentMsg += 1;
                 if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -158,7 +158,7 @@ public class ReportGenerator {
         return chatBytes.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory) {
+    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory, WAAccount account) {
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
@@ -272,25 +272,31 @@ public class ReportGenerator {
                 List<IItemBase> result = null;
                 String onclick = null;
                 byte[] thumb = null;
+                String name = null, number = null;
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                    if(account!=null) {
+                    	name = account.getName();
+                    	number = message.getLocalResource();
+                    } else {
+                    	name = null;
+                    	number = message.getLocalResource();
+                    }
                 } else {
                     out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
-                    if (group) {
-                        String remote = message.getRemoteResource();
-                        if (remote != null) {
-                            String number = remote;
-                            WAContact contact = contactsDirectory.getContact(number);
-                            String name = contact == null ? null : contact.getName();
-                            if (name == null)
-                                name = number;
-                            else
-                                name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                                    + name + "</span><br/>"); //$NON-NLS-1$
-                        }
+                    number = message.getRemoteResource();
+                    if (number != null) {
+                        WAContact contact = contactsDirectory.getContact(number);
+                        name = contact == null ? null : contact.getName();
                     }
                 }
+                if (name == null)
+                    name = number;
+                else
+                    name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+                        + name + "</span><br/>"); //$NON-NLS-1$
+
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
