@@ -585,21 +585,31 @@ public class OutlookPSTParser extends AbstractParser {
          */
         List<String> headersBlackList = Stream.of("From", "Subject", "To", "Bcc", "Cc").collect(Collectors.toList());
         String headers = email.getTransportMessageHeaders();
-        if (!headers.isEmpty()){
+        if (!headers.isEmpty()) {
+            String headerTmp = "";
+            String valueTmp = "";
             String[] lines = headers.split("\n");
             for (String line : lines) {
                 line = line.trim();
-                if (!line.isEmpty())
-                {
+                if (!line.isEmpty()) {
                     String[] h = line.split(": ", 2);
-                    if (h.length < 2) // Didn't match...
+                    if (h.length < 2) {
+                        // Didn't match, it's not a new header, it's maybe part of last header value...
+                        valueTmp += line;
                         continue;
+                    }
                     if (headersBlackList.contains(h[0]))
                         continue;
-                    
-                    metadata.add(h[0], h[1]);
+                    if (headerTmp != "")
+                        metadata.add(headerTmp, valueTmp);
+             
+                    headerTmp = h[0];
+                    valueTmp = h[1];
                 }
+                
             }
+            
+            metadata.add(headerTmp, valueTmp);
         }
     }
 
