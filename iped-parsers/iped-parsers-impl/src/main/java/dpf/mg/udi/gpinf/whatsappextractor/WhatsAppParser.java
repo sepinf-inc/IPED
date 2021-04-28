@@ -224,18 +224,18 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
-				if (account != null) {
-					String local = formatContact(account, cache);
-					chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
-				}
-                if(c.isGroupChat()) {
-	                for(WAContact member:c.getGroupmembers()) {
-	                	chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
-	                }
+                if (account != null) {
+                    String local = formatContact(account, cache);
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+                }
+                if (c.isGroupChat()) {
+                    for (WAContact member : c.getGroupmembers()) {
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                    }
                 } else {
-	                if(c.getRemote()!=null) {
-	                	chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
-	                }
+                    if (c.getRemote() != null) {
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+                    }
                 }
 
                 ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
@@ -445,7 +445,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
-    	while ((path = new File(path).getParent()) != null) {
+        while ((path = new File(path).getParent()) != null) {
             for (IItemBase item : result) {
                 if (item.getPath().startsWith(path)) {
                     return item;
