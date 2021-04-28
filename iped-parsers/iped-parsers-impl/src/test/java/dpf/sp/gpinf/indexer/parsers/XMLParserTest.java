@@ -25,7 +25,9 @@ public class XMLParserTest extends TestCase {
             ContentHandler handler = new BodyContentHandler();
             ParseContext context = new ParseContext();
             InputStream stream = getStream("test-files/testXML.xml");
+            parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
+            
             String bodyText = handler.toString();
             assertTrue(bodyText.contains("<dc:title>Tika test document</dc:title>"));
             assertTrue(bodyText.contains("<dc:creator>Rida Benjelloun</dc:creator>"));

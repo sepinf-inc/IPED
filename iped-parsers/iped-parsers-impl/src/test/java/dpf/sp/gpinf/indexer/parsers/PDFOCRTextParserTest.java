@@ -31,6 +31,7 @@ public class PDFOCRTextParserTest extends TestCase{
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/testPDF_protected.pdf");
+        parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
     }

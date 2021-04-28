@@ -19,6 +19,7 @@ public class RARParserTest  extends AbstractPkgTest {
         ContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
         InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar4.rar");
+        parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         stream.close();
             

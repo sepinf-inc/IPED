@@ -28,6 +28,7 @@ public class XBaseParserTest {
         BodyContentHandler handler = new BodyContentHandler(); 
         Metadata metadata = new Metadata();
         context.set(Parser.class, parser);
+        parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
         String fileContent = handler.toString();

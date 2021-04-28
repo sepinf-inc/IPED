@@ -28,6 +28,7 @@ public class MBoxParserTest extends AbstractPkgTest{
             ContentHandler handler = new BodyContentHandler();
             ParseContext context = new ParseContext();
             InputStream stream = getStream("test-files/testMBOX.mbox");
+            parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
             
 

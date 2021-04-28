@@ -30,6 +30,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_sample.pst");
+        parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         assertEquals("thisisatest", metadata.get(TikaCoreProperties.TITLE));
          

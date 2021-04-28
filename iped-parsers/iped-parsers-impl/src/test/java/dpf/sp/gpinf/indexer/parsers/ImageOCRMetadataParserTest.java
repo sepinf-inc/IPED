@@ -31,6 +31,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_lenajpeg.jpg");
         metadata.set(Metadata.CONTENT_TYPE, "image/jpeg");
+        parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         //tiff
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));

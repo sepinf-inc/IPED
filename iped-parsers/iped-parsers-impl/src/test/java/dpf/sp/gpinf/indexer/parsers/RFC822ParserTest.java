@@ -42,7 +42,7 @@ public class RFC822ParserTest extends TestCase {
         ContentHandler handler = spy(new DefaultHandler());
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/testRFC822");
-        
+        parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
         verify(handler).startDocument();

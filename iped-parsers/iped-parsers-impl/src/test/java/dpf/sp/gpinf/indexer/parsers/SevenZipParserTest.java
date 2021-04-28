@@ -21,6 +21,7 @@ public class SevenZipParserTest  extends AbstractPkgTest {
         InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar5.rar");
         String mimetype = "application/x-rar-compressed";
         when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
+        parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, mockedMetadata, recursingContext);
         stream.close();
     

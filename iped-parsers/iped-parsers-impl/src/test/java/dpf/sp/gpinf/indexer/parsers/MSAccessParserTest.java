@@ -31,6 +31,7 @@ public class MSAccessParserTest extends TestCase{
             ContentHandler handler = new DefaultHandler();
             ParseContext context = new ParseContext();
             InputStream stream = getStream("test-files/testMDBCampaign_Template.mdb");
+            parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
 
 

@@ -57,6 +57,7 @@ public class RegistryParser extends AbstractParser {
 
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
+//    private String TOOL_PATH = "C:\\Users\\guilh\\OneDrive\\Área de Trabalho\\RegRipper3.0-master"; //$NON-NLS-1$
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
@@ -68,6 +69,7 @@ public class RegistryParser extends AbstractParser {
             if (!tested) {
                 try {
                     cmd = new String[] { TOOL_PATH + TOOL_NAME };
+//                    cmd = new String[] { "C:\\Users\\guilh\\OneDrive\\Área de Trabalho\\RegRipper3.0-master\\" + TOOL_NAME };
                     if (!System.getProperty("os.name").toLowerCase().startsWith("windows")) //$NON-NLS-1$ //$NON-NLS-2$
                         cmd = new String[] { "perl", "-I", ".", TOOL_NAME + ".pl" }; //$NON-NLS-1$ //$NON-NLS-2$
 
