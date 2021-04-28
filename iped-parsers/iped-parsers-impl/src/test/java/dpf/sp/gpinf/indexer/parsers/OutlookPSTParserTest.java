@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.parsers;
 
 
 
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,6 +16,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
+
     
 public class OutlookPSTParserTest extends AbstractPkgTest{
     
@@ -22,10 +24,14 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
     
+    
+    
+    
     @Test
     public void testOutlookPSTParser() throws IOException, SAXException, TikaException{
-
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
@@ -41,6 +47,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
     public void testOutlookPSTParserMetadata() throws IOException, SAXException, TikaException{
 
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
@@ -69,6 +77,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
     public void testOutlookPSTParserMetadataSimpleMessage() throws IOException, SAXException, TikaException{
 
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
@@ -85,6 +95,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
     public void testOutlookPSTParserMetadataRealMessages() throws IOException, SAXException, TikaException{
 
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
@@ -106,6 +118,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
     public void testOutlookPSTParserMetadataMessageAttach() throws IOException, SAXException, TikaException{
 
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
@@ -121,6 +135,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
     public void testOutlookPSTParserMetadataUserInfo() throws IOException, SAXException, TikaException{
 
         OutlookPSTParser parser = new OutlookPSTParser();
+        parser.setRecoverDeleted(false);
+        parser.setUseLibpffParser(false);
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
