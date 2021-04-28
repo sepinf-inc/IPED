@@ -275,12 +275,12 @@ public class ReportGenerator {
                 String name = null, number = null;
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
-                    if(account!=null) {
-                    	name = account.getName();
-                    	number = message.getLocalResource();
+                    if (account != null) {
+                        name = account.getName();
+                        number = message.getLocalResource();
                     } else {
-                    	name = null;
-                    	number = message.getLocalResource();
+                        name = null;
+                        number = message.getLocalResource();
                     }
                 } else {
                     out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
@@ -290,16 +290,14 @@ public class ReportGenerator {
                         name = contact == null ? null : contact.getName();
                     }
                 }
-                if (name == null) {
-                    name = number;
-                } else {
-                	if(name.trim().length()==0) {
-                		if(number==null || number.trim().length()==0){
-                			name = "";
-                		}else {
-                			name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                		}
-                	}
+                name = name == null ? "" : name.trim();
+                number = number == null ? "" : number.trim();
+                if (!number.isEmpty()) {
+                    if (name.isEmpty()) {
+                        name = number;
+                    } else if (!number.equals(name) && !number.equals(name + "@s.whatsapp.net")) {
+                        name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                    }
                 }
                 out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
                         + name + "</span><br/>"); //$NON-NLS-1$
