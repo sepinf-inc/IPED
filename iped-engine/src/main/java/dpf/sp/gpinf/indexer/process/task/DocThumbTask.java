@@ -402,6 +402,7 @@ public class DocThumbTask extends ThumbTask {
     }
 
     private void createLOThumb(IItem item, File thumbFile) {
+        File outFile = null;
         long t = System.currentTimeMillis();
         try {
             if (loEnvCreateProcess != null) {
@@ -444,7 +445,7 @@ public class DocThumbTask extends ThumbTask {
             int pos = name.lastIndexOf('.');
             if (pos >= 0) name = name.substring(0, pos);
             name += ".png";
-            File outFile = new File(loOutDir, name);
+            outFile = new File(loOutDir, name);
             boolean success = false;
             if (outFile.exists()) {
                 BufferedImage img = ImageIO.read(outFile);
@@ -459,6 +460,8 @@ public class DocThumbTask extends ThumbTask {
                     ImageIO.write(img, "jpg", baos);
                     success = true;
                 }
+            } else {
+                outFile = null;
             }
             if (success && baos.size() > 0) {
                 item.setThumb(baos.toByteArray());
@@ -471,6 +474,9 @@ public class DocThumbTask extends ThumbTask {
             convertProcess = null;
             boolean hasThumb = updateHasThumb(item);
             (hasThumb ? totalLoProcessed : totalLoFailed).incrementAndGet();
+            if (outFile != null) {
+                outFile.delete();
+            }
         }
         totalLoTime.addAndGet(System.currentTimeMillis() - t);
     }
