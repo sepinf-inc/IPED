@@ -8,6 +8,7 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.PrintStream;
 
 import javax.imageio.ImageIO;
 
@@ -56,11 +57,13 @@ public class PDFToThumb {
 
     public static void main(String[] args) {
         try {
+            PrintStream systemOut = System.out;
+            System.setOut(System.err);
             File file = new File(args[0]);
             int targetSize = Integer.parseInt(args[1]);
             BufferedImage img = getPdfThumb(file, targetSize);
             if (img != null) {
-                BufferedOutputStream out = new BufferedOutputStream(System.out);
+                BufferedOutputStream out = new BufferedOutputStream(systemOut);
                 ImageIO.write(img, "jpg", out);
                 out.close();
                 System.exit(0);
