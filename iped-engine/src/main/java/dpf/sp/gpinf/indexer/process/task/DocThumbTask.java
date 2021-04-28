@@ -344,14 +344,9 @@ public class DocThumbTask extends ThumbTask {
                 ProcessBuilder pb = new ProcessBuilder(cmd);
                 convertProcess = pb.start();
                 Util.ignoreStream(convertProcess.getErrorStream());
-                byte[] buf = new byte[65536];
+                Future<?> resultFuture = executor.submit(new ResultRunnable(convertProcess, baos));
                 try {
-                    int read = 0;
-                    BufferedInputStream pis = new BufferedInputStream(convertProcess.getInputStream());
-                    while ((read = pis.read(buf)) >= 0) {
-                        baos.write(buf, 0, read);
-                    }
-                    pis.close();
+                    resultFuture.get();
                     convertProcess.waitFor();
                     success = convertProcess.exitValue() == 0;
                 } catch (InterruptedException e) {
@@ -381,6 +376,29 @@ public class DocThumbTask extends ThumbTask {
             (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
         }
         totalPdfTime.addAndGet(System.currentTimeMillis() - t);
+    }
+
+    private class ResultRunnable implements Runnable {
+        private final Process p;
+        private ByteArrayOutputStream baos;
+
+        private ResultRunnable(Process p, ByteArrayOutputStream baos) {
+            this.p = p;
+            this.baos = baos;
+        }
+
+        @Override
+        public void run() {
+            try (BufferedInputStream pis = new BufferedInputStream(p.getInputStream())) {
+                byte[] buf = new byte[65536];
+                int read = 0;
+                while ((read = pis.read(buf)) >= 0) {
+                    baos.write(buf, 0, read);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     private void createLOThumb(IItem item, File thumbFile) {
