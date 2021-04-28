@@ -287,4 +287,13 @@ public abstract class AbstractTask {
     public String getName() {
         return this.getClass().getSimpleName();
     }
+    
+    /**
+     * This method can be overwritten by concrete tasks to detect when the processing is interrupted
+     * by the user (e.g. closing the application window) when the tasking *is running* (i.e. it is the 
+     * active task of a worker), and release resources (e.g. stop external processes). 
+     * Default implementation does nothing. 
+     */
+    public void interrupted() {
+    }
 }

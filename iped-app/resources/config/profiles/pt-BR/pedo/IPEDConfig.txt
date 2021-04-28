@@ -121,6 +121,10 @@ enableFaceRecognition = false
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = true
 
+# [Experimental] Habilita a geração de miniaturas para PDFs e diversos formatos tratados pelo LibreOffice.
+# Configurações avançadas podem ser encontradas em conf/DocThumbsConfig.txt.
+enableDocThumbs = false
+
 # Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
 # Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt
 enableHTMLReport = true
