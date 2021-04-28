@@ -31,6 +31,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -42,8 +43,8 @@ import iped3.IItem;
 public class DocThumbTask extends ThumbTask {
 
     private static final String enableProperty = "enableDocThumbs";
-    private static final String thumbTimeout = "thumbTimeout";
     private static final String taskConfigFile = "DocThumbsConfig.txt";
+    private static final String thumbTimeout = ImageThumbTask.THUMB_TIMEOUT;
 
     private static boolean taskEnabled;
 
@@ -224,7 +225,7 @@ public class DocThumbTask extends ThumbTask {
                 || ((!pdfEnabled || !isPdfType(item.getMediaType()) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
                 || item.getHash() == null 
                 || item.getThumb() != null
-                || item.getExtraAttribute("fileFragment") != null)) {
+                || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null)) {
             return;
         }
         File thumbFile = getThumbFile(item);
@@ -247,8 +248,8 @@ public class DocThumbTask extends ThumbTask {
         }
         Metadata metadata = item.getMetadata();
         if (metadata != null) {
-            String pe = metadata.get("parserException");
-            if (pe != null && pe.equalsIgnoreCase("true")) {
+            String pe = metadata.get(IndexerDefaultParser.PARSER_EXCEPTION);
+            if (Boolean.valueOf(pe)) {
                 return;
             }
         }
@@ -477,41 +478,40 @@ public class DocThumbTask extends ThumbTask {
             File cfgIn = new File(loOutDir, "user/registrymodifications.xcu");
             File cfgOut = new File(loOutDir, "user/registrymodifications.tmp");
             if (cfgIn.exists()) {
-                BufferedReader in = new BufferedReader(new FileReader(cfgIn));
-                BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut));
-                String line = null;
-                int cnt = 0;
-                while ((line = in.readLine()) != null) {
-                    out.write(line);
-                    out.newLine();
-                    if (++cnt == 2) {
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"FirstRun\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                try (BufferedReader in = new BufferedReader(new FileReader(cfgIn));
+                        BufferedWriter out = new BufferedWriter(new FileWriter(cfgOut))) {
+                    String line = null;
+                    int cnt = 0;
+                    while ((line = in.readLine()) != null) {
+                        out.write(line);
                         out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseLocking\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"AutoSave\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"LoadPrinter\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"CreateBackup\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Impress/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Writer/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Calc/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Current\"><prop oor:name=\"Temp\" oor:op=\"fuse\"><value xsi:nil=\"true\"/></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Info\"><prop oor:name=\"WorkPathChanged\" oor:op=\"fuse\"><value>false</value></prop></item>");
-                        out.newLine();
-                        out.write("<item oor:path=\"/org.openoffice.Office.Paths/Paths/org.openoffice.Office.Paths:NamedPath['Temp']\"><prop oor:name=\"WritePath\" oor:op=\"fuse\"><value>file://"
-                                + loOutPath + "</value></prop></item>");
-                        out.newLine();
+                        if (++cnt == 2) {
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"FirstRun\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Misc\"><prop oor:name=\"UseLocking\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"AutoSave\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"LoadPrinter\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Save/Document\"><prop oor:name=\"CreateBackup\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Impress/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Writer/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Calc/Filter/Import/VBA\"><prop oor:name=\"Load\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Current\"><prop oor:name=\"Temp\" oor:op=\"fuse\"><value xsi:nil=\"true\"/></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Common/Path/Info\"><prop oor:name=\"WorkPathChanged\" oor:op=\"fuse\"><value>false</value></prop></item>");
+                            out.newLine();
+                            out.write("<item oor:path=\"/org.openoffice.Office.Paths/Paths/org.openoffice.Office.Paths:NamedPath['Temp']\"><prop oor:name=\"WritePath\" oor:op=\"fuse\"><value>file://"
+                                    + loOutPath + "</value></prop></item>");
+                            out.newLine();
+                        }
                     }
                 }
-                in.close();
-                out.close();
             }
             cfgIn.delete();
             cfgOut.renameTo(cfgIn);
