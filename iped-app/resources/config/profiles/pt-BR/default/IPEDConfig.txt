@@ -10,18 +10,8 @@ hash = md5; sha-256
 # e tenha recebido a biblioteca, necessário copiá-la para a pasta de plugins/optional_jars.
 enablePhotoDNA = false
 
-# Habilita consulta de hashes na base do IPED. Programas com status "Alerta" podem ser alterados em conf/KFFTaskConfig.txt.
-# Necessário utilizar hash md5 ou sha-1.
-enableKff = false
-
-# Habilita consulta de hashes na base do LED. Os arquivos com hashes
-# existentes na base podem ser consultados com o filtro "Hash com Alerta (PI)"
-# Necessário utilizar hash md5 ou sha-1.
-enableLedWkff = false
- 
-# Habilita consulta à base de hashes do ProjectVic. Necessita md5 ou sha-1 habilitado.
-# Arquivos com hits são anotados com atributos extas como projectvic_category, projectvic_victimIdentified, etc. 
-enableProjectVicHashLookup = false
+# Habilita consulta de hashes na base do IPED.
+enableHashDBLookup = false
 
 # Habilita detecção de nudez. Para cada imagem cria os atributos "scoreNudez" (1 a 1000)
 # e classeNudez (1 a 5) para ordenação e/ou filtro.
@@ -34,8 +24,8 @@ enableLedDie = false
 # Um atributo nsfw_nudity_score de 0 a 100 é criado nos arquivos processados.
 enableYahooNSFWDetection = false
 
-# Exclui do restante do processamento e do caso arquivos ignoráveis conforme base de hashes.
-excludeKffIgnorable = false
+# Exclui do restante do processamento e do caso arquivos conhecidos (hash:status = known) conforme base de hashes.
+excludeKnown = false
 
 # Ignora/descarta arquivos duplicados do restante do processamento e do caso.
 # Pode agilizar bastante o processamento de casos com backups. Necessita habilitar o cálculo de hash.
@@ -107,8 +97,8 @@ indexUnallocated = false
 enableCarving = false
 
 # Habilita carving que recupera arquivos conhecidos da base do LED baseado no início (64K) do arquivo.
-# Necessário habilitar "addUnallocated" e configurar "ledWkffPath". 
-enableKFFCarving = false
+# Necessário habilitar "addUnallocated" e configurar "hashesDB" (com hashes do LED importados). 
+enableLedCarving = false
 
 # Habilita carving específico de arquivos known.met do e-Mule. Necessário habilitar "addUnallocated". 
 enableKnownMetCarving = false
@@ -130,6 +120,10 @@ enableFaceRecognition = false
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = true
+
+# [Experimental] Habilita a geração de miniaturas para PDFs e diversos formatos tratados pelo LibreOffice.
+# Configurações avançadas podem ser encontradas em conf/DocThumbsConfig.txt.
+enableDocThumbs = false
 
 # Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
 # Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt

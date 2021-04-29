@@ -251,7 +251,7 @@ class LibraryFile extends ShareazaEntity {
         html.endElement("td"); //$NON-NLS-1$
     }
 
-    public boolean isKffHit() {
+    public boolean isHashDBHit() {
         return !hashSetHits.isEmpty();
     }
 

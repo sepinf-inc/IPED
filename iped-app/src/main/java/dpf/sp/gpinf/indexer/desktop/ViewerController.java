@@ -132,6 +132,7 @@ public class ViewerController {
                     viewersRepository.removeViewer(officeViewer);
                 } catch (Throwable e) {
                     // catches NoClassDefFoundError on Linux if libreoffice-java is not installed
+                    // and if debugging UI: custom class loader is not used to load libreoffice jars
                     e.printStackTrace();
                 } finally {
                     synchronized (lock) {
