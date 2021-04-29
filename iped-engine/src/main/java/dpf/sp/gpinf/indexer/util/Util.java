@@ -588,19 +588,16 @@ public class Util {
         return null;
     }
 
-    public static InputStream getPOIFSInputStream(InputStream is) throws IOException {
-        try (TemporaryResources tmp = new TemporaryResources()) {
-            TikaInputStream tin = TikaInputStream.get(is, tmp);
-            POIFSContainerDetector oleDetector = new POIFSContainerDetector();
-            MediaType mime = oleDetector.detect(tin, new Metadata());
-            if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null
-                    && tin.getOpenContainer() instanceof DirectoryEntry) {
-                try (POIFSFileSystem fs = new POIFSFileSystem()) {
-                    copy((DirectoryEntry) tin.getOpenContainer(), fs.getRoot());
-                    LimitedByteArrayOutputStream baos = new LimitedByteArrayOutputStream();
-                    fs.writeFilesystem(baos);
-                    return new ByteArrayInputStream(baos.toByteArray());
-                }
+    public static InputStream getPOIFSInputStream(TikaInputStream tin) throws IOException {
+        POIFSContainerDetector oleDetector = new POIFSContainerDetector();
+        MediaType mime = oleDetector.detect(tin, new Metadata());
+        if (!MediaType.OCTET_STREAM.equals(mime) && tin.getOpenContainer() != null
+                && tin.getOpenContainer() instanceof DirectoryEntry) {
+            try (POIFSFileSystem fs = new POIFSFileSystem()) {
+                copy((DirectoryEntry) tin.getOpenContainer(), fs.getRoot());
+                LimitedByteArrayOutputStream baos = new LimitedByteArrayOutputStream();
+                fs.writeFilesystem(baos);
+                return new ByteArrayInputStream(baos.toByteArray());
             }
         }
         return null;
