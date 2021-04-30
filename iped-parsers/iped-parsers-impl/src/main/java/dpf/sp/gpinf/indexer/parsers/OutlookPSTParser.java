@@ -154,6 +154,10 @@ public class OutlookPSTParser extends AbstractParser {
 
             pstFile = new PSTFile(tmpFile);
             pstFile.setAutoCharsetDetector(new TikaAutoCharsetDetector());
+            if (pstFile.getPSTFileType() == PSTFile.PST_TYPE_2013_UNICODE) {
+                throw new TikaException("current java-libpst support for OST 2013 format is broken,"
+                        + " see https://github.com/rjohnsondev/java-libpst/issues/60");
+            }
 
             if (extractor.shouldParseEmbedded(metadata))
                 walkFolder(pstFile.getRootFolder(), "", -1); //$NON-NLS-1$
