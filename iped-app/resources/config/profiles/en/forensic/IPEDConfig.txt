@@ -108,9 +108,9 @@ enableKnownMetCarving = false
 # It can slow down processing, but strongly speeds up image preview in the gallery
 enableImageThumbs = true
 
-# [Experimental] Enables the generation of images features during processing, allowing the search
+# Enables the generation of images features during processing, allowing the search
 # for visually similar images. "enableImageThumbs" must be enabled.
-enableImageSimilarity = false
+enableImageSimilarity = true
 
 # [Experimental] Enables face recognition feature.
 # You MUST install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
