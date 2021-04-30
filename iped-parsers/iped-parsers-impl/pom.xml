@@ -86,9 +86,9 @@
             <type>jar</type>
         </dependency>
         <dependency>
-            <groupId>iped</groupId>
+            <groupId>com.pff</groupId>
             <artifactId>java-libpst</artifactId>
-            <version>0.7-patched2</version>
+            <version>0.9.5-SNAPSHOT</version>
             <type>jar</type>
         </dependency>
         <dependency>
