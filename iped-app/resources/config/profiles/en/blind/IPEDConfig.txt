@@ -122,6 +122,10 @@ enableFaceRecognition = false
 # Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"
 enableVideoThumbs = true
 
+# [Experimental] Enables thumbnail creation for PDFs and many formats supported by LibreOffice.
+# Advanced configurations can be found at conf/DocThumbsConfig.txt.
+enableDocThumbs = false
+
 # Enables HTML report generation on automatic extractions or from selected items.
 # Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = true

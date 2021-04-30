@@ -103,13 +103,15 @@ public abstract class ThumbTask extends AbstractTask {
                 }
             } catch (Exception e) {
             }
-
-            if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
-                evidence.setExtraAttribute(HAS_THUMB, true);
-            } else {
-                evidence.setExtraAttribute(HAS_THUMB, false);
-            }
         }
     }
 
+    protected boolean updateHasThumb(IItem evidence) {
+        if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
+            evidence.setExtraAttribute(HAS_THUMB, true);
+            return true;
+        } 
+        evidence.setExtraAttribute(HAS_THUMB, false);
+        return false;
+    }
 }

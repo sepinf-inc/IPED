@@ -269,7 +269,6 @@ public class ImageThumbTask extends ThumbTask {
 
     private void createImageThumb(IItem evidence, File thumbFile) {
         long[] performanceStats = new long[numStats];
-        File tmp = null;
         try {
             BufferedImage img = null;
             Dimension dimension = null;
@@ -368,15 +367,7 @@ public class ImageThumbTask extends ThumbTask {
             logger.warn(evidence.toString(), e);
 
         } finally {
-            if (tmp != null && !tmp.renameTo(thumbFile)) {
-                tmp.delete();
-            }
-
-            if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
-                evidence.setExtraAttribute(HAS_THUMB, true);
-            } else {
-                evidence.setExtraAttribute(HAS_THUMB, false);
-            }
+            updateHasThumb(evidence);
         }
     }
 }

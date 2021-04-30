@@ -27,4 +27,5 @@ enableImageThumbs = false
 enableImageSimilarity = false
 enableFaceRecognition = false
 enableVideoThumbs = false
+enableDocThumbs = false
 enableHTMLReport = false

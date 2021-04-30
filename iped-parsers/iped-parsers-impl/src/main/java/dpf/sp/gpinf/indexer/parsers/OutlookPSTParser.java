@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.pff.AutoCharsetDetector;
 import com.pff.PSTAttachment;
 import com.pff.PSTContact;
 import com.pff.PSTException;
@@ -149,7 +150,13 @@ public class OutlookPSTParser extends AbstractParser {
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
+
             pstFile = new PSTFile(tmpFile);
+            pstFile.setAutoCharsetDetector(new TikaAutoCharsetDetector());
+            if (pstFile.getPSTFileType() == PSTFile.PST_TYPE_2013_UNICODE) {
+                throw new TikaException("current java-libpst support for OST 2013 format is broken,"
+                        + " see https://github.com/rjohnsondev/java-libpst/issues/60");
+            }
 
             if (extractor.shouldParseEmbedded(metadata))
                 walkFolder(pstFile.getRootFolder(), "", -1); //$NON-NLS-1$
@@ -193,6 +200,15 @@ public class OutlookPSTParser extends AbstractParser {
         }
 
         xhtml.endDocument();
+
+    }
+
+    public static class TikaAutoCharsetDetector implements AutoCharsetDetector {
+
+        @Override
+        public String decodeString(byte[] data) {
+            return Util.decodeUnknownCharsetSimpleThenTika(data);
+        }
 
     }
 
