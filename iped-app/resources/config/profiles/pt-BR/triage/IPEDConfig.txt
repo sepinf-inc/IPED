@@ -110,7 +110,7 @@ enableKnownMetCarving = false
 # Pode deixar o processamento bem mais lento, porém torna a visualização na galeria muito rápida.
 enableImageThumbs = false
 
-# [Experimental] Habilita a geração de características das imagens durante o processamento, permitindo 
+# Habilita a geração de características das imagens durante o processamento, permitindo 
 # a busca de imagens visualmente semelhantes. Necessário habilitar "enableImageThumbs".
 enableImageSimilarity = false
 

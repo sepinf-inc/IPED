@@ -110,9 +110,9 @@ enableKnownMetCarving = true
 # Pode deixar o processamento bem mais lento, porém torna a visualização na galeria muito rápida.
 enableImageThumbs = true
 
-# [Experimental] Habilita a geração de características das imagens durante o processamento, permitindo 
+# Habilita a geração de características das imagens durante o processamento, permitindo 
 # a busca de imagens visualmente semelhantes. Necessário habilitar "enableImageThumbs".
-enableImageSimilarity = false
+enableImageSimilarity = true
 
 # Habilita extração de imagens de cenas de vídeos.
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
