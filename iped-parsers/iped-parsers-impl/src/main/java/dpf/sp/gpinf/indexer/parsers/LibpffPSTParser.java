@@ -342,7 +342,7 @@ public class LibpffPSTParser extends AbstractParser {
     private void writeBody(File file, Metadata metadata, StringBuilder preview) throws IOException {
         File body = new File(file, "Message.html"); //$NON-NLS-1$
         if (body.exists()) {
-            String text = Util.decodeUnknownCharsetTika(Files.readAllBytes(body.toPath()));
+            String text = Util.decodeUnknownCharsetSimpleThenTika(Files.readAllBytes(body.toPath()));
             /*
              * byte[] content = Files.readAllBytes(body.toPath()); Charset charset; try {
              * AutoDetectReader adr = new AutoDetectReader(new
@@ -358,7 +358,7 @@ public class LibpffPSTParser extends AbstractParser {
         } else {
             body = new File(file, "Message.txt"); //$NON-NLS-1$
             if (body.exists()) {
-                String text = Util.decodeUnknownCharsetTika(Files.readAllBytes(body.toPath()));
+                String text = Util.decodeUnknownCharsetSimpleThenTika(Files.readAllBytes(body.toPath()));
                 if (text != null && !text.isEmpty()) {
                     metadata.set(ExtraProperties.MESSAGE_BODY,
                             Util.getContentPreview(text, MediaType.TEXT_PLAIN.toString()));
@@ -620,7 +620,7 @@ public class LibpffPSTParser extends AbstractParser {
 
     private List<String> readAllLines(File file) {
         try {
-            String content = Util.decodeUnknownCharsetTika(Files.readAllBytes(file.toPath()));
+            String content = Util.decodeUnknownCharsetSimpleThenTika(Files.readAllBytes(file.toPath()));
             String[] newLines = { "\r\n", "\n", "\r" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             for (String newLine : newLines) {
                 String[] lines = content.split(newLine);

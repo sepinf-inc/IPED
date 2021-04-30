@@ -84,37 +84,64 @@ public class Util {
         return getContentPreview(new ByteArrayInputStream(content), null, mimeType);
     }
 
-    public static String decodeUnknowCharset(byte[] data) {
+    private static String decodeUTF16OrUTF8(byte[] data) throws UnsupportedEncodingException {
 
-        try {
-            int count0 = 0, max = 10000;
-            if (data.length < max) {
-                max = data.length;
+        int count0 = 0, max = 1 << 14;
+        if (data.length < max) {
+            max = data.length;
+        }
+        for (int i = 0; i < max; i++) {
+            if (data[i] == 0) {
+                count0++;
             }
-            for (int i = 0; i < max; i++) {
-                if (data[i] == 0) {
-                    count0++;
-                }
-            }
-            if (count0 > 0 && count0 * 2 >= 0.9 * (float) max) {
-                return new String(data, StandardCharsets.UTF_16LE);
-            }
-
-            String result = new String(data, StandardCharsets.UTF_8);
-
-            if (result.contains("�")) {
-                result = new String(data, "windows-1252"); //$NON-NLS-1$
-            }
-
-            return result;
-
-        } catch (UnsupportedEncodingException e) {
-            return new String(data);
+        }
+        int count = 2 * count0;
+        if (count > 0 && count >= 0.9 * (float) max && count <= 1.1 * (float) max) {
+            return new String(data, StandardCharsets.UTF_16LE);
         }
 
+        String result = new String(data, StandardCharsets.UTF_8);
+
+        if (result.contains("�")) {
+            throw new UnsupportedEncodingException("Data is not UTF8 nor UTF16");
+        }
+
+        return result;
     }
 
-    public static String decodeUnknownCharsetTika(byte[] data) {
+    public static String decodeUnknowCharset(byte[] data) {
+        try {
+            return decodeUTF16OrUTF8(data);
+
+        } catch (UnsupportedEncodingException e) {
+            return decodeWindows1252(data);
+        }
+    }
+
+    private static String decodeWindows1252(byte[] data) {
+        try {
+            return new String(data, "windows-1252");
+
+        } catch (UnsupportedEncodingException e1) {
+            return new String(data, StandardCharsets.ISO_8859_1);
+        }
+    }
+
+    public static String decodeUnknownCharsetSimpleThenTika(byte[] data) {
+        try {
+            return decodeUTF16OrUTF8(data);
+
+        } catch (UnsupportedEncodingException e) {
+
+            return decodeUnknownCharsetTika(data, false);
+        }
+    }
+
+    public static String decodeUnknownCharsetTikaThenSimple(byte[] data) {
+        return decodeUnknownCharsetTika(data, true);
+    }
+
+    private static String decodeUnknownCharsetTika(byte[] data, boolean useFallbackDetection) {
         try (Reader reader = new AutoDetectReader(new ByteArrayInputStream(data))) {
             int i = 0;
             char[] cbuf = new char[1 << 12];
@@ -125,7 +152,11 @@ public class Util {
             return sb.toString();
 
         } catch (IOException | TikaException e) {
-            return decodeUnknowCharset(data);
+            if (useFallbackDetection) {
+                return decodeUnknowCharset(data);
+            } else {
+                return decodeWindows1252(data);
+            }
         }
     }
 

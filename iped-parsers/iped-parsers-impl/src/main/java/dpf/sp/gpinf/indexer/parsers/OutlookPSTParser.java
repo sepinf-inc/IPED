@@ -204,7 +204,7 @@ public class OutlookPSTParser extends AbstractParser {
 
         @Override
         public String decodeString(byte[] data) {
-            return Util.decodeUnknownCharsetTika(data);
+            return Util.decodeUnknownCharsetSimpleThenTika(data);
         }
 
     }
