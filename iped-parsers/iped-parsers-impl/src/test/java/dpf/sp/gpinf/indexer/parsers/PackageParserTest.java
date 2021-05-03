@@ -371,6 +371,126 @@ public class PackageParserTest extends AbstractPkgTest{
        
     }
 
+    @Test
+    public void testPackageParserArjParsing() throws IOException, SAXException, TikaException{
+
+        PackageParser parser = new PackageParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/mockarc.arj");
+        parser.getSupportedTypes(recursingContext);
+        parser.parse(stream, handler, metadata, recursingContext);
+        String hts = handler.toString();
+        assertTrue(hts.contains("mockdoc1.docx"));
+        assertTrue(hts.contains("mockdoc2.docx"));
+        assertTrue(hts.contains("mocksheets1.xlsx"));
+        assertTrue(hts.contains("mocksheets2.xlsx"));
+        assertTrue(hts.contains("mocktext1.txt"));
+        assertTrue(hts.contains("mocktext2.txt"));
+       
+    }
+    
+    @Test
+    public void testPackageParserArjEmbedded() throws IOException, SAXException, TikaException{
+
+        PackageParser parser = new PackageParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/mockarc.arj");
+        parser.getSupportedTypes(trackingContext);
+        parser.parse(stream, handler, metadata, trackingContext);
+        assertEquals(6, tracker.filenames.size());
+        assertEquals(6, tracker.modifieddate.size());
+        assertEquals(6, tracker.itensmd5.size());
+        
+        assertEquals("mockdoc1.docx", tracker.filenames.get(0));
+        assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
+        assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
+        
+        assertEquals("mockdoc2.docx", tracker.filenames.get(1));
+        assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
+        assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
+        
+        assertEquals("mocksheets1.xlsx", tracker.filenames.get(2));
+        assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
+        assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(2));
+        
+        assertEquals("mocksheets2.xlsx", tracker.filenames.get(3));
+        assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
+        assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(3));
+        
+        assertEquals("mocktext1.txt", tracker.filenames.get(4));
+        assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
+        assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(4));
+        
+        assertEquals("mocktext2.txt", tracker.filenames.get(5));
+        assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
+        assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
+      
+       
+    }
+    
+    
+  @Test
+  public void testPackageParserArParsing() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/mockarc.ar");
+      parser.getSupportedTypes(recursingContext);
+      parser.parse(stream, handler, metadata, recursingContext);
+      String hts = handler.toString();
+      System.out.println(tracker.itensmd5.size());
+      assertTrue(hts.contains("mockdoc1.docx"));
+      assertTrue(hts.contains("mockdoc2.docx"));
+      assertTrue(hts.contains("mocksheets1.xlsx"));
+      assertTrue(hts.contains("mocksheets2.xlsx"));
+      assertTrue(hts.contains("mocktext1.txt"));
+      assertTrue(hts.contains("mocktext2.txt"));
+     
+  }
+  
+  @Test
+  public void testPackageParserArEmbedded() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/mockarc.arj");
+      parser.getSupportedTypes(trackingContext);
+      parser.parse(stream, handler, metadata, trackingContext);
+      assertEquals(6, tracker.filenames.size());
+      assertEquals(6, tracker.modifieddate.size());
+      assertEquals(6, tracker.itensmd5.size());
+    
+    
+    assertEquals("mockdoc1.docx", tracker.filenames.get(0));
+    assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
+    assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
+    
+    assertEquals("mockdoc2.docx", tracker.filenames.get(1));
+    assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
+    assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
+    
+    assertEquals("mocksheets1.xlsx", tracker.filenames.get(2));
+    assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
+    assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(2));
+    
+    assertEquals("mocksheets2.xlsx", tracker.filenames.get(3));
+    assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
+    assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(3));
+    
+    assertEquals("mocktext1.txt", tracker.filenames.get(4));
+    assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
+    assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(4));
+    
+    assertEquals("mocktext2.txt", tracker.filenames.get(5));
+    assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
+    assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
+    
+     
+  }
 
 
 }
