@@ -571,8 +571,6 @@ public class PackageParserTest extends AbstractPkgTest{
       parser.getSupportedTypes(recursingContext);
       parser.parse(stream, handler, metadata, recursingContext);
       String hts = handler.toString();
-      System.out.println(hts);
-      
       assertTrue(hts.contains("Mockdoc1:"));
       
   }
