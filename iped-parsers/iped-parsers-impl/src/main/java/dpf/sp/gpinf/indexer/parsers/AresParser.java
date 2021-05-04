@@ -47,7 +47,7 @@ import gpinf.ares.AresEntry;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
-
+//ShareL.dat e ShareH.dat???
 /**
  * Parser para arquivos ShareL.dat e ShareL.dat do Ares Galaxy.
  * 

@@ -441,7 +441,6 @@ public class PackageParserTest extends AbstractPkgTest{
       parser.getSupportedTypes(recursingContext);
       parser.parse(stream, handler, metadata, recursingContext);
       String hts = handler.toString();
-      System.out.println(tracker.itensmd5.size());
       assertTrue(hts.contains("mockdoc1.docx"));
       assertTrue(hts.contains("mockdoc2.docx"));
       assertTrue(hts.contains("mocksheets1.xlsx"));
@@ -492,5 +491,121 @@ public class PackageParserTest extends AbstractPkgTest{
      
   }
 
+  @Test
+  public void testPackageParserCpioParsing() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/testCpio.cpio");
+      parser.getSupportedTypes(recursingContext);
+      parser.parse(stream, handler, metadata, recursingContext);
+      String hts = handler.toString();
+
+      assertTrue(hts.contains("mockdoc1.docx"));
+      assertTrue(hts.contains("mockdoc2.docx"));
+      assertTrue(hts.contains("mocksheets1.xlsx"));
+      assertTrue(hts.contains("mocksheets2.xlsx"));
+      assertTrue(hts.contains("mocktext1.txt"));
+      assertTrue(hts.contains("mocktext2.txt"));
+      
+  }
+  
+
+  @Test
+  public void testPackageParserCpioEmbedded() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/testCpio.cpio");
+      parser.getSupportedTypes(trackingContext);
+      parser.parse(stream, handler, metadata, trackingContext);
+      assertEquals(8, tracker.filenames.size());
+      assertEquals(8, tracker.modifieddate.size());
+      assertEquals(8, tracker.itensmd5.size());
+    
+    
+    assertEquals("mockdoc1.docx", tracker.filenames.get(0));
+    assertEquals("2021-05-04", tracker.modifieddate.get(0).substring(0,10));
+    assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
+    
+    assertEquals("mockdoc2.docx", tracker.filenames.get(1));
+    assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
+    assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
+    
+    assertEquals("mockfolder", tracker.filenames.get(2));
+    assertEquals("2021-05-04", tracker.modifieddate.get(2).substring(0,10));
+    assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(2));
+    assertEquals("true", tracker.isfolder.get(2));
+    
+    assertEquals("mocksheets1.xlsx", tracker.filenames.get(3));
+    assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
+    assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(3));
+    
+    assertEquals("mocksheets2.xlsx", tracker.filenames.get(4));
+    assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
+    assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(4));
+    
+    assertEquals("mocktext1.txt", tracker.filenames.get(5));
+    assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
+    assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(5));
+    
+    assertEquals("mocktext2.txt", tracker.filenames.get(6));
+    assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
+    assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(6));
+
+    assertEquals("test.cpio", tracker.filenames.get(7));
+    assertEquals("2021-05-04", tracker.modifieddate.get(7).substring(0,10));
+    assertEquals("BA61B70D7C45946AC670D39080C1DD42", tracker.itensmd5.get(7));
+     
+  }
+
+  @Test
+  public void testPackageParserOoxmlParsing() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/mockdoc1.docx");
+      parser.getSupportedTypes(recursingContext);
+      parser.parse(stream, handler, metadata, recursingContext);
+      String hts = handler.toString();
+      System.out.println(hts);
+      
+      assertTrue(hts.contains("Mockdoc1:"));
+      
+  }
+  
+  @Test
+  public void testPackageParserOoxmlEmbedded() throws IOException, SAXException, TikaException{
+
+      PackageParser parser = new PackageParser();
+      Metadata metadata = new Metadata();
+      ContentHandler handler = new BodyContentHandler();
+      InputStream stream = getStream("test-files/mockdoc1.docx");
+      parser.getSupportedTypes(trackingContext);
+      parser.parse(stream, handler, metadata, trackingContext);
+      assertEquals(17, tracker.filenames.size());
+      assertEquals(12, tracker.modifieddate.size());
+      assertEquals(17, tracker.itensmd5.size());
+      assertEquals(22, tracker.isfolder.size());
+
+      assertEquals("[Content_Types].xml", tracker.filenames.get(0));
+      assertEquals("1980-01-01", tracker.modifieddate.get(0).substring(0,10));
+      assertEquals("A7CBC749C317FA432BA2DB5A47131123", tracker.itensmd5.get(0));
+      assertEquals("false", tracker.isfolder.get(0));
+      
+      assertEquals("_rels", tracker.filenames.get(1));
+      assertEquals("1980-01-01", tracker.modifieddate.get(1).substring(0,10));
+      assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
+      assertEquals("true", tracker.isfolder.get(1));
+      
+      
+     
+  }
+  
+
+  
 
 }
