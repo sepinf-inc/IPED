@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 
 public class Messages {
 
-    private static final String BUNDLE_NAME = "iped-api-messages"; //$NON-NLS-1$
+    private static final String BUNDLE_NAME = "iped-parsers-messages"; //$NON-NLS-1$
 
     private static ResourceBundle RESOURCE_BUNDLE;
 

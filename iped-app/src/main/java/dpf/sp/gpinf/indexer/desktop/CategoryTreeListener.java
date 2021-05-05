@@ -72,7 +72,11 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     }
 
     private void addCategoryToQuery(Category category, Builder builder) {
-        String name = IndexItem.normalize(category.name, true);
+        String name = category.name;
+        char[] input = name.toLowerCase().toCharArray();
+        char[] output = new char[input.length * 4];
+        int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+        name = (new String(output, 0, len)).trim();
         builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
 
         for (Category subcat : category.children) {

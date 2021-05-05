@@ -1,14 +1,10 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -16,7 +12,6 @@ import java.util.stream.Collectors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.document.DateTools;
-import org.apache.lucene.document.IntPoint;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.flexible.standard.StandardQueryParser;
 import org.apache.lucene.queryparser.flexible.standard.config.PointsConfig;
@@ -24,30 +19,20 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
-import org.apache.lucene.search.ConstantScoreQuery;
-import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
-import org.apache.lucene.search.PublicPointRangeQuery;
 import org.apache.lucene.search.PhraseQuery;
-import org.apache.lucene.search.PointRangeQuery;
-import org.apache.lucene.search.PrefixQuery;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
-import org.apache.lucene.search.TermRangeQuery;
-import org.apache.lucene.search.WildcardQuery;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IIPEDSource;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IQueryBuilder;
-import iped3.util.BasicProps;
 
 public class QueryBuilder implements IQueryBuilder {
 
@@ -96,124 +81,6 @@ public class QueryBuilder implements IQueryBuilder {
 
         return result;
 
-    }
-
-    private Term getNonLocalizedTerm(Term term) {
-        String field = getNonLocalizedField(term.field());
-        String value = term.text();
-        if (BasicProps.CATEGORY.equals(field)) {
-            value = getNonLocalizedCategory(value).toLowerCase();
-        }
-        return new Term(field, value);
-    }
-
-    private String getNonLocalizedCategory(String category) {
-        CategoryLocalization categoryLocale = (CategoryLocalization) ConfigurationManager.getInstance()
-                .findObjects(CategoryLocalization.class).iterator().next();
-        return categoryLocale.getNonLocalizedCategory(category);
-    }
-
-    private String getNonLocalizedField(String field) {
-        return BasicProps.getNonLocalizedField(field);
-    }
-
-    public Query getNonLocalizedQuery(Query query) {
-        if (query == null) {
-            return null;
-        }
-        if (query instanceof MatchAllDocsQuery) {
-            return query;
-
-        } else if (query instanceof BooleanQuery) {
-            BooleanQuery.Builder builder = new BooleanQuery.Builder();
-            for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                builder.add(getNonLocalizedQuery(clause.getQuery()), clause.getOccur());
-            }
-            return builder.build();
-
-        } else if (query instanceof BoostQuery) {
-            BoostQuery bq = (BoostQuery) query;
-            return new BoostQuery(getNonLocalizedQuery(bq.getQuery()), bq.getBoost());
-
-        } else if (query instanceof TermQuery) {
-            Term term = ((TermQuery) query).getTerm();
-            return new TermQuery(getNonLocalizedTerm(term));
-
-        } else if (query instanceof PhraseQuery) {
-            PhraseQuery pq = (PhraseQuery) query;
-            PhraseQuery.Builder builder = new PhraseQuery.Builder();
-            builder.setSlop(pq.getSlop());
-            int i = 0;
-
-            if (BasicProps.CATEGORY.equals(getNonLocalizedField(pq.getTerms()[0].field()))) {
-                List<TermAndPos> terms = new ArrayList<>();
-                for (Term term : pq.getTerms()) {
-                    terms.add(new TermAndPos(term, pq.getPositions()[i++]));
-                }
-                Collections.sort(terms);
-                String category = terms.stream().map(t -> t.term.text()).collect(Collectors.joining(" "));
-                category = getNonLocalizedCategory(category).toLowerCase();
-                i = 0;
-                for (String term : category.split(" ")) {
-                    builder.add(new Term(BasicProps.CATEGORY, term), i++);
-                }
-            }else {
-                for (Term term : pq.getTerms()) {
-                    builder.add(getNonLocalizedTerm(term), pq.getPositions()[i++]);
-                }
-            }
-            return builder.build();
-
-        } else if (query instanceof PrefixQuery) {
-            PrefixQuery pq = (PrefixQuery) query;
-            return new PrefixQuery(getNonLocalizedTerm(pq.getPrefix()));
-
-        } else if (query instanceof WildcardQuery) {
-            WildcardQuery q = (WildcardQuery) query;
-            return new WildcardQuery(getNonLocalizedTerm(q.getTerm()));
-
-        } else if (query instanceof FuzzyQuery) {
-            FuzzyQuery q = (FuzzyQuery) query;
-            return new FuzzyQuery(getNonLocalizedTerm(q.getTerm()), q.getMaxEdits(), q.getPrefixLength(),
-                    FuzzyQuery.defaultMaxExpansions, q.getTranspositions());
-
-        } else if (query instanceof RegexpQuery) {
-            RegexpQuery q = (RegexpQuery) query;
-            return new RegexpQuery(getNonLocalizedTerm(q.getRegexp()));
-
-        } else if (query instanceof TermRangeQuery) {
-            TermRangeQuery q = (TermRangeQuery) query;
-            return new TermRangeQuery(getNonLocalizedField(q.getField()), q.getLowerTerm(), q.getUpperTerm(),
-                    q.includesLower(), q.includesUpper());
-
-        } else if (query instanceof PointRangeQuery) {
-            PointRangeQuery q = (PointRangeQuery) query;
-            return new PublicPointRangeQuery(getNonLocalizedField(q.getField()), q);
-
-        } else if (query instanceof ConstantScoreQuery) {
-            ConstantScoreQuery q = (ConstantScoreQuery) query;
-            return new ConstantScoreQuery(getNonLocalizedQuery(q.getQuery()));
-
-        } else {
-            // TODO: handle MultiPhraseQuery and DisjunctionMaxQuery
-            throw new RuntimeException(query.getClass().getSimpleName() + " not handled currently");
-        }
-
-    }
-
-    private class TermAndPos implements Comparable<TermAndPos> {
-        Term term;
-        int position;
-
-        TermAndPos(Term term, int position) {
-            this.term = term;
-            this.position = position;
-        }
-
-        @Override
-        public int compareTo(TermAndPos o) {
-            return Integer.compare(this.position, o.position);
-        }
     }
 
     public Set<String> getQueryStrings(String queryText) {
@@ -265,17 +132,19 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
             parser.setPointsConfigMap(getPointsConfigMap());
 
-            // remove acentos, pois StandardQueryParser não normaliza wildcardQueries
+            // remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
             AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                     .findObjects(AdvancedIPEDConfig.class).iterator().next();
             if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
-                texto = IndexItem.normalize(texto, false);
+                char[] input = texto.toCharArray();
+                char[] output = new char[input.length * 4];
+                int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+                texto = (new String(output, 0, len)).trim();
             }
 
             try {
                 Query q = parser.parse(texto, null);
                 q = handleNegativeQueries(q, analyzer);
-                q = getNonLocalizedQuery(q);
                 return q;
                 
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
@@ -326,7 +195,6 @@ public class QueryBuilder implements IQueryBuilder {
         PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
         pointsConfigMap.put(IndexItem.LENGTH, configLong);
-        pointsConfigMap.put(IndexItem.getLocalizedField(IndexItem.LENGTH), configLong);
         pointsConfigMap.put(IndexItem.ID, configInt);
         pointsConfigMap.put(IndexItem.SLEUTHID, configInt);
         pointsConfigMap.put(IndexItem.PARENTID, configInt);
