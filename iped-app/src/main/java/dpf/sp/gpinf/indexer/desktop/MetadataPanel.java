@@ -317,8 +317,9 @@ public class MetadataPanel extends JPanel
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields)
-                props.addItem(f);
+            for (String f : fields) {
+                props.addItem(BasicProps.getLocalizedField(f));
+            }
         }
         updatingProps = false;
     }
@@ -576,7 +577,7 @@ public class MetadataPanel extends JPanel
             sortAndUpdateList(filteredArray);
             return;
         }
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         loadDocValues(field);
 
@@ -913,7 +914,7 @@ public class MetadataPanel extends JPanel
         }
 
         String field = (String) props.getSelectedItem();
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
         for (ValueCount value : list.getSelectedValuesList()) {
