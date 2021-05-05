@@ -46,7 +46,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
@@ -105,6 +104,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
+            col = BasicProps.getLocalizedField(col);
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
         }
 
