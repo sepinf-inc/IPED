@@ -1,25 +1,25 @@
 function openIfExists(url2, url1){
     if (navigator.userAgent.search("JavaFX") >= 0) return;
-    var img1 = new Image();
+    const img1 = new Image();
     img1.onload = () => window.location = url1;
     img1.onerror = () => window.location = url2;
     img1.src = url1;
 }
 
-function createMediaElement(elementType, imgElement) {
-    var mediaElement = document.createElement(elementType);
-    var controls = document.createAttribute("controls");
+function createMediaElement(elementType, el) {
+    const mediaElement = document.createElement(elementType);
+    const controls = document.createAttribute("controls");
     mediaElement.setAttributeNode(controls);
-    var src1 = imgElement.getAttribute("data-src1");
+    const src1 = el.getAttribute("data-src1");
     if (src1) {
-        var src1Attr = document.createAttribute("src");
+        const src1Attr = document.createAttribute("src");
         src1Attr.value = src1;
         mediaElement.setAttributeNode(src1Attr); 
     }
-    var src2 = imgElement.getAttribute("data-src2");
+    const src2 = el.getAttribute("data-src2");
     if (src2) {
-        var sourceElement = document.createElement("source");
-        var src2Attr = document.createAttribute("src");
+        const sourceElement = document.createElement("source");
+        const src2Attr = document.createAttribute("src");
         src2Attr.value = src2;
         sourceElement.setAttributeNode(src2Attr);
         mediaElement.appendChild(sourceElement);
@@ -29,12 +29,8 @@ function createMediaElement(elementType, imgElement) {
 
 function createMediaControls() {
     document.querySelectorAll(".iped-video, .iped-audio").forEach((el) => {
-        var mediaType = "video";
-        if (el.className.search("iped-audio") >= 0) {
-            mediaType = "audio";
-        }
-        var mediaElement = createMediaElement(mediaType, el);
-        el.replaceWith(mediaElement);
+        const mediaType = el.classList.contains("iped-audio") ? "audio" : "video";
+        el.replaceWith(createMediaElement(mediaType, el));
     });
     document.querySelectorAll("input.check").forEach((el) => {
         el.remove();
