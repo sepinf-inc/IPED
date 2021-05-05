@@ -34,6 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
@@ -208,6 +209,9 @@ public class Configuration {
 
         LocaleConfig localeConfig = new LocaleConfig();
         configManager.addObject(localeConfig);
+
+        CategoryLocalization categoryLocalization = new CategoryLocalization();
+        configManager.addObject(categoryLocalization);
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
