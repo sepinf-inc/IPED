@@ -1,14 +1,14 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.AUDIO_MESSAGE;
-import static dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType.IMAGE_MESSAGE;
-
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -17,6 +17,7 @@ import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
+import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -129,7 +130,7 @@ public class ReportGenerator {
         printMessageFile(printWriter, c.getTitle(), c.getPrintId(), c.getRemote().getAvatar(), () -> {
             ByteArrayOutputStream bout = new ByteArrayOutputStream();
             PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8)); // $NON-NLS-1$
-            if(c.getRecoveredFrom()!=null) {
+            if (c.getRecoveredFrom() != null) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + Messages.getString("WhatsAppReport.RecoveredFrom") + " " + c.getRecoveredFrom()
                         + "</div></div>");
@@ -163,7 +164,8 @@ public class ReportGenerator {
         return chatBytes.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory, WAAccount account) {
+    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory,
+            WAAccount account) {
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
@@ -274,10 +276,16 @@ public class ReportGenerator {
                 break;
 
             default:
-                List<IItemBase> result = null;
-                String onclick = null;
+                IItemBase mediaItem = null;
                 byte[] thumb = null;
                 String name = null, number = null;
+                String query = null;
+                String escapedQuery = null;
+                String exportPath = null;
+                String mediaHash = null;
+                String mediaName = null;
+                long mediaSize = 0L;
+
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
                     if (account != null) {
@@ -354,54 +362,112 @@ public class ReportGenerator {
                     case AUDIO_MESSAGE:
                     case VIDEO_MESSAGE:
                     case GIF_MESSAGE:
-                        if (message.getMediaHash() != null) {
-                            onclick = "app.open(\"sha-256:" + message.getMediaHash() + "\") "; //$NON-NLS-1$ //$NON-NLS-2$
-                            result = dpf.sp.gpinf.indexer.parsers.util.Util
-                                    .getItems("sha-256:" + message.getMediaHash(), searcher); //$NON-NLS-1$
-                        } else if (message.getMediaName() != null && !message.getMediaName().isEmpty()) {
-                            String mediaName = message.getMediaName();
+                    case IMAGE_MESSAGE:
+                    case APP_MESSAGE:
+                    case STICKER_MESSAGE:
+
+                        // Create query for finding the media file
+                        mediaHash = message.getMediaHash();
+                        mediaName = message.getMediaName();
+                        mediaSize = message.getMediaSize();
+
+                        if (mediaHash != null) {
+                            query = "sha-256:" + mediaHash;
+                            escapedQuery = "'" + query + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+                        } else if (mediaName != null && !mediaName.isEmpty()) {
                             if (mediaName.contains("/")) { //$NON-NLS-1$
                                 mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
                             }
                             if (searcher != null)
                                 mediaName = searcher.escapeQuery(mediaName);
-                            String query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    + message.getMediaSize();
-                            onclick = "\"app.open(" //$NON-NLS-1$
-                                    + SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"") + ")\" "; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-                            if (searcher != null)
-                                result = searcher.search(query);
+                            query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                    + mediaSize;
+                            escapedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                         }
 
-                        if (result != null && !result.isEmpty()) {
-                            String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(result.get(0));
-                            if (!exportPath.isEmpty()) {
-                                if (onclick != null) {
-                                    String onCheck = onclick.replaceFirst(".open", ".check").replace("\")",
-                                            "\",this.checked)");
-                                    out.println("<input class=\"check\" type=\"checkbox\" onclick=" + onCheck
-                                            + " name=\"" + result.get(0).getHash() + "\" />");
+                        // look for the media file
+                        List<IItemBase> result = Collections.emptyList();
+
+                        if (mediaHash != null) {
+                            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher); // $NON-NLS-1$
+                            if (!result.isEmpty()) {
+                                mediaItem = result.get(0);
+                            } else if (mediaName != null && !mediaName.isEmpty()) {
+                                // item not found by hash. It is possible that the the file has been padded with
+                                // zeros
+                                // see https://github.com/sepinf-inc/IPED/issues/486
+                                // try to to find by name and by approximate size, then check hash
+
+                                if (mediaName.contains("/")) { //$NON-NLS-1$
+                                    mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
                                 }
-                                out.println("<a "); //$NON-NLS-1$
-                                if (onclick != null)
-                                    out.println("onclick=" + onclick); //$NON-NLS-1$
-                                out.println(" href=\"" + exportPath + "\">"); //$NON-NLS-1$ //$NON-NLS-2$
-                                String source;
-                                if (message.getMessageType() == AUDIO_MESSAGE) {
+                                if (searcher != null)
+                                    mediaName = searcher.escapeQuery(mediaName);
+                                query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":[" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                        + (mediaSize + 1) + " TO " + (mediaSize + 15) + "]";
+
+                                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
+
+                                if (!result.isEmpty()) {
+                                    // check hash
+                                    for (IItemBase item : result) {
+                                        if (itemStreamEndsWithZeros(item, mediaSize)) {
+                                            mediaItem = item;
+                                            // change the query, as the sha-256 hash of the media file won't match in
+                                            // this case
+                                            query = "hash:" + item.getHash(); //$NON-NLS-1$
+                                            escapedQuery = "'" + query + "'"; //$NON-NLS-1$ //$NON-NLS-2$
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        } else if (mediaName != null && !mediaName.isEmpty()) {
+                            if (searcher != null)
+                                result = searcher.search(query);
+                            if (!result.isEmpty()) {
+                                mediaItem = result.get(0);
+                            }
+                        }
+
+                        // generate output
+
+                        if (mediaItem != null) {
+                            exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(mediaItem);
+                        }
+
+                        if (query != null) {
+                            if (mediaItem != null) {
+                                out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check("
+                                        + escapedQuery + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\"/>");
+                            }
+                            out.println("<a onclick=\"app.open(" + escapedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
+
+                            if (exportPath != null && !exportPath.isEmpty()) {
+                                out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                            }
+                            out.println(">"); //$NON-NLS-1$
+                        }
+
+                        thumb = message.getThumbData();
+
+                        if (mediaItem != null) { // media file found
+                            if (thumb == null)
+                                thumb = mediaItem.getThumb();
+
+                            if (message.getMessageType() == MessageType.AUDIO_MESSAGE
+                                    || message.getMessageType() == MessageType.VIDEO_MESSAGE
+                                    || message.getMessageType() == MessageType.GIF_MESSAGE) {
+                                String source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(mediaItem)
+                                        .orElse("");
+                                if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
-                                    source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(result.get(0))
-                                            .orElse("");
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
                                             + " title=\"Audio\" " + "data-src1=\"" + exportPath + "\" " + "data-src2=\"" //$NON-NLS-4$
                                             + source + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
-                                    thumb = message.getThumbData();
-                                    if (thumb == null && result != null && !result.isEmpty())
-                                        thumb = result.get(0).getThumb();
-                                    source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(result.get(0))
-                                            .orElse("");
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -416,11 +482,10 @@ public class ReportGenerator {
                                     }
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
-                                String transcription = result.get(0).getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
+                                String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
                                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
-                                    String confidence = result.get(0).getMetadata()
-                                            .get(ExtraProperties.CONFIDENCE_ATTR);
+                                    String confidence = mediaItem.getMetadata().get(ExtraProperties.CONFIDENCE_ATTR);
                                     if (confidence != null) {
                                         float score = Float.valueOf(confidence) * 100;
                                         out.print(" [" + (int) score + "%]"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -429,91 +494,70 @@ public class ReportGenerator {
                                     out.println(transcription);
                                     out.println("</i><br/>"); //$NON-NLS-1$
                                 }
-                            }
-
-                        } else {
-                            out.println("<a onclick=" + onclick + ">"); //$NON-NLS-1$
-                            if (message.getMessageType() == AUDIO_MESSAGE) {
-                                out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
                             } else {
-                                out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
-                            }
-                            out.println("</a>"); //$NON-NLS-1$
-                        }
-                        if (message.getMediaCaption() != null)
-                            out.println("<br>" + message.getMediaCaption() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                        break;
-                    case IMAGE_MESSAGE:
-                    case APP_MESSAGE:
-                    case STICKER_MESSAGE:
-                        String linkParam = null;
-                        String exportPath = null;
-                        String quote = "";
-                        if (message.getMediaHash() != null) {
-                            linkParam = "\"sha-256:" + message.getMediaHash() + "\"";
-                            result = dpf.sp.gpinf.indexer.parsers.util.Util
-                                    .getItems("sha-256:" + message.getMediaHash(), searcher); //$NON-NLS-1$
-                            if (result != null && !result.isEmpty()) {
-                                exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(result.get(0));
-                            }
-                        } else if (message.getMediaName() != null && !message.getMediaName().isEmpty()) {
-                            String mediaName = message.getMediaName();
-                            if (mediaName.contains("/")) { //$NON-NLS-1$
-                                mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
-                            }
-                            if (searcher != null)
-                                mediaName = searcher.escapeQuery(mediaName);
-                            String query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    + message.getMediaSize();
-                            linkParam = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            quote = "\"";
-                            if (searcher != null)
-                                result = searcher.search(query);
-                            if (result != null && !result.isEmpty()) {
-                                exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(result.get(0));
-                            }
-                        }
-                        if (linkParam != null) {
-                            if (result != null && !result.isEmpty()) {
-                                out.println("<input class=\"check\" type=\"checkbox\" onclick=" + quote + "app.check("
-                                        + linkParam + ",this.checked)" + quote + " name=\"" + result.get(0).getHash()
-                                        + "\"/>");
-                            }
-                            out.println("<a onclick=" + quote + "app.open(" + linkParam + ")" + quote + " "); //$NON-NLS-1$ //$NON-NLS-2$
-                        }
-                        if (exportPath != null && !exportPath.isEmpty()) {
-                            out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                        }
-                        if (linkParam != null) {
-                            out.println(">"); //$NON-NLS-1$
-                        }
-                        thumb = message.getThumbData();
-                        if (thumb == null && result != null && !result.isEmpty())
-                            thumb = result.get(0).getThumb();
-                        if (thumb != null) {
-                            if (getTitle(message).equals("video")) //$NON-NLS-1$
-                                out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                            out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                            out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                if (thumb != null) {
+                                    if (getTitle(message).equals("video")) //$NON-NLS-1$
+                                        out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
+                                    out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                    out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
-                        } else {
-                            if (message.getMessageType() == IMAGE_MESSAGE) { // $NON-NLS-1$
-                                out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
-                            } else
-                                out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                } else {
+                                    if (message.getMessageType() == MessageType.IMAGE_MESSAGE) { // $NON-NLS-1$
+                                        out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
+                                    } else
+                                        out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                }
+                                out.println("</a><br>"); //$NON-NLS-1$
+                            }
+                        } else { // mediaItem is null (media file not found)
+                            switch (message.getMessageType()) {
+                                case AUDIO_MESSAGE:
+                                    out.println("<div class=\"audioImg\" title=\"Audio\"></div>"); //$NON-NLS-1$
+                                    break;
+                                case VIDEO_MESSAGE:
+                                case GIF_MESSAGE:
+                                    if (thumb != null) {
+                                        out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
+                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    } else {
+                                        out.println("<div class=\"videoImg\" title=\"Video\"></div>"); //$NON-NLS-1$
+                                    }
+                                    break;
+                                case STICKER_MESSAGE:
+                                case IMAGE_MESSAGE:
+                                case APP_MESSAGE:
+                                    if (thumb != null) {
+                                        if (getTitle(message).equals("video")) //$NON-NLS-1$
+                                            out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
+                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
+
+                                    } else if (message.getMessageType() == MessageType.APP_MESSAGE) {
+                                        out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
+                                    } else {
+                                        out.println("<div class=\"imageImg\" title=\"Image\"></div>"); //$NON-NLS-1$
+                                    }
+                                    break;
+                                default:
+                            }
+
+                            if (query != null) {
+                                out.println("</a><br>"); //$NON-NLS-1$
+                            }
                         }
-                        if (linkParam != null) {
-                            out.println("</a>"); //$NON-NLS-1$
-                        }
+
                         if (message.getMediaCaption() != null)
                             out.println("<br>" + message.getMediaCaption() + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
                         break;
+
                     default:
                         break;
                 }
-                if (result != null && !result.isEmpty()) {
-                    message.addChildPornSets(ChildPornHashLookup.lookupHash(result.get(0).getHash()));
+                if (mediaItem != null) {
+                    message.addChildPornSets(ChildPornHashLookup.lookupHash(mediaItem.getHash()));
                 }
                 break;
         }
@@ -551,6 +595,32 @@ public class ReportGenerator {
         }
 
         out.println("</div></div>"); //$NON-NLS-1$
+    }
+
+    /**
+     * Check it the media file is padded with zeros (check if all bytes beyond
+     * mediaSize are zeros)
+     * 
+     * @param item
+     * @param mediaSize
+     * @return
+     */
+    private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
+        try {
+            InputStream is = item.getBufferedStream();
+            is.skip(mediaSize);
+            int b;
+            // this loop will run at most 15 times
+            while ((b = is.read()) >= 0) {
+                if (b > 0) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (IOException ex) {
+
+        }
+        return false;
     }
 
     public static String formatMMSS(int duration) {
