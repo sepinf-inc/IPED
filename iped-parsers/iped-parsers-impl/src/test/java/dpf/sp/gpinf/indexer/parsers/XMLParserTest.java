@@ -1,14 +1,11 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.InputStream;
-
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
-
-
 import junit.framework.TestCase;
 
 public class XMLParserTest extends TestCase {
@@ -24,7 +21,7 @@ public class XMLParserTest extends TestCase {
             Metadata metadata = new Metadata();
             ContentHandler handler = new BodyContentHandler();
             ParseContext context = new ParseContext();
-            InputStream stream = getStream("test-files/testXML.xml");
+            InputStream stream = getStream("test-files/test_xml.xml");
             parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
             
@@ -48,7 +45,7 @@ public class XMLParserTest extends TestCase {
     
     @Test
     public void testXMLParserNonAsciiChars() throws Exception {
-        InputStream stream = getStream("test-files/testXML.xml");
+        InputStream stream = getStream("test-files/test_xml.xml");
         Metadata metadata = new Metadata();
         XMLParser parser = new XMLParser();
         ParseContext context = new ParseContext();

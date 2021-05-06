@@ -1,10 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -12,7 +9,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import junit.framework.TestCase;
 
 public class RegistryParserTest extends TestCase{
@@ -29,7 +25,7 @@ public class RegistryParserTest extends TestCase{
 //        Metadata metadata = new Metadata();
 //        ContentHandler handler = new BodyContentHandler(28000000);
 //        ParseContext context = new ParseContext();
-//        InputStream stream = getStream("test-files/SOFTWARE");
+//        InputStream stream = getStream("test-files/test_software");
 //        metadata.set(Metadata.RESOURCE_NAME_KEY, "software");
 //        parser.getSupportedTypes(context);
 //        parser.parse(stream, handler, metadata, context);
@@ -48,7 +44,7 @@ public class RegistryParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/SAM");
+        InputStream stream = getStream("test-files/test_sam");
         parser.getSupportedTypes(context);
         metadata.set(Metadata.RESOURCE_NAME_KEY, "sam");
         parser.parse(stream, handler, metadata, context);
@@ -67,7 +63,7 @@ public class RegistryParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/SECURITY");
+        InputStream stream = getStream("test-files/test_security");
         metadata.set(Metadata.RESOURCE_NAME_KEY, "security");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
@@ -87,7 +83,7 @@ public class RegistryParserTest extends TestCase{
 //        Metadata metadata = new Metadata();
 //        ContentHandler handler = new BodyContentHandler(6000000);
 //        ParseContext context = new ParseContext();
-//        InputStream stream = getStream("test-files/SYSTEM");
+//        InputStream stream = getStream("test-files/test_system");
 //        metadata.set(Metadata.RESOURCE_NAME_KEY, "system");
 //        parser.getSupportedTypes(context);
 //        parser.parse(stream, handler, metadata, context);

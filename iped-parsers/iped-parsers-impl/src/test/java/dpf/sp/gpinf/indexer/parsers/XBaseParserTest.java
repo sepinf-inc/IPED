@@ -1,10 +1,8 @@
 package dpf.sp.gpinf.indexer.parsers;
 
 import static org.junit.Assert.assertTrue;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -22,7 +20,7 @@ public class XBaseParserTest {
     @Test
     public void XbaseParserTestContent() throws IOException, SAXException, TikaException {
 
-        InputStream stream = getStream("test-files/testDBF.dbf");
+        InputStream stream = getStream("test-files/test_dbf.dbf");
         XBaseParser parser = new XBaseParser();
         ParseContext context = new ParseContext();
         BodyContentHandler handler = new BodyContentHandler(); 
@@ -52,7 +50,7 @@ public class XBaseParserTest {
     @Test
     public void XbaseParserTestContentNonAscii() throws IOException, SAXException, TikaException {
 
-        InputStream stream = getStream("test-files/testDBF.dbf");
+        InputStream stream = getStream("test-files/test_dbf.dbf");
         XBaseParser parser = new XBaseParser();
         ParseContext context = new ParseContext();
         BodyContentHandler handler = new BodyContentHandler(); 

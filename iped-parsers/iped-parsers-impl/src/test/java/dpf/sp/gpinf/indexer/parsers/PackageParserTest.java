@@ -1,19 +1,15 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 
 public class PackageParserTest extends AbstractPkgTest{
 
@@ -27,7 +23,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mockzip.zip");
+        InputStream stream = getStream("test-files/test_mockZip.zip");
         parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         
@@ -47,7 +43,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mockzip.zip");
+        InputStream stream = getStream("test-files/test_mockZip.zip");
         parser.getSupportedTypes(trackingContext);
         parser.parse(stream, handler, metadata, trackingContext);
         
@@ -124,7 +120,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mocktar.tar");
+        InputStream stream = getStream("test-files/test_mockTar.tar");
         parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         
@@ -142,7 +138,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mocktar.tar");
+        InputStream stream = getStream("test-files/test_mockTar.tar");
         parser.getSupportedTypes(trackingContext);
         parser.parse(stream, handler, metadata, trackingContext);
         
@@ -218,7 +214,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mock7z_2.7z");
+        InputStream stream = getStream("test-files/test_mock7z_2.7z");
         parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         
@@ -236,7 +232,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mock7z_2.7z");
+        InputStream stream = getStream("test-files/test_mock7z_2.7z");
         parser.getSupportedTypes(trackingContext);
         parser.parse(stream, handler, metadata, trackingContext);
         
@@ -319,7 +315,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = spy(new Metadata());
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/testJar.jar");
+        InputStream stream = getStream("test-files/test_jar.jar");
         parser.getSupportedTypes(recursingContext);
         when(metadata.get(Metadata.CONTENT_TYPE)).thenReturn("application/java");
         parser.parse(stream, handler, metadata, recursingContext);
@@ -343,7 +339,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/testJar.jar");
+        InputStream stream = getStream("test-files/test_jar.jar");
         parser.getSupportedTypes(trackingContext);
         parser.parse(stream, handler, metadata, trackingContext);
         
@@ -377,7 +373,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mockarc.arj");
+        InputStream stream = getStream("test-files/test_mockArc.arj");
         parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         String hts = handler.toString();
@@ -396,7 +392,7 @@ public class PackageParserTest extends AbstractPkgTest{
         PackageParser parser = new PackageParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mockarc.arj");
+        InputStream stream = getStream("test-files/test_mockArc.arj");
         parser.getSupportedTypes(trackingContext);
         parser.parse(stream, handler, metadata, trackingContext);
         assertEquals(6, tracker.filenames.size());
@@ -437,7 +433,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/mockarc.ar");
+      InputStream stream = getStream("test-files/test_mockArc.ar");
       parser.getSupportedTypes(recursingContext);
       parser.parse(stream, handler, metadata, recursingContext);
       String hts = handler.toString();
@@ -456,7 +452,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/mockarc.arj");
+      InputStream stream = getStream("test-files/test_mockArc.ar");
       parser.getSupportedTypes(trackingContext);
       parser.parse(stream, handler, metadata, trackingContext);
       assertEquals(6, tracker.filenames.size());
@@ -497,7 +493,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/testCpio.cpio");
+      InputStream stream = getStream("test-files/test_cpio.cpio");
       parser.getSupportedTypes(recursingContext);
       parser.parse(stream, handler, metadata, recursingContext);
       String hts = handler.toString();
@@ -518,7 +514,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/testCpio.cpio");
+      InputStream stream = getStream("test-files/test_cpio.cpio");
       parser.getSupportedTypes(trackingContext);
       parser.parse(stream, handler, metadata, trackingContext);
       assertEquals(8, tracker.filenames.size());
@@ -567,7 +563,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/mockdoc1.docx");
+      InputStream stream = getStream("test-files/test_mockDoc1.docx");
       parser.getSupportedTypes(recursingContext);
       parser.parse(stream, handler, metadata, recursingContext);
       String hts = handler.toString();
@@ -581,7 +577,7 @@ public class PackageParserTest extends AbstractPkgTest{
       PackageParser parser = new PackageParser();
       Metadata metadata = new Metadata();
       ContentHandler handler = new BodyContentHandler();
-      InputStream stream = getStream("test-files/mockdoc1.docx");
+      InputStream stream = getStream("test-files/test_mockDoc1.docx");
       parser.getSupportedTypes(trackingContext);
       parser.parse(stream, handler, metadata, trackingContext);
       assertEquals(17, tracker.filenames.size());

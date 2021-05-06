@@ -1,10 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -13,7 +10,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
 import junit.framework.TestCase;
 
 public class ImageOCRMetadataParserTest extends TestCase{
@@ -29,7 +25,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenajpeg.jpg");
+        InputStream stream = getStream("test-files/test_lenaJpeg.jpg");
         metadata.set(Metadata.CONTENT_TYPE, "image/jpeg");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
@@ -47,7 +43,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenapng.png");
+        InputStream stream = getStream("test-files/test_lenaPng.png");
         metadata.set(Metadata.CONTENT_TYPE, "image/png");
         //tiff
         parser.parse(stream, handler, metadata, context);
@@ -64,7 +60,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenatiff.tiff");
+        InputStream stream = getStream("test-files/test_lenaTiff.tiff");
         metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
         parser.parse(stream, handler, metadata, context);
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
@@ -81,7 +77,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenabmp.bmp");
+        InputStream stream = getStream("test-files/test_lenaBmp.bmp");
         metadata.set(Metadata.CONTENT_TYPE, "image/bmp");
         parser.parse(stream, handler, metadata, context);
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
@@ -97,7 +93,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenajp2.jp2");
+        InputStream stream = getStream("test-files/test_lenaJp2.jp2");
         metadata.set(Metadata.CONTENT_TYPE, "image/jp2");
         parser.parse(stream, handler, metadata, context);
         
@@ -110,7 +106,7 @@ public class ImageOCRMetadataParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_horsegif.gif");
+        InputStream stream = getStream("test-files/test_horseGif.gif");
         metadata.set(Metadata.CONTENT_TYPE, "image/gif");
         parser.parse(stream, handler, metadata, context);
         assertEquals("342", metadata.get(Metadata.IMAGE_LENGTH));

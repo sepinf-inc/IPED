@@ -4,21 +4,20 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
-
-
-
-
 import java.io.InputStream;
 
-
 public class RARParserTest  extends AbstractPkgTest {
+    
+    private static InputStream getStream(String name) {
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    }
     
     @Test
     public void testSevenZipRAR4Parsing() throws Exception {
         RARParser parser = new RARParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
-        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar4.rar");
+        InputStream stream = getStream("test-files/test_mockRar4.rar");
         parser.getSupportedTypes(recursingContext);
         parser.parse(stream, handler, metadata, recursingContext);
         stream.close();
@@ -85,7 +84,7 @@ public class RARParserTest  extends AbstractPkgTest {
         RARParser parser = new RARParser(); // Should auto-detect!
         ContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
-        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar4.rar");
+        InputStream stream = getStream("test-files/test_mockRar4.rar");
         parser.parse(stream, handler, metadata, trackingContext);
         stream.close();
         

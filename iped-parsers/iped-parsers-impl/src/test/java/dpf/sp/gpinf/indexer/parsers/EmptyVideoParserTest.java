@@ -1,9 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -11,7 +9,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import junit.framework.TestCase;
 
 public class EmptyVideoParserTest extends TestCase{
@@ -26,7 +23,7 @@ public class EmptyVideoParserTest extends TestCase{
         EmptyVideoParser parser = new EmptyVideoParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/testvideomp4.mp4");
+        InputStream stream = getStream("test-files/test_videoMp4.mp4");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);

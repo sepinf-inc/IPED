@@ -1,10 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -12,7 +9,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import junit.framework.TestCase;
 
 public class KnownMetParserTest extends TestCase{

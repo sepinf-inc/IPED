@@ -4,21 +4,22 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
-
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
-
 import java.io.InputStream;
 
-
 public class SevenZipParserTest  extends AbstractPkgTest {
+    
+    private static InputStream getStream(String name) {
+        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    }
 
     @Test
     public void testSevenZipRAR5Parsing() throws Exception {
         SevenZipParser parser = new SevenZipParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata mockedMetadata = spy(new Metadata());
-        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar5.rar");
+        InputStream stream = getStream("test-files/test_mockRar5.rar");
         String mimetype = "application/x-rar-compressed";
         when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
         parser.getSupportedTypes(recursingContext);
@@ -86,7 +87,7 @@ public class SevenZipParserTest  extends AbstractPkgTest {
         SevenZipParser parser = new SevenZipParser();
         ContentHandler handler = new BodyContentHandler();
         Metadata mockedMetadata = spy(new Metadata());
-        InputStream stream = SevenZipParserTest.class.getResourceAsStream("/test-files/mockrar5.rar");
+        InputStream stream = getStream("test-files/test_mockRar5.rar");
         String mimetype = "application/x-rar-compressed";
         when(mockedMetadata.get(Metadata.CONTENT_TYPE)).thenReturn(mimetype);
         parser.parse(stream, handler, mockedMetadata, trackingContext);

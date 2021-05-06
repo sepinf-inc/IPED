@@ -1,11 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -15,18 +11,13 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
-
-    
 public class OutlookPSTParserTest extends AbstractPkgTest{
     
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
     
-    
-    
-    
+
     @Test
     public void testOutlookPSTParser() throws IOException, SAXException, TikaException{
         OutlookPSTParser parser = new OutlookPSTParser();

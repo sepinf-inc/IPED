@@ -1,9 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -13,7 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
 import junit.framework.TestCase;
 
 public class PDFOCRTextParserTest extends TestCase{
@@ -21,7 +18,6 @@ public class PDFOCRTextParserTest extends TestCase{
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-   
     
     @Test
     public void testPDFOCRTextParsing() throws IOException, SAXException, TikaException{
@@ -30,13 +26,13 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_protected.pdf");
+        InputStream stream = getStream("test-files/test_pdfProtected.pdf");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings({ "deprecation", "static-access" })
     @Test
     public void testPDFOCRTextEmbbedMetadata() throws IOException, SAXException, TikaException{
 
@@ -44,7 +40,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_protected.pdf");
+        InputStream stream = getStream("test-files/test_pdfProtected.pdf");
         parser.parse(stream, handler, metadata, context);
         assertEquals("Rethinking the Financial Network, Speech by Andrew G Haldane,"
                 + " Executive Director, Financial Stability delivered at the Financial"
@@ -65,7 +61,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_protected.pdf");
+        InputStream stream = getStream("test-files/test_pdfProtected.pdf");
         parser.parse(stream, handler, metadata, context);
         String bodyText = handler.toString();
         assertTrue(bodyText.contains("RETHINKING THE FINANCIAL NETWORK"));
@@ -81,7 +77,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_resumes.pdf");
+        InputStream stream = getStream("test-files/test_pdfResumes.pdf");
         parser.parse(stream, handler, metadata, context);
         
         
@@ -95,7 +91,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_resumes.pdf");
+        InputStream stream = getStream("test-files/test_pdfResumes.pdf");
         parser.parse(stream, handler, metadata, context);
         String bodyText = handler.toString();
         assertTrue(bodyText.contains("Freshman Resume"));
@@ -113,12 +109,13 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_images.pdf");
+        InputStream stream = getStream("test-files/test_pdfImages.pdf");
         parser.parse(stream, handler, metadata, context);
 
         
         
     }
+    @SuppressWarnings({ "deprecation", "static-access" })
     @Test
     public void testPDFOCRTextImagesEmbbedMetadata() throws IOException, SAXException, TikaException{
 
@@ -126,7 +123,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_images.pdf");
+        InputStream stream = getStream("test-files/test_pdfImages.pdf");
         parser.parse(stream, handler, metadata, context);
         assertEquals("g2free.lo", metadata.get(TikaCoreProperties.TITLE));
         assertEquals("QuarkXPress(tm) 4.11", metadata.get(TikaCoreProperties.CREATOR_TOOL));
@@ -142,7 +139,7 @@ public class PDFOCRTextParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/testPDF_images.pdf");
+        InputStream stream = getStream("test-files/test_pdfImages.pdf");
         parser.parse(stream, handler, metadata, context);
         String bodyText = handler.toString();
         assertTrue(bodyText.contains("Polygon-based representations of 3D"));

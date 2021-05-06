@@ -1,9 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.commons.lang.StringUtils;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -15,7 +13,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-
 import junit.framework.TestCase;
 
 public class MSAccessParserTest extends TestCase{
@@ -30,17 +27,18 @@ public class MSAccessParserTest extends TestCase{
             Metadata metadata = new Metadata();
             ContentHandler handler = new DefaultHandler();
             ParseContext context = new ParseContext();
-            InputStream stream = getStream("test-files/testMDBCampaign_Template.mdb");
+            InputStream stream = getStream("test-files/test_mdb.mdb");
             parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
 
 
     }
     
+    @SuppressWarnings({ "deprecation", "static-access" })
     @Test
     public void testMSAccessMetadata() throws IOException, SAXException, TikaException{
             
-            String filepath = "test-files/testMDBCampaign_Template.mdb";
+            String filepath = "test-files/test_mdb.mdb";
             MSAccessParser parser = new MSAccessParser();
             Metadata metadata = new Metadata();
             BodyContentHandler handler = new BodyContentHandler();
@@ -60,7 +58,7 @@ public class MSAccessParserTest extends TestCase{
     @Test
     public void testMSAccessHandler() throws IOException, SAXException, TikaException{
             
-            String filepath = "test-files/testMDBCampaign_Template.mdb";
+            String filepath = "test-files/test_mdb.mdb";
             MSAccessParser parser = new MSAccessParser();
             Metadata metadata = new Metadata();
             BodyContentHandler handler = new BodyContentHandler();

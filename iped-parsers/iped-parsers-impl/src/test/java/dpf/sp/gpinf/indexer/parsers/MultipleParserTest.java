@@ -1,10 +1,7 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
 import java.io.IOException;
 import java.io.InputStream;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -12,7 +9,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-
 import junit.framework.TestCase;
 
 public class MultipleParserTest extends TestCase{
@@ -32,7 +28,7 @@ public class MultipleParserTest extends TestCase{
         
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/mockdoc1.docx");
+        InputStream stream = getStream("test-files/test_mockDoc1.docx");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.addParser(parserXML);
@@ -55,7 +51,7 @@ public class MultipleParserTest extends TestCase{
         
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/testvideoflv.flv");
+        InputStream stream = getStream("test-files/test_videoFlv.flv");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.addParser(parserEmptyVideo);
@@ -76,7 +72,7 @@ public class MultipleParserTest extends TestCase{
         
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_lenapng.png");
+        InputStream stream = getStream("test-files/test_lenaPng.png");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.addParser(parserEmptyVideo);
