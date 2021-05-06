@@ -8,8 +8,6 @@ import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.Collections;
-import java.util.List;
 import java.util.function.Supplier;
 
 import org.apache.commons.text.StringSubstitutor;
@@ -20,10 +18,7 @@ import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
-import iped3.search.IItemSearcher;
-import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 /**
@@ -39,12 +34,10 @@ public class ReportGenerator {
     private static final String template = Util.readResourceAsString("wachat-html-template.txt");
     private static final String css = Util.readResourceAsString("css/whatsapp.css");
     private static final String js = Util.readResourceAsString("js/whatsapp.js");
-    private IItemSearcher searcher;
     private boolean firstFragment = true;
     private int currentMsg = 0;
 
-    public ReportGenerator(IItemSearcher searcher) {
-        this.searcher = searcher;
+    public ReportGenerator() {
     }
 
     public int getNextMsgNum() {
@@ -280,11 +273,7 @@ public class ReportGenerator {
                 byte[] thumb = null;
                 String name = null, number = null;
                 String query = null;
-                String escapedQuery = null;
                 String exportPath = null;
-                String mediaHash = null;
-                String mediaName = null;
-                long mediaSize = 0L;
 
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
@@ -365,72 +354,8 @@ public class ReportGenerator {
                     case IMAGE_MESSAGE:
                     case APP_MESSAGE:
                     case STICKER_MESSAGE:
-
-                        // Create query for finding the media file
-                        mediaHash = message.getMediaHash();
-                        mediaName = message.getMediaName();
-                        mediaSize = message.getMediaSize();
-
-                        if (mediaHash != null) {
-                            query = "sha-256:" + mediaHash;
-                            escapedQuery = "'" + query + "'"; //$NON-NLS-1$ //$NON-NLS-2$
-                        } else if (mediaName != null && !mediaName.isEmpty()) {
-                            if (mediaName.contains("/")) { //$NON-NLS-1$
-                                mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
-                            }
-                            if (searcher != null)
-                                mediaName = searcher.escapeQuery(mediaName);
-                            query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                    + mediaSize;
-                            escapedQuery = SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\""); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-                        }
-
-                        // look for the media file
-                        List<IItemBase> result = Collections.emptyList();
-
-                        if (mediaHash != null) {
-                            result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher); // $NON-NLS-1$
-                            if (!result.isEmpty()) {
-                                mediaItem = result.get(0);
-                            } else if (mediaName != null && !mediaName.isEmpty()) {
-                                // item not found by hash. It is possible that the the file has been padded with
-                                // zeros
-                                // see https://github.com/sepinf-inc/IPED/issues/486
-                                // try to to find by name and by approximate size, then check hash
-
-                                if (mediaName.contains("/")) { //$NON-NLS-1$
-                                    mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
-                                }
-                                if (searcher != null)
-                                    mediaName = searcher.escapeQuery(mediaName);
-                                query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":[" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                                        + (mediaSize + 1) + " TO " + (mediaSize + 15) + "]";
-
-                                result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
-
-                                if (!result.isEmpty()) {
-                                    // check hash
-                                    for (IItemBase item : result) {
-                                        if (itemStreamEndsWithZeros(item, mediaSize)) {
-                                            mediaItem = item;
-                                            // change the query, as the sha-256 hash of the media file won't match in
-                                            // this case
-                                            query = "hash:" + item.getHash(); //$NON-NLS-1$
-                                            escapedQuery = "'" + query + "'"; //$NON-NLS-1$ //$NON-NLS-2$
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                        } else if (mediaName != null && !mediaName.isEmpty()) {
-                            if (searcher != null)
-                                result = searcher.search(query);
-                            if (!result.isEmpty()) {
-                                mediaItem = result.get(0);
-                            }
-                        }
-
-                        // generate output
+                        mediaItem = message.getMediaItem();
+                        query = message.getMediaQuery();
 
                         if (mediaItem != null) {
                             exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(mediaItem);
@@ -438,10 +363,11 @@ public class ReportGenerator {
 
                         if (query != null) {
                             if (mediaItem != null) {
-                                out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check("
-                                        + escapedQuery + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\"/>");
+                                out.println(
+                                        "<input class=\"check\" type=\"checkbox\" onclick=\"app.check(" + query
+                                                + ",this.checked)\"" + " name=\"" + mediaItem.getHash() + "\"/>");
                             }
-                            out.println("<a onclick=\"app.open(" + escapedQuery + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
+                            out.println("<a onclick=\"app.open(" + query + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
 
                             if (exportPath != null && !exportPath.isEmpty()) {
                                 out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -597,32 +523,6 @@ public class ReportGenerator {
         out.println("</div></div>"); //$NON-NLS-1$
     }
 
-    /**
-     * Check it the media file is padded with zeros (check if all bytes beyond
-     * mediaSize are zeros)
-     * 
-     * @param item
-     * @param mediaSize
-     * @return
-     */
-    private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
-        try {
-            InputStream is = item.getBufferedStream();
-            is.skip(mediaSize);
-            int b;
-            // this loop will run at most 15 times
-            while ((b = is.read()) >= 0) {
-                if (b > 0) {
-                    return false;
-                }
-            }
-            return true;
-        } catch (IOException ex) {
-
-        }
-        return false;
-    }
-
     public static String formatMMSS(int duration) {
         return String.format("%02d:%02d", duration / 60, duration % 60); //$NON-NLS-1$
     }
@@ -664,5 +564,4 @@ public class ReportGenerator {
         });
         out.println(interpolator.replace(template));
     }
-
 }
