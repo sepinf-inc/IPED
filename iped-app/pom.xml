@@ -492,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20210430</version>
+                                    <version>20210505</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
