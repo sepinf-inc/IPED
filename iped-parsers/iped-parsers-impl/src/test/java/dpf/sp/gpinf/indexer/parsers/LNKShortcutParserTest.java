@@ -17,7 +17,8 @@ public class LNKShortcutParserTest extends TestCase{
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
         
-    //it seems the builder in github uses english encoding when building. Not only for names but for date format as well... 
+    //it seems the builder in github uses english encoding when building. Not only for names but for date format as well...
+    //ALSO whenever the encoding changes, the location of some chars changes... changing assert method again! this time should work.
         @Test
         public void testLNKShortcutParserParsingLink() throws IOException, SAXException, TikaException{
 
@@ -41,19 +42,19 @@ public class LNKShortcutParserTest extends TestCase{
 //            assertEquals(localPath, hts.substring(609,622));
             
             String actualLocalPath = "C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe";
-            assertEquals(actualLocalPath, hts.substring(623, 683));
+            assertTrue(hts.contains(actualLocalPath));
             
 //            String primaryName = "Nome Primário";
 //            assertEquals(primaryName, hts.substring(1480, 1493));
             
             String actualPrimaryName = "Telegram.exe";
-            assertEquals(actualPrimaryName, hts.substring(2271, 2283));
+            assertTrue(hts.contains(actualPrimaryName));
             
 //            String secundaryName = "Nome Secundário";
 //            assertEquals(secundaryName, hts.substring(1310, 1325));
             
             String actualSecundaryName = "Telegram Desktop";
-            assertEquals(actualSecundaryName, hts.substring(2095, 2111));
+            assertTrue(hts.contains(actualSecundaryName));
             
 //            String lastAccessDate = "Data do Último Acesso";
 //            assertEquals(lastAccessDate, hts.substring(72, 93));
@@ -87,19 +88,19 @@ public class LNKShortcutParserTest extends TestCase{
 //            assertEquals(localPath, hts.substring(637, 650));
             
             String actualLocalPath = "C:\\Program Files (x86)\\PokerStars\\PokerStarsUpdate.exe";
-            assertEquals(actualLocalPath, hts.substring(651, 705));
+            assertTrue(hts.contains(actualLocalPath));
             
 //            String primaryName = "Nome Primário";
 //            assertEquals(primaryName, hts.substring(1315, 1328));
             
             String actualPrimaryName = "PokerStarsUpdate.exe";
-            assertEquals(actualPrimaryName, hts.substring(2395, 2415));
+            assertTrue(hts.contains(actualPrimaryName));
             
 //            String secundaryName = "Nome Secundário";
 //            assertEquals(secundaryName, hts.substring(1530, 1545));
             
             String actualSecundaryName = "PokerStars";
-            assertEquals(actualSecundaryName, hts.substring(1981, 1991));
+            assertTrue(hts.contains(actualSecundaryName));
             
 //            String lastAccessDate = "Data do Último Acesso";
 //            assertEquals(lastAccessDate, hts.substring(72, 93));
