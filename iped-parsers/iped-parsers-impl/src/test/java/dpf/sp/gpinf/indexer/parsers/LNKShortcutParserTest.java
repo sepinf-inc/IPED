@@ -29,19 +29,36 @@ public class LNKShortcutParserTest extends TestCase{
             parser.parse(stream, handler, metadata, context);
             
             String hts = handler.toString();
-//            assertTrue(hts.contains("Data de Criação"));
-//            assertTrue(hts.contains("05/09/2020 02:04:27"));
-            assertTrue(hts.contains("Caminho Local"));
-            assertTrue(hts.contains("C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe"));
-            assertTrue(hts.contains("Root Folder Shell - CLSID"));
-            assertTrue(hts.contains("59031a47-3f72-44a7-89c5-5595fe6b30ee"));
-            assertTrue(hts.contains("Nome Primário"));
-            assertTrue(hts.contains("Telegram.exe"));
-            assertTrue(hts.contains("Nome Secundário"));
-            assertTrue(hts.contains("Telegram Desktop"));
-//            assertTrue(hts.contains("Data do Último Acesso"));
-//            assertTrue(hts.contains("05/09/2020 02:04:30"));
-
+            
+            String creationDate = "Data de Criação";
+            assertEquals(creationDate, hts.substring(22,37));
+            
+            String creationDateNumber = "05/09/2020 02:04:27";
+            assertEquals(creationDateNumber, hts.substring(38,57));
+            
+            String localPath = "Caminho Local";
+            assertEquals(localPath, hts.substring(609,622));
+            
+            String actualLocalPath = "C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe";
+            assertEquals(actualLocalPath, hts.substring(623, 683));
+            
+            String primaryName = "Nome Primário";
+            assertEquals(primaryName, hts.substring(1480, 1493));
+            
+            String actualPrimaryName = "Telegram.exe";
+            assertEquals(actualPrimaryName, hts.substring(2271, 2283));
+            
+            String secundaryName = "Nome Secundário";
+            assertEquals(secundaryName, hts.substring(1310, 1325));
+            
+            String actualSecundaryName = "Telegram Desktop";
+            assertEquals(actualSecundaryName, hts.substring(2095, 2111));
+            
+            String lastAccessDate = "Data do Último Acesso";
+            assertEquals(lastAccessDate, hts.substring(72, 93));
+            
+            String lastAccessDateNumber = "05/09/2020 02:04:33";
+            assertEquals(lastAccessDateNumber, hts.substring(94, 113)); 
 
            }
         
@@ -58,19 +75,36 @@ public class LNKShortcutParserTest extends TestCase{
             parser.parse(stream, handler, metadata, context);
             
             String hts = handler.toString();
-//            assertTrue(hts.contains("Data de Criação"));
-//            assertTrue(hts.contains("31/03/2021 01:54:53"));
-            assertTrue(hts.contains("Caminho Local"));
-            assertTrue(hts.contains("C:\\Program Files (x86)\\PokerStars\\PokerStarsUpdate.exe"));
-            assertTrue(hts.contains("Root Folder Shell - CLSID"));
-            assertTrue(hts.contains("20d04fe0-3aea-1069-a2d8-08002b30309d"));
-            assertTrue(hts.contains("Nome Primário"));
-            assertTrue(hts.contains("PokerStarsUpdate.exe"));
-            assertTrue(hts.contains("Nome Secundário"));
-            assertTrue(hts.contains("PokerStars"));
-//            assertTrue(hts.contains("Data do Último Acesso"));
-//            assertTrue(hts.contains("31/03/2021 01:54:53"));
-
+            
+            String creationDate = "Data de Criação";
+            assertEquals(creationDate, hts.substring(22, 37));
+            
+            String creationDateNumber = "31/03/2021 01:54:53";
+            assertEquals(creationDateNumber, hts.substring(38, 57));
+            
+            String localPath = "Caminho Local";
+            assertEquals(localPath, hts.substring(637, 650));
+            
+            String actualLocalPath = "C:\\Program Files (x86)\\PokerStars\\PokerStarsUpdate.exe";
+            assertEquals(actualLocalPath, hts.substring(651, 705));
+            
+            String primaryName = "Nome Primário";
+            assertEquals(primaryName, hts.substring(1315, 1328));
+            
+            String actualPrimaryName = "PokerStarsUpdate.exe";
+            assertEquals(actualPrimaryName, hts.substring(2395, 2415));
+            
+            String secundaryName = "Nome Secundário";
+            assertEquals(secundaryName, hts.substring(1530, 1545));
+            
+            String actualSecundaryName = "PokerStars";
+            assertEquals(actualSecundaryName, hts.substring(1981, 1991));
+            
+            String lastAccessDate = "Data do Último Acesso";
+            assertEquals(lastAccessDate, hts.substring(72, 93));
+            
+            String lastAccessDateNumber = "31/03/2021 01:54:53";
+            assertEquals(lastAccessDateNumber, hts.substring(94, 113));
 
            }
 
