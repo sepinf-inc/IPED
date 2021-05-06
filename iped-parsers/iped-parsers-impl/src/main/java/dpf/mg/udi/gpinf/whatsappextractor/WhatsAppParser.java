@@ -1043,10 +1043,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                             }
                             List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
                             for (Message m : messageList) {
-                                if (itemStreamEndsWithZeros(item, m.getMediaSize())) {
-                                    long mediaSize = m.getMediaSize();
-                                    long fileSize = item.getLength();
-                                    if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
+                                long mediaSize = m.getMediaSize();
+                                long fileSize = item.getLength();
+                                if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
+                                    if (itemStreamEndsWithZeros(item, mediaSize)) {
                                         m.setMediaItem(item);
                                         m.setMediaQuery("'" + BasicProps.HASH + ":" + item.getHash() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                                     }
