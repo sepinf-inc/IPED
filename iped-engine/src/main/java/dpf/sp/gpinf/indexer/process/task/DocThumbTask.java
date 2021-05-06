@@ -223,7 +223,7 @@ public class DocThumbTask extends ThumbTask {
         if (!taskEnabled 
                 || !item.isToAddToCase()
                 || ((!pdfEnabled || !isPdfType(item.getMediaType()) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
-                || item.getHash() == null 
+                || item.getHashValue() == null 
                 || item.getThumb() != null
                 || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null)) {
             return;
