@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +215,7 @@ public class ImageThumbTask extends ThumbTask {
     protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null || evidence.getThumb() != null) {
+                || StringUtils.isEmpty(evidence.getHash()) || evidence.getThumb() != null) {
             return;
         }
 

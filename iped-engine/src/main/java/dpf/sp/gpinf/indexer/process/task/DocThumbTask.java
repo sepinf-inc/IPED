@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -223,7 +224,7 @@ public class DocThumbTask extends ThumbTask {
         if (!taskEnabled 
                 || !item.isToAddToCase()
                 || ((!pdfEnabled || !isPdfType(item.getMediaType()) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
-                || item.getHash() == null 
+                || StringUtils.isEmpty(item.getHash())
                 || item.getThumb() != null
                 || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null)) {
             return;
