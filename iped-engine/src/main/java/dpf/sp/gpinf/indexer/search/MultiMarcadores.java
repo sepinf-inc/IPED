@@ -183,6 +183,20 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return null;
     }
 
+    public int getLabelCount(String labelName) {
+        int ret = 0;
+        for (IMarcadores m : map.values()) {
+            Integer labelId = m.getLabelId(labelName);
+            if (labelId != null) {
+                Integer cnt = m.getLabelCount(labelId);
+                if (cnt != null) {
+                    ret += cnt;
+                }
+            }
+        }
+        return ret;
+    }
+    
     public void setInReport(String labelName, boolean inReport) {
         for (IMarcadores m : map.values()) {
             int labelId = m.getLabelId(labelName);

@@ -110,7 +110,7 @@ public class Worker extends Thread {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
-            task.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+            task.init(Configuration.getInstance().properties, new File(output, "conf")); //$NON-NLS-1$
         }
 
     }
@@ -123,11 +123,18 @@ public class Worker extends Thread {
 
     public void finish() throws Exception {
         this.interrupt();
-        finishTasks();
+        synchronized (this) {
+            this.wait();
+        }
+        if (exception != null) {
+            throw exception;
+        }
     }
 
     public void processNextQueue() {
-        this.interrupt();
+        synchronized(this) {
+            this.notifyAll();
+        }
     }
 
     /**
@@ -234,30 +241,54 @@ public class Worker extends Thread {
 
                 } else {
                     IItem queueEnd = evidence;
-                    evidence = null;
-                    if (manager.numItensBeingProcessed() == 0) {
+                    if (manager.numItensBeingProcessed() == 0 && caseData.getItemQueue().size() == 0) {
                         caseData.getItemQueue().addLast(queueEnd);
                         process(queueEnd);
-                        break;
+                        evidence = null;
+                        synchronized(this) {
+                            LOGGER.debug(this.getName() + " going to wait notify!");
+                            this.wait();
+                        }
                     } else {
+                        LOGGER.debug(this.getName() + " Queue size = " + caseData.getItemQueue().size()
+                                + " itemsInThisWorker = " + itensBeingProcessed + " itemsInAllWorkers = "
+                                + manager.numItensBeingProcessed());
+
                         caseData.getItemQueue().addLast(queueEnd);
                         if (itensBeingProcessed > 0) {
                             process(queueEnd);
                         } else {
-                            Thread.sleep(1000);
+                            // no items accumulated in this worker, wait some time to increase
+                            // the chance of other worker taking the queue-end
+                            // Thread.sleep(1000);
                         }
                     }
                 }
 
             } catch (InterruptedException e) {
-                if (caseData.getCurrentQueuePriority() == null)
+                if (caseData.getCurrentQueuePriority() == null) {
+                    try {
+                        finishTasks();
+                    } catch (Exception e1) {
+                        if (exception == null) {
+                            exception = e1;
+                        }
+                    } finally {
+                        synchronized (this) {
+                            this.notify();
+                        }
+                    }
                     break;
+                }
             }
         }
 
         if (evidence == null) {
             LOGGER.info("{} finished.", getName()); //$NON-NLS-1$
         } else {
+            AbstractTask task = runningTask;
+            if (task != null)
+                task.interrupted();
             LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
         }
     }

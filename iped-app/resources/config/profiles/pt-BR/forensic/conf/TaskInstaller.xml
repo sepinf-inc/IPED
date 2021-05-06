@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	Processing Task Installer.
-	It is possible to uninstall tasks or install new tasks added to the plugin or scripts folder.
-	The task installation order is very sensible, because some tasks depend on results of others.
+    Processing Task Installer.
+    It is possible to uninstall tasks or install new tasks added to the plugin or scripts folder.
+    The task installation order is very sensible, because some tasks depend on results of others.
 -->
 <tasks>
     <!--<task script="ExampleScriptTask.js"></task>-->
@@ -17,29 +17,30 @@
     
     <!--tasks that ignore items should be after SetCategoryTask, so category of ignored items will be included in CSV properties file-->
     <task class="dpf.sp.gpinf.indexer.process.task.HashTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.KFFTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.LedKFFTask"></task>
-    <task class="dpf.sp.gpinf.indexer.process.task.ProjectVICHashLookup"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.HashDBLookupTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DuplicateTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.transcript.AudioTranscriptTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
+    
     <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.NamedEntityTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ExportFileTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
     
+    <task class="dpf.sp.gpinf.indexer.process.task.DocThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNATask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.PhotoDNALookup"></task>
-    <!--<task script="NSFWNudityDetectTask.py"></task>-->
+    <task script="NSFWNudityDetectTask.py"></task>
+    <task script="FaceRecognitionTask.py"></task>
     
     <!--Carving must be installed before IndexTask because it sets hasChildren property in parent items-->
-    <task class="dpf.sp.gpinf.indexer.process.task.KFFCarveTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.LedCarveTask"></task>
     <task class="dpf.sp.gpinf.carver.CarverTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.KnownMetCarveTask"></task>
     

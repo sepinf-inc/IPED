@@ -18,7 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.datasource;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,7 +44,7 @@ import iped3.ICaseData;
  * casos do IPED.
  *
  */
-public class ItemProducer extends Thread {
+public class ItemProducer extends Thread implements Closeable {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ItemProducer.class);
 
@@ -52,7 +54,8 @@ public class ItemProducer extends Thread {
     private File output;
     private Manager manager;
     private DataSourceReader currentReader;
-    private ArrayList<DataSourceReader> sourceReaders = new ArrayList<DataSourceReader>();
+    private ArrayList<DataSourceReader> supportedReaders = new ArrayList<DataSourceReader>();
+    private ArrayList<DataSourceReader> instantiatedReaders = new ArrayList<DataSourceReader>();
 
     public ItemProducer(Manager manager, ICaseData caseData, boolean listOnly, List<File> datasources, File output)
             throws Exception {
@@ -75,7 +78,7 @@ public class ItemProducer extends Thread {
         for (Class<? extends DataSourceReader> srcReader : readerList) {
             Constructor<? extends DataSourceReader> constr = srcReader.getConstructor(ICaseData.class, File.class,
                     boolean.class);
-            sourceReaders.add(constr.newInstance(caseData, output, listOnly));
+            supportedReaders.add(constr.newInstance(caseData, output, listOnly));
         }
     }
 
@@ -84,6 +87,13 @@ public class ItemProducer extends Thread {
             return currentReader.currentDirectory();
         } else {
             return null;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        for (DataSourceReader reader : instantiatedReaders) {
+            reader.close();
         }
     }
 
@@ -104,8 +114,12 @@ public class ItemProducer extends Thread {
                 }
 
                 int alternativeFiles = 0;
-                for (DataSourceReader srcReader : sourceReaders) {
+                for (DataSourceReader srcReader : supportedReaders) {
                     if (srcReader.isSupported(source)) {
+                        Constructor<? extends DataSourceReader> constr = srcReader.getClass()
+                                .getConstructor(ICaseData.class, File.class, boolean.class);
+                        srcReader = constr.newInstance(caseData, output, listOnly);
+                        instantiatedReaders.add(srcReader);
                         currentReader = srcReader;
                         alternativeFiles += srcReader.read(source);
                         break;
@@ -125,8 +139,9 @@ public class ItemProducer extends Thread {
             }
             if (!listOnly) {
                 Item evidence = new Item();
+                evidence.setPath("[queue-end]");
                 evidence.setQueueEnd(true);
-                // caseData.addEvidenceFile(evidence);
+                caseData.addItem(evidence);
 
             } else {
                 LOGGER.info("Total items found: {}", caseData.getDiscoveredEvidences()); //$NON-NLS-1$

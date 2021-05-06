@@ -21,7 +21,9 @@ package dpf.sp.gpinf.indexer.datasource;
 import iped3.ICaseData;
 import iped3.datasource.IDataSource;
 
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import gpinf.dev.data.Item;
@@ -34,7 +36,7 @@ import gpinf.dev.data.Item;
  * @author Nassif
  *
  */
-public abstract class DataSourceReader {
+public abstract class DataSourceReader implements Closeable {
 
     /**
      * Objeto com dados do caso
@@ -133,5 +135,10 @@ public abstract class DataSourceReader {
             return datasource.getName();
         }
         return cmdArgs.getDataSourceName(datasource);
+    }
+
+    @Override
+    public void close() throws IOException {
+        // TODO remove and implement in all subclasses
     }
 }

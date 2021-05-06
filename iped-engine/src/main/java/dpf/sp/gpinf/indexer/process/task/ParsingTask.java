@@ -65,6 +65,7 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
@@ -336,6 +337,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private String getParserName(Parser parser) {
         if (parser instanceof ExternalParser)
             return ((ExternalParser) parser).getParserName();
+        else if (parser instanceof MultipleParser)
+            return ((MultipleParser) parser).getParserName();
         else
             return parser.getClass().getSimpleName();
     }
@@ -426,12 +429,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             metadata.remove(ExtraProperties.USER_THUMB);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
-        }
-
-        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
-        if (hashSetStatus != null) {
-            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
-            metadata.remove(KFFTask.KFF_STATUS);
         }
 
         String prevMediaType = evidence.getMediaType().toString();
@@ -603,6 +600,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             checkRecursiveZipBomb(subItem);
 
+            if ("".equals(metadata.get(BasicProps.LENGTH))) {
+                subItem.setLength(null);
+            }
+
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
@@ -613,9 +614,17 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (reader.setTimeoutPaused(true)) {
                 try {
                     long start = System.nanoTime() / 1000;
-                    // When external parsing is on, items MUST be sent to queue, or errors will
-                    // occur
-                    ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER : ProcessTime.AUTO;
+                    // If external parsing is on, items are sent to queue to avoid deadlock
+                    // ProcessTime time = ForkParser2.enabled ? ProcessTime.LATER :
+                    // ProcessTime.AUTO;
+
+                    // Unfortunatelly AUTO value causes issues with JEP (python lib) too,
+                    // because items could be processed by Workers in a different thread (parsing
+                    // thread), instead of Worker default thread. So we are using LATER, which sends
+                    // items to queue and is a bit slower when expanding lots of containers at the
+                    // same time (causes a lot of IO instead mixing IO with CPU used to process
+                    // subitems)
+                    ProcessTime time = ProcessTime.LATER;
                     worker.processNewItem(subItem, time);
                     subitensDiscovered.incrementAndGet();
                     numSubitems++;

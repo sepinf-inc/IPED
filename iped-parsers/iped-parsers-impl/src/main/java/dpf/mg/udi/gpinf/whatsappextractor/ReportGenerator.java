@@ -116,7 +116,7 @@ public class ReportGenerator {
 
     }
 
-    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory) {
+    public byte[] generateNextChatHtml(Chat c, WAContactsDirectory contactsDirectory, WAAccount account) {
 
         if ((!firstFragment && currentMsg == 0) || (currentMsg > 0 && currentMsg == c.getMessages().size()))
             return null;
@@ -147,7 +147,7 @@ public class ReportGenerator {
                             + thisDate + "</div></div>"); //$NON-NLS-1$
                     lastDate = thisDate;
                 }
-                printMessage(out, m, c.isGroupChat(), contactsDirectory);
+                printMessage(out, m, c.isGroupChat(), contactsDirectory, account);
                 currentMsg += 1;
                 if (currentMsg != c.getMessages().size() && bout.size() >= MIN_SIZE_TO_SPLIT_CHAT) {
                     out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
@@ -163,7 +163,7 @@ public class ReportGenerator {
         return chatBytes.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory) {
+    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory, WAAccount account) {
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
@@ -277,25 +277,36 @@ public class ReportGenerator {
                 List<IItemBase> result = null;
                 String onclick = null;
                 byte[] thumb = null;
+                String name = null, number = null;
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
+                    if (account != null) {
+                        name = account.getName();
+                        number = message.getLocalResource();
+                    } else {
+                        name = null;
+                        number = message.getLocalResource();
+                    }
                 } else {
                     out.println("<div class=\"incoming from\">"); //$NON-NLS-1$
-                    if (group) {
-                        String remote = message.getRemoteResource();
-                        if (remote != null) {
-                            String number = remote;
-                            WAContact contact = contactsDirectory.getContact(number);
-                            String name = contact == null ? null : contact.getName();
-                            if (name == null)
-                                name = number;
-                            else
-                                name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
-                            out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                                    + name + "</span><br/>"); //$NON-NLS-1$
-                        }
+                    number = message.getRemoteResource();
+                    if (number != null) {
+                        WAContact contact = contactsDirectory.getContact(number);
+                        name = contact == null ? null : contact.getName();
                     }
                 }
+                name = name == null ? "" : name.trim();
+                number = number == null ? "" : number.trim();
+                if (!number.isEmpty()) {
+                    if (name.isEmpty()) {
+                        name = number;
+                    } else if (!number.equals(name) && !number.equals(name + "@s.whatsapp.net")) {
+                        name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                }
+                out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+                        + name + "</span><br/>"); //$NON-NLS-1$
+
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
@@ -392,10 +403,10 @@ public class ReportGenerator {
                                     source = dpf.sp.gpinf.indexer.parsers.util.Util.getSourceFileIfExists(result.get(0))
                                             .orElse("");
                                     if (thumb != null) {
-                                        out.println("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
-                                        out.println("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                        out.println(" data-src1=\"" + exportPath + "\"");
-                                        out.println(" data-src2=\"" + source + "\"");
+                                        out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
+                                        out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                        out.print(" data-src1=\"" + exportPath + "\"");
+                                        out.print(" data-src2=\"" + source + "\"");
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
@@ -482,8 +493,8 @@ public class ReportGenerator {
                         if (thumb != null) {
                             if (getTitle(message).equals("video")) //$NON-NLS-1$
                                 out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                            out.println("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                            out.println("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                            out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
+                            out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                             out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                         } else {
@@ -507,7 +518,7 @@ public class ReportGenerator {
                 break;
         }
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + message.getChildPornSets().toString() + "</i></p>");
         }
 

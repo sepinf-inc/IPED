@@ -4,7 +4,7 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
     
     <artifactId>iped-api</artifactId>
@@ -19,7 +19,7 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>24.1.1-jre</version>
+            <version>29.0-jre</version>
         </dependency>
         <dependency>
             <groupId>org.apache.lucene</groupId>

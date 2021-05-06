@@ -39,11 +39,14 @@ import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
+import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
@@ -236,6 +239,16 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(app.ipedResult.getItem(row)));
             }
 
+            if (item instanceof TimeItemId) {
+                TimeItemId timeItem = (TimeItemId) item;
+                if (field.equals(BasicProps.TIMESTAMP)) {
+                    return timeItem.getTimeStampValue();
+                }
+                if (field.equals(BasicProps.TIME_EVENT)) {
+                    return timeItem.getTimeEventValue();
+                }
+            }
+
             SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
             if (sndv == null)
                 sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
@@ -257,8 +270,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     } catch (NumberFormatException e) {
                     }
                 }
-                if (!sorted)
+                if (!sorted) {
                     Arrays.sort(values, collator);
+                }
             }
 
             StringBuilder sb = new StringBuilder();

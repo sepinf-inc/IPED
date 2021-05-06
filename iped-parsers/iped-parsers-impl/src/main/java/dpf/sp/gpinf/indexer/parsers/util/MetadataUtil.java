@@ -153,9 +153,12 @@ public class MetadataUtil {
     }
 
     public static final void normalizeMetadata(Metadata metadata) {
+        // remove possible null key (#329)
+        metadata.remove(null);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
         removeIgnorable(metadata);
+        removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
@@ -173,6 +176,24 @@ public class MetadataUtil {
                 for (Property p : prop.getSecondaryExtractProperties())
                     metadata.remove(p.getName());
             }
+        }
+    }
+
+    private static void removeInvalidGPSMeta(Metadata metadata) {
+        String lat = metadata.get(Metadata.LATITUDE);
+        String lon = metadata.get(Metadata.LONGITUDE);
+        boolean remove = false;
+        try {
+            if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
+                remove = true;
+            }
+        } catch (NumberFormatException e) {
+            remove = true;
+        }
+        if (remove) {
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(Metadata.ALTITUDE.getName());
         }
     }
 
@@ -342,8 +363,14 @@ public class MetadataUtil {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
     }
 
+    public static boolean isVideoType(MediaType mediaType) {
+        return mediaType.getType().equals("video") //$NON-NLS-1$
+                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+    }
+
     private static void prefixVideoMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("video")) //$NON-NLS-1$
+        if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
+                || isVideoType(MediaType.parse(metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE))))
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
     }
 

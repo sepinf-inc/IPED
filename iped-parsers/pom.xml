@@ -4,14 +4,13 @@
     <parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
     
     <artifactId>iped-parsers</artifactId>
     <packaging>pom</packaging>
     
     <modules>
-        <module>java-libpst</module>
         <module>java-dbf</module>
         <module>iped-parsers-impl</module>
     </modules>

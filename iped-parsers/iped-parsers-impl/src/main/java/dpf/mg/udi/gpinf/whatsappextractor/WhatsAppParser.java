@@ -202,7 +202,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator(searcher);
-            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts);
+            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
             while (bytes != null) {
                 Metadata chatMetadata = new Metadata();
                 int nextMsg = reportGenerator.getNextMsgNum();
@@ -212,7 +212,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 storeLocations(msgSubset, chatMetadata);
 
                 firstMsg = nextMsg;
-                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts);
+                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
 
                 String chatName = c.getTitle();
                 if (frag > 0 || nextBytes != null)
@@ -224,10 +224,17 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
-                
-                if(c.isGroupChat()) {
-                    for(WAContact member:c.getGroupmembers()) {
+                if (account != null) {
+                    String local = formatContact(account, cache);
+                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
+                }
+                if (c.isGroupChat()) {
+                    for (WAContact member : c.getGroupmembers()) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                    }
+                } else {
+                    if (c.getRemote() != null) {
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
                     }
                 }
 
@@ -438,14 +445,10 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
-        if (result.size() == 1) {
-            return result.get(0);
-        } else if (result.size() > 1) {
-            while ((path = new File(path).getParent()) != null) {
-                for (IItemBase item : result) {
-                    if (item.getPath().startsWith(path)) {
-                        return item;
-                    }
+        while ((path = new File(path).getParent()) != null) {
+            for (IItemBase item : result) {
+                if (item.getPath().startsWith(path)) {
+                    return item;
                 }
             }
         }
@@ -525,9 +528,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("kffstatus", "pedo");
+                    meta.set("hash:status", "pedo");
                     for (String set : m.getChildPornSets()) {
-                        meta.add("kffgroup", set);
+                        meta.add("hash:set", set);
                     }
                 }
             }
@@ -561,7 +564,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                             meta, false);
                 }
             } else {
-                meta.set(BasicProps.HASH, "");
+                meta.set(BasicProps.LENGTH, "");
                 extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
             }
         }

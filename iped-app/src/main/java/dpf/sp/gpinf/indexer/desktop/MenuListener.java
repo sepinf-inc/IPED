@@ -108,7 +108,10 @@ public class MenuListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         LOGGER.debug("MenuListener Aktion Event Performed " + e.toString() + " " + e.getSource());
-        if (e.getSource() == menu.disposicao) {
+        if (e.getSource() == menu.toggleTimelineView) {
+            App.get().timelineListener.toggleTimelineTableView();
+
+        } else if (e.getSource() == menu.disposicao) {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
@@ -337,6 +340,12 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.similarImagesExternal) {
             SimilarImagesFilterActions.searchSimilarImages(true);
+
+        } else if (e.getSource() == menu.similarFacesCurrent) {
+            SimilarFacesFilterActions.searchSimilarImages(false);
+
+        } else if (e.getSource() == menu.similarFacesExternal) {
+            SimilarFacesFilterActions.searchSimilarImages(true);
 
         } else if (e.getSource() == menu.similarDocs) {
             int selIdx = App.get().resultsTable.getSelectedRow();

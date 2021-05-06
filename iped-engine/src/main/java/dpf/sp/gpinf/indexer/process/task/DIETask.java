@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -230,38 +231,32 @@ public class DIETask extends AbstractTask {
                     return;
                 }
                 //For videos call the detection method for each extracted frame image (VideoThumbsTask must be enabled)
-                File viewFile = Util.getFileFromHash(new File(output, "view"), evidence.getHash(), "jpg");
+                File viewFile = evidence.getViewFile();
                 if (viewFile != null && viewFile.exists()) {
-                    Object[] read = ImageUtil.readJpegWithMetaData(viewFile);
-                    if (read != null && read.length == 2) {
-                        String videoComment = (String) read[1];
-                        if (videoComment != null && videoComment.startsWith("Frames=")) {
-                            List<BufferedImage> frames = ImageUtil.getFrames((BufferedImage) read[0], videoComment);
-                            List<Double> pvideo = new ArrayList<Double>();
-                            if (frames != null) {
-                                for (BufferedImage frame : frames) {
-                                    List<Float> features = die.extractFeatures(frame);
-                                    if (features != null) {
-                                        double p = predictor.predict(features);
-                                        pvideo.add(p);
-                                    }
-                                }
+                    List<BufferedImage> frames = ImageUtil.getFrames(viewFile);
+                    List<Double> pvideo = new ArrayList<Double>();
+                    if (frames != null) {
+                        for (BufferedImage frame : frames) {
+                            List<Float> features = die.extractFeatures(frame);
+                            if (features != null) {
+                                double p = predictor.predict(features);
+                                pvideo.add(p);
                             }
-                            if (!pvideo.isEmpty()) {
-                                double p = videoScore(pvideo);
-                                int score = predictionToScore(p);
-                                update(evidence, score);
-                                totalVideosProcessed.incrementAndGet();
-                                synchronized (videoResults) {
-                                    videoResults.put(evidence.getHash(), (short) score);
-                                }
-                            } else {
-                                totalVideosFailed.incrementAndGet();
-                            }
-                            t = System.currentTimeMillis() - t;
-                            totalVideosTime.addAndGet(t);
                         }
                     }
+                    if (!pvideo.isEmpty()) {
+                        double p = videoScore(pvideo);
+                        int score = predictionToScore(p);
+                        update(evidence, score);
+                        totalVideosProcessed.incrementAndGet();
+                        synchronized (videoResults) {
+                            videoResults.put(evidence.getHash(), (short) score);
+                        }
+                    } else {
+                        totalVideosFailed.incrementAndGet();
+                    }
+                    t = System.currentTimeMillis() - t;
+                    totalVideosTime.addAndGet(t);
                 }
             }
         } catch (Exception e) {
@@ -316,8 +311,7 @@ public class DIETask extends AbstractTask {
      * Check if the evidence is a video.
      */
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return MetadataUtil.isVideoType(mediaType);
     }
     
 

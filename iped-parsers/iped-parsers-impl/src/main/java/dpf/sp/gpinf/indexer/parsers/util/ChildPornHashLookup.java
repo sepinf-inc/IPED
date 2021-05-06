@@ -2,7 +2,9 @@ package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ChildPornHashLookup {
     
@@ -31,29 +33,28 @@ public class ChildPornHashLookup {
     }
 
     public static List<String> lookupHash(String algorithm, String hash) {
-        ArrayList<String> hashsets = new ArrayList<>();
+        Set<String> hashsets = new HashSet<String>();
         if (hash != null) {
             for (LookupProvider provider : lookupProviders) {
-                String hashSet = provider.lookupHash(algorithm, hash);
-                if (hashSet != null) {
-                    hashsets.add(hashSet);
+                List<String> sets = provider.lookupHash(algorithm, hash);
+                if (sets != null) {
+                    hashsets.addAll(sets);
                 }
-
             }
         }
-        return hashsets;
+        List<String> l = new ArrayList<String>(hashsets);
+        Collections.sort(l);
+        return l;
     }
 
     public static abstract class LookupProvider {
 
         /**
-         * @param hashAlgo
-         *            hash algorithm
-         * @param hash
-         *            hash to look up
-         * @return hashset id where hash was found.
+         * @param hashAlgo Hash algorithm.
+         * @param hash Hash to look up
+         * @return A list of hash sets in which the hash was found.
          */
-        public abstract String lookupHash(String hashAlgo, String hash);
+        public abstract List<String> lookupHash(String hashAlgo, String hash);
 
     }
 

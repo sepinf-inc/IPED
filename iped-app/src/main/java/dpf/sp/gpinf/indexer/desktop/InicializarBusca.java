@@ -18,8 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -36,6 +38,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import iped3.IIPEDSource;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -83,9 +86,12 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                     singleCase = new IPEDSource(App.get().casesPathFile);
                 else
                     singleCase = new IPEDSource(App.get().casesPathFile, manager.getIndexWriter());
-                App.get().appCase = new IPEDMultiSource(Collections.singletonList(singleCase));
+
+                App.get().appCase = new IPEDMultiSource(singleCase);
             } else
                 App.get().appCase = new IPEDMultiSource(App.get().casesPathFile);
+
+            checkIfProcessingFinished(App.get().appCase);
 
             App.get().appCase.checkImagePaths();
             App.get().appCase.getMultiMarcadores()
@@ -126,6 +132,30 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         return null;
     }
 
+    private void checkIfProcessingFinished(IPEDMultiSource multiSource) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                List<String> casesWithError = new ArrayList<>();
+                for (IPEDSource source : multiSource.getAtomicSources()) {
+                    if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
+                        casesWithError.add(source.getCaseDir().getAbsolutePath());
+                    }
+                }
+                if (!casesWithError.isEmpty()) {
+                    String casesList = "";
+                    if (multiSource.getAtomicSources().size() > 1) {
+                        casesList = Messages.getString("ProcessingNotFinished.cases");
+                        casesList += casesWithError.stream().collect(Collectors.joining("\n"));
+                    }
+                    JOptionPane.showMessageDialog(App.get(),
+                            Messages.getString("ProcessingNotFinished.message") + casesList,
+                            Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+    }
+
     private void showErrorDialog(final Throwable e) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
@@ -136,7 +166,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 }
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("AppLazyInitializer.errorMsg.line1") //$NON-NLS-1$
                         + Messages.getString("AppLazyInitializer.errorMsg.line2") //$NON-NLS-1$
-                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, //$NON-NLS-1$
+                        + App.get().getLogConfiguration().getLogFile()
+                        + Messages.getString("AppLazyInitializer.errorMsg.line3") + msg, // $NON-NLS-1$
                         Messages.getString("AppLazyInitializer.errorTitle"), JOptionPane.ERROR_MESSAGE); //$NON-NLS-1$
 
                 App.get().dialogBar.setVisible(false);

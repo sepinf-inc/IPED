@@ -4,7 +4,7 @@
 	<parent>
         <groupId>iped</groupId>
         <artifactId>iped-parent</artifactId>
-        <version>3.19-snapshot</version>
+        <version>4.0.0-snapshot</version>
     </parent>
     
     <artifactId>iped-app</artifactId>
@@ -492,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20200916</version>
+                                    <version>20210430</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
@@ -645,6 +645,27 @@
                                     <mainClass>br.gov.pf.iped.webapi.Main</mainClass>
                                 </manifest>
                             </archive>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>create-hashdb-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>iped-hashdb</finalName>
+                            <outputDirectory>${lib.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>gpinf.hashdb.HashDBTool</mainClass>
+                                </manifest>
+                            </archive>
+                            <includes>
+                                <include>**/hashdb/*</include>
+                            </includes>
                         </configuration>
                     </execution>
                 </executions>

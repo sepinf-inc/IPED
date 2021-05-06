@@ -24,8 +24,8 @@ public class ReportGenerator {
     private static final String NEW_ROW = "<TR>"; //$NON-NLS-1$
     private static final String CLOSE_ROW = "</TR>"; //$NON-NLS-1$
 
-    private static final String[] cols = { "Offset", "FileName", "FullPath", "USN", "TimeStamp", "Reasons", "MTF Ref.",
-            "MTF parent Ref", "File attr", "Source Info", "Security Id" };
+    public static final String[] cols = { "Journal Offset", "FileName", "FilePath", "USN", "TimeStamp", "Reasons",
+            "MFT Ref.", "MFT parent Ref", "File attributes", "Source Info", "Security Id" };
 
     public final SimpleDateFormat timeFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS XXX"); //$NON-NLS-1$
 
@@ -79,10 +79,10 @@ public class ReportGenerator {
             out.print(newCol(u.getFullPath()));
             out.print(newCol(u.getUSN() + ""));
             out.print(newCol(timeFormat.format(u.getFileTime())));
-            out.print(newCol(u.getReasons()));
+            out.print(newCol(u.getReasons().toString()));
             out.print(newCol("0x" + Util.byteArrayToHex(u.getMftRef())));
             out.print(newCol("0x" + Util.byteArrayToHex(u.getParentMftRef())));
-            out.print(newCol(u.getHumanAttributes()));
+            out.print(newCol(u.getHumanAttributes().toString()));
             out.print(newCol(u.getSourceInformation() + ""));
             out.print(newCol(u.getSecurityId() + ""));
             out.print(CLOSE_ROW);

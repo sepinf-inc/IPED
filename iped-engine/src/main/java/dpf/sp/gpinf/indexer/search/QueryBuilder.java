@@ -113,7 +113,7 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
-        
+
         if(texto.trim().startsWith("* "))
             texto = texto.trim().replaceFirst("\\* ", "*:* ");
 
@@ -138,22 +138,25 @@ public class QueryBuilder implements IQueryBuilder {
             if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
                 char[] input = texto.toCharArray();
                 char[] output = new char[input.length * 4];
-                FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-                texto = (new String(output)).trim();
+                int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
+                texto = (new String(output, 0, len)).trim();
             }
 
             try {
-                Query q = parser.parse(texto, null);
+                Query q;
+                synchronized (lock) {
+                    q = parser.parse(texto, null);
+                }
                 q = handleNegativeQueries(q, analyzer);
                 return q;
-                
+
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
                 throw new QueryNodeException(e);
             }
         }
 
     }
-    
+
     private Query handleNegativeQueries(Query q, Analyzer analyzer) {
         if(q instanceof BoostQuery) {
             float boost = ((BoostQuery) q).getBoost();

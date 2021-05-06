@@ -4,9 +4,11 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.Properties;
 
+import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
@@ -96,6 +98,16 @@ public abstract class AbstractTask {
         }
     }
 
+    public boolean hasIpedDatasource() {
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        for (File source : args.getDatasources()) {
+            if (source.getName().endsWith(".iped")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Método de inicialização da tarefa. Chamado em cada instância da tarefa pelo
      * Worker no qual ela está instalada.
@@ -152,7 +164,9 @@ public abstract class AbstractTask {
         }
 
         AbstractTask prevTask = worker.runningTask;
+        IItem prevEvidence = worker.evidence;
         worker.runningTask = this;
+        worker.evidence = evidence;
 
         if (this.isEnabled() && (!evidence.isToIgnore() || processIgnoredItem())) {
             long t = System.nanoTime() / 1000;
@@ -166,10 +180,11 @@ public abstract class AbstractTask {
 
         sendToNextTask(evidence);
 
+        worker.evidence = prevEvidence;
         worker.runningTask = prevTask;
 
         // ESTATISTICAS
-        if ((nextTask == null) && !evidence.isQueueEnd()) {
+        if (nextTask == null && !evidence.isQueueEnd()) {
             evidence.dispose();
             stats.incProcessed();
             if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
@@ -182,8 +197,10 @@ public abstract class AbstractTask {
                 }
                 stats.addVolume(len);
             }
-            worker.itensBeingProcessed--;
         }
+        
+        if (nextTask == null && !evidence.isQueueEnd())
+            worker.itensBeingProcessed--;
     }
 
     /**
@@ -202,7 +219,9 @@ public abstract class AbstractTask {
             else {
                 evidence.dispose();
                 caseData.addItemToQueue(evidence, priority);
-                worker.itensBeingProcessed--;
+                if (!evidence.isQueueEnd()) {
+                    worker.itensBeingProcessed--;
+                }
             }
         }
     }
@@ -218,7 +237,8 @@ public abstract class AbstractTask {
      */
     private void processMonitorTimeout(IItem evidence) throws Exception {
         try {
-            this.process(evidence);
+            if (!evidence.isQueueEnd() || processQueueEnd())
+                this.process(evidence);
 
         } catch (TimeoutException e) {
             LOGGER.warn("{} TIMEOUT processing {} ({} bytes)\t{}", worker.getName(), evidence.getPath(), //$NON-NLS-1$
@@ -241,7 +261,7 @@ public abstract class AbstractTask {
     }
 
     /**
-     * Indica se itens ignorados, como KFF ignorable, devem ser processados pela
+     * Indica se itens ignorados (hash:status = ignore), devem ser processados pela
      * tarefa ou não. O valor padrão é false, assim itens ignorados não são
      * processados pelas tarefas seguintes. Tarefas específicas podem sobrescrever
      * esse comportamento.
@@ -249,6 +269,10 @@ public abstract class AbstractTask {
      * @return se a tarefa deve processar um item ignorado.
      */
     protected boolean processIgnoredItem() {
+        return false;
+    }
+
+    protected boolean processQueueEnd() {
         return false;
     }
 
@@ -262,5 +286,14 @@ public abstract class AbstractTask {
 
     public String getName() {
         return this.getClass().getSimpleName();
+    }
+    
+    /**
+     * This method can be overwritten by concrete tasks to detect when the processing is interrupted
+     * by the user (e.g. closing the application window) when the tasking *is running* (i.e. it is the 
+     * active task of a worker), and release resources (e.g. stop external processes). 
+     * Default implementation does nothing. 
+     */
+    public void interrupted() {
     }
 }

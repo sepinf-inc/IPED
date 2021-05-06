@@ -16,11 +16,11 @@ Arquivos XML = application/xml; application/rdf+xml; application/rss+xml
 
 Arquivos de Georeferenciamento = application/vnd.google-earth.kml+xml; application/gpx
 
-Documentos de Texto = application/vnd.ms-wordml; application/x-tika-ooxml-protected-docx; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer;
+Documentos de Texto = application/vnd.ms-wordml; application/x-tika-ooxml-protected-docx; application/vnd.apple.pages; application/msword; application/msword2; application/msword5; application/vnd.ms-word.document.macroenabled.12; application/vnd.ms-word.template.macroenabled.12; application/vnd.openxmlformats-officedocument.wordprocessingml.document; application/vnd.openxmlformats-officedocument.wordprocessingml.template; application/vnd.oasis.opendocument.text; application/vnd.oasis.opendocument.text-master; application/vnd.oasis.opendocument.text-template; application/vnd.oasis.opendocument.text-web; application/vnd.sun.xml.writer; application/vnd.sun.xml.writer.global; application/vnd.sun.xml.writer.template; application/vnd.stardivision.writer; vnd.oasis.opendocument.flat.text
 
-Planilhas = application/vnd.ms-spreadsheetml; application/x-tika-ooxml-protected-xlsx; text/csv; application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc; application/x-tika-old-excel
+Planilhas = application/vnd.ms-spreadsheetml; application/x-tika-ooxml-protected-xlsx; text/csv; application/vnd.apple.numbers; application/vnd.ms-excel; application/vnd.ms-excel.addin.macroenabled.12; application/vnd.ms-excel.sheet.macroenabled.12; application/vnd.ms-excel.sheet.binary.macroenabled.12; application/vnd.ms-excel.template.macroenabled.12; application/x-tika-msworks-spreadsheet; application/vnd.openxmlformats-officedocument.spreadsheetml.sheet; application/vnd.openxmlformats-officedocument.spreadsheetml.template; application/vnd.oasis.opendocument.spreadsheet; application/vnd.oasis.opendocument.spreadsheet-template; application/vnd.sun.xml.calc; application/vnd.sun.xml.calc.template; application/vnd.stardivision.calc; application/x-tika-old-excel; vnd.oasis.opendocument.flat.spreadsheet
 
-Apresentações = application/x-tika-ooxml-protected-pptx; application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress;
+Apresentações = application/x-tika-ooxml-protected-pptx; application/vnd.apple.keynote; application/x-corelpresentations; application/vnd.ms-powerpoint; application/vnd.ms-powerpoint.addin.macroenabled.12; application/vnd.ms-powerpoint.presentation.macroenabled.12; application/vnd.ms-powerpoint.slide.macroenabled.12; application/vnd.ms-powerpoint.slideshow.macroenabled.12; application/vnd.ms-powerpoint.template.macroenabled.12; application/vnd.openxmlformats-officedocument.presentationml.presentation; application/vnd.openxmlformats-officedocument.presentationml.slide; application/vnd.openxmlformats-officedocument.presentationml.template; application/vnd.openxmlformats-officedocument.presentationml.slideshow; application/vnd.oasis.opendocument.presentation; application/vnd.oasis.opendocument.presentation-template; application/vnd.sun.xml.impress; application/vnd.sun.xml.impress.template; application/vnd.stardivision.impress; vnd.oasis.opendocument.flat.presentation
 
 Arquivos OLE = application/x-tika-msoffice
 
@@ -40,7 +40,7 @@ Arquivos Sincronizados GDrive = application/x-gdrive-cloud-graph; application/x-
 
 Registros de Arquivos GDrive = application/x-gdrive-cloud-graph-registry; application/x-gdrive-snapshot-registry;
 
-Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db; application/x-mssql-data;
+Bases de dados = application/x-edb; application/x-edb-table; application/irpf; application/x-msaccess; application/x-dbf; application/vnd.oasis.opendocument.database; application/x-sqlite3; application/x-mysql-db; application/x-berkeley-db; application/x-mssql-data; application/x-database-table;
 
 Arquivos Compactados = application/x-tika-ooxml; application/zlib; application/applefile; application/vnd.ms-tnef; application/zip; application/x-rar-compressed; application/x-tar; application/gzip; application/x-gzip; application/x-xz; application/x-bzip; application/x-bzip2; application/x-7z-compressed; application/x-arj; application/x-gtar; application/x-archive; application/x-cpio; application/x-tika-unix-dump; application/x-snappy-framed; application/x-snappy; application/x-snappy-raw; application/x-compress; application/x-java-pack200; application/x-lzma; application/x-lz4; application/x-lz4-block; application/x-brotli; application/zstd; application/deflate64; image/x-emf-compressed 
 
@@ -49,6 +49,8 @@ Contatos = text/x-vcard; application/windows-adress-book; application/outlook-co
 Chats = application/messenger-plus; application/messenger-chat; application/sqlite-skype; application/skype; application/x-whatsapp-db; application/x-whatsapp-chatstorage; application/x-whatsapp-chat; application/x-skype-conversation; application/x-ufed-html-chats; application/x-ufed-chats-txt; application/x-ufed-chat; application/x-ufed-chat-whatsapp; application/x-ufed-chat-preview; application/x-telegram-chat
 
 Registro do Windows = application/x-windows-registry; application/x-windows-registry-report
+
+Journal USN = application/x-usnjournal-$J; ; application/x-usnjournal-report-html; application/x-usnjournal-report-csv; application/x-usnjournal-registry
 
 Programas e Bibliotecas = application/x-superfetch; application/x-elf-log; application/x-elf-file; application/x-prefetch; application/java-archive; application/x-dosexec; application/x-msdownload; application/x-bat; application/vnd.ms-cab-compressed; application/x-font-ttf; application/pkcs7-signature; application/vnd.ms-htmlhelp; application/java-vm; application/vnd.ms-pki.seccat; application/x-ms-installer; application/x-ufed-html-apps; application/x-ufed-installedapplication
 
@@ -79,6 +81,8 @@ Discos ISO = application/x-iso9660-image; application/x-udf-image;
 Discos Virtuais = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx
 
 Outros Espelhos = application/x-disk-image;
+
+Sessões Salvas do Mozilla Firefox = application/x-firefox-savedsession
 
 # UFED
 
@@ -133,3 +137,5 @@ Gravações = application/x-ufed-html-recordings; application/x-ufed-recording
 Cartões Móveis = application/x-ufed-mobilecard
 
 Uso de Aplicativos = application/x-ufed-applicationusage
+
+Informações do Dispositivo = application/x-ufed-deviceinfo

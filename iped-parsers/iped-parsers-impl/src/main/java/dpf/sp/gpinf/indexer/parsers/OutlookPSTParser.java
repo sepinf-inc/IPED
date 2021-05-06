@@ -52,7 +52,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFParser2;
+import org.apache.tika.parser.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -60,6 +60,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.pff.AutoCharsetDetector;
 import com.pff.PSTAttachment;
 import com.pff.PSTContact;
 import com.pff.PSTException;
@@ -150,7 +151,14 @@ public class OutlookPSTParser extends AbstractParser {
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
+
             pstFile = new PSTFile(tmpFile);
+            pstFile.setAutoCharsetDetector(new TikaAutoCharsetDetector());
+
+            if (useLibpffParser && pstFile.getPSTFileType() == PSTFile.PST_TYPE_2013_UNICODE) {
+                throw new TikaException("current java-libpst support for OST 2013 format is broken,"
+                        + " see https://github.com/rjohnsondev/java-libpst/issues/60");
+            }
 
             if (extractor.shouldParseEmbedded(metadata))
                 walkFolder(pstFile.getRootFolder(), "", -1); //$NON-NLS-1$
@@ -194,6 +202,15 @@ public class OutlookPSTParser extends AbstractParser {
         }
 
         xhtml.endDocument();
+
+    }
+
+    public static class TikaAutoCharsetDetector implements AutoCharsetDetector {
+
+        @Override
+        public String decodeString(byte[] data) {
+            return Util.decodeUnknownCharsetSimpleThenTika(data);
+        }
 
     }
 
@@ -497,7 +514,7 @@ public class OutlookPSTParser extends AbstractParser {
                     text = email.getRTFBody();
                     if (text != null) {
                         try {
-                            RTFParser2 parser = new RTFParser2();
+                            RTFParser parser = new RTFParser();
                             BodyContentHandler handler = new BodyContentHandler();
                             parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(),
                                     context);
