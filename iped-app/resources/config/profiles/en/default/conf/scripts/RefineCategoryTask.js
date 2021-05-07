@@ -123,7 +123,7 @@ function process(e){
 	var path = e.getPath().toLowerCase();
 
 
-	//Arquivos das pastas de backup do iPhone. Devem ser processados depois por ferramenta específica, como Physical Analyser
+	//iPhone backup default folders
 	if ((path.indexOf("/application data/apple computer/mobilesync/backup") > -1)||
 		(path.indexOf("/appdata/roaming/apple computer/mobilesync/backup") > -1)||
 		(path.indexOf("/appdata/roaming/apple computer/mobilesyncbackup") > -1)||
@@ -134,13 +134,13 @@ function process(e){
 		
 	
 	
-	//Arquivos de instalação do Torchat
+	//Torchat Install files
 	if (path.indexOf("torchat/") !== -1){
 		e.addCategory("Torchat");
 		e.addCategory("Tor");
 	}
 		
-	//Arquivos relacionados ao Tor, TorBrowser e OperaTor
+	//Files related to Tor, TorBrowser e OperaTor
 	if ((path.indexOf("torbrowser/") !== -1)||
 		(nome.equals("tor.exe"))||
 		(nome.equals("operator.exe"))||
@@ -150,7 +150,7 @@ function process(e){
 		e.addCategory("Tor");
 	
 	
-	//Programas de armazenamento na nuvem e suas pastas default de armazenamento local
+	//Cloud Storage Software and their default local folders
 	if (((path.indexOf("megasync/") !== -1)||
 		(path.indexOf("dropbox/") !== -1)||
 		(path.indexOf("com.getdropbox") !== -1)||
@@ -205,6 +205,158 @@ function process(e){
 	}
 	if ((path.indexOf("ph.telegra.telegraph") !== -1))	{
 		e.addCategory("Telegram");	
+	}
+	
+	//Categories for Brazilian Software
+	
+	//Program Files of Federal Taxes Agency
+	if(e.getMediaType().toString().equals("application/irpf")){
+		
+		if (nome.indexOf("-irpf-") !== -1)
+			e.addCategory("Tax Returns and Receipts IRPF");
+
+		else if (nome.indexOf("-dirf-") !== -1)
+			e.addCategory("Tax Returns and Receipts DIRF");
+
+		else if ((nome.indexOf("dirf") !== -1)&& (ext.equals("fdb")))
+			e.addCategory("Tax Returns and Receipts DIRF");
+
+		else if (nome.indexOf("-dipj-") !== -1)
+			e.addCategory("Tax Returns and Receipts DIPJ");
+		
+		else if (nome.indexOf("-cnpj-") !== -1)
+			e.addCategory("Tax Returns and Receipts CNPJ");
+		
+		else if (nome.indexOf("-dsimples-") !== -1)
+			e.addCategory("Tax Returns and Receipts DSIMPLES");
+		
+		else if (nome.indexOf("-dctfs") !== -1)
+			e.addCategory("Tax Returns and Receipts DCTF");
+
+		else if (nome.indexOf("-dctfm") !== -1)
+			e.addCategory("Tax Returns and Receipts DCTF");
+
+		else if (nome.indexOf("-perdcomp") !== -1)
+			e.addCategory("Tax Returns and Receipts PER DCOMP");
+		
+		else if (ext.equals("rec")||ext.equals("dec") ||ext.equals("bak")  ||ext.equals("dbk"))
+			e.addCategory("Other Tax Returns and Receipts");	
+	}
+	
+	
+	//Files related to "Conectividade Social da CAIXA", "Sistema Empresa de Recolhimento do FGTS", "Informações à Previdência Social" (SEFIP/GEFIP)
+	if(e.getMediaType().toString().equals("application/zip")){
+		if (ext.equals("sfp")||(ext.equals("bkp")&& nome.indexOf(".bkp")==16))
+			e.addCategory("SEFIP_GEFIP Files");	
+		if (ext.equals("cns"))
+			e.addCategory("Social Connectivity Program Files");
+	}
+	
+	if (nome.indexOf("sefip.re") !== -1 || nome.indexOf("sefipcr.re") !== -1)
+		e.addCategory("SEFIP_GEFIP Files");
+		
+	if (nome.indexOf("sfpdb001") !== -1)
+		e.addCategory("SEFIP Databases");
+		
+	if (nome.indexOf("sefip.exe") !== -1)
+		e.addCategory("SEFIP Executables");
+		
+	if (nome.indexOf("cnsini.exe") !== -1){
+		e.addCategory("Social Connectivity Program Executables");
+		e.addCategory("Social Connectivity Program Files");
+	}
+	
+	//Must be tested for false positives...
+	/*if ((nome.endsWith(".re") === true)||(nome.equals("hash.txt") === true))
+		e.addCategory("SEFIP Files");
+	
+	if (nome.equals("selo.xml") === true){
+		e.addCategory("Social Connectivity Program Files");
+		e.addCategory("SEFIP Files");
+	}
+	*/
+	
+	//Files related to "Guia de Recolhimento Rescisório do FGTS da Caixa Econômica Federal"
+	if (nome.indexOf("grrf.re") !== -1 || nome.indexOf("grrf.fdb") !== -1)	
+		e.addCategory("GRRF Files");	
+		
+		
+	//Specific PDF files with known name patterns created by some softwares
+	if(categorias.indexOf("PDF Documents") !== -1)
+	{
+		if (nome.indexOf("grf_") !== -1 || nome.indexOf("sefip_") !== -1 || nome.indexOf("gare ") !== -1 || (nome.indexOf("re_") !== -1 && nome.indexOf("re_") < 5))
+			e.addCategory("PDF Bills of Exchange");
+		if (nome.indexOf("-irpf-20") !== -1 || nome.indexOf("-irpf-19") !== -1)
+			e.addCategory("Tax Returns and Receipts IRPF");
+		if (nome.indexOf("-dirf-20") !== -1 || nome.indexOf("-dirf-19") !== -1)
+			e.addCategory("Tax Returns and Receipts DIRF");
+		if (nome.indexOf("-dipj-20") !== -1 || nome.indexOf("-dipj-19") !== -1)
+			e.addCategory("Tax Returns and Receipts DIPJ");
+		if (nome.indexOf("-cnpj-20") !== -1 || nome.indexOf("-cnpj-19") !== -1)
+			e.addCategory("Tax Returns and Receipts CNPJ");
+		if (nome.indexOf("-irpf-20") !== -1 || nome.indexOf("-irpf-19") !== -1)
+			e.addCategory("Tax Returns and Receipts IRPF");
+		if (nome.indexOf("-dsimples-20") !== -1 || nome.indexOf("-dsimples-19") !== -1)
+			e.addCategory("Tax Returns and Receipts DSIMPLES");
+		if (nome.indexOf("-dctfs1") !== -1 || nome.indexOf("-dctfs2") !== -1)
+			e.addCategory("Tax Returns and Receipts DCTF");
+	}
+	if (((path.indexOf("pdcomp") !== -1)||
+	(path.indexOf("perdcomp") !== -1))
+	&&(path.indexOf("wdpdcomp") == -1)&&(path.indexOf("wpdcomp") == -1))	
+	{
+		e.addCategory("Tax Returns and Receipts PER DCOMP");	
+	}
+	
+	
+	//SPED Program Files
+	if ((ext.equals("sped"))	||
+	((ext.equals("txt"))&&(nome.indexOf("sped-") !== -1))||
+	((ext.equals("txt"))&&(nome.indexOf("sped_") !== -1))||
+	(path.indexOf("sped/") !== -1)
+	)
+	{
+		e.addCategory("SPED Program Files");
+	}
+	
+	//Receitanet Program Files
+	if (
+	(path.indexOf("/receitanet") !== -1)
+	)
+	{
+		e.addCategory("Receitanet Program Files");
+	}
+	
+	//RFB Program Files
+	if(
+		(path.indexOf("programa rfb/") !== -1)||
+		(path.indexOf("programas rfb/") !== -1)||
+		(path.indexOf("/irpf20") !== -1)||
+		(path.indexOf("/irpf19") !== -1)||
+		(path.indexOf("/dirpf20") !== -1)||
+		(path.indexOf("/dirpf19") !== -1)||
+		(path.indexOf("/dirpf/") !== -1)||
+		(
+			//((path.indexOf("/arquivos de programas") !== -1)||(path.indexOf("/program files") !== -1))&&
+				(
+				(path.indexOf("/dirf") !== -1)||
+				(path.indexOf("/dipj") !== -1)||
+				(path.indexOf("/dctf") !== -1)||
+				(path.indexOf("/simplesnacional") !== -1)||
+				(path.indexOf("/sedif") !== -1)||
+				(path.indexOf("/pgdcnpj") !== -1)||
+				(path.indexOf("/sefaz") !== -1)||
+				(path.indexOf("/sintegra") !== -1)||
+				(path.indexOf("/danfe") !== -1)||
+				(path.indexOf("/gdrais") !== -1)||
+				(path.indexOf("/sicalcp") !== -1)||
+				(path.indexOf("/cagednet") !== -1)||
+				(path.indexOf("/dsimples") !== -1)
+				)
+		)
+	)
+	{
+		e.addCategory("RFB Program Files");
 	}
 }
 
