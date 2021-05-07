@@ -134,38 +134,3 @@ public class RawStringParserTest extends TestCase{
     
 
 }
-
-/*
-# Python program for writing with particular encode
-data = """sample text"""
-
-# Change as needed (iso8859-1, utf8, utf16)
-data.encode('iso8859-1')
-
-# Writing file.
-with open ('test_iso8859-1', 'w') as fp:
-    fp.write(data)
-
-
-# Python program for reading and merging streams
-
-data = data2 = b''
-out_data = b''
-
-# Reading data from file1
-# Change as needed
-with open('test_utf16iso88591', 'rb') as fp:
-    data = fp.read()
-    out_data += data
-
-# Reading data from file2
-# Change as needed
-with open('test_utf8', 'rb') as fp:
-    data2 = fp.read()
-    out_data += data2
-    
-# Writing file
-# Change as needed    
-with open ('test_utf16iso88591utf8', 'wb') as fp:
-    fp.write(out_data)
-*/
