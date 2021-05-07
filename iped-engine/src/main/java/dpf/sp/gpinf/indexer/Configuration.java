@@ -54,6 +54,7 @@ import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
+import iped3.configuration.IConfigurationDirectory;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -125,14 +126,14 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty("iped.root", appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
                 appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
-        System.setProperty("iped.configPath", configPath);
+        System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$

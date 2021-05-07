@@ -1,15 +1,8 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.File;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
-import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
-
-import dpf.sp.gpinf.indexer.Configuration;
 
 public class MessagesFilter {
 
@@ -18,13 +11,6 @@ public class MessagesFilter {
     private static ResourceBundle RESOURCE_BUNDLE;
 
     private MessagesFilter() {
-    }
-
-    private static ResourceBundle getExternalBundle(String bundleName, Locale locale) throws MalformedURLException {
-        File file = new File(Configuration.getInstance().configPath, "conf/localization");
-        URL[] urls = { file.toURI().toURL() };
-        ClassLoader loader = new URLClassLoader(urls);
-        return ResourceBundle.getBundle(bundleName, locale, loader);
     }
 
     public static String get(String key, String defaultValue) {
@@ -37,20 +23,12 @@ public class MessagesFilter {
 
     public static String get(String key) {
 
-        try {
-            if (RESOURCE_BUNDLE == null) {
-                String localeStr = System.getProperty("iped-locale"); //$NON-NLS-1$
-                Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
-                RESOURCE_BUNDLE = getExternalBundle(BUNDLE_NAME, locale);
-            }
-            return RESOURCE_BUNDLE.getString(key);
-
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+        if (RESOURCE_BUNDLE == null) {
+            String localeStr = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+            Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
+            RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
         }
+        return RESOURCE_BUNDLE.getString(key);
     }
 
-    public static void resetLocale() {
-        RESOURCE_BUNDLE = null;
-    }
 }

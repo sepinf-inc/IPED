@@ -34,7 +34,7 @@ public class CategoryLocalization extends AbstractPropertiesConfigurable {
     private DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
-            String confFile = CONF_PREFIX + "_" + System.getProperty(LocaleConfig.LOCALE_SYS_PROP) + CONF_SUFFIX;
+            String confFile = CONF_PREFIX + "_" + System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP) + CONF_SUFFIX;
             return entry.endsWith(confFile);
         }
     };

@@ -106,9 +106,9 @@ public class CaseManagement extends JFrame {
 
     public static void main(String[] args) {
 
-        String locale = System.getProperty("iped-locale");
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP);
         if (locale == null) {
-            System.setProperty("iped-locale", "pt-BR");
+            System.setProperty(iped3.util.Messages.LOCALE_SYS_PROP, "en");
         }
 
         javax.swing.SwingUtilities.invokeLater(new Runnable() {

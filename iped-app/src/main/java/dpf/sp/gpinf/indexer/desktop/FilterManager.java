@@ -54,7 +54,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
-        String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$
