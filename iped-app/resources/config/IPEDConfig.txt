@@ -1,1 +1,1 @@
-﻿# Configuration file moved! Please edit your processing configuration options in profiles/[locale]/default
+﻿# Configuration file moved! Please edit your processing configuration options in profiles/default
