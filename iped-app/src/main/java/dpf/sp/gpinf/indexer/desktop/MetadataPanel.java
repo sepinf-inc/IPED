@@ -130,7 +130,7 @@ public class MetadataPanel extends JPanel
         props.addActionListener(this);
 
         scale.setToolTipText(LINEAR_SCALE + " / " + LOG_SCALE);
-        scale.setPreferredSize(new Dimension(32, 15));
+        scale.setPreferredSize(new Dimension(30, 15));
         scale.setEnabled(false);
         scale.addChangeListener(this);
         scale.addMouseListener(new SliderMouseListener(scale));
