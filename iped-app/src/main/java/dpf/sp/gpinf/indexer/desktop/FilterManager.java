@@ -7,7 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -61,6 +65,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
+    private static class FilterComparator implements Comparator<String> {
+        @Override
+        public int compare(String o1, String o2) {
+            return MessagesFilter.get(o1, o1).compareTo(MessagesFilter.get(o2, o2));
+        }
+    }
+
     public void loadFilters() {
         try {
             if (userFilters.exists()) {
@@ -87,11 +98,11 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         comboFilter.addItem(App.FILTRO_TODOS);
         comboFilter.addItem(App.FILTRO_SELECTED);
 
-        Object[] filternames = filters.keySet().toArray();
-        Arrays.sort(filternames, Collator.getInstance());
-        for (Object filter : filternames) {
-            String localizedName = MessagesFilter.get((String) filter, (String) filter);
-            localizationMap.put(localizedName, (String) filter);
+        List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
+        Collections.sort(filternames, new FilterComparator());
+        for (String filter : filternames) {
+            String localizedName = MessagesFilter.get(filter, filter);
+            localizationMap.put(localizedName, filter);
             comboFilter.addItem(localizedName);
         }
 
@@ -112,12 +123,12 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private void populateList() {
 
         String name = list.getSelectedValue();
-        Object[] filternames = filters.keySet().toArray();
-        Arrays.sort(filternames, Collator.getInstance());
+        List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
+        Collections.sort(filternames, new FilterComparator());
         listModel.clear();
-        for (Object filter : filternames) {
-            String localizedName = MessagesFilter.get((String) filter, (String) filter);
-            localizationMap.put(localizedName, (String) filter);
+        for (String filter : filternames) {
+            String localizedName = MessagesFilter.get(filter, filter);
+            localizationMap.put(localizedName, filter);
             listModel.addElement(localizedName);
         }
         list.setSelectedValue(name, true);
