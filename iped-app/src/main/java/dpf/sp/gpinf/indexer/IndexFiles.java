@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
@@ -43,7 +42,6 @@ import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
@@ -56,7 +54,7 @@ public class IndexFiles {
     private static Logger LOGGER = null;
 
     String rootPath, configPath;
-    String profile, locale;
+    String profile;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -144,7 +142,6 @@ public class IndexFiles {
         }
 
         configPath = rootPath;
-        locale = getProfileLocale();
 
         profile = null;
 
@@ -154,19 +151,11 @@ public class IndexFiles {
             profile = "default"; //$NON-NLS-1$
         }
         if (profile != null)
-            configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
+            configPath = new File(configPath, "profiles/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (!new File(configPath).exists())
             throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
     }
-
-    public String getProfileLocale() throws IOException {
-        UTF8Properties props = new UTF8Properties();
-        props.load(new File(rootPath, Configuration.LOCAL_CONFIG));
-        String locale = props.getProperty("locale").trim(); //$NON-NLS-1$
-        return locale;
-    }
-
 
     protected void startManager() {
         try {
