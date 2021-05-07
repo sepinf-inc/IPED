@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -29,6 +30,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private File defaultFilter;
 
     private UTF8Properties filters = new UTF8Properties();
+    private HashMap<String, String> localizationMap = new HashMap<>();
     private volatile boolean updatingCombo = false;
     private JComboBox<String> comboFilter;
 
@@ -88,7 +90,9 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         Object[] filternames = filters.keySet().toArray();
         Arrays.sort(filternames, Collator.getInstance());
         for (Object filter : filternames) {
-            comboFilter.addItem((String) filter);
+            String localizedName = MessagesFilter.get((String) filter, (String) filter);
+            localizationMap.put(localizedName, (String) filter);
+            comboFilter.addItem(localizedName);
         }
 
         if (prevSelected != null) {
@@ -112,7 +116,9 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         Arrays.sort(filternames, Collator.getInstance());
         listModel.clear();
         for (Object filter : filternames) {
-            listModel.addElement((String) filter);
+            String localizedName = MessagesFilter.get((String) filter, (String) filter);
+            localizationMap.put(localizedName, (String) filter);
+            listModel.addElement(localizedName);
         }
         list.setSelectedValue(name, true);
     }
@@ -171,7 +177,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     }
 
     public String getFilterExpression(String filter) {
-        return filters.getProperty(filter);
+        return filters.getProperty(localizationMap.get(filter));
     }
 
     public boolean isUpdatingFilter() {
@@ -187,12 +193,14 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         if (e.getSource() == novo) {
             String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("FilterManager.NewName"), //$NON-NLS-1$
                     list.getSelectedValue());
-            if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
-                filters.put(newLabel.trim(), expression.getText());
+            if (newLabel != null && !(newLabel = newLabel.trim()).isEmpty() && !listModel.contains(newLabel)) {
+                String filter = localizationMap.getOrDefault(newLabel, newLabel);
+                filters.put(filter, expression.getText());
             }
         }
 
         String filter = list.getSelectedValue();
+        filter = localizationMap.getOrDefault(filter, filter);
         if (e.getSource() == save && filter != null) {
             filters.put(filter, expression.getText());
         }
