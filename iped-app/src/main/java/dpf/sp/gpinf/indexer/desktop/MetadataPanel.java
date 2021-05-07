@@ -95,6 +95,7 @@ public class MetadataPanel extends JPanel
     JButton update = new JButton();
     JTextField listFilter = new JTextField();
     JButton copyResultToClipboard = new JButton();
+    private final JButton reset = new JButton();
 
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -129,7 +130,7 @@ public class MetadataPanel extends JPanel
         props.addActionListener(this);
 
         scale.setToolTipText(LINEAR_SCALE + " / " + LOG_SCALE);
-        scale.setPreferredSize(new Dimension(30, 15));
+        scale.setPreferredSize(new Dimension(32, 15));
         scale.setEnabled(false);
         scale.addChangeListener(this);
         scale.addMouseListener(new SliderMouseListener(scale));
@@ -139,17 +140,24 @@ public class MetadataPanel extends JPanel
         sort.addChangeListener(this);
         sort.addMouseListener(new SliderMouseListener(sort));
 
-        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 15));
+        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
         update.setPreferredSize(new Dimension(20, 20));
         update.setContentAreaFilled(false);
         update.addMouseListener(new ButtonMouseListener(update));
 
-        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 15));
+        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 16));
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
         copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
         copyResultToClipboard.setContentAreaFilled(false);
         copyResultToClipboard.addMouseListener(new ButtonMouseListener(copyResultToClipboard));
+        
+        reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 16));
+        reset.setToolTipText(Messages.getString("MetadataPanel.Clear"));
+        reset.setPreferredSize(new Dimension(20, 20));
+        reset.setContentAreaFilled(false);
+        reset.addMouseListener(new ButtonMouseListener(reset));
+        reset.addActionListener(this);
 
         list.setFixedCellHeight(18);
         list.setFixedCellWidth(2000);
@@ -182,6 +190,7 @@ public class MetadataPanel extends JPanel
         l4.add(Box.createRigidArea(new Dimension(10, 0)));
         l4.add(copyResultToClipboard);
         l4.add(update);
+        l4.add(reset);
 
         listFilter.addActionListener(this);
         copyResultToClipboard.addActionListener(this);
@@ -875,6 +884,9 @@ public class MetadataPanel extends JPanel
         else if (e.getSource() == copyResultToClipboard)
             copyResultsToClipboard();
 
+        else if (e.getSource() == reset)
+            resetPanel();
+        
     }
 
     @Override
@@ -1045,6 +1057,22 @@ public class MetadataPanel extends JPanel
         public void mouseReleased(MouseEvent e) {
             button.setContentAreaFilled(false);
         }
-    };
+    }
+    
+    private void resetPanel() {
+        if (groups.getSelectedItem() != null) {
+            boolean empty = list.isSelectionEmpty();
+            groups.setSelectedItem(null);
+            listFilter.setText("");
+            sort.setValue(0);
+            scale.setValue(0);
+            updateProps();
+            clearFilter();
+            if (!empty) {
+                App.get().appletListener.updateFileListing();
+                updateTabColor();
+            }
+        }
+    }
 
 }
