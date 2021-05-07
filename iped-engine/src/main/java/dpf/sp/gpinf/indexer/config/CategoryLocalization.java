@@ -1,20 +1,20 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.nio.file.DirectoryStream.Filter;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.Enumeration;
+import java.util.Locale;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.TreeMap;
 
-public class CategoryLocalization extends AbstractPropertiesConfigurable {
+public class CategoryLocalization {
 
-    private static final String CONF_PREFIX = "categories";
-    private static final String CONF_SUFFIX = ".properties";
+    private static final String BUNDLE_NAME = "iped-categories";
 
+    private static ResourceBundle RESOURCE_BUNDLE;
     private static Collator collator;
+    private static CategoryLocalization instance;
 
     private Map<String, String> map = new TreeMap<>(getCollator());
     private Map<String, String> invertedMap = new TreeMap<>(getCollator());
@@ -31,27 +31,28 @@ public class CategoryLocalization extends AbstractPropertiesConfigurable {
         return collator;
     }
 
-    private DirectoryStream.Filter<Path> filter = new Filter<Path>() {
-        @Override
-        public boolean accept(Path entry) throws IOException {
-            String confFile = CONF_PREFIX + "_" + System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP) + CONF_SUFFIX;
-            return entry.endsWith(confFile);
+    public static CategoryLocalization getInstance() {
+        if (instance == null) {
+            synchronized (CategoryLocalization.class) {
+                if (instance == null) {
+                    instance = new CategoryLocalization();
+                }
+            }
         }
-    };
-
-    @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return filter;
+        return instance;
     }
 
-    @Override
-    public void processConfig(Path resource) throws IOException {
-        super.processConfig(resource);
-        Enumeration<String> keys = (Enumeration<String>) super.properties.propertyNames();
+    private CategoryLocalization() {
+        String localeStr = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
+        Locale locale = localeStr != null ? Locale.forLanguageTag(localeStr) : Locale.getDefault();
+        RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
+
+        Enumeration<String> keys = (Enumeration<String>) RESOURCE_BUNDLE.getKeys();
         while (keys.hasMoreElements()) {
             String key = keys.nextElement();
-            map.put(key.toLowerCase(), super.properties.getProperty(key));
-            invertedMap.put(super.properties.getProperty(key), key);
+            String value = RESOURCE_BUNDLE.getString(key).trim();
+            map.put(key.toLowerCase().trim(), value);
+            invertedMap.put(value, key.trim());
         }
     }
 

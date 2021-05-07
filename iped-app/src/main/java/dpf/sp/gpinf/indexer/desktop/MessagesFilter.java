@@ -6,7 +6,7 @@ import java.util.ResourceBundle;
 
 public class MessagesFilter {
 
-    private static final String BUNDLE_NAME = "filters"; //$NON-NLS-1$
+    private static final String BUNDLE_NAME = "iped-filters"; //$NON-NLS-1$
 
     private static ResourceBundle RESOURCE_BUNDLE;
 

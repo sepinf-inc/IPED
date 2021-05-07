@@ -21,11 +21,8 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
@@ -34,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
@@ -54,10 +50,10 @@ import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
-import iped3.configuration.IConfigurationDirectory;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.IConfigurationDirectory;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -210,9 +206,6 @@ public class Configuration {
 
         LocaleConfig localeConfig = new LocaleConfig();
         configManager.addObject(localeConfig);
-
-        CategoryLocalization categoryLocalization = new CategoryLocalization();
-        configManager.addObject(categoryLocalization);
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);

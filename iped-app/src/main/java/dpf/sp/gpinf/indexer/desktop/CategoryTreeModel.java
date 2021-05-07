@@ -20,7 +20,6 @@ import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 import dpf.sp.gpinf.indexer.config.CategoryLocalization;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 
@@ -29,8 +28,7 @@ public class CategoryTreeModel implements TreeModel {
     public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
     private static String CONF_FILE = "conf/CategoryHierarchy.txt"; //$NON-NLS-1$
 
-    private CategoryLocalization categoryLocale = (CategoryLocalization) ConfigurationManager.getInstance()
-            .findObjects(CategoryLocalization.class).iterator().next();
+    private CategoryLocalization categoryLocale = CategoryLocalization.getInstance();
 
     public Category root;
 
