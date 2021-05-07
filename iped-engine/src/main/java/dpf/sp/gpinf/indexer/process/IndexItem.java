@@ -854,6 +854,14 @@ public class IndexItem extends BasicProps {
                     return new GenericFileType(str);
                 return null;
             }
+            
+            @Override
+            public String getTypeExt() {
+                if (getType() == null)
+                    return null;
+                else
+                    return getType().getLongDescr();
+            }
 
             @Override
             public Date getAccessDate() {
