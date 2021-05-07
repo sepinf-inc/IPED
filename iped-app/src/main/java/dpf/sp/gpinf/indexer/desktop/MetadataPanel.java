@@ -55,6 +55,7 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -198,11 +199,13 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-    interface LookupOrd {
-        String lookupOrd(int ord);
+    abstract class LookupOrd {
+        boolean isCategory = false;
+
+        abstract String lookupOrd(int ord);
     }
 
-    class LookupOrdSDV implements LookupOrd {
+    class LookupOrdSDV extends LookupOrd {
 
         SortedDocValues sdv;
 
@@ -220,7 +223,7 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    class LookupOrdSSDV implements LookupOrd {
+    class LookupOrdSSDV extends LookupOrd {
 
         SortedSetDocValues ssdv;
 
@@ -250,7 +253,11 @@ public class MetadataPanel extends JPanel
 
         public String getVal() {
             try {
-                return lo.lookupOrd(ord);
+                String val = lo.lookupOrd(ord);
+                if (lo.isCategory) {
+                    val = CategoryLocalization.getInstance().getLocalizedCategory(val);
+                }
+                return val;
 
             } catch (Exception e) {
                 // LookupOrd get invalid if UI is updated when processing (IndexReader closed)
@@ -792,6 +799,7 @@ public class MetadataPanel extends JPanel
                     list.add(new ValueCount(lo, ord, valueCount[ord]));
         } else if (docValuesSet != null) {
             LookupOrd lo = new LookupOrdSSDV(docValuesSet);
+            lo.isCategory = BasicProps.CATEGORY.equals(field);
             boolean isMoney = field.equals(MONEY_FIELD);
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0)
