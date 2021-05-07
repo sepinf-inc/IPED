@@ -108,9 +108,7 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     private String getNonLocalizedCategory(String category) {
-        CategoryLocalization categoryLocale = (CategoryLocalization) ConfigurationManager.getInstance()
-                .findObjects(CategoryLocalization.class).iterator().next();
-        return categoryLocale.getNonLocalizedCategory(category);
+        return CategoryLocalization.getInstance().getNonLocalizedCategory(category);
     }
 
     private String getNonLocalizedField(String field) {
