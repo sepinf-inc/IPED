@@ -51,7 +51,7 @@ public class GraphicsMagicConverter implements Closeable {
     private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
 
     private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", "96", "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-            WIDTH, "-", "bmp:-" }; //$NON-NLS-1$ //$NON-NLS-2$
+            WIDTH, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
