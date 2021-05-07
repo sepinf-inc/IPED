@@ -19,6 +19,8 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
+import iped3.configuration.IConfigurationDirectory;
+
 public class RegistryKeyParserManager {
     ScriptEngine engine;
     Invocable inv;
@@ -33,7 +35,7 @@ public class RegistryKeyParserManager {
     private void loadConfigPath() {
         File dir;
         try {
-            String configPath = System.getProperty("iped.configPath");
+            String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
 
             dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
 

@@ -67,7 +67,7 @@ public class SearchLinksDialog extends JDialog {
     }
 
     public static void main(String[] args) {
-        System.setProperty("iped-locale", "pt-BR");
+        System.setProperty(iped3.util.Messages.LOCALE_SYS_PROP, "pt-BR");
         SearchLinksDialog dialog = new SearchLinksDialog();
         dialog.setVisible(true);
     }
