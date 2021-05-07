@@ -26,11 +26,13 @@ public abstract class AbstractPkgTest extends TestCase {
    protected ParseContext recursingContext;
    protected ParseContext mboxContext;
    protected ParseContext pstContext;
+   protected ParseContext oleContext;
    
    protected Parser autoDetectParser;
    protected EmbeddedTrackingParser tracker;
    protected EmbeddedMboxParser mboxtracker;
    protected EmbeddedPSTParser psttracker;
+   protected EmbeddedOLEParser oletracker;
 
    protected void setUp() throws Exception {
       super.setUp();
@@ -38,6 +40,10 @@ public abstract class AbstractPkgTest extends TestCase {
       mboxtracker = new EmbeddedMboxParser();
       mboxContext = new ParseContext();
       mboxContext.set(Parser.class, mboxtracker);
+      
+      oletracker = new EmbeddedOLEParser();
+      oleContext = new ParseContext();
+      oleContext.set(Parser.class, oletracker);
       
       psttracker = new EmbeddedPSTParser();
       pstContext = new ParseContext();
@@ -200,6 +206,26 @@ public abstract class AbstractPkgTest extends TestCase {
          
           contentmd5.add(hdigest.toUpperCase());
 
+      }
+
+   }
+   
+   @SuppressWarnings("serial")
+   protected static class EmbeddedOLEParser extends AbstractParser {
+       
+      protected List<String> documentfolder = new ArrayList<String>();
+      
+      public Set<MediaType> getSupportedTypes(ParseContext context) {
+          return (new AutoDetectParser()).getSupportedTypes(context);
+      }
+
+      public void parse(InputStream stream, ContentHandler handler,
+              Metadata metadata, ParseContext context) throws IOException,
+              SAXException, TikaException {
+          
+         
+          if(metadata.get(TikaCoreProperties.TITLE)!= null)
+              documentfolder.add(metadata.get(TikaCoreProperties.TITLE));
       }
 
    }
