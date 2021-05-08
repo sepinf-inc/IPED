@@ -1138,6 +1138,6 @@ public class MetadataPanel extends JPanel
     
     private void clearTextFilter(JTextField field, String emptyFilter) {
         field.setText(emptyFilter);
-        field.setForeground(Color.gray);
+        field.setForeground(new Color(140, 140, 140));
     }
 }
