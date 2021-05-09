@@ -22,7 +22,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
@@ -97,41 +96,40 @@ public class LedCarveTask extends BaseCarveTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String value = confParams.getProperty("enableLedCarving");
-                if (value != null && value.trim().equalsIgnoreCase("true")) {
+                if ("true".equalsIgnoreCase(confParams.getProperty("enableLedCarving").trim())) {
                     String hashDBPath = confParams.getProperty("hashesDB");
                     if (hashDBPath == null) {
-                        throw new IPEDException("Hash database path (hashesDB) must be configured in " + Configuration.LOCAL_CONFIG);
-                    }
-                    File hashDBFile = new File(hashDBPath.trim());
-                    if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                        String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
-                        if (hasIpedDatasource()) {
-                            logger.warn(msg);
-                            init.set(true);
-                            return;
-                        }
-                        throw new IPEDException(msg);
-                    }
-                    hashDBDataSource = new HashDBDataSource(hashDBFile);
-                    long t = System.currentTimeMillis();
-                    if (readCache(hashDBFile)) {
-                        logger.info("Load from cache file {}.", cachePath);
+                        logger.error("Hash database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
-                        ledHashDB = hashDBDataSource.readLedHashDB();
-                        if (ledHashDB == null || ledHashDB.size() == 0) {
-                            logger.error("LED hashes must be loaded into IPED hash database to enable LedCarveTask.");
-                            init.set(true);
-                            return;
-                        }
-                        if (writeCache(hashDBFile)) {
-                            logger.info("Cache file {} was created.", cachePath);
+                        File hashDBFile = new File(hashDBPath.trim());
+                        if (!hashDBFile.exists() || !hashDBFile.canRead()) {
+                            String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
+                            if (hasIpedDatasource()) {
+                                logger.warn(msg);
+                            } else {
+                                logger.error(msg);
+                            }
+                        } else {
+                            hashDBDataSource = new HashDBDataSource(hashDBFile);
+                            long t = System.currentTimeMillis();
+                            if (readCache(hashDBFile)) {
+                                logger.info("Load from cache file {}.", cachePath);
+                            } else {
+                                ledHashDB = hashDBDataSource.readLedHashDB();
+                                if (ledHashDB == null || ledHashDB.size() == 0) {
+                                    logger.error("LED hashes must be loaded into IPED hash database to enable LedCarveTask.");
+                                } else if (writeCache(hashDBFile)) {
+                                    logger.info("Cache file {} was created.", cachePath);
+                                }
+                            }
+                            if (ledHashDB != null && ledHashDB.size() > 0) {
+                                logger.info("{} LED Hashes loaded in {} ms.", ledHashDB.size(), System.currentTimeMillis() - t);
+                                taskEnabled = true;
+                            }
                         }
                     }
-                    logger.info("{} LED Hashes loaded in {} ms.", ledHashDB.size(), System.currentTimeMillis() - t);
-                    taskEnabled = true;
                 }
-                logger.info(taskEnabled ? "Task enabled." : "Task disabled.");
+                logger.info("Task {}.", taskEnabled ? "enabled" : "disabled");
                 init.set(true);
             }
         }
