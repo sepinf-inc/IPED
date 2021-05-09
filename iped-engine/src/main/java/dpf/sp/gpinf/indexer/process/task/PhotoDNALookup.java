@@ -71,6 +71,7 @@ public class PhotoDNALookup extends AbstractTask {
                         Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
                         transforms = (PhotoDNATransforms) c.newInstance();
                     } catch (ClassNotFoundException e) {
+                        LOGGER.error("PhotoDNA jar not found.");
                         init.set(true);
                         return;
                     }
