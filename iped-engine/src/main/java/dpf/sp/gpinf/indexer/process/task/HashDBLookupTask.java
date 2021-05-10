@@ -64,7 +64,8 @@ public class HashDBLookupTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = "true".equalsIgnoreCase(confParams.getProperty(ENABLE_PARAM).trim());
+                String config = confParams.getProperty(ENABLE_PARAM);
+                taskEnabled = config != null && Boolean.parseBoolean(config.trim());
                 if (taskEnabled) {
                     String hashes = confParams.getProperty("hash");
                     if (hashes == null) {

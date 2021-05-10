@@ -66,7 +66,8 @@ public class PhotoDNALookup extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                if ("true".equalsIgnoreCase(confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA).trim())) {
+                String config = confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA);
+                if (config != null && Boolean.parseBoolean(config.trim())) {
                     try {
                         Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
                         transforms = (PhotoDNATransforms) c.newInstance();

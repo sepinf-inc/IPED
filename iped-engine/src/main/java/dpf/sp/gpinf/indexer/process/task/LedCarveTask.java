@@ -96,7 +96,8 @@ public class LedCarveTask extends BaseCarveTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                if ("true".equalsIgnoreCase(confParams.getProperty("enableLedCarving").trim())) {
+                String config = confParams.getProperty("enableLedCarving");
+                if (config != null && Boolean.parseBoolean(config.trim())) {
                     String hashDBPath = confParams.getProperty("hashesDB");
                     if (hashDBPath == null) {
                         logger.error("Hash database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
