@@ -7,6 +7,11 @@ import java.io.File;
 import java.io.IOException;
 import java.text.Collator;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
@@ -29,6 +34,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private File defaultFilter;
 
     private UTF8Properties filters = new UTF8Properties();
+    private HashMap<String, String> localizationMap = new HashMap<>();
     private volatile boolean updatingCombo = false;
     private JComboBox<String> comboFilter;
 
@@ -52,11 +58,18 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     private static final File getGlobalFilterFile() {
         String name = "ipedFilters"; //$NON-NLS-1$
-        String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$
         return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+    }
+
+    private static class FilterComparator implements Comparator<String> {
+        @Override
+        public int compare(String o1, String o2) {
+            return MessagesFilter.get(o1, o1).compareTo(MessagesFilter.get(o2, o2));
+        }
     }
 
     public void loadFilters() {
@@ -85,10 +98,12 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         comboFilter.addItem(App.FILTRO_TODOS);
         comboFilter.addItem(App.FILTRO_SELECTED);
 
-        Object[] filternames = filters.keySet().toArray();
-        Arrays.sort(filternames, Collator.getInstance());
-        for (Object filter : filternames) {
-            comboFilter.addItem((String) filter);
+        List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
+        Collections.sort(filternames, new FilterComparator());
+        for (String filter : filternames) {
+            String localizedName = MessagesFilter.get(filter, filter);
+            localizationMap.put(localizedName, filter);
+            comboFilter.addItem(localizedName);
         }
 
         if (prevSelected != null) {
@@ -108,11 +123,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     private void populateList() {
 
         String name = list.getSelectedValue();
-        Object[] filternames = filters.keySet().toArray();
-        Arrays.sort(filternames, Collator.getInstance());
+        List<String> filternames = filters.keySet().stream().map(i -> (String) i).collect(Collectors.toList());
+        Collections.sort(filternames, new FilterComparator());
         listModel.clear();
-        for (Object filter : filternames) {
-            listModel.addElement((String) filter);
+        for (String filter : filternames) {
+            String localizedName = MessagesFilter.get(filter, filter);
+            localizationMap.put(localizedName, filter);
+            listModel.addElement(localizedName);
         }
         list.setSelectedValue(name, true);
     }
@@ -171,7 +188,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     }
 
     public String getFilterExpression(String filter) {
-        return filters.getProperty(filter);
+        return filters.getProperty(localizationMap.get(filter));
     }
 
     public boolean isUpdatingFilter() {
@@ -187,12 +204,14 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         if (e.getSource() == novo) {
             String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("FilterManager.NewName"), //$NON-NLS-1$
                     list.getSelectedValue());
-            if (newLabel != null && !newLabel.trim().isEmpty() && !listModel.contains(newLabel.trim())) {
-                filters.put(newLabel.trim(), expression.getText());
+            if (newLabel != null && !(newLabel = newLabel.trim()).isEmpty() && !listModel.contains(newLabel)) {
+                String filter = localizationMap.getOrDefault(newLabel, newLabel);
+                filters.put(filter, expression.getText());
             }
         }
 
         String filter = list.getSelectedValue();
+        filter = localizationMap.getOrDefault(filter, filter);
         if (e.getSource() == save && filter != null) {
             filters.put(filter, expression.getText());
         }

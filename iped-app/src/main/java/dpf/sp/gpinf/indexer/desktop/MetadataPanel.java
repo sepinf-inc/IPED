@@ -55,6 +55,7 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -102,6 +103,7 @@ public class MetadataPanel extends JPanel
     volatile SortedSetDocValues docValuesSet;
     volatile SortedSetDocValues eventDocValuesSet;
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
+    volatile boolean isCategory = false;
 
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array, filteredArray;
@@ -198,11 +200,13 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-    interface LookupOrd {
-        String lookupOrd(int ord);
+    abstract class LookupOrd {
+        boolean isCategory = false;
+
+        abstract String lookupOrd(int ord);
     }
 
-    class LookupOrdSDV implements LookupOrd {
+    class LookupOrdSDV extends LookupOrd {
 
         SortedDocValues sdv;
 
@@ -220,7 +224,7 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    class LookupOrdSSDV implements LookupOrd {
+    class LookupOrdSSDV extends LookupOrd {
 
         SortedSetDocValues ssdv;
 
@@ -250,7 +254,11 @@ public class MetadataPanel extends JPanel
 
         public String getVal() {
             try {
-                return lo.lookupOrd(ord);
+                String val = lo.lookupOrd(ord);
+                if (lo.isCategory) {
+                    val = CategoryLocalization.getInstance().getLocalizedCategory(val);
+                }
+                return val;
 
             } catch (Exception e) {
                 // LookupOrd get invalid if UI is updated when processing (IndexReader closed)
@@ -317,8 +325,9 @@ public class MetadataPanel extends JPanel
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields)
-                props.addItem(f);
+            for (String f : fields) {
+                props.addItem(BasicProps.getLocalizedField(f));
+            }
         }
         updatingProps = false;
     }
@@ -412,6 +421,7 @@ public class MetadataPanel extends JPanel
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
+        isCategory = BasicProps.CATEGORY.equals(field);
         eventSetToOrdsCache.clear();
     }
 
@@ -576,7 +586,7 @@ public class MetadataPanel extends JPanel
             sortAndUpdateList(filteredArray);
             return;
         }
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         loadDocValues(field);
 
@@ -791,6 +801,7 @@ public class MetadataPanel extends JPanel
                     list.add(new ValueCount(lo, ord, valueCount[ord]));
         } else if (docValuesSet != null) {
             LookupOrd lo = new LookupOrdSSDV(docValuesSet);
+            lo.isCategory = BasicProps.CATEGORY.equals(field);
             boolean isMoney = field.equals(MONEY_FIELD);
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0)
@@ -823,6 +834,15 @@ public class MetadataPanel extends JPanel
 
         } else if (array.length > 0 && array[0] instanceof MoneyCount) {
             Arrays.sort(array);
+
+        } else if (isCategory) {
+            int[] categoryOrd = RowComparator.getLocalizedCategoryOrd(docValuesSet);
+            Arrays.sort(array, new Comparator<ValueCount>() {
+                @Override
+                public int compare(ValueCount o1, ValueCount o2) {
+                    return categoryOrd[o1.ord] - categoryOrd[o2.ord];
+                }
+            });
         }
 
         LOGGER.info("Metadata value sorting took {}ms", (System.currentTimeMillis() - time));
@@ -913,7 +933,7 @@ public class MetadataPanel extends JPanel
         }
 
         String field = (String) props.getSelectedItem();
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
         for (ValueCount value : list.getSelectedValuesList()) {
