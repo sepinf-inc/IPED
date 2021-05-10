@@ -89,10 +89,15 @@ public class ImageUtil {
                                 int offset = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
                                 int length = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
 
-                                byte[] tnData = new byte[length];
-                                System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
-                                        length);
-                                tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                                if (JPEG_SEGMENT_PREAMBLE.length() + offset + length > segmentBytes.length) {
+                                    length = segmentBytes.length - (JPEG_SEGMENT_PREAMBLE.length() + offset);
+                                }
+                                if (length > 0 && length < 1 << 24) {
+                                    byte[] tnData = new byte[length];
+                                    System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
+                                            length);
+                                    tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                                }
                             }
                         } catch (MetadataException e) {
                             //ignore
