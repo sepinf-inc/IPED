@@ -9,8 +9,24 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 
 public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorService {
 
-    private static final Base58CheckedValidator base58validator = new Base58CheckedValidator(
-            "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz".toCharArray());
+    private static final AltcoinBase58CheckValidator validator;
+    
+    static {
+        validator = new AltcoinBase58CheckValidator();
+        validator.setVersionForPrefix("1", 0);
+        validator.setVersionForPrefix("3", 5);
+        validator.setVersionForPrefix("5", 128);
+        validator.setVersionForPrefix("K", 128);
+        validator.setVersionForPrefix("L", 128);
+        validator.setVersionForPrefix("xpub", 4);
+        validator.setVersionForPrefix("xpub", 136);
+        validator.setVersionForPrefix("xpub", 178);
+        validator.setVersionForPrefix("xpub", 30);
+        validator.setVersionForPrefix("xprv", 4);
+        validator.setVersionForPrefix("xprv", 136);
+        validator.setVersionForPrefix("xprv", 173);
+        validator.setVersionForPrefix("xprv", 228);
+    }
 
     private static int[] BECH32_CHARSET_REV = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
             -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -40,35 +56,9 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     public boolean validateBitcoinAddress(String addr) {
         if (addr.startsWith("bc1")) {
             return bech32VerifyChecksum(addr);
-        } else {
-            try {
-                int addressHeader = getAddressHeader(addr);
-                switch (addr.charAt(0)) {
-                    case '1':
-                        return addressHeader == 0;
-                    case '3':
-                        return addressHeader == 5;
-                    case '5':
-                    case 'K':
-                    case 'L':
-                        return addressHeader == 128;
-                    default:
-                }
-
-                if (addr.startsWith("xpub")) {
-                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 178 || addressHeader == 30;
-                } else if (addr.startsWith("xprv")) {
-                    return addressHeader == 4 || addressHeader == 136 || addressHeader == 173 || addressHeader == 228;
-                }
-            } catch (Exception x) {
-            }
         }
-        return false;
-    }
-
-    private static int getAddressHeader(String address) throws IOException {
-        byte[] tmp = base58validator.decodeChecked(address);
-        return tmp[0] & 0xFF;
+        
+        return validator.validate(addr);
     }
 
     /*
