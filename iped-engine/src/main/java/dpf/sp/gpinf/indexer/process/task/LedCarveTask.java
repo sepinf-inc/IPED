@@ -100,7 +100,7 @@ public class LedCarveTask extends BaseCarveTask {
                 if (config != null && Boolean.parseBoolean(config.trim())) {
                     String hashDBPath = confParams.getProperty("hashesDB");
                     if (hashDBPath == null) {
-                        logger.error("Hash database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
+                        logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
                         File hashDBFile = new File(hashDBPath.trim());
                         if (!hashDBFile.exists() || !hashDBFile.canRead()) {
@@ -118,7 +118,7 @@ public class LedCarveTask extends BaseCarveTask {
                             } else {
                                 ledHashDB = hashDBDataSource.readLedHashDB();
                                 if (ledHashDB == null || ledHashDB.size() == 0) {
-                                    logger.error("LED hashes must be loaded into IPED hash database to enable LedCarveTask.");
+                                    logger.error("LED hashes must be loaded into IPED hashes database to enable LedCarveTask.");
                                 } else if (writeCache(hashDBFile)) {
                                     logger.info("Cache file {} was created.", cachePath);
                                 }

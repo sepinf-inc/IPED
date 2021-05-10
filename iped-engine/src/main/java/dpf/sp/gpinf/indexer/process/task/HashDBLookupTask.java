@@ -83,12 +83,12 @@ public class HashDBLookupTask extends AbstractTask {
                         }
                         String hashDBPath = confParams.getProperty("hashesDB");
                         if (hashDBPath == null) {
-                            logger.error("Configure hash database path (hashesDB) in {}", Configuration.LOCAL_CONFIG);
+                            logger.error("Configure hashes database path (hashesDB) in {}", Configuration.LOCAL_CONFIG);
                             taskEnabled = false;
                         } else {
                             hashDBFile = new File(hashDBPath.trim());
                             if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                                String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
+                                String msg = "Invalid hashes database file: " + hashDBFile.getAbsolutePath();
                                 if (hasIpedDatasource()) {
                                     logger.warn(msg);
                                 } else {
@@ -97,7 +97,7 @@ public class HashDBLookupTask extends AbstractTask {
                                 taskEnabled = false;
                             } else {
                                 String s = confParams.getProperty("excludeKnown");
-                                excludeKnown = "true".equalsIgnoreCase(s.trim());
+                                excludeKnown = Boolean.parseBoolean(s.trim());
                                 hashDBDataSource = new HashDBDataSource(hashDBFile);
                                 addLookupProvider(hashDBDataSource);
                                 File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);

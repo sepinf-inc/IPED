@@ -78,7 +78,7 @@ public class PhotoDNALookup extends AbstractTask {
                     }
                     String hashDBPath = confParams.getProperty("hashesDB");
                     if (hashDBPath == null) {
-                        LOGGER.error("Hash database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
+                        LOGGER.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
                         File hashDBFile = new File(hashDBPath.trim());
                         if (!hashDBFile.exists() || !hashDBFile.canRead()) {
@@ -108,7 +108,7 @@ public class PhotoDNALookup extends AbstractTask {
                                 }
                                 photoDNAHashSet = hashDBDataSource.readPhotoDNA(statusFilter);
                                 if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
-                                    LOGGER.error("PhotoDNA hashes must be loaded into IPED hash database to enable PhotoDNALookup.");
+                                    LOGGER.error("PhotoDNA hashes must be loaded into IPED hashes database to enable PhotoDNALookup.");
                                 } else if (writeCache(hashDBFile, photoDNAHashSet, statusHashDBFilter)) {
                                     LOGGER.info("Cache file {} was created.", cachePath);
                                 }
