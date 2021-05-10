@@ -16,3 +16,4 @@ br.gov.pf.iped.regex.PlacaRegexValidatorService
 br.gov.pf.iped.regex.IPLRegexValidatorService
 br.gov.pf.iped.regex.FacebookContactValidatorService
 br.gov.pf.iped.regex.RIFRegexValidatorService
+br.gov.pf.iped.regex.DogeCoinAddressValidatorService
