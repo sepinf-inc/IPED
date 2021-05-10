@@ -11,6 +11,7 @@ import java.util.Set;
 import org.apache.commons.codec.binary.Hex;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import iped3.io.IItemBase;
 
 /**
  *
@@ -46,6 +47,8 @@ public class Message {
     private MessageStatus messageStatus;
     private String recoveredFrom = null;
     private Set<String> childPornSets = new HashSet<>();
+    private IItemBase mediaItem = null;
+    private String mediaQuery = null;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -311,6 +314,22 @@ public class Message {
 
     public void addChildPornSets(Collection<String> sets) {
         this.childPornSets.addAll(sets);
+    }
+    
+    public IItemBase getMediaItem() {
+        return mediaItem;
+    }
+
+    public void setMediaItem(IItemBase mediaItem) {
+        this.mediaItem = mediaItem;
+    }
+
+    public String getMediaQuery() {
+        return mediaQuery;
+    }
+
+    public void setMediaQuery(String mediaQuery) {
+        this.mediaQuery = mediaQuery;
     }
 
     public static enum MessageType {
