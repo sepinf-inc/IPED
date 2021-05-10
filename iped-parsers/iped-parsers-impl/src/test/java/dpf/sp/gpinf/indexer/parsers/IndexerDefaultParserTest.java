@@ -59,12 +59,12 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.image.ImageParser"));
         assertTrue(hts.contains("image:IHDR: width=512, height=512, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive"));
         assertTrue(hts.contains("image:tiff:BitsPerSample: 8 8 8"));
-        assertTrue(hts.contains("image:tiff:ImageLength: 512"));
-        assertTrue(hts.contains("image:tiff:ImageWidth: 512"));
+        assertTrue(hts.contains("image:Height: 512"));
+        assertTrue(hts.contains("image:Width: 512"));
 
         assertTrue(mts.contains("Content-Type=image/png"));
-        assertTrue(mts.contains("image:tiff:ImageLength=512"));
-        assertTrue(mts.contains("image:tiff:ImageWidth=512"));
+        assertTrue(mts.contains("image:Height=512"));
+        assertTrue(mts.contains("image:Width=512"));
         assertTrue(mts.contains("image:tiff:BitsPerSample=8 8 8"));
 
        }
