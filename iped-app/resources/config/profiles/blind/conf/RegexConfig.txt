@@ -58,9 +58,9 @@ CRIPTOCOIN_RIPPLE, 1, 1, false = [^0-9a-zA-Z](r|X)[a-km-zA-HJ-NP-Z1-9]{20,55}[^0
 # but be warned that you will get a lot of false positives.
 CRIPTOCOIN_ETHEREUM, 0, 1, false = 0x[a-fA-F0-9]{40}[^a-fA-F0-9]
 
-# Regexes below are commented out because they do not have validators currently and return many false positives, you could enable them if necessary
+CRIPTOCOIN_DOGECOIN, 1, 1, false = [^0-9a-zA-Z][DA9][1-9A-HJ-NP-Za-km-z]{25,34}[^0-9a-zA-Z]
 
-#CRIPTOCOIN_DOGECOIN, 1, 1, false = [^0-9a-zA-Z]D{1}[5-9A-HJ-NP-U]{1}[1-9A-HJ-NP-Za-km-z]{32}[^0-9a-zA-Z]
+# Regexes below are commented out because they do not have validators currently and return many false positives, you could enable them if necessary
 
 #CRIPTOCOIN_NEO, 1, 1, false = [^0-9a-zA-Z]A[0-9a-zA-Z]{33}[^0-9a-zA-Z]
 
