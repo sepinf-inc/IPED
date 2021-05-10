@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItem;
 import iped3.io.IItemBase;
+import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -1068,20 +1069,19 @@ public class WhatsAppParser extends SQLite3DBParser {
      * @return
      */
     private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
-        try {
-            InputStream is = item.getBufferedStream();
-            is.skip(mediaSize);
-            int b;
+        try (SeekableInputStream sis = item.getStream()) {
+            sis.seek(mediaSize);
+            byte[] bytes = new byte[15];
+            int read = org.apache.commons.io.IOUtils.read(sis, bytes);
             // this loop will run at most 15 times
-            while ((b = is.read()) >= 0) {
-                if (b > 0) {
+            while (--read >= 0) {
+                if (bytes[read] != 0) {
                     return false;
                 }
             }
             return true;
         } catch (IOException ex) {
-
+            return false;
         }
-        return false;
     }
 }
