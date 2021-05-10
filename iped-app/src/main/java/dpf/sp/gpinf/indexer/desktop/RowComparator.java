@@ -136,7 +136,7 @@ public class RowComparator implements Comparator<Integer> {
                 if (ssdv == null)
                     ssdv = atomicReader.getSortedSetDocValues("_" + indexedField); //$NON-NLS-1$
                 if (isCategory) {
-                    localizedCategoryOrds = buildLocalizedCategoryOrd();
+                    localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
                 }
             }
             if (ndv == null && sndv == null && ssdv == null) {
@@ -150,7 +150,7 @@ public class RowComparator implements Comparator<Integer> {
         }
     }
 
-    private int[] buildLocalizedCategoryOrd() {
+    public static int[] getLocalizedCategoryOrd(SortedSetDocValues ssdv) {
         int[] localizedOrds = new int[(int) ssdv.getValueCount()];
         ArrayList<String> localizedVals = new ArrayList<>();
         for (int i = 0; i < localizedOrds.length; i++) {

@@ -103,6 +103,7 @@ public class MetadataPanel extends JPanel
     volatile SortedSetDocValues docValuesSet;
     volatile SortedSetDocValues eventDocValuesSet;
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
+    volatile boolean isCategory = false;
 
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array, filteredArray;
@@ -420,6 +421,7 @@ public class MetadataPanel extends JPanel
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
+        isCategory = BasicProps.CATEGORY.equals(field);
         eventSetToOrdsCache.clear();
     }
 
@@ -832,6 +834,15 @@ public class MetadataPanel extends JPanel
 
         } else if (array.length > 0 && array[0] instanceof MoneyCount) {
             Arrays.sort(array);
+
+        } else if (isCategory) {
+            int[] categoryOrd = RowComparator.getLocalizedCategoryOrd(docValuesSet);
+            Arrays.sort(array, new Comparator<ValueCount>() {
+                @Override
+                public int compare(ValueCount o1, ValueCount o2) {
+                    return categoryOrd[o1.ord] - categoryOrd[o2.ord];
+                }
+            });
         }
 
         LOGGER.info("Metadata value sorting took {}ms", (System.currentTimeMillis() - time));
