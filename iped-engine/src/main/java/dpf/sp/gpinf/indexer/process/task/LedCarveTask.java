@@ -103,8 +103,8 @@ public class LedCarveTask extends BaseCarveTask {
                         logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
                         File hashDBFile = new File(hashDBPath.trim());
-                        if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                            String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
+                        if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
+                            String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
                             if (hasIpedDatasource()) {
                                 logger.warn(msg);
                             } else {

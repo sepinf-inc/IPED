@@ -87,8 +87,8 @@ public class HashDBLookupTask extends AbstractTask {
                             taskEnabled = false;
                         } else {
                             hashDBFile = new File(hashDBPath.trim());
-                            if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                                String msg = "Invalid hashes database file: " + hashDBFile.getAbsolutePath();
+                            if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
+                                String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
                                 if (hasIpedDatasource()) {
                                     logger.warn(msg);
                                 } else {
