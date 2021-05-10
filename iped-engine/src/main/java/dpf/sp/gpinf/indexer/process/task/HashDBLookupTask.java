@@ -83,7 +83,7 @@ public class HashDBLookupTask extends AbstractTask {
                         }
                         String hashDBPath = confParams.getProperty("hashesDB");
                         if (hashDBPath == null) {
-                            logger.error("Configure hashes database path (hashesDB) in {}", Configuration.LOCAL_CONFIG);
+                            logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                             taskEnabled = false;
                         } else {
                             hashDBFile = new File(hashDBPath.trim());
