@@ -19,7 +19,10 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.IOException;
+import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 
@@ -33,6 +36,7 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -58,11 +62,13 @@ public class RowComparator implements Comparator<Integer> {
     private boolean isDoubleField = false;
     private boolean isTimeStamp = false;
     private boolean isTimeEvent = false;
+    private boolean isCategory = false;
 
     protected SortedDocValues sdv;
     protected SortedSetDocValues ssdv;
     private NumericDocValues ndv;
     private SortedNumericDocValues sndv;
+    private int[] localizedCategoryOrds;
 
     public static void setLoadDocValues(boolean load) {
         loadDocValues = load;
@@ -105,6 +111,7 @@ public class RowComparator implements Comparator<Integer> {
 
         isTimeStamp = BasicProps.TIMESTAMP.equals(field);
         isTimeEvent = BasicProps.TIME_EVENT.equals(field);
+        isCategory = BasicProps.CATEGORY.equals(field);
 
         if (!loadDocValues)
             return;
@@ -128,6 +135,9 @@ public class RowComparator implements Comparator<Integer> {
                 ssdv = atomicReader.getSortedSetDocValues(indexedField);
                 if (ssdv == null)
                     ssdv = atomicReader.getSortedSetDocValues("_" + indexedField); //$NON-NLS-1$
+                if (isCategory) {
+                    localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
+                }
             }
             if (ndv == null && sndv == null && ssdv == null) {
                 sdv = atomicReader.getSortedDocValues(indexedField);
@@ -138,6 +148,24 @@ public class RowComparator implements Comparator<Integer> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static int[] getLocalizedCategoryOrd(SortedSetDocValues ssdv) {
+        int[] localizedOrds = new int[(int) ssdv.getValueCount()];
+        ArrayList<String> localizedVals = new ArrayList<>();
+        for (int i = 0; i < localizedOrds.length; i++) {
+            String val = ssdv.lookupOrd(i).utf8ToString();
+            String localizedVal = CategoryLocalization.getInstance().getLocalizedCategory(val);
+            localizedVals.add(localizedVal);
+        }
+        ArrayList<String> sortedLocalizedVals = new ArrayList<>(localizedVals);
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Collections.sort(sortedLocalizedVals, collator);
+        for(int i = 0; i < localizedOrds.length; i++) {
+            localizedOrds[i] = sortedLocalizedVals.indexOf(localizedVals.get(i));
+        }
+        return localizedOrds;
     }
 
     private ThreadLocal<Bits> localDocsWithField = new ThreadLocal<Bits>() {
@@ -282,6 +310,14 @@ public class RowComparator implements Comparator<Integer> {
                 lssdv.setDocument(b);
                 while (i++ <= k)
                     ordB = (int) lssdv.nextOrd();
+                if (isCategory) {
+                    if (ordA > -1) {
+                        ordA = localizedCategoryOrds[ordA];
+                    }
+                    if (ordB > -1) {
+                        ordB = localizedCategoryOrds[ordB];
+                    }
+                }
                 result = ordA - ordB;
                 k++;
 

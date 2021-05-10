@@ -21,11 +21,8 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
 import org.apache.tika.fork.ForkParser2;
@@ -56,6 +53,7 @@ import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.IConfigurationDirectory;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -96,7 +94,7 @@ public class Configuration {
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
         if (appRoot.contains("profiles")) //$NON-NLS-1$
-            appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
+            appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
 
@@ -124,14 +122,14 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty("iped.root", appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
                 appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
 
-        System.setProperty("iped.configPath", configPath);
+        System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$

@@ -4,10 +4,13 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.GridLayout;
 import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -38,6 +41,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -55,6 +60,7 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -95,6 +101,10 @@ public class MetadataPanel extends JPanel
     JButton update = new JButton();
     JTextField listFilter = new JTextField();
     JButton copyResultToClipboard = new JButton();
+    private final JButton reset = new JButton();
+    private final JTextField propsFilter = new JTextField();
+    
+    private Object lastPropSel;
 
     volatile NumericDocValues numValues;
     volatile SortedNumericDocValues numValuesSet;
@@ -102,6 +112,7 @@ public class MetadataPanel extends JPanel
     volatile SortedSetDocValues docValuesSet;
     volatile SortedSetDocValues eventDocValuesSet;
     volatile HashMap<String, long[]> eventSetToOrdsCache = new HashMap<>();
+    volatile boolean isCategory = false;
 
     volatile IMultiSearchResult ipedResult;
     ValueCount[] array, filteredArray;
@@ -117,6 +128,9 @@ public class MetadataPanel extends JPanel
      */
     private static final long serialVersionUID = 1L;
 
+    private static final String emptyPropsFilter = "[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char)0x2191;
+    private static final String emptyListFilter = "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char)0x2193;
+    
     public MetadataPanel() {
         super(new BorderLayout());
 
@@ -139,17 +153,24 @@ public class MetadataPanel extends JPanel
         sort.addChangeListener(this);
         sort.addMouseListener(new SliderMouseListener(sort));
 
-        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 15));
+        update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
         update.setPreferredSize(new Dimension(20, 20));
         update.setContentAreaFilled(false);
         update.addMouseListener(new ButtonMouseListener(update));
 
-        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 15));
+        copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 16));
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
         copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
         copyResultToClipboard.setContentAreaFilled(false);
         copyResultToClipboard.addMouseListener(new ButtonMouseListener(copyResultToClipboard));
+        
+        reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 16));
+        reset.setToolTipText(Messages.getString("MetadataPanel.Clear"));
+        reset.setPreferredSize(new Dimension(20, 20));
+        reset.setContentAreaFilled(false);
+        reset.addMouseListener(new ButtonMouseListener(reset));
+        reset.addActionListener(this);
 
         list.setFixedCellHeight(18);
         list.setFixedCellWidth(2000);
@@ -157,22 +178,44 @@ public class MetadataPanel extends JPanel
 
         JPanel l1 = new JPanel(new BorderLayout());
         JLabel label = new JLabel(Messages.getString("MetadataPanel.Group")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(90, 20));
+        label.setPreferredSize(new Dimension(80, 20));
         l1.add(label, BorderLayout.WEST);
         l1.add(groups, BorderLayout.CENTER);
 
         JPanel l2 = new JPanel(new BorderLayout());
         label = new JLabel(Messages.getString("MetadataPanel.Property")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(90, 20));
+        label.setPreferredSize(new Dimension(80, 20));
         l2.add(label, BorderLayout.WEST);
         l2.add(props, BorderLayout.CENTER);
 
         JPanel l3 = new JPanel(new BorderLayout());
         label = new JLabel(Messages.getString("MetadataPanel.Filter"));
-        label.setPreferredSize(new Dimension(90, 20));
+        label.setPreferredSize(new Dimension(80, 20));
         l3.add(label, BorderLayout.WEST);
-        l3.add(listFilter, BorderLayout.CENTER);
+        JPanel l3c = new JPanel(new GridLayout(1,2,0,4));
+        l3c.add(propsFilter);
+        l3c.add(listFilter);
+        l3.add(l3c, BorderLayout.CENTER);
+        
+        setupFilter(propsFilter, emptyPropsFilter);
+        setupFilter(listFilter, emptyListFilter);
 
+        propsFilter.getDocument().addDocumentListener(new DocumentListener() {
+            public void removeUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                changedUpdate(e);
+            }
+
+            public void changedUpdate(DocumentEvent e) {
+                if (propsFilter.isFocusOwner()) {
+                    updateProps();
+                }
+            }
+        });
+        
         JPanel l4 = new JPanel(new FlowLayout(FlowLayout.RIGHT, 1, 1));
         l4.add(new JLabel(Messages.getString("MetadataPanel.Sort")));
         l4.add(sort);
@@ -182,6 +225,7 @@ public class MetadataPanel extends JPanel
         l4.add(Box.createRigidArea(new Dimension(10, 0)));
         l4.add(copyResultToClipboard);
         l4.add(update);
+        l4.add(reset);
 
         listFilter.addActionListener(this);
         copyResultToClipboard.addActionListener(this);
@@ -198,11 +242,13 @@ public class MetadataPanel extends JPanel
         this.add(scrollList, BorderLayout.CENTER);
     }
 
-    interface LookupOrd {
-        String lookupOrd(int ord);
+    abstract class LookupOrd {
+        boolean isCategory = false;
+
+        abstract String lookupOrd(int ord);
     }
 
-    class LookupOrdSDV implements LookupOrd {
+    class LookupOrdSDV extends LookupOrd {
 
         SortedDocValues sdv;
 
@@ -220,7 +266,7 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    class LookupOrdSSDV implements LookupOrd {
+    class LookupOrdSSDV extends LookupOrd {
 
         SortedSetDocValues ssdv;
 
@@ -250,7 +296,11 @@ public class MetadataPanel extends JPanel
 
         public String getVal() {
             try {
-                return lo.lookupOrd(ord);
+                String val = lo.lookupOrd(ord);
+                if (lo.isCategory) {
+                    val = CategoryLocalization.getInstance().getLocalizedCategory(val);
+                }
+                return val;
 
             } catch (Exception e) {
                 // LookupOrd get invalid if UI is updated when processing (IndexReader closed)
@@ -316,9 +366,15 @@ public class MetadataPanel extends JPanel
         props.removeAllItems();
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
+            String filterStr = propsFilter.getText();
+            filterStr = filterStr.isEmpty() || filterStr.equals(emptyPropsFilter) ? null : filterStr.toLowerCase();
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields)
-                props.addItem(f);
+            for (String f : fields){
+                f = BasicProps.getLocalizedField(f);
+                if (filterStr == null || f.toLowerCase().contains(filterStr))
+                    props.addItem(f);
+            }
+            props.setSelectedItem(lastPropSel);
         }
         updatingProps = false;
     }
@@ -337,11 +393,12 @@ public class MetadataPanel extends JPanel
     }
 
     private ValueCount[] filter(ValueCount[] values) {
-        if (StringUtils.isEmpty(this.listFilter.getText())) {
+        String searchValue = listFilter.getText();
+        if (searchValue.isEmpty() || searchValue.equals(emptyListFilter)) {
             return values;
         }
+        searchValue = searchValue.toLowerCase();
         ArrayList<ValueCount> filtered = new ArrayList<>();
-        String searchValue = listFilter.getText().toLowerCase();
         for (ValueCount valueCount : values) {
             String val = valueCount.getVal();
             if (val != null && val.toLowerCase().contains(searchValue)) {
@@ -381,6 +438,8 @@ public class MetadataPanel extends JPanel
         ipedResult = App.get().ipedResult;
 
         logScale = scale.getValue() == 1;
+        if (props.getSelectedItem() != null)
+            lastPropSel = props.getSelectedItem();
 
         new Thread() {
             @Override
@@ -412,6 +471,7 @@ public class MetadataPanel extends JPanel
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
+        isCategory = BasicProps.CATEGORY.equals(field);
         eventSetToOrdsCache.clear();
     }
 
@@ -576,7 +636,7 @@ public class MetadataPanel extends JPanel
             sortAndUpdateList(filteredArray);
             return;
         }
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         loadDocValues(field);
 
@@ -791,6 +851,7 @@ public class MetadataPanel extends JPanel
                     list.add(new ValueCount(lo, ord, valueCount[ord]));
         } else if (docValuesSet != null) {
             LookupOrd lo = new LookupOrdSSDV(docValuesSet);
+            lo.isCategory = BasicProps.CATEGORY.equals(field);
             boolean isMoney = field.equals(MONEY_FIELD);
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0)
@@ -823,6 +884,15 @@ public class MetadataPanel extends JPanel
 
         } else if (array.length > 0 && array[0] instanceof MoneyCount) {
             Arrays.sort(array);
+
+        } else if (isCategory) {
+            int[] categoryOrd = RowComparator.getLocalizedCategoryOrd(docValuesSet);
+            Arrays.sort(array, new Comparator<ValueCount>() {
+                @Override
+                public int compare(ValueCount o1, ValueCount o2) {
+                    return categoryOrd[o1.ord] - categoryOrd[o2.ord];
+                }
+            });
         }
 
         LOGGER.info("Metadata value sorting took {}ms", (System.currentTimeMillis() - time));
@@ -875,6 +945,9 @@ public class MetadataPanel extends JPanel
         else if (e.getSource() == copyResultToClipboard)
             copyResultsToClipboard();
 
+        else if (e.getSource() == reset)
+            resetPanel();
+        
     }
 
     @Override
@@ -913,7 +986,7 @@ public class MetadataPanel extends JPanel
         }
 
         String field = (String) props.getSelectedItem();
-        field = field.trim();
+        field = BasicProps.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
         for (ValueCount value : list.getSelectedValuesList()) {
@@ -1045,6 +1118,48 @@ public class MetadataPanel extends JPanel
         public void mouseReleased(MouseEvent e) {
             button.setContentAreaFilled(false);
         }
-    };
+    }
+    
+    private void resetPanel() {
+        if (groups.getSelectedItem() != null) {
+            boolean empty = list.isSelectionEmpty();
+            groups.setSelectedItem(null);
+            clearTextFilter(listFilter, emptyListFilter);
+            clearTextFilter(propsFilter, emptyPropsFilter);
+            sort.setValue(0);
+            scale.setValue(0);
+            updateProps();
+            clearFilter();
+            lastPropSel = null;
+            if (!empty) {
+                App.get().appletListener.updateFileListing();
+                updateTabColor();
+            }
+        }
+    }
 
+    private void setupFilter(JTextField field, String emptyFilter) {
+        field.addFocusListener(new FocusListener() {
+            public void focusLost(FocusEvent e) {
+                String text = field.getText().trim();
+                if (text.isEmpty() || text.equals(emptyFilter)) {
+                    clearTextFilter(field, emptyFilter);
+                }
+            }
+
+            public void focusGained(FocusEvent e) {
+                String text = field.getText().trim();
+                if (text.equals(emptyFilter)) {
+                    field.setText("");
+                }
+                field.setForeground(Color.black);
+            }
+        });
+        clearTextFilter(field, emptyFilter);
+    }
+    
+    private void clearTextFilter(JTextField field, String emptyFilter) {
+        field.setText(emptyFilter);
+        field.setForeground(new Color(140, 140, 140));
+    }
 }
