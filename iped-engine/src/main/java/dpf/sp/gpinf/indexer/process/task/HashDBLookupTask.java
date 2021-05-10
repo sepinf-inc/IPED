@@ -97,7 +97,7 @@ public class HashDBLookupTask extends AbstractTask {
                                 taskEnabled = false;
                             } else {
                                 String s = confParams.getProperty("excludeKnown");
-                                excludeKnown = Boolean.parseBoolean(s.trim());
+                                excludeKnown = s != null && Boolean.parseBoolean(s.trim());
                                 hashDBDataSource = new HashDBDataSource(hashDBFile);
                                 addLookupProvider(hashDBDataSource);
                                 File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);
