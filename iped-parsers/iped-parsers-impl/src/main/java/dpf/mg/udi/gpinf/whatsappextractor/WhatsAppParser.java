@@ -531,14 +531,14 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaHash() != null) {
+            if (m.getMediaQuery() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
-                if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
-                    for (String set : m.getChildPornSets()) {
-                        meta.add("hash:set", set); //$NON-NLS-1$
-                    }
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+            }
+            if (!m.getChildPornSets().isEmpty()) {
+                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                for (String set : m.getChildPornSets()) {
+                    meta.add("hash:set", set); //$NON-NLS-1$
                 }
             }
 
@@ -579,22 +579,31 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata, IItemSearcher searcher) {
         for (Message m : messages) {
-            if (m.getMediaHash() != null) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
-
-            } else if (m.getMediaName() != null && !m.getMediaName().isEmpty() && m.getMediaSize() > 2) {
-                String mediaName = m.getMediaName();
-                if (mediaName.contains("/")) //$NON-NLS-1$
-                    mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
-                mediaName = escape(searcher, mediaName);
-                String query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + m.getMediaSize();
+            if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
+                String query = revertEscapeQuery(m.getMediaQuery());
                 metadata.add(ExtraProperties.LINKED_ITEMS, query);
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_ITEMS, query);
+                if (m.isFromMe()) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, query);
+                }
             }
+        }
+    }
+
+    private String revertEscapeQuery(String query) {
+        if (query.startsWith("'") && query.endsWith("'")) {
+            query = query.substring(1, query.length() - 1);
+        } else if (query.startsWith("&quot;") && query.endsWith("&quot;")) {
+            query = SimpleHTMLEncoder.htmlDecode(query).replace("\\\"", "\"");
+            query = query.substring(1, query.length() - 1);
+        }
+        return query;
+    }
+
+    private String escapeQuery(String query, boolean isHashQuery) {
+        if (isHashQuery) {
+            return "'" + query + "'";
+        } else {
+            return SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"");
         }
     }
 
@@ -957,7 +966,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (messageList != null) {
                     for (Message m : messageList) {
                         m.setMediaItem(item);
-                        m.setMediaQuery("'sha-256:" + hash + "'"); //$NON-NLS-1$ //$NON-NLS-2$
+                        m.setMediaQuery(escapeQuery("sha-256:" + hash, true)); //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
             }
@@ -993,7 +1002,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         m.setMediaItem(item);
                         String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
                                 + BasicProps.LENGTH + ":" + fileSize; //$NON-NLS-1$
-                        m.setMediaQuery(SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                        m.setMediaQuery(escapeQuery(query, false));
                     }
                 }
             }
@@ -1049,7 +1058,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
                                     if (itemStreamEndsWithZeros(item, mediaSize)) {
                                         m.setMediaItem(item);
-                                        m.setMediaQuery("'" + BasicProps.HASH + ":" + item.getHash() + "'"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                                        m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                    // //$NON-NLS-3$
                                     }
                                 }
                             }
