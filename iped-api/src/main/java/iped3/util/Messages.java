@@ -13,7 +13,7 @@ public abstract class Messages {
 
     public static final String LOCALE_SYS_PROP = "iped-locale";
     public static final String BUNDLES_FOLDER = "localization";
-    public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/config/";
+    public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
 
     private static final String BUNDLE_NAME = "iped-basicprops"; //$NON-NLS-1$
 
