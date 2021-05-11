@@ -57,10 +57,6 @@ public class ImageUtil {
     
     private static int TAG_THUMBNAIL_DATA = 0x10000;
 
-    static {
-        updateExifReaderToLoadThumbData();
-    }
-    
     public static final void updateExifReaderToLoadThumbData() {
         List<JpegSegmentMetadataReader> allReaders = (List<JpegSegmentMetadataReader>) JpegMetadataReader.ALL_READERS;
         for (int n = 0, cnt = allReaders.size(); n < cnt; n++) {
