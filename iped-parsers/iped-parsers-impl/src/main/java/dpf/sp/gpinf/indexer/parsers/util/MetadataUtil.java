@@ -12,6 +12,7 @@ import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
@@ -36,6 +37,19 @@ public class MetadataUtil {
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
 
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
+
+    private static final Map<String, String> renameMap = getRenameMap();
+
+    private static Map<String, String> getRenameMap() {
+        Map<String, String> rename = new HashMap<String, String>();
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MAKE.getName(), ExtraProperties.IMAGE_META_PREFIX + "Make");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MODEL.getName(), ExtraProperties.IMAGE_META_PREFIX + "Model");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Width");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return rename;
+    }
 
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
@@ -167,6 +181,7 @@ public class MetadataUtil {
         prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
+        renameKeys(metadata);
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {
@@ -449,6 +464,19 @@ public class MetadataUtil {
             }
         }
         return clone;
+    }
+    
+    private static void renameKeys(Metadata metadata) {
+        for (String oldName : renameMap.keySet()) {
+            String[] values = metadata.getValues(oldName);
+            if (values != null) {
+                metadata.remove(oldName);
+                String newName = renameMap.get(oldName);
+                for (String val : values) {
+                    metadata.add(newName, val);
+                }
+            }
+        }
     }
 
 }

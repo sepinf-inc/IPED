@@ -167,6 +167,7 @@ public class UsnJrnlParser extends AbstractParser {
                 Metadata metadataItem = new Metadata();
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
+                metadataItem.set(BasicProps.LENGTH, "");
 
                 String[] props = ReportGenerator.cols;
 

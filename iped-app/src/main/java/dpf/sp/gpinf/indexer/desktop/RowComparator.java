@@ -19,7 +19,10 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.io.IOException;
+import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 
@@ -33,9 +36,12 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
+import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
+import iped3.util.BasicProps;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -54,11 +60,15 @@ public class RowComparator implements Comparator<Integer> {
     private HashSet<String> fieldsToLoad = new HashSet<String>();
     private boolean isLongField = false;
     private boolean isDoubleField = false;
+    private boolean isTimeStamp = false;
+    private boolean isTimeEvent = false;
+    private boolean isCategory = false;
 
     protected SortedDocValues sdv;
     protected SortedSetDocValues ssdv;
     private NumericDocValues ndv;
     private SortedNumericDocValues sndv;
+    private int[] localizedCategoryOrds;
 
     public static void setLoadDocValues(boolean load) {
         loadDocValues = load;
@@ -99,6 +109,10 @@ public class RowComparator implements Comparator<Integer> {
         isDoubleField = Float.class.equals(IndexItem.getMetadataTypes().get(field))
                 || Double.class.equals(IndexItem.getMetadataTypes().get(field));
 
+        isTimeStamp = BasicProps.TIMESTAMP.equals(field);
+        isTimeEvent = BasicProps.TIME_EVENT.equals(field);
+        isCategory = BasicProps.CATEGORY.equals(field);
+
         if (!loadDocValues)
             return;
 
@@ -121,6 +135,9 @@ public class RowComparator implements Comparator<Integer> {
                 ssdv = atomicReader.getSortedSetDocValues(indexedField);
                 if (ssdv == null)
                     ssdv = atomicReader.getSortedSetDocValues("_" + indexedField); //$NON-NLS-1$
+                if (isCategory) {
+                    localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
+                }
             }
             if (ndv == null && sndv == null && ssdv == null) {
                 sdv = atomicReader.getSortedDocValues(indexedField);
@@ -131,6 +148,24 @@ public class RowComparator implements Comparator<Integer> {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public static int[] getLocalizedCategoryOrd(SortedSetDocValues ssdv) {
+        int[] localizedOrds = new int[(int) ssdv.getValueCount()];
+        ArrayList<String> localizedVals = new ArrayList<>();
+        for (int i = 0; i < localizedOrds.length; i++) {
+            String val = ssdv.lookupOrd(i).utf8ToString();
+            String localizedVal = CategoryLocalization.getInstance().getLocalizedCategory(val);
+            localizedVals.add(localizedVal);
+        }
+        ArrayList<String> sortedLocalizedVals = new ArrayList<>(localizedVals);
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Collections.sort(sortedLocalizedVals, collator);
+        for(int i = 0; i < localizedOrds.length; i++) {
+            localizedOrds[i] = sortedLocalizedVals.indexOf(localizedVals.get(i));
+        }
+        return localizedOrds;
     }
 
     private ThreadLocal<Bits> localDocsWithField = new ThreadLocal<Bits>() {
@@ -245,11 +280,21 @@ public class RowComparator implements Comparator<Integer> {
             else
                 return 1;
 
-        } else if (bookmarkCol)
+        } else if (bookmarkCol) {
             return Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemA))
                     .compareTo(Util.concatStrings(app.appCase.getMultiMarcadores().getLabelList(itemB)));
 
-        else if (sdv != null) {
+        } else if (isTimeStamp && itemA instanceof TimeItemId) {
+            int ordA = ((TimeItemId) itemA).getTimeStampOrd();
+            int ordB = ((TimeItemId) itemB).getTimeStampOrd();
+            return Integer.compare(ordA, ordB);
+
+        } else if (isTimeEvent && itemA instanceof TimeItemId) {
+            int ordA = ((TimeItemId) itemA).getTimeEventOrd();
+            int ordB = ((TimeItemId) itemB).getTimeEventOrd();
+            return Integer.compare(ordA, ordB);
+
+        } else if (sdv != null) {
             SortedDocValues sdv = localSDV.get();
             return sdv.getOrd(a) - sdv.getOrd(b);
 
@@ -265,12 +310,21 @@ public class RowComparator implements Comparator<Integer> {
                 lssdv.setDocument(b);
                 while (i++ <= k)
                     ordB = (int) lssdv.nextOrd();
+                if (isCategory) {
+                    if (ordA > -1) {
+                        ordA = localizedCategoryOrds[ordA];
+                    }
+                    if (ordB > -1) {
+                        ordB = localizedCategoryOrds[ordB];
+                    }
+                }
                 result = ordA - ordB;
                 k++;
 
             } while (result == 0 && ordA != SortedSetDocValues.NO_MORE_ORDS && ordB != SortedSetDocValues.NO_MORE_ORDS);
 
             return result;
+
         } else if (sndv != null) {
             SortedNumericDocValues lsndv = localSNDV.get();
             int result, k = 0, countA = 0, countB = 0;
@@ -296,9 +350,8 @@ public class RowComparator implements Comparator<Integer> {
             } while (result == 0 && (k < countA || k < countB));
 
             return result;
-        }
 
-        else if (ndv != null) {
+        } else if (ndv != null) {
             Bits docsWithField = localDocsWithField.get();
             if (docsWithField.get(a)) {
                 if (docsWithField.get(b)) {
@@ -310,41 +363,41 @@ public class RowComparator implements Comparator<Integer> {
                 return -1;
             else
                 return 0;
-        } else {
-            // Ordenação sob demanda caso não haja DocValues (bem mais lenta)
-            try {
-                Document doc1 = app.appCase.getReader().document(a, fieldsToLoad);
-                Document doc2 = app.appCase.getReader().document(b, fieldsToLoad);
 
-                String v1 = doc1.get(field);
-                String v2 = doc2.get(field);
+        }
 
-                if (v1 == null || v1.isEmpty()) {
-                    if (v2 == null || v2.isEmpty())
-                        return 0;
-                    else
-                        return -1;
-                } else if (v2 == null || v2.isEmpty())
-                    return 1;
+        // On demand sorting if DocValues does not exist for this field (much slower)
+        try {
+            Document doc1 = app.appCase.getReader().document(a, fieldsToLoad);
+            Document doc2 = app.appCase.getReader().document(b, fieldsToLoad);
 
-                if (isLongField) {
-                    long l1 = Long.parseLong(v1);
-                    long l2 = Long.parseLong(v2);
-                    return Long.compare(l1, l2);
-                }
-                if (isDoubleField) {
-                    double d1 = Double.parseDouble(v1);
-                    double d2 = Double.parseDouble(v2);
-                    return Double.compare(d1, d2);
-                }
+            String v1 = doc1.get(field);
+            String v2 = doc2.get(field);
 
-                return v1.compareTo(v2);
+            if (v1 == null || v1.isEmpty()) {
+                if (v2 == null || v2.isEmpty())
+                    return 0;
+                else
+                    return -1;
+            } else if (v2 == null || v2.isEmpty())
+                return 1;
 
-            } catch (IOException e) {
-                e.printStackTrace();
-                return 0;
+            if (isLongField) {
+                long l1 = Long.parseLong(v1);
+                long l2 = Long.parseLong(v2);
+                return Long.compare(l1, l2);
+            }
+            if (isDoubleField) {
+                double d1 = Double.parseDouble(v1);
+                double d2 = Double.parseDouble(v2);
+                return Double.compare(d1, d2);
             }
 
+            return v1.compareTo(v2);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            return 0;
         }
 
     }

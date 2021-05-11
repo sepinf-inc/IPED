@@ -69,6 +69,7 @@ import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
@@ -747,8 +748,9 @@ public class Manager {
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
+                    new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
             if (!advancedConfig.isEmbutirLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$

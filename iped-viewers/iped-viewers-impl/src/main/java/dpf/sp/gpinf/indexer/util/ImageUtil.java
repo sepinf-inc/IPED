@@ -13,7 +13,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -57,11 +56,17 @@ public class ImageUtil {
     
     private static int TAG_THUMBNAIL_DATA = 0x10000;
 
+    private static boolean exifReaderUpdated = false;
+
     static {
         updateExifReaderToLoadThumbData();
     }
-    
-    public static final void updateExifReaderToLoadThumbData() {
+
+    public static final synchronized void updateExifReaderToLoadThumbData() {
+        if (exifReaderUpdated) {
+            return;
+        }
+        exifReaderUpdated = true;
         List<JpegSegmentMetadataReader> allReaders = (List<JpegSegmentMetadataReader>) JpegMetadataReader.ALL_READERS;
         for (int n = 0, cnt = allReaders.size(); n < cnt; n++) {
             if (allReaders.get(n).getClass() != ExifReader.class) {
@@ -89,10 +94,15 @@ public class ImageUtil {
                                 int offset = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_OFFSET);
                                 int length = tnDirectory.getInt(ExifThumbnailDirectory.TAG_THUMBNAIL_LENGTH);
 
-                                byte[] tnData = new byte[length];
-                                System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
-                                        length);
-                                tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                                if (JPEG_SEGMENT_PREAMBLE.length() + offset + length > segmentBytes.length) {
+                                    length = segmentBytes.length - (JPEG_SEGMENT_PREAMBLE.length() + offset);
+                                }
+                                if (length > 0 && length < 1 << 24) {
+                                    byte[] tnData = new byte[length];
+                                    System.arraycopy(segmentBytes, JPEG_SEGMENT_PREAMBLE.length() + offset, tnData, 0,
+                                            length);
+                                    tnDirectory.setObject(TAG_THUMBNAIL_DATA, tnData);
+                                }
                             }
                         } catch (MetadataException e) {
                             //ignore
@@ -113,10 +123,36 @@ public class ImageUtil {
         return set;
     }
 
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+        return resizeImage(img, maxW, maxH, BufferedImage.TYPE_INT_ARGB);
+    }
+
+    /**
+     * Redimensiona um imagem, mantendo sua proporção original se possível, mas utilizando mantendo dimensões mínimas.
+     */
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int minW, int minH, int imageType) {
+        int imgW = img.getWidth();
+        int imgH = img.getHeight();
+        if (imgW * maxH > imgH * maxW) {
+            imgH = imgH * maxW / imgW;
+            imgW = maxW;
+        } else {
+            imgW = imgW * maxH / imgH;
+            imgH = maxH;
+        }
+        if (imgW <= minW) {
+            imgW = minW;
+        }
+        if (imgH <= minH) {
+            imgH = minH;
+        }
+        return resizeImageFixed(img, imgW, imgH, imageType);
+    }
+
     /**
      * Redimensiona um imagem, mantendo sua proporção original.
      */
-    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH) {
+    public static BufferedImage resizeImage(BufferedImage img, int maxW, int maxH, int imageType) {
         int imgW = img.getWidth();
         int imgH = img.getHeight();
         if (imgW * maxH > imgH * maxW) {
@@ -132,14 +168,14 @@ public class ImageUtil {
         if (imgH <= 0) {
             imgH = 1;
         }
-        return resizeImageFixed(img, imgW, imgH);
+        return resizeImageFixed(img, imgW, imgH, imageType);
     }
 
     /**
      * Redimensiona um imagem numa área determinada.
      */
-    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH) {
-        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, BufferedImage.TYPE_INT_ARGB);
+    public static BufferedImage resizeImageFixed(BufferedImage img, int imgW, int imgH, int imageType) {
+        BufferedImage bufferedImage = new BufferedImage(imgW, imgH, imageType);
         Graphics2D graphics2D = bufferedImage.createGraphics();
         // graphics2D.setComposite(AlphaComposite.Src);
         graphics2D.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);

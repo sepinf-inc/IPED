@@ -5,7 +5,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -13,7 +12,6 @@ import java.util.TreeSet;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
-import org.apache.tika.io.CloseShieldInputStream;
 import org.apache.tika.io.IOUtils;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -54,6 +52,13 @@ public class MultipleParser extends AbstractParser {
     @Field
     private boolean stopAfterSomeParserWorks = false;
 
+    @Field
+    private String parserName = MultipleParser.class.getSimpleName();
+
+    public String getParserName() {
+        return parserName;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
         return supportedTypes;
@@ -88,7 +93,8 @@ public class MultipleParser extends AbstractParser {
         EmbeddedContentHandler embeddedHandler = new EmbeddedContentHandler(handler);
         embeddedHandler.startDocument();
         try {
-            TikaInputStream tis = TikaInputStream.get(new CloseShieldInputStream(stream), tmp);
+            TikaInputStream tis = TikaInputStream.get(stream, tmp);
+            boolean firstTis = true;
             Path tempPath = null;
             for (Parser parser : parsers) {
                 if (tis != null && (tis.hasFile() || source == null)) {
@@ -100,6 +106,7 @@ public class MultipleParser extends AbstractParser {
                     } else {
                         tis = TikaInputStream.get(source.getStream());
                     }
+                    firstTis = false;
                 }
                 Metadata newMetadata = getNewMetadata(metadata);
                 try {
@@ -125,7 +132,9 @@ public class MultipleParser extends AbstractParser {
                     ParserUtils.recordParserDetails(parser, newMetadata);
                     // merge even if parser fails, some meta could be extracted
                     mergeMetadata(metadata, newMetadata);
-                    IOUtils.closeQuietly(tis);
+                    if (!firstTis) {
+                        IOUtils.closeQuietly(tis);
+                    }
                     tis = null;
                 }
             }

@@ -129,6 +129,10 @@ public class ImageThumbTask extends ThumbTask {
         // use memory instead of files to cache image streams
         // tests have shown up to 3x thumb creation speed up
         ImageIO.setUseCache(false);
+
+        // install a new exif reader to read thumb data.
+        // must be installed at the beginning of the processing, see #532
+        ImageUtil.updateExifReaderToLoadThumbData();
     }
 
     @Override
@@ -214,7 +218,7 @@ public class ImageThumbTask extends ThumbTask {
     protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null || evidence.getThumb() != null) {
+                || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
 
@@ -269,7 +273,6 @@ public class ImageThumbTask extends ThumbTask {
 
     private void createImageThumb(IItem evidence, File thumbFile) {
         long[] performanceStats = new long[numStats];
-        File tmp = null;
         try {
             BufferedImage img = null;
             Dimension dimension = null;
@@ -368,15 +371,7 @@ public class ImageThumbTask extends ThumbTask {
             logger.warn(evidence.toString(), e);
 
         } finally {
-            if (tmp != null && !tmp.renameTo(thumbFile)) {
-                tmp.delete();
-            }
-
-            if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
-                evidence.setExtraAttribute(HAS_THUMB, true);
-            } else {
-                evidence.setExtraAttribute(HAS_THUMB, false);
-            }
+            updateHasThumb(evidence);
         }
     }
 }

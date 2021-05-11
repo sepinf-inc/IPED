@@ -1,6 +1,9 @@
 package iped3.util;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class BasicProps {
@@ -9,17 +12,17 @@ public class BasicProps {
     public static final String PARENTID = "parentId"; //$NON-NLS-1$
     public static final String PARENTIDs = "parentIds"; //$NON-NLS-1$
     public static final String EVIDENCE_UUID = "evidenceUUID"; //$NON-NLS-1$
-    public static final String NAME = Messages.getString("BasicProps.name"); //$NON-NLS-1$
-    public static final String TYPE = Messages.getString("BasicProps.type"); //$NON-NLS-1$
-    public static final String LENGTH = Messages.getString("BasicProps.size"); //$NON-NLS-1$
-    public static final String CREATED = Messages.getString("BasicProps.created"); //$NON-NLS-1$
-    public static final String ACCESSED = Messages.getString("BasicProps.accessed"); //$NON-NLS-1$
-    public static final String MODIFIED = Messages.getString("BasicProps.modified"); //$NON-NLS-1$
-    public static final String RECORDDATE = Messages.getString("BasicProps.recordDate"); //$NON-NLS-1$
-    public static final String PATH = Messages.getString("BasicProps.path"); //$NON-NLS-1$
-    public static final String CATEGORY = Messages.getString("BasicProps.category"); //$NON-NLS-1$
-    public static final String DELETED = Messages.getString("BasicProps.deleted"); //$NON-NLS-1$
-    public static final String CONTENT = Messages.getString("BasicProps.content"); //$NON-NLS-1$
+    public static final String NAME = "name"; //$NON-NLS-1$
+    public static final String TYPE = "type"; //$NON-NLS-1$
+    public static final String LENGTH = "size"; //$NON-NLS-1$
+    public static final String CREATED = "created"; //$NON-NLS-1$
+    public static final String ACCESSED = "accessed"; //$NON-NLS-1$
+    public static final String MODIFIED = "modified"; //$NON-NLS-1$
+    public static final String RECORDDATE = "recordDate"; //$NON-NLS-1$
+    public static final String PATH = "path"; //$NON-NLS-1$
+    public static final String CATEGORY = "category"; //$NON-NLS-1$
+    public static final String DELETED = "deleted"; //$NON-NLS-1$
+    public static final String CONTENT = "content"; //$NON-NLS-1$
     public static final String EXPORT = "export"; //$NON-NLS-1$
     public static final String HASH = "hash"; //$NON-NLS-1$
     public static final String ISDIR = "isDir"; //$NON-NLS-1$
@@ -38,6 +41,43 @@ public class BasicProps {
     public static final String META_ADDRESS = "metaAddress";
     public static final String MFT_SEQUENCE = "MFTSequence";
     public static final String FILESYSTEM_ID = "fileSystemId";
+    public static final String TIMESTAMP = "timeStamp";
+    public static final String TIME_EVENT = "timeEvent";
+
+    private static Map<String, String> toNonLocalizedMap = getNonLocalizationMap();
+    private static Map<String, String> toLocalizedMap = invertMap(toNonLocalizedMap);
+
+    private static final Map<String, String> getNonLocalizationMap() {
+        Map<String, String> map = new HashMap<>();
+        map.put(Messages.getString("BasicProps.name"), NAME);
+        map.put(Messages.getString("BasicProps.type"), TYPE);
+        map.put(Messages.getString("BasicProps.size"), LENGTH);
+        map.put(Messages.getString("BasicProps.created"), CREATED);
+        map.put(Messages.getString("BasicProps.accessed"), ACCESSED);
+        map.put(Messages.getString("BasicProps.modified"), MODIFIED);
+        map.put(Messages.getString("BasicProps.recordDate"), RECORDDATE);
+        map.put(Messages.getString("BasicProps.path"), PATH);
+        map.put(Messages.getString("BasicProps.category"), CATEGORY);
+        map.put(Messages.getString("BasicProps.deleted"), DELETED);
+        map.put(Messages.getString("BasicProps.content"), CONTENT);
+        return map;
+    }
+
+    private static final Map<String, String> invertMap(Map<String, String> map) {
+        Map<String, String> invertedMap = new HashMap<>();
+        for (Entry<String, String> entry : map.entrySet()) {
+            invertedMap.put(entry.getValue(), entry.getKey());
+        }
+        return invertedMap;
+    }
+
+    public static final String getNonLocalizedField(String localizedField) {
+        return toNonLocalizedMap.getOrDefault(localizedField, localizedField);
+    }
+
+    public static final String getLocalizedField(String nonLocalizedField) {
+        return toLocalizedMap.getOrDefault(nonLocalizedField, nonLocalizedField);
+    }
 
     public static final Set<String> SET = getBasicProps();
 
@@ -73,6 +113,8 @@ public class BasicProps {
         basicProps.add(TREENODE);
         basicProps.add(THUMB);
         basicProps.add(SIMILARITY_FEATURES);
+        basicProps.add(TIMESTAMP);
+        basicProps.add(TIME_EVENT);
         return basicProps;
     }
 

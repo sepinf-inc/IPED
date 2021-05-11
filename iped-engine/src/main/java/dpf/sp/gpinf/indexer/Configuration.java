@@ -38,7 +38,6 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.config.KFFConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
@@ -58,6 +57,7 @@ import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.IConfigurationDirectory;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -98,7 +98,7 @@ public class Configuration {
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
         if (appRoot.contains("profiles")) //$NON-NLS-1$
-            appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
+            appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
 
@@ -126,14 +126,14 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty("iped.root", appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
                 appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
-        System.setProperty("iped.configPath", configPath);
+        System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
@@ -229,9 +229,6 @@ public class Configuration {
 
         IPEDConfig ipedConfig = new IPEDConfig();
         configManager.addObject(ipedConfig);
-
-        KFFConfig kffConfig = new KFFConfig();
-        configManager.addObject(kffConfig);
 
         OCRConfig ocrConfig = new OCRConfig();
         configManager.addObject(ocrConfig);

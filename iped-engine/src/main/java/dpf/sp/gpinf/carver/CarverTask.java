@@ -82,14 +82,12 @@ public class CarverTask extends BaseCarveTask {
         // Nova instancia pois o mesmo objeto é reusado e nao é imutável
         CarverTask carver = new CarverTask();
         carver.setWorker(worker);
-        carver.carverConfig = this.carverConfig;
         carver.safeProcess(evidence);
 
         // Ao terminar o tratamento do item, caso haja referência ao mesmo no mapa de
-        // itens
-        // carveados através do KFF, esta pode ser removida.
-        synchronized (kffCarved) {
-            kffCarved.remove(evidence);
+        // itens carveados através do LedCarving, esta pode ser removida.
+        synchronized (ledCarved) {
+            ledCarved.remove(evidence);
         }
     }
 

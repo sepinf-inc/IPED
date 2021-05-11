@@ -19,6 +19,7 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 
@@ -26,6 +27,8 @@ public class CategoryTreeModel implements TreeModel {
 
     public static String rootName = Messages.getString("CategoryTreeModel.RootName"); //$NON-NLS-1$
     private static String CONF_FILE = "conf/CategoryHierarchy.txt"; //$NON-NLS-1$
+
+    private CategoryLocalization categoryLocale = CategoryLocalization.getInstance();
 
     public Category root;
 
@@ -80,10 +83,12 @@ public class CategoryTreeModel implements TreeModel {
         public String toString() {
             if (this.equals(root))
                 return name;
+            String name = categoryLocale.getLocalizedCategory(this.name);
             if (numItems == null) {
                 return name + " (...)"; //$NON-NLS-1$
-            } else
+            } else {
                 return name + " (" + numItems + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            }
         }
 
         private synchronized Integer countNumItems() {
@@ -136,7 +141,8 @@ public class CategoryTreeModel implements TreeModel {
 
         @Override
         public int compareTo(Category o) {
-            return collator.compare(name, o.name);
+            return collator.compare(categoryLocale.getLocalizedCategory(name),
+                    categoryLocale.getLocalizedCategory(o.name));
         }
 
         @Override
