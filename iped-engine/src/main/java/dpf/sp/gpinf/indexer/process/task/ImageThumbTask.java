@@ -129,6 +129,10 @@ public class ImageThumbTask extends ThumbTask {
         // use memory instead of files to cache image streams
         // tests have shown up to 3x thumb creation speed up
         ImageIO.setUseCache(false);
+
+        // install a new exif reader to read thumb data.
+        // must be installed at the beginning of the processing, see #532
+        ImageUtil.updateExifReaderToLoadThumbData();
     }
 
     @Override

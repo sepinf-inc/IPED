@@ -174,8 +174,6 @@ public class Manager {
         instance = this;
 
         commitIntervalMillis = advancedConfig.getCommitIntervalSeconds() * 1000;
-
-        ImageUtil.updateExifReaderToLoadThumbData();
     }
 
     public File getIndexTemp() {
