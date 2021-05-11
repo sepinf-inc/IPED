@@ -13,6 +13,7 @@ public abstract class Messages {
 
     public static final String LOCALE_SYS_PROP = "iped-locale";
     public static final String BUNDLES_FOLDER = "localization";
+    public static final String BUNDLES_FOLDER_PREFIX = "iped-app/resources/";
 
     private static final String BUNDLE_NAME = "iped-basicprops"; //$NON-NLS-1$
 
@@ -22,7 +23,17 @@ public abstract class Messages {
     }
 
     public static ResourceBundle getExternalBundle(String bundleName, Locale locale) {
-        File file = new File(System.getProperty(IConfigurationDirectory.IPED_ROOT), BUNDLES_FOLDER);
+        File file = null;
+        String baseFolder = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        if (baseFolder != null) {
+            file = new File(baseFolder, BUNDLES_FOLDER);
+        } else {
+            File baseFile = new File(System.getProperty("user.dir"));
+            do {
+                baseFile = baseFile.getParentFile();
+                file = new File(baseFile, BUNDLES_FOLDER_PREFIX + BUNDLES_FOLDER);
+            } while (!file.exists());
+        }
         try {
             URL[] urls = { file.toURI().toURL() };
             ClassLoader loader = new URLClassLoader(urls);
