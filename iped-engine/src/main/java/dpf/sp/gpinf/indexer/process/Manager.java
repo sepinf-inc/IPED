@@ -201,7 +201,7 @@ public class Manager {
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
 
         prepareOutputFolder();
-        
+
         if ((args.isContinue() || args.isRestart())) {
             if (finalIndexDir.exists()) {
                 indexDir = finalIndexDir;
