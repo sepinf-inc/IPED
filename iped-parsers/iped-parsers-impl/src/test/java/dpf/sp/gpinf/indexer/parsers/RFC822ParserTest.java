@@ -38,6 +38,7 @@ public class RFC822ParserTest extends TestCase {
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_rfc822");
         parser.getSupportedTypes(context);
+        parser.setIsUtf8(true);
         parser.parse(stream, handler, metadata, context);
         
         verify(handler).startDocument();
@@ -60,7 +61,6 @@ public class RFC822ParserTest extends TestCase {
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/test_rfc822Multipart");
         ContentHandler handler = mock(XHTMLContentHandler.class);
-
         parser.parse(stream, handler, metadata, new ParseContext());
         verify(handler).startDocument();
         verify(handler).endDocument();

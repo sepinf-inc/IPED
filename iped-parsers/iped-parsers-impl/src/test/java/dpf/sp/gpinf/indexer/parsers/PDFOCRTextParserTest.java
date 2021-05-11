@@ -31,6 +31,29 @@ public class PDFOCRTextParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         
     }
+    
+    @Test
+    public void testPDFOCRTextParsingICE() throws IOException, SAXException, TikaException{
+
+        PDFOCRTextParser parser = new PDFOCRTextParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new DefaultHandler();
+        ParseContext context = new ParseContext();
+        InputStream stream = getStream("test-files/test_pdfProtected.pdf");
+        parser.getSupportedTypes(context);
+        parser.setUseIcePDF(true);
+        parser.parse(stream, handler, metadata, context);
+        
+        String mts = metadata.toString();
+        assertTrue(mts.contains("creator=PScript5.dll"));
+        assertTrue(mts.contains("subject=Speeches by Andrew G Haldane"));
+        assertTrue(mts.contains("Author=The Bank of England"));
+        assertTrue(mts.contains("Creation-Date=April 28"));
+        assertTrue(mts.contains("title=Rethinking the Financial Network, Speech by Andrew G Haldane,"
+                + " Executive Director, Financial Stability delivered at the Financial Student Association"));
+        assertTrue(mts.contains("Content-Type=application/pdf"));
+        
+    }
 
     @SuppressWarnings({ "deprecation", "static-access" })
     @Test

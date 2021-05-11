@@ -29,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 
+import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
@@ -104,10 +105,16 @@ public class PDFOCRTextParser extends PDFParser {
         }
     }
 
+    @Field
+    public void setUseIcePDF(boolean value) {
+        this.useIcePDFParsing = value;
+    }
+
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;
     }
+    
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)

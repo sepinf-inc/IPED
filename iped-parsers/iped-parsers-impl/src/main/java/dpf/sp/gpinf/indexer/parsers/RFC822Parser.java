@@ -86,12 +86,18 @@ public class RFC822Parser extends AbstractParser {
 
     private HtmlParser htmlParser = new HtmlParser();
     private RawStringParser txtParser = new RawStringParser();
+    private boolean isUtf8 = false;
 
     private static Set<MediaType> getTypes() {
         HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
         supportedTypes.add(MediaType.parse("message/rfc822")); //$NON-NLS-1$
         supportedTypes.add(MediaType.parse("message/x-emlx")); //$NON-NLS-1$
         return supportedTypes;
+    }
+    
+    @org.apache.tika.config.Field
+    public void setIsUtf8(boolean value) {
+        this.isUtf8 = value;
     }
 
     @Override
@@ -320,7 +326,6 @@ public class RFC822Parser extends AbstractParser {
         }
 
         private String decodeIfUtf8(String value) {
-            boolean isUtf8 = false;
             int idx = value.indexOf('Ã');
             if (idx > -1 && idx < value.length() - 1) {
                 int c_ = value.codePointAt(idx + 1);
