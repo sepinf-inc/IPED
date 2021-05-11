@@ -40,6 +40,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -63,8 +64,10 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItem;
 import iped3.io.IItemBase;
+import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -111,13 +114,17 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
 
-    public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled";
+    public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled"; //$NON-NLS-1$
 
     private static final AtomicBoolean sha256Checked = new AtomicBoolean();
 
     // workaround to show message type before caption (values are shown in sort
     // order)
     private static final String MESSAGE_TYPE_PREFIX = "! "; //$NON-NLS-1$
+    
+    private static final int MESSAGE_SEARCH_BATCH_SIZE = 512;
+    
+    private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
 
@@ -144,8 +151,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (!sha256Checked.getAndSet(true)) {
-            if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) {
-                logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!");
+            if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) { //$NON-NLS-1$
+                logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!"); //$NON-NLS-1$
             }
         }
         return SUPPORTED_TYPES;
@@ -199,9 +206,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher);
             int frag = 0;
             int firstMsg = 0;
-            ReportGenerator reportGenerator = new ReportGenerator(searcher);
+            ReportGenerator reportGenerator = new ReportGenerator();
             byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
             while (bytes != null) {
                 Metadata chatMetadata = new Metadata();
@@ -301,7 +309,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             mainDbFound = true;
         }
 
-        logger.info("hasChildren " + ((IItem) context.get(IItemBase.class)).getParentIds().toString());
+        logger.info("hasChildren " + ((IItem) context.get(IItemBase.class)).getParentIds().toString()); //$NON-NLS-1$
 
     }
 
@@ -318,8 +326,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
        
-        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\"";
-        query += " && " + BasicProps.EVIDENCE_UUID + ":" + mainDB.getDataSource().getUUID();
+        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        query += " && " + BasicProps.EVIDENCE_UUID + ":" + mainDB.getDataSource().getUUID(); //$NON-NLS-1$ //$NON-NLS-2$
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
 
         TemporaryResources tmp = new TemporaryResources();
@@ -349,12 +357,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (cm.isBackup(tempChatList)) {
                     // merge in the main chat list
                     int numMsgRecovered = cm.mergeChatList(tempChatList);
-                    logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath());
+                    logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath()); //$NON-NLS-1$
 
                 } else {
                     // TODO if the backup is not merged, parent of chats should be the backup, not
                     // main db. This is not working currently.
-                    logger.info("Creating separate report for {}", it.getPath());
+                    logger.info("Creating separate report for {}", it.getPath()); //$NON-NLS-1$
                     context.set(EmbeddedParent.class, new EmbeddedParent(it));
                     createReport(tempChatList, searcher,
                             getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
@@ -403,10 +411,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
         }
 
-        IItemSearcher searcher = context.get(IItemSearcher.class);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
-        ReportGenerator reportGenerator = new ReportGenerator(searcher);
+        ReportGenerator reportGenerator = new ReportGenerator();
 
         if (extractor.shouldParseEmbedded(meta)) {
             ByteArrayInputStream bais = new ByteArrayInputStream(reportGenerator.generateAccountHtml(account));
@@ -414,22 +421,22 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private static final Pattern numbers = Pattern.compile("[0-9]+");
+    private static final Pattern numbers = Pattern.compile("[0-9]+"); //$NON-NLS-1$
 
     private String getInternationalPhone(String id) {
         Matcher m = numbers.matcher(id);
         if (m.matches())
-            return "+" + id;
+            return "+" + id; //$NON-NLS-1$
         else
             return null;
     }
 
     private WAAccount getUserAccount(IItemSearcher searcher, String dbPath, boolean isAndroid) {
-        String query = BasicProps.NAME + ":";
+        String query = BasicProps.NAME + ":"; //$NON-NLS-1$
         if (isAndroid)
-            query += "\"com.whatsapp_preferences.xml\"";
+            query += "\"com.whatsapp_preferences.xml\""; //$NON-NLS-1$
         else
-            query += "\"group.net.whatsapp.WhatsApp.shared.plist\"";
+            query += "\"group.net.whatsapp.WhatsApp.shared.plist\""; //$NON-NLS-1$
         List<IItemBase> result = searcher.search(query);
         IItemBase item = getBestItem(result, dbPath);
         if (item != null) {
@@ -441,7 +448,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 e.printStackTrace();
             }
         }
-        return new WAAccount("unknownAccount");
+        return new WAAccount("unknownAccount"); //$NON-NLS-1$
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
@@ -519,19 +526,19 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.MESSAGE_BODY, m.getData());
             meta.set(ExtraProperties.URL, m.getUrl());
 
-            meta.set("mediaName", m.getMediaName());
-            meta.set("mediaMime", m.getMediaMime());
+            meta.set("mediaName", m.getMediaName()); //$NON-NLS-1$
+            meta.set("mediaMime", m.getMediaMime()); //$NON-NLS-1$
             if (m.getMediaSize() != 0) {
                 meta.set("mediaSize", Long.toString(m.getMediaSize()));
             }
-            if (m.getMediaHash() != null) {
+            if (m.getMediaQuery() != null) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ATTACHMENT.toString());
-                meta.set(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
-                if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("hash:status", "pedo");
-                    for (String set : m.getChildPornSets()) {
-                        meta.add("hash:set", set);
-                    }
+                meta.set(ExtraProperties.LINKED_ITEMS, revertEscapeQuery(m.getMediaQuery())); // $NON-NLS-1$
+            }
+            if (!m.getChildPornSets().isEmpty()) {
+                meta.set("hash:status", "pedo"); //$NON-NLS-1$ //$NON-NLS-2$
+                for (String set : m.getChildPornSets()) {
+                    meta.add("hash:set", set); //$NON-NLS-1$
                 }
             }
 
@@ -539,16 +546,16 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (m.getMessageType() == MessageType.LOCATION_MESSAGE
                     || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
-                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude()); //$NON-NLS-1$
             }
 
             if (m.getMessageStatus() != null) {
-                meta.set("messageStatus", m.getMessageStatus().toString());
+                meta.set("messageStatus", m.getMessageStatus().toString()); //$NON-NLS-1$
             }
 
             if (m.isCall()) {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CALL.toString());
-                meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration()));
+                meta.set("duration", ReportGenerator.formatMMSS(m.getMediaDuration())); //$NON-NLS-1$
             }
 
             if (meta.get(ExtraProperties.MESSAGE_BODY) == null) {
@@ -564,7 +571,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                             meta, false);
                 }
             } else {
-                meta.set(BasicProps.LENGTH, "");
+                meta.set(BasicProps.LENGTH, ""); //$NON-NLS-1$
                 extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
             }
         }
@@ -572,22 +579,31 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void storeLinkedHashes(List<Message> messages, Metadata metadata, IItemSearcher searcher) {
         for (Message m : messages) {
-            if (m.getMediaHash() != null) {
-                metadata.add(ExtraProperties.LINKED_ITEMS, "sha-256:" + m.getMediaHash()); //$NON-NLS-1$
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_HASHES, m.getMediaHash());
-
-            } else if (m.getMediaName() != null && !m.getMediaName().isEmpty() && m.getMediaSize() > 2) {
-                String mediaName = m.getMediaName();
-                if (mediaName.contains("/")) //$NON-NLS-1$
-                    mediaName = mediaName.substring(mediaName.lastIndexOf('/') + 1); // $NON-NLS-1$
-                mediaName = escape(searcher, mediaName);
-                String query = BasicProps.NAME + ":\"" + mediaName + "\" AND " + BasicProps.LENGTH + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                        + m.getMediaSize();
+            if (m.getMediaQuery() != null && m.getMediaSize() > 2) {
+                String query = revertEscapeQuery(m.getMediaQuery());
                 metadata.add(ExtraProperties.LINKED_ITEMS, query);
-                if (m.isFromMe())
-                    metadata.add(ExtraProperties.SHARED_ITEMS, query);
+                if (m.isFromMe()) {
+                    metadata.add(ExtraProperties.SHARED_HASHES, query);
+                }
             }
+        }
+    }
+
+    private String revertEscapeQuery(String query) {
+        if (query.startsWith("'") && query.endsWith("'")) {
+            query = query.substring(1, query.length() - 1);
+        } else if (query.startsWith("&quot;") && query.endsWith("&quot;")) {
+            query = SimpleHTMLEncoder.htmlDecode(query).replace("\\\"", "\"");
+            query = query.substring(1, query.length() - 1);
+        }
+        return query;
+    }
+
+    private String escapeQuery(String query, boolean isHashQuery) {
+        if (isHashQuery) {
+            return "'" + query + "'";
+        } else {
+            return SimpleHTMLEncoder.htmlEncode("\"" + query.replace("\"", "\\\"") + "\"");
         }
     }
 
@@ -596,7 +612,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (m.getMessageType() == MessageType.LOCATION_MESSAGE
                     || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
                 if (m.getLatitude() != 0.0 && m.getLongitude() != 0.0) {
-                    metadata.add(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
+                    metadata.add(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude()); //$NON-NLS-1$
                 }
             }
         }
@@ -610,7 +626,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (contact.getAvatarPath() != null) {
                     String avatarFileBase = contact.getAvatarPath();
                     if (avatarFileBase.contains("/")) { //$NON-NLS-1$
-                        avatarFileBase = avatarFileBase.substring(avatarFileBase.lastIndexOf('/') + 1);
+                        avatarFileBase = avatarFileBase.substring(avatarFileBase.lastIndexOf('/') + 1); //$NON-NLS-1$
                     }
                     avatarFileBase = escape(searcher, avatarFileBase);
                     // Try file .jpg
@@ -663,8 +679,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             // filter group avatars and unrelated images
             if (item.getName().startsWith(id) && item.getName().split("-").length < 3) { //$NON-NLS-1$
                 String str = item.getName().substring(id.length());
-                int idx = str.indexOf(".");
-                if (str.startsWith("-") && idx > 0) { //$NON-NLS-1$ //$NON-NLS-2$
+                int idx = str.indexOf("."); //$NON-NLS-1$
+                if (str.startsWith("-") && idx > 0) { //$NON-NLS-1$
                     String t = str.substring(1, idx); // $NON-NLS-1$
                     try {
                         Long time = Long.valueOf(t);
@@ -716,7 +732,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 String dbPath = ((ItemInfo) context.get(ItemInfo.class)).getPath();
                 WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
 
-                ReportGenerator reportGenerator = new ReportGenerator(searcher);
+                ReportGenerator reportGenerator = new ReportGenerator();
                 for (WAContact c : waExtractor.getContactsDirectory().contacts()) {
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CONTACT.toString());
@@ -775,9 +791,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (searcher == null) {
             return new WAContactsDirectory();
         }
-        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\"";
-        query += " && " + BasicProps.CONTENTTYPE + ":(\"" + WA_DB.toString() + "\" || \"" + CONTACTS_V2.toString()
-                + "\")";
+        String query = BasicProps.PATH + ":\"" + searcher.escapeQuery(path) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+        query += " && " + BasicProps.CONTENTTYPE + ":(\"" + WA_DB.toString() + "\" || \"" + CONTACTS_V2.toString() //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                + "\")"; //$NON-NLS-1$
         List<IItemBase> items = searcher.search(query);
         if (items.size() == 0) {
             return new WAContactsDirectory();
@@ -874,5 +890,208 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
     }
+        
+    private void searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher ) {
+        if (searcher == null) {
+            return;
+        }
+        List<List<Message>> listsToProcess = new ArrayList<>();
+        List<Message> messagesToProcess = new ArrayList<>();
+        int count = 0;
+        for (Message m : messages) {
+            if ((m.getMediaHash() != null && !m.getMediaHash().isEmpty()) 
+                    || (m.getMediaName() != null && !m.getMediaName().isEmpty())) {
+                messagesToProcess.add(m);
+                count ++;
+                if (count == MESSAGE_SEARCH_BATCH_SIZE ) {
+                    count = 0;
+                    listsToProcess.add(messagesToProcess);
+                    messagesToProcess = new ArrayList<>();
+                }
+            }
+        }
+        if (count > 0) {
+            listsToProcess.add(messagesToProcess);
+        }
+        
+        for (List<Message> listToProcess : listsToProcess) {
+            searchMediaFilesForMessages(listToProcess, searcher);
+        }
+    }
+    
+    private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher) {
+        Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
+        Map<Pair<String, Long>, List<Message>> fileNameAndSizeToSearchFor = new HashMap<>();
 
+        // First search for hashes
+        for (Message m : messages) {
+            String hash = m.getMediaHash();
+            if (hash != null && !hash.isEmpty()) {
+                List<Message> messageList = hashesToSearchFor.get(hash);
+                if (messageList == null) {
+                    messageList = new ArrayList<>();
+                    hashesToSearchFor.put(hash, messageList);
+                }
+                messageList.add(m);
+            } else {
+                String fileName = m.getMediaName();
+                long fileSize = m.getMediaSize();
+                if (fileName != null && !fileName.isEmpty() && fileSize > 0) {
+                    if (fileName.contains("/")) { //$NON-NLS-1$
+                        fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
+                    }
+                    Pair<String, Long> key = Pair.of(fileName, fileSize);
+                    List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
+                    if (messageList == null) {
+                        messageList = new ArrayList<>();
+                        fileNameAndSizeToSearchFor.put(key, messageList);
+                    }
+                    messageList.add(m);
+                }
+            }
+        }
+
+        if (!hashesToSearchFor.isEmpty()) {
+            StringBuilder allHashesQueryBuilder = new StringBuilder();
+            allHashesQueryBuilder.append("sha-256:("); //$NON-NLS-1$
+            for (String h : hashesToSearchFor.keySet()) {
+                allHashesQueryBuilder.append(h).append(" "); //$NON-NLS-1$
+            }
+            allHashesQueryBuilder.append(")"); //$NON-NLS-1$
+            String allHashesQuery = allHashesQueryBuilder.toString();
+            List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(allHashesQuery, searcher);
+            for (IItemBase item : result) {
+                String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
+                List<Message> messageList = hashesToSearchFor.remove(hash);
+                if (messageList != null) {
+                    for (Message m : messageList) {
+                        m.setMediaItem(item);
+                        m.setMediaQuery(escapeQuery("sha-256:" + hash, true)); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                }
+            }
+        }
+
+        // for media messages without hash, try to find by filename and size
+        if (!fileNameAndSizeToSearchFor.isEmpty()) {
+            StringBuilder fileNameAndSizeQueryBuilder = new StringBuilder();
+            for (Pair<String, Long> key : fileNameAndSizeToSearchFor.keySet()) {
+                fileNameAndSizeQueryBuilder.append("("); //$NON-NLS-1$
+                fileNameAndSizeQueryBuilder.append(BasicProps.NAME).append(":\""); //$NON-NLS-1$
+                fileNameAndSizeQueryBuilder.append(searcher.escapeQuery(key.getLeft()));
+                fileNameAndSizeQueryBuilder.append("\" AND "); //$NON-NLS-1$
+                fileNameAndSizeQueryBuilder.append(BasicProps.LENGTH).append(":"); //$NON-NLS-1$
+                fileNameAndSizeQueryBuilder.append(key.getRight().toString());
+                fileNameAndSizeQueryBuilder.append(") "); //$NON-NLS-1$
+
+            }
+
+            String fileNameAndSizeQuery = fileNameAndSizeQueryBuilder.toString();
+            List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(fileNameAndSizeQuery, searcher);
+            for (IItemBase item : result) {
+                if (item.getName() != null && !item.getName().isEmpty() && item.getLength() != null
+                        && item.getLength() > 0) {
+                    String fileName = item.getName();
+                    long fileSize = item.getLength();
+                    if (fileName.contains("/")) { //$NON-NLS-1$
+                        fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
+                    }
+                    Pair<String, Long> key = Pair.of(fileName, fileSize);
+                    List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
+                    for (Message m : messageList) {
+                        m.setMediaItem(item);
+                        String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
+                                + BasicProps.LENGTH + ":" + fileSize; //$NON-NLS-1$
+                        m.setMediaQuery(escapeQuery(query, false));
+                    }
+                }
+            }
+        }
+
+        // fallback search for media items that have hash in database, but hashes were
+        // not found
+        // It is possible that the the file has been padded with zeros
+        // see https://github.com/sepinf-inc/IPED/issues/486
+        // try to to find by name and by approximate size, then check if it ends with
+        // zeros
+        if (FALLBACK_FILENAME_APPROX_SIZE) {
+            if (!hashesToSearchFor.isEmpty()) {
+                Map<String, List<Message>> fallBackFileNamesToSearchFor = new HashMap<>();
+                for (List<Message> messageList : hashesToSearchFor.values()) {
+                    for (Message m : messageList) {
+                        String fileName = m.getMediaName();
+                        if (fileName != null && !fileName.isEmpty()) {
+                            if (fileName.contains("/")) { //$NON-NLS-1$
+                                fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
+                            }
+                            List<Message> newMessageList = fallBackFileNamesToSearchFor.get(fileName);
+                            if (newMessageList == null) {
+                                newMessageList = new ArrayList<>();
+                                fallBackFileNamesToSearchFor.put(fileName, newMessageList);
+                            }
+                            newMessageList.add(m);
+                        }
+                    }
+                }
+    
+                if (!fallBackFileNamesToSearchFor.isEmpty()) {
+                    StringBuilder fallBackQueryBuilder = new StringBuilder();
+                    fallBackQueryBuilder.append(BasicProps.NAME).append(":("); //$NON-NLS-1$
+                    for (String fileName : fallBackFileNamesToSearchFor.keySet()) {
+                        fileName = searcher.escapeQuery(fileName);
+                        fallBackQueryBuilder.append("\"").append(fileName).append("\" "); //$NON-NLS-1$ //$NON-NLS-2$
+                    }
+                    fallBackQueryBuilder.append(")"); //$NON-NLS-1$
+    
+                    String fallBackQuery = fallBackQueryBuilder.toString();
+                    List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(fallBackQuery, searcher);
+                    for (IItemBase item : result) {
+                        if (item.getName() != null && item.getLength() != null && item.getLength() > 0) {
+                            String fileName = item.getName();
+                            if (fileName.contains("/")) { //$NON-NLS-1$
+                                fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
+                            }
+                            List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
+                            for (Message m : messageList) {
+                                long mediaSize = m.getMediaSize();
+                                long fileSize = item.getLength();
+                                if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
+                                    if (itemStreamEndsWithZeros(item, mediaSize)) {
+                                        m.setMediaItem(item);
+                                        m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                    // //$NON-NLS-3$
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Check it the media file is padded with zeros (check if all bytes beyond
+     * mediaSize are zeros)
+     * 
+     * @param item
+     * @param mediaSize
+     * @return
+     */
+    private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
+        try (SeekableInputStream sis = item.getStream()) {
+            sis.seek(mediaSize);
+            byte[] bytes = new byte[15];
+            int read = org.apache.commons.io.IOUtils.read(sis, bytes);
+            // this loop will run at most 15 times
+            while (--read >= 0) {
+                if (bytes[read] != 0) {
+                    return false;
+                }
+            }
+            return true;
+        } catch (IOException ex) {
+            return false;
+        }
+    }
 }
