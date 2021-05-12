@@ -12,9 +12,9 @@ public class DogeCoinAddressValidatorService extends BasicAbstractRegexValidator
     
     static {
         validator = new AltcoinBase58CheckValidator();
-        validator.setVersionForPrefix("D", 30);
-        validator.setVersionForPrefix("A", 22);
-        validator.setVersionForPrefix("9", 22);
+        validator.setVersionForPrefix("D", (byte) 30);
+        validator.setVersionForPrefix("A", (byte) 22);
+        validator.setVersionForPrefix("9", (byte) 22);
     }
 
     @Override

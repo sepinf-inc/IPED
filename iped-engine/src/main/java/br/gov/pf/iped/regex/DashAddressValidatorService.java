@@ -12,8 +12,8 @@ public class DashAddressValidatorService extends BasicAbstractRegexValidatorServ
     
     static {
         validator = new AltcoinBase58CheckValidator();
-        validator.setVersionForPrefix("7", 16);
-        validator.setVersionForPrefix("X", 76);
+        validator.setVersionForPrefix("7", (byte) 16);
+        validator.setVersionForPrefix("X", (byte) 76);
     }
 
     @Override

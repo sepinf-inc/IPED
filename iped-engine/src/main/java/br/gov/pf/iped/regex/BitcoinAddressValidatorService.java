@@ -1,7 +1,6 @@
 package br.gov.pf.iped.regex;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -13,19 +12,13 @@ public class BitcoinAddressValidatorService extends BasicAbstractRegexValidatorS
     
     static {
         validator = new AltcoinBase58CheckValidator();
-        validator.setVersionForPrefix("1", 0);
-        validator.setVersionForPrefix("3", 5);
-        validator.setVersionForPrefix("5", 128);
-        validator.setVersionForPrefix("K", 128);
-        validator.setVersionForPrefix("L", 128);
-        validator.setVersionForPrefix("xpub", 4);
-        validator.setVersionForPrefix("xpub", 136);
-        validator.setVersionForPrefix("xpub", 178);
-        validator.setVersionForPrefix("xpub", 30);
-        validator.setVersionForPrefix("xprv", 4);
-        validator.setVersionForPrefix("xprv", 136);
-        validator.setVersionForPrefix("xprv", 173);
-        validator.setVersionForPrefix("xprv", 228);
+        validator.setVersionForPrefix("1", (byte) 0 );
+        validator.setVersionForPrefix("3", (byte) 5);
+        validator.setVersionForPrefix("5", (byte) 128);
+        validator.setVersionForPrefix("K", (byte) 128);
+        validator.setVersionForPrefix("L", (byte) 128);
+        validator.setVersionForPrefix("xpub", (byte) 4, (byte) 136, (byte) 178, (byte) 30);
+        validator.setVersionForPrefix("xpub", (byte) 4, (byte) 136, (byte) 173, (byte) 228);
     }
 
     private static int[] BECH32_CHARSET_REV = { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
