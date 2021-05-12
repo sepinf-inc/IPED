@@ -1,4 +1,4 @@
-package br.gov.pf.iped.regex;
+package br.gov.pf.iped.regex.cripto;
 
 import java.io.File;
 import java.util.Arrays;
@@ -6,14 +6,15 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 
-public class DashAddressValidatorService extends BasicAbstractRegexValidatorService {
+public class DogeCoinAddressValidatorService extends BasicAbstractRegexValidatorService {
 
     private static final AltcoinBase58CheckValidator validator;
     
     static {
         validator = new AltcoinBase58CheckValidator();
-        validator.setVersionForPrefix("7", (byte) 16);
-        validator.setVersionForPrefix("X", (byte) 76);
+        validator.setVersionForPrefix("D", (byte) 30);
+        validator.setVersionForPrefix("A", (byte) 22);
+        validator.setVersionForPrefix("9", (byte) 22);
     }
 
     @Override
@@ -23,7 +24,7 @@ public class DashAddressValidatorService extends BasicAbstractRegexValidatorServ
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_DASH");
+        return Arrays.asList("CRIPTOCOIN_DOGECOIN");
     }
 
     @Override

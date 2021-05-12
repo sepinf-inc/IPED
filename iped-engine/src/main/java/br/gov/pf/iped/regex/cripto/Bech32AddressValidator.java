@@ -1,4 +1,4 @@
-package br.gov.pf.iped.regex;
+package br.gov.pf.iped.regex.cripto;
 
 public class Bech32AddressValidator {
 

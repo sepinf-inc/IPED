@@ -1,4 +1,4 @@
-package br.gov.pf.iped.regex;
+package br.gov.pf.iped.regex.cripto;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
