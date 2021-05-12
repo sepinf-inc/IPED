@@ -290,10 +290,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
          * "document_content": { "type": "join", "relations": { "document": "content" }
          * }
          */
-        HashMap<String, Object> documentContentkRelation = new HashMap<>();
-        documentContentkRelation.put("type", "join");
-        documentContentkRelation.put("relations", Collections.singletonMap("document", "content"));
-        properties.put("document_content", documentContentkRelation);
+        HashMap<String, Object> documentContentRelation = new HashMap<>();
+        documentContentRelation.put("type", "join");
+        documentContentRelation.put("relations", Collections.singletonMap("document", "content"));
+        properties.put("document_content", documentContentRelation);
 
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
