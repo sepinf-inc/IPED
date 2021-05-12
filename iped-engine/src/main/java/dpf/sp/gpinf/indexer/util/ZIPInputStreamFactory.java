@@ -62,12 +62,12 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
     };
 
     public ZIPInputStreamFactory(Path dataSource) {
-        super(dataSource.toUri());
+        super(dataSource);
     }
 
     private synchronized void init() throws ZipException {
         if (zip == null) {
-            zip = new ZipFile4j(Paths.get(this.dataSource).toFile());
+            zip = new ZipFile4j(this.dataSource.toFile());
         }
     }
 
