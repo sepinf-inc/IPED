@@ -9,7 +9,6 @@ import java.nio.file.Path;
 public class LocaleConfig extends AbstractPropertiesConfigurable {
 
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
-
     private static final String HOST_COUNTRY = "hostCountryCode";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -47,7 +46,7 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().isEmpty())
             locale = Locale.forLanguageTag(value.trim());
 
-        System.setProperty("iped-locale", locale.toLanguageTag()); //$NON-NLS-1$
+        System.setProperty(iped3.util.Messages.LOCALE_SYS_PROP, locale.toLanguageTag()); // $NON-NLS-1$
     }
 
     public Locale getLocale() {

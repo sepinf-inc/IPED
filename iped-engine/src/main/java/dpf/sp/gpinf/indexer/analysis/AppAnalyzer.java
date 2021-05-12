@@ -40,6 +40,7 @@ public class AppAnalyzer {
     public static Analyzer get() {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
         analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(true));
+        analyzerPerField.put(IndexItem.getLocalizedField(IndexItem.CATEGORY), new StandardASCIIAnalyzer(true));
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());

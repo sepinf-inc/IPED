@@ -704,6 +704,22 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY LOCALIZATION FOLDER -->
+                    <execution>
+                        <id>copy-localization</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/localization</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${resources.dir}/localization</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                     <!-- COPY THIRD LICENSES FOLDER -->
                     <execution>
                         <id>copy-licenses</id>

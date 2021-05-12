@@ -59,6 +59,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
@@ -303,10 +304,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
 
-        AtomicLong time = times.get(getParserName(parser));
+        String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
+        AtomicLong time = times.get(parserName);
         if (time == null) {
             time = new AtomicLong();
-            times.put(getParserName(parser), time);
+            times.put(parserName, time);
         }
 
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
@@ -334,9 +336,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     }
 
-    private String getParserName(Parser parser) {
+    private String getParserName(Parser parser, String contentType) {
         if (parser instanceof ExternalParser)
             return ((ExternalParser) parser).getParserName();
+        else if (parser instanceof PythonParser)
+            return ((PythonParser) parser).getName(contentType);
         else if (parser instanceof MultipleParser)
             return ((MultipleParser) parser).getParserName();
         else

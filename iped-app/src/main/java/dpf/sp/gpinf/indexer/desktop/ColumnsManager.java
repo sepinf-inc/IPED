@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -87,7 +88,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
@@ -543,6 +544,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     public void resetToDefaultLayout() {
+        // resetColumns(Arrays.asList(defaultFields).stream().map(f ->
+        // BasicProps.getLocalizedField(f))
+        // .collect(Collectors.toList()), defaultWidths);
         resetColumns(Arrays.asList(defaultFields), defaultWidths);
     }
 
@@ -559,6 +563,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         int newPos = 2;
         for (String col : newCols) {
+            col = BasicProps.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
                 if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
@@ -678,7 +683,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(f);
+                check.setText(BasicProps.getLocalizedField(f));
                 if (colState.visibleFields.contains(f))
                     check.setSelected(true);
                 check.addActionListener(this);
@@ -707,6 +712,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateGUICol(String colName, boolean insert) {
 
+        colName = BasicProps.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
             colState.visibleFields.add(colName);

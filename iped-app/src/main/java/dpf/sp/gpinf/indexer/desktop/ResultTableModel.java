@@ -38,6 +38,7 @@ import org.apache.lucene.document.Document;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
+import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -46,7 +47,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 import iped3.util.BasicProps;
-import iped3.util.ExtraProperties;
 
 public class ResultTableModel extends AbstractTableModel implements SearchResultTableModel {
 
@@ -105,6 +105,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
+            col = BasicProps.getLocalizedField(col);
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
         }
 
@@ -272,6 +273,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
                 if (!sorted) {
                     Arrays.sort(values, collator);
+                }
+            }
+            
+            if (BasicProps.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
+                for (int i = 0; i < values.length; i++) {
+                    values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
                 }
             }
 

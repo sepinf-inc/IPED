@@ -210,9 +210,10 @@ public class IndexItem extends BasicProps {
         return normalize(value, true);
     }
 
-    private static final String normalize(String value, boolean toLowerCase) {
-        if (toLowerCase)
+    public static final String normalize(String value, boolean toLowerCase) {
+        if (toLowerCase) {
             value = value.toLowerCase();
+        }
         char[] input = value.toCharArray();
         char[] output = new char[input.length * 4];
         int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
