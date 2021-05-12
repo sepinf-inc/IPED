@@ -35,7 +35,7 @@ public class LiteCoinAddressValidatorService extends BasicAbstractRegexValidator
 
     @Override
     public List<String> getRegexNames() {
-        return Arrays.asList("CRIPTOCOIN_DOGECOIN");
+        return Arrays.asList("CRIPTOCOIN_LITECOIN");
     }
 
     @Override
