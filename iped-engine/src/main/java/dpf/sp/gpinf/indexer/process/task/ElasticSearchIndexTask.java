@@ -236,7 +236,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
-                .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy)
+                .put(INDEX_REPLICAS_KEY, index_replicas)// .put(INDEX_POLICY_KEY, index_policy)
                 .put(IGNORE_MALFORMED, true);
 
         if (useCustomAnalyzer) {
@@ -333,15 +333,18 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private IndexRequest createMetaDataRegistry(IItem item, String metadata_id) throws IOException {
+    private IndexRequest createMetaDataRegistry(String id, String route, XContentBuilder jasonData)
+            throws IOException {
 
         IndexRequest indexRequest = Requests.indexRequest(indexName);
 
-        indexRequest.id(metadata_id);
+        indexRequest.id(id);
 
-        XContentBuilder jsonBuilder = getJsonMetadataBuilder(item);
+        // routing is required when using parent-child relations
+        indexRequest.routing(route);
 
-        indexRequest.source(jsonBuilder);
+        // json data to be inserted
+        indexRequest.source(jasonData);
 
         indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
         indexRequest.opType(OpType.CREATE);
@@ -385,26 +388,23 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         try {
             // creates the father;
-
-            IndexRequest parentIndexRequest = createMetaDataRegistry(item, parentId);
-            parentIndexRequest.routing(parentId);
+            XContentBuilder jsonMetadata = getJsonMetadataBuilder(item);
+            IndexRequest parentIndexRequest = createMetaDataRegistry(parentId, parentId, jsonMetadata);
             bulkRequest.add(parentIndexRequest);
             idToPath.put(parentId, item.getPath());
 
             do {
                 String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum--);
 
+                // creates the json _source of the fragment
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId,
+                        contentPersistentId);
 
-                XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader, parentId, contentPersistentId);
+                // creates the request
+                IndexRequest contentRequest = createMetaDataRegistry(contentPersistentId, parentId, jsonContent);
 
-                IndexRequest indexRequest = Requests.indexRequest(indexName);
-                indexRequest.routing(parentId);
-                indexRequest.id(contentPersistentId);
-                indexRequest.source(jsonBuilder);
-                indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
-                indexRequest.opType(OpType.CREATE);
+                bulkRequest.add(contentRequest);
 
-                bulkRequest.add(indexRequest);
                 idToPath.put(contentPersistentId, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
@@ -537,16 +537,19 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return builder.endObject();
     }
 
-    private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader, String parentID,
+    private XContentBuilder getJsonFragmentBuilder(IItem item, Reader textReader, String parentID,
             String contentPersistentId) throws IOException {
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
+
+        // maps the content to its parent metadata
         HashMap<String,String> document_content=new HashMap<>();
         document_content.put("name", "content");
         document_content.put("parent",parentID);
+
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId())
-                .field("document_content", document_content).field("contentPersistentId", contentPersistentId)
+                .field(BasicProps.ID, item.getId()).field("document_content", document_content)
+                .field("contentPersistentId", contentPersistentId)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();
