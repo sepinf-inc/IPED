@@ -1,27 +1,24 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import javax.imageio.ImageIO;
 
 import org.apache.commons.codec.binary.Hex;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.dpf.sepinf.photodna.api.PhotoDNA;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
 public class PhotoDNATask extends AbstractTask {
 
     private Logger LOGGER = LoggerFactory.getLogger(PhotoDNATask.class);
+
+    public static final String PDNA_NOT_FOUND_MSG = "Optional photoDNA lib not found in plugin/optional_jars folder. If you are law enforcement, ask sepinf.inc@pf.gov.br";
 
     public static final int HASH_SIZE = 144;
 
@@ -98,8 +95,7 @@ public class PhotoDNATask extends AbstractTask {
         } catch (ClassNotFoundException e) {
             enabled = false;
             if (!warned.getAndSet(true))
-                LOGGER.error(
-                        "Optional photoDNA lib not loaded. If you have rights to use it, you should put it into plugin/optional_jars folder.");
+                LOGGER.error(PDNA_NOT_FOUND_MSG);
         }
 
     }
