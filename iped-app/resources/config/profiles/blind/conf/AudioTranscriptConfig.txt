@@ -11,11 +11,12 @@ implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.MicrosoftTran
 #implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.GoogleTranscriptTask
 
 # Specific of Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
-serviceRegion = westus
+serviceRegion = brazilsouth
 
-# Language model(s) to use when processing audios. You can set at most 2 separated by ;
-# Setting more than 1 model can result in wrong language detection.
-language = en-US
+# Language model(s) to use when processing audios. 'auto' uses the 'locale' set on LocalConfig.txt
+# You can specify one or two languages separated by ;
+# Setting more than 1 lang model can result in wrong language detection.
+language = auto
 
 # Depending on your subscription, Microsoft limits the number of max concurrent requests
 maxConcurrentRequests = 20

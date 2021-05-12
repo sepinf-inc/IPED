@@ -45,11 +45,6 @@
     		<version>0.2</version>
 		</dependency>
     	<dependency>
-    		<groupId>black.ninia</groupId>
-  			<artifactId>jep</artifactId>
-  			<version>3.9.1</version>
-  		</dependency>
-    	<dependency>
             <groupId>iped</groupId>
             <artifactId>iped-ahocorasick</artifactId>
             <version>1.1</version>

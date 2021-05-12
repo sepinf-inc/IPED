@@ -14,7 +14,6 @@
 
 # If enabled, format/normalize regex matches using registered validators.
 # However regex results may not be highlighted in content preview.
-
 formatRegexMatches = false
 
 # Register REGEX below:
@@ -28,8 +27,6 @@ IP , 1 , 1 = [^0-9\.]([^0].?.?&<1-255>)(\.(([^0].?.?&<1-255>)|0)){3}[^0-9\.]
 MAC_ADDRESS , 0 , 0 , false = ([0-9a-fA-F][0-9a-fA-F]:){5}([0-9a-fA-F][0-9a-fA-F])
 			
 MONEY , 1 , 1 , false = [^0-9\.\,]((([^0].?.?&<1-999>)(((\.[0-9]{3}){1,4}\,[0-9]{2})|((\,[0-9]{3}){1,4}\.[0-9]{2})))|(\$\s{0,10}<1-999>(((\.[0-9]{3}){1,4}(\,[0-9]{2})?)|((\,[0-9]{3}){1,4}(\.[0-9]{2})?))))[^0-9\.\,]
-			
-# BANK_ACCOUNT , 0 , 0 , true = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
 
 CREDIT_CARD, 1 , 1 = [^0-9]([0-9]{4} ){3}[0-9]{4}[^0-9]
 
@@ -46,7 +43,6 @@ CRIPTOCOIN_BITCOIN_WIF_PRIV_K_UNC_PUB_K, 1, 1, false = [^0-9a-zA-Z]5[a-km-zA-HJ-
 CRIPTOCOIN_BITCOIN_WIF_PRIV_K_COMP_PUB_K, 1, 1, false = [^0-9a-zA-Z][KL][a-km-zA-HJ-NP-Z1-9]{51}[^0-9a-zA-Z]
 CRIPTOCOIN_BITCOIN_BIP32_HD_XPRV_KEY, 1, 1, false = [^0-9a-zA-Z]xprv[a-km-zA-HJ-NP-Z1-9]{107,108}[^0-9a-zA-Z]
 CRIPTOCOIN_BITCOIN_BIP32_HD_XPUB_KEY, 1, 1, false = [^0-9a-zA-Z]xpub[a-km-zA-HJ-NP-Z1-9]{107,108}[^0-9a-zA-Z]
-
 
 CRIPTOCOIN_MONERO, 1, 1, false = [^0-9a-zA-Z]4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}[^0-9a-zA-Z]
 
@@ -66,3 +62,22 @@ CRIPTOCOIN_ETHEREUM, 0, 1, false = 0x[a-fA-F0-9]{40}[^a-fA-F0-9]
 #CRIPTOCOIN_NEO, 1, 1, false = [^0-9a-zA-Z]A[0-9a-zA-Z]{33}[^0-9a-zA-Z]
 
 #CRIPTOCOIN_DASH, 1, 1, false = [^0-9a-zA-Z]X[1-9A-HJ-NP-Za-km-z]{33}[^0-9a-zA-Z]
+
+
+# Brazilian specific patterns:
+
+BR_CPF , 1 , 1 = [^0-9][0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}[^0-9]
+
+BR_CNPJ , 1 , 1 , false = [^0-9][0-9]{2}\.?[0-9]{3}\.?[0-9]{3}/[0-9]{4}-?[0-9]{2}[^0-9]
+
+BR_PISPASEP , 1 , 1 , false = [^0-9][0-9]{3}\.?[0-9]{4}\.?[0-9]{3}-?[0-9]{1}[^0-9]
+
+BR_CNH, 1 , 1 , false = [^0-9][0-9]{3}\.?[0-9]{3}\.?[0-9]{3}-?[0-9]{2}[^0-9]
+
+BR_TITULO_ELEITOR, 1 , 1 , false = [^0-9][0-9]{12}[^0-9]
+
+BR_BOLETO, 1 , 1 = [^0-9][0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0-9]{5}(\s|\.)?[0-9]{6}(\s|\.)?[0-9xX](\s|\.)?[0-9]{14}[^0-9]
+
+BR_BANK_ACCOUNT , 0 , 0 , true = (ag|agen|ag[eê]ncia)(\s|\.|:){0,10}[0-9]{4}(\-?[0-9xX])?.{0,10}(cc|conta|conta[ \-]corrente)(\s|\.|:){0,10}[0-9]{5,11}(\-?[0-9xX])?
+
+BR_CAR_PLATE = ((\r\n| |\	)([A-Z]{3})(()|-)([0-9]{4})( |\	|\r\n))|((Placa|Placas|PLACA|PLACAS)( |:|: )([A-Za-z]{3})( )([0-9]{4}))
