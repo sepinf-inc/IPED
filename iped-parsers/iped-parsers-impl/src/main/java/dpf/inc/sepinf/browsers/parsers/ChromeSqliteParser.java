@@ -598,24 +598,24 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
         return searches;
     }
 
-    public static void main(String[] args) {
-
-        try {
-            String filepath = "/home/herrmann/Documents/BrowsersArtifacts/History"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            ChromeSqliteParser parser = new ChromeSqliteParser();
-            ParseContext context = new ParseContext();
-            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                    MediaType.application("x-chrome-sqlite").toString()); //$NON-NLS-1$
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//            String filepath = "/home/herrmann/Documents/BrowsersArtifacts/History"; //$NON-NLS-1$
+//            InputStream input = new FileInputStream(filepath);
+//            ChromeSqliteParser parser = new ChromeSqliteParser();
+//            ParseContext context = new ParseContext();
+//            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
+//            Metadata metadata = new Metadata();
+//            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+//                    MediaType.application("x-chrome-sqlite").toString()); //$NON-NLS-1$
+//            context.set(Parser.class, parser);
+//
+//            parser.parse(input, handler, metadata, context);
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 }

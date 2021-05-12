@@ -33,8 +33,8 @@ public class FirefoxSqliteParserTest extends AbstractPkgTest{
         parser.setExtractEntries(true);
         parser.parse(stream, handler, metadata, firefoxContext);
         
-        assertEquals(36, firefoxtracker.bookmarktitle.size());
-        assertEquals(38, firefoxtracker.bookmarkurl.size());
+        assertEquals(47, firefoxtracker.bookmarktitle.size());
+        assertEquals(49, firefoxtracker.bookmarkurl.size());
         assertEquals(27, firefoxtracker.bookmarkcreated.size());
         assertEquals(27, firefoxtracker.bookmarkmodified.size());
         
