@@ -66,7 +66,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
 
-    private static final String ELASTIC_ID = "elastic_id";
     private static final String ENABLED_KEY = "enable";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
@@ -283,7 +282,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
         HashMap<String, Object> properties = new HashMap<>();
         properties.put(BasicProps.EVIDENCE_UUID, Collections.singletonMap("type", "keyword")); //$NON-NLS-1$ //$NON-NLS-2$
         properties.put(BasicProps.ID, Collections.singletonMap("type", "keyword"));
-        properties.put(ELASTIC_ID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
@@ -492,7 +490,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
+                .field(BasicProps.ID, item.getId())
                 .field("document_content", "document").field(BasicProps.SUBITEMID, item.getSubitemId())
                 .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
@@ -546,9 +544,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         HashMap<String,String> document_content=new HashMap<>();
         document_content.put("name", "content");
         document_content.put("parent",parentID);
-        String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId()).field(ELASTIC_ID, item.getDataSource().getUUID() + item.getId())
+                .field(BasicProps.ID, item.getId())
                 .field("document_content", document_content).field("contentPersistentId", contentPersistentId)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
