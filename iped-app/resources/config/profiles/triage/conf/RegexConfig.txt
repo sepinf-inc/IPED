@@ -59,6 +59,9 @@ CRIPTOCOIN_DOGECOIN, 1, 1, false = [^0-9a-zA-Z][DA9][1-9A-HJ-NP-Za-km-z]{25,34}[
 
 CRIPTOCOIN_DASH, 1, 1, false = [^0-9a-zA-Z][7X][1-9A-HJ-NP-Za-km-z]{25,34}[^0-9a-zA-Z]
 
+# Old Litecoin P2SH addresses starting with 3 will not be matched by this regex, as they would be validated as BTC as well (with valid checksum)
+CRIPTOCOIN_LITECOIN, 1, 1, false = ([^0-9a-zA-Z][LM][a-km-zA-HJ-NP-Z1-9]{25,34}[^0-9a-zA-Z])|([^0-9a-zA-Z]ltc1[ac-hj-np-z02-9]{11,71}[^0-9a-zA-Z])
+
 # Regexes below are commented out because they do not have validators currently and return many false positives, you could enable them if necessary
 
 #CRIPTOCOIN_NEO, 1, 1, false = [^0-9a-zA-Z]A[0-9a-zA-Z]{33}[^0-9a-zA-Z]
