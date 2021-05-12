@@ -59,12 +59,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
@@ -302,10 +304,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
 
-        AtomicLong time = times.get(getParserName(parser));
+        String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
+        AtomicLong time = times.get(parserName);
         if (time == null) {
             time = new AtomicLong();
-            times.put(getParserName(parser), time);
+            times.put(parserName, time);
         }
 
         AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
@@ -333,9 +336,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     }
 
-    private String getParserName(Parser parser) {
+    private String getParserName(Parser parser, String contentType) {
         if (parser instanceof ExternalParser)
             return ((ExternalParser) parser).getParserName();
+        else if (parser instanceof PythonParser)
+            return ((PythonParser) parser).getName(contentType);
+        else if (parser instanceof MultipleParser)
+            return ((MultipleParser) parser).getParserName();
         else
             return parser.getClass().getSimpleName();
     }
@@ -426,12 +433,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
             metadata.remove(ExtraProperties.USER_THUMB);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
-        }
-
-        String hashSetStatus = metadata.get(KFFTask.KFF_STATUS);
-        if (hashSetStatus != null) {
-            evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
-            metadata.remove(KFFTask.KFF_STATUS);
         }
 
         String prevMediaType = evidence.getMediaType().toString();
@@ -602,6 +603,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             extractor.extractFile(inputStream, subItem, evidence.getLength());
 
             checkRecursiveZipBomb(subItem);
+
+            if ("".equals(metadata.get(BasicProps.LENGTH))) {
+                subItem.setLength(null);
+            }
 
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);

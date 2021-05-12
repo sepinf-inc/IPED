@@ -22,7 +22,6 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.IItem;
-import iped3.util.ExtraProperties;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
@@ -379,7 +378,7 @@ public class VideoThumbTask extends ThumbTask {
     protected void process(IItem evidence) throws Exception {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null) {
+                || evidence.getHashValue() == null) {
             return;
         }
 
@@ -488,6 +487,8 @@ public class VideoThumbTask extends ThumbTask {
                     }
                 } catch (Throwable e) {
                     logger.warn(evidence.toString(), e);
+                } finally {
+                    updateHasThumb(evidence);
                 }
             }
 

@@ -47,7 +47,7 @@ public class MenuClass extends JPopupMenu {
             navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal;
+            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -180,6 +180,10 @@ public class MenuClass extends JPopupMenu {
         this.add(exportTerms);
 
         this.addSeparator();
+
+        toggleTimelineView = new JMenuItem(Messages.getString("App.ToggleTimelineView")); //$NON-NLS-1$
+        toggleTimelineView.addActionListener(menuListener);
+        this.add(toggleTimelineView);
 
         layoutPadrao = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
         layoutPadrao.addActionListener(menuListener);

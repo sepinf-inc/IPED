@@ -18,6 +18,8 @@ public class PhotoDNATask extends AbstractTask {
 
     private Logger LOGGER = LoggerFactory.getLogger(PhotoDNATask.class);
 
+    public static final String PDNA_NOT_FOUND_MSG = "Optional photoDNA lib not found in plugin/optional_jars folder. If you are law enforcement, ask sepinf.inc@pf.gov.br";
+
     public static final int HASH_SIZE = 144;
 
     public static final String ENABLE_PHOTO_DNA = "enablePhotoDNA";
@@ -30,7 +32,9 @@ public class PhotoDNATask extends AbstractTask {
 
     public static final String MIN_FILE_SIZE = "minFileSize";
 
-    public static final String SKIP_KFF_FILES = "skipKffFiles";
+    public static final String SKIP_HASH_DB_FILES = "skipHashDBFiles";
+
+    public static final String STATUS_HASH_DB_FILTER = "statusHashDBFilter";
 
     public static final String MAX_SIMILARITY_DISTANCE = "maxSimilarityDistance";
 
@@ -46,7 +50,7 @@ public class PhotoDNATask extends AbstractTask {
 
     private int minFileSize = 10000;
 
-    private boolean skipKffFiles = true;
+    private boolean skipHashDBFiles = true;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
@@ -68,9 +72,13 @@ public class PhotoDNATask extends AbstractTask {
         if (value != null && !value.trim().isEmpty())
             minFileSize = Integer.valueOf(value.trim());
 
-        value = config.getProperty(SKIP_KFF_FILES);
+        value = config.getProperty(SKIP_HASH_DB_FILES);
         if (value != null && !value.trim().isEmpty())
-            skipKffFiles = Boolean.valueOf(value.trim());
+            skipHashDBFiles = Boolean.valueOf(value.trim());
+
+        value = config.getProperty(STATUS_HASH_DB_FILTER);
+        if (value != null && !value.trim().isEmpty())
+            PhotoDNALookup.statusHashDBFilter = value.trim();
 
         value = config.getProperty(MAX_SIMILARITY_DISTANCE);
         if (value != null && !value.trim().isEmpty())
@@ -87,8 +95,7 @@ public class PhotoDNATask extends AbstractTask {
         } catch (ClassNotFoundException e) {
             enabled = false;
             if (!warned.getAndSet(true))
-                LOGGER.error(
-                        "Optional photoDNA lib not loaded. If you have rights to use it, you should put it into plugin/optional_jars folder.");
+                LOGGER.error(PDNA_NOT_FOUND_MSG);
         }
 
     }
@@ -109,17 +116,21 @@ public class PhotoDNATask extends AbstractTask {
         if (!evidence.isToAddToCase())
             return;
 
-        if (evidence.getThumb() == null || !evidence.getMediaType().getType().equals("image"))
+        byte[] thumb = evidence.getThumb(); 
+        if (thumb == null || !evidence.getMediaType().getType().equals("image"))
             return;
 
         if (evidence.getLength() != null && evidence.getLength() < minFileSize)
             return;
 
-        if (skipKffFiles && evidence.getExtraAttribute(KFFTask.KFF_STATUS) != null)
+        if (useThumbnail && thumb.length == 0)
+            return;
+
+        if (skipHashDBFiles && evidence.getExtraAttribute(HashDBLookupTask.STATUS_ATTRIBUTE) != null)
             return;
 
         byte[] hash;
-        try (InputStream is = useThumbnail ? new ByteArrayInputStream(evidence.getThumb())
+        try (InputStream is = useThumbnail ? new ByteArrayInputStream(thumb)
                 : evidence.getBufferedStream()) {
 
             photodna.reset();
@@ -128,17 +139,11 @@ public class PhotoDNATask extends AbstractTask {
             evidence.setExtraAttribute(PHOTO_DNA, hashStr);
 
         } catch (Throwable e) {
-            // e.printStackTrace();
-            LOGGER.info("Error computing photoDNA for " + evidence.getPath() + ": " + e.toString());
+            LOGGER.info("Error computing photoDNA for " + evidence.getPath(), e);
             evidence.setExtraAttribute("photodna_exception", e.toString());
             return;
         }
 
-        /*
-         * int distance = new
-         * br.dpf.sepinf.photodna.PhotoDNAComparator().compare(thumbHash, fileHash);
-         * evidence.setExtraAttribute("photodna_diff", distance);
-         */
     }
 
 }

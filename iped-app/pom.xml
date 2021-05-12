@@ -492,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20200916</version>
+                                    <version>20210505</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
@@ -647,6 +647,27 @@
                             </archive>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>create-hashdb-jar</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                        <configuration>
+                            <finalName>iped-hashdb</finalName>
+                            <outputDirectory>${lib.dir}</outputDirectory>
+                            <forceCreation>true</forceCreation>
+                            <archive>
+                                <addMavenDescriptor>false</addMavenDescriptor>
+                                <manifest>
+                                    <addClasspath>true</addClasspath>
+                                    <mainClass>gpinf.hashdb.HashDBTool</mainClass>
+                                </manifest>
+                            </archive>
+                            <includes>
+                                <include>**/hashdb/*</include>
+                            </includes>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             
@@ -679,6 +700,22 @@
                 						<include>ThirdParty.txt</include>
                 						<include>ReleaseNotes.txt</include>
             						</includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <!-- COPY LOCALIZATION FOLDER -->
+                    <execution>
+                        <id>copy-localization</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/localization</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${resources.dir}/localization</directory>
                                 </resource>
                             </resources>
                         </configuration>

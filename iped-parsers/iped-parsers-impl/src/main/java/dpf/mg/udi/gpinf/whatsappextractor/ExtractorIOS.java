@@ -44,6 +44,7 @@ import com.google.common.collect.ImmutableSet;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 
 /**
  *
@@ -63,7 +64,10 @@ public class ExtractorIOS extends Extractor {
         List<Chat> list = new ArrayList<>();
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
-            try (ResultSet rs = stmt.executeQuery(SELECT_CHAT_LIST)) {
+            boolean hasProfilePictureItemTable = SQLite3DBParser.containsTable("ZWAPROFILEPICTUREITEM", conn);
+            String chatListQuery = hasProfilePictureItemTable ? SELECT_CHAT_LIST : SELECT_CHAT_LIST_NO_PPIC;
+
+            try (ResultSet rs = stmt.executeQuery(chatListQuery)) {
                 while (rs.next()) {
                     String contactId = rs.getString("contact"); //$NON-NLS-1$
                     if (!(contactId.endsWith("@status") || contactId.endsWith("@broadcast"))) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -271,6 +275,11 @@ public class ExtractorIOS extends Extractor {
             + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, ZPATH as avatarPath " //$NON-NLS-1$
             + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "LEFT JOIN ZWAPROFILEPICTUREITEM ON ZWAPROFILEPICTUREITEM.ZJID = ZWACHATSESSION.ZCONTACTJID " //$NON-NLS-1$
+            + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
+
+    private static final String SELECT_CHAT_LIST_NO_PPIC = "SELECT ZWACHATSESSION.Z_PK as id, ZCONTACTJID AS contact, " //$NON-NLS-1$
+            + "ZPARTNERNAME as subject, ZLASTMESSAGEDATE, NULL as avatarPath " //$NON-NLS-1$
+            + "FROM ZWACHATSESSION " //$NON-NLS-1$
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
      * Filtragem por status da mensagem (ZMESSAGESTATUS):

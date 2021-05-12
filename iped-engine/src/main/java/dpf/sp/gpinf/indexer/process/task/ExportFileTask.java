@@ -52,6 +52,8 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -482,11 +484,6 @@ public class ExportFileTask extends AbstractTask {
             setExtractLocation();
         }
 
-        InputStream poiInputStream = Util.getPOIFSInputStream(inputStream);
-        if (poiInputStream != null) {
-            inputStream = poiInputStream;
-        }
-
         if (!computeHash) {
             outputFile = new File(getSubDir(extractDir),
                     Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
@@ -506,7 +503,12 @@ public class ExportFileTask extends AbstractTask {
         synchronized (hashLock) {
             if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
-                try {
+                try (TemporaryResources tmp = new TemporaryResources()) {
+
+                    TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
+                    InputStream poiInputStream = Util.getPOIFSInputStream(tis);
+                    inputStream = poiInputStream != null ? poiInputStream : tis;
+
                     long total = 0;
                     int i = 0;
                     while (i != -1 && !Thread.currentThread().isInterrupted()) {

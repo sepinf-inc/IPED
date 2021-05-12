@@ -19,14 +19,12 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,12 +38,10 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
-import dpf.sp.gpinf.indexer.process.task.KFFTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
@@ -58,7 +54,7 @@ public class IndexFiles {
     private static Logger LOGGER = null;
 
     String rootPath, configPath;
-    String profile, locale;
+    String profile;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -146,7 +142,6 @@ public class IndexFiles {
         }
 
         configPath = rootPath;
-        locale = getProfileLocale();
 
         profile = null;
 
@@ -156,38 +151,10 @@ public class IndexFiles {
             profile = "default"; //$NON-NLS-1$
         }
         if (profile != null)
-            configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
+            configPath = new File(configPath, "profiles/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
 
         if (!new File(configPath).exists())
             throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
-    }
-
-    public String getProfileLocale() throws IOException {
-        UTF8Properties props = new UTF8Properties();
-        props.load(new File(rootPath, Configuration.LOCAL_CONFIG));
-        String locale = props.getProperty("locale").trim(); //$NON-NLS-1$
-        return locale;
-    }
-
-    /**
-     * Importa base de hashes no formato NSRL.
-     *
-     * @param kffPath
-     *            caminho para base de hashes.
-     */
-    void importKFF(File kffPath) {
-        try {
-            setConfigPath();
-            Configuration.getInstance().getConfiguration(configPath);
-            KFFTask kff = new KFFTask();
-            kff.init(Configuration.getInstance().properties, null, true);
-            kff.importKFF(kffPath);
-        } catch (IPEDException e) {
-            System.out.println(e.toString());
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     protected void startManager() {
@@ -207,10 +174,9 @@ public class IndexFiles {
             else
                 LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
 
-            if (!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
-                LOGGER.error(
-                        "It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
-                                + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
+            if (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError))
+                LOGGER.error("Processing aborted because of OutOfMemoryError. See the possible workarounds at " //$NON-NLS-1$
+                        + "https://github.com/sepinf-inc/IPED/wiki/Troubleshooting"); //$NON-NLS-1$
 
         } finally {
             if (manager != null)
@@ -272,7 +238,6 @@ public class IndexFiles {
      * Entrada principal da aplicação para processamento de evidências
      */
     public static void main(String[] args) {
-
         boolean fromCustomLoader = CustomLoader.isFromCustomLoader(args);
         String logPath = null;
         if (fromCustomLoader) {
