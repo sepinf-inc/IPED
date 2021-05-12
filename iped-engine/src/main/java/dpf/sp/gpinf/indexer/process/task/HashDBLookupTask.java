@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.hashdb.HashDB;
 import gpinf.hashdb.HashDBDataSource;
 import iped3.IItem;
@@ -65,72 +64,56 @@ public class HashDBLookupTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String enableParam = confParams.getProperty(ENABLE_PARAM);
-                if (enableParam != null) {
-                    taskEnabled = Boolean.valueOf(enableParam.trim());
-                }
-                String hashes = null;
+                String config = confParams.getProperty(ENABLE_PARAM);
+                taskEnabled = config != null && Boolean.parseBoolean(config.trim());
                 if (taskEnabled) {
-                    hashes = confParams.getProperty("hash");
+                    String hashes = confParams.getProperty("hash");
                     if (hashes == null) {
+                        logger.warn("No hash enabled.");
                         taskEnabled = false;
-                        logger.info("No hash enabled. Task disabled.");
-                        init.set(true);
-                        return;
+                    } else {
+                        hashesAttributes = new String[HashDB.hashTypes.length];
+                        String[] hashTypes = hashes.split(";");
+                        for (String hashType : hashTypes) {
+                            hashType = hashType.trim();
+                            int idx = HashDB.hashType(hashType);
+                            if (idx >= 0) {
+                                hashesAttributes[idx] = hashType;
+                            }
+                        }
+                        String hashDBPath = confParams.getProperty("hashesDB");
+                        if (hashDBPath == null) {
+                            logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
+                            taskEnabled = false;
+                        } else {
+                            hashDBFile = new File(hashDBPath.trim());
+                            if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
+                                String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
+                                if (hasIpedDatasource()) {
+                                    logger.warn(msg);
+                                } else {
+                                    logger.error(msg);
+                                }
+                                taskEnabled = false;
+                            } else {
+                                String s = confParams.getProperty("excludeKnown");
+                                excludeKnown = s != null && Boolean.parseBoolean(s.trim());
+                                hashDBDataSource = new HashDBDataSource(hashDBFile);
+                                addLookupProvider(hashDBDataSource);
+                                File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);
+                                if (nsrlConfigFile.exists()) {
+                                    loadNsrlConfig(nsrlConfigFile);
+                                    if (!nsrlStatusByProdName.isEmpty()) {
+                                        logger.info("NSRL product configurations loaded: {}", nsrlStatusByProdName.size());
+                                    }
+                                }
+                                logger.info("HashDB: {}", hashDBFile.getAbsolutePath());
+                                logger.info("Exclude Known: {}", excludeKnown);
+                            }
+                        }
                     }
                 }
-                if (!taskEnabled) {
-                    logger.info("Task disabled.");
-                    init.set(true);
-                    return;
-                }
-
-                hashesAttributes = new String[HashDB.hashTypes.length];
-                String[] hashTypes = hashes.split(";");
-                for (String hashType : hashTypes) {
-                    hashType = hashType.trim();
-                    int idx = HashDB.hashType(hashType);
-                    if (idx >= 0) {
-                        hashesAttributes[idx] = hashType;
-                    }
-                }
-
-                String hashDBPath = confParams.getProperty("hashesDB");
-                if (hashDBPath == null) {
-                    throw new IPEDException("Configure hash database path (hashesDB) on " + Configuration.LOCAL_CONFIG);
-                }
-                hashDBFile = new File(hashDBPath.trim());
-                if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                    String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
-                    if (hasIpedDatasource()) {
-                        logger.warn(msg);
-                        init.set(true);
-                        taskEnabled = false;
-                        return;
-                    }
-                    throw new IPEDException(msg);
-                }
-                String s = confParams.getProperty("excludeKnown");
-                if (s != null) {
-                    excludeKnown = Boolean.valueOf(s.trim());
-                }
-
-                hashDBDataSource = new HashDBDataSource(hashDBFile);
-
-                addLookupProvider(hashDBDataSource);
-                
-                logger.info("Task enabled.");
-
-                File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);
-                if (nsrlConfigFile.exists()) {
-                    loadNsrlConfig(nsrlConfigFile);
-                    if (!nsrlStatusByProdName.isEmpty()) {
-                        logger.info("NSRL product configurations loaded: {}", nsrlStatusByProdName.size());
-                    }
-                }
-
-                logger.info("HashDB: {}", hashDBFile.getAbsolutePath());
-                logger.info("Exclude Known: {}", excludeKnown);
+                logger.info("Task {}.", taskEnabled ? "enabled" : "disabled");
                 init.set(true);
             }
         }
