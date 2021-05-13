@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.github.filipesimoes</groupId>
             <artifactId>kharon</artifactId>
-            <version>0.1.5</version>
+            <version>0.1.6</version>
         </dependency>
         
     </dependencies>
