@@ -100,14 +100,10 @@ public class Contact implements ContactInterface {
         return fn;
     }
 
-    private static DecoderTelegramInterface d = null;
 
-    public static Contact getContactFromBytes(byte[] bytes)
-            throws InstantiationException, IllegalAccessException, ClassNotFoundException {
-        if (d == null) {
-            Object o = Class.forName(Extractor.DECODER_CLASS).newInstance();
-            d = (DecoderTelegramInterface) o;
-        }
+
+    public static Contact getContactFromBytes(byte[] bytes, DecoderTelegramInterface d) {
+       
         d.setDecoderData(bytes, d.USER);
         Contact c = new Contact(0);
         d.getUserData(c);
