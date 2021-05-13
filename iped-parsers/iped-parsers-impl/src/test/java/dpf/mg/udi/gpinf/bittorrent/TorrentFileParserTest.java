@@ -58,8 +58,10 @@ public class TorrentFileParserTest extends TestCase{
 
         String hts = handler.toString();
         String mts = metadata.toString();        
-
-        assertTrue(hts.contains("Big Buck Bunny\\Big Buck Bunny.en.srt"));
+        
+        //Changing this assertion for debugging the builder
+        String first = "Big Buck Bunny\\Big Buck Bunny.en.srt";
+        assertEquals(first, hts.substring(46, 82));
         assertTrue(hts.contains("140"));
         assertTrue(hts.contains("Big Buck Bunny\\Big Buck Bunny.mp4"));
         assertTrue(hts.contains("276134947"));
