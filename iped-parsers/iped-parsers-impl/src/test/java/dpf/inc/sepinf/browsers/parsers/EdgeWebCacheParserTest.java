@@ -23,22 +23,26 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
     @Test
     public void testEdgeBookmarkParser() throws IOException, SAXException, TikaException{
 
-        //which file this parser read?? 
+        //This parser uses edbparser. Edbparser uses external software. 
+        //I'll add this and other softwares like regripper later.
+        //For now, i'll be testing parsers that need external softwares locally.
+        
         EdgeWebCacheParser parser = new EdgeWebCacheParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
                 MediaType.application("x-edge-web-cache").toString());
-        ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/");
+        ContentHandler handler = new BodyContentHandler(100000000);
+        InputStream stream = getStream("test-files/test_webCache.dat");
         ParseContext context = new ParseContext();
-//        parser.getSupportedTypes(context);
+        parser.getSupportedTypes(context);
+        parser.setExtractEntries(true);
 //        parser.parse(stream, handler, metadata, edgeContext);
-//        
-//        assertEquals(0, chrometracker.bookmarktitle.size());
-//        assertEquals(0, chrometracker.bookmarkurl.size());
-//        assertEquals(0, chrometracker.bookmarkcreated.size());
-//        assertEquals(0, chrometracker.bookmarkmodified.size());
-//        
+        
+        assertEquals(0, edgetracker.bookmarktitle.size());
+        assertEquals(0, edgetracker.bookmarkurl.size());
+        assertEquals(0, edgetracker.bookmarkcreated.size());
+        assertEquals(0, edgetracker.bookmarkmodified.size());
+        
 
         
     }

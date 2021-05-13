@@ -21,16 +21,17 @@ public class SafariPlistParserTest extends AbstractPkgTest{
     } 
     
     @Test
-    public void testChromeSqliteBookmarkParser() throws IOException, SAXException, TikaException{
+    public void testSafariPlistParser() throws IOException, SAXException, TikaException{
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
                 MediaType.application("x-safari-plist").toString());
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_plist.plist");
+        InputStream stream = getStream("test-files/test_sample.plist");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
+        parser.setExtractEntries(true);
 //        parser.parse(stream, handler, metadata, safariContext);
         
         
