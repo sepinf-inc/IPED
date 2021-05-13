@@ -1,9 +1,11 @@
-package br.gov.pf.iped.regex;
+package br.gov.pf.iped.regex.cripto;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
+
+import br.gov.pf.iped.regex.cripto.BitcoinAddressValidatorService;
 
 public class BitcoinAddressValidatorServiceTest {
 
