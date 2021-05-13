@@ -535,14 +535,9 @@ public class IPEDReader extends DataSourceReader {
                         evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
 
                     } else {
-                        MediaType type = evidence.getMediaType();
-                        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
-                            if (type.equals(MediaTypes.METADATA_ENTRY)) {
-                                evidence.setInputStreamFactory(
-                                        new MetadataInputStreamFactory(evidence.getMetadata(), true));
-                                break;
-                            }
-                            type = MediaTypes.getParentType(type);
+                        if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
+                            evidence.setInputStreamFactory(
+                                    new MetadataInputStreamFactory(evidence.getMetadata(), true));
                         }
                     }
                 }
