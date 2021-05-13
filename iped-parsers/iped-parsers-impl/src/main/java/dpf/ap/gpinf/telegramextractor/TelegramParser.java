@@ -130,7 +130,7 @@ public class TelegramParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
                     .newInstance();
-            Extractor e = new Extractor(conn,d);
+            Extractor e = new Extractor(conn, d);
             e.setSearcher(searcher);
             e.extractContacts();
             ReportGenerator r = new ReportGenerator(searcher);
