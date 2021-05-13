@@ -379,7 +379,7 @@ public class VideoThumbTask extends ThumbTask {
     protected void process(IItem evidence) throws Exception {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
         if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null) {
+                || evidence.getHashValue() == null) {
             return;
         }
 

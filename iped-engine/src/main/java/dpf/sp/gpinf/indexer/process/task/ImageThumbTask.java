@@ -214,7 +214,7 @@ public class ImageThumbTask extends ThumbTask {
     protected void process(IItem evidence) throws Exception {
 
         if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
-                || evidence.getHash() == null || evidence.getThumb() != null) {
+                || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
 
