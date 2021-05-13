@@ -100,10 +100,8 @@ public class Contact implements ContactInterface {
         return fn;
     }
 
-
-
     public static Contact getContactFromBytes(byte[] bytes, DecoderTelegramInterface d) {
-       
+
         d.setDecoderData(bytes, d.USER);
         Contact c = new Contact(0);
         d.getUserData(c);
