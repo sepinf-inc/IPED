@@ -30,6 +30,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -746,7 +747,8 @@ public class SleuthkitReader extends DataSourceReader {
 
         }
 
-        if (absFile == null || absFile.getName().startsWith("$BadClus:$Bad")) { //$NON-NLS-1$
+        if (absFile == null || absFile.getName().startsWith("$BadClus:$Bad")
+                || absFile.getName().equals("$UPCASE_TABLE")) {
             return null;
         }
 
