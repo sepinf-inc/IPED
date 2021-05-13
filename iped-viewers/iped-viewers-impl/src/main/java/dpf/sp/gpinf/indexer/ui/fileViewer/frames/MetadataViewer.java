@@ -115,14 +115,7 @@ public class MetadataViewer extends Viewer {
     }
 
     public boolean isMetadataEntry(String contentType) {
-        MediaType type = MediaType.parse(contentType);
-        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
-            if (MediaTypes.METADATA_ENTRY.equals(type)) {
-                return true;
-            }
-            type = this.getParentType(type);
-        }
-        return false;
+        return MediaTypes.isMetadataEntryType(MediaType.parse(contentType));
     }
 
     @Override
