@@ -379,8 +379,9 @@ public class ReportGenerator {
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
-        if (message.getTimeStamp() != null)
-        out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        if (message.getTimeStamp() != null) {
+            out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        }
         out.println("</span>"); //$NON-NLS-1$
 
         out.println("</div></div>"); //$NON-NLS-1$
