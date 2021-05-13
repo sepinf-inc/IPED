@@ -25,7 +25,7 @@ public class BitTorrentResumeDatParserTest extends TestCase{
 
         BitTorrentResumeDatParser parser = new BitTorrentResumeDatParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-bittorrent-resume-dat").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_resume.dat");
@@ -34,7 +34,6 @@ public class BitTorrentResumeDatParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
         
         assertTrue(hts.contains("Sintel.torrent"));
         assertTrue(hts.contains("63831927"));
@@ -46,8 +45,6 @@ public class BitTorrentResumeDatParserTest extends TestCase{
         assertTrue(hts.contains("23551574"));     
         assertTrue(hts.contains("Big Buck Bunny.torrent"));
         assertTrue(hts.contains("56228123"));     
-        assertTrue(mts.contains("Indexer-Content-Type=application/x-bittorrent-resume-dat"));
-        assertTrue(mts.contains("Content-Type=application/x-bittorrent-resume-dat"));
    
     }
 }

@@ -25,7 +25,7 @@ public class TorrentFileParserTest extends TestCase{
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_torrentSimple.torrent");
@@ -34,12 +34,9 @@ public class TorrentFileParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
 
         String hts = handler.toString();
-        String mts = metadata.toString();
         
         assertTrue(hts.contains("NovaROFull_19112020.exe"));
         assertTrue(hts.contains("3259111196"));
-        assertTrue(mts.contains("Indexer-Content-Type=application/x-bittorrent"));
-        assertTrue(mts.contains("Content-Type=application/x-bittorrent"));
    
     }
     
@@ -48,7 +45,7 @@ public class TorrentFileParserTest extends TestCase{
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_torrentMultiple.torrent");
@@ -56,10 +53,7 @@ public class TorrentFileParserTest extends TestCase{
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
 
-        String hts = handler.toString();
-        String mts = metadata.toString();        
-        
-        System.out.println(hts);
+        String hts = handler.toString();       
         
         assertTrue(hts.contains("Big Buck Bunny"));
         assertTrue(hts.contains("Big Buck Bunny.mp4"));
@@ -68,8 +62,6 @@ public class TorrentFileParserTest extends TestCase{
         assertTrue(hts.contains("276134947"));
         assertTrue(hts.contains("310380"));        
         
-        assertTrue(mts.contains("Indexer-Content-Type=application/x-bittorrent"));
-        assertTrue(mts.contains("Content-Type=application/x-bittorrent"));
    
     }
 }

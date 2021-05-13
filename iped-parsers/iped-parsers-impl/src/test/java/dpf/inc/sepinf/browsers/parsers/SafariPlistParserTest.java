@@ -25,7 +25,7 @@ public class SafariPlistParserTest extends AbstractPkgTest{
 
         SafariPlistParser parser = new SafariPlistParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-safari-plist").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.plist");

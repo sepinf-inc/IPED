@@ -29,7 +29,7 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
         
         EdgeWebCacheParser parser = new EdgeWebCacheParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-edge-web-cache").toString());
         ContentHandler handler = new BodyContentHandler(100000000);
         InputStream stream = getStream("test-files/test_webCache.dat");

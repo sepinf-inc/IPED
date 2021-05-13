@@ -24,7 +24,7 @@ public class FirefoxSqliteParserTest extends AbstractPkgTest{
 
         FirefoxSqliteParser parser = new FirefoxSqliteParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+        metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-firefox-places").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_places.sqlite");
