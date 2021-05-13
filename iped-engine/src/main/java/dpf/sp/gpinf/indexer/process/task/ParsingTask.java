@@ -25,11 +25,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -129,7 +131,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
-    private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
+    private static Map<Integer, ZipBombStats> zipBombStatsMap = Collections
+            .synchronizedMap(new LinkedHashMap<Integer, ZipBombStats>(128, 0.75f, true) {
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer, ZipBombStats> eldest) {
+            if (this.size() > 1 << 14) {
+                return true;
+            }
+            return false;
+        }
+            });
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private IItem evidence;
