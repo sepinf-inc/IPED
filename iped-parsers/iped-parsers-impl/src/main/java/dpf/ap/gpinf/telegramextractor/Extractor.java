@@ -559,7 +559,7 @@ public class Extractor {
 
     private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
         public int compare(Message o1, Message o2) {
-            if (o1 == null || o2 == null)
+            if (o1 == null || o2 == null || o1.getTimeStamp() == null || o2.getTimeStamp() == null)
                 return 0;
             return o1.getTimeStamp().compareTo(o2.getTimeStamp());
         }
