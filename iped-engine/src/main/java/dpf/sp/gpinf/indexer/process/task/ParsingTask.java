@@ -25,13 +25,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -66,7 +64,6 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
@@ -138,16 +135,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
-    private static Map<Integer, ZipBombStats> zipBombStatsMap = Collections
-            .synchronizedMap(new LinkedHashMap<Integer, ZipBombStats>(128, 0.75f, true) {
-        @Override
-        protected boolean removeEldestEntry(Map.Entry<Integer, ZipBombStats> eldest) {
-            if (this.size() > 1 << 14) {
-                return true;
-            }
-            return false;
-        }
-            });
+    private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private IItem evidence;
@@ -168,7 +156,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         return set;
     }
 
-    private class ZipBombStats {
+    // this must be static or moved to its own class, see #539
+    private static class ZipBombStats {
 
         private Long itemSize;
         private long childrenSize = 0;
