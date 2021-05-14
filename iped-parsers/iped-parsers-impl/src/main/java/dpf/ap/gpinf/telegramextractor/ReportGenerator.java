@@ -109,8 +109,11 @@ public class ReportGenerator {
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
             Message m = c.getMessages().get(currentMsg++);
-            String thisDate = dateFormat.format(m.getTimeStamp());
-            if (lastDate == null || !lastDate.equals(thisDate)) {
+            String thisDate = null;
+            if (m.getTimeStamp() != null) {
+                thisDate = dateFormat.format(m.getTimeStamp());
+            }
+            if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + thisDate + "</div></div>"); //$NON-NLS-1$
                 lastDate = thisDate;
@@ -376,7 +379,9 @@ public class ReportGenerator {
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
-        out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        if (message.getTimeStamp() != null) {
+            out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        }
         out.println("</span>"); //$NON-NLS-1$
 
         out.println("</div></div>"); //$NON-NLS-1$

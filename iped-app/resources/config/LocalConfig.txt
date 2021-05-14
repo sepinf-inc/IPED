@@ -21,7 +21,8 @@ outputOnSSD = false
 # If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
 numThreads = default
 
-# Full path for IPED hash database. It is highly recommended to store it on a fast disk (preferably SSD).
+# Full path for IPED hash database. It is highly recommended to store it on a fast disk, 
+# preferably SSD, and not the same used as "indexTemp", if other disk is available.
 #hashesDB = C:/IPED/iped-hashes.db
 
 # File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).

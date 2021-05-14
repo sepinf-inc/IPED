@@ -1,8 +1,10 @@
-package br.gov.pf.iped.regex;
+package br.gov.pf.iped.regex.cripto;
 
 import static org.junit.Assert.*;
 
 import org.junit.Test;
+
+import br.gov.pf.iped.regex.cripto.EthereumAddressValidatorService;
 
 public class EthereumAddressValidatorServiceTest {
 

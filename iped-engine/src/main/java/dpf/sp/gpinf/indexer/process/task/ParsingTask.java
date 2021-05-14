@@ -82,7 +82,10 @@ import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
+import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -94,6 +97,7 @@ import iped3.io.IStreamSource;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -152,7 +156,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         return set;
     }
 
-    private class ZipBombStats {
+    // this must be static or moved to its own class, see #539
+    private static class ZipBombStats {
 
         private Long itemSize;
         private long childrenSize = 0;
@@ -541,9 +546,18 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
             subItem.setMetadata(metadata);
 
+            boolean updateInputStream = false;
             String contentTypeStr = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
             if (contentTypeStr != null) {
-                subItem.setMediaType(MediaType.parse(contentTypeStr));
+                MediaType type = MediaType.parse(contentTypeStr);
+                subItem.setMediaType(type);
+                if (caseData.containsReport() && MediaTypes.isMetadataEntryType(type)) {
+                    subItem.setInputStreamFactory(new MetadataInputStreamFactory(subItem.getMetadata(), true));
+                    metadata.remove(BasicProps.LENGTH);
+                    if (inputStream == null || inputStream instanceof EmptyInputStream) {
+                        updateInputStream = true;
+                    }
+                }
             }
 
             subItem.setName(name);
@@ -598,9 +612,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setSubItem(true);
             subItem.setSumVolume(false);
 
-            ExportFileTask extractor = new ExportFileTask();
-            extractor.setWorker(worker);
-            extractor.extractFile(inputStream, subItem, evidence.getLength());
+            InputStream is = !updateInputStream ? inputStream : subItem.getStream();
+            try {
+                ExportFileTask extractor = new ExportFileTask();
+                extractor.setWorker(worker);
+                extractor.extractFile(is, subItem, evidence.getLength());
+            } finally {
+                if (updateInputStream) {
+                    IOUtil.closeQuietly(is);
+                }
+            }
 
             checkRecursiveZipBomb(subItem);
 

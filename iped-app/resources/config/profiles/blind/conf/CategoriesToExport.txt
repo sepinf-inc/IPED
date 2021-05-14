@@ -18,6 +18,7 @@ Spreadsheets
 Presentations
 Contacts
 Chats
+Instant Messages
 Internet History
 Web Bookmarks
 Link files
