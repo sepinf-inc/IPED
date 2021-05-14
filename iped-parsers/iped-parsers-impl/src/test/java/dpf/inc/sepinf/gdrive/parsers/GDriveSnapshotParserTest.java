@@ -10,7 +10,6 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import junit.framework.TestCase;
 
 public class GDriveSnapshotParserTest extends TestCase{

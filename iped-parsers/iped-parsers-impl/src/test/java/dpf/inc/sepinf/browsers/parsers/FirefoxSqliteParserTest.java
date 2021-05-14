@@ -11,8 +11,6 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-
 public class FirefoxSqliteParserTest extends AbstractPkgTest{
 
     private static InputStream getStream(String name) {
