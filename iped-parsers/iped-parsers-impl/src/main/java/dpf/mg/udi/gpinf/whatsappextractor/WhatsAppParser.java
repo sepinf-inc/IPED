@@ -448,7 +448,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 e.printStackTrace();
             }
         }
-        return new WAAccount("unknownAccount"); //$NON-NLS-1$
+        WAAccount account = new WAAccount("unknownAccount");
+        account.setUnknown(true);
+        return account;
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {
