@@ -299,7 +299,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 e.printStackTrace();
             }
         }
-        return new WAAccount("unknownAccount");
+        WAAccount account = new WAAccount("unknownAccount");
+        account.setUnknown(true);
+        return account;
     }
 
     private IItemBase getBestItem(List<IItemBase> result, String path) {

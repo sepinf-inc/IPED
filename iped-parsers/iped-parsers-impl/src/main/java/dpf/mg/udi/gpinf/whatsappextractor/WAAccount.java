@@ -22,6 +22,8 @@ public class WAAccount extends WAContact {
 
     private static final String idSuffix = "@s.whatsapp.net"; //$NON-NLS-1$
 
+    private boolean isUnknown = false;
+
     public WAAccount(String id) {
         super(id);
     }
@@ -113,6 +115,14 @@ public class WAAccount extends WAContact {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
+    }
+
+    public boolean isUnknown() {
+        return isUnknown;
+    }
+
+    public void setUnknown(boolean isUnknown) {
+        this.isUnknown = isUnknown;
     }
 
 }
