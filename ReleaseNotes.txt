@@ -1,4 +1,45 @@
-05/14/2020: IPED-3.18.6
+xx/xx/2021: IPED-4.0.0-alpha
+News:
+#361: Face recognition functionality (Rui Santana & Luis Nassif)
+#118: Refactor hash database importing and look up for different hashsets: NSRL, ProjectVic, LED, PhotoDNA, CSV (Wladimir Leite)
+#451: Unified Timeline Table View and Event Filtering (Luis Nassif)
+#483: Support parser implementations in python (Luis Nassif)
+#340: Object Storage Module using MinIO (Luis Nassif)
+#362: Change processing pipeline to allow tasks to accumulate items and process them together (Luis Nassif)
+#357: Optimize NSFWNudityDetectTask.py, run on videos and makes it easier to enable (Luis Nassif)
+#388: Change python tasks to implement classes instead of isolate functions (Luis Nassif)
+#419: Create thumbnails for formats supported by LibreOffice (Wladimir Leite)
+#119: Create thumbnails for PDFs (Wladimir Leite)
+#530: Increase ALTCOINS Regexes and Validators (Fábio Pfeifer)
+#486: Link WhatsApp attachments in Apple Warrant Returns Cellebrite Reports (Fábio Pfeifer)
+#63:  Parser for binary plist files (Luis Nassif)
+#463: Reenable MP4Parser to extract more metadata from MP4 videos and audios (Luis Nassif)
+#459: Allow running multiple parsers on the same file (Luis Nassif)
+#465: Enable Tika's executable file parser combined with RawStringParser (Luis Nassif)
+#466: Enable Tika's EMF parser combined with RawStringParser (Luis Nassif)
+#479: Filtering and copying to clipboard the results of Metadata filter panel (Leandro Oliveira & Luis Nassif)
+#520: Allow filtering property names in Metadata filter panel (Wladimir Leite)
+#470: Change default plain text parser from RawStringParser (Latin1) to Tika's text parser (Luis Nassif)
+#288: Populate hashDb:set property with LED hashset file name (Wladimir Leite)
+#300: Change NSRL hashset look up module to use "known" flag as default (Wladimir Leite)
+#307: Compress LED hashset loaded on memory (Wladimir Leite)
+#364: Change NSRL database to store all product references to the same hash (Wladimir Leite)
+#519: Add a button to clear Metadata filter panel content (Wladimir Leite)
+#522: Simpler names for important image metadata (Wladimir Leite)
+#370: Implement --continue & --restart semantics in ElasticSearch module (Luis Nassif)
+#371: Cmd line option to set ElasticSearch index name and index ID fields as keyword (Luis Nassif)
+#356: Warn user if WhatsAppParser runs and sha-256 was disabled by him (Luis Nassif)
+#178: Upgrade to Tika 1.26 (Luis Nassif)
+#179: Upgrade to Lucene 6.6.6 (Luis Nassif)
+#228: Upgrade drewnoakes metadata-extractor (Luis Nassif)
+Fixes:
+#420: Fix diacritics normalization and filtering rules for other languages (Luis Nassif)
+#380: Error when more than one python task is enabled at the same time (Luis Nassif)
+#490: Errors in the console while processing corrupted VCFs (Wladimir Leite)
+#487: Fix debugging analysis UI from eclipse IDE (Luis Nassif)
+#471: Log Console Error (Wladimir Leite)
+
+05/14/2021: IPED-3.18.6
 News:
 #469: Plot videos with geo information on map (Luis Nassif)
 #540: Support Telegram version 7.6/7.7 (João Hauck)
@@ -32,7 +73,7 @@ Fixes:
 #518: External thumbnail generation fails for rare valid images (Wladimir Leite)
 #436: Rare ConcurrentModificationException closing UFDR file cache when finishing processing (Luis Nassif)
 
-03/26/2020: IPED-3.18.5
+03/26/2021: IPED-3.18.5
 News:
 #360: NTFS USN Journal parser (João Hauck and Luis Nassif)
 #136: Create memory and file cache for UFDR compressed files (Luis Nassif)
