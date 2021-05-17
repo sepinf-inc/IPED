@@ -26,6 +26,7 @@ News:
 #364: Change NSRL database to store all product references to the same hash (Wladimir Leite)
 #519: Add a button to clear Metadata filter panel content (Wladimir Leite)
 #522: Simpler names for important image metadata (Wladimir Leite)
+#548: Optimize linked items searching when creating reports (Luís Nassif)
 #370: Implement --continue & --restart semantics in ElasticSearch module (Luis Nassif)
 #371: Cmd line option to set ElasticSearch index name and index ID fields as keyword (Luis Nassif)
 #356: Warn user if WhatsAppParser runs and sha-256 was disabled by him (Luis Nassif)
@@ -35,6 +36,7 @@ News:
 Fixes:
 #420: Fix diacritics normalization and filtering rules for other languages (Luis Nassif)
 #380: Error when more than one python task is enabled at the same time (Luis Nassif)
+#549: NullPointerException in VcardParser when parsing vcards pointing to external thumbnail (Luis Nassif)
 #490: Errors in the console while processing corrupted VCFs (Wladimir Leite)
 #487: Fix debugging analysis UI from eclipse IDE (Luis Nassif)
 #471: Log Console Error (Wladimir Leite)
