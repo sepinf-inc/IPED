@@ -337,12 +337,15 @@ public class IPEDReader extends DataSourceReader {
     }
 
     private void insertLinkedItems(LuceneSearchResult result) {
+        long t = System.currentTimeMillis();
         int[] luceneIds = result.getLuceneIds();
         Arrays.sort(luceneIds);
         String queryText = ExtraProperties.LINKED_ITEMS + ":*"; //$NON-NLS-1$
         IIPEDSearcher searcher = new IPEDSearcher(ipedCase, queryText);
         try {
             SearchResult itemsWithLinks = searcher.search();
+            int numItems = 0;
+            StringBuilder query = new StringBuilder();
             for (int i = 0; i < itemsWithLinks.getLength(); i++) {
                 int luceneId = ipedCase.getLuceneId(itemsWithLinks.getId(i));
                 if (Arrays.binarySearch(luceneIds, luceneId) < 0)
@@ -350,25 +353,40 @@ public class IPEDReader extends DataSourceReader {
 
                 Document doc = ipedCase.getReader().document(luceneId);
                 String[] items = doc.getValues(ExtraProperties.LINKED_ITEMS);
-                StringBuilder query = new StringBuilder();
-                for (String item : items)
+                if (items.length > 0) {
+                    LOGGER.debug("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + items.length); //$NON-NLS-1$
+                }
+                for (String item : items) {
                     query.append("(").append(item).append(") "); //$NON-NLS-1$
-
-                StringBuilder queryBuilder = new StringBuilder();
-                queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
-                queryBuilder.append(query.toString());
-                queryBuilder.append(")"); //$NON-NLS-1$
-                searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
-
-                LuceneSearchResult linkedItems = searcher.luceneSearch();
-                if (linkedItems.getLength() > 0) {
-                    LOGGER.info("Linked items to '" + doc.get(IndexItem.NAME) + "' found: " + linkedItems.getLength()); //$NON-NLS-1$
-                    insertIntoProcessQueue(linkedItems, false);
+                    numItems++;
+                }
+                if (numItems >= 500) {
+                    insertLinkedItemsBatch(query);
+                    query = new StringBuilder();
+                    numItems = 0;
                 }
             }
+            if (numItems > 0) {
+                insertLinkedItemsBatch(query);
+            }
+
         } catch (Exception e1) {
             e1.printStackTrace();
+        }
+        t = System.currentTimeMillis() - t;
+        LOGGER.info("Search for linked items took {} ms", t);
+    }
 
+    private void insertLinkedItemsBatch(StringBuilder query) throws Exception {
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
+        queryBuilder.append(query.toString());
+        queryBuilder.append(")"); //$NON-NLS-1$
+        IIPEDSearcher searcher = new IPEDSearcher(ipedCase, queryBuilder.toString());
+
+        LuceneSearchResult linkedItems = searcher.luceneSearch();
+        if (linkedItems.getLength() > 0) {
+            insertIntoProcessQueue(linkedItems, false);
         }
     }
 
