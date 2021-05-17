@@ -1,0 +1,52 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Taxi Lago Norte
+N:;Taxi Lago Norte;;;
+TEL;TYPE=CELL:021 (61)3468-2000
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Sushi Loko Flamingo
+N:Flamingo;Sushi;Loko;;
+TEL;TYPE=CELL:021 (61)3011-7666
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Smart Assistência Técnica
+N:Técnica;Smart;Assistência;;
+TEL;TYPE=CELL:99592-3794
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Magnanimo Test@paraparaparapara el raton para el
+N:para;Test@paraparaparapara;el raton;Magnanimo;el
+NICKNAME:ratuxo
+X-PHONETIC-FIRST-NAME:ratón
+X-PHONETIC-MIDDLE-NAME:ton
+X-PHONETIC-LAST-NAME:pará
+EMAIL;TYPE=INTERNET;TYPE=WORK:insuportavel@test.paraparapara
+item1.X-GTALK:9185-goog
+item1.X-ABLabel:
+TEL;TYPE=HOME:99 99998-6219
+ADR;TYPE=HOME:73100-900;isso mesmo;R. da Casa do Prof. Elder;Bela Vista;MS;
+ 79260-000;BR;R. da Casa do Prof. Elder\nisso mesmo\n73100-900\nBela Vista
+ \nMS\n79260-000\nBR
+item2.ORG:nicolecity;dança
+item2.X-ABLabel:
+item3.TITLE:CEO do para para
+item3.X-ABLabel:
+BDAY:19961024
+item4.URL:www.rato.com.br
+item4.X-ABLabel:PROFILE
+item5.X-ABDATE:19961024
+item5.X-ABLabel:_$!<Anniversary>!$_
+item6.X-ABRELATEDNAMES:casado
+item6.X-ABLabel:_$!<Child>!$_
+NOTE:gosta muito de dançar para-para\nrato rato rato: esse cara é o rato
+PHOTO:https://lh4.googleusercontent.com/-Dy198dqQSdg/YKK003AyCbI/AAAAAAAAAA
+ A/NK729AsFv-wYaocSeos-ip654pthBJZmgCOQCEAE/photo.jpg
+CATEGORIES:myContacts
+END:VCARD
