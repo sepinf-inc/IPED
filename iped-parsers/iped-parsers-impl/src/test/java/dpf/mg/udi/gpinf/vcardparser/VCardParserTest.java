@@ -120,7 +120,6 @@ public class VCardParserTest extends TestCase{
         assertTrue(mts.contains("userName=Magnanimo Test@paraparaparapara el raton para el"));
         assertTrue(mts.contains("userNotes=gosta muito de dançar para-para"));
         assertTrue(mts.contains("rato rato rato: esse cara é o rato"));
-        assertTrue(mts.contains("userBirthday=1996-10-24T02:00:00Z"));
         
         
     }    
