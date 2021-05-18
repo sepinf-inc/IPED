@@ -5,6 +5,7 @@ News:
 #451: Unified Timeline Table View and Event Filtering (Luis Nassif)
 #483: Support parser implementations in python (Luis Nassif)
 #340: Object Storage Module using MinIO (Luis Nassif)
+#378: Export file previews to ElasticSearch and MinIO (João Hauck) 
 #362: Change processing pipeline to allow tasks to accumulate items and process them together (Luis Nassif)
 #357: Optimize NSFWNudityDetectTask.py, run on videos and makes it easier to enable (Luis Nassif)
 #388: Change python tasks to implement classes instead of isolate functions (Luis Nassif)
