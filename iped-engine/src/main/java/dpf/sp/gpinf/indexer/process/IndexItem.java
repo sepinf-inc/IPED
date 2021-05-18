@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
@@ -101,6 +100,9 @@ import jep.NDArray;
  * itens que será adicionado ao índice.
  */
 public class IndexItem extends BasicProps {
+
+    public static final String POSSIBLE_STR_DOCVALUES_PREFIX = "_str_";
+    public static final String POSSIBLE_NUM_DOCVALUES_PREFIX = "_num_";
 
     public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
@@ -574,7 +576,7 @@ public class IndexItem extends BasicProps {
          */
         String keyPrefix = ""; //$NON-NLS-1$
         if (isMetadataKey) {
-            keyPrefix = "_num_"; //$NON-NLS-1$
+            keyPrefix = POSSIBLE_NUM_DOCVALUES_PREFIX;
         }
         if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
@@ -647,7 +649,7 @@ public class IndexItem extends BasicProps {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
             if (isMetadataKey) {
-                keyPrefix = "_"; //$NON-NLS-1$
+                keyPrefix = POSSIBLE_STR_DOCVALUES_PREFIX;
             }
             if (!isMultiValued)
                 doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));

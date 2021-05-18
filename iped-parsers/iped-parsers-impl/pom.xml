@@ -74,6 +74,11 @@
       		</exclusions> 
         </dependency>
         <dependency>
+            <groupId>org.tallison</groupId>
+            <artifactId>isoparser</artifactId>
+            <version>1.9.41.6</version>
+        </dependency>
+        <dependency>
             <groupId>org.xerial</groupId>
             <artifactId>sqlite-jdbc</artifactId>
             <version>${xerial.sqlite.version}</version>

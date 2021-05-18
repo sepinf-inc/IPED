@@ -277,11 +277,8 @@ public class ReportGenerator {
 
                 if (message.isFromMe()) {
                     out.println("<div class=\"outgoing to\">"); //$NON-NLS-1$
-                    if (account != null) {
+                    if (account != null && !account.isUnknown()) {
                         name = account.getName();
-                        number = message.getLocalResource();
-                    } else {
-                        name = null;
                         number = message.getLocalResource();
                     }
                 } else {
@@ -301,8 +298,10 @@ public class ReportGenerator {
                         name += " (" + number + ")"; //$NON-NLS-1$ //$NON-NLS-2$
                     }
                 }
-                out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                        + name + "</span><br/>"); //$NON-NLS-1$
+                if (!name.isEmpty()) {
+                    out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
+                            + name + "</span><br/>"); //$NON-NLS-1$
+                }
 
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:

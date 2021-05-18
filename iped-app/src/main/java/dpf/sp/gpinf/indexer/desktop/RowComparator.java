@@ -123,18 +123,19 @@ public class RowComparator implements Comparator<Integer> {
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
                 if (ndv == null) {
-                    ndv = atomicReader.getNumericDocValues("_num_" + indexedField); //$NON-NLS-1$
+                    ndv = atomicReader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 }
                 if (ndv == null) {
                     sndv = atomicReader.getSortedNumericDocValues(indexedField);
                     if (sndv == null)
-                        sndv = atomicReader.getSortedNumericDocValues("_num_" + indexedField); //$NON-NLS-1$
+                        sndv = atomicReader
+                                .getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 }
             }
             if (ndv == null && sndv == null) {
                 ssdv = atomicReader.getSortedSetDocValues(indexedField);
                 if (ssdv == null)
-                    ssdv = atomicReader.getSortedSetDocValues("_" + indexedField); //$NON-NLS-1$
+                    ssdv = atomicReader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 if (isCategory) {
                     localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
                 }
@@ -142,7 +143,7 @@ public class RowComparator implements Comparator<Integer> {
             if (ndv == null && sndv == null && ssdv == null) {
                 sdv = atomicReader.getSortedDocValues(indexedField);
                 if (sdv == null)
-                    sdv = atomicReader.getSortedDocValues("_" + indexedField); //$NON-NLS-1$
+                    sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
             }
 
         } catch (IOException e) {
@@ -174,7 +175,7 @@ public class RowComparator implements Comparator<Integer> {
             try {
                 Bits bits = atomicReader.getDocsWithField(field);
                 if (bits == null)
-                    bits = atomicReader.getDocsWithField("_num_" + field); //$NON-NLS-1$
+                    bits = atomicReader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
                 return bits;
 
             } catch (IOException e) {
@@ -190,7 +191,7 @@ public class RowComparator implements Comparator<Integer> {
             try {
                 NumericDocValues ndv = atomicReader.getNumericDocValues(field);
                 if (ndv == null)
-                    ndv = atomicReader.getNumericDocValues("_num_" + field); //$NON-NLS-1$
+                    ndv = atomicReader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
                 return ndv;
 
             } catch (IOException e) {
@@ -206,7 +207,7 @@ public class RowComparator implements Comparator<Integer> {
             try {
                 SortedDocValues sdv = atomicReader.getSortedDocValues(field);
                 if (sdv == null)
-                    sdv = atomicReader.getSortedDocValues("_" + field);
+                    sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field);
                 return sdv;
 
             } catch (IOException e) {
@@ -222,7 +223,7 @@ public class RowComparator implements Comparator<Integer> {
             try {
                 SortedSetDocValues ssdv = atomicReader.getSortedSetDocValues(field);
                 if (ssdv == null)
-                    ssdv = atomicReader.getSortedSetDocValues("_" + field);
+                    ssdv = atomicReader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field);
                 return ssdv;
 
             } catch (IOException e) {
@@ -238,7 +239,7 @@ public class RowComparator implements Comparator<Integer> {
             try {
                 SortedNumericDocValues sndv = atomicReader.getSortedNumericDocValues(field);
                 if (sndv == null)
-                    sndv = atomicReader.getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+                    sndv = atomicReader.getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
                 return sndv;
 
             } catch (IOException e) {
