@@ -37,6 +37,7 @@ Fixes:
 #420: Fix diacritics normalization and filtering rules for other languages (Luis Nassif)
 #380: Error when more than one python task is enabled at the same time (Luis Nassif)
 #549: NullPointerException in VcardParser when parsing vcards pointing to external thumbnail (Luis Nassif)
+#365: Fail to delete temp file of DBX mailboxes (Luis Nassif)
 #490: Errors in the console while processing corrupted VCFs (Wladimir Leite)
 #487: Fix debugging analysis UI from eclipse IDE (Luis Nassif)
 #471: Log Console Error (Wladimir Leite)
