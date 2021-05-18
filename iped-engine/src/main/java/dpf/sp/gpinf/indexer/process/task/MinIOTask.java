@@ -183,14 +183,13 @@ public class MinIOTask extends AbstractTask {
         }
 
         try {
-
             minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
                     .contentType(mediatype).build());
 
             return fullPath;
 
         } catch (Exception e) {
-            throw new Exception("Error when uploading object ");
+            throw new Exception("Error when uploading object ", e);
         }
 
 
@@ -229,22 +228,22 @@ public class MinIOTask extends AbstractTask {
             }
         }catch (Exception e) {
             // TODO: handle exception
-            logger.error(e.getMessage() + "File" + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
         if (item.getViewFile() != null) {
-
             try (InputStream is = new FileInputStream(item.getViewFile())) {
                 String fullPath = insertItem(hash, is, item.getViewFile().length(),
                         getMimeType(item.getViewFile().getName()), true);
                 if (fullPath != null) {
-                    item.getMetadata().add("previewInDataSource", "idInDataSource:"+fullPath);
-                    item.getMetadata().add("previewInDataSource",
-                            "type:" + getMimeType(item.getViewFile().getName()));
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
+                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
                 }
             }
             catch (Exception e) {
                 // TODO: handle exception
-                logger.error(e.getMessage() + "Preview" + item.getViewFile().getPath() + " ("
+                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
             }
         }

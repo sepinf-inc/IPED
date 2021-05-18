@@ -87,6 +87,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static final String USER_KEY = "user";
     private static final String PASSWORD_KEY = "password";
 
+    public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
+    public static final String KEY_VAL_SEPARATOR = ":";
+
     private static boolean enabled = false;
     private static String host;
     private static String protocol;
@@ -515,10 +518,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field("extraAttributes", item.getExtraAttributeMap());
 
         for (String key : getMetadataKeys(item)) {
-            if ("previewInDataSource".equals(key)) {
+            if (PREVIEW_IN_DATASOURCE.equals(key)) {
                 HashMap<String, String> previewInDataSource = new HashMap<>();
                 for (String preview : item.getMetadata().getValues(key)) {
-                    String[] prevIt = preview.split(":");
+                    String[] prevIt = preview.split(KEY_VAL_SEPARATOR);
                     if (prevIt.length == 2) {
                         previewInDataSource.put(prevIt[0], prevIt[1]);
                     }
