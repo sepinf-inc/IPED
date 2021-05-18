@@ -341,7 +341,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private IndexRequest createMetaDataRegistry(String id, String route, XContentBuilder jasonData) throws IOException {
+    private IndexRequest createIndexRequest(String id, String route, XContentBuilder jsonData) throws IOException {
 
         IndexRequest indexRequest = Requests.indexRequest(indexName);
 
@@ -351,7 +351,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         indexRequest.routing(route);
 
         // json data to be inserted
-        indexRequest.source(jasonData);
+        indexRequest.source(jsonData);
 
         indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
         indexRequest.opType(OpType.CREATE);
@@ -394,7 +394,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         try {
             // creates the father;
             XContentBuilder jsonMetadata = getJsonMetadataBuilder(item);
-            IndexRequest parentIndexRequest = createMetaDataRegistry(parentId, parentId, jsonMetadata);
+            IndexRequest parentIndexRequest = createIndexRequest(parentId, parentId, jsonMetadata);
             bulkRequest.add(parentIndexRequest);
             idToPath.put(parentId, item.getPath());
 
@@ -405,7 +405,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentPersistentId);
 
                 // creates the request
-                IndexRequest contentRequest = createMetaDataRegistry(contentPersistentId, parentId, jsonContent);
+                IndexRequest contentRequest = createIndexRequest(contentPersistentId, parentId, jsonContent);
 
                 bulkRequest.add(contentRequest);
 
