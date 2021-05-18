@@ -458,16 +458,16 @@ public class MetadataPanel extends JPanel
         // System.out.println("getDocValues");
         numValues = reader.getNumericDocValues(field);
         if (numValues == null)
-            numValues = reader.getNumericDocValues("_num_" + field); //$NON-NLS-1$
+            numValues = reader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         numValuesSet = reader.getSortedNumericDocValues(field);
         if (numValuesSet == null)
-            numValuesSet = reader.getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+            numValuesSet = reader.getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         docValues = reader.getSortedDocValues(field);
         if (docValues == null)
-            docValues = reader.getSortedDocValues("_" + field); //$NON-NLS-1$
+            docValues = reader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         docValuesSet = reader.getSortedSetDocValues(field);
         if (docValuesSet == null)
-            docValuesSet = reader.getSortedSetDocValues("_" + field); //$NON-NLS-1$
+            docValuesSet = reader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }

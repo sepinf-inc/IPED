@@ -212,7 +212,7 @@
         </parser>
         <parser class="dpf.ap.gpinf.telegramextractor.TelegramParser">
             <params>
-                <param name="enabledForUfdr" type="bool">false</param>
+                <param name="enabledForUfdr" type="bool">true</param>
             </params>
         </parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>

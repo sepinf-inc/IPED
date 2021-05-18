@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.github.filipesimoes</groupId>
             <artifactId>kharon</artifactId>
-            <version>0.1.5</version>
+            <version>0.1.6</version>
         </dependency>
         
     </dependencies>
@@ -435,7 +435,7 @@
                                 <artifactItem>
                                     <groupId>net.sf</groupId>
     								<artifactId>java-dbx</artifactId>
-    								<version>1.1-p4</version>
+    								<version>1.1-p5</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${optional.dir}</outputDirectory>
@@ -454,7 +454,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.4-SNAPSHOT</version>
+    								<version>1.0.5-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${optional.dir}</outputDirectory>

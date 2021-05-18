@@ -45,4 +45,14 @@ public class MediaTypes {
         return instance != null && (instance.equals(parent) || isInstanceOf(getParentType(instance), parent));
     }
 
+    public static boolean isMetadataEntryType(MediaType type) {
+        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
+            if (MediaTypes.METADATA_ENTRY.equals(type)) {
+                return true;
+            }
+            type = getParentType(type);
+        }
+        return false;
+    }
+
 }
