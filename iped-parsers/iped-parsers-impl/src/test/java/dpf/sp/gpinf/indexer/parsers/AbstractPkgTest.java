@@ -92,11 +92,7 @@ public abstract class AbstractPkgTest extends TestCase {
    }
    @SuppressWarnings("serial")
    protected static class EmbeddedMboxParser extends AbstractParser {
-      protected List<String> messageto = new ArrayList<String>();
-      protected List<String> messagefrom = new ArrayList<String>();
       protected List<String> messagesubject = new ArrayList<String>();
-      protected List<String> messagebody = new ArrayList<String>();
-      protected List<String> messagedate = new ArrayList<String>();
       protected List<String> contenttype = new ArrayList<String>();
       protected List<String> contentmd5 = new ArrayList<String>();
       
@@ -110,16 +106,8 @@ public abstract class AbstractPkgTest extends TestCase {
             SAXException, TikaException {
 
          String hdigest = new DigestUtils(MD5).digestAsHex(stream);
-         if(metadata.get(Metadata.MESSAGE_TO)!= null)
-             messageto.add(metadata.get(Metadata.MESSAGE_TO));
-         if(metadata.get(Metadata.MESSAGE_FROM)!= null)
-             messagefrom.add(metadata.get(Metadata.MESSAGE_FROM));
          if(metadata.get(ExtraProperties.MESSAGE_SUBJECT)!= null)
              messagesubject.add(metadata.get(ExtraProperties.MESSAGE_SUBJECT));
-         if(metadata.get(ExtraProperties.MESSAGE_BODY)!= null)
-             messagebody.add(metadata.get(ExtraProperties.MESSAGE_BODY));
-         if(metadata.get(ExtraProperties.MESSAGE_DATE)!= null)
-             messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
          if(metadata.get(HttpHeaders.CONTENT_TYPE)!= null)
              contenttype.add(metadata.get(HttpHeaders.CONTENT_TYPE));
          contentmd5.add(hdigest.toUpperCase());

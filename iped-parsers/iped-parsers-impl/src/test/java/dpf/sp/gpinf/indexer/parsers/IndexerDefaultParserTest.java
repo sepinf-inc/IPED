@@ -13,10 +13,7 @@ import junit.framework.TestCase;
 
 public class IndexerDefaultParserTest extends TestCase{
     
-    //It seems this is a generic parser that tries to delegates the stream 
-    //To a specific parser using the ContentType.
-    //This class will test some files 
-    //such as: Image, Video, Document, Text, Package, PDF and an Unknown file type.
+    //This class will test some files such as: Image, Video, Document, Text, Package, PDF and an Unknown file type.
     
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -25,7 +22,6 @@ public class IndexerDefaultParserTest extends TestCase{
     @Test
     public void testIndexerDefaultParserParsing() throws IOException, SAXException, TikaException{
 
-        //When in doubt, tries to parse with RawStringParser.
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();

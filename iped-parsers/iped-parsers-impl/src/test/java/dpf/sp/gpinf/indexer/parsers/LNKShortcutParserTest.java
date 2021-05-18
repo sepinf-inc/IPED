@@ -17,8 +17,6 @@ public class LNKShortcutParserTest extends TestCase{
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
         
-    //it seems the builder in github uses english encoding when building. Not only for names but for date format as well...
-    //ALSO whenever the encoding changes, the location of some chars changes... changing assert method again! this time should work.
         @Test
         public void testLNKShortcutParserParsingLink() throws IOException, SAXException, TikaException{
 
