@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.io.FilenameUtils;
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,6 +67,8 @@ public class MinIOTask extends AbstractTask {
     private static String accessKey;
     private static String secretKey;
     private static String bucket = null;
+
+    private static Tika tika;
 
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
@@ -195,17 +197,15 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    public String getMimeType(String name) {
-        String ext = FilenameUtils.getExtension(name).toLowerCase();
-        if (ext.equals("html") || ext.equals("htm")) {
-            return "text/html";
+    private static String getMimeType(String name) {
+        if (tika == null) {
+            synchronized (MinIOTask.class) {
+                if (tika == null) {
+                    tika = new Tika();
+                }
+            }
         }
-        if (ext.equals("jpg") || ext.equals("jpeg")) {
-            return "image/jpeg";
-        }
-
-        // default HTML
-        return "text/html";
+        return tika.detect(name);
     }
 
     @Override
