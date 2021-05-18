@@ -149,7 +149,7 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        
+
     }
 
     private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
@@ -194,7 +194,6 @@ public class MinIOTask extends AbstractTask {
             throw new Exception("Error when uploading object ", e);
         }
 
-
     }
 
     private static String getMimeType(String name) {
@@ -226,7 +225,7 @@ public class MinIOTask extends AbstractTask {
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
             }
-        }catch (Exception e) {
+        } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
@@ -240,8 +239,7 @@ public class MinIOTask extends AbstractTask {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
                             + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
                 }
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // TODO: handle exception
                 logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
@@ -343,9 +341,8 @@ public class MinIOTask extends AbstractTask {
                 try {
                     size = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(id).build()).length();
                 } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                        | InvalidBucketNameException
-                        | InvalidResponseException | NoSuchAlgorithmException | ServerException
-                        | XmlParserException e) {
+                        | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException
+                        | ServerException | XmlParserException e) {
                     throw new IOException(e);
                 }
             }
@@ -390,9 +387,9 @@ public class MinIOTask extends AbstractTask {
             try {
                 return minioClient.getObject(bucket, id, pos);
 
-            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException
-                    | InternalException | InvalidBucketNameException | InvalidResponseException
-                    | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
+                    | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
+                    | XmlParserException e) {
                 throw new IOException(e);
             }
         }

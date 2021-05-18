@@ -182,7 +182,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         if (args.isRestart()) {
             deleteIndex(indexName);
         }
-        
+
         if (!args.isAppendIndex() && !args.isContinue()) {
             if (indexExists(indexName)) {
                 throw new IPEDException("ElasticSearch index already exists: " + indexName);
@@ -336,8 +336,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private IndexRequest createMetaDataRegistry(String id, String route, XContentBuilder jasonData)
-            throws IOException {
+    private IndexRequest createMetaDataRegistry(String id, String route, XContentBuilder jasonData) throws IOException {
 
         IndexRequest indexRequest = Requests.indexRequest(indexName);
 
@@ -351,7 +350,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
         indexRequest.opType(OpType.CREATE);
-
 
         return indexRequest;
 
@@ -386,7 +384,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
             fragNum = 1;
         }
 
-
         String parentId = Util.getPersistentId(item);
 
         try {
@@ -400,8 +397,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum--);
 
                 // creates the json _source of the fragment
-                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId,
-                        contentPersistentId);
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentPersistentId);
 
                 // creates the request
                 IndexRequest contentRequest = createMetaDataRegistry(contentPersistentId, parentId, jsonContent);
@@ -493,9 +489,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         String inputStreamSrcPath = getInputStreamSourcePath(item);
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId())
-                .field("document_content", "document").field(BasicProps.SUBITEMID, item.getSubitemId())
-                .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
+                .field(BasicProps.ID, item.getId()).field("document_content", "document")
+                .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
+                .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
@@ -546,9 +542,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
         // maps the content to its parent metadata
-        HashMap<String,String> document_content=new HashMap<>();
+        HashMap<String, String> document_content = new HashMap<>();
         document_content.put("name", "content");
-        document_content.put("parent",parentID);
+        document_content.put("parent", parentID);
 
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
