@@ -252,7 +252,8 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
             if (sndv == null)
-                sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues("_num_" + field); //$NON-NLS-1$
+                sndv = App.get().appCase.getLeafReader()
+                        .getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
 
             boolean mayBeNumeric = MetadataPanel.mayBeNumeric(field);
 

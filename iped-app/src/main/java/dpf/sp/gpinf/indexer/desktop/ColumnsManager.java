@@ -398,8 +398,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     if (reader == null) {
                         reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
                         bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField("_num_" + field); //$NON-NLS-1$
-                        bits2 = reader.getDocsWithField("_" + field); //$NON-NLS-1$
+                        bits1 = reader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
+                        bits2 = reader.getDocsWithField(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
                     }
                     int doc = docs[i] - docBases[baseOrd];
                     if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
