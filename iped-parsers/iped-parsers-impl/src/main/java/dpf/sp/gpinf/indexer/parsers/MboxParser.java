@@ -143,13 +143,7 @@ public class MboxParser extends AbstractParser {
         }
 
         String subject = mailMetadata.get(ExtraProperties.MESSAGE_SUBJECT);
-        String messageto = mailMetadata.get(Metadata.MESSAGE_TO);
-        String messagefrom = mailMetadata.get(Metadata.MESSAGE_FROM);
-        String messagebody = mailMetadata.get(ExtraProperties.MESSAGE_BODY);
-        String messagedate = mailMetadata.get(ExtraProperties.MESSAGE_DATE);
-        
-        
-        
+
         if (subject == null || subject.trim().isEmpty())
             subject = Messages.getString("MboxParser.NoSubject"); //$NON-NLS-1$
 
@@ -158,10 +152,6 @@ public class MboxParser extends AbstractParser {
         finalMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "message/rfc822"); //$NON-NLS-1$
         finalMetadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
         finalMetadata.set(TikaCoreProperties.CREATED, mailMetadata.getDate(TikaCoreProperties.CREATED));
-        finalMetadata.set(Metadata.MESSAGE_TO, messageto);
-        finalMetadata.set(Metadata.MESSAGE_FROM, messagefrom);
-        finalMetadata.set(ExtraProperties.MESSAGE_BODY, messagebody);
-        finalMetadata.set(ExtraProperties.MESSAGE_DATE, messagedate);
 
         return finalMetadata;
     }

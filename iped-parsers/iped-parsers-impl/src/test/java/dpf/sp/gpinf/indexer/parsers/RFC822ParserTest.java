@@ -38,7 +38,6 @@ public class RFC822ParserTest extends TestCase {
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_rfc822");
         parser.getSupportedTypes(context);
-        parser.setIsUtf8(true);
         parser.parse(stream, handler, metadata, context);
         
         verify(handler).startDocument();
