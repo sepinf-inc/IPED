@@ -102,7 +102,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private static int max_async_requests = 5;
     private static int index_shards = 1;
     private static int index_replicas = 1;
-    private static String index_policy = "default_policy";
+    private static String index_policy = "";
     private static boolean useCustomAnalyzer;
 
     private static RestHighLevelClient client;
@@ -226,7 +226,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         max_async_requests = Integer.valueOf(props.getProperty(MAX_ASYNC_REQUESTS_KEY).trim());
         index_shards = Integer.valueOf(props.getProperty(INDEX_SHARDS_KEY).trim());
         index_replicas = Integer.valueOf(props.getProperty(INDEX_REPLICAS_KEY).trim());
-        index_policy = props.getProperty(INDEX_POLICY_KEY).trim();
+        index_policy = props.getProperty(INDEX_POLICY_KEY);
+        index_policy = index_policy == null ? "" : index_policy.trim();
         useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
     }
 
@@ -239,8 +240,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
-                .put(INDEX_REPLICAS_KEY, index_replicas)// .put(INDEX_POLICY_KEY, index_policy)
+                .put(INDEX_REPLICAS_KEY, index_replicas)
                 .put(IGNORE_MALFORMED, true);
+
+        if (!index_policy.isEmpty()) {
+            builder.put(INDEX_POLICY_KEY, index_policy);
+        }
 
         if (useCustomAnalyzer) {
             builder.put("analysis.tokenizer.latinExtB.type", "simple_pattern") //$NON-NLS-1$ //$NON-NLS-2$
