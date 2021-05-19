@@ -31,31 +31,21 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.util.PDFToThumb;
 import iped3.IItem;
 
 public class DocThumbTask extends ThumbTask {
 
-    private static final String enableProperty = "enableDocThumbs";
-    private static final String taskConfigFile = "DocThumbsConfig.txt";
     private static final String thumbTimeout = ImageThumbTask.THUMB_TIMEOUT;
 
-    private static boolean taskEnabled;
-
-    private static int pdfTimeout = 60;
-    private static int loTimeout = 180;
-    private static int timeoutIncPerMB = 2;
-    private static int thumbSize = 480;
-    private static boolean externalPdfConversion;
-    private static int maxPdfExternalMemory = 256;
-    private static boolean pdfEnabled;
-    private static boolean loEnabled;
+    private static DocThumbTaskConfig docThumbsConfig;
 
     private static String loPath;
 
@@ -85,82 +75,30 @@ public class DocThumbTask extends ThumbTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
-                if (taskEnabled) {
-                    UTF8Properties properties = new UTF8Properties();
-                    File confFile = new File(confDir, taskConfigFile);
-                    properties.load(confFile);
+                docThumbsConfig = (DocThumbTaskConfig) ConfigurationManager.getInstance()
+                        .findObjects(DocThumbTaskConfig.class).iterator().next();
+                if (docThumbsConfig.isEnabled()) {
 
-                    String value = properties.getProperty("pdfThumbs");
-                    if (value != null) {
-                        value = value.trim();
-                        if ("external".equalsIgnoreCase(value)) {
-                            externalPdfConversion = true;
-                            pdfEnabled = true;
-                        } else if ("internal".equalsIgnoreCase(value)) {
-                            externalPdfConversion = false;
-                            pdfEnabled = true;
-                        }
+                    logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
+                    logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));
+                    if (docThumbsConfig.isLoEnabled()) {
+                        URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                        File jarDir = new File(url.toURI()).getParentFile();
+                        LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
+                        loPath = loFinder.getLOPath();
+                        logger.info("LibreOffice Path: " + loPath);
                     }
 
-                    value = properties.getProperty("libreOfficeThumbs");
-                    if (value != null) {
-                        value = value.trim();
-                        if ("external".equalsIgnoreCase(value)) {
-                            loEnabled = true;
-                        }
-                    }
-                    if (!loEnabled && !pdfEnabled) {
-                        logger.warn("Both PDF and LibreOffice thumb generation disabled!");
-                        taskEnabled = false;
-                    }
-                    if (taskEnabled) {
-                        value = properties.getProperty("pdfTimeout");
-                        if (value != null && !value.trim().isEmpty()) {
-                            pdfTimeout = Integer.parseInt(value);
-                        }
-
-                        value = properties.getProperty("libreOfficeTimeout");
-                        if (value != null && !value.trim().isEmpty()) {
-                            loTimeout = Integer.parseInt(value);
-                        }
-
-                        value = properties.getProperty("timeoutIncPerMB");
-                        if (value != null && !value.trim().isEmpty()) {
-                            timeoutIncPerMB = Integer.parseInt(value);
-                        }
-
-                        value = properties.getProperty("maxPdfExternalMemory");
-                        if (value != null && !value.trim().isEmpty()) {
-                            maxPdfExternalMemory = Integer.parseInt(value);
-                        }
-
-                        value = properties.getProperty("thumbSize");
-                        if (value != null && !value.trim().isEmpty()) {
-                            thumbSize = Integer.valueOf(value.trim());
-                        }
-
-                        logger.info("Thumb Size: " + thumbSize);
-                        logger.info("LibreOffice Conversion: " + (loEnabled ? "enabled" : "disabled"));
-                        if (loEnabled) {
-                            URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-                            File jarDir = new File(url.toURI()).getParentFile();
-                            LibreOfficeFinder loFinder = new LibreOfficeFinder(jarDir);
-                            loPath = loFinder.getLOPath();
-                            logger.info("LibreOffice Path: " + loPath);
-                        }
-
-                        logger.info("PDF Conversion: " + (pdfEnabled ? "enabled" : "disabled"));
-                        if (pdfEnabled) {
-                            logger.info("External PDF Conversion: " + externalPdfConversion);
-                        }
+                    logger.info("PDF Conversion: " + (docThumbsConfig.isPdfEnabled() ? "enabled" : "disabled"));
+                    if (docThumbsConfig.isPdfEnabled()) {
+                        logger.info("External PDF Conversion: " + docThumbsConfig.isExternalPdfConversion());
                     }
                 }
-                logger.info("Task " + (taskEnabled ? "enabled" : "disabled"));
+                logger.info("Task " + (docThumbsConfig.isEnabled() ? "enabled" : "disabled"));
                 init.set(true);
             }
         }
-        if (loEnabled) {
+        if (docThumbsConfig.isLoEnabled()) {
             loOutDir = Files.createTempDirectory("doc-thumb").toFile();
             loOutPath = loOutDir.getAbsolutePath().replace('\\', '/');
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
@@ -181,7 +119,7 @@ public class DocThumbTask extends ThumbTask {
 
     @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return docThumbsConfig.isEnabled();
     }
 
     @Override
@@ -196,7 +134,7 @@ public class DocThumbTask extends ThumbTask {
                 if (!executor.isShutdown()) {
                     executor.shutdownNow();
                 }
-                if (taskEnabled) {
+                if (isEnabled()) {
                     logger.info("Total PDF processed: " + totalPdfProcessed);
                     logger.info("Total PDF not processed: " + totalPdfFailed);
                     logger.info("Total PDF timeout: " + totalPdfTimeout);
@@ -220,9 +158,10 @@ public class DocThumbTask extends ThumbTask {
 
     @Override
     protected void process(IItem item) throws Exception {
-        if (!taskEnabled 
+        if (!isEnabled() 
                 || !item.isToAddToCase()
-                || ((!pdfEnabled || !isPdfType(item.getMediaType()) && (!loEnabled || !isLibreOfficeType(item.getMediaType())))
+                || ((!docThumbsConfig.isPdfEnabled() || !isPdfType(item.getMediaType())
+                        && (!docThumbsConfig.isLoEnabled() || !isLibreOfficeType(item.getMediaType())))
                 || item.getHashValue() == null 
                 || item.getThumb() != null
                 || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null)) {
@@ -235,7 +174,8 @@ public class DocThumbTask extends ThumbTask {
         if (isPdfType(item.getMediaType())) {
             Future<?> future = executor.submit(new PDFThumbCreator(item, thumbFile));
             try {
-                int timeout = pdfTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
+                int timeout = docThumbsConfig.getPdfTimeout()
+                        + (int) ((item.getLength() * docThumbsConfig.getTimeoutIncPerMB()) >>> 20);
                 future.get(timeout, TimeUnit.SECONDS);
             } catch (TimeoutException e) {
                 future.cancel(true);
@@ -255,7 +195,8 @@ public class DocThumbTask extends ThumbTask {
         }
         Future<?> future = executor.submit(new LOThumbCreator(item, thumbFile));
         try {
-            int timeout = loTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
+            int timeout = docThumbsConfig.getLoTimeout()
+                    + (int) ((item.getLength() * docThumbsConfig.getTimeoutIncPerMB()) >>> 20);
             future.get(timeout, TimeUnit.SECONDS);
         } catch (TimeoutException e) {
             future.cancel(true);
@@ -333,13 +274,14 @@ public class DocThumbTask extends ThumbTask {
         boolean success = false;
         ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
         try {
-            if (externalPdfConversion) {
+            if (docThumbsConfig.isExternalPdfConversion()) {
                 URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
                 String jarDir = new File(url.toURI()).getParent();
                 String classpath = jarDir + "/*";
                 File file = item.getTempFile();
-                String[] cmd = {"java","-cp",classpath,"-Xmx" + maxPdfExternalMemory + "M",PDFToThumb.class.getCanonicalName(),file.getAbsolutePath(),
-                        String.valueOf(thumbSize)};
+                String[] cmd = { "java", "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
+                        PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(),
+                        String.valueOf(docThumbsConfig.getThumbSize()) };
 
                 ProcessBuilder pb = new ProcessBuilder(cmd);
                 convertProcess = pb.start();
@@ -355,7 +297,7 @@ public class DocThumbTask extends ThumbTask {
                 }
             } else {
                 File file = item.getTempFile();
-                BufferedImage img = PDFToThumb.getPdfThumb(file, thumbSize);
+                BufferedImage img = PDFToThumb.getPdfThumb(file, docThumbsConfig.getThumbSize());
                 if (img != null) {
                     ImageIO.write(img, "jpg", baos);
                     success = true;
@@ -368,7 +310,7 @@ public class DocThumbTask extends ThumbTask {
         } catch (Throwable e) {
             logger.warn(item.toString(), e);
         } finally {
-            if (externalPdfConversion) {
+            if (docThumbsConfig.isExternalPdfConversion()) {
                 finishProcess(convertProcess);
                 convertProcess = null;
             }
@@ -450,6 +392,7 @@ public class DocThumbTask extends ThumbTask {
             if (outFile.exists()) {
                 BufferedImage img = ImageIO.read(outFile);
                 if (img != null) {
+                    int thumbSize = docThumbsConfig.getThumbSize();
                     if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
                         img = ImageUtil.resizeImage(img, thumbSize, thumbSize, BufferedImage.TYPE_INT_BGR);
                     }
