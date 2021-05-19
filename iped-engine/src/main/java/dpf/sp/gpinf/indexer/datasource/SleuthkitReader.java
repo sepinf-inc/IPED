@@ -1032,7 +1032,7 @@ public class SleuthkitReader extends DataSourceReader {
                         if (!line.trim().isEmpty()) {
                             if (line.toLowerCase().contains("error") //$NON-NLS-1$
                                     && !line.toLowerCase().contains("microsoft reserved partition")) { //$NON-NLS-1$
-                                LOGGER.error("Sleuthkit: " + line.trim()); //$NON-NLS-1$
+                                LOGGER.error("Sleuthkit error processing {}: {}", image, line.trim()); //$NON-NLS-1$
                             } else {
                                 LOGGER.info("Sleuthkit: " + line.trim()); //$NON-NLS-1$
                             }
