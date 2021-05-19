@@ -32,6 +32,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 
@@ -41,8 +43,6 @@ import iped3.IItem;
 public class HashTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HashTask.class);
-
-    public static final String HASH_PROP = "hash";
 
     public enum HASH {
         MD5("md5"), //$NON-NLS-1$
@@ -72,25 +72,20 @@ public class HashTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        String value = confProps.getProperty(HASH_PROP);
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            for (String algorithm : value.split(";")) { //$NON-NLS-1$
-                algorithm = algorithm.trim();
-                MessageDigest digest = null;
-                if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
-                    digest = MessageDigest.getInstance(algorithm.toUpperCase());
-                } else {
-                    digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider()); //$NON-NLS-1$
-                }
-                digestMap.put(algorithm, digest);
-                if (HASH.SHA256.toString().equals(algorithm)) {
-                    System.setProperty(WhatsAppParser.SHA256_ENABLED_SYSPROP, Boolean.TRUE.toString());
-                }
-            }
+        HashTaskConfig hashConfig = (HashTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(HashTaskConfig.class).iterator().next();
 
+        for (String algorithm : hashConfig.getAlgorithms()) {
+            MessageDigest digest = null;
+            if (!algorithm.equalsIgnoreCase(HASH.EDONKEY.toString())) {
+                digest = MessageDigest.getInstance(algorithm.toUpperCase());
+            } else {
+                digest = MessageDigest.getInstance("MD4", new BouncyCastleProvider()); //$NON-NLS-1$
+            }
+            digestMap.put(algorithm, digest);
+            if (HASH.SHA256.toString().equals(algorithm)) {
+                System.setProperty(WhatsAppParser.SHA256_ENABLED_SYSPROP, Boolean.TRUE.toString());
+            }
         }
 
     }
