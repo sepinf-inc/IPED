@@ -46,6 +46,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
@@ -119,7 +121,10 @@ public class IPEDReader extends DataSourceReader {
         caseData.setIpedReport(true);
 
         // Configuração para não expandir containers
-        ParsingTask.setExpandContainers(false);
+        CategoryToExpandConfig expandConfig = (CategoryToExpandConfig) ConfigurationManager.getInstance()
+                .findObjects(CategoryToExpandConfig.class).iterator().next();
+        expandConfig.setExpandContainers(false);
+
         CarverTask.setEnabled(false);
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);

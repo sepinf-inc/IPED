@@ -10,15 +10,17 @@ import java.nio.file.Path;
 
 public class IPEDConfig extends AbstractPropertiesConfigurable {
 
-    boolean toAddUnallocated = false;
-    boolean toAddFileSlacks = false;
-    boolean enableHtmlReport = true;
-
-    public static final String CONFDIR = "confdir";
-    public static final String TOADDUNALLOCATED = "addUnallocated";
-    public static final String TOADDFILESLACKS = "addFileSlacks";
+    public static final String CONFDIR = "confdir"; //$NON-NLS-1$
+    public static final String TOADDUNALLOCATED = "addUnallocated"; //$NON-NLS-1$
+    public static final String TOADDFILESLACKS = "addFileSlacks"; //$NON-NLS-1$
     public static final String ENABLEHTMLREPORT = "enableHTMLReport"; //$NON-NLS-1$
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
+    public static final String ENABLE_PARSING = "enableFileParsing"; //$NON-NLS-1$
+
+    private boolean toAddUnallocated = false;
+    private boolean toAddFileSlacks = false;
+    private boolean enableHtmlReport = true;
+    private boolean enableFileParsing = true;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -92,6 +94,15 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
             enableHtmlReport = Boolean.valueOf(value.trim());
         }
 
+        value = properties.getProperty(ENABLE_PARSING);
+        if (value != null) {
+            enableFileParsing = Boolean.valueOf(value.trim());
+        }
+
+    }
+
+    public boolean isFileParsingEnabled() {
+        return enableFileParsing;
     }
 
 }

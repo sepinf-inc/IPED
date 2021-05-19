@@ -24,6 +24,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
@@ -52,7 +53,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private static final String SUPPORTED_LINKS_KEY = "supportedMimesWithLinks";
 
-    private static boolean enableFileParsing = true;
+    private IPEDConfig ipedConfig;
 
     private Set<String> supportedMimes = new HashSet<>();
 
@@ -69,10 +70,8 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        String value = confParams.getProperty(ParsingTask.ENABLE_PARSING);
-        if (value != null & !value.trim().isEmpty()) {
-            enableFileParsing = Boolean.valueOf(value.trim());
-        }
+
+        ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
 
         File config = new File(confDir, CONFIG_FILE_NAME);
         String content = Util.readUTF8Content(config);
@@ -108,15 +107,11 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enableFileParsing;
+        return ipedConfig.isFileParsingEnabled();
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
-
-        if (!enableFileParsing) {
-            return;
-        }
 
         String mediaType = evidence.getMediaType().toString();
         if (evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty()

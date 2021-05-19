@@ -18,15 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.Base64;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,7 +37,6 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -63,7 +57,9 @@ import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
@@ -118,8 +114,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     private static Logger LOGGER = LoggerFactory.getLogger(ParsingTask.class);
 
-    public static final String EXPAND_CONFIG = "CategoriesToExpand.txt"; //$NON-NLS-1$
-    public static final String ENABLE_PARSING = "enableFileParsing"; //$NON-NLS-1$
     public static final String ENCRYPTED = "encrypted"; //$NON-NLS-1$
     public static final String HAS_SUBITEM = "hasSubitem"; //$NON-NLS-1$
     public static final String NUM_SUBITEMS = "numSubItems"; //$NON-NLS-1$
@@ -127,16 +121,15 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private static final int MAX_SUBITEM_DEPTH = 100;
     private static final String SUBITEM_DEPTH = "subitemDepth"; //$NON-NLS-1$
 
-    private static boolean expandContainers = false;
-    private static boolean enableFileParsing = true;
-
     public static AtomicInteger subitensDiscovered = new AtomicInteger();
-    private static HashSet<String> categoriesToExpand = new HashSet<String>();
     public static AtomicLong totalText = new AtomicLong();
     public static Map<String, AtomicLong> times = Collections.synchronizedMap(new TreeMap<String, AtomicLong>());
 
     private static Map<Integer, ZipBombStats> zipBombStatsMap = new ConcurrentHashMap<>();
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
+
+    private CategoryToExpandConfig expandConfig;
+    private IPEDConfig ipedConfig;
 
     private IItem evidence;
     private ParseContext context;
@@ -183,11 +176,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     @Override
     public boolean isEnabled() {
-        return enableFileParsing;
-    }
-
-    public static void setExpandContainers(boolean enabled) {
-        expandContainers = enabled;
+        return ipedConfig.isFileParsingEnabled();
     }
 
     public ParseContext getTikaContext() {
@@ -226,7 +215,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             context.set(IItemSearcher.class, (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName()));
         }
 
-        extractEmbedded = isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
+        extractEmbedded = expandConfig.isToBeExpanded(itemInfo.getCategories()) || isToAlwaysExpand(evidence);
         if (extractEmbedded) {
             context.set(EmbeddedDocumentExtractor.class, this);
         } else
@@ -257,19 +246,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
     }
 
-    public static void load(File file) throws FileNotFoundException, IOException {
-        categoriesToExpand = new HashSet<String>();
-        BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8")); //$NON-NLS-1$
-        String line = reader.readLine();
-        while ((line = reader.readLine()) != null) {
-            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            categoriesToExpand.add(line.trim());
-        }
-        reader.close();
-    }
-
     private static boolean isToAlwaysExpand(IItem item) {
         return WhatsAppParser.WA_USER_PLIST.equals(item.getMediaType())
                 || WhatsAppParser.WA_USER_XML.equals(item.getMediaType()) 
@@ -277,31 +253,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 || TelegramParser.TELEGRAM_DB_IOS.equals(item.getMediaType());
     }
 
-    private static boolean isToBeExpanded(Collection<String> categories) {
-
-        if (!expandContainers) {
-            return false;
-        }
-
-        boolean result = false;
-        for (String category : categories) {
-            if (categoriesToExpand.contains(category)) {
-                result = true;
-                break;
-            }
-        }
-        return result;
-    }
-
     public static int getSubitensDiscovered() {
         return subitensDiscovered.get();
     }
 
     public void process(IItem evidence) throws IOException {
-
-        if (!enableFileParsing) {
-            return;
-        }
 
         long start = System.nanoTime() / 1000;
 
@@ -324,6 +280,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);
+                task.ipedConfig = this.ipedConfig;
+                task.expandConfig = this.expandConfig;
                 task.depth = depth;
                 task.timeInDepth = timeInDepth;
                 task.safeProcess(evidence);
@@ -729,29 +687,19 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
 
-        load(new File(confDir, EXPAND_CONFIG));
+        ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
 
-        String value = confProps.getProperty("expandContainers"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            expandContainers = Boolean.valueOf(value);
-        }
-
-        value = confProps.getProperty(ENABLE_PARSING);
-        if (value != null & !value.trim().isEmpty()) {
-            enableFileParsing = Boolean.valueOf(value.trim());
-        }
+        expandConfig = (CategoryToExpandConfig) ConfigurationManager.getInstance()
+                .findObjects(CategoryToExpandConfig.class).iterator().next();
 
     }
 
     @Override
     public void finish() throws Exception {
-        if (totalText != null)
+        if (totalText != null) {
             LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
+        }
         totalText = null;
-
     }
 
 }
