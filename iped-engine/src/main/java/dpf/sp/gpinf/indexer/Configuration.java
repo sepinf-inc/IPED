@@ -203,7 +203,7 @@ public class Configuration {
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
 
-        ConfigurationManager configManager = new ConfigurationManager(configDirectory);
+        ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
 
         LocaleConfig localeConfig = new LocaleConfig();
         configManager.addObject(localeConfig);

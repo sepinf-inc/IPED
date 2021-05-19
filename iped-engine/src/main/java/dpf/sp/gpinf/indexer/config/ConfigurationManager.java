@@ -14,21 +14,32 @@ import macee.core.Configurable;
 import macee.core.ObjectManager;
 
 public class ConfigurationManager implements ObjectManager<Configurable> {
-    static ConfigurationManager singleton = null;
 
-    static public ConfigurationManager getInstance() {
-        return singleton;
-    }
+    private static ConfigurationManager singleton = null;
+
+    final HashMap<Object, Configurable> configurations = new HashMap<Object, Configurable>();
 
     IConfigurationDirectory directory;
     HashMap<Configurable, Boolean> loadedConfigurables = new LinkedHashMap<Configurable, Boolean>();
 
-    public ConfigurationManager(IConfigurationDirectory directory) {
-        this.directory = directory;
-        ConfigurationManager.singleton = this;
+    public static ConfigurationManager getInstance() {
+        return singleton;
     }
 
-    final HashMap<Object, Configurable> configurations = new HashMap<Object, Configurable>();
+    public static ConfigurationManager createInstance(IConfigurationDirectory directory) {
+        if (singleton == null) {
+            synchronized (ConfigurationManager.class) {
+                if (singleton == null) {
+                    singleton = new ConfigurationManager(directory);
+                }
+            }
+        }
+        return singleton;
+    }
+
+    private ConfigurationManager(IConfigurationDirectory directory) {
+        this.directory = directory;
+    }
 
     public void addObject(Configurable config) {
         loadedConfigurables.put(config, false);
