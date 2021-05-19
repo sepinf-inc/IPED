@@ -23,7 +23,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -39,7 +38,6 @@ import java.sql.Statement;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.zip.Deflater;
@@ -62,7 +60,9 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
@@ -85,7 +85,6 @@ import iped3.sleuthkit.ISleuthKitItem;
 public class ExportFileTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
-    public static final String EXTRACT_CONFIG = "CategoriesToExport.txt"; //$NON-NLS-1$
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
     private static final String SUBITEM_DIR = "subitens"; //$NON-NLS-1$
 
@@ -103,7 +102,9 @@ public class ExportFileTask extends AbstractTask {
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
 
-    private static HashSet<String> categoriesToExtract = new HashSet<String>();
+    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
+    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
+
     public static int subDirCounter = 0, itensExtracted = 0;
     private static File subDir;
 
@@ -111,9 +112,7 @@ public class ExportFileTask extends AbstractTask {
     private File extractDir;
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
-
-    private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
-    private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
+    private CategoryToExportConfig exportConfig;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -206,17 +205,6 @@ public class ExportFileTask extends AbstractTask {
         return conn;
     }
 
-    public static void load(File file) throws FileNotFoundException, IOException {
-
-        String content = Util.readUTF8Content(file);
-        for (String line : content.split("\n")) { //$NON-NLS-1$
-            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            categoriesToExtract.add(line.trim());
-        }
-    }
-
     private static synchronized File getSubDir(File extractDir) {
         if (subDirCounter % 1000 == 0) {
             subDir = new File(extractDir, Integer.toString(subDirCounter / 1000));
@@ -225,15 +213,15 @@ public class ExportFileTask extends AbstractTask {
         return subDir;
     }
 
-    public static boolean hasCategoryToExtract() {
-        return categoriesToExtract.size() > 0;
+    public boolean hasCategoryToExtract() {
+        return exportConfig.hasCategoryToExport();
     }
 
-    public static boolean isToBeExtracted(IItem evidence) {
+    private boolean isToBeExtracted(IItem evidence) {
 
         boolean result = false;
         for (String category : evidence.getCategorySet()) {
-            if (categoriesToExtract.contains(category)) {
+            if (exportConfig.isToExportCategory(category)) {
                 result = true;
                 break;
             }
@@ -717,17 +705,18 @@ public class ExportFileTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        load(new File(confDir, EXTRACT_CONFIG));
+
+        exportConfig = (CategoryToExportConfig) ConfigurationManager.getInstance()
+                .findObjects(CategoryToExportConfig.class).iterator().next();
+
+        HashTaskConfig hashConfig = (HashTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(HashTaskConfig.class).iterator().next();
 
         if (hasCategoryToExtract()) {
             caseData.setContainsReport(true);
         }
 
-        String value = confProps.getProperty("hash"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
+        if (!hashConfig.getAlgorithms().isEmpty()) {
             computeHash = true;
         }
 

@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -251,9 +252,7 @@ public class Statistics {
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
         reader.close();
 
-        if (indexed != processed && (ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
-            LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
-        }
+        LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
 
         long processedVolume = getVolume() / (1024 * 1024);
 
@@ -269,7 +268,10 @@ public class Statistics {
             LOGGER.error("Alert: Processed " + processed + " items of " + discovered); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        if (!(ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
+        CategoryToExportConfig exportConfig = (CategoryToExportConfig) ConfigurationManager.getInstance()
+                .findObjects(CategoryToExportConfig.class).iterator().next();
+
+        if (!(exportConfig.hasCategoryToExport() || RegexTask.isExtractByKeywordsOn())) {
             if (indexed != discovered - carvedIgnored - ignored) {
                 LOGGER.error("Alert: Indexed " + indexed + " items of " + (discovered - carvedIgnored - ignored)); //$NON-NLS-1$ //$NON-NLS-2$
             }
