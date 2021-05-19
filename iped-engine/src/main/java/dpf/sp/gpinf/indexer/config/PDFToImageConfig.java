@@ -42,8 +42,10 @@ public class PDFToImageConfig extends AbstractPropertiesConfigurable {
         }
     }
 
+    @Override
     public void processConfig(Path resource) throws IOException {
-        super.processConfig(resource);
+
+        properties.load(resource.toFile());
 
         String value = null;
 

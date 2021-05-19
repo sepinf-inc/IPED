@@ -11,6 +11,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import macee.core.Configurable;
 
 public abstract class AbstractPropertiesConfigurable implements Configurable<UTF8Properties, UTF8Properties> {
+
     UTF8Properties properties = new UTF8Properties();
     UTF8Properties userProperties = new UTF8Properties();
 
@@ -27,10 +28,6 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
             Path path = iterator.next();
             processConfig(path);
         }
-    }
-
-    public void processConfig(Path resource) throws IOException {
-        properties.load(resource.toFile());
     }
 
     @Override
@@ -51,6 +48,8 @@ public abstract class AbstractPropertiesConfigurable implements Configurable<UTF
     @Override
     public void setUserConfiguration(UTF8Properties config) {
         // TODO Auto-generated method stub
-
     }
+
+    public abstract void processConfig(Path resource) throws IOException;
+
 }

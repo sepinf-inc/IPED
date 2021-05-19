@@ -37,8 +37,10 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
         return filter;
     }
 
+    @Override
     public void processConfig(Path resource) throws IOException {
-        super.processConfig(resource);
+
+        properties.load(resource.toFile());
 
         String value;
 
