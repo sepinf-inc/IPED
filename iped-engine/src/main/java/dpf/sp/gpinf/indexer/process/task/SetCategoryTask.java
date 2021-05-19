@@ -18,20 +18,14 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.util.HashMap;
 import java.util.Properties;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
 import iped3.util.BasicProps;
 
@@ -42,17 +36,15 @@ import iped3.util.BasicProps;
  */
 public class SetCategoryTask extends AbstractTask {
 
-    public static String CATEGORIES_BY_TYPE = "CategoriesByTypeConfig.txt"; //$NON-NLS-1$
-
     private static String FOLDER_CATEGORY = Messages.getString("SetCategoryTask.Folders"); //$NON-NLS-1$
     public static String SCANNED_CATEGORY = Messages.getString("SetCategoryTask.ScannedDocs"); //$NON-NLS-1$
 
-    private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-    private static HashMap<String, String> mimetypeToCategoryMap;
+    private CategoryConfig categoryConfig;
 
     @Override
     public void init(Properties confProps, File configPath) throws Exception {
-        load(new File(configPath, CATEGORIES_BY_TYPE));
+        categoryConfig = (CategoryConfig) ConfigurationManager.getInstance()
+                .findObjects(CategoryConfig.class).iterator().next();
     }
 
     @Override
@@ -61,61 +53,12 @@ public class SetCategoryTask extends AbstractTask {
 
     }
 
-    public static synchronized void load(File file) throws FileNotFoundException, IOException {
-
-        if (mimetypeToCategoryMap != null) {
-            return;
-        }
-
-        mimetypeToCategoryMap = new HashMap<>();
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"))) { //$NON-NLS-1$
-            String line = reader.readLine();
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("#")) { //$NON-NLS-1$
-                    continue;
-                }
-                String[] keyValuePair = line.split("="); //$NON-NLS-1$
-                if (keyValuePair.length == 2) {
-                    String category = keyValuePair[0].trim();
-                    String mimeTypes = keyValuePair[1].trim();
-                    for (String mimeType : mimeTypes.split(";")) { //$NON-NLS-1$
-                        mimeType = mimeType.trim();
-                        MediaType mt = MediaType.parse(mimeType);
-                        if (mt != null)
-                            mimeType = registry.normalize(mt).toString();
-                        mimetypeToCategoryMap.put(mimeType, category);
-                    }
-                }
-            }
-        }
-    }
-
-    private static String get(MediaType type) {
-
-        String category;
-        do {
-            category = mimetypeToCategoryMap.get(type.toString());
-            if (category == null) {
-                category = mimetypeToCategoryMap.get(type.getType());
-            }
-            if (category != null) {
-                return category;
-            }
-
-            type = registry.getSupertype(type);
-
-        } while (type != null);
-
-        return ""; //$NON-NLS-1$
-    }
-
     public void process(IItem e) throws Exception {
 
         if (e.isDir()) {
             e.setCategory(FOLDER_CATEGORY);
         } else {
-            String category = get(e.getMediaType());
+            String category = categoryConfig.getCategory(e.getMediaType());
             e.setCategory(category);
         }
 
@@ -123,7 +66,7 @@ public class SetCategoryTask extends AbstractTask {
         if (e.isDir()) {
             category = FOLDER_CATEGORY;
         } else {
-            category = get(e.getMediaType());
+            category = categoryConfig.getCategory(e.getMediaType());
         }
         e.setCategory(category);
         e.setTempAttribute(BasicProps.CATEGORY, category);
