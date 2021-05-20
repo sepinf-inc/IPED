@@ -585,7 +585,7 @@ public class WinXTimelineParser extends SQLite3DBParser {
      * https://github.com/kacos2000/WindowsTimeline/blob/master/WindowsTimeline.sql
      * Works with Windows 10 v1803/1809/1903+
      */
-
+    
     private String WINX_TIMELINE_QUERY = " SELECT " + " ActivityOperation.ETag as 'Etag', "
             + " ActivityOperation.OperationOrder as 'Order', " + " case "
             + " when ActivityOperation.ActivityType in (2,3,11,12,15)  "
