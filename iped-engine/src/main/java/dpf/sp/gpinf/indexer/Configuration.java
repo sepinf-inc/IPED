@@ -39,7 +39,9 @@ import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
+import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
+import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
@@ -237,6 +239,7 @@ public class Configuration {
         configManager.addObject(new CategoryToExpandConfig());
         configManager.addObject(new CategoryToExportConfig());
         configManager.addObject(new DocThumbTaskConfig());
+        configManager.addObject(new ElasticSearchTaskConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração

@@ -43,11 +43,12 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -64,25 +65,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ElasticSearchIndexTask.class);
 
-    private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
-
-    private static final String ENABLED_KEY = "enable";
-    private static final String HOST_KEY = "host";
-    private static final String PORT_KEY = "port";
-    private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
     private static final String IGNORE_MALFORMED = "index.mapping.ignore_malformed";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
     private static final String INDEX_POLICY_KEY = "index.lifecycle.name";
-    private static final String MIN_BULK_SIZE_KEY = "min_bulk_size";
-    private static final String MIN_BULK_ITEMS_KEY = "min_bulk_items";
-    private static final String MAX_ASYNC_REQUESTS_KEY = "max_async_requests";
-    private static final String TIMEOUT_MILLIS_KEY = "timeout_millis";
-    private static final String CONNECT_TIMEOUT_KEY = "connect_timeout_millis";
-    private static final String CMD_FIELDS_KEY = "elastic";
-    private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
 
+    private static final String CMD_FIELDS_KEY = "elastic";
     private static final String INDEX_NAME_KEY = "indexName";
     private static final String USER_KEY = "user";
     private static final String PASSWORD_KEY = "password";
@@ -90,20 +79,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
 
-    private static boolean enabled = false;
-    private static String host;
-    private static String protocol;
-    private static int port = 9200;
-    private static int max_fields = 10000;
-    private static int min_bulk_size = 1 << 23;
-    private static int min_bulk_items = 1000;
-    private static int connect_timeout = 5000;
-    private static int timeout_millis = 3600000;
-    private static int max_async_requests = 5;
-    private static int index_shards = 1;
-    private static int index_replicas = 1;
-    private static String index_policy = "";
-    private static boolean useCustomAnalyzer;
+    private ElasticSearchTaskConfig elasticConfig;
 
     private static RestHighLevelClient client;
 
@@ -125,7 +101,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return elasticConfig.isEnabled();
     }
 
     @Override
@@ -137,9 +113,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
             return;
         }
 
-        loadConfFile(new File(confDir, CONF_FILE_NAME));
+        elasticConfig = (ElasticSearchTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(ElasticSearchTaskConfig.class).iterator().next();
 
-        if (!enabled) {
+        if (!elasticConfig.isEnabled()) {
             return;
         }
 
@@ -153,11 +130,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
             indexName = output.getParentFile().getName();
         }
 
-        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
+        RestClientBuilder clientBuilder = RestClient
+                .builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort(), elasticConfig.getProtocol()))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
-                        return requestConfigBuilder.setConnectTimeout(connect_timeout).setSocketTimeout(timeout_millis);
+                        return requestConfigBuilder.setConnectTimeout(elasticConfig.getConnect_timeout())
+                                .setSocketTimeout(elasticConfig.getTimeout_millis());
                     }
                 });
 
@@ -176,7 +155,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         boolean ping = client.ping(RequestOptions.DEFAULT);
         if (!ping) {
-            throw new IOException("ElasticSearch cluster at " + host + ":" + port + " not responding to ping.");
+            throw new IOException("ElasticSearch cluster at " + elasticConfig.getHost() + ":" + elasticConfig.getPort()
+                    + " not responding to ping.");
         }
 
         if (args.isRestart()) {
@@ -210,27 +190,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private void loadConfFile(File file) throws IOException {
-        UTF8Properties props = new UTF8Properties();
-        props.load(file);
-
-        enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
-        host = props.getProperty(HOST_KEY).trim();
-        port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
-        protocol = props.getProperty(PROTOCOL_KEY);
-        max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
-        min_bulk_size = Integer.valueOf(props.getProperty(MIN_BULK_SIZE_KEY).trim());
-        min_bulk_items = Integer.valueOf(props.getProperty(MIN_BULK_ITEMS_KEY).trim());
-        connect_timeout = Integer.valueOf(props.getProperty(CONNECT_TIMEOUT_KEY).trim());
-        timeout_millis = Integer.valueOf(props.getProperty(TIMEOUT_MILLIS_KEY).trim());
-        max_async_requests = Integer.valueOf(props.getProperty(MAX_ASYNC_REQUESTS_KEY).trim());
-        index_shards = Integer.valueOf(props.getProperty(INDEX_SHARDS_KEY).trim());
-        index_replicas = Integer.valueOf(props.getProperty(INDEX_REPLICAS_KEY).trim());
-        index_policy = props.getProperty(INDEX_POLICY_KEY);
-        index_policy = index_policy == null ? "" : index_policy.trim();
-        useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
-    }
-
     private boolean indexExists(String indexName) throws IOException {
         GetIndexRequest request = new GetIndexRequest(indexName);
         return client.indices().exists(request, RequestOptions.DEFAULT);
@@ -239,15 +198,16 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void createIndex(String indexName) throws IOException {
 
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
-                .put(INDEX_REPLICAS_KEY, index_replicas)
+        Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
+                .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas())
                 .put(IGNORE_MALFORMED, true);
 
-        if (!index_policy.isEmpty()) {
-            builder.put(INDEX_POLICY_KEY, index_policy);
+        if (!elasticConfig.getIndex_policy().isEmpty()) {
+            builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
         }
 
-        if (useCustomAnalyzer) {
+        if (elasticConfig.isUseCustomAnalyzer()) {
             builder.put("analysis.tokenizer.latinExtB.type", "simple_pattern") //$NON-NLS-1$ //$NON-NLS-2$
                     .put("analysis.tokenizer.latinExtB.pattern", getLatinExtendedBPattern()) //$NON-NLS-1$ //$NON-NLS-2$
                     .put("analysis.analyzer.default.type", "custom") //$NON-NLS-1$ //$NON-NLS-2$
@@ -353,7 +313,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         // json data to be inserted
         indexRequest.source(jsonData);
 
-        indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
+        indexRequest.timeout(TimeValue.timeValueMillis(elasticConfig.getTimeout_millis()));
         indexRequest.opType(OpType.CREATE);
 
         return indexRequest;
@@ -413,8 +373,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
-                if (bulkRequest.estimatedSizeInBytes() >= min_bulk_size
-                        || bulkRequest.numberOfActions() >= min_bulk_items) {
+                if (bulkRequest.estimatedSizeInBytes() >= elasticConfig.getMin_bulk_size()
+                        || bulkRequest.numberOfActions() >= elasticConfig.getMin_bulk_items()) {
                     sendBulkRequest();
                     bulkRequest = new BulkRequest();
                     idToPath = new HashMap<>();
@@ -432,7 +392,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void sendBulkRequest() throws IOException {
         try {
             synchronized (lock) {
-                if (++numRequests > max_async_requests) {
+                if (++numRequests > elasticConfig.getMax_async_requests()) {
                     lock.wait();
                 }
             }
