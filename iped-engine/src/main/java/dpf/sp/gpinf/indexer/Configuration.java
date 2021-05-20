@@ -240,6 +240,7 @@ public class Configuration {
         configManager.addObject(new CategoryToExportConfig());
         configManager.addObject(new DocThumbTaskConfig());
         configManager.addObject(new ElasticSearchTaskConfig());
+        configManager.addObject(new HtmlReportTaskConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração
