@@ -70,10 +70,12 @@ public class SQLiteContainerDetector implements Detector {
         if (input == null)
             return MediaType.OCTET_STREAM;
 
-        TemporaryResources tmp = new TemporaryResources();
         File dbFile = null;
         try {
-            TikaInputStream tis = TikaInputStream.get(input, tmp);
+            TikaInputStream tis = TikaInputStream.cast(input);
+            if (tis == null) {
+                throw new RuntimeException("Just a TikaInputStream can be given to " + this.getClass().getSimpleName());
+            }
 
             byte[] prefix = new byte[32];
             int len = tis.peek(prefix);
@@ -88,7 +90,6 @@ public class SQLiteContainerDetector implements Detector {
             return detectSQLiteFormat(dbFile);
 
         } finally {
-            tmp.close();
             if (dbFile != null && IOUtil.isTemporaryFile(dbFile)) {
                 new File(dbFile.getAbsolutePath() + "-wal").delete();
                 new File(dbFile.getAbsolutePath() + "-shm").delete();
