@@ -23,16 +23,13 @@ public class WinXTimelineParserTest extends TestCase{
 
         WinXTimelineParser parser = new WinXTimelineParser();
         Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new BodyContentHandler(1 << 20);
         InputStream stream = getStream("test-files/test_activitiesCache.db");
         ParseContext context = new ParseContext();
         parser.setExtractEntries(true);
         parser.getSupportedTypes(context);
-//        parser.parse(stream, handler, metadata, context);
-//        
-//        String hts = handler.toString();
-//        
-//        System.out.println(hts);
+        parser.parse(stream, handler, metadata, context);
+        String hts = handler.toString();
      
     }
 
