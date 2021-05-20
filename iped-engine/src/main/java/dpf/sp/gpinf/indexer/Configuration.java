@@ -32,8 +32,14 @@ import org.slf4j.LoggerFactory;
 
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
+import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
+import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
@@ -205,11 +211,8 @@ public class Configuration {
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
 
-        LocaleConfig localeConfig = new LocaleConfig();
-        configManager.addObject(localeConfig);
-
-        PluginConfig pluginConfig = new PluginConfig();
-        configManager.addObject(pluginConfig);
+        configManager.addObject(new LocaleConfig());
+        configManager.addObject(new PluginConfig());
 
         loadLibsAndToolPaths();
 
@@ -221,26 +224,19 @@ public class Configuration {
             return;
         }
 
-        LocalConfig localConfig = new LocalConfig();
-        configManager.addObject(localConfig);
-
-        IPEDConfig ipedConfig = new IPEDConfig();
-        configManager.addObject(ipedConfig);
-
-        OCRConfig ocrConfig = new OCRConfig();
-        configManager.addObject(ocrConfig);
-
-        AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
-        configManager.addObject(advancedConfig);
-
-        PDFToImageConfig pdfToImageConfig = new PDFToImageConfig();
-        configManager.addObject(pdfToImageConfig);
-
-        SleuthKitConfig sleuthKitConfig = new SleuthKitConfig();
-        configManager.addObject(sleuthKitConfig);
-
-        UFEDReaderConfig urConfig = new UFEDReaderConfig();
-        configManager.addObject(urConfig);
+        configManager.addObject(new LocalConfig());
+        configManager.addObject(new IPEDConfig());
+        configManager.addObject(new OCRConfig());
+        configManager.addObject(new AdvancedIPEDConfig());
+        configManager.addObject(new PDFToImageConfig());
+        configManager.addObject(new SleuthKitConfig());
+        configManager.addObject(new UFEDReaderConfig());
+        configManager.addObject(new HashTaskConfig());
+        configManager.addObject(new AudioTranscriptConfig());
+        configManager.addObject(new CategoryConfig());
+        configManager.addObject(new CategoryToExpandConfig());
+        configManager.addObject(new CategoryToExportConfig());
+        configManager.addObject(new DocThumbTaskConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração
