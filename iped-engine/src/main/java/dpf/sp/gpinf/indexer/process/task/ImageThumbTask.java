@@ -56,6 +56,10 @@ public class ImageThumbTask extends ThumbTask {
 
     private int thumbSize;
 
+    public ImageThumbTaskConfig getImageThumbConfig() {
+        return imgThumbConfig;
+    }
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
