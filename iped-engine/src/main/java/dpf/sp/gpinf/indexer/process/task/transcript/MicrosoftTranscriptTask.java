@@ -32,13 +32,9 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(MicrosoftTranscriptTask.class);
 
-    private static final String REGION_KEY = "serviceRegion";
-
     private static final String SUBSCRIPTION_KEY = "azureSubscriptionKey";
 
-    private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
-
-    private static Semaphore maxRequests;
+    private static Semaphore maxConcurrentRequests;
 
     private SpeechConfig config;
 
@@ -47,11 +43,9 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
 
         super.init(confParams, confDir);
 
-        if (!isEnabled) {
+        if (!transcriptConfig.isEnabled()) {
             return;
         }
-
-        String serviceRegion = props.getProperty(REGION_KEY).trim();
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         String speechSubscriptionKey = args.getExtraParams().get(SUBSCRIPTION_KEY);
@@ -60,15 +54,14 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
                     "You must pass -X" + SUBSCRIPTION_KEY + "=XXX param to enable audio transcription.");
         }
 
-        config = SpeechConfig.fromSubscription(speechSubscriptionKey, serviceRegion);
+        config = SpeechConfig.fromSubscription(speechSubscriptionKey, transcriptConfig.getServiceRegion());
 
         config.setProfanity(ProfanityOption.Raw);
 
         config.setOutputFormat(OutputFormat.Detailed);
 
-        if (maxRequests == null) {
-            int max = Integer.valueOf(props.getProperty(MAX_REQUESTS_KEY).trim());
-            maxRequests = new Semaphore(max);
+        if (maxConcurrentRequests == null) {
+            maxConcurrentRequests = new Semaphore(transcriptConfig.getMaxConcurrentRequests());
         }
     }
 
@@ -85,9 +78,10 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
         TextAndScore textAndScore = null;
         while (!ok.get() && ++tries <= 3) {
             ok.set(true);
-            AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig.fromLanguages(languages);
+            AutoDetectSourceLanguageConfig langConfig = AutoDetectSourceLanguageConfig
+                    .fromLanguages(transcriptConfig.getLanguages());
             AudioConfig audioInput = AudioConfig.fromWavFileInput(tmpFile.getAbsolutePath());
-            maxRequests.acquire();
+            maxConcurrentRequests.acquire();
             try (SpeechRecognizer recognizer = new SpeechRecognizer(config, langConfig, audioInput)) {
 
                 Semaphore stopTranslationWithFileSemaphore = new Semaphore(0);
@@ -144,7 +138,8 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
 
                 // Waits for completion.
                 boolean acquired = stopTranslationWithFileSemaphore.tryAcquire(
-                        MIN_TIMEOUT + (timeoutPerSec * tmpFile.length() / WAV_BYTES_PER_SEC), TimeUnit.SECONDS);
+                        MIN_TIMEOUT + (transcriptConfig.getTimeoutPerSec() * tmpFile.length() / WAV_BYTES_PER_SEC),
+                        TimeUnit.SECONDS);
                 if (!acquired) {
                     ok.set(false);
                     throw new TimeoutException("Timeout waiting for transcription.");
@@ -164,7 +159,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
                 LOGGER.warn("", ex);
 
             } finally {
-                maxRequests.release();
+                maxConcurrentRequests.release();
             }
         }
 

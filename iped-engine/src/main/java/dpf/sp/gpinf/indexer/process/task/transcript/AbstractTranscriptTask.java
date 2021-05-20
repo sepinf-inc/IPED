@@ -9,8 +9,6 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
@@ -21,30 +19,17 @@ import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AbstractTranscriptTask.class);
-
-    protected static final String ENABLE_KEY = "enableAudioTranscription";
-
-    static final String CONF_FILE = "AudioTranscriptConfig.txt";
-
-    private static final String TIMEOUT_KEY = "timeout";
-
-    private static final String LANG_KEY = "language";
-
-    private static final String LANG_VAL_AUTO = "auto";
-
-    private static final String MIMES_KEY = "mimesToProcess";
-
-    private static final String CONVERT_CMD_KEY = "convertCommand";
 
     private static final String TEST_FFMPEG = "ffmpeg -version";
 
@@ -66,25 +51,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static boolean ffmpegDetected = false;
 
-    protected UTF8Properties props = new UTF8Properties();
-
-    protected List<String> languages = new ArrayList<>();
-
-    protected int timeoutPerSec;
-
-    private List<String> mimesToProcess = new ArrayList<>();
-
-    private String convertCmd;
+    protected AudioTranscriptConfig transcriptConfig;
 
     private Connection conn;
-
-    protected boolean isEnabled = false;
 
     protected IItem evidence;
 
     @Override
     public boolean isEnabled() {
-        return this.isEnabled;
+        return transcriptConfig.isEnabled();
     }
 
     protected boolean isToProcess(IItem evidence) {
@@ -94,7 +69,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return false;
         }
         boolean supported = false;
-        for (String mime : mimesToProcess) {
+        for (String mime : transcriptConfig.getMimesToProcess()) {
             if (evidence.getMediaType().toString().startsWith(mime)) {
                 supported = true;
                 break;
@@ -190,33 +165,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        String enabled = confParams.getProperty(ENABLE_KEY);
-        if (enabled != null) {
-            isEnabled = Boolean.valueOf(enabled.trim());
-        }
-        if (!isEnabled) {
-            return;
-        }
-
-        props.load(new File(confDir, CONF_FILE));
-
-        String langs = props.getProperty(LANG_KEY).trim();
-        if (LANG_VAL_AUTO.equalsIgnoreCase(langs)) {
-            languages.add(System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP));
-        } else {
-            for (String lang : langs.split(";")) {
-                languages.add(lang.trim());
-            }
-        }
-
-        convertCmd = props.getProperty(CONVERT_CMD_KEY).trim();
-
-        String mimes = props.getProperty(MIMES_KEY).trim();
-        for (String mime : mimes.split(";")) {
-            mimesToProcess.add(mime.trim());
-        }
-
-        timeoutPerSec = Integer.valueOf(props.getProperty(TIMEOUT_KEY).trim());
+        transcriptConfig = (AudioTranscriptConfig) ConfigurationManager.getInstance()
+                .findObjects(AudioTranscriptConfig.class).iterator().next();
 
         if (conn == null) {
             createConnection();
@@ -231,7 +181,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         File tmpFile = File.createTempFile("iped", ".wav");
         Files.delete(tmpFile.toPath());
         ProcessBuilder pb = new ProcessBuilder();
-        String[] cmd = convertCmd.split(" ");
+        String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
             cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + VideoThumbTask.mplayerWin);
         }
