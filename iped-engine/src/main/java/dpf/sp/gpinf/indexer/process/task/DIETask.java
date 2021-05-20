@@ -20,6 +20,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -92,6 +94,8 @@ public class DIETask extends AbstractTask {
 
     private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
 
+    private boolean extractThumb;
+
     @Override
     public boolean isEnabled() {
         return taskEnabled;
@@ -158,6 +162,10 @@ public class DIETask extends AbstractTask {
                 init.set(true);
             }
         }
+
+        ImageThumbTaskConfig imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(ImageThumbTaskConfig.class).iterator().next();
+        extractThumb = imgThumbConfig.isExtractThumb();
     }
 
     /**
@@ -321,7 +329,7 @@ public class DIETask extends AbstractTask {
     private BufferedImage getBufferedImage(IItem evidence) {
         BufferedImage img = null;
         try {
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
+            if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);

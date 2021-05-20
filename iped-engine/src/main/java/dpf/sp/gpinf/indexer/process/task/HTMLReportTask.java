@@ -68,6 +68,7 @@ import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -177,6 +178,8 @@ public class HTMLReportTask extends AbstractTask {
 
     private HtmlReportTaskConfig htmlReportConfig;
 
+    private boolean extractThumb;
+
     private static Collator getCollator() {
         LocaleConfig localeConfig = (LocaleConfig) ConfigurationManager.getInstance().findObjects(LocaleConfig.class)
                 .iterator().next();
@@ -244,6 +247,10 @@ public class HTMLReportTask extends AbstractTask {
             }
             init.set(true);
         }
+
+        ImageThumbTaskConfig imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(ImageThumbTaskConfig.class).iterator().next();
+        extractThumb = imgThumbConfig.isExtractThumb();
     }
 
     /**
@@ -810,7 +817,7 @@ public class HTMLReportTask extends AbstractTask {
                 return;
             }
             BufferedImage img = null;
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
+            if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
                     img = ImageUtil.getThumb(stream);

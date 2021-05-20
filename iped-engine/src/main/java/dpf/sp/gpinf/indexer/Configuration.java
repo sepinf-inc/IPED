@@ -43,6 +43,7 @@ import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
@@ -241,6 +242,7 @@ public class Configuration {
         configManager.addObject(new DocThumbTaskConfig());
         configManager.addObject(new ElasticSearchTaskConfig());
         configManager.addObject(new HtmlReportTaskConfig());
+        configManager.addObject(new ImageThumbTaskConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração

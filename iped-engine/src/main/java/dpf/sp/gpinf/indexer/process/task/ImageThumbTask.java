@@ -25,104 +25,59 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
 public class ImageThumbTask extends ThumbTask {
 
-    private static final String enableProperty = "enableImageThumbs"; //$NON-NLS-1$
-
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
-
-    private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
     
     private static final int TIMEOUT_DELTA = 5;
 
     private static final int samplingRatio = 3;
 
-    public static boolean extractThumb = true;
+    private static final int numStats = 22;
 
-    private static ExecutorService executor = Executors.newCachedThreadPool();
-
-    public int thumbSize = 160;
-
-    public int galleryThreads = 1;
-
-    public boolean logGalleryRendering = false;
-
-    private boolean taskEnabled = false;
-
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
 
     private static final Map<String, long[]> performanceStatsPerType = new HashMap<String, long[]>();
     private static final AtomicBoolean logInit = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
-    private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
-    private static final int numStats = 22;
+
+    private static ExecutorService executor = Executors.newCachedThreadPool();
+
+    private ImageThumbTaskConfig imgThumbConfig;
+
+    private GraphicsMagicConverter graphicsMagicConverter;
+
+    private int thumbSize;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
-
-        UTF8Properties properties = new UTF8Properties();
-        File confFile = new File(confDir, TASK_CONFIG_FILE);
-        properties.load(confFile);
-
-        String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            if (value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
-                GraphicsMagicConverter.setUseGM(true);
-            }
-        } else {
-            GraphicsMagicConverter.setEnabled(false);
-        }
+        imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(ImageThumbTaskConfig.class).iterator().next();
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
         }
+        GraphicsMagicConverter.setEnabled(imgThumbConfig.isUseGraphicsMagick());
+        GraphicsMagicConverter.setMinTimeout(imgThumbConfig.getMinTimeout());
+        GraphicsMagicConverter.setTimeoutPerMB(imgThumbConfig.getTimeoutPerMB());
 
-        value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setMinTimeout(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("imgConvTimeoutPerMB"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setTimeoutPerMB(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
-        if (value != null && !value.trim().equalsIgnoreCase("default")) { //$NON-NLS-1$
-            galleryThreads = Integer.valueOf(value.trim());
-        } else {
-            galleryThreads = Runtime.getRuntime().availableProcessors();
-        }
-
-        value = properties.getProperty("imgThumbSize"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            thumbSize = Integer.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("extractThumb"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            extractThumb = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("logGalleryRendering"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            logGalleryRendering = Boolean.valueOf(value.trim());
-        }
         graphicsMagicConverter = new GraphicsMagicConverter(executor);
 
+        thumbSize = imgThumbConfig.getThumbSize();
+
         synchronized (logInit) {
-            if (taskEnabled && !logInit.get()) {
+            if (isEnabled() && !logInit.get()) {
                 logInit.set(true);
                 logger.info("Thumb Size: " + thumbSize); //$NON-NLS-1$
-                logger.info("Extract Thumb: " + extractThumb); //$NON-NLS-1$
+                logger.info("Extract Thumb: " + imgThumbConfig.isExtractThumb()); //$NON-NLS-1$
             }
         }
 
@@ -137,7 +92,7 @@ public class ImageThumbTask extends ThumbTask {
 
     @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return imgThumbConfig.isTaskEnabled();
     }
 
     @Override
@@ -147,7 +102,7 @@ public class ImageThumbTask extends ThumbTask {
 
         graphicsMagicConverter.close();
         synchronized (finished) {
-            if (taskEnabled && !finished.get()) {
+            if (isEnabled() && !finished.get()) {
                 finished.set(true);
                 if (!performanceStatsPerType.isEmpty()) {
                     List<String> types = new ArrayList<String>(performanceStatsPerType.keySet());
@@ -217,7 +172,7 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!isEnabled() || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
@@ -279,7 +234,7 @@ public class ImageThumbTask extends ThumbTask {
             try (BufferedInputStream stream = evidence.getBufferedStream()) {
                 dimension = ImageUtil.getImageFileDimension(stream);
             }
-            if (extractThumb && isJpeg(evidence)) { // $NON-NLS-1$
+            if (imgThumbConfig.isExtractThumb() && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
