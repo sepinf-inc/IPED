@@ -236,6 +236,7 @@ public class Manager {
             finalizarIndexacao();
 
         } catch (Exception e) {
+            e.printStackTrace();
             interromperIndexacao();
             throw e;
 

@@ -685,7 +685,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(Properties confProps, File confDir) {
 
         ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
 

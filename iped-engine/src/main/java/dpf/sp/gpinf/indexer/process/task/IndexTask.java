@@ -206,6 +206,7 @@ public class IndexTask extends AbstractTask {
     private ParseContext getTikaContext(IItem evidence) {
         ParsingTask pt = new ParsingTask(evidence, this.autoParser);
         pt.setWorker(worker);
+        pt.init(null, null);
         ParseContext context = pt.getTikaContext();
         // this is to not create new items while indexing
         pt.setExtractEmbedded(false);

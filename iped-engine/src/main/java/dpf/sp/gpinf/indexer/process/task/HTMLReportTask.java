@@ -200,11 +200,11 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
+
+        htmlReportConfig = (HtmlReportTaskConfig) ConfigurationManager.getInstance()
+                .findObjects(HtmlReportTaskConfig.class).iterator().next();
+
         if (!init.get()) {
-
-            htmlReportConfig = (HtmlReportTaskConfig) ConfigurationManager.getInstance()
-                    .findObjects(HtmlReportTaskConfig.class).iterator().next();
-
             if (htmlReportConfig.isEnabled()) {
                 logger.info("Task enabled."); //$NON-NLS-1$
             } else {

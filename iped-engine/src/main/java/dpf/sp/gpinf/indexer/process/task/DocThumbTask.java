@@ -78,7 +78,6 @@ public class DocThumbTask extends ThumbTask {
                 docThumbsConfig = (DocThumbTaskConfig) ConfigurationManager.getInstance()
                         .findObjects(DocThumbTaskConfig.class).iterator().next();
                 if (docThumbsConfig.isEnabled()) {
-
                     logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
                     logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));
                     if (docThumbsConfig.isLoEnabled()) {
@@ -98,7 +97,7 @@ public class DocThumbTask extends ThumbTask {
                 init.set(true);
             }
         }
-        if (docThumbsConfig.isLoEnabled()) {
+        if (docThumbsConfig.isEnabled() && docThumbsConfig.isLoEnabled()) {
             loOutDir = Files.createTempDirectory("doc-thumb").toFile();
             loOutPath = loOutDir.getAbsolutePath().replace('\\', '/');
             if (System.getProperty("os.name").toLowerCase().contains("windows")) {
