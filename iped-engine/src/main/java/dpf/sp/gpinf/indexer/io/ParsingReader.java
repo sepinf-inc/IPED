@@ -144,8 +144,7 @@ public class ParsingReader extends Reader {
                 length = Long.parseLong(lengthStr);
             }
         }
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         timeOutBySize = (int) (length / 1000000) * advancedConfig.getTimeOutPerMB();
 
         pipedReader = new FastPipedReader(128 * 1024, timeOutBySize);

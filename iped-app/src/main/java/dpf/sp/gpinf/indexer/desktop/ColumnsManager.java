@@ -203,8 +203,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private ColumnsManager() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         autoManageCols = advancedConfig.isAutoManageCols();
 
         dialog.setBounds(new Rectangle(400, 400));

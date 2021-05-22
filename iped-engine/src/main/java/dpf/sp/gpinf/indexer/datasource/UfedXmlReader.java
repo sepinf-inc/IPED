@@ -206,8 +206,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     private void configureParsers() {
 
-        UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
-                .findObjects(UFEDReaderConfig.class).iterator().next();
+        UFEDReaderConfig ufedReaderConfig = ConfigurationManager.findObject(UFEDReaderConfig.class);
 
         // TODO enable TelegramParser for UFDR in next major release
         if (!TelegramParser.isEnabledForUfdr()) {

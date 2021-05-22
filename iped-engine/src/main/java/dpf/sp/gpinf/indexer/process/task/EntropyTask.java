@@ -30,8 +30,7 @@ public class EntropyTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         return advancedConfig.isEntropyTest();
     }
 

@@ -263,9 +263,8 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
             parser.setPointsConfigMap(getPointsConfigMap());
 
-            // remove acentos, pois StandardQueryParser não normaliza wildcardQueries
-            AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
+            AdvancedIPEDConfig advConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
             if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
                 texto = IndexItem.normalize(texto, false);
             }

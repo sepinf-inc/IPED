@@ -45,8 +45,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
 
         if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment()
                 && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())

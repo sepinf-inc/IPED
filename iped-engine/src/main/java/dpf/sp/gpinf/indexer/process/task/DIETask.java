@@ -163,8 +163,7 @@ public class DIETask extends AbstractTask {
             }
         }
 
-        ImageThumbTaskConfig imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(ImageThumbTaskConfig.class).iterator().next();
+        ImageThumbTaskConfig imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
         extractThumb = imgThumbConfig.isExtractThumb();
     }
 

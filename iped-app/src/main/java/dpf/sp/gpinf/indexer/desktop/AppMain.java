@@ -174,8 +174,7 @@ public class AppMain {
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance()
-                        .findObjects(PluginConfig.class).iterator().next();
+                PluginConfig pluginConfig = ConfigurationManager.findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
                 jars.add(Configuration.getInstance().tskJarFile);
 

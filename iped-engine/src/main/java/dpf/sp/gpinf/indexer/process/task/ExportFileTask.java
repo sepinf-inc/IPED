@@ -134,8 +134,7 @@ public class ExportFileTask extends AbstractTask {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
+        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
         if (!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
@@ -706,11 +705,9 @@ public class ExportFileTask extends AbstractTask {
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
 
-        exportConfig = (CategoryToExportConfig) ConfigurationManager.getInstance()
-                .findObjects(CategoryToExportConfig.class).iterator().next();
+        exportConfig = ConfigurationManager.findObject(CategoryToExportConfig.class);
 
-        HashTaskConfig hashConfig = (HashTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(HashTaskConfig.class).iterator().next();
+        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
 
         if (hasCategoryToExtract()) {
             caseData.setContainsReport(true);

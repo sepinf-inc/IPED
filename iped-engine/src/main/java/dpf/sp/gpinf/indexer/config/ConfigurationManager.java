@@ -85,6 +85,15 @@ public class ConfigurationManager implements ObjectManager<Configurable> {
         return result;
     }
 
+    public static <T extends Configurable> T findObject(Class<? extends Configurable> clazz) {
+        for (Configurable configurable : singleton.loadedConfigurables.keySet()) {
+            if (configurable.getClass().equals(clazz)) {
+                return (T) configurable;
+            }
+        }
+        return null;
+    }
+
     @Override
     public Set<Configurable> findObjects(String className) {
         Set<Configurable> result = new HashSet<Configurable>();

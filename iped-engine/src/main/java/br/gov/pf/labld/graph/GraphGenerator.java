@@ -65,8 +65,7 @@ public class GraphGenerator {
 
     private boolean importDB(ImportListener listener, File output, File... input) {
         try {
-            LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                    .iterator().next();
+            LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
             GraphImportRunner runner = new GraphImportRunner(listener, input);
             runner.run(output, GraphTask.DB_NAME, localConfig.isOutputOnSSD());
             return true;

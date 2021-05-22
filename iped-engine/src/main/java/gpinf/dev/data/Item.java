@@ -660,8 +660,7 @@ public class Item implements ISleuthKitItem {
 
         if (stream == null && sleuthFile != null) {
             SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-            SleuthKitConfig tskConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
-                    .findObjects(SleuthKitConfig.class).iterator().next();
+            SleuthKitConfig tskConfig = ConfigurationManager.findObject(SleuthKitConfig.class);
             if (sleuthcase == null || !tskConfig.isRobustImageReading()) {
                 stream = new SleuthkitInputStream(sleuthFile);
             } else {

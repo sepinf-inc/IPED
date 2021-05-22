@@ -181,8 +181,7 @@ public class HTMLReportTask extends AbstractTask {
     private boolean extractThumb;
 
     private static Collator getCollator() {
-        LocaleConfig localeConfig = (LocaleConfig) ConfigurationManager.getInstance().findObjects(LocaleConfig.class)
-                .iterator().next();
+        LocaleConfig localeConfig = ConfigurationManager.findObject(LocaleConfig.class);
 
         Collator c = Collator.getInstance(localeConfig.getLocale());
         c.setStrength(Collator.TERTIARY);
@@ -201,8 +200,7 @@ public class HTMLReportTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        htmlReportConfig = (HtmlReportTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(HtmlReportTaskConfig.class).iterator().next();
+        htmlReportConfig = ConfigurationManager.findObject(HtmlReportTaskConfig.class);
 
         if (!init.get()) {
             if (htmlReportConfig.isEnabled()) {
@@ -248,8 +246,7 @@ public class HTMLReportTask extends AbstractTask {
             init.set(true);
         }
 
-        ImageThumbTaskConfig imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(ImageThumbTaskConfig.class).iterator().next();
+        ImageThumbTaskConfig imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
         extractThumb = imgThumbConfig.isExtractThumb();
     }
 
@@ -276,8 +273,7 @@ public class HTMLReportTask extends AbstractTask {
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
             if (!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = (LocaleConfig) ConfigurationManager.getInstance()
-                        .findObjects(LocaleConfig.class).iterator().next();
+                LocaleConfig localeConf = ConfigurationManager.findObject(LocaleConfig.class);
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
@@ -577,8 +573,7 @@ public class HTMLReportTask extends AbstractTask {
         });
         final CustomComparator comparator = new CustomComparator();
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];
@@ -610,8 +605,7 @@ public class HTMLReportTask extends AbstractTask {
         final int tot = regs.size();
         final int numPages = (tot + htmlReportConfig.getItemsPerPage() - 1) / htmlReportConfig.getItemsPerPage();
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];

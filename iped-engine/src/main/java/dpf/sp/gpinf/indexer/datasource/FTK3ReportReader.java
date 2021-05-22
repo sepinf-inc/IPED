@@ -57,8 +57,7 @@ public class FTK3ReportReader extends DataSourceReader {
     public int read(File report) throws Exception {
 
         // Configuração para não expandir containers
-        CategoryToExpandConfig expandConfig = (CategoryToExpandConfig) ConfigurationManager.getInstance()
-                .findObjects(CategoryToExpandConfig.class).iterator().next();
+        CategoryToExpandConfig expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
         expandConfig.setExpandContainers(false);
 
         CarverTask.setEnabled(false);

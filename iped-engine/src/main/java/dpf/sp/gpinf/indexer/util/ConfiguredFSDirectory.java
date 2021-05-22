@@ -16,8 +16,7 @@ public class ConfiguredFSDirectory {
     private static Logger LOGGER = LoggerFactory.getLogger(ConfiguredFSDirectory.class);
 
     public static FSDirectory open(File indexDir) throws IOException {
-        AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
 
         FSDirectory result;
         if (advConfig.isUseNIOFSDirectory()) {

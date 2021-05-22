@@ -22,8 +22,7 @@ public abstract class ThumbTask extends AbstractTask {
     protected File getThumbFile(IItem evidence) throws Exception {
         File thumbFile = null;
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
+        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
         boolean storeThumbsInDb = !caseData.containsReport() || !ipedConfig.isHtmlReportEnabled();
         if (storeThumbsInDb) {
             return null;

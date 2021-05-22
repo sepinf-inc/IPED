@@ -221,8 +221,7 @@ public class CarverTask extends BaseCarveTask {
 
         enableCarving = ctConfig.getCarvingEnabled();
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
+        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
         if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 

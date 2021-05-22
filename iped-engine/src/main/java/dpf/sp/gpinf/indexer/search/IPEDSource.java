@@ -187,8 +187,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 tskCaseList.add(sleuthCase);
             }
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
             if (advancedConfig.isPreOpenImagesOnSleuth() && iw == null) {
                 TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, advancedConfig.isOpenImagesCacheWarmUpEnabled(),
                         advancedConfig.getOpenImagesCacheWarmUpThreads());
@@ -350,8 +349,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     protected void openSearcher() {
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         if (advancedConfig.getSearchThreads() > 1) {
             searchExecutorService = Executors.newFixedThreadPool(advancedConfig.getSearchThreads());
             searcher = new IndexSearcher(reader, searchExecutorService);

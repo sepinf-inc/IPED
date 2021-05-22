@@ -72,8 +72,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
         } else {
-            OCRConfig ocrconfig = (OCRConfig) ConfigurationManager.getInstance().findObjects(OCRConfig.class).iterator()
-                    .next();
+            OCRConfig ocrconfig = ConfigurationManager.findObject(OCRConfig.class);
             if (ocrconfig.isOCREnabled() == null)
                 throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
                         + AdvancedIPEDConfig.class.getSimpleName());

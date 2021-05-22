@@ -165,8 +165,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        transcriptConfig = (AudioTranscriptConfig) ConfigurationManager.getInstance()
-                .findObjects(AudioTranscriptConfig.class).iterator().next();
+        transcriptConfig = ConfigurationManager.findObject(AudioTranscriptConfig.class);
 
         if (conn == null) {
             createConnection();

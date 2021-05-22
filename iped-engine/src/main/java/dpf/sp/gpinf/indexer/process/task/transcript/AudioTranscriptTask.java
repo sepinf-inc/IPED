@@ -14,8 +14,7 @@ public class AudioTranscriptTask extends AbstractTask {
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-        AudioTranscriptConfig transcriptConfig = (AudioTranscriptConfig) ConfigurationManager.getInstance()
-                .findObjects(AudioTranscriptConfig.class).iterator().next();
+        AudioTranscriptConfig transcriptConfig = ConfigurationManager.findObject(AudioTranscriptConfig.class);
 
         impl = (AbstractTranscriptTask) Class.forName(transcriptConfig.getClassName()).newInstance();
         impl.setWorker(worker);

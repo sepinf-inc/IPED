@@ -307,8 +307,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            SleuthKitConfig sleuthKitConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
-                    .findObjects(SleuthKitConfig.class).iterator().next();
+            SleuthKitConfig sleuthKitConfig = ConfigurationManager.findObject(SleuthKitConfig.class);
             if (sleuthKitConfig.isRobustImageReading())
                 Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
 
@@ -707,8 +706,7 @@ public class SleuthkitReader extends DataSourceReader {
             return addEvidenceFile(content);
         }
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
+        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
         if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
 
@@ -720,8 +718,7 @@ public class SleuthkitReader extends DataSourceReader {
             // processamento caso haja lock de escrita no sqlite ao adicionar outra evidênca
             absFile.getRanges();
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
             long fragSize = advancedConfig.getUnallocatedFragSize();
             int fragNum = 0;
             for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {
@@ -793,8 +790,7 @@ public class SleuthkitReader extends DataSourceReader {
                     return null;
             }
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
             if (advancedConfig.getMinOrphanSizeToIgnore() != -1
                     && absFile.getSize() >= advancedConfig.getMinOrphanSizeToIgnore())
                 return null;

@@ -106,8 +106,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
 
-                AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                        .findObjects(AdvancedIPEDConfig.class).iterator().next();
+                AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
                 autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
                 autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
 

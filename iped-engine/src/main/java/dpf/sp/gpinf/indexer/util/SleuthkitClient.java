@@ -48,8 +48,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     static AtomicInteger idStart = new AtomicInteger();
 
     static {
-        SleuthKitConfig config = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class)
-                .iterator().next();
+        SleuthKitConfig config = ConfigurationManager.findObject(SleuthKitConfig.class);
         NUM_TSK_SERVERS = config.getNumImageReaders();
     }
 
@@ -156,8 +155,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     private void start() {
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         String pipePath = localConfig.getIndexerTemp() + "/pipe-" + id; //$NON-NLS-1$
 
         String classpath = Configuration.getInstance().appRoot + "/lib/*"; //$NON-NLS-1$

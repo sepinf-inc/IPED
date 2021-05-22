@@ -60,8 +60,7 @@ public class AppAnalyzer {
         analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
         StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(false);
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
         defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
         defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());

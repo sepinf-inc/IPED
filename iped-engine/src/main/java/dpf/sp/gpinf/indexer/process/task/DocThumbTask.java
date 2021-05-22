@@ -75,8 +75,7 @@ public class DocThumbTask extends ThumbTask {
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                docThumbsConfig = (DocThumbTaskConfig) ConfigurationManager.getInstance()
-                        .findObjects(DocThumbTaskConfig.class).iterator().next();
+                docThumbsConfig = ConfigurationManager.findObject(DocThumbTaskConfig.class);
                 if (docThumbsConfig.isEnabled()) {
                     logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
                     logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));

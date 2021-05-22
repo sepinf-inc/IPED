@@ -43,8 +43,7 @@ public class SetCategoryTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File configPath) throws Exception {
-        categoryConfig = (CategoryConfig) ConfigurationManager.getInstance()
-                .findObjects(CategoryConfig.class).iterator().next();
+        categoryConfig = ConfigurationManager.findObject(CategoryConfig.class);
     }
 
     @Override

@@ -72,8 +72,7 @@ public class HashTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        HashTaskConfig hashConfig = (HashTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(HashTaskConfig.class).iterator().next();
+        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
 
         for (String algorithm : hashConfig.getAlgorithms()) {
             MessageDigest digest = null;

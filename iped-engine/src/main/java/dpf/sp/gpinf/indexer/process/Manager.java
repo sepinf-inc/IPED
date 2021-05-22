@@ -149,10 +149,8 @@ public class Manager {
 
     public Manager(List<File> sources, File output, File palavras) {
 
-        this.localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator()
-                .next();
-        this.advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        this.localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        this.advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;

@@ -224,8 +224,7 @@ public class Statistics {
                 totalTime += worker.tasks.get(i).getTaskTime();
             }
         }
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         totalTime = totalTime / (1000000 * localConfig.getNumThreads());
         for (int i = 0; i < taskTimes.length; i++) {
             long sec = taskTimes[i] / (1000000 * localConfig.getNumThreads());
@@ -268,8 +267,7 @@ public class Statistics {
             LOGGER.error("Alert: Processed " + processed + " items of " + discovered); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        CategoryToExportConfig exportConfig = (CategoryToExportConfig) ConfigurationManager.getInstance()
-                .findObjects(CategoryToExportConfig.class).iterator().next();
+        CategoryToExportConfig exportConfig = ConfigurationManager.findObject(CategoryToExportConfig.class);
 
         if (!(exportConfig.hasCategoryToExport() || RegexTask.isExtractByKeywordsOn())) {
             if (indexed != discovered - carvedIgnored - ignored) {
@@ -286,8 +284,7 @@ public class Statistics {
     }
 
     public void printSystemInfo() throws Exception {
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         LOGGER.info("Operating System: {}", System.getProperty("os.name")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Java Version: {}", System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
         String warn = Util.getJavaVersionWarn();

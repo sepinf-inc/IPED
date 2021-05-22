@@ -272,8 +272,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             times.put(parserName, time);
         }
 
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < advancedConfig.getMinItemSizeToFragment())
                         || IndexerDefaultParser.isSpecificParser(parser))) {
@@ -338,8 +337,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.startBackgroundParsing();
 
         try {
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
 
             TextCache textCache = new TextCache();
             textCache.setEnableDiskCache(advancedConfig.isStoreTextCacheOnDisk());
@@ -687,10 +685,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     @Override
     public void init(Properties confProps, File confDir) {
 
-        ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
 
-        expandConfig = (CategoryToExpandConfig) ConfigurationManager.getInstance()
-                .findObjects(CategoryToExpandConfig.class).iterator().next();
+        expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
 
     }
 

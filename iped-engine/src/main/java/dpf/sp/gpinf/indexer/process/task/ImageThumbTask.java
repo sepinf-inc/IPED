@@ -63,8 +63,7 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        imgThumbConfig = (ImageThumbTaskConfig) ConfigurationManager.getInstance()
-                .findObjects(ImageThumbTaskConfig.class).iterator().next();
+        imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);

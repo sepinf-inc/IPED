@@ -71,7 +71,7 @@ public class MakePreviewTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator().next();
+        ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
 
         File config = new File(confDir, CONFIG_FILE_NAME);
         String content = Util.readUTF8Content(config);
@@ -163,8 +163,7 @@ public class MakePreviewTask extends AbstractTask {
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
 
             // ForkServer timeout
             if (evidence.getLength() != null) {
