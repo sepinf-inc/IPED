@@ -35,11 +35,12 @@ import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
-import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
@@ -238,11 +239,12 @@ public class Configuration {
         configManager.addObject(new AudioTranscriptConfig());
         configManager.addObject(new CategoryConfig());
         configManager.addObject(new CategoryToExpandConfig());
-        configManager.addObject(new CategoryToExportConfig());
         configManager.addObject(new DocThumbTaskConfig());
         configManager.addObject(new ElasticSearchTaskConfig());
         configManager.addObject(new HtmlReportTaskConfig());
         configManager.addObject(new ImageThumbTaskConfig());
+        configManager.addObject(new ExportByCategoriesConfig());
+        configManager.addObject(new ExportByKeywordsConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração

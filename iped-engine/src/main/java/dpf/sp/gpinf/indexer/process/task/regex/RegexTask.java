@@ -21,6 +21,8 @@ import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -32,8 +34,6 @@ public class RegexTask extends AbstractTask {
     public static final String REGEX_PREFIX = "Regex:"; //$NON-NLS-1$
 
     private static final String REGEX_CONFIG = "RegexConfig.txt"; //$NON-NLS-1$
-
-    private static final String KEYWORDS_CONFIG = "KeywordsToExport.txt"; //$NON-NLS-1$
 
     private static final String KEYWORDS_NAME = "KEYWORDS"; //$NON-NLS-1$
 
@@ -47,8 +47,6 @@ public class RegexTask extends AbstractTask {
 
     private static Regex regexFull;
 
-    private static volatile boolean extractByKeywords = false;
-
     private static boolean formatRegexMatches = false;
 
     private boolean enabled = true;
@@ -56,10 +54,6 @@ public class RegexTask extends AbstractTask {
     private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
-
-    public static boolean isExtractByKeywordsOn() {
-        return extractByKeywords;
-    }
 
     class Regex {
 
@@ -161,17 +155,11 @@ public class RegexTask extends AbstractTask {
                 }
             }
 
-            confFile = new File(confDir, KEYWORDS_CONFIG);
-            content = Util.readUTF8Content(confFile);
-            for (String line : content.split("\n")) { //$NON-NLS-1$
-                line = line.trim();
-                if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
-                    continue;
-                else {
-                    String regex = replace(line);
+            ExportByKeywordsConfig exportConfig = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
+            if (exportConfig.isEnabled()) {
+                for (String keyword : exportConfig.getKeywords()) {
+                    String regex = replace(keyword);
                     regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
-                    extractByKeywords = true;
-                    caseData.setContainsReport(true);
                 }
             }
 

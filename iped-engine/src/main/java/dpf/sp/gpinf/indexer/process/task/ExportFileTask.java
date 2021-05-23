@@ -60,7 +60,8 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
@@ -112,7 +113,8 @@ public class ExportFileTask extends AbstractTask {
     private File extractDir;
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
-    private CategoryToExportConfig exportConfig;
+    private ExportByCategoriesConfig exportByCategories;
+    private ExportByKeywordsConfig exportByKeywords;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -212,15 +214,15 @@ public class ExportFileTask extends AbstractTask {
         return subDir;
     }
 
-    public boolean hasCategoryToExtract() {
-        return exportConfig.hasCategoryToExport();
+    public boolean isAutomaticExportEnabled() {
+        return exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled();
     }
 
     private boolean isToBeExtracted(IItem evidence) {
 
         boolean result = false;
         for (String category : evidence.getCategorySet()) {
-            if (exportConfig.isToExportCategory(category)) {
+            if (exportByCategories.isToExportCategory(category)) {
                 result = true;
                 break;
             }
@@ -251,11 +253,9 @@ public class ExportFileTask extends AbstractTask {
             copyViewFile(evidence);
         }
 
-        boolean isAutomaticFileExtractionOn = hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn();
-
         // Renomeia subitem caso deva ser exportado
         if (!caseData.isIpedReport() && evidence.isSubItem()
-                && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticFileExtractionOn)) {
+                && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticExportEnabled())) {
 
             evidence.setToExtract(true);
             if (!doNotExport(evidence) && !MinIOTask.isTaskEnabled()) {
@@ -268,7 +268,7 @@ public class ExportFileTask extends AbstractTask {
             incItensExtracted();
         }
 
-        if (isAutomaticFileExtractionOn && !evidence.isToExtract()) {
+        if (isAutomaticExportEnabled() && !evidence.isToExtract()) {
             evidence.setAddToCase(false);
         }
 
@@ -705,14 +705,13 @@ public class ExportFileTask extends AbstractTask {
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
 
-        exportConfig = ConfigurationManager.findObject(CategoryToExportConfig.class);
-
-        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
-
-        if (hasCategoryToExtract()) {
+        exportByCategories = ConfigurationManager.findObject(ExportByCategoriesConfig.class);
+        exportByKeywords = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
+        if (isAutomaticExportEnabled()) {
             caseData.setContainsReport(true);
         }
 
+        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
         if (!hashConfig.getAlgorithms().isEmpty()) {
             computeHash = true;
         }

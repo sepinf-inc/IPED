@@ -7,7 +7,7 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
-public class CategoryToExportConfig extends AbstractPropertiesConfigurable {
+public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable {
 
     public static final String CONFIG_FILE = "CategoriesToExport.txt"; //$NON-NLS-1$
     

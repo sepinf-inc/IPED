@@ -22,7 +22,8 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.config.CategoryToExportConfig;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -267,9 +268,10 @@ public class Statistics {
             LOGGER.error("Alert: Processed " + processed + " items of " + discovered); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        CategoryToExportConfig exportConfig = ConfigurationManager.findObject(CategoryToExportConfig.class);
+        ExportByCategoriesConfig exportByCategories = ConfigurationManager.findObject(ExportByCategoriesConfig.class);
+        ExportByKeywordsConfig exportByKeywords = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
 
-        if (!(exportConfig.hasCategoryToExport() || RegexTask.isExtractByKeywordsOn())) {
+        if (!(exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled())) {
             if (indexed != discovered - carvedIgnored - ignored) {
                 LOGGER.error("Alert: Indexed " + indexed + " items of " + (discovered - carvedIgnored - ignored)); //$NON-NLS-1$ //$NON-NLS-2$
             }
