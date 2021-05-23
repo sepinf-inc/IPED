@@ -107,11 +107,14 @@ public class RegexTask extends AbstractTask {
     private static Automaton ignoreDiacritics(Automaton a) {
         Map<Character, Set<Character>> map = new HashMap<Character, Set<Character>>();
         for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {
-            Set<Character> ws = new HashSet<Character>();
             char[] input = { c1 };
             char[] output = new char[1];
             FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
             char c2 = output[0];
+            Set<Character> ws = map.get(c2);
+            if (ws == null) {
+                ws = new HashSet<Character>();
+            }
             ws.add(c1);
             ws.add(c2);
             map.put(c1, ws);
