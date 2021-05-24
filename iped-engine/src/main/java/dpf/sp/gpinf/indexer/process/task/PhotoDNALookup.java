@@ -23,6 +23,8 @@ import com.eatthepath.jvptree.VPTree;
 
 import br.dpf.sepinf.photodna.api.PhotoDNATransforms;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
@@ -43,13 +45,8 @@ public class PhotoDNALookup extends AbstractTask {
 
     public static final String PHOTO_DNA_NEAREAST_HASH = PHOTO_DNA_HIT_PREFIX + "nearestHash";
 
-    public static int MAX_DISTANCE = 50000;
-
-    public static boolean rotateAndFlip = true;
-
-    public static String statusHashDBFilter = "";
-
     private static final AtomicBoolean init = new AtomicBoolean(false);
+
     private static final AtomicBoolean finished = new AtomicBoolean(false);
 
     private static VPDistance photoDNADistance = new VPDistance();
@@ -62,12 +59,16 @@ public class PhotoDNALookup extends AbstractTask {
 
     private static HashDBDataSource hashDBDataSource;
 
+    private PhotoDNAConfig pdnaConfig;
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
+
+        pdnaConfig = ConfigurationManager.findObject(PhotoDNAConfig.class);
+
         synchronized (init) {
             if (!init.get()) {
-                String config = confParams.getProperty(PhotoDNATask.ENABLE_PHOTO_DNA);
-                if (config != null && Boolean.parseBoolean(config.trim())) {
+                if (pdnaConfig.isEnabled()) {
                     try {
                         Class<?> c = Class.forName("br.dpf.sepinf.photodna.PhotoDNATransforms");
                         transforms = (PhotoDNATransforms) c.newInstance();
@@ -91,14 +92,15 @@ public class PhotoDNALookup extends AbstractTask {
                         } else {
                             long t = System.currentTimeMillis();
                             hashDBDataSource = new HashDBDataSource(hashDBFile);
-                            ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile, statusHashDBFilter);
+                            ArrayList<PhotoDnaItem> photoDNAHashSet = readCache(hashDBFile,
+                                    pdnaConfig.getStatusHashDBFilter());
                             if (photoDNAHashSet != null) {
                                 LOGGER.info("Load from cache file {}.", cachePath);
                             } else {
                                 Set<String> statusFilter = null;
-                                if (!statusHashDBFilter.isEmpty()) {
+                                if (!pdnaConfig.getStatusHashDBFilter().isEmpty()) {
                                     statusFilter = new HashSet<String>();
-                                    String[] s = statusHashDBFilter.split(",");
+                                    String[] s = pdnaConfig.getStatusHashDBFilter().split(",");
                                     for(String a : s) {
                                         a = a.trim();
                                         if (!a.isEmpty()) {
@@ -109,7 +111,8 @@ public class PhotoDNALookup extends AbstractTask {
                                 photoDNAHashSet = hashDBDataSource.readPhotoDNA(statusFilter);
                                 if (photoDNAHashSet == null || photoDNAHashSet.isEmpty()) {
                                     LOGGER.error("PhotoDNA hashes must be loaded into IPED hashes database to enable PhotoDNALookup.");
-                                } else if (writeCache(hashDBFile, photoDNAHashSet, statusHashDBFilter)) {
+                                } else if (writeCache(hashDBFile, photoDNAHashSet,
+                                        pdnaConfig.getStatusHashDBFilter())) {
                                     LOGGER.info("Cache file {} was created.", cachePath);
                                 }
                             }
@@ -178,10 +181,10 @@ public class PhotoDNALookup extends AbstractTask {
 
         int rot = 0;
         boolean flip = false;
-        while (rot == 0 || (rotateAndFlip && rot < 4)) {
+        while (rot == 0 || (pdnaConfig.isRotateAndFlip() && rot < 4)) {
             int degree = 90 * rot++;
             PhotoDnaItem photoDnaItemRot = new PhotoDnaItem(-1, transforms.rot(photodna.getBytes(), degree, flip));
-            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot, MAX_DISTANCE);
+            List<PhotoDnaItem> neighbors = vptree.getAllWithinDistance(photoDnaItemRot, pdnaConfig.getMaxDistance());
 
             PhotoDnaItem nearest = null;
             int minDist = Integer.MAX_VALUE;

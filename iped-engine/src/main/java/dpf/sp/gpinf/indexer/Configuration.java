@@ -52,6 +52,7 @@ import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.config.NamedEntityTaskConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
+import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
@@ -255,6 +256,7 @@ public class Configuration {
         configManager.addObject(new MakePreviewConfig());
         configManager.addObject(new MinIOConfig());
         configManager.addObject(new NamedEntityTaskConfig());
+        configManager.addObject(new PhotoDNAConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração
