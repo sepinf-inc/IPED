@@ -4,8 +4,11 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -27,6 +30,7 @@ import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class NamedEntityTask extends AbstractTask {
 
@@ -58,11 +62,29 @@ public class NamedEntityTask extends AbstractTask {
         if (!nerConfig.isTaskEnabled())
             return;
 
+        if (nerConfig.getNerImpl().contains("CoreNLPNERecogniser")) { //$NON-NLS-1$
+            try {
+                Class.forName("edu.stanford.nlp.ie.crf.CRFClassifier"); //$NON-NLS-1$
+
+            } catch (ClassNotFoundException e) {
+                LOGGER.error("StanfordCoreNLP not found. Did you put the jar in the optional lib folder?");
+                nerConfig.setTaskEnabled(false);
+                return;
+            }
+        }
+
         System.setProperty(NamedEntityParser.SYS_PROP_NER_IMPL, nerConfig.getNerImpl());
 
         for (Entry<String, String> entry : nerConfig.getLangToModelMap().entrySet()) {
             String lang = entry.getKey();
             String modelPath = entry.getValue();
+
+            URL modelResource = this.getClass().getResource("/" + modelPath); //$NON-NLS-1$
+            if (modelResource == null) {
+                LOGGER.error(modelPath + " not found. Did you put the model in the optional lib folder?");
+                nerConfig.setTaskEnabled(false);
+                return;
+            }
 
             System.setProperty(CoreNLPNERecogniser.MODEL_PROP_NAME, modelPath);
             NamedEntityParser nerParser = new NamedEntityParser();

@@ -1,14 +1,12 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.net.URL;
 import java.nio.file.DirectoryStream.Filter;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import java.nio.file.Path;
 
 public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable {
@@ -31,6 +29,10 @@ public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable {
 
     public boolean isTaskEnabled() {
         return taskEnabled;
+    }
+
+    public void setTaskEnabled(boolean enabled) {
+        this.taskEnabled = enabled;
     }
 
     public String getNerImpl() {
@@ -74,45 +76,29 @@ public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable {
                 taskEnabled = Boolean.valueOf(value.trim());
             }
         } else {
+            nerImpl = properties.getProperty("NERImpl"); //$NON-NLS-1$
 
-        }
-
-        nerImpl = properties.getProperty("NERImpl"); //$NON-NLS-1$
-        if (nerImpl.contains("CoreNLPNERecogniser")) { //$NON-NLS-1$
-            try {
-                Class.forName("edu.stanford.nlp.ie.crf.CRFClassifier"); //$NON-NLS-1$
-
-            } catch (ClassNotFoundException e) {
-                throw new IPEDException("StanfordCoreNLP not found. Did you put the jar in the optional lib folder?");
-            }
-        }
-
-        String langAndModel;
-        int i = 0;
-        while ((langAndModel = properties.getProperty("langModel_" + i++)) != null) { //$NON-NLS-1$
-            String[] strs = langAndModel.split(":"); //$NON-NLS-1$
-            String lang = strs[0].trim();
-            String modelPath = strs[1].trim();
-
-            URL modelResource = this.getClass().getResource("/" + modelPath); //$NON-NLS-1$
-            if (modelResource == null) {
-                throw new IPEDException(modelPath + " not found. Did you put the model in the optional lib folder?");
+            String langAndModel;
+            int i = 0;
+            while ((langAndModel = properties.getProperty("langModel_" + i++)) != null) { //$NON-NLS-1$
+                String[] strs = langAndModel.split(":"); //$NON-NLS-1$
+                String lang = strs[0].trim();
+                String modelPath = strs[1].trim();
+                langToModelMap.put(lang, modelPath);
             }
 
-            langToModelMap.put(lang, modelPath);
-        }
+            String mimes = properties.getProperty("mimeTypesToIgnore"); //$NON-NLS-1$
+            for (String mime : mimes.split(";")) { //$NON-NLS-1$
+                mimeTypesToIgnore.add(mime.trim());
+            }
 
-        String mimes = properties.getProperty("mimeTypesToIgnore"); //$NON-NLS-1$
-        for (String mime : mimes.split(";")) { //$NON-NLS-1$
-            mimeTypesToIgnore.add(mime.trim());
-        }
+            String categories = properties.getProperty("categoriesToIgnore"); //$NON-NLS-1$
+            for (String cat : categories.split(";")) { //$NON-NLS-1$
+                categoriesToIgnore.add(cat.trim());
+            }
 
-        String categories = properties.getProperty("categoriesToIgnore"); //$NON-NLS-1$
-        for (String cat : categories.split(";")) { //$NON-NLS-1$
-            categoriesToIgnore.add(cat.trim());
+            minLangScore = Float.valueOf(properties.getProperty("minLangScore").trim()); //$NON-NLS-1$
         }
-
-        minLangScore = Float.valueOf(properties.getProperty("minLangScore").trim()); //$NON-NLS-1$
 
     }
 
