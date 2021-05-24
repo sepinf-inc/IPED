@@ -30,6 +30,7 @@ import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 
+
 public class UsnJrnlParser extends AbstractParser {
     public enum ReportType {
         CSV, HTML
