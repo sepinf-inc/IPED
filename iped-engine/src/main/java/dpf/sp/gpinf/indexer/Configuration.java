@@ -50,8 +50,10 @@ import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
+import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
+import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
@@ -245,6 +247,8 @@ public class Configuration {
         configManager.addObject(new ImageThumbTaskConfig());
         configManager.addObject(new ExportByCategoriesConfig());
         configManager.addObject(new ExportByKeywordsConfig());
+        configManager.addObject(new RegexTaskConfig());
+        configManager.addObject(new VideoThumbsConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração
