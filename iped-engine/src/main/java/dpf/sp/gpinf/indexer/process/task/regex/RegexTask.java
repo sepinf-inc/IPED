@@ -19,13 +19,12 @@ import dk.brics.automaton.BasicOperations;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
+import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
+import dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 
@@ -33,13 +32,7 @@ public class RegexTask extends AbstractTask {
 
     public static final String REGEX_PREFIX = "Regex:"; //$NON-NLS-1$
 
-    private static final String REGEX_CONFIG = "RegexConfig.txt"; //$NON-NLS-1$
-
     private static final String KEYWORDS_NAME = "KEYWORDS"; //$NON-NLS-1$
-
-    private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
-
-    private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
 
     private static final int MAX_RESULTS = 50000; // OOME protection for files with tons of hits
 
@@ -47,15 +40,15 @@ public class RegexTask extends AbstractTask {
 
     private static Regex regexFull;
 
-    private static boolean formatRegexMatches = false;
-
     private boolean enabled = true;
 
     private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
 
-    class Regex {
+    private RegexTaskConfig regexConfig;
+
+    static class Regex {
 
         String name;
         int prefix, sufix;
@@ -74,10 +67,12 @@ public class RegexTask extends AbstractTask {
         }
 
         public Regex(String name, Automaton aut, boolean ignoreCases, boolean ignoreDiacritics) {
-            if (ignoreCases)
+            if (ignoreCases) {
                 aut = ignoreCases(aut);
-            if (ignoreDiacritics)
+            }
+            if (ignoreDiacritics) {
                 aut = ignoreDiacritics(aut);
+            }
             this.ignoreCases = ignoreCases;
             this.name = name;
             this.automaton = aut;
@@ -125,43 +120,20 @@ public class RegexTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        String value = confParams.getProperty(ENABLE_PARAM);
-        if (value != null && !value.trim().isEmpty())
-            enabled = Boolean.valueOf(value.trim());
+        regexConfig = ConfigurationManager.findObject(RegexTaskConfig.class);
 
-        if (enabled && regexList == null) {
+        if (regexConfig.isTaskEnabled() && regexList == null) {
+
             regexList = new ArrayList<Regex>();
-
-            File confFile = new File(confDir, REGEX_CONFIG);
-            String content = Util.readUTF8Content(confFile);
-            for (String line : content.split("\n")) { //$NON-NLS-1$
-                line = line.trim();
-                if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
-                    continue;
-                else {
-                    String[] values = line.split("=", 2); //$NON-NLS-1$
-                    if (values.length < 2)
-                        throw new IPEDException(Messages.getString("RegexTask.SeparatorNotFound.1") + REGEX_CONFIG //$NON-NLS-1$
-                                + Messages.getString("RegexTask.SeparatorNotFound.2") + line); //$NON-NLS-1$
-                    String name = values[0].trim();
-                    if (name.equals(FORMAT_MATCHES)) {
-                        formatRegexMatches = Boolean.valueOf(values[1].trim());
-                        continue;
-                    }
-                    String[] params = name.split(","); //$NON-NLS-1$
-                    String regexName = params[0].trim();
-                    int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
-                    int sufix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
-                    boolean ignoreCase = params.length > 3 ? Boolean.valueOf(params[3].trim()) : true;
-                    String regex = replace(values[1].trim());
-                    regexList.add(new Regex(regexName, prefix, sufix, ignoreCase, false, regex));
-                }
+            for (RegexEntry e : regexConfig.getRegexList()) {
+                regexList.add(new Regex(e.getRegexName(), e.getPrefix(), e.getSuffix(), e.isIgnoreCase(), false,
+                        e.getRegex()));
             }
 
             ExportByKeywordsConfig exportConfig = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
             if (exportConfig.isEnabled()) {
                 for (String keyword : exportConfig.getKeywords()) {
-                    String regex = replace(keyword);
+                    String regex = RegexTaskConfig.replace(keyword);
                     regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
                 }
             }
@@ -182,14 +154,6 @@ public class RegexTask extends AbstractTask {
             regexValidator = new RegexValidator();
             regexValidator.init(confDir);
         }
-    }
-
-    private static final String replace(String s) {
-        return s.replace("\\t", "\t") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\r", "\r") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\n", "\n") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\f", "\f") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\s", "[ \t\r\n\f]"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Override
@@ -241,7 +205,7 @@ public class RegexTask extends AbstractTask {
                         if (regex.ignoreCases)
                             hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {
-                            if (formatRegexMatches) {
+                            if (regexConfig.isFormatRegexMatches()) {
                                 hit = regexValidator.format(regex, hit);
                             }
                             Map<String, RegexHits> hitMap = hitList.get(i);
