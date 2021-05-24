@@ -49,6 +49,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.MakePreviewConfig;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
+import dpf.sp.gpinf.indexer.config.NamedEntityTaskConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
@@ -253,6 +254,7 @@ public class Configuration {
         configManager.addObject(new VideoThumbsConfig());
         configManager.addObject(new MakePreviewConfig());
         configManager.addObject(new MinIOConfig());
+        configManager.addObject(new NamedEntityTaskConfig());
 
         // adiciona os jars dos plugins como fonte para busca de arquivos de
         // configuração
