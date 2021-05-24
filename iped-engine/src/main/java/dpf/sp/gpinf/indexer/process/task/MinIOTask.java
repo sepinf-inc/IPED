@@ -17,6 +17,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.network.util.ProxySever;
@@ -53,43 +55,31 @@ public class MinIOTask extends AbstractTask {
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
 
     private static final int FOLDER_LEVELS = 4;
-    private static final String CONF_FILE = "MinIOConfig.txt";
-    private static final String ENABLE_KEY = "enable";
-    private static final String HOST_KEY = "host";
-    private static final String PORT_KEY = "port";
     private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
     private static final String BUCKET_KEY = "bucket";
 
-    private static boolean enabled = false;
-    private static String server = "http://127.0.0.1:9000";
     private static String accessKey;
     private static String secretKey;
     private static String bucket = null;
 
     private static Tika tika;
 
+    private MinIOConfig minIOConfig;
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        File config = new File(confDir, CONF_FILE);
-        UTF8Properties props = new UTF8Properties();
-        props.load(config);
+        minIOConfig = ConfigurationManager.findObject(MinIOConfig.class);
 
-        enabled = Boolean.valueOf(props.getProperty(ENABLE_KEY));
-
-        if (!enabled) {
+        if (!minIOConfig.isEnabled()) {
             return;
         }
 
-        String host = props.getProperty(HOST_KEY);
-        String port = props.getProperty(PORT_KEY);
-
-        server = host + ":" + port;
+        String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
         // case name is default bucket name
         if (bucket == null) {
@@ -140,11 +130,12 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return minIOConfig.isEnabled();
     }
 
     public static boolean isTaskEnabled() {
-        return enabled;
+        MinIOConfig minIOConfig = ConfigurationManager.findObject(MinIOConfig.class);
+        return minIOConfig.isEnabled();
     }
 
     @Override
