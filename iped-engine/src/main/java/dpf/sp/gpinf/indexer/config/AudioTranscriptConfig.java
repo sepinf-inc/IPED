@@ -83,7 +83,7 @@ public class AudioTranscriptConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processConfig(Path resource) throws IOException {
 
-        UTF8Properties props = new UTF8Properties();
+        UTF8Properties props = super.properties;
         props.load(resource.toFile());
 
         if (IPEDConfig.CONFIG_FILE.equals(resource.getFileName().toString())) {

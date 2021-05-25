@@ -253,7 +253,7 @@ public class Configuration {
         configManager.loadConfig(taskConfig);
 
         for (AbstractTask task : taskConfig.getNewTaskInstances()) {
-            for (Configurable configurable : task.getConfigurables()) {
+            for (Configurable<?> configurable : task.getConfigurables()) {
                 configManager.addObject(configurable);
             }
         }

@@ -8,8 +8,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
-
 public class DocThumbTaskConfig extends AbstractPropertiesConfigurable {
 
     private static final String ENABLE_PROP = "enableDocThumbs";
@@ -76,7 +74,6 @@ public class DocThumbTaskConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processConfig(Path resource) throws IOException {
         
-        UTF8Properties properties = new UTF8Properties();
         properties.load(resource.toFile());
         
         if (resource.getFileName().toString().equals(IPEDConfig.CONFIG_FILE)) {

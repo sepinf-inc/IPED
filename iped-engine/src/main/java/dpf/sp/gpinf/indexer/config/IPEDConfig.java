@@ -29,12 +29,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
         }
     };
 
-    public IPEDConfig() {
-        propNames.add(IPEDConfig.CONFDIR);
-        propNames.add(IPEDConfig.TOADDUNALLOCATED);
-        propNames.add(IPEDConfig.TOADDFILESLACKS);
-    }
-
     public String getConfDir() {
         return (String) properties.get(IPEDConfig.CONFDIR);
     }

@@ -21,7 +21,9 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -110,6 +112,10 @@ public class DIETask extends AbstractTask {
      */
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
+
+        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+
         synchronized (init) {
             if (!init.get()) {
                 String enableParam = confParams.getProperty(ENABLE_PARAM);

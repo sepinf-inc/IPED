@@ -5,9 +5,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,7 +23,7 @@ import dpf.sp.gpinf.indexer.process.task.ScriptTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import macee.core.Configurable;
 
-public class TaskInstallerConfig implements Configurable {
+public class TaskInstallerConfig implements Configurable<List<Path>> {
 
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
     public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
@@ -46,7 +44,7 @@ public class TaskInstallerConfig implements Configurable {
     }
 
     @Override
-    public Filter getResourceLookupFilter() {
+    public Filter<Path> getResourceLookupFilter() {
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
@@ -56,11 +54,8 @@ public class TaskInstallerConfig implements Configurable {
     }
 
     @Override
-    public void processConfigs(List resources) throws IOException {
-        for (Iterator<Path> iterator = resources.iterator(); iterator.hasNext();) {
-            Path path = iterator.next();
-            this.resources.add(path);
-        }
+    public void processConfig(Path resource) throws IOException {
+        this.resources.add(resource);
     }
 
     private List<AbstractTask> loadTasks(File file, List<AbstractTask> tasks) throws InstantiationException,
@@ -99,31 +94,13 @@ public class TaskInstallerConfig implements Configurable {
     }
 
     @Override
-    public Object getApplicationConfiguration() {
-        // TODO Auto-generated method stub
-        return null;
+    public List<Path> getConfiguration() {
+        return resources;
     }
 
     @Override
-    public void setApplicationConfiguration(Object config) {
-        // TODO Auto-generated method stub
-    }
-
-    @Override
-    public Set getApplicationPropertyNames() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public Object getUserConfiguration() {
-        // TODO Auto-generated method stub
-        return null;
-    }
-
-    @Override
-    public void setUserConfiguration(Object config) {
-        // TODO Auto-generated method stub
+    public void setConfiguration(List<Path> config) {
+        this.resources = config;
     }
 
 }

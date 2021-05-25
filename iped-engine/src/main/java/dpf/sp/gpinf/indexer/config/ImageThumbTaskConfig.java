@@ -67,7 +67,6 @@ public class ImageThumbTaskConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processConfig(Path resource) throws IOException {
 
-        UTF8Properties properties = new UTF8Properties();
         properties.load(resource.toFile());
 
         if (resource.endsWith(IPEDConfig.CONFIG_FILE)) {
