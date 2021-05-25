@@ -21,10 +21,12 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -94,6 +96,7 @@ import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
+import macee.core.Configurable;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,
@@ -682,11 +685,14 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(p.getName());
     }
 
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new CategoryToExpandConfig());
+    }
+
     @Override
     public void init(Properties confProps, File confDir) {
 
         ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
-
         expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
 
     }

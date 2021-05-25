@@ -1,16 +1,24 @@
 package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class AudioTranscriptTask extends AbstractTask {
 
     private AbstractTranscriptTask impl;
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new AudioTranscriptConfig());
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

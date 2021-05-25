@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -40,6 +41,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import gpinf.util.PDFToThumb;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class DocThumbTask extends ThumbTask {
 
@@ -70,6 +72,10 @@ public class DocThumbTask extends ThumbTask {
     private Process loEnvCreateProcess;
     private Process convertProcess;
     private boolean tempSet;
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new DocThumbTaskConfig());
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

@@ -8,6 +8,8 @@ import java.io.InputStream;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +42,7 @@ import io.minio.errors.XmlParserException;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.io.SeekableInputStream;
+import macee.core.Configurable;
 
 /**
  * Task to export files to MinIO object storage service.
@@ -131,6 +134,10 @@ public class MinIOTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return minIOConfig.isEnabled();
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new MinIOConfig());
     }
 
     public static boolean isTaskEnabled() {

@@ -19,6 +19,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
@@ -28,6 +30,7 @@ import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 
 /**
  * Classe que carrega o mapeamento de mimeTypes para Categoria da aplicação.
@@ -40,6 +43,11 @@ public class SetCategoryTask extends AbstractTask {
     public static String SCANNED_CATEGORY = Messages.getString("SetCategoryTask.ScannedDocs"); //$NON-NLS-1$
 
     private CategoryConfig categoryConfig;
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new CategoryConfig());
+    }
 
     @Override
     public void init(Properties confProps, File configPath) throws Exception {

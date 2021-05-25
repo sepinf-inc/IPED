@@ -6,6 +6,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +32,7 @@ import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class ImageThumbTask extends ThumbTask {
 
@@ -58,6 +60,10 @@ public class ImageThumbTask extends ThumbTask {
 
     public ImageThumbTaskConfig getImageThumbConfig() {
         return imgThumbConfig;
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new ImageThumbTaskConfig());
     }
 
     @Override

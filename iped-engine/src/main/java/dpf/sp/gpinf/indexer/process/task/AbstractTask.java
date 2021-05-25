@@ -1,7 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
@@ -17,6 +19,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
 import dpf.sp.gpinf.indexer.process.Worker.STATE;
 import iped3.ICaseData;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Classe que representa uma tarefa de procesamento (assinatura, hash, carving,
@@ -295,5 +298,19 @@ public abstract class AbstractTask {
      * Default implementation does nothing. 
      */
     public void interrupted() {
+    }
+
+    /**
+     * This method can return one or more Configurable instances holding specific
+     * task processing options. These configurables are loaded at start up and later
+     * passed to the task init(...). This method could be also used by an UI to
+     * query each task options. Each implementation is responsible to load/store
+     * processing options from/to configuration Files, Paths or other resources.
+     * 
+     * @return Configurable instance with task specific configurations
+     */
+    public List<Configurable> getConfigurables() {
+        // TODO make abstract and implement in all tasks
+        return Collections.emptyList();
     }
 }

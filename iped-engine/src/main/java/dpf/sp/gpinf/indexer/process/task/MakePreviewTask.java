@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
@@ -39,6 +41,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import macee.core.Configurable;
 
 public class MakePreviewTask extends AbstractTask {
 
@@ -57,6 +60,10 @@ public class MakePreviewTask extends AbstractTask {
     public MakePreviewTask() {
         parser.setPrintMetadata(false);
         parser.setIgnoreStyle(false);
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new MakePreviewConfig());
     }
 
     @Override

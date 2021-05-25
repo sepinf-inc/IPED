@@ -42,6 +42,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -79,6 +80,7 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
@@ -191,6 +193,10 @@ public class HTMLReportTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return htmlReportConfig.isEnabled();
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new HtmlReportTaskConfig());
     }
 
     /**

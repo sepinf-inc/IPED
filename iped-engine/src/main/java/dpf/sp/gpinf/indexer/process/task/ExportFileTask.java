@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -77,6 +78,7 @@ import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -700,6 +702,11 @@ public class ExportFileTask extends AbstractTask {
             }
         }
 
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new ExportByCategoriesConfig(), new ExportByKeywordsConfig());
     }
 
     @Override

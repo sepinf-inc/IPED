@@ -23,8 +23,10 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Properties;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
@@ -36,6 +38,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Classe para calcular e manipular hashes.
@@ -68,6 +71,11 @@ public class HashTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return !digestMap.isEmpty();
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new HashTaskConfig());
     }
 
     @Override

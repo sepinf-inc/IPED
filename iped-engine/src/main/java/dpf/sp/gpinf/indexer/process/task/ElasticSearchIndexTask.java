@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
@@ -53,6 +54,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 import repackaged.org.apache.http.HttpHost;
 import repackaged.org.apache.http.auth.AuthScope;
 import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
@@ -102,6 +104,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return elasticConfig.isEnabled();
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new ElasticSearchTaskConfig());
     }
 
     @Override

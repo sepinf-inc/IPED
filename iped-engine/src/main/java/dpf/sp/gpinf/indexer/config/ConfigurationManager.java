@@ -8,6 +8,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import iped3.configuration.IConfigurationDirectory;
 import macee.core.Configurable;
@@ -16,8 +17,6 @@ import macee.core.ObjectManager;
 public class ConfigurationManager implements ObjectManager<Configurable> {
 
     private static ConfigurationManager singleton = null;
-
-    final HashMap<Object, Configurable> configurations = new HashMap<Object, Configurable>();
 
     IConfigurationDirectory directory;
     HashMap<Configurable, Boolean> loadedConfigurables = new LinkedHashMap<Configurable, Boolean>();
@@ -42,18 +41,25 @@ public class ConfigurationManager implements ObjectManager<Configurable> {
     }
 
     public void addObject(Configurable config) {
-        loadedConfigurables.put(config, false);
+        Set<String> configurableNames = loadedConfigurables.keySet().stream().map(c -> c.getClass().getName())
+                .collect(Collectors.toSet());
+        if (!configurableNames.contains(config.getClass().getName())) {
+            loadedConfigurables.put(config, false);
+        }
     }
 
     public void loadConfigs() throws IOException {
         for (Iterator<Configurable> iterator = loadedConfigurables.keySet().iterator(); iterator.hasNext();) {
             Configurable configurable = iterator.next();
-            if (loadedConfigurables.get(configurable) == false) {
-                List<Path> resources = directory.lookUpResource(configurable);
+            loadConfig(configurable);
+        }
+    }
 
-                configurable.processConfigs(resources);
-                loadedConfigurables.put(configurable, new Boolean(true));
-            }
+    public void loadConfig(Configurable configurable) throws IOException {
+        if (loadedConfigurables.get(configurable) == false) {
+            List<Path> resources = directory.lookUpResource(configurable);
+            configurable.processConfigs(resources);
+            loadedConfigurables.put(configurable, true);
         }
     }
 

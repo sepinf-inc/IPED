@@ -22,12 +22,14 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.IItem;
+import macee.core.Configurable;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -172,6 +174,10 @@ public class VideoThumbTask extends ThumbTask {
             meta = meta.substring(0, meta.length() - 4);
         }
         return meta;
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new VideoThumbsConfig());
     }
 
     /**

@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,6 +28,7 @@ import dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class RegexTask extends AbstractTask {
 
@@ -115,6 +117,10 @@ public class RegexTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new RegexTaskConfig());
     }
 
     @Override

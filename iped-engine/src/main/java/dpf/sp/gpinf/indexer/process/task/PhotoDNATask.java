@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -14,6 +16,7 @@ import br.dpf.sepinf.photodna.api.PhotoDNA;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class PhotoDNATask extends AbstractTask {
 
@@ -30,6 +33,10 @@ public class PhotoDNATask extends AbstractTask {
     private PhotoDNAConfig pdnaConfig;
 
     private PhotoDNA photodna;
+
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new PhotoDNAConfig());
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

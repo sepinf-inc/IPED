@@ -56,6 +56,7 @@ import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
+import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
@@ -65,12 +66,14 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
+import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.configuration.IConfigurationDirectory;
+import macee.core.Configurable;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -87,7 +90,7 @@ public class Configuration {
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
 
-    ConfigurationDirectory configDirectory;
+    private ConfigurationDirectory configDirectory;
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
@@ -218,6 +221,7 @@ public class Configuration {
         configDirectory = new ConfigurationDirectory(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
+        addPluginJarsToConfigurationLookup(configDirectory);
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
 
@@ -241,25 +245,24 @@ public class Configuration {
         configManager.addObject(new PDFToImageConfig());
         configManager.addObject(new SleuthKitConfig());
         configManager.addObject(new UFEDReaderConfig());
-        configManager.addObject(new HashTaskConfig());
-        configManager.addObject(new AudioTranscriptConfig());
-        configManager.addObject(new CategoryConfig());
-        configManager.addObject(new CategoryToExpandConfig());
-        configManager.addObject(new DocThumbTaskConfig());
-        configManager.addObject(new ElasticSearchTaskConfig());
-        configManager.addObject(new HtmlReportTaskConfig());
-        configManager.addObject(new ImageThumbTaskConfig());
-        configManager.addObject(new ExportByCategoriesConfig());
-        configManager.addObject(new ExportByKeywordsConfig());
-        configManager.addObject(new RegexTaskConfig());
-        configManager.addObject(new VideoThumbsConfig());
-        configManager.addObject(new MakePreviewConfig());
-        configManager.addObject(new MinIOConfig());
-        configManager.addObject(new NamedEntityTaskConfig());
-        configManager.addObject(new PhotoDNAConfig());
 
-        // adiciona os jars dos plugins como fonte para busca de arquivos de
-        // configuração
+        TaskInstallerConfig taskConfig = new TaskInstallerConfig();
+        configManager.addObject(taskConfig);
+
+        // must load taskConfig before using it
+        configManager.loadConfig(taskConfig);
+
+        for (AbstractTask task : taskConfig.getNewTaskInstances()) {
+            for (Configurable configurable : task.getConfigurables()) {
+                configManager.addObject(configurable);
+            }
+        }
+
+        configManager.loadConfigs();
+    }
+
+    // add plugin jars to the configuration resource look up engine
+    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory) {
         if (optionalJarDir != null) {
             File[] jars = optionalJarDir.listFiles();
             if (jars != null) {
@@ -278,8 +281,6 @@ public class Configuration {
                 }
             }
         }
-
-        configManager.loadConfigs();
     }
 
 }

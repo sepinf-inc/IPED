@@ -51,6 +51,10 @@ public class NamedEntityTask extends AbstractTask {
         return nerConfig.isTaskEnabled();
     }
 
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new NamedEntityTaskConfig());
+    }
+
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
