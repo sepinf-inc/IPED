@@ -1,16 +1,13 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
-
-import dpf.sp.gpinf.indexer.util.Util;
-import macee.core.EnabledInterface;
-
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExportByKeywordsConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+import dpf.sp.gpinf.indexer.util.Util;
+
+public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> {
 
     private static final String CONFIG_FILE = "KeywordsToExport.txt";
 
@@ -26,17 +23,7 @@ public class ExportByKeywordsConfig extends AbstractPropertiesConfigurable imple
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE);
-            }
-        };
-    }
-
-    @Override
-    public void processConfig(Path resource) throws IOException {
+    public void processTaskConfig(Path resource) throws IOException {
 
         String content = Util.readUTF8Content(resource.toFile());
         for (String line : content.split("\n")) { //$NON-NLS-1$
@@ -47,6 +34,26 @@ public class ExportByKeywordsConfig extends AbstractPropertiesConfigurable imple
             keywords.add(line);
         }
 
+    }
+
+    @Override
+    public List<String> getConfiguration() {
+        return keywords;
+    }
+
+    @Override
+    public void setConfiguration(List<String> config) {
+        this.keywords = config;
+    }
+
+    @Override
+    public String getTaskEnableProperty() {
+        return ExportByCategoriesConfig.ENABLE_PARAM;
+    }
+
+    @Override
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
     }
 
 }

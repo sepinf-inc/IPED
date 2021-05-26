@@ -1,23 +1,18 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Path;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import macee.core.EnabledInterface;
-
-import java.nio.file.Path;
-
-public class DocThumbTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     private static final String ENABLE_PROP = "enableDocThumbs";
     private static final String CONFIG_FILE = "DocThumbsConfig.txt";
 
     private static final Logger logger = LoggerFactory.getLogger(DocThumbTaskConfig.class);
 
-    private boolean enabled;
     private int pdfTimeout = 60;
     private int loTimeout = 180;
     private int timeoutIncPerMB = 2;
@@ -26,11 +21,6 @@ public class DocThumbTaskConfig extends AbstractPropertiesConfigurable implement
     private int maxPdfExternalMemory = 256;
     private boolean pdfEnabled;
     private boolean loEnabled;
-
-    @Override
-    public boolean isEnabled() {
-        return enabled;
-    }
 
     public int getPdfTimeout() {
         return pdfTimeout;
@@ -65,77 +55,68 @@ public class DocThumbTaskConfig extends AbstractPropertiesConfigurable implement
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE) || entry.endsWith(IPEDConfig.CONFIG_FILE);
-            }
-        };
+    public String getTaskEnableProperty() {
+        return ENABLE_PROP;
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
         
         properties.load(resource.toFile());
-        
-        if (resource.getFileName().toString().equals(IPEDConfig.CONFIG_FILE)) {
-            String value = properties.getProperty(ENABLE_PROP);
-            if(value != null) {
-                enabled = Boolean.valueOf(value.trim());
+
+        String value = properties.getProperty("pdfThumbs");
+        if (value != null) {
+            value = value.trim();
+            if ("external".equalsIgnoreCase(value)) {
+                externalPdfConversion = true;
+                pdfEnabled = true;
+            } else if ("internal".equalsIgnoreCase(value)) {
+                externalPdfConversion = false;
+                pdfEnabled = true;
             }
         }
 
-        if (resource.getFileName().toString().equals(CONFIG_FILE)) {
-            String value = properties.getProperty("pdfThumbs");
-            if (value != null) {
-                value = value.trim();
-                if ("external".equalsIgnoreCase(value)) {
-                    externalPdfConversion = true;
-                    pdfEnabled = true;
-                } else if ("internal".equalsIgnoreCase(value)) {
-                    externalPdfConversion = false;
-                    pdfEnabled = true;
-                }
+        value = properties.getProperty("libreOfficeThumbs");
+        if (value != null) {
+            value = value.trim();
+            if ("external".equalsIgnoreCase(value)) {
+                loEnabled = true;
             }
+        }
 
-            value = properties.getProperty("libreOfficeThumbs");
-            if (value != null) {
-                value = value.trim();
-                if ("external".equalsIgnoreCase(value)) {
-                    loEnabled = true;
-                }
-            }
+        value = properties.getProperty("pdfTimeout");
+        if (value != null && !value.trim().isEmpty()) {
+            pdfTimeout = Integer.parseInt(value);
+        }
 
-            value = properties.getProperty("pdfTimeout");
-            if (value != null && !value.trim().isEmpty()) {
-                pdfTimeout = Integer.parseInt(value);
-            }
+        value = properties.getProperty("libreOfficeTimeout");
+        if (value != null && !value.trim().isEmpty()) {
+            loTimeout = Integer.parseInt(value);
+        }
 
-            value = properties.getProperty("libreOfficeTimeout");
-            if (value != null && !value.trim().isEmpty()) {
-                loTimeout = Integer.parseInt(value);
-            }
+        value = properties.getProperty("timeoutIncPerMB");
+        if (value != null && !value.trim().isEmpty()) {
+            timeoutIncPerMB = Integer.parseInt(value);
+        }
 
-            value = properties.getProperty("timeoutIncPerMB");
-            if (value != null && !value.trim().isEmpty()) {
-                timeoutIncPerMB = Integer.parseInt(value);
-            }
+        value = properties.getProperty("maxPdfExternalMemory");
+        if (value != null && !value.trim().isEmpty()) {
+            maxPdfExternalMemory = Integer.parseInt(value);
+        }
 
-            value = properties.getProperty("maxPdfExternalMemory");
-            if (value != null && !value.trim().isEmpty()) {
-                maxPdfExternalMemory = Integer.parseInt(value);
-            }
-
-            value = properties.getProperty("thumbSize");
-            if (value != null && !value.trim().isEmpty()) {
-                thumbSize = Integer.valueOf(value.trim());
-            }
+        value = properties.getProperty("thumbSize");
+        if (value != null && !value.trim().isEmpty()) {
+            thumbSize = Integer.valueOf(value.trim());
         }
 
         if (!loEnabled && !pdfEnabled) {
             logger.warn("Both PDF and LibreOffice thumb generation disabled!");
-            enabled = false;
+            super.setEnabled(false);
         }
 
     }

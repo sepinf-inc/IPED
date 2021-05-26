@@ -1,40 +1,18 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import macee.core.EnabledInterface;
-
-public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class ExportByCategoriesConfig extends AbstractTaskConfig<Set<String>> {
 
     public static final String CONFIG_FILE = "CategoriesToExport.txt"; //$NON-NLS-1$
+    public static final String ENABLE_PARAM = "enableAutomaticExportFiles";
     
-    private HashSet<String> categoriesToExport = new HashSet<String>();
-
-    @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE);
-            }
-        };
-    }
-
-    @Override
-    public void processConfig(Path resource) throws IOException {
-        List<String> lines = Files.readAllLines(resource);
-        for (String line : lines) { // $NON-NLS-1$
-            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            categoriesToExport.add(line.trim());
-        }
-    }
+    private Set<String> categoriesToExport = new HashSet<String>();
 
     public boolean hasCategoryToExport() {
         return categoriesToExport.size() > 0;
@@ -47,6 +25,37 @@ public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable imp
     @Override
     public boolean isEnabled() {
         return hasCategoryToExport();
+    }
+
+    @Override
+    public Set<String> getConfiguration() {
+        return categoriesToExport;
+    }
+
+    @Override
+    public void setConfiguration(Set<String> config) {
+        this.categoriesToExport = config;
+    }
+
+    @Override
+    public String getTaskEnableProperty() {
+        return ENABLE_PARAM;
+    }
+
+    @Override
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
+        List<String> lines = Files.readAllLines(resource);
+        for (String line : lines) { // $NON-NLS-1$
+            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
+                continue;
+            }
+            categoriesToExport.add(line.trim());
+        }
     }
 
 }

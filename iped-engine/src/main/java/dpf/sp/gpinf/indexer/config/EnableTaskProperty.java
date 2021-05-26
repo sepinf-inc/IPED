@@ -7,8 +7,6 @@ import java.nio.file.Path;
 import macee.core.EnabledInterface;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
-    
-    private static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
 
     private String propertyName;
     private String value;
@@ -22,7 +20,7 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE);
+                return entry.endsWith(IPEDConfig.CONFIG_FILE);
             }
         };
     }
@@ -47,6 +45,11 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
     @Override
     public boolean isEnabled() {
         return Boolean.valueOf(value);
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.value = String.valueOf(enabled);
     }
 
 }

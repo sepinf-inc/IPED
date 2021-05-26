@@ -72,7 +72,7 @@ public class NamedEntityTask extends AbstractTask {
 
             } catch (ClassNotFoundException e) {
                 LOGGER.error("StanfordCoreNLP not found. Did you put the jar in the optional lib folder?");
-                nerConfig.setTaskEnabled(false);
+                nerConfig.setEnabled(false);
                 return;
             }
         }
@@ -86,7 +86,7 @@ public class NamedEntityTask extends AbstractTask {
             URL modelResource = this.getClass().getResource("/" + modelPath); //$NON-NLS-1$
             if (modelResource == null) {
                 LOGGER.error(modelPath + " not found. Did you put the model in the optional lib folder?");
-                nerConfig.setTaskEnabled(false);
+                nerConfig.setEnabled(false);
                 return;
             }
 

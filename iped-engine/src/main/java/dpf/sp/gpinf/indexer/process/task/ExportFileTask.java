@@ -87,7 +87,7 @@ import macee.core.Configurable;
  */
 public class ExportFileTask extends AbstractTask {
 
-    private static final String ENABLE_PARAM = "enableAutomaticExportFiles";
+    private static final String ENABLE_PARAM = ExportByCategoriesConfig.ENABLE_PARAM;
 
     private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
@@ -724,7 +724,7 @@ public class ExportFileTask extends AbstractTask {
         }
 
         HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
-        if (!hashConfig.getAlgorithms().isEmpty()) {
+        if (hashConfig.isEnabled()) {
             computeHash = true;
         }
 

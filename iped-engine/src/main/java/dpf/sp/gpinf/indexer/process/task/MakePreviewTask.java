@@ -49,8 +49,6 @@ public class MakePreviewTask extends AbstractTask {
 
     public static final String viewFolder = "view"; //$NON-NLS-1$
 
-    private IPEDConfig ipedConfig;
-
     private MakePreviewConfig previewConfig;
 
     private IndexerDefaultParser parser = new IndexerDefaultParser();
@@ -68,10 +66,7 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
-
-        ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
         previewConfig = ConfigurationManager.findObject(MakePreviewConfig.class);
-
     }
 
     @Override
@@ -93,7 +88,7 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return ipedConfig.isFileParsingEnabled();
+        return previewConfig.isEnabled();
     }
 
     @Override

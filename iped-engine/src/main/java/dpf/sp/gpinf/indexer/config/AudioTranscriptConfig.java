@@ -1,16 +1,14 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
 import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class AudioTranscriptConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     private static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
@@ -25,7 +23,6 @@ public class AudioTranscriptConfig extends AbstractPropertiesConfigurable implem
 
     private static final String LANG_AUTO_VAL = "auto";
 
-    private boolean isEnabled = false;
     private List<String> languages = new ArrayList<>();
     private List<String> mimesToProcess = new ArrayList<>();
     private String className;
@@ -45,11 +42,6 @@ public class AudioTranscriptConfig extends AbstractPropertiesConfigurable implem
 
     public int getMaxConcurrentRequests() {
         return maxConcurrentRequests;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return isEnabled;
     }
 
     public List<String> getLanguages() {
@@ -73,48 +65,40 @@ public class AudioTranscriptConfig extends AbstractPropertiesConfigurable implem
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONF_FILE) || entry.endsWith(IPEDConfig.CONFIG_FILE);
-            }
-        };
+    public String getTaskEnableProperty() {
+        return ENABLE_KEY;
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
+    public String getTaskConfigFileName() {
+        return CONF_FILE;
+    }
 
-        UTF8Properties props = super.properties;
-        props.load(resource.toFile());
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
 
-        if (IPEDConfig.CONFIG_FILE.equals(resource.getFileName().toString())) {
-            String enabled = props.getProperty(ENABLE_KEY);
-            if (enabled != null) {
-                isEnabled = Boolean.valueOf(enabled.trim());
-            }
+        properties.load(resource.toFile());
+
+        String langs = properties.getProperty(LANG_KEY).trim();
+        if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
+            languages.add(System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP));
         } else {
-            String langs = props.getProperty(LANG_KEY).trim();
-            if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {
-                languages.add(System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP));
-            } else {
-                for (String lang : langs.split(";")) {
-                    languages.add(lang.trim());
-                }
+            for (String lang : langs.split(";")) {
+                languages.add(lang.trim());
             }
-
-            String mimes = props.getProperty(MIMES_KEY).trim();
-            for (String mime : mimes.split(";")) {
-                mimesToProcess.add(mime.trim());
-            }
-
-            className = props.getProperty(IMPL_CLASS_KEY).trim();
-            serviceRegion = props.getProperty(REGION_KEY).trim();
-            convertCmd = props.getProperty(CONVERT_CMD_KEY).trim();
-            timeoutPerSec = Integer.valueOf(props.getProperty(TIMEOUT_KEY).trim());
-            requestIntervalMillis = Integer.valueOf(props.getProperty(REQUEST_INTERVAL_KEY).trim());
-            maxConcurrentRequests = Integer.valueOf(props.getProperty(MAX_REQUESTS_KEY).trim());
         }
+
+        String mimes = properties.getProperty(MIMES_KEY).trim();
+        for (String mime : mimes.split(";")) {
+            mimesToProcess.add(mime.trim());
+        }
+
+        className = properties.getProperty(IMPL_CLASS_KEY).trim();
+        serviceRegion = properties.getProperty(REGION_KEY).trim();
+        convertCmd = properties.getProperty(CONVERT_CMD_KEY).trim();
+        timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_KEY).trim());
+        requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
+        maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
 
     }
 

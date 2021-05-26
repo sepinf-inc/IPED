@@ -4,15 +4,14 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
 
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
 
-    private static final String ENABLED_KEY = "enable";
+    private static final String ENABLED_KEY = "enableIndexToElasticSearch";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
     private static final String PROTOCOL_KEY = "protocol";
@@ -45,6 +44,11 @@ public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable impl
     @Override
     public boolean isEnabled() {
         return enabled;
+    }
+
+    @Override
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public String getHost() {
@@ -100,17 +104,17 @@ public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable impl
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONF_FILE_NAME);
-            }
-        };
+    public String getTaskEnableProperty() {
+        return ENABLED_KEY;
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
+    public String getTaskConfigFileName() {
+        return CONF_FILE_NAME;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
 
         UTF8Properties props = super.properties;
         props.load(resource.toFile());

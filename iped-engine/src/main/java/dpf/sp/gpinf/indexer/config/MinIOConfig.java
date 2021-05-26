@@ -1,16 +1,12 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
-
-import macee.core.EnabledInterface;
-
 import java.nio.file.Path;
 
-public class MinIOConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class MinIOConfig extends AbstractTaskPropertiesConfig {
 
     private static final String CONFIG_FILE = "MinIOConfig.txt";
-    private static final String ENABLE_KEY = "enable";
+    private static final String ENABLE_KEY = "enableMinIO";
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
 
@@ -23,6 +19,11 @@ public class MinIOConfig extends AbstractPropertiesConfigurable implements Enabl
         return enabled;
     }
 
+    @Override
+    public void setEnabled(boolean value) {
+        enabled = value;
+    }
+
     public String getHost() {
         return host;
     }
@@ -32,17 +33,7 @@ public class MinIOConfig extends AbstractPropertiesConfigurable implements Enabl
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE);
-            }
-        };
-    }
-
-    @Override
-    public void processConfig(Path resource) throws IOException {
+    public void processTaskConfig(Path resource) throws IOException {
 
         properties.load(resource.toFile());
 
@@ -50,6 +41,16 @@ public class MinIOConfig extends AbstractPropertiesConfigurable implements Enabl
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
 
+    }
+
+    @Override
+    public String getTaskEnableProperty() {
+        return ENABLE_KEY;
+    }
+
+    @Override
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
     }
 
 }

@@ -1,32 +1,42 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 
-public class HashTaskConfig extends EnableTaskProperty {
+public class HashTaskConfig extends AbstractTaskPropertiesConfig {
 
-    public static final String HASH_PROP = "hash";
+    public static final String ENABLE_PARAM = "enableHash";
+    public static final String CONFIG_FILE = "HashTaskConfig.txt";
 
-    private ArrayList<String> algorithms;
+    private ArrayList<String> algorithms = new ArrayList<>();
 
-    public HashTaskConfig() {
-        super(HASH_PROP);
+    public ArrayList<String> getAlgorithms() {
+        return algorithms;
     }
 
     @Override
-    public boolean isEnabled() {
-        return !getAlgorithms().isEmpty();
+    public String getTaskEnableProperty() {
+        return ENABLE_PARAM;
     }
 
-    public ArrayList<String> getAlgorithms() {
-        if (algorithms == null) {
-            algorithms = new ArrayList<>();
-            if (super.getValue() != null && !super.getValue().isEmpty()) {
-                for (String algorithm : super.getValue().split(";")) {
-                    algorithms.add(algorithm.trim());
-                }
+    @Override
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
+
+        properties.load(resource.toFile());
+        String hashes = properties.getProperty("hashes");
+        if (hashes != null) {
+            hashes = hashes.trim();
+            for (String algorithm : hashes.split(";")) {
+                algorithms.add(algorithm.trim());
             }
         }
-        return algorithms;
+
     }
 
 }

@@ -2,9 +2,8 @@
 # Processing Settings
 ########################################################################
 
-# Enables file hashes calculation. To calculate multiple hashes use ; as separator
-# Possible values: md5, sha-1, sha-256, sha-512 and edonkey
-hash = md5; sha-256
+# Enables file hashes calculation.
+enableHash = true
 
 # Enables photoDNA hash calculation. If you have rights to use it (law enforcement that fight against child exploitation)
 # and have received the library, you must put it into plugin/optional_jars folder

@@ -1,13 +1,9 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
-
-import macee.core.EnabledInterface;
-
 import java.nio.file.Path;
 
-public class VideoThumbsConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
+public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     /**
      * Constante com o nome utilizado para o arquivo de propriedades.
@@ -23,11 +19,6 @@ public class VideoThumbsConfig extends AbstractPropertiesConfigurable implements
     private static final String TIMEOUTS = "Timeouts";
 
     private static final String GALLERY_THUMBS = "GalleryThumbs";
-
-    /**
-     * If the task is enabled or not.
-     */
-    private boolean taskEnabled;
 
     /**
      * Image width of extracted frame.
@@ -67,11 +58,6 @@ public class VideoThumbsConfig extends AbstractPropertiesConfigurable implements
     private int galleryThumbWidth = -1;
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
-
-    @Override
-    public boolean isEnabled() {
-        return taskEnabled;
-    }
 
     public int getWidth() {
         return width;
@@ -114,65 +100,59 @@ public class VideoThumbsConfig extends AbstractPropertiesConfigurable implements
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE) || entry.endsWith(IPEDConfig.CONFIG_FILE);
-            }
-        };
+    public String getTaskEnableProperty() {
+        return ENABLED_PROP;
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
 
         properties.load(resource.toFile());
 
-        if (resource.getFileName().toString().equals(IPEDConfig.CONFIG_FILE)) {
-            String value = properties.getProperty(ENABLED_PROP);
-            if (value != null) {
-                taskEnabled = Boolean.valueOf(value.trim());
-            }
-        } else {
-            // Layout
-            String value = properties.getProperty(LAYOUT); // $NON-NLS-1$
-            if (value != null) {
-                String[] vals = value.trim().split(","); //$NON-NLS-1$
-                if (vals.length == 3) {
-                    width = Integer.parseInt(vals[0].trim());
-                    columns = Integer.parseInt(vals[1].trim());
-                    rows = Integer.parseInt(vals[2].trim());
-                }
-            }
-
-            // Verbose do MPlayer
-            value = properties.getProperty(VERBOSE); // $NON-NLS-1$
-            if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
-                verbose = true;
-            }
-
-            // Timeouts
-            value = properties.getProperty(TIMEOUTS); // $NON-NLS-1$
-            if (value != null) {
-                String[] vals = value.trim().split(","); //$NON-NLS-1$
-                if (vals.length == 3) {
-                    timeoutFirst = 1000 * Integer.parseInt(vals[0].trim());
-                    timeoutInfo = 1000 * Integer.parseInt(vals[1].trim());
-                    timeoutProcess = 1000 * Integer.parseInt(vals[2].trim());
-                }
-            }
-
-            // Gallery Thumbs Configuration
-            value = properties.getProperty(GALLERY_THUMBS); // $NON-NLS-1$
-            if (value != null) {
-                String[] vals = value.trim().split(","); //$NON-NLS-1$
-                if (vals.length == 3) {
-                    galleryThumbWidth = Integer.parseInt(vals[0].trim());
-                    galleryMinThumbs = Integer.parseInt(vals[1].trim());
-                    galleryMaxThumbs = Integer.parseInt(vals[2].trim());
-                }
+        // Layout
+        String value = properties.getProperty(LAYOUT); // $NON-NLS-1$
+        if (value != null) {
+            String[] vals = value.trim().split(","); //$NON-NLS-1$
+            if (vals.length == 3) {
+                width = Integer.parseInt(vals[0].trim());
+                columns = Integer.parseInt(vals[1].trim());
+                rows = Integer.parseInt(vals[2].trim());
             }
         }
+
+        // Verbose do MPlayer
+        value = properties.getProperty(VERBOSE); // $NON-NLS-1$
+        if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
+            verbose = true;
+        }
+
+        // Timeouts
+        value = properties.getProperty(TIMEOUTS); // $NON-NLS-1$
+        if (value != null) {
+            String[] vals = value.trim().split(","); //$NON-NLS-1$
+            if (vals.length == 3) {
+                timeoutFirst = 1000 * Integer.parseInt(vals[0].trim());
+                timeoutInfo = 1000 * Integer.parseInt(vals[1].trim());
+                timeoutProcess = 1000 * Integer.parseInt(vals[2].trim());
+            }
+        }
+
+        // Gallery Thumbs Configuration
+        value = properties.getProperty(GALLERY_THUMBS); // $NON-NLS-1$
+        if (value != null) {
+            String[] vals = value.trim().split(","); //$NON-NLS-1$
+            if (vals.length == 3) {
+                galleryThumbWidth = Integer.parseInt(vals[0].trim());
+                galleryMinThumbs = Integer.parseInt(vals[1].trim());
+                galleryMaxThumbs = Integer.parseInt(vals[2].trim());
+            }
+        }
+
 
     }
 
