@@ -40,5 +40,21 @@ public class CertificateParserTest extends TestCase{
 //        System.out.println("hts:" + hts + "\nmts:" + mts);
         
     }
+    
+    @Test
+    public void testCertificate() throws IOException, SAXException, TikaException{
+
+        CryptoAPIBlobParser parser = new CryptoAPIBlobParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/test_fileEncrypted.txt");
+        ParseContext context = new ParseContext();
+        parser.getSupportedTypes(context);
+//        parser.parse(stream, handler, metadata, context);
+        String hts = handler.toString();
+        String mts = metadata.toString();
+//        System.out.println("hts:" + hts + "\nmts:" + mts);
+        
+    }
 
 }
