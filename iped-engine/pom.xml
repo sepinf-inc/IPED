@@ -235,6 +235,11 @@
 			<artifactId>bcpkix-jdk15on</artifactId>
 			<version>1.64</version>
 		</dependency>
+     	<dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-psd</artifactId>
+    		<version>3.7.0</version>
+	  	</dependency>
     </dependencies>
     
 </project>
