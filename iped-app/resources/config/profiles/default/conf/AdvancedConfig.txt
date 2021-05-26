@@ -48,11 +48,6 @@ embutirLibreOffice = true
 # Needed to properly index rotated PDFs but doubles the processing time of PDFs.
 sortPDFChars = false
 
-# Perform test for randomness before indexing binary items and unknown file types.
-# Makes indexing faster and reduces index size, specially when indexing unallocated space.
-# May cause loss of hits surrounded by "random" content.
-entropyTest = true
-
 # Minimum size of raw strings extracted from unknown files for indexing.
 minRawStringSize = 4
 

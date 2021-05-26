@@ -5,6 +5,7 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -21,18 +22,17 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
-import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Explicit Image Detection (DIE) Task .
@@ -63,6 +63,11 @@ public class DIETask extends AbstractTask {
      * Field name used to store a detection "class" (a value from 1 to 5, derived from the score).
      */
     public static String DIE_CLASS = "classeNudez"; //$NON-NLS-1$
+
+    /**
+     * Path to model file relative to application folder.
+     */
+    private static final String DIE_MODEL_PATH = "models/rfdie.dat"; //$NON-NLS-1$
 
     /**
      * Indica se a tarefa está habilitada ou não.
@@ -107,38 +112,27 @@ public class DIETask extends AbstractTask {
         taskEnabled = enabled;
     }
 
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
     /**
      * Initialize the task.
      */
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
 
-        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
-        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
-
         synchronized (init) {
             if (!init.get()) {
-                String enableParam = confParams.getProperty(ENABLE_PARAM);
-                if (enableParam != null)
-                    taskEnabled = Boolean.valueOf(enableParam.trim());
-
-                String diePath = confParams.getProperty("ledDie"); //$NON-NLS-1$
-                if (taskEnabled && diePath == null)
-                    throw new IPEDException("Configure DIE path on " + Configuration.LOCAL_CONFIG); //$NON-NLS-1$
-
-                // backwards compatibility
-                if (enableParam == null && diePath != null)
-                    taskEnabled = true;
-
+                taskEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
                 }
 
-                File dieDat = new File(diePath.trim());
-                if (!dieDat.exists())
-                    dieDat = new File(new File(Configuration.getInstance().appRoot), diePath.trim());
+                File dieDat = new File(Configuration.getInstance().appRoot, DIE_MODEL_PATH);
                 if (!dieDat.exists() || !dieDat.canRead()) {
                     String msg = "Invalid DIE database file: " + dieDat.getAbsolutePath(); //$NON-NLS-1$
                     CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());

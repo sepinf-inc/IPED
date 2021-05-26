@@ -64,10 +64,10 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
@@ -86,6 +86,8 @@ import macee.core.Configurable;
  * selecionados após análise.
  */
 public class ExportFileTask extends AbstractTask {
+
+    private static final String ENABLE_PARAM = "enableAutomaticExportFiles";
 
     private static Logger LOGGER = LoggerFactory.getLogger(ExportFileTask.class);
     public static final String EXTRACT_DIR = Messages.getString("ExportFileTask.ExportFolder"); //$NON-NLS-1$
@@ -117,6 +119,7 @@ public class ExportFileTask extends AbstractTask {
     private List<String> noContentLabels;
     private ExportByCategoriesConfig exportByCategories;
     private ExportByKeywordsConfig exportByKeywords;
+    private boolean automaticExportEnabled = false;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -217,7 +220,7 @@ public class ExportFileTask extends AbstractTask {
     }
 
     public boolean isAutomaticExportEnabled() {
-        return exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled();
+        return automaticExportEnabled && (exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled());
     }
 
     private boolean isToBeExtracted(IItem evidence) {
@@ -706,12 +709,14 @@ public class ExportFileTask extends AbstractTask {
 
     @Override
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new ExportByCategoriesConfig(), new ExportByKeywordsConfig());
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM), new ExportByCategoriesConfig(),
+                new ExportByKeywordsConfig());
     }
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
 
+        automaticExportEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
         exportByCategories = ConfigurationManager.findObject(ExportByCategoriesConfig.class);
         exportByKeywords = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
         if (isAutomaticExportEnabled()) {

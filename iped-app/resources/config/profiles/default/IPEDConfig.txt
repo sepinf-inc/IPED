@@ -50,6 +50,11 @@ expandContainers = true
 # New expressions can be configured in file "conf/RegexConfig.txt"
 enableRegexSearch = true
 
+# Enables automatic file exporting to case folder based on categories or keywords.
+# If enabled, just the exported files are included in case, others are ignored, and the case becomes datasource independent.
+# Relevant categories and keywords can be configured in CategoriesToExport.txt and KeywordsToExport.txt.
+enableAutomaticExportFiles = false
+
 # Enables detection of more than 70 idioms in document files.
 enableLanguageDetect = true
 
@@ -62,6 +67,12 @@ enableNamedEntityRecogniton = false
 # Feature to create link graphs of communications (calls, messages, emails...)
 # Optionally it can create entities and links based on nearby regex hits (experimental). It could be enabled in conf/GraphConfig.json
 enableGraphGeneration = true
+
+# Perform test for randomness of binary items and unknown file types.
+# This is used to detect possible encrypted items.
+# Also makes indexing faster and reduces index size, specially when indexing unallocated space.
+# May cause loss of hits surrounded by "random" content.
+entropyTest = true
 
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
