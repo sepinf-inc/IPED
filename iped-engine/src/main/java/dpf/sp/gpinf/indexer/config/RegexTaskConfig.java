@@ -6,12 +6,13 @@ import java.nio.file.DirectoryStream.Filter;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class RegexTaskConfig extends AbstractPropertiesConfigurable {
+public class RegexTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONFIG_FILE = "RegexConfig.txt"; //$NON-NLS-1$
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
@@ -21,7 +22,8 @@ public class RegexTaskConfig extends AbstractPropertiesConfigurable {
     private boolean formatRegexMatches;
     private List<RegexEntry> regexList = new ArrayList<>();
 
-    public boolean isTaskEnabled() {
+    @Override
+    public boolean isEnabled() {
         return taskEnabled;
     }
 

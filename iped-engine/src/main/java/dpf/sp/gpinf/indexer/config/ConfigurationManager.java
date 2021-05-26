@@ -8,7 +8,6 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import iped3.configuration.IConfigurationDirectory;
 import macee.core.Configurable;
@@ -42,11 +41,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     @Override
     public void addObject(Configurable<?> config) {
-        Set<String> configurableNames = loadedConfigurables.keySet().stream().map(c -> c.getClass().getName())
-                .collect(Collectors.toSet());
-        if (!configurableNames.contains(config.getClass().getName())) {
-            loadedConfigurables.put(config, false);
-        }
+        loadedConfigurables.put(config, false);
     }
 
     public void loadConfigs() throws IOException {
@@ -99,6 +94,17 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
             }
         }
         return null;
+    }
+
+    public static boolean getEnableTaskProperty(String propertyName) {
+        Set<Configurable<?>> configs = singleton.findObjects(EnableTaskProperty.class);
+        for(Configurable<?> config : configs) {
+            EnableTaskProperty enableProp = (EnableTaskProperty) config;
+            if (enableProp.getPropertyName().equals(propertyName)) {
+                return enableProp.isEnabled();
+            }
+        }
+        return false;
     }
 
     @Override

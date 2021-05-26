@@ -7,6 +7,7 @@ import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
@@ -21,6 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -32,9 +35,9 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a
@@ -49,6 +52,7 @@ public class IndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
+    private static final String ENABLE_PARAM = "indexFileContents";
     public static final String TEXT_SPLITTED = "textSplitted";
 
     public static boolean indexFileContents = true;
@@ -214,17 +218,16 @@ public class IndexTask extends AbstractTask {
     }
 
     @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
+    @Override
     public void init(Properties properties, File confDir) throws Exception {
+        
+        indexFileContents = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
-        String value = properties.getProperty("indexFileContents"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexFileContents = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
+        String value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }

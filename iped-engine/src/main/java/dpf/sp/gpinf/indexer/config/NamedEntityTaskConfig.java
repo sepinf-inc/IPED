@@ -7,9 +7,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import macee.core.EnabledInterface;
+
 import java.nio.file.Path;
 
-public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable {
+public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     public static final String CONF_FILE = "NamedEntityRecognitionConfig.txt"; //$NON-NLS-1$
 
@@ -27,7 +29,8 @@ public class NamedEntityTaskConfig extends AbstractPropertiesConfigurable {
 
     private Set<String> categoriesToIgnore = new HashSet<String>();
 
-    public boolean isTaskEnabled() {
+    @Override
+    public boolean isEnabled() {
         return taskEnabled;
     }
 

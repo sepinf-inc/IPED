@@ -6,10 +6,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class AudioTranscriptConfig extends AbstractPropertiesConfigurable {
+public class AudioTranscriptConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
@@ -46,6 +47,7 @@ public class AudioTranscriptConfig extends AbstractPropertiesConfigurable {
         return maxConcurrentRequests;
     }
 
+    @Override
     public boolean isEnabled() {
         return isEnabled;
     }

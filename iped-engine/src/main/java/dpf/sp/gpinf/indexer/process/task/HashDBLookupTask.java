@@ -18,11 +18,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import gpinf.hashdb.HashDB;
 import gpinf.hashdb.HashDBDataSource;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class HashDBLookupTask extends AbstractTask {
     private static final String ENABLE_PARAM = "enableHashDBLookup";
@@ -61,11 +64,15 @@ public class HashDBLookupTask extends AbstractTask {
     private static final Map<String, Boolean> nsrlMergeByProdName = new HashMap<String, Boolean>();
 
     @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
+    @Override
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String config = confParams.getProperty(ENABLE_PARAM);
-                taskEnabled = config != null && Boolean.parseBoolean(config.trim());
+                taskEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (taskEnabled) {
                     String hashes = confParams.getProperty("hash");
                     if (hashes == null) {

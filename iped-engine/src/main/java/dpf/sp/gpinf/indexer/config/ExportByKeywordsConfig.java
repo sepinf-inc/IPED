@@ -4,17 +4,19 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.util.Util;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ExportByKeywordsConfig extends AbstractPropertiesConfigurable {
+public class ExportByKeywordsConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONFIG_FILE = "KeywordsToExport.txt";
 
     private List<String> keywords = new ArrayList<>();
 
+    @Override
     public boolean isEnabled() {
         return !this.keywords.isEmpty();
     }

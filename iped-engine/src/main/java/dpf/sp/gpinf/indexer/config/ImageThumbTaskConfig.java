@@ -3,11 +3,11 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class ImageThumbTaskConfig extends AbstractPropertiesConfigurable {
+public class ImageThumbTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String enableProperty = "enableImageThumbs"; //$NON-NLS-1$
 
@@ -22,7 +22,8 @@ public class ImageThumbTaskConfig extends AbstractPropertiesConfigurable {
     private int thumbSize = 160;
     private int galleryThreads = 1;
 
-    public boolean isTaskEnabled() {
+    @Override
+    public boolean isEnabled() {
         return taskEnabled;
     }
 

@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.config.TikaConfig;
@@ -12,8 +14,11 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Análise de assinatura utilizando biblioteca Apache Tika.
@@ -21,6 +26,8 @@ import iped3.IItem;
 public class SignatureTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SignatureTask.class);
+
+    private static final String ENABLE_PARAM = "processFileSignatures";
 
     private static final String[] HFS_ATTR_SUFFIX = { ":DATA", ":DECOMP", ":RSRC" };
 
@@ -102,14 +109,13 @@ public class SignatureTask extends AbstractTask {
     }
 
     @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
+    @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        String value = confProps.getProperty("processFileSignatures"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            processFileSignatures = Boolean.valueOf(value);
-        }
+        processFileSignatures = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
     }
 
     @Override

@@ -7,7 +7,9 @@ import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 
-public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable {
+import macee.core.EnabledInterface;
+
+public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     public static final String CONFIG_FILE = "CategoriesToExport.txt"; //$NON-NLS-1$
     
@@ -40,6 +42,11 @@ public class ExportByCategoriesConfig extends AbstractPropertiesConfigurable {
 
     public boolean isToExportCategory(String category) {
         return categoriesToExport.contains(category);
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return hasCategoryToExport();
     }
 
 }

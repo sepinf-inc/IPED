@@ -9,7 +9,9 @@ import java.io.FileOutputStream;
 import java.security.MessageDigest;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -21,13 +23,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class LedCarveTask extends BaseCarveTask {
+
+    private static final String ENABLE_PARAM = "enableLedCarving";
 
     private static Logger logger = LoggerFactory.getLogger(LedCarveTask.class);
 
@@ -90,14 +97,19 @@ public class LedCarveTask extends BaseCarveTask {
         taskEnabled = enabled;
     }
 
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
     /**
      * Inicializa tarefa.
      */
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String config = confParams.getProperty("enableLedCarving");
-                if (config != null && Boolean.parseBoolean(config.trim())) {
+                boolean enableParam = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                if (enableParam) {
                     String hashDBPath = confParams.getProperty("hashesDB");
                     if (hashDBPath == null) {
                         logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);

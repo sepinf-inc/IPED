@@ -3,12 +3,12 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.dev.data.ReportInfo;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class HtmlReportTaskConfig extends AbstractPropertiesConfigurable {
+public class HtmlReportTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONFIG_FILE = "HTMLReportConfig.txt"; //$NON-NLS-1$
 
@@ -73,6 +73,7 @@ public class HtmlReportTaskConfig extends AbstractPropertiesConfigurable {
         return this.info;
     }
 
+    @Override
     public boolean isEnabled() {
         return taskEnabled;
     }

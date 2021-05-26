@@ -48,7 +48,7 @@ public class NamedEntityTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return nerConfig.isTaskEnabled();
+        return nerConfig.isEnabled();
     }
 
     public List<Configurable> getConfigurables() {
@@ -63,7 +63,7 @@ public class NamedEntityTask extends AbstractTask {
         if (inited.getAndSet(true))
             return;
 
-        if (!nerConfig.isTaskEnabled())
+        if (!nerConfig.isEnabled())
             return;
 
         if (nerConfig.getNerImpl().contains("CoreNLPNERecogniser")) { //$NON-NLS-1$

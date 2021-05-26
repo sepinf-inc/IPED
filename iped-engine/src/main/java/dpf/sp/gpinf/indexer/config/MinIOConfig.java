@@ -3,9 +3,11 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
+import macee.core.EnabledInterface;
+
 import java.nio.file.Path;
 
-public class MinIOConfig extends AbstractPropertiesConfigurable {
+public class MinIOConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONFIG_FILE = "MinIOConfig.txt";
     private static final String ENABLE_KEY = "enable";
@@ -16,6 +18,7 @@ public class MinIOConfig extends AbstractPropertiesConfigurable {
     private String host;
     private String port;
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }

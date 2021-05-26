@@ -6,9 +6,11 @@ import java.nio.file.DirectoryStream.Filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import macee.core.EnabledInterface;
+
 import java.nio.file.Path;
 
-public class DocThumbTaskConfig extends AbstractPropertiesConfigurable {
+public class DocThumbTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String ENABLE_PROP = "enableDocThumbs";
     private static final String CONFIG_FILE = "DocThumbsConfig.txt";
@@ -25,6 +27,7 @@ public class DocThumbTaskConfig extends AbstractPropertiesConfigurable {
     private boolean pdfEnabled;
     private boolean loEnabled;
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }

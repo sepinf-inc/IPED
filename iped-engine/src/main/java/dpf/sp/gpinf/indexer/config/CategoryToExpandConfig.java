@@ -8,7 +8,9 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.HashSet;
 
-public class CategoryToExpandConfig extends AbstractPropertiesConfigurable {
+import macee.core.EnabledInterface;
+
+public class CategoryToExpandConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     public static final String CONFIG_FILE = "CategoriesToExpand.txt";
     private static final String ENABLED = "expandContainers";
@@ -61,6 +63,11 @@ public class CategoryToExpandConfig extends AbstractPropertiesConfigurable {
 
     public void setExpandContainers(boolean value) {
         this.expandContainers = value;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return expandContainers;
     }
 
 }

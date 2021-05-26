@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
@@ -13,8 +15,11 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Image Similarity task.
@@ -44,12 +49,15 @@ public class ImageSimilarityTask extends AbstractTask {
         taskEnabled = enabled;
     }
 
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(enableParam));
+    }
+
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String enabled = confParams.getProperty(enableParam);
-                if (enabled != null)
-                    taskEnabled = Boolean.valueOf(enabled.trim());
+                taskEnabled = ConfigurationManager.getEnableTaskProperty(enableParam);
 
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$

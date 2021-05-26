@@ -4,10 +4,11 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
-public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable {
+public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
 
@@ -41,6 +42,7 @@ public class ElasticSearchTaskConfig extends AbstractPropertiesConfigurable {
     private String index_policy = "";
     private boolean useCustomAnalyzer;
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }

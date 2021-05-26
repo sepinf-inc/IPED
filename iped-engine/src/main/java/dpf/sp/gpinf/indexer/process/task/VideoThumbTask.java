@@ -201,7 +201,7 @@ public class VideoThumbTask extends ThumbTask {
         synchronized (init) {
             if (!init.get()) {
                 // Verifica se tarefa está habilitada
-                if (videoConfig.isTaskEnabled()) {
+                if (videoConfig.isEnabled()) {
                     taskEnabled = true;
                 } else {
                     logger.info("Task disabled."); //$NON-NLS-1$
@@ -254,7 +254,7 @@ public class VideoThumbTask extends ThumbTask {
 
     @Override
     public boolean isEnabled() {
-        return videoConfig.isTaskEnabled();
+        return videoConfig.isEnabled();
     }
 
     /**

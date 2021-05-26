@@ -2,9 +2,12 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
+
+import macee.core.EnabledInterface;
+
 import java.nio.file.Path;
 
-public class VideoThumbsConfig extends AbstractPropertiesConfigurable {
+public class VideoThumbsConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     /**
      * Constante com o nome utilizado para o arquivo de propriedades.
@@ -65,7 +68,8 @@ public class VideoThumbsConfig extends AbstractPropertiesConfigurable {
     private int galleryMinThumbs = -1;
     private int galleryMaxThumbs = -1;
 
-    public boolean isTaskEnabled() {
+    @Override
+    public boolean isEnabled() {
         return taskEnabled;
     }
 

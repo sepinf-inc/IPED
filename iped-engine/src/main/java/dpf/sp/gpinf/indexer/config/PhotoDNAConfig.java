@@ -3,9 +3,11 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
+import macee.core.EnabledInterface;
+
 import java.nio.file.Path;
 
-public class PhotoDNAConfig extends AbstractPropertiesConfigurable {
+public class PhotoDNAConfig extends AbstractPropertiesConfigurable implements EnabledInterface {
 
     public static final String CONFIG_FILE = "PhotoDNAConfig.txt";
 
@@ -37,6 +39,7 @@ public class PhotoDNAConfig extends AbstractPropertiesConfigurable {
 
     private String statusHashDBFilter = "";
 
+    @Override
     public boolean isEnabled() {
         return enabled;
     }

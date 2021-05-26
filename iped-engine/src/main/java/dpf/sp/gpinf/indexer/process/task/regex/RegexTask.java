@@ -128,7 +128,7 @@ public class RegexTask extends AbstractTask {
 
         regexConfig = ConfigurationManager.findObject(RegexTaskConfig.class);
 
-        if (regexConfig.isTaskEnabled() && regexList == null) {
+        if (regexConfig.isEnabled() && regexList == null) {
 
             regexList = new ArrayList<Regex>();
             for (RegexEntry e : regexConfig.getRegexList()) {

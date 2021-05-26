@@ -101,7 +101,7 @@ public class ImageThumbTask extends ThumbTask {
 
     @Override
     public boolean isEnabled() {
-        return imgThumbConfig.isTaskEnabled();
+        return imgThumbConfig.isEnabled();
     }
 
     @Override
