@@ -696,6 +696,23 @@
 		<glob pattern="*.m2ts"/>
     </mime-type>
     
+    <mime-type type="video/ts">
+    	<magic priority="50">
+            <match value="G" type="string" offset="0">
+	            <match value="G" type="string" offset="188">
+		            <match value="G" type="string" offset="376">
+			            <match value="G" type="string" offset="564">
+				            <match value="G" type="string" offset="752">
+					            <match value="G" type="string" offset="940"/>
+				            </match>
+			            </match>
+		            </match>
+	            </match>
+            </match>
+        </magic>
+        <glob pattern="*.ts"/>
+    </mime-type>
+    
     <mime-type type="application/x-lnk">
         <magic priority="50">
             <match value="0x4C0000000114020000000000C000000000000046" type="string" offset="0"/>
