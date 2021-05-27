@@ -38,11 +38,11 @@ public class SkypeParserTest extends TestCase{
     } 
     
     @Test
-    public void testSkypeParser() throws IOException, SAXException, TikaException{
+    public void testSkypeParserV12() throws IOException, SAXException, TikaException{
         
         SkypeParser parser = new SkypeParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype").toString());
+        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype-v12").toString());
         ContentHandler handler = new BodyContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_skypeS4lStreeguil1.db").getFile());
@@ -374,9 +374,35 @@ public class SkypeParserTest extends TestCase{
         context.set(IItemBase.class, item);
         context.set(ItemInfo.class, itemInfo);
         
-//        parser.parse(stream, handler, metadata, context);
-//        String hts = handler.toString();
-//        System.out.println(hts);
-           
+        parser.parse(stream, handler, metadata, context);
+        String hts = handler.toString();
+        String mts = metadata.toString();
+        System.out.println(hts + "\n" + mts);
+        assertTrue(hts.contains("conversationsv14"));
+        assertTrue(hts.contains("5"));
+        assertTrue(hts.contains("0"));
+        assertTrue(hts.contains("internaldata"));
+        assertTrue(hts.contains("2"));
+        assertTrue(hts.contains("12"));
+        assertTrue(hts.contains("cellularMessageInfo"));
+        assertTrue(hts.contains("2"));
+        assertTrue(hts.contains("0"));
+        assertTrue(hts.contains("engagementMessagesQueue"));
+        assertTrue(hts.contains("2"));
+        assertTrue(hts.contains("0"));
+        assertTrue(hts.contains("mediadrafts"));
+        assertTrue(hts.contains("2"));
+        assertTrue(hts.contains("0"));
+        
+        assertTrue(mts.contains("database:table_name=metadata"));
+        assertTrue(mts.contains("database:table_name=messagesv12"));
+        assertTrue(mts.contains("database:table_name=alertsv12"));
+        assertTrue(mts.contains("database:table_name=popupcards"));
+        assertTrue(mts.contains("database:table_name=conversationsv14"));
+        assertTrue(mts.contains("Content-Type=application/sqlite-skype-v12"));
+        assertTrue(mts.contains("database:table_name=profilecachev8_phoneNumbersIndex"));
+        assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segdir"));
+        assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segments"));
+        assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_content"));
     }
 }
