@@ -8,6 +8,10 @@ import org.slf4j.LoggerFactory;
 
 public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final String ENABLE_PROP = "enableDocThumbs";
     private static final String CONFIG_FILE = "DocThumbsConfig.txt";
 

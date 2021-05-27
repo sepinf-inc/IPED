@@ -1,14 +1,21 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import dpf.sp.gpinf.indexer.util.Util;
 
 import java.nio.file.Path;
 
-public class MakePreviewConfig extends AbstractTaskConfig<Object> {
+public class MakePreviewConfig extends AbstractTaskConfig<List<Set<String>>> {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     private static final String ENABLE_PROP = IPEDConfig.ENABLE_PARSING;
 
@@ -18,31 +25,27 @@ public class MakePreviewConfig extends AbstractTaskConfig<Object> {
 
     private static final String SUPPORTED_LINKS_KEY = "supportedMimesWithLinks";
 
-    public static class MakePreviewMimes {
+    private Set<String> supportedMimes = new HashSet<>();
 
-        private Set<String> supportedMimes = new HashSet<>();
-
-        private Set<String> supportedMimesWithLinks = new HashSet<>();
-    }
-
-    private MakePreviewMimes mimes = new MakePreviewMimes();
+    private Set<String> supportedMimesWithLinks = new HashSet<>();
 
     public Set<String> getSupportedMimes() {
-        return mimes.supportedMimes;
+        return supportedMimes;
     }
 
     public Set<String> getSupportedMimesWithLinks() {
-        return mimes.supportedMimesWithLinks;
+        return supportedMimesWithLinks;
     }
 
     @Override
-    public Object getConfiguration() {
-        return mimes;
+    public List<Set<String>> getConfiguration() {
+        return Arrays.asList(supportedMimes, supportedMimesWithLinks);
     }
 
     @Override
-    public void setConfiguration(Object config) {
-        mimes = (MakePreviewMimes) config;
+    public void setConfiguration(List<Set<String>> config) {
+        supportedMimes = config.get(0);
+        supportedMimesWithLinks = config.get(1);
     }
 
     @Override
@@ -66,9 +69,9 @@ public class MakePreviewConfig extends AbstractTaskConfig<Object> {
             if (line.startsWith(SUPPORTED_KEY) || line.startsWith(SUPPORTED_LINKS_KEY))
                 for (String mime : line.substring(line.indexOf('=') + 1).split(";")) {
                     if (line.startsWith(SUPPORTED_LINKS_KEY))
-                        mimes.supportedMimesWithLinks.add(mime.trim());
+                        supportedMimesWithLinks.add(mime.trim());
                     else if (line.startsWith(SUPPORTED_KEY))
-                        mimes.supportedMimes.add(mime.trim());
+                        supportedMimes.add(mime.trim());
                 }
         }
 

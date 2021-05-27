@@ -10,6 +10,10 @@ import java.nio.file.Path;
 
 public class IPEDConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String CONFDIR = "confdir"; //$NON-NLS-1$
     public static final String TOADDUNALLOCATED = "addUnallocated"; //$NON-NLS-1$
     public static final String TOADDFILESLACKS = "addFileSlacks"; //$NON-NLS-1$

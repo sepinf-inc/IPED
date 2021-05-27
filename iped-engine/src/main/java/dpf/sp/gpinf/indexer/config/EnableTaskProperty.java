@@ -8,6 +8,10 @@ import macee.core.EnabledInterface;
 
 public class EnableTaskProperty extends AbstractPropertiesConfigurable implements EnabledInterface {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private String propertyName;
     private String value;
 

@@ -18,6 +18,10 @@ import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
 public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 

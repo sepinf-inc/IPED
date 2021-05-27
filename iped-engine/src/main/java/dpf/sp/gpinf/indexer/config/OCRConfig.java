@@ -8,6 +8,10 @@ import java.nio.file.Path;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 
 public class OCRConfig extends AbstractPropertiesConfigurable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String OCRLanguage = "OCRLanguage";
     public static final String minFileSize2OCR = "minFileSize2OCR";
     public static final String maxFileSize2OCR = "maxFileSize2OCR";

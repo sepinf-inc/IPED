@@ -9,6 +9,10 @@ import macee.core.EnabledInterface;
 
 public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledInterface {
     
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     protected EnableTaskProperty enabledProp;
 
     public abstract String getTaskEnableProperty();

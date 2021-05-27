@@ -6,6 +6,11 @@ import java.nio.file.Path;
 public class VideoThumbsConfig extends AbstractTaskPropertiesConfig {
 
     /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
+    /**
      * Constante com o nome utilizado para o arquivo de propriedades.
      */
     private static final String CONFIG_FILE = "VideoThumbsConfig.txt";

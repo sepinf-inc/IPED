@@ -1,13 +1,15 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
-
-import macee.core.EnabledInterface;
 
 import java.nio.file.Path;
 
 public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     private static final String ENABLE_PROP = "enableImageThumbs"; //$NON-NLS-1$
 

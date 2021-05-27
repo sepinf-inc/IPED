@@ -6,6 +6,11 @@ import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
 public class SleuthKitConfig extends AbstractPropertiesConfigurable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {

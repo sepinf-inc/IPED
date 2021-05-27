@@ -9,6 +9,10 @@ import java.util.Set;
 
 public class ExportByCategoriesConfig extends AbstractTaskConfig<Set<String>> {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String CONFIG_FILE = "CategoriesToExport.txt"; //$NON-NLS-1$
     public static final String ENABLE_PARAM = "enableAutomaticExportFiles";
     

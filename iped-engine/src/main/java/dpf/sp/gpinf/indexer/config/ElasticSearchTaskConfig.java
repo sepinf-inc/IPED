@@ -1,13 +1,17 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
 
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 import java.nio.file.Path;
 
 public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
 

@@ -10,6 +10,10 @@ import java.util.Set;
 
 public class CategoryToExpandConfig extends AbstractTaskConfig<Set<String>> {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String CONFIG_FILE = "CategoriesToExpand.txt";
     private static final String ENABLED = "expandContainers";
 

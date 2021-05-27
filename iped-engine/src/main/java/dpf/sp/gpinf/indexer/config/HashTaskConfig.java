@@ -6,6 +6,10 @@ import java.util.ArrayList;
 
 public class HashTaskConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String ENABLE_PARAM = "enableHash";
     public static final String CONFIG_FILE = "HashTaskConfig.txt";
 

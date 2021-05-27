@@ -23,8 +23,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
-import org.apache.tika.mime.MediaType;
-
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;

@@ -10,6 +10,10 @@ import java.util.Set;
 
 public class PluginConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private String optional_jars;
     private File optionalJarDir;
 

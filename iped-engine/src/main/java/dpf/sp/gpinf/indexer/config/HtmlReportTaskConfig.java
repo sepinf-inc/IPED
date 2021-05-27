@@ -7,6 +7,11 @@ import gpinf.dev.data.ReportInfo;
 
 public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     private static final String CONFIG_FILE = "HTMLReportConfig.txt"; //$NON-NLS-1$
 
     /**

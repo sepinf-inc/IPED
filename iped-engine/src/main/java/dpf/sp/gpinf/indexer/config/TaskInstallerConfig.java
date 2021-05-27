@@ -1,9 +1,12 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,18 +26,22 @@ import dpf.sp.gpinf.indexer.process.task.ScriptTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import macee.core.Configurable;
 
-public class TaskInstallerConfig implements Configurable<List<Path>> {
+public class TaskInstallerConfig implements Configurable<List<String>> {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final String CONFIG_XML = "TaskInstaller.xml"; //$NON-NLS-1$
     public static final String SCRIPT_BASE = "conf/scripts"; //$NON-NLS-1$
 
-    private List<Path> resources = new ArrayList<>();
+    private List<String> xmls = new ArrayList<>();
 
     public List<AbstractTask> getNewTaskInstances() {
         List<AbstractTask> tasks = new ArrayList<>();
-        for (Path path : resources) {
+        for (String xml : xmls) {
             try {
-                loadTasks(path.toFile(), tasks);
+                loadTasks(xml, tasks);
             } catch (InstantiationException | IllegalAccessException | ClassNotFoundException
                     | ParserConfigurationException | SAXException | IOException e) {
                 throw new RuntimeException(e);
@@ -55,14 +62,15 @@ public class TaskInstallerConfig implements Configurable<List<Path>> {
 
     @Override
     public void processConfig(Path resource) throws IOException {
-        this.resources.add(resource);
+        byte[] bytes = Files.readAllBytes(resource);
+        this.xmls.add(new String(bytes, StandardCharsets.UTF_8));
     }
 
-    private List<AbstractTask> loadTasks(File file, List<AbstractTask> tasks) throws InstantiationException,
+    private List<AbstractTask> loadTasks(String xml, List<AbstractTask> tasks) throws InstantiationException,
             IllegalAccessException, IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
 
         DocumentBuilder dombuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
-        Document dom = dombuilder.parse(file);
+        Document dom = dombuilder.parse(new ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
         NodeList list = dom.getElementsByTagName("task"); //$NON-NLS-1$
         for (int i = 0; i < list.getLength(); i++) {
             Node node = list.item(i);
@@ -94,13 +102,13 @@ public class TaskInstallerConfig implements Configurable<List<Path>> {
     }
 
     @Override
-    public List<Path> getConfiguration() {
-        return resources;
+    public List<String> getConfiguration() {
+        return xmls;
     }
 
     @Override
-    public void setConfiguration(List<Path> config) {
-        this.resources = config;
+    public void setConfiguration(List<String> config) {
+        this.xmls = config;
     }
 
 }

@@ -1,6 +1,7 @@
 package macee.core;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.util.Iterator;
@@ -17,7 +18,7 @@ import java.util.List;
  * @author Bruno W. P. Hoelz
  * @author Luis Nassif
  */
-public interface Configurable<T> {
+public interface Configurable<T> extends Serializable {
 
     /**
      * Returns a filter to be used for resource lookup on the configuration

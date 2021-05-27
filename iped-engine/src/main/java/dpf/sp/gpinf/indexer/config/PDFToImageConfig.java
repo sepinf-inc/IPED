@@ -14,6 +14,10 @@ import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 
 public class PDFToImageConfig extends AbstractPropertiesConfigurable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String MAXPDFTextSize2OCR = "maxPDFTextSize2OCR";
     public static final String PDFToImgResolution = "pdfToImgResolution";
     public static final String PDFToImgLib = "pdfToImgLib";

@@ -5,6 +5,11 @@ import java.nio.file.Path;
 
 public class PhotoDNAConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String CONFIG_FILE = "PhotoDNAConfig.txt";
 
     public static final String ENABLE_PHOTO_DNA = "enablePhotoDNA";

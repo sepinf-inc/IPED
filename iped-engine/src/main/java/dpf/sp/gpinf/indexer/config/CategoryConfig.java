@@ -2,21 +2,27 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Map;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
-public class CategoryConfig extends AbstractPropertiesConfigurable {
+public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     private static final String CONFIG_FILE = "CategoriesByTypeConfig.txt";
 
-    private HashMap<String, String> mimetypeToCategoryMap;
-    private MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+    private transient MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
+
+    private Map<String, String> mimetypeToCategoryMap = new HashMap<>();
 
     public String getCategory(MediaType type) {
 
@@ -38,19 +44,32 @@ public class CategoryConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public Filter<Path> getResourceLookupFilter() {
-        return new Filter<Path>() {
-            @Override
-            public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(CONFIG_FILE);
-            }
-        };
+    public boolean isEnabled() {
+        return true;
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
+    public Map<String, String> getConfiguration() {
+        return mimetypeToCategoryMap;
+    }
 
-        mimetypeToCategoryMap = new HashMap<>();
+    @Override
+    public void setConfiguration(Map<String, String> config) {
+        this.mimetypeToCategoryMap = config;
+    }
+
+    @Override
+    public String getTaskEnableProperty() {
+        return "";
+    }
+
+    @Override
+    public String getTaskConfigFileName() {
+        return CONFIG_FILE;
+    }
+
+    @Override
+    public void processTaskConfig(Path resource) throws IOException {
 
         try (BufferedReader reader = Files.newBufferedReader(resource)) {
             String line = reader.readLine();
@@ -73,7 +92,6 @@ public class CategoryConfig extends AbstractPropertiesConfigurable {
                 }
             }
         }
-
     }
 
 }

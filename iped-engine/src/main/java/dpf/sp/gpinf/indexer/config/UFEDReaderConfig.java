@@ -6,6 +6,11 @@ import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
 
 public class UFEDReaderConfig extends AbstractPropertiesConfigurable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {

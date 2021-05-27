@@ -5,12 +5,18 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 
-public class RegexTaskConfig extends AbstractTaskConfig<List<?>> {
+public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final String CONFIG_FILE = "RegexConfig.txt"; //$NON-NLS-1$
     private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
     private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
@@ -63,13 +69,14 @@ public class RegexTaskConfig extends AbstractTaskConfig<List<?>> {
     }
 
     @Override
-    public List<?> getConfiguration() {
-        return regexList;
+    public Pair<Boolean, List<?>> getConfiguration() {
+        return Pair.of(formatRegexMatches, regexList);
     }
 
     @Override
-    public void setConfiguration(List<?> config) {
-        regexList = (List<RegexEntry>) config;
+    public void setConfiguration(Pair<Boolean, List<?>> config) {
+        formatRegexMatches = config.getLeft();
+        regexList = (List<RegexEntry>) config.getRight();
     }
 
     @Override

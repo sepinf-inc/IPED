@@ -8,6 +8,10 @@ import java.nio.file.Path;
 
 public class LocaleConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
     private static final String HOST_COUNTRY = "hostCountryCode";
 

@@ -9,6 +9,11 @@ import java.util.Set;
 
 public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String CONF_FILE = "NamedEntityRecognitionConfig.txt"; //$NON-NLS-1$
 
     private static final String ENABLE_PARAM = "enableNamedEntityRecogniton"; //$NON-NLS-1$

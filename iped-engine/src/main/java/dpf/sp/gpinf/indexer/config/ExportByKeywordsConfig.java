@@ -9,6 +9,11 @@ import dpf.sp.gpinf.indexer.util.Util;
 
 public class ExportByKeywordsConfig extends AbstractTaskConfig<List<String>> {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     private static final String CONFIG_FILE = "KeywordsToExport.txt";
 
     private List<String> keywords = new ArrayList<>();

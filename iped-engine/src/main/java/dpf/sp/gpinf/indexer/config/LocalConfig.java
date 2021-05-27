@@ -14,6 +14,11 @@ import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$

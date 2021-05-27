@@ -4,12 +4,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
-
 import java.nio.file.Path;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     private static final String CONF_FILE = "AudioTranscriptConfig.txt";
     private static final String ENABLE_KEY = "enableAudioTranscription";
     private static final String IMPL_CLASS_KEY = "implementationClass";
