@@ -137,7 +137,11 @@
             <artifactId>rtf-to-html</artifactId>
             <version>1.0.1</version>
         </dependency>
-        
+        <dependency>
+    		<groupId>com.twelvemonkeys.imageio</groupId>
+    		<artifactId>imageio-psd</artifactId>
+    		<version>3.7.0</version>
+	  	</dependency>
 	</dependencies>
 
 </project>
