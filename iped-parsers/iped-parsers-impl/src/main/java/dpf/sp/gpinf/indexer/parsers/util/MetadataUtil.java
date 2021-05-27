@@ -473,7 +473,7 @@ public class MetadataUtil {
                 metadata.remove(oldName);
                 String newName = renameMap.get(oldName);
                 for (String val : values) {
-                    metadata.add(newName, val);
+                    metadata.set(newName, val);
                 }
             }
         }
