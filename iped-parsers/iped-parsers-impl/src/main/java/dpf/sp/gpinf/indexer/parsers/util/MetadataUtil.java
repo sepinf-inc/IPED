@@ -40,6 +40,19 @@ public class MetadataUtil {
 
     private static final Map<String, String> renameMap = getRenameMap();
 
+    private static final Set<String> singleValueKeys = getSingleValKeys();
+
+    private static Set<String> getSingleValKeys() {
+        Set<String> singleValueKeys = new HashSet<>();
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Make");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Model");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Height");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return singleValueKeys;
+    }
+
     private static Map<String, String> getRenameMap() {
         Map<String, String> rename = new HashMap<String, String>();
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MAKE.getName(), ExtraProperties.IMAGE_META_PREFIX + "Make");
@@ -182,6 +195,7 @@ public class MetadataUtil {
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
         renameKeys(metadata);
+        removeExtraValsFromSingleValueKeys(metadata);
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {
@@ -475,6 +489,16 @@ public class MetadataUtil {
                 for (String val : values) {
                     metadata.add(newName, val);
                 }
+            }
+        }
+    }
+
+    // currently keeps just last value, how to choose?
+    private static void removeExtraValsFromSingleValueKeys(Metadata metadata) {
+        for (String key : singleValueKeys) {
+            String[] values = metadata.getValues(key);
+            if (values != null && values.length > 1) {
+                metadata.set(key, values[values.length - 1]);
             }
         }
     }
