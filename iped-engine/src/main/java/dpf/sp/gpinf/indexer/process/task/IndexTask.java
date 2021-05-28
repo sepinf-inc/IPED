@@ -13,6 +13,8 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.TextField;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -153,7 +155,29 @@ public class IndexTask extends AbstractTask {
                 }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
-                worker.writer.addDocument(doc);
+                // loop to handle possible corrupted metadata, see #571
+                while (true) {
+                    try {
+                        worker.writer.addDocument(doc);
+                        break;
+                    } catch (IllegalArgumentException e) {
+                        String msg = e.toString();
+                        if (msg.contains("cannot change DocValues type from")) {
+                            String badField = msg.substring(msg.indexOf('\"') + 1, msg.length() - 1);
+                            String badValue = doc.get(badField);
+                            // removes default field
+                            doc.removeField(badField);
+                            // removes docValues field
+                            doc.removeField(badField);
+                            // add the field as a generic string, without docValues (sort won't work fine)
+                            doc.add(new TextField(badField, badValue, Field.Store.YES));
+                            LOGGER.warn("Possible corrupted metadata value '{}' in field '{}' in item '{}' ({} bytes)",
+                                    badValue, badField, evidence.getPath(), evidence.getLength());
+                        } else {
+                            throw e;
+                        }
+                    }
+                }
 
                 while (worker.state != STATE.RUNNING) {
                     try {
