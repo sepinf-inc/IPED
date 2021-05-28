@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -31,14 +30,13 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.EntropyTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import iped3.IIPEDSource;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -106,9 +104,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
 
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
 
-                AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-                autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
-                autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
+                boolean enableEntropyTest = ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM);
+                autoParser.setFallback(new RawStringParser(enableEntropyTest));
+                autoParser.setErrorParser(new RawStringParser(enableEntropyTest));
 
                 App.get().setAutoParser(autoParser);
 

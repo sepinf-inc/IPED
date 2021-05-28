@@ -32,7 +32,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     long minOrphanSizeToIgnore = -1;
     int searchThreads = 1;
     boolean autoManageCols = true;
-    boolean entropyTest = true;
     boolean storeTermVectors = true;
     boolean filterNonLatinChars = false;
     boolean convertCharsToAscii = true;
@@ -211,12 +210,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
         }
 
-        value = properties.getProperty("entropyTest"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            entropyTest = Boolean.valueOf(value.trim());
-            System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, value.trim());
-        }
-
         value = properties.getProperty("textSplitSize"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             textSplitSize = Integer.valueOf(value.trim());
@@ -312,10 +305,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isAutoManageCols() {
         return autoManageCols;
-    }
-
-    public boolean isEntropyTest() {
-        return entropyTest;
     }
 
     public static int getTextSplitSize() {
