@@ -20,6 +20,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.HashDBLookupConfig;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import gpinf.hashdb.HashDB;
@@ -28,7 +31,7 @@ import iped3.IItem;
 import macee.core.Configurable;
 
 public class HashDBLookupTask extends AbstractTask {
-    private static final String ENABLE_PARAM = "enableHashDBLookup";
+
     public static final String ATTRIBUTES_PREFIX = "hashDb:";
     private static final String STATUS_PROPERTY = "status";
     public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
@@ -57,7 +60,6 @@ public class HashDBLookupTask extends AbstractTask {
     private byte[][] hashes;
     private final Map<String, String> properties = new HashMap<String, String>();
 
-    private static final String NSRL_CONFIG_FILE = "NSRLConfig.json";
     private static String nsrlDefaultStatus;
     private static boolean nsrlDefaultMerge;
     private static final Map<String, String> nsrlStatusByProdName = new HashMap<String, String>();
@@ -65,35 +67,34 @@ public class HashDBLookupTask extends AbstractTask {
 
     @Override
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+        return Arrays.asList(new HashDBLookupConfig());
     }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
-                if (taskEnabled) {
-                    String hashes = confParams.getProperty("hash");
-                    if (hashes == null) {
+                HashDBLookupConfig hashDBConfig = ConfigurationManager.findObject(HashDBLookupConfig.class);
+                if (hashDBConfig.isEnabled()) {
+                    HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
+                    if (!hashConfig.isEnabled()) {
                         logger.warn("No hash enabled.");
                         taskEnabled = false;
                     } else {
                         hashesAttributes = new String[HashDB.hashTypes.length];
-                        String[] hashTypes = hashes.split(";");
-                        for (String hashType : hashTypes) {
+                        for (String hashType : hashConfig.getAlgorithms()) {
                             hashType = hashType.trim();
                             int idx = HashDB.hashType(hashType);
                             if (idx >= 0) {
                                 hashesAttributes[idx] = hashType;
                             }
                         }
-                        String hashDBPath = confParams.getProperty("hashesDB");
-                        if (hashDBPath == null) {
+                        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+                        if (localConfig.getHashDbFile() == null) {
                             logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                             taskEnabled = false;
                         } else {
-                            hashDBFile = new File(hashDBPath.trim());
+                            hashDBFile = localConfig.getHashDbFile();
                             if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
                                 String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
                                 if (hasIpedDatasource()) {
@@ -103,13 +104,11 @@ public class HashDBLookupTask extends AbstractTask {
                                 }
                                 taskEnabled = false;
                             } else {
-                                String s = confParams.getProperty("excludeKnown");
-                                excludeKnown = s != null && Boolean.parseBoolean(s.trim());
+                                excludeKnown = hashDBConfig.isExcludeKnown();
                                 hashDBDataSource = new HashDBDataSource(hashDBFile);
                                 addLookupProvider(hashDBDataSource);
-                                File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);
-                                if (nsrlConfigFile.exists()) {
-                                    loadNsrlConfig(nsrlConfigFile);
+                                if (hashDBConfig.getNsrlConfig() != null) {
+                                    loadNsrlConfig(hashDBConfig.getNsrlConfig());
                                     if (!nsrlStatusByProdName.isEmpty()) {
                                         logger.info("NSRL product configurations loaded: {}", nsrlStatusByProdName.size());
                                     }
@@ -288,10 +287,10 @@ public class HashDBLookupTask extends AbstractTask {
         if (found) totFound.incrementAndGet();
     }
 
-    private void loadNsrlConfig(File file) {
+    private void loadNsrlConfig(String nsrlConfig) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(file);
+            JsonNode root = mapper.readTree(nsrlConfig);
             JsonNode node = root.get("defaultStatus");
             if (node != null) {
                 nsrlDefaultStatus = node.asText();
@@ -317,7 +316,7 @@ public class HashDBLookupTask extends AbstractTask {
                 }
             }
         } catch (Exception e) {
-            logger.error("Error reading NSRL configuration file: " + file.getPath(), e);
+            logger.error("Error reading NSRL configuration file: " + HashDBLookupConfig.NSRL_CONFIG_FILE, e);
         }
     }
 }

@@ -23,6 +23,8 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
 
+    private static final String HASH_DB = "hashesDB";
+
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
         public boolean accept(Path entry) throws IOException {
@@ -30,10 +32,11 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         }
     };
 
-    boolean indexTempOnSSD = false;
-    boolean outputOnSSD = false;
-    File indexerTemp, indexTemp;
-    int numThreads;
+    private boolean indexTempOnSSD = false;
+    private boolean outputOnSSD = false;
+    private File indexerTemp, indexTemp;
+    private int numThreads;
+    private File hashDbFile;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -115,6 +118,11 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         if (outputOnSSD || !indexTempOnSSD || Boolean.valueOf(System.getProperty(SYS_PROP_APPEND)))
             indexTemp = null;
+
+        value = properties.getProperty(HASH_DB);
+        if (value != null) {
+            setHashDbFile(new File(value.trim()));
+        }
     }
 
     public void setIndexerTemp(File temp) {
@@ -141,5 +149,13 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public int getNumThreads() {
         return numThreads;
+    }
+
+    public File getHashDbFile() {
+        return hashDbFile;
+    }
+
+    public void setHashDbFile(File hashDbFile) {
+        this.hashDbFile = hashDbFile;
     }
 }
