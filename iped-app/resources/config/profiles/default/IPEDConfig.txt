@@ -27,6 +27,11 @@ enableYahooNSFWDetection = false
 # It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
 ignoreDuplicates = false
 
+# Ignores HFS+ hard links pointing to items already processed. The hard links are added to the case,
+# but their content is not processed (indexed, expanded, carved, etc).
+# Optimizes HFS+ image processing containing millions of hard links (such as Time Machine volumes).
+ignoreHardLinks = true
+
 # Exports the properties of all files in the case to file "Lista de Arquivos.csv"
 exportFileProps = true
 

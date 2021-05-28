@@ -65,11 +65,6 @@ filterNonLatinChars = false
 # Removes accents and converts characters to their equivalent ascii char.
 convertCharsToAscii = true
 
-# Ignores HFS + hard links pointing to items already processed. The hard links are added to the case,
-# but their content is not processed (indexed, expanded, carved, etc).
-# Optimizes HFS + image processing containing thousands of hard links (such as Time Machine volumes).
-ignoreHardLinks = true
-
 # Set this option to ignore orphaned files bigger than a certain size.
 # In rare cases, Sleuthkit can incorrectly recover thousands of giant orphaned files, 
 # which may render processing unfeasible.
