@@ -54,6 +54,7 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
@@ -132,6 +133,7 @@ public class Manager {
 
     private LocalConfig localConfig;
     private AdvancedIPEDConfig advancedConfig;
+    private IndexTaskConfig indexConfig;
     private CmdLineArgs args;
 
     private Thread commitThread = null;
@@ -151,6 +153,7 @@ public class Manager {
 
         this.localConfig = ConfigurationManager.findObject(LocalConfig.class);
         this.advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
+        this.indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;
@@ -578,7 +581,7 @@ public class Manager {
             workers[k].finish();
         }
 
-        if (advancedConfig.isForceMerge()) {
+        if (indexConfig.isForceMerge()) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
             try {

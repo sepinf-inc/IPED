@@ -46,6 +46,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -348,7 +349,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             textReader = new StringReader(""); //$NON-NLS-1$
         }
 
-        FragmentingReader fragReader = new FragmentingReader(textReader);
+        IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
+                indexConfig.getTextOverlapSize());
         int fragNum = fragReader.estimateNumberOfFrags();
         if (fragNum == -1) {
             fragNum = 1;

@@ -1,0 +1,36 @@
+# Indexes files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc
+# In this option, raw strings are extracted from the files and indexed
+indexUnknownFiles = true
+
+# Index corrupted files with strings. For example, deleted and partially overwritten images
+# can have searchable plain text into them.
+indexCorruptedFiles = true
+
+# Added unallocated space will be indexed. "addUnallocated" and "indexUnknownFiles" must be enabled.
+indexUnallocated = false
+
+# Converts text to lowercase before indexing, making the search case-insensitive.
+# Disable only in exceptional cases to generate better dictionaries to use in case-sensitive password breaking.
+convertCharsToLowerCase = true
+
+# Removes diacritics and converts characters to their equivalent ascii char.
+convertCharsToAscii = true
+
+# Define additional characters to be indexed in addition to letters and numbers, i.e. these characters will no longer be treated as separators.
+extraCharsToIndex =
+
+# Do not index words with characters not in Latin-1 charset, like chinese, cyrillic, arabic...
+# Default is false.
+filterNonLatinChars = false
+
+# Size (bytes) of the text segments extracted from items before indexing. Includes all items,
+# not just the ones indexed via strings. This avoids OutOfMemory errors while indexing items with large chunks of extracted text. 
+textSplitSize = 10485760
+
+# Uses NIOFSDirectory instead of MMAPDirectory to open index (https://lucene.apache.org/core/4_9_0/core/org/apache/lucene/store/FSDirectory.html)
+# It is a bit slower, but prevents JVM crashes when reading index through network shares. 
+useNIOFSDirectory = false
+
+# Forces index merging into a single segment, reducing its size and optimizing the search from optical media.
+# This merging is costly and unnecessary if the index is accessed from a hard disk.
+forceMerge = false

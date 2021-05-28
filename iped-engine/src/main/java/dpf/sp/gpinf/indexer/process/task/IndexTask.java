@@ -24,6 +24,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -52,16 +53,13 @@ public class IndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
-    private static final String ENABLE_PARAM = "indexFileContents";
     public static final String TEXT_SPLITTED = "textSplitted";
-
-    public static boolean indexFileContents = true;
-    public static boolean indexUnallocated = false;
-
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private IndexerDefaultParser autoParser;
     private List<IdLenPair> textSizes;
+
+    private IndexTaskConfig indexConfig;
 
     public IndexTask() {
         this.autoParser = new IndexerDefaultParser();
@@ -121,8 +119,8 @@ public class IndexTask extends AbstractTask {
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexFileContents
-                    && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexConfig.isEnabled() && (indexConfig.isIndexUnallocated()
+                    || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
                     LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
@@ -144,7 +142,8 @@ public class IndexTask extends AbstractTask {
         if (textReader == null)
             textReader = new StringReader(""); //$NON-NLS-1$
 
-        FragmentingReader fragReader = new FragmentingReader(textReader);
+        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
+                indexConfig.getTextOverlapSize());
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
         int fragments = fragReader.estimateNumberOfFrags();
@@ -219,21 +218,13 @@ public class IndexTask extends AbstractTask {
 
     @Override
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+        return Arrays.asList(new IndexTaskConfig());
     }
 
     @Override
     public void init(Properties properties, File confDir) throws Exception {
         
-        indexFileContents = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
-
-        String value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexUnallocated = Boolean.valueOf(value);
-        }
+        indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {

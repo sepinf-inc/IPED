@@ -78,14 +78,6 @@ entropyTest = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
-# Indexes files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc
-# In this option, raw strings are extracted from the files and indexed
-indexUnknownFiles = true
-
-# Index corrupted files with strings. For example, deleted and partially overwritten images
-# can have searchable plain text into them.
-indexCorruptedFiles = true
-
 # Enables OCR in scanned images and PDFs. It can strongly increase processing time.
 # Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
 # Advanced OCR options, such as the Tesseract path on Linux, can be modified in "conf/AdvancedConfig.txt"
@@ -100,9 +92,6 @@ addFileSlacks = false
 
 # Adds and processes unallocated areas of images, via sleuthkit
 addUnallocated = false
-
-# Added unallocated space will be indexed. "addUnallocated" and "indexUnknownFiles" must be enabled.
-indexUnallocated = false
 
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
 # By default carving runs on almost every item in the case. 

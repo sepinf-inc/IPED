@@ -7,12 +7,9 @@ import java.nio.file.Path;
 
 import org.apache.tika.fork.ForkParser2;
 
-import dpf.sp.gpinf.indexer.analysis.LetterDigitTokenizer;
 import dpf.sp.gpinf.indexer.io.FastPipedReader;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
@@ -25,25 +22,18 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
-    boolean forceMerge = false;
     int timeOut = 180;
     int timeOutPerMB = 2;
     boolean embutirLibreOffice = true;
     long minOrphanSizeToIgnore = -1;
     int searchThreads = 1;
     boolean autoManageCols = true;
-    boolean storeTermVectors = true;
-    boolean filterNonLatinChars = false;
-    boolean convertCharsToAscii = true;
-    int maxTokenLength = 255;
+
     boolean preOpenImagesOnSleuth = false;
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
-    boolean useNIOFSDirectory = false;
     int commitIntervalSeconds = 1800;
     private boolean storeTextCacheOnDisk = true;
-    private static int textSplitSize = 10485760;
-    private static int textOverlapSize = 10000;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
@@ -105,14 +95,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             minItemSizeToFragment = Long.valueOf(value);
         }
 
-        value = properties.getProperty("forceMerge"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && value.equalsIgnoreCase("false")) { //$NON-NLS-1$
-            forceMerge = false;
-        }
-
         value = properties.getProperty("timeOut"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -136,42 +118,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         }
         if (value != null && !value.isEmpty()) {
             embutirLibreOffice = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            LetterDigitTokenizer.load(value);
-        }
-
-        value = properties.getProperty("convertCharsToLowerCase"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            storeTermVectors = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("maxTokenLength"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            maxTokenLength = Integer.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("filterNonLatinChars"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            filterNonLatinChars = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("convertCharsToAscii"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            convertCharsToAscii = Boolean.valueOf(value.trim());
         }
 
         value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
@@ -210,14 +156,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
         }
 
-        value = properties.getProperty("textSplitSize"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            textSplitSize = Integer.valueOf(value.trim());
-        }
-
-        FragmentingReader.setTextSplitSize(textSplitSize);
-        FragmentingReader.setTextOverlapSize(textOverlapSize);
-
         value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             storeTextCacheOnDisk = Boolean.valueOf(value.trim());
@@ -236,11 +174,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("openImagesCacheWarmUpThreads"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
-        }
-
-        value = properties.getProperty("useNIOFSDirectory"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            useNIOFSDirectory = Boolean.valueOf(value.trim());
         }
 
         value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
@@ -267,20 +200,12 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         return commitIntervalSeconds;
     }
 
-    public boolean isUseNIOFSDirectory() {
-        return useNIOFSDirectory;
-    }
-
     public long getUnallocatedFragSize() {
         return unallocatedFragSize;
     }
 
     public long getMinItemSizeToFragment() {
         return minItemSizeToFragment;
-    }
-
-    public boolean isForceMerge() {
-        return forceMerge;
     }
 
     public int getTimeOut() {
@@ -305,30 +230,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isAutoManageCols() {
         return autoManageCols;
-    }
-
-    public static int getTextSplitSize() {
-        return textSplitSize;
-    }
-
-    public static int getTextOverlapSize() {
-        return textOverlapSize;
-    }
-
-    public boolean isStoreTermVectors() {
-        return storeTermVectors;
-    }
-
-    public boolean isFilterNonLatinChars() {
-        return filterNonLatinChars;
-    }
-
-    public boolean isConvertCharsToAscii() {
-        return convertCharsToAscii;
-    }
-
-    public int getMaxTokenLength() {
-        return maxTokenLength;
     }
 
     public boolean isPreOpenImagesOnSleuth() {
