@@ -199,7 +199,7 @@ public class IndexItem extends BasicProps {
         return normalize(value, true);
     }
 
-    private static final String normalize(String value, boolean toLowerCase) {
+    public static final String normalize(String value, boolean toLowerCase) {
         if (toLowerCase)
             value = value.toLowerCase();
         char[] input = value.toCharArray();
