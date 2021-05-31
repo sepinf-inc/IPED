@@ -9,6 +9,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -29,25 +30,9 @@ public class CertificateParserTest extends TestCase{
         CertificateParser parser = new CertificateParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                MediaType.application("pkcs7-signature").toString());
+                MediaType.application("x-pem-file").toString());
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_certificate.p7b");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-//        parser.parse(stream, handler, metadata, context);
-        String hts = handler.toString();
-        String mts = metadata.toString();
-//        System.out.println("hts:" + hts + "\nmts:" + mts);
-        
-    }
-    
-    @Test
-    public void testCertificate() throws IOException, SAXException, TikaException{
-
-        CryptoAPIBlobParser parser = new CryptoAPIBlobParser();
-        Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_fileEncrypted.txt");
+        InputStream stream = getStream("test-files/test_server.crt");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
 //        parser.parse(stream, handler, metadata, context);

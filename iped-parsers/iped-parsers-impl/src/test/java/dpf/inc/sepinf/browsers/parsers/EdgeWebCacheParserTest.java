@@ -31,7 +31,7 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE,
                 MediaType.application("x-edge-web-cache").toString());
-        ContentHandler handler = new BodyContentHandler(100000000);
+        ContentHandler handler = new BodyContentHandler(1<<25);
         InputStream stream = getStream("test-files/test_webCache.dat");
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, getName(), false);
@@ -40,10 +40,10 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
         parser.setExtractEntries(true);
 //        parser.parse(stream, handler, metadata, edgeContext);
         
-//        assertEquals(0, edgetracker.bookmarktitle.size());
-//        assertEquals(0, edgetracker.bookmarkurl.size());
-//        assertEquals(0, edgetracker.bookmarkcreated.size());
-//        assertEquals(0, edgetracker.bookmarkmodified.size());
+        assertEquals(0, edgetracker.bookmarktitle.size());
+        assertEquals(0, edgetracker.bookmarkurl.size());
+        assertEquals(0, edgetracker.bookmarkcreated.size());
+        assertEquals(0, edgetracker.bookmarkmodified.size());
         
 
         
