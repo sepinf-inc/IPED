@@ -122,18 +122,18 @@ public class ImageViewer extends Viewer implements ActionListener {
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
+                    SeekableInputStream sis = content.getStream();
+                    in = new BufferedInputStream(sis);
+                    //int maxDimension = d != null ? Math.min(Math.max(d.width, d.height), maxDim) : maxDim;
+                    image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
+                }
+                if (image == null) {
+                    IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     image = ImageUtil.getThumb(in);
                     //if (image != null && d != null) {
                         //sampling = ImageUtil.getSamplingFactor(d.width, d.height, image.getWidth(), image.getHeight());
                     //}
-                }
-                if (image == null) {
-                    IOUtil.closeQuietly(in);
-                    SeekableInputStream sis = content.getStream();
-                    in = new BufferedInputStream(sis);
-                    //int maxDimension = d != null ? Math.min(Math.max(d.width, d.height), maxDim) : maxDim;
-                    image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
