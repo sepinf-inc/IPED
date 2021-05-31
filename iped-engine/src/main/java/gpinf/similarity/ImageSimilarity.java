@@ -142,7 +142,7 @@ public class ImageSimilarity {
         Graphics2D gGray = auxGrayImg.createGraphics();
         gColor.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         gGray.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        if (w * h > maxPixels) {
+        if (w > maxDim || h > maxDim) {
             if (w > h) {
                 h = h * maxDim / w;
                 w = maxDim;
