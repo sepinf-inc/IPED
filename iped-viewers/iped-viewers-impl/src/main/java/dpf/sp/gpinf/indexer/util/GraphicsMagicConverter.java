@@ -42,20 +42,22 @@ import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class GraphicsMagicConverter implements Closeable {
 
-    private static final String GEOMETRY = "GEOMETRY"; //$NON-NLS-1$
+    private static final String SAMPLE_GEOMETRY = "SAMPLE_GEOMETRY"; //$NON-NLS-1$
+    private static final String RESIZE_GEOMETRY = "RESIZE_GEOMETRY"; //$NON-NLS-1$
     private static final String THREADS = "threads"; //$NON-NLS-1$
     private static final String NUM_THREADS = "numThreads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
-    private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
+    private static final String MAGICK_MEMORY_LIMIT_VAL = "32MP"; //$NON-NLS-1$
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
     
     private static final int lowDensity = 96;
     private static final int highDensity = 250;
+    private static final int sampleFactor = 2;
 
     private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-            GEOMETRY, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$
+            SAMPLE_GEOMETRY, "-resize", RESIZE_GEOMETRY, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
@@ -194,8 +196,11 @@ public class GraphicsMagicConverter implements Closeable {
             if (!toolPath.isEmpty() && i == 0) {
                 cmd[0] = toolPath + "/" + cmd[0]; //$NON-NLS-1$
             }
-            if (cmd[i].equals(GEOMETRY)) {
-                cmd[i] = String.format("%1$dx%1$d", maxDimension);
+            if (cmd[i].equals(SAMPLE_GEOMETRY)) {
+                cmd[i] = String.format("%1$dx%1$d>", maxDimension * sampleFactor);
+            }
+            if (cmd[i].equals(RESIZE_GEOMETRY)) {
+                cmd[i] = String.format("%1$dx%1$d>", maxDimension);
             }
             if (cmd[i].equals(NUM_THREADS)) {
                 cmd[i] = String.valueOf(numThreads);
