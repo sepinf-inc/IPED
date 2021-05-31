@@ -86,11 +86,6 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public boolean isSupportedType(String contentType) {
-        //Handled by VectorImageViewer
-        if (contentType.equals("image/emf") || contentType.equals("image/wmf")
-                || contentType.equals("image/svg+xml")) 
-            return false; 
-        
         return contentType.startsWith("image"); //$NON-NLS-1$
     }
 
@@ -102,10 +97,6 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
     }
     
-    protected boolean isVectorViewer() {
-        return false;
-    }
-
     @Override
     public void loadFile(IStreamSource content, Set<String> highlightTerms) {
         cleanState(true);
@@ -114,7 +105,7 @@ public class ImageViewer extends Viewer implements ActionListener {
             try {
                 in = new BufferedInputStream(content.getStream());
 
-                Dimension d = null;
+                /*Dimension d = null;
                 if (!isVectorViewer()) {
                     try (InputStream is = content.getStream()) {
                         d = ImageUtil.getImageFileDimension(is);
@@ -124,25 +115,25 @@ public class ImageViewer extends Viewer implements ActionListener {
                             d = graphicsMagicConverter.getDimension(is);
                         }
                     }
-                }
+                }*/
 
-                int sampling = d == null ? 1 : ImageUtil.getSamplingFactor(d.width, d.height, maxDim, maxDim);
+                //int sampling = d == null ? 1 : ImageUtil.getSamplingFactor(d.width, d.height, maxDim, maxDim);
                 image = ImageUtil.getSubSampledImage(in, maxDim, maxDim);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     image = ImageUtil.getThumb(in);
-                    if (image != null && d != null) {
-                        sampling = ImageUtil.getSamplingFactor(d.width, d.height, image.getWidth(), image.getHeight());
-                    }
+                    //if (image != null && d != null) {
+                        //sampling = ImageUtil.getSamplingFactor(d.width, d.height, image.getWidth(), image.getHeight());
+                    //}
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    int maxDimension = d != null ? Math.max(d.width, d.height) / sampling : maxDim;
-                    image = graphicsMagicConverter.getImage(in, maxDimension, true, sis.size());
+                    //int maxDimension = d != null ? Math.min(Math.max(d.width, d.height), maxDim) : maxDim;
+                    image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
@@ -156,14 +147,14 @@ public class ImageViewer extends Viewer implements ActionListener {
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
                             isVideo = true;
                             if (!highlightTerms.isEmpty()) {
-                                drawRectangles(image, sampling, highlightTerms);
+                                //TODO drawRectangles(image, sampling, highlightTerms);
                             }
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());
                         }
                     }
                     if (!isVideo && !highlightTerms.isEmpty()) {
-                        drawRectangles(image, sampling, highlightTerms);
+                      //TODO drawRectangles(image, sampling, highlightTerms);
                     }
                 }
 
