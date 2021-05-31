@@ -272,11 +272,7 @@ public class ImageThumbTask extends ThumbTask {
         File tmp = null;
         try {
             BufferedImage img = null;
-            Dimension dimension = null;
-            try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                dimension = ImageUtil.getImageFileDimension(stream);
-            }
-            if (extractThumb && isJpeg(evidence)) { // $NON-NLS-1$
+            if (extractThumb && isJpeg(evidence)) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
@@ -303,7 +299,6 @@ public class ImageThumbTask extends ThumbTask {
                             true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-                    dimension = null;
                 } catch (TimeoutException e) {
                     stats.incTimeouts();
                     evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
@@ -314,8 +309,7 @@ public class ImageThumbTask extends ThumbTask {
             }
 
             if (img != null) {
-                if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize)
-                        && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
+                if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
                     long t = System.currentTimeMillis();
                     img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
                     performanceStats[12]++;
