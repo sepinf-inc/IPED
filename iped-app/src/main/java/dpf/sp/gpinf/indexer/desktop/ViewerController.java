@@ -42,6 +42,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.VectorImageViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
@@ -89,6 +90,7 @@ public class ViewerController {
 
         // These are content-specific viewers (inside a single ViewersRepository)
         viewersRepository.addViewer(new ImageViewer());
+        viewersRepository.addViewer(new VectorImageViewer());
         viewersRepository.addViewer(new CADViewer());
         if (javaFX) {
             viewersRepository.addViewer(new HtmlViewer());

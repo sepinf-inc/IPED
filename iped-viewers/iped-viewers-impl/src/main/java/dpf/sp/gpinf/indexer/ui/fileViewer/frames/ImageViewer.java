@@ -61,6 +61,8 @@ public class ImageViewer extends Viewer implements ActionListener {
     private static final String actionFitWindow = "fit-window";
     private static final String actionCopyImage = "copy-image";
 
+    private static final int maxDim = 2400;
+    
     volatile protected BufferedImage image;
     volatile protected int rotation;
 
@@ -79,11 +81,16 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public String getName() {
-        return "Imagem"; //$NON-NLS-1$
+        return "Image"; //$NON-NLS-1$
     }
 
     @Override
     public boolean isSupportedType(String contentType) {
+        //Handled by VectorImageViewer
+        if (contentType.equals("image/emf") || contentType.equals("image/wmf")
+                || contentType.equals("image/svg+xml")) 
+            return false; 
+        
         return contentType.startsWith("image"); //$NON-NLS-1$
     }
 
@@ -93,6 +100,10 @@ public class ImageViewer extends Viewer implements ActionListener {
         if (cleanRotation) {
             rotation = 0;
         }
+    }
+    
+    protected boolean isVectorViewer() {
+        return false;
     }
 
     @Override
@@ -104,16 +115,17 @@ public class ImageViewer extends Viewer implements ActionListener {
                 in = new BufferedInputStream(content.getStream());
 
                 Dimension d = null;
-                try (InputStream is = content.getStream()) {
-                    d = ImageUtil.getImageFileDimension(is);
-                }
-                if (d == null) {
+                if (!isVectorViewer()) {
                     try (InputStream is = content.getStream()) {
-                        d = graphicsMagicConverter.getDimension(is);
+                        d = ImageUtil.getImageFileDimension(is);
+                    }
+                    if (d == null) {
+                        try (InputStream is = content.getStream()) {
+                            d = graphicsMagicConverter.getDimension(is);
+                        }
                     }
                 }
 
-                int maxDim = 2000;
                 int sampling = d == null ? 1 : ImageUtil.getSamplingFactor(d.width, d.height, maxDim, maxDim);
                 image = ImageUtil.getSubSampledImage(in, maxDim, maxDim);
 
@@ -129,8 +141,8 @@ public class ImageViewer extends Viewer implements ActionListener {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    int width = d != null ? d.width / sampling : maxDim;
-                    image = graphicsMagicConverter.getImage(in, width, sis.size());
+                    int maxDimension = d != null ? Math.max(d.width, d.height) / sampling : maxDim;
+                    image = graphicsMagicConverter.getImage(in, maxDimension, true, sis.size());
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);

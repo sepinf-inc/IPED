@@ -42,16 +42,20 @@ import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class GraphicsMagicConverter implements Closeable {
 
-    private static final String WIDTH = "width"; //$NON-NLS-1$
+    private static final String GEOMETRY = "GEOMETRY"; //$NON-NLS-1$
     private static final String THREADS = "threads"; //$NON-NLS-1$
     private static final String NUM_THREADS = "numThreads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
     private static final String MAGICK_MEMORY_LIMIT_VAL = "10MP"; //$NON-NLS-1$
+    private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
+    
+    private static final int lowDensity = 96;
+    private static final int highDensity = 250;
 
-    private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", "96", "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$
-            WIDTH, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$
+    private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            GEOMETRY, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String tmpDirName = "gm-im_temp"; //$NON-NLS-1$
     private static final String winToolPath = "/tools/imagemagick"; //$NON-NLS-1$
@@ -122,10 +126,12 @@ public class GraphicsMagicConverter implements Closeable {
         Thread t = new Thread() {
             public void run() {
                 while (true) {
+                    long t = System.currentTimeMillis() - 60000;
                     File[] subFiles = tmpDir.listFiles();
                     if (subFiles != null) {
                         for (File tmp : subFiles) {
-                            tmp.delete();
+                            if (tmp.lastModified() < t)
+                                tmp.delete();
                         }
                     }
                     try {
@@ -177,7 +183,7 @@ public class GraphicsMagicConverter implements Closeable {
         this.numThreads = threads;
     }
 
-    private String[] getCmd(int width) {
+    private String[] getCmd(int maxDimension, boolean highRes) {
 
         if (!useGM && !imageMagickConfigured) {
             configureImageMagick();
@@ -188,19 +194,22 @@ public class GraphicsMagicConverter implements Closeable {
             if (!toolPath.isEmpty() && i == 0) {
                 cmd[0] = toolPath + "/" + cmd[0]; //$NON-NLS-1$
             }
-            if (cmd[i].equals(WIDTH)) {
-                cmd[i] = String.valueOf(width);
+            if (cmd[i].equals(GEOMETRY)) {
+                cmd[i] = String.format("%1$dx%1$d", maxDimension);
             }
             if (cmd[i].equals(NUM_THREADS)) {
                 cmd[i] = String.valueOf(numThreads);
+            }
+            if (cmd[i].equals(DENSITY)) {
+                cmd[i] = String.valueOf(highRes ? highDensity : lowDensity);
             }
         }
         return cmd;
     }
 
-    public BufferedImage getImage(final InputStream in, final int width, Long imageSize) {
+    public BufferedImage getImage(final InputStream in, final int maxDimension, final boolean highRes, Long imageSize) {
         try {
-            return getImage(in, width, imageSize, false);
+            return getImage(in, maxDimension, highRes, imageSize, false);
 
         } catch (TimeoutException e) {
             return null;
@@ -234,7 +243,7 @@ public class GraphicsMagicConverter implements Closeable {
         return null;
     }
 
-    public BufferedImage getImage(InputStream in, int width, Long imageSize, boolean throwTimeout)
+    public BufferedImage getImage(InputStream in, int maxDimension, final boolean highRes, Long imageSize, boolean throwTimeout)
             throws TimeoutException {
 
         if (!enabled) {
@@ -246,7 +255,7 @@ public class GraphicsMagicConverter implements Closeable {
         pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
 
-        pb.command(getCmd(width));
+        pb.command(getCmd(maxDimension, highRes));
         Process p = null;
         try {
             p = pb.start();
@@ -274,7 +283,7 @@ public class GraphicsMagicConverter implements Closeable {
                         throw te;
                     }
                 } else {
-                    Log.warning("ImageMagickConverter", "Timeout converting image to BMP, elapsed " + timeout + "s."); //$NON-NLS-1$
+                    Log.warning("ImageMagickConverter", "Timeout converting image to PNG, elapsed " + timeout + "s."); //$NON-NLS-1$
                 }
             } catch (ExecutionException e) {
                 throw new RuntimeException(e);

@@ -83,7 +83,7 @@ public class SimilarImagesFilterActions {
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
-                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim * sampleFactor, file.length());
+                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim * sampleFactor, false, file.length());
                     } catch (Exception e) {
                     } finally {
                         IOUtil.closeQuietly(is);

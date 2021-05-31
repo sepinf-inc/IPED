@@ -302,7 +302,7 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, evidence.getLength(),
+                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, false, evidence.getLength(),
                             true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
