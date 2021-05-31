@@ -103,6 +103,8 @@ public class ExtraProperties {
 
     public static final String USER_THUMB = "userPhoto"; //$NON-NLS-1$
 
+    public static final String IS_LOCAL_USER = "isLocalUser"; //$NON-NLS-1$
+
     public static final String PARENT_VIEW_POSITION = "parentViewPosition"; //$NON-NLS-1$
 
     public static final String CARVEDBY_METADATA_NAME = "CarvedBy"; //$NON-NLS-1$

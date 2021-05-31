@@ -496,11 +496,11 @@ public class GraphTask extends AbstractTask {
          * item.getDataSource().getUUID()); if(msisdns != null && msisdns.size() == 1) {
          * msisdnPhones = getPhones(msisdns.toString()); }
          */
-        writePersonNode(item, msisdnPhones);
+        writePersonNode(item, msisdnPhones, true);
 
     }
 
-    private NodeValues writePersonNode(IItem item, SortedSet<String> msisdnPhones) throws IOException {
+    private NodeValues writePersonNode(IItem item, SortedSet<String> msisdnPhones, boolean isLocalUser) throws IOException {
 
         SortedSet<String> possibleEmails = new TreeSet<>();// getEmails(itemText);
         possibleEmails
@@ -590,6 +590,10 @@ public class GraphTask extends AbstractTask {
             nv1.addProp(ExtraProperties.USER_ACCOUNT, serviceAccount);
         }
 
+        if (isLocalUser) {
+            nv1.addProp(ExtraProperties.IS_LOCAL_USER, true);
+        }
+
         String uniqueId = graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
 
         for (String email : emails) {
@@ -662,6 +666,7 @@ public class GraphTask extends AbstractTask {
                 nv1 = new NodeValues(DynLabel.label(GraphConfiguration.DATASOURCE_LABEL), BasicProps.EVIDENCE_UUID,
                         evidenceUUID);
                 nv1.addProp(BasicProps.NAME, Util.getRootName(item.getPath()));
+                nv1.addProp(ExtraProperties.IS_LOCAL_USER, true);
                 graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue, nv1.props);
                 datasourceOwnerMap.put(evidenceUUID, nv1);
 
@@ -669,6 +674,7 @@ public class GraphTask extends AbstractTask {
                 if (msisdns != null && !msisdns.isEmpty()) {
                     NodeValues nv2 = this.getPhoneNodeValues(msisdns.get(0));
                     if (nv2 != null) {
+                        nv2.addProp(ExtraProperties.IS_LOCAL_USER, true);
                         String id = graphFileWriter.writeNode(nv2.label, nv2.propertyName, nv2.propertyValue);
                         graphFileWriter.writeNodeReplace(nv1.label, nv1.propertyName, nv1.propertyValue, id);
                     }
@@ -694,10 +700,11 @@ public class GraphTask extends AbstractTask {
             graphFileWriter.writeNode(nv1.label, nv1.propertyName, nv1.propertyValue);
         }
 
-        if (nv1 == null)
+        if (nv1 == null) {
             nv1 = getGenericOwnerNode(item);
+        }
 
-        NodeValues nv2 = writePersonNode(item, null);
+        NodeValues nv2 = writePersonNode(item, null, false);
 
         RelationshipType relationshipType = DynRelationshipType.withName(relationType);
         Map<String, Object> relProps = new HashMap<>();
