@@ -951,7 +951,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (img == null) {
                     stream = evidence.getBufferedStream();
                     try {
-                        img = graphicsMagicConverter.getImage(stream, thumbSize * sampleFactor, evidence.getLength());
+                        img = graphicsMagicConverter.getImage(stream, thumbSize, false, evidence.getLength());
                     } finally {
                         IOUtil.closeQuietly(stream);
                     }
