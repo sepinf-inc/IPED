@@ -32,7 +32,7 @@ public class KeyStoreParserTest extends TestCase{
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
                 MediaType.application("x-java-keystore").toString());
         ContentHandler handler = new ToTextContentHandler();
-        InputStream stream = getStream("test-files/test_myRelease.keystore");
+        InputStream stream = getStream("test-files/test_serverMyRelease.keystore");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);

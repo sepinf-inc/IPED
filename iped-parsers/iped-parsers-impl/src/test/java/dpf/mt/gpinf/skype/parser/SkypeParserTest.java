@@ -745,7 +745,6 @@ public class SkypeParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
         String mts = metadata.toString();
-        System.out.println(hts + "\n" + mts);
         assertTrue(hts.contains("Videos"));
         assertTrue(hts.contains("21"));
         assertTrue(hts.contains("0"));
