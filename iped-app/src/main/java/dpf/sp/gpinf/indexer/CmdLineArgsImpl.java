@@ -443,6 +443,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
+        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "indexador").exists())) {
+            throw new IPEDException(
+                    "You cannot use --append, --continue or --restart with an inexistent or invalid case folder.");
+        }
+
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));
 
     }
