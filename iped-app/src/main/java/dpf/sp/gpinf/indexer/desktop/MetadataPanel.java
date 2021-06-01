@@ -47,7 +47,6 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
@@ -1123,13 +1122,14 @@ public class MetadataPanel extends JPanel
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();
-            groups.setSelectedItem(null);
             clearTextFilter(listFilter, emptyListFilter);
             clearTextFilter(propsFilter, emptyPropsFilter);
+            clearFilter();
+            props.removeAllItems();
+            groups.setSelectedItem(null);
+            filteredArray = array = new ValueCount[0];
             sort.setValue(0);
             scale.setValue(0);
-            updateProps();
-            clearFilter();
             lastPropSel = null;
             if (!empty) {
                 App.get().appletListener.updateFileListing();
