@@ -104,36 +104,18 @@ public class ImageViewer extends Viewer implements ActionListener {
             InputStream in = null;
             try {
                 in = new BufferedInputStream(content.getStream());
-
-                /*Dimension d = null;
-                if (!isVectorViewer()) {
-                    try (InputStream is = content.getStream()) {
-                        d = ImageUtil.getImageFileDimension(is);
-                    }
-                    if (d == null) {
-                        try (InputStream is = content.getStream()) {
-                            d = graphicsMagicConverter.getDimension(is);
-                        }
-                    }
-                }*/
-
-                //int sampling = d == null ? 1 : ImageUtil.getSamplingFactor(d.width, d.height, maxDim, maxDim);
                 image = ImageUtil.getSubSampledImage(in, maxDim, maxDim);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    //int maxDimension = d != null ? Math.min(Math.max(d.width, d.height), maxDim) : maxDim;
                     image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
                     image = ImageUtil.getThumb(in);
-                    //if (image != null && d != null) {
-                        //sampling = ImageUtil.getSamplingFactor(d.width, d.height, image.getWidth(), image.getHeight());
-                    //}
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
@@ -147,14 +129,14 @@ public class ImageViewer extends Viewer implements ActionListener {
                         if (videoComment != null && videoComment.startsWith("Frames=")) {
                             isVideo = true;
                             if (!highlightTerms.isEmpty()) {
-                                //TODO drawRectangles(image, sampling, highlightTerms);
+                                drawRectangles(image, getZoom(content, image), highlightTerms);
                             }
                             image = ImageUtil.getBestFramesFit(image, videoComment, imagePanel.getWidth(),
                                     imagePanel.getHeight());
                         }
                     }
                     if (!isVideo && !highlightTerms.isEmpty()) {
-                      //TODO drawRectangles(image, sampling, highlightTerms);
+                      drawRectangles(image, getZoom(content, image), highlightTerms);
                     }
                 }
 
@@ -169,17 +151,38 @@ public class ImageViewer extends Viewer implements ActionListener {
         updatePanel(image);
     }
 
-    private void drawRectangles(BufferedImage img, int sampling, Set<String> highlights) {
+    private double getZoom(IStreamSource content, BufferedImage img) throws IOException {
+        Dimension d = null;
+        try (InputStream is = content.getStream()) {
+            d = ImageUtil.getImageFileDimension(is);
+        }
+        if (d == null) {
+            try (InputStream is = content.getStream()) {
+                d = graphicsMagicConverter.getDimension(is);
+            }
+        }
+        if (d == null)
+            return 0;
+        int originalDimension = Math.max(d.width, d.height);
+        int displayedDimension = Math.max(img.getWidth(), img.getHeight());
+        if (originalDimension == 0 || displayedDimension == 0)
+            return 0;
+        return displayedDimension / (double) originalDimension;
+    }
+
+    private void drawRectangles(BufferedImage img, double zoom, Set<String> highlights) {
+        if (zoom <= 0) 
+            return;
         Graphics2D graph = img.createGraphics();
         graph.setColor(Color.RED);
         graph.setStroke(new BasicStroke(4));
         for (String str : highlights) {
             if (str.startsWith(HIGHLIGHT_LOCATION + "[") && str.endsWith("]")) {
                 String[] vals = str.substring(HIGHLIGHT_LOCATION.length() + 1, str.length() - 1).split(", ");
-                int top = Integer.parseInt(vals[0]) / sampling;
-                int right = Integer.parseInt(vals[1]) / sampling;
-                int bottom = Integer.parseInt(vals[2]) / sampling;
-                int left = Integer.parseInt(vals[3]) / sampling;
+                int top = (int) Math.round(Integer.parseInt(vals[0]) * zoom);
+                int right = (int) Math.round(Integer.parseInt(vals[1]) * zoom);
+                int bottom = (int) Math.round(Integer.parseInt(vals[2]) * zoom);
+                int left = (int) Math.round(Integer.parseInt(vals[3]) * zoom);
                 graph.drawRect(left, top, right - left, bottom - top);
             }
         }
