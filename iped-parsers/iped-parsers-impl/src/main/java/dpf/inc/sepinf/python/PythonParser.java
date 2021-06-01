@@ -24,7 +24,9 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import jep.JEPClassFinder;
 import jep.Jep;
+import jep.JepConfig;
 import jep.JepException;
 import jep.SharedInterpreter;
 
@@ -61,6 +63,16 @@ public class PythonParser extends AbstractParser {
                 return;
             }
             inited = true;
+
+            // fix for https://github.com/sepinf-inc/IPED/issues/586
+            try {
+                JepConfig config = new JepConfig();
+                config.setClassEnquirer(JEPClassFinder.getInstance());
+                SharedInterpreter.setConfig(config);
+            } catch (JepException e1) {
+                throw new RuntimeException(e1);
+            }
+
             File pythonParsersFolder = new File(System.getProperty(PYTHON_PARSERS_FOLDER));
             File[] scripts = pythonParsersFolder.listFiles();
             if (scripts != null) {
