@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
@@ -24,6 +25,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private int timeOutPerMB = 2;
     private boolean storeTextCacheOnDisk = true;
     private boolean sortPDFChars;
+    private boolean processImagesInPDFs = false;
     private String phoneParsersToUse;
 
     @Override
@@ -97,6 +99,11 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             sortPDFChars = Boolean.valueOf(value.trim());
         }
 
+        value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
+        if (value != null) {
+            processImagesInPDFs = Boolean.valueOf(value.trim());
+        }
+
         value = properties.getProperty("phoneParsersToUse"); //$NON-NLS-1$
         if (value != null) {
             phoneParsersToUse = value.trim();
@@ -138,6 +145,10 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     public boolean isSortPDFChars() {
         return sortPDFChars;
+    }
+
+    public boolean isProcessImagesInPDFs() {
+        return processImagesInPDFs;
     }
 
     public String getPhoneParsersToUse() {

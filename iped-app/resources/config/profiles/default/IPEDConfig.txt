@@ -78,11 +78,6 @@ entropyTest = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
-# Enables OCR in scanned images and PDFs. It can strongly increase processing time.
-# Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
-# Advanced OCR options, such as the Tesseract path on Linux, can be modified in "conf/AdvancedConfig.txt"
-enableOCR = false
-
 # Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
 # Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
 enableAudioTranscription = false

@@ -18,12 +18,7 @@ public class PDFToImageConfig extends AbstractPropertiesConfigurable {
      * 
      */
     private static final long serialVersionUID = 1L;
-    public static final String MAXPDFTextSize2OCR = "maxPDFTextSize2OCR";
-    public static final String PDFToImgResolution = "pdfToImgResolution";
-    public static final String PDFToImgLib = "pdfToImgLib";
-    public static final String ExternalPdfToImgConv = "externalPdfToImgConv";
-    public static final String ExternalConvMaxMem = "externalConvMaxMem";
-    public static final String ProcessImagesInPDFs = "processImagesInPDFs";
+
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
@@ -52,45 +47,6 @@ public class PDFToImageConfig extends AbstractPropertiesConfigurable {
         properties.load(resource.toFile());
 
         String value = null;
-
-        value = properties.getProperty("pdfToImgResolution"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFToImage.RESOLUTION_PROP, value.trim());
-        }
-
-        value = properties.getProperty("pdfToImgLib"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFToImage.PDFLIB_PROP, value.trim());
-        }
-
-        value = properties.getProperty("externalPdfToImgConv"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
-        }
-        // do not open extra processes for OCR if forkParser is enabled
-        if (ForkParser2.isEnabled()) {
-            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
-        }
-
-        value = properties.getProperty("externalConvMaxMem"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, value.trim());
-        }
-
-        value = properties.getProperty("maxPDFTextSize2OCR"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, value.trim());
-        }
-
-        value = properties.getProperty("processImagesInPDFs"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, value.trim());
-        }
-
-        value = properties.getProperty("sortPDFChars"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, value.trim());
-        }
 
     }
 }

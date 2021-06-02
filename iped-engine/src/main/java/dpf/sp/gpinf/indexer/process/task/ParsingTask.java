@@ -63,11 +63,13 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
+import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
@@ -77,6 +79,7 @@ import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
+import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
 import dpf.sp.gpinf.indexer.process.Worker;
@@ -686,7 +689,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig());
+        return Arrays.asList(new ParsingTaskConfig(), new OCRConfig(), new CategoryToExpandConfig());
     }
 
     @Override
@@ -706,6 +709,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             ForkParser2.setPluginDir(Configuration.getInstance().getPluginDir());
             ForkParser2.setPoolSize(parsingConfig.getNumExternalParsers());
             ForkParser2.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+            // do not open extra processes for OCR if ForkParser is enabled
+            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         }
         if (parsingConfig.isParseUnknownFiles()) {
             System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, Boolean.TRUE.toString());
@@ -716,7 +721,30 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)) {
             System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, Boolean.TRUE.toString());
         }
+        if (parsingConfig.isSortPDFChars()) {
+            System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, Boolean.TRUE.toString());
+        }
+        if (parsingConfig.isProcessImagesInPDFs()) {
+            System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, Boolean.TRUE.toString());
+        }
 
+        setupOCROptions(ConfigurationManager.findObject(OCRConfig.class));
+
+    }
+
+    private static void setupOCROptions(OCRConfig ocrConfig) {
+        if (ocrConfig.isOCREnabled()) {
+            System.setProperty(OCRParser.ENABLE_PROP, "true");
+            System.setProperty(OCRParser.LANGUAGE_PROP, ocrConfig.getOcrLanguage());
+            System.setProperty(OCRParser.MIN_SIZE_PROP, ocrConfig.getMinFileSize2OCR());
+            System.setProperty(OCRParser.MAX_SIZE_PROP, ocrConfig.getMaxFileSize2OCR());
+            System.setProperty(OCRParser.PAGE_SEGMODE_PROP, ocrConfig.getPageSegMode());
+            System.setProperty(PDFToImage.RESOLUTION_PROP, ocrConfig.getPdfToImgResolution());
+            System.setProperty(PDFToImage.PDFLIB_PROP, ocrConfig.getPdfToImgLib());
+            System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, ocrConfig.getExternalPdfToImgConv());
+            System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, ocrConfig.getExternalConvMaxMem());
+            System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, ocrConfig.getMaxPdfTextSize2OCR());
+        }
     }
 
     @Override
