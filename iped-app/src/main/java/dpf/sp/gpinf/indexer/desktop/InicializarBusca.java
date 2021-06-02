@@ -31,10 +31,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
-import dpf.sp.gpinf.indexer.process.task.EntropyTask;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 
@@ -102,12 +102,8 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
+                ParsingTask.setupParsingOptions(ConfigurationManager.findObject(ParsingTaskConfig.class));
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
-
-                boolean enableEntropyTest = ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM);
-                autoParser.setFallback(new RawStringParser(enableEntropyTest));
-                autoParser.setErrorParser(new RawStringParser(enableEntropyTest));
-
                 App.get().setAutoParser(autoParser);
 
                 FileProcessor exibirAjuda = new FileProcessor(-1, false);

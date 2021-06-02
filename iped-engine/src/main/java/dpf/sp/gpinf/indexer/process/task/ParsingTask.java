@@ -39,6 +39,7 @@ import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
+import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -58,10 +59,11 @@ import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
@@ -132,7 +134,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     private static final Set<MediaType> typesToCheckZipBomb = getTypesToCheckZipbomb();
 
     private CategoryToExpandConfig expandConfig;
-    private IPEDConfig ipedConfig;
+    private ParsingTaskConfig parsingConfig;
 
     private IItem evidence;
     private ParseContext context;
@@ -179,7 +181,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     @Override
     public boolean isEnabled() {
-        return ipedConfig.isFileParsingEnabled();
+        return parsingConfig.isEnabled();
     }
 
     public ParseContext getTikaContext() {
@@ -282,7 +284,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             try {
                 depth++;
                 ParsingTask task = new ParsingTask(worker, autoParser);
-                task.ipedConfig = this.ipedConfig;
+                task.parsingConfig = this.parsingConfig;
                 task.expandConfig = this.expandConfig;
                 task.depth = depth;
                 task.timeInDepth = timeInDepth;
@@ -340,10 +342,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         reader.startBackgroundParsing();
 
         try {
-            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-
             TextCache textCache = new TextCache();
-            textCache.setEnableDiskCache(advancedConfig.isStoreTextCacheOnDisk());
+            textCache.setEnableDiskCache(parsingConfig.isStoreTextCacheOnDisk());
             char[] cbuf = new char[128 * 1024];
             int len = 0;
             while ((len = reader.read(cbuf)) != -1 && !Thread.currentThread().isInterrupted()) {
@@ -686,14 +686,36 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new CategoryToExpandConfig());
+        return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig());
     }
 
     @Override
     public void init(Properties confProps, File confDir) {
 
-        ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
+        parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
         expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
+
+        setupParsingOptions(parsingConfig);
+
+    }
+
+    public static void setupParsingOptions(ParsingTaskConfig parsingConfig) {
+
+        if (parsingConfig.isEnableExternalParsing()) {
+            ForkParser2.setEnabled(true);
+            ForkParser2.setPluginDir(Configuration.getInstance().getPluginDir());
+            ForkParser2.setPoolSize(parsingConfig.getNumExternalParsers());
+            ForkParser2.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
+        }
+        if (parsingConfig.isParseUnknownFiles()) {
+            System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, Boolean.TRUE.toString());
+        }
+        if (parsingConfig.isParseCorruptedFiles()) {
+            System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, Boolean.TRUE.toString());
+        }
+        if (ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)) {
+            System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, Boolean.TRUE.toString());
+        }
 
     }
 

@@ -5,10 +5,6 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
-import org.apache.tika.fork.ForkParser2;
-
-import dpf.sp.gpinf.indexer.io.FastPipedReader;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
@@ -22,8 +18,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     long unallocatedFragSize = 1024 * 1024 * 1024;
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
-    int timeOut = 180;
-    int timeOutPerMB = 2;
     boolean embutirLibreOffice = true;
     long minOrphanSizeToIgnore = -1;
     int searchThreads = 1;
@@ -33,7 +27,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
     int commitIntervalSeconds = 1800;
-    private boolean storeTextCacheOnDisk = true;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
@@ -56,29 +49,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         String value = null;
 
-        value = properties.getProperty("enableExternalParsing"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            ForkParser2.enabled = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("numExternalParsers"); //$NON-NLS-1$
-        if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
-            ForkParser2.SERVER_POOL_SIZE = Integer.valueOf(value.trim());
-        } else {
-            OCRConfig ocrconfig = ConfigurationManager.findObject(OCRConfig.class);
-            if (ocrconfig.isOCREnabled() == null)
-                throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
-                        + AdvancedIPEDConfig.class.getSimpleName());
-
-            int div = ocrconfig.isOCREnabled() ? 1 : 2;
-            ForkParser2.SERVER_POOL_SIZE = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div);
-        }
-
-        value = properties.getProperty("externalParsingMaxMem"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            ForkParser2.SERVER_MAX_HEAP = value.trim();
-        }
-
         value = properties.getProperty("unallocatedFragSize"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -93,23 +63,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         }
         if (value != null && !value.isEmpty()) {
             minItemSizeToFragment = Long.valueOf(value);
-        }
-
-        value = properties.getProperty("timeOut"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            timeOut = Integer.valueOf(value);
-        }
-        FastPipedReader.setTimeout(timeOut);
-
-        value = properties.getProperty("timeOutPerMB"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            timeOutPerMB = Integer.valueOf(value);
         }
 
         value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
@@ -149,16 +102,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         value = properties.getProperty("autoManageCols"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             autoManageCols = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
-        }
-
-        value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            storeTextCacheOnDisk = Boolean.valueOf(value.trim());
         }
 
         value = properties.getProperty("preOpenImagesOnSleuth"); //$NON-NLS-1$
@@ -208,14 +151,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         return minItemSizeToFragment;
     }
 
-    public int getTimeOut() {
-        return timeOut;
-    }
-
-    public int getTimeOutPerMB() {
-        return timeOutPerMB;
-    }
-
     public boolean isEmbutirLibreOffice() {
         return embutirLibreOffice;
     }
@@ -244,7 +179,4 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         return openImagesCacheWarmUpThreads;
     }
 
-    public boolean isStoreTextCacheOnDisk() {
-        return storeTextCacheOnDisk;
-    }
 }

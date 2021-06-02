@@ -25,40 +25,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.fork.ForkParser2;
 import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
-import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
-import dpf.sp.gpinf.indexer.config.CategoryConfig;
-import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
-import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
-import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
-import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
-import dpf.sp.gpinf.indexer.config.HashTaskConfig;
-import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
-import dpf.sp.gpinf.indexer.config.MakePreviewConfig;
-import dpf.sp.gpinf.indexer.config.MinIOConfig;
-import dpf.sp.gpinf.indexer.config.NamedEntityTaskConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
-import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
-import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
@@ -94,7 +77,7 @@ public class Configuration {
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    public File optionalJarDir;
+    private File optionalJarDir;
     public File tskJarFile;
     public String loaddbPathWin;
 
@@ -109,6 +92,14 @@ public class Configuration {
     }
 
     private Configuration() {
+    }
+
+    public String getPluginDir() {
+        try {
+            return optionalJarDir.getCanonicalPath();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private String getAppRoot(String configPath) {
@@ -158,7 +149,6 @@ public class Configuration {
         String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
         if (optional_jars != null) {
             optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-            ForkParser2.plugin_dir = optionalJarDir.getCanonicalPath();
         }
 
         String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$

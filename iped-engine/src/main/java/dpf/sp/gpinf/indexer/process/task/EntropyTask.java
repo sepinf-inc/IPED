@@ -8,7 +8,6 @@ import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped3.IItem;
@@ -27,7 +26,6 @@ public class EntropyTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
         enableOption = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
-        System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, String.valueOf(enableOption));
     }
 
     @Override

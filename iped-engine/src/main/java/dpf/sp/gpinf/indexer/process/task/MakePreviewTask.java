@@ -22,10 +22,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.MakePreviewConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
@@ -144,12 +143,12 @@ public class MakePreviewTask extends AbstractTask {
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
-            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
+            ParsingTaskConfig parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
 
             // ForkServer timeout
             if (evidence.getLength() != null) {
-                int timeOutBySize = (int) (evidence.getLength() / 1000000) * advancedConfig.getTimeOutPerMB();
-                int totalTimeout = (advancedConfig.getTimeOut() + timeOutBySize) * 1000;
+                int timeOutBySize = (int) (evidence.getLength() / 1000000) * parsingConfig.getTimeOutPerMB();
+                int totalTimeout = (parsingConfig.getTimeOut() + timeOutBySize) * 1000;
                 context.set(ParsingTimeout.class, new ParsingTimeout(totalTimeout));
             }
 
@@ -195,7 +194,7 @@ public class MakePreviewTask extends AbstractTask {
                 if (pch.getProgress())
                     start = System.currentTimeMillis();
 
-                if ((System.currentTimeMillis() - start) / 1000 >= advancedConfig.getTimeOut()) {
+                if ((System.currentTimeMillis() - start) / 1000 >= parsingConfig.getTimeOut()) {
                     t.interrupt();
                     stats.incTimeouts();
                     throw new TimeoutException();

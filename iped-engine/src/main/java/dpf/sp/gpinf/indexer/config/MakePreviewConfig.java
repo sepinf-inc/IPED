@@ -17,7 +17,7 @@ public class MakePreviewConfig extends AbstractTaskConfig<List<Set<String>>> {
      */
     private static final long serialVersionUID = 1L;
 
-    private static final String ENABLE_PROP = IPEDConfig.ENABLE_PARSING;
+    private static final String ENABLE_PROP = ParsingTaskConfig.ENABLE_PARAM;
 
     private static final String CONFIG_FILE = "MakePreviewConfig.txt";
 

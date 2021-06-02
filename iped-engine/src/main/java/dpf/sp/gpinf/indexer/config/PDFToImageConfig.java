@@ -68,7 +68,7 @@ public class PDFToImageConfig extends AbstractPropertiesConfigurable {
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, value.trim());
         }
         // do not open extra processes for OCR if forkParser is enabled
-        if (ForkParser2.enabled) {
+        if (ForkParser2.isEnabled()) {
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         }
 
