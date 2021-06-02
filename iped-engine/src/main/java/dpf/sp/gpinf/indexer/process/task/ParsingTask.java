@@ -71,6 +71,7 @@ import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
+import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
@@ -704,6 +705,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     public static void setupParsingOptions(ParsingTaskConfig parsingConfig) {
 
+        // most options below are set using sys props because they are also used by
+        // child external processes
+
         if (parsingConfig.isEnableExternalParsing()) {
             ForkParser2.setEnabled(true);
             ForkParser2.setPluginDir(Configuration.getInstance().getPluginDir());
@@ -712,21 +716,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         }
-        if (parsingConfig.isParseUnknownFiles()) {
-            System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, Boolean.TRUE.toString());
-        }
-        if (parsingConfig.isParseCorruptedFiles()) {
-            System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, Boolean.TRUE.toString());
-        }
-        if (ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)) {
-            System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, Boolean.TRUE.toString());
-        }
-        if (parsingConfig.isSortPDFChars()) {
-            System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, Boolean.TRUE.toString());
-        }
-        if (parsingConfig.isProcessImagesInPDFs()) {
-            System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, Boolean.TRUE.toString());
-        }
+        System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, String.valueOf(parsingConfig.isParseUnknownFiles()));
+        System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, String.valueOf(parsingConfig.isParseCorruptedFiles()));
+        System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, String.valueOf(ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)));
+        System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
+        System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
+        System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
 
         setupOCROptions(ConfigurationManager.findObject(OCRConfig.class));
 

@@ -3,9 +3,6 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
-import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
-
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -23,6 +20,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean parseUnknownFiles = true;
     private int timeOut = 180;
     private int timeOutPerMB = 2;
+    private int minRawStringSize = 4;
     private boolean storeTextCacheOnDisk = true;
     private boolean sortPDFChars;
     private boolean processImagesInPDFs = false;
@@ -85,8 +83,8 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
         }
 
         value = properties.getProperty("minRawStringSize"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            System.setProperty(RawStringParser.MIN_STRING_SIZE, value.trim());
+        if (value != null) {
+            minRawStringSize = Integer.valueOf(value.trim());
         }
 
         value = properties.getProperty("storeTextCacheOnDisk"); //$NON-NLS-1$
@@ -153,6 +151,10 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     public String getPhoneParsersToUse() {
         return phoneParsersToUse;
+    }
+
+    public int getMinRawStringSize() {
+        return minRawStringSize;
     }
 
 }
