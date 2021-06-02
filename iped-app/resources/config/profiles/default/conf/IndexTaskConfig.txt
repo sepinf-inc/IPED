@@ -1,11 +1,3 @@
-# Indexes files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc
-# In this option, raw strings are extracted from the files and indexed
-indexUnknownFiles = true
-
-# Index corrupted files with strings. For example, deleted and partially overwritten images
-# can have searchable plain text into them.
-indexCorruptedFiles = true
-
 # Added unallocated space will be indexed. "addUnallocated" and "indexUnknownFiles" must be enabled.
 indexUnallocated = false
 
@@ -34,3 +26,10 @@ useNIOFSDirectory = false
 # Forces index merging into a single segment, reducing its size and optimizing the search from optical media.
 # This merging is costly and unnecessary if the index is accessed from a hard disk.
 forceMerge = false
+
+# Store term vectors into index, needed to search for similar documents.
+# Increases index size up to 30%.
+storeTermVectors = true
+
+# Maximum word length to be indexed.
+maxTokenLength = 255

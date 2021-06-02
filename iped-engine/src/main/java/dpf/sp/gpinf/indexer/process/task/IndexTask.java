@@ -23,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
@@ -119,7 +118,7 @@ public class IndexTask extends AbstractTask {
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexConfig.isEnabled() && (indexConfig.isIndexUnallocated()
+            if (indexConfig.isIndexFileContents() && (indexConfig.isIndexUnallocated()
                     || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {

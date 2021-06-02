@@ -15,9 +15,6 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
     private static final String ENABLE_PARAM = "indexFileContents";
     private static final String CONFIG_FILE = "IndexTaskConfig.txt";
 
-    private boolean indexFileContents = true;
-    private boolean indexCorruptedFiles = true;
-    private boolean indexUnknownFiles = true;
     private boolean indexUnallocated = false;
     private boolean convertCharsToLowerCase = false;
     private boolean convertCharsToAscii = false;
@@ -45,7 +42,12 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 
         properties.load(resource.toFile());
 
-        String value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
+        String value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
+        if (value != null) {
+            indexUnallocated = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("extraCharsToIndex"); //$NON-NLS-1$
         if (value != null) {
             extraCharsToIndexArray = convertExtraCharsToIndex(value.trim());
         }
@@ -87,10 +89,7 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 
         value = properties.getProperty("forceMerge"); //$NON-NLS-1$
         if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && value.equalsIgnoreCase("false")) { //$NON-NLS-1$
-            forceMerge = false;
+            forceMerge = Boolean.valueOf(value.trim());
         }
 
     }
@@ -114,16 +113,13 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
         return extraCodePoints;
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     public boolean isIndexFileContents() {
-        return indexFileContents;
-    }
-
-    public boolean isIndexCorruptedFiles() {
-        return indexCorruptedFiles;
-    }
-
-    public boolean isIndexUnknownFiles() {
-        return indexUnknownFiles;
+        return super.enabledProp.isEnabled();
     }
 
     public boolean isIndexUnallocated() {
