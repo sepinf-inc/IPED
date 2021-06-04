@@ -13,7 +13,7 @@
 externalConversionTool = imagemagick
 
 # Density used for external conversion of vector images, for low resolution output (thumbnails). 
-lowResDensity = 48
+lowResDensity = 96
 
 # Density used for external conversion of vector images, for high resolution output. 
 highResDensity = 250

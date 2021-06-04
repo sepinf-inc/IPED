@@ -52,7 +52,7 @@ public class GraphicsMagicConverter implements Closeable {
     private static String MAGICK_AREA_LIMIT_VAL = "32MP"; //$NON-NLS-1$
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
     
-    private static int lowDensity = 48;
+    private static int lowDensity = 96;
     private static int highDensity = 250;
     private static final int sampleFactor = 2;
 
