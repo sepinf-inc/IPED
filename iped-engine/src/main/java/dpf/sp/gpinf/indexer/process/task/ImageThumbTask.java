@@ -85,6 +85,21 @@ public class ImageThumbTask extends ThumbTask {
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
         }
 
+        value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setLowResDensity(Integer.valueOf(value.trim()));
+        }
+
+        value = properties.getProperty("highResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setHighResDensity(Integer.valueOf(value.trim()));
+        }
+
+        value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setMaxMPixelsInMemory(Integer.valueOf(value.trim()));
+        }
+
         value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             GraphicsMagicConverter.setMinTimeout(Integer.valueOf(value.trim()));

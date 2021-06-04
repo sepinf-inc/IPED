@@ -12,6 +12,17 @@
 # Comment out to disable external image decoding of java not supported image formats.
 externalConversionTool = imagemagick
 
+# Density used for external conversion of vector images, for low resolution output (thumbnails). 
+lowResDensity = 48
+
+# Density used for external conversion of vector images, for high resolution output. 
+highResDensity = 250
+
+# Maximum number of megapixels (MP) of an image that can reside in the pixel cache memory,
+# used by external conversion process. Higher values will consume more memory, but can make
+# the conversion process much faster for some images.
+maxMPixelsInMemory = 32
+
 # Timeout (seconds) to wait for external image decoding.
 imgConvTimeout = 20
 

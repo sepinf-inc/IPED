@@ -48,12 +48,12 @@ public class GraphicsMagicConverter implements Closeable {
     private static final String NUM_THREADS = "numThreads"; //$NON-NLS-1$
     private static final String IM_TEMP_PATH = "MAGICK_TEMPORARY_PATH"; //$NON-NLS-1$
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
-    private static final String MAGICK_MEMORY_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
-    private static final String MAGICK_MEMORY_LIMIT_VAL = "32MP"; //$NON-NLS-1$
+    private static final String MAGICK_AREA_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
+    private static String MAGICK_AREA_LIMIT_VAL = "32MP"; //$NON-NLS-1$
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
     
-    private static final int lowDensity = 96;
-    private static final int highDensity = 250;
+    private static int lowDensity = 48;
+    private static int highDensity = 250;
     private static final int sampleFactor = 2;
 
     private static String[] CMD = { "gm", "convert", "-limit", THREADS, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
@@ -102,6 +102,18 @@ public class GraphicsMagicConverter implements Closeable {
         super();
         this.executorService = Executors.newCachedThreadPool();
         this.ownsExecutor = true;
+    }
+
+    public static void setLowResDensity(int lowResDensity) {
+        lowDensity = lowResDensity;
+    }
+
+    public static void setHighResDensity(int highResDensity) {
+        highDensity = highResDensity;
+    }
+    
+    public static void setMaxMPixelsInMemory(int maxMPixelsInMemory) {
+        MAGICK_AREA_LIMIT_VAL = String.format("%dMP", maxMPixelsInMemory);
     }
 
     public static void setMinTimeout(int minimumSeconds) {
@@ -227,7 +239,7 @@ public class GraphicsMagicConverter implements Closeable {
         ProcessBuilder pb = new ProcessBuilder();
         pb.environment().put(GM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
-        pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
+        pb.environment().put(MAGICK_AREA_LIMIT, MAGICK_AREA_LIMIT_VAL);
 
         String[] cmd = { CMD[0], "identify", "-ping", "-format", "%w %h", "-" };
         if (!toolPath.isEmpty()) {
@@ -258,7 +270,7 @@ public class GraphicsMagicConverter implements Closeable {
         ProcessBuilder pb = new ProcessBuilder();
         pb.environment().put(GM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
-        pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
+        pb.environment().put(MAGICK_AREA_LIMIT, MAGICK_AREA_LIMIT_VAL);
 
         pb.command(getCmd(maxDimension, highRes));
         Process p = null;
