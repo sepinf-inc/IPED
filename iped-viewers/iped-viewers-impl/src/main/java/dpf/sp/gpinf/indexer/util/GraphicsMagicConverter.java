@@ -64,7 +64,7 @@ public class GraphicsMagicConverter implements Closeable {
 
     private static boolean useGM = false;
     private static boolean enabled = true;
-    private static int minTimeout = 10;
+    private static int minTimeout = 20;
     private static int timeoutPerMB = 2;
     private static String toolPath = ""; //$NON-NLS-1$
 
