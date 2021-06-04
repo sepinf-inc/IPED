@@ -35,6 +35,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -115,6 +116,7 @@ public class OCRParser extends AbstractParser {
     public static final String SUBSET_TO_OCR = "subsetToOcr"; //$NON-NLS-1$
     public static final String SUBSET_SEPARATOR = "_#_"; //$NON-NLS-1$
     public static final String TEXT_DIR = "text"; //$NON-NLS-1$
+    public static final String PROCESS_NON_STANDARD_FORMATS_PROP = "ocr.processNonStandard"; //$NON-NLS-1$
 
     private boolean ENABLED = Boolean.valueOf(System.getProperty(ENABLE_PROP, "false")); //$NON-NLS-1$
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
@@ -124,6 +126,7 @@ public class OCRParser extends AbstractParser {
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
     private List<String> bookmarksToOCR = Arrays
             .asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); // $NON-NLS-1$;
+    private boolean PROCESS_NON_STANDARD_FORMATS = Boolean.valueOf(System.getProperty(PROCESS_NON_STANDARD_FORMATS_PROP, "true")); //$NON-NLS-1$
 
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
@@ -133,27 +136,78 @@ public class OCRParser extends AbstractParser {
     // Root folder to store ocr results
     private File outputBase;
 
-    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
+    private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
+    private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
+    private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
+    private static final Map<String,Set<MediaType>> librarySupportedTypes = getLibrarySupportedTypes();
 
-    private static Set<MediaType> getTypes() {
-        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+    static {
+        allSupportedTypes.addAll(directSupportedTypes);
+        allSupportedTypes.addAll(nonStandardSupportedTypes);
+    }
 
-        supportedTypes.add(MediaType.image("png")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpeg")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("tiff")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.application("pdf")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("bmp")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("gif")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jp2")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpx")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
+    private static Set<MediaType> getDirectSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        
+        types.add(MediaType.image("png")); //$NON-NLS-1$
+        types.add(MediaType.image("jpeg")); //$NON-NLS-1$
+        types.add(MediaType.image("tiff")); //$NON-NLS-1$
+        types.add(MediaType.application("pdf")); //$NON-NLS-1$
+        types.add(MediaType.image("bmp")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-bitmap")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-graymap")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
+        
+        return types;
+    }
+    
+    private static Set<MediaType> getNonStandardSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        
+        types.add(MediaType.image("gif")); //$NON-NLS-1$
+        types.add(MediaType.image("jp2")); //$NON-NLS-1$
+        types.add(MediaType.image("jpx")); //$NON-NLS-1$
+        types.add(MediaType.image("webp")); //$NON-NLS-1$
+        
+        types.add(MediaType.image("aces")); //$NON-NLS-1$
+        types.add(MediaType.image("emf")); //$NON-NLS-1$
+        types.add(MediaType.image("heic")); //$NON-NLS-1$
+        types.add(MediaType.image("svg+xml")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.adobe.photoshop")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.wap.wbmp")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.zbrush.dcx")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.zbrush.pcx")); //$NON-NLS-1$
+        types.add(MediaType.image("wmf")); //$NON-NLS-1$
+        types.add(MediaType.image("x-cmu-raster")); //$NON-NLS-1$
+        types.add(MediaType.image("x-jp2-codestream")); //$NON-NLS-1$
+        types.add(MediaType.image("x-rgb")); //$NON-NLS-1$
+        types.add(MediaType.image("x-xbitmap")); //$NON-NLS-1$
+        
+        return types;
+    }
 
-        return supportedTypes;
+    private static Map<String, Set<MediaType>> getLibrarySupportedTypes() {
+        Map<String, Set<MediaType>> libraryToTypes = new HashMap<String, Set<MediaType>>();
+        
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        types.add(MediaType.image("gif")); //$NON-NLS-1$
+        libraryToTypes.put("libgif", types); //$NON-NLS-1$
+
+        types = new HashSet<MediaType>();
+        types.add(MediaType.image("jp2")); //$NON-NLS-1$
+        types.add(MediaType.image("jpx")); //$NON-NLS-1$
+        libraryToTypes.put("libopenjp2", types); //$NON-NLS-1$
+
+        types = new HashSet<MediaType>();
+        types.add(MediaType.image("webp")); //$NON-NLS-1$
+        libraryToTypes.put("libwebp", types); //$NON-NLS-1$
+        
+        return libraryToTypes;
     }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        return SUPPORTED_TYPES;
+        return PROCESS_NON_STANDARD_FORMATS ? allSupportedTypes : directSupportedTypes;
     }
 
     public boolean isEnabled() {
@@ -171,9 +225,21 @@ public class OCRParser extends AbstractParser {
         try {
             synchronized (checked) {
                 if (ENABLED && !checked.getAndSet(true)) {
-                    tessVersion = checkVersion(cmd[0], "-v"); //$NON-NLS-1$
+                    List<String> info = checkVersionInfo(cmd[0], "-v"); //$NON-NLS-1$
+                    if (!info.isEmpty()) 
+                        tessVersion = info.get(0);
                     LOGGER = LoggerFactory.getLogger(OCRParser.class);
                     LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
+                    if (info.size() <= 1) {
+                        LOGGER.info("No Tesseract optional image libraries detected."); //$NON-NLS-1$
+                    } else {
+                        LOGGER.info("Tesseract optional image libraries: " + info.subList(1, info.size())); //$NON-NLS-1$
+                        for (int i = 1; i < info.size(); i++) {
+                            Set<MediaType> types = librarySupportedTypes.get(info.get(i));
+                            directSupportedTypes.addAll(types);
+                            nonStandardSupportedTypes.removeAll(types);
+                        }
+                    }
                 }
             }
             if (ENABLED && Integer.valueOf(tessVersion.charAt(0)) >= 4) { // $NON-NLS-1$
@@ -626,7 +692,7 @@ public class OCRParser extends AbstractParser {
         }.start();
     }
 
-    public static String checkVersion(String... checkCmd) throws IOException, InterruptedException {
+    public static List<String> checkVersionInfo(String... checkCmd) throws IOException, InterruptedException {
         Process process = Runtime.getRuntime().exec(checkCmd);
         int result = process.waitFor();
 
@@ -640,12 +706,23 @@ public class OCRParser extends AbstractParser {
         }
     }
 
-    private static String extractVersion(InputStream is) throws IOException {
-        String version = IOUtils.readLines(is).get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
+    private static List<String> extractVersion(InputStream is) throws IOException {
+        List<String> lines = IOUtils.readLines(is);
+        String version = lines.get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
         if (version.startsWith("v")) {
             version = version.substring(1);
         }
-        return version;
+        List<String> info = new ArrayList<String>();
+        info.add(version);
+        for (String libName : librarySupportedTypes.keySet()) {
+            for (String l : lines) {
+                if (l.contains(libName)) {
+                    info.add(libName);
+                    break;
+                }
+            }
+        }
+        return info;
     }
 
 }
