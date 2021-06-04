@@ -117,6 +117,7 @@ public class OCRParser extends AbstractParser {
     public static final String SUBSET_SEPARATOR = "_#_"; //$NON-NLS-1$
     public static final String TEXT_DIR = "text"; //$NON-NLS-1$
     public static final String PROCESS_NON_STANDARD_FORMATS_PROP = "ocr.processNonStandard"; //$NON-NLS-1$
+    public static final String MAX_CONV_IMAGE_SIZE_PROP = "ocr.maxConvImageSize"; //$NON-NLS-1$
 
     private boolean ENABLED = Boolean.valueOf(System.getProperty(ENABLE_PROP, "false")); //$NON-NLS-1$
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
@@ -127,6 +128,7 @@ public class OCRParser extends AbstractParser {
     private List<String> bookmarksToOCR = Arrays
             .asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); // $NON-NLS-1$;
     private boolean PROCESS_NON_STANDARD_FORMATS = Boolean.valueOf(System.getProperty(PROCESS_NON_STANDARD_FORMATS_PROP, "true")); //$NON-NLS-1$
+    private int MAX_CONV_IMAGE_SIZE = Integer.valueOf(System.getProperty(MAX_CONV_IMAGE_SIZE_PROP, "3000")); //$NON-NLS-1$
 
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
