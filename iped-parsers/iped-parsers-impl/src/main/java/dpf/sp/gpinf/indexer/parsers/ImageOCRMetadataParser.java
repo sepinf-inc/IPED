@@ -59,20 +59,7 @@ public class ImageOCRMetadataParser extends AbstractParser {
     private final JpegParser jpegParser = new JpegParser();
     private final TiffParser tiffParser = new TiffParser();
     private final OCRParser ocrParser = new OCRParser();
-    private final Set<MediaType> SUPPORTED_TYPES = getTypes();
-
-    private static Set<MediaType> getTypes() {
-        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
-        supportedTypes.add(MediaType.image("png")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpeg")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("tiff")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("bmp")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("gif")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jp2")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpx")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
-        return supportedTypes;
-    }
+    private final Set<MediaType> SUPPORTED_TYPES = OCRParser.getImageSupportedTypes();
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext context) {
