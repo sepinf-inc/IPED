@@ -138,12 +138,23 @@ public class OCRParser extends AbstractParser {
 
     private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
     private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
-    private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
-    private static final Map<String,Set<MediaType>> librarySupportedTypes = getLibrarySupportedTypes();
+    private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
 
+    private static final Map<String,Set<MediaType>> librarySupportedTypes = getLibrarySupportedTypes();
+    
+    private static final Set<MediaType> imageSupportedTypes = new HashSet<MediaType>();
+    private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
+    
     static {
-        allSupportedTypes.addAll(directSupportedTypes);
-        allSupportedTypes.addAll(nonStandardSupportedTypes);
+        imageSupportedTypes.addAll(directSupportedTypes);
+        imageSupportedTypes.addAll(nonStandardSupportedTypes);
+        
+        allSupportedTypes.addAll(imageSupportedTypes);
+        allSupportedTypes.addAll(nonImageSupportedTypes);
+    }
+
+    public static Set<MediaType> getImageSupportedTypes() {
+        return imageSupportedTypes;
     }
 
     private static Set<MediaType> getDirectSupportedTypes() {
@@ -152,12 +163,17 @@ public class OCRParser extends AbstractParser {
         types.add(MediaType.image("png")); //$NON-NLS-1$
         types.add(MediaType.image("jpeg")); //$NON-NLS-1$
         types.add(MediaType.image("tiff")); //$NON-NLS-1$
-        types.add(MediaType.application("pdf")); //$NON-NLS-1$
         types.add(MediaType.image("bmp")); //$NON-NLS-1$
         types.add(MediaType.image("x-portable-bitmap")); //$NON-NLS-1$
         types.add(MediaType.image("x-portable-graymap")); //$NON-NLS-1$
         types.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
-        
+
+        return types;
+    }
+    
+    private static Set<MediaType> getNonImageSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        types.add(MediaType.application("pdf")); //$NON-NLS-1$
         return types;
     }
     
@@ -240,6 +256,8 @@ public class OCRParser extends AbstractParser {
                             nonStandardSupportedTypes.removeAll(types);
                         }
                     }
+                    LOGGER.info("Process non-standard image formats {}.", //$NON-NLS-1$
+                            PROCESS_NON_STANDARD_FORMATS ? "enabled" : "disabled");
                 }
             }
             if (ENABLED && Integer.valueOf(tessVersion.charAt(0)) >= 4) { // $NON-NLS-1$
@@ -375,6 +393,9 @@ public class OCRParser extends AbstractParser {
                     else if (mediaType.equals("image/tiff")) //$NON-NLS-1$
                         parseTiff(xhtml, tmp, input, tmpOutput);
 
+                    else if (nonStandardSupportedTypes.contains(mediaType))
+                        parseNonStandardImage(xhtml, tmp, input, tmpOutput);
+                    
                     else
                         parse(xhtml, input, tmpOutput);
 
@@ -518,6 +539,11 @@ public class OCRParser extends AbstractParser {
         }
     }
 
+    private void parseNonStandardImage(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
+            throws IOException, SAXException, TikaException {
+        //TODO
+    }
+    
     private void parsePDF(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
             throws IOException, SAXException, TikaException {
 
