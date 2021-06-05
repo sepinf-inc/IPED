@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.parsers;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -96,6 +95,7 @@ public class ImageOCRMetadataParser extends AbstractParser {
                     LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
                 }
                 tis = TikaInputStream.get(file);
+                LOGGER.error("AQUI="+countHandler.getCharCount());
                 metadata.set(OCRParser.OCR_CHAR_COUNT, countHandler.getCharCount() + ""); //$NON-NLS-1$
             }
 
