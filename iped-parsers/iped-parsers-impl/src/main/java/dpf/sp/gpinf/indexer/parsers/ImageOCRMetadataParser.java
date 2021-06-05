@@ -95,7 +95,6 @@ public class ImageOCRMetadataParser extends AbstractParser {
                     LOGGER.warn("OCRParser error on '{}' ({} bytes)\t{}", file.getPath(), file.length(), e.toString()); //$NON-NLS-1$
                 }
                 tis = TikaInputStream.get(file);
-                LOGGER.error("AQUI="+countHandler.getCharCount());
                 metadata.set(OCRParser.OCR_CHAR_COUNT, countHandler.getCharCount() + ""); //$NON-NLS-1$
             }
 
