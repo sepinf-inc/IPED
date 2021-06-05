@@ -292,7 +292,7 @@ public class OCRParser extends AbstractParser {
 
                     String ocrText = getOcrTextFromDb(outFileName, outputBase);
                     if (ocrText != null) {
-                        extractOutput(new ByteArrayInputStream(ocrText.getBytes("UTF-8")), xhtml); //$NON-NLS-1$
+                        extractOutput(ocrText, xhtml); //$NON-NLS-1$
                         return;
                     }
 
@@ -325,7 +325,7 @@ public class OCRParser extends AbstractParser {
                     storeOcrTextInDb(outFileName, ocrText, outputBase);
 
                 } else
-                    extractOutput(new FileInputStream(output), xhtml);
+                    extractOutput(output, xhtml);
 
             }
 
@@ -562,39 +562,19 @@ public class OCRParser extends AbstractParser {
 
         }
         if (output.exists())
-            extractOutput(new FileInputStream(output), xhtml);
+            extractOutput(output, xhtml);
 
     }
 
-    /**
-     * Starts a thread that extracts the contents of the standard output stream of
-     * the given process to the given XHTML content handler. The standard output
-     * stream is closed once fully processed.
-     * 
-     * @param process
-     *            process
-     * @param xhtml
-     *            XHTML content handler
-     * @throws SAXException
-     *             if the XHTML SAX events could not be handled
-     * @throws IOException
-     *             if an input error occurred
-     */
-    private void extractOutput(InputStream stream, XHTMLContentHandler xhtml) throws SAXException, IOException {
-        Reader reader = new InputStreamReader(stream, "UTF-8"); //$NON-NLS-1$
-        try {
-            // xhtml.startElement("p");
-            char[] buffer = new char[1024];
-            for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
-                xhtml.characters(buffer, 0, n);
-            }
-            // xhtml.endElement("p");
-        } finally {
-            reader.close();
-        }
+    private void extractOutput(File output, XHTMLContentHandler xhtml) throws SAXException, IOException {
+        byte[] bytes = Files.readAllBytes(output.toPath());
+        String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
+        extractOutput(ocrText, xhtml);
     }
 
-    // Object msgLock = new Object();
+    private void extractOutput(String ocrText, XHTMLContentHandler xhtml) throws SAXException, IOException {
+        xhtml.characters(ocrText);
+    }
 
     /**
      * 
