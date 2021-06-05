@@ -70,6 +70,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 /**
  * Parser OCR para imagens e PDFs via Tesseract. No caso de PDFs, é gerada uma
@@ -396,7 +397,7 @@ public class OCRParser extends AbstractParser {
                         parseTiff(xhtml, tmp, input, tmpOutput);
 
                     else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType)))
-                        parseNonStandardImage(xhtml, tmp, input, tmpOutput);
+                        parseNonStandard(xhtml, input, tmpOutput);
                     
                     else
                         parse(xhtml, input, tmpOutput);
@@ -541,9 +542,32 @@ public class OCRParser extends AbstractParser {
         }
     }
 
-    private void parseNonStandardImage(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
+    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output)
             throws IOException, SAXException, TikaException {
-        //TODO
+        FileInputStream is = null;
+        File imageFile = null;
+        try {
+            is = new FileInputStream(input);
+            BufferedImage img = ImageUtil.getSubSampledImage(is, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+            if (img == null) {
+                // TODO: External conversion
+            }
+            if (img != null) {
+                if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
+                    img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
+                
+                img = getCompatibleImage(img);
+                imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
+                ImageIO.write(img, PDFToImage.EXT, imageFile);
+
+                if (imageFile.exists()) 
+                    parse(xhtml, imageFile, output);
+            }
+        } finally {
+            IOUtil.closeQuietly(is);
+            if (imageFile != null)
+                imageFile.delete();
+        }
     }
     
     private void parsePDF(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
