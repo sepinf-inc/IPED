@@ -340,7 +340,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize(), evidence.getLength());
+                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

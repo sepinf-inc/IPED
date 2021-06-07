@@ -85,6 +85,21 @@ public class ImageThumbTask extends ThumbTask {
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
         }
 
+        value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setLowResDensity(Integer.valueOf(value.trim()));
+        }
+
+        value = properties.getProperty("highResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setHighResDensity(Integer.valueOf(value.trim()));
+        }
+
+        value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            GraphicsMagicConverter.setMaxMPixelsInMemory(Integer.valueOf(value.trim()));
+        }
+
         value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             GraphicsMagicConverter.setMinTimeout(Integer.valueOf(value.trim()));
@@ -275,11 +290,7 @@ public class ImageThumbTask extends ThumbTask {
         long[] performanceStats = new long[numStats];
         try {
             BufferedImage img = null;
-            Dimension dimension = null;
-            try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                dimension = ImageUtil.getImageFileDimension(stream);
-            }
-            if (extractThumb && isJpeg(evidence)) { // $NON-NLS-1$
+            if (extractThumb && isJpeg(evidence)) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageUtil.getThumb(stream);
@@ -302,11 +313,9 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = graphicsMagicConverter.getImage(stream, thumbSize * samplingRatio, evidence.getLength(),
-                            true);
+                    img = graphicsMagicConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
-                    dimension = null;
                 } catch (TimeoutException e) {
                     stats.incTimeouts();
                     evidence.setExtraAttribute(THUMB_TIMEOUT, "true"); //$NON-NLS-1$
@@ -317,8 +326,7 @@ public class ImageThumbTask extends ThumbTask {
             }
 
             if (img != null) {
-                if (dimension != null && (dimension.width > thumbSize || dimension.height > thumbSize)
-                        && Math.max(img.getWidth(), img.getHeight()) != thumbSize) {
+                if (img.getWidth() > thumbSize || img.getHeight() > thumbSize) {
                     long t = System.currentTimeMillis();
                     img = ImageUtil.resizeImage(img, thumbSize, thumbSize);
                     performanceStats[12]++;
