@@ -3,8 +3,10 @@ package dpf.sp.gpinf.carver;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.TreeMap;
 
@@ -29,6 +31,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o
@@ -39,18 +42,16 @@ import iped3.IItem;
  */
 public class CarverTask extends BaseCarveTask {
 
-    private static final long serialVersionUID = 1L;
     public static boolean enableCarving = false;
     public static boolean ignoreCorrupted = true;
 
     private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
-
-    private CarvedItemListener carvedItemListener = null;
-
     private static MediaTypeRegistry registry;
 
+    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
+    private CarvedItemListener carvedItemListener = null;
     IItem evidence;
 
     long prevLen = 0;
@@ -211,22 +212,25 @@ public class CarverTask extends BaseCarveTask {
     }
 
     @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new CarverTaskConfig());
+    }
+
+    @Override
     public void init(Properties confProps, File confDir) throws Exception {
 
-        AppCarverTaskConfig ctConfig = new AppCarverTaskConfig();
-        ConfigurationManager.getInstance().addObject(ctConfig);
-        ConfigurationManager.getInstance().loadConfigs();
-
-        enableCarving = ctConfig.getCarvingEnabled();
-
+        CarverTaskConfig ctConfig = ConfigurationManager.findObject(CarverTaskConfig.class);
         FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
-        if (carverTypes == null && ctConfig.getCarvingEnabled() && !fsConfig.isToAddUnallocated())
+
+        enableCarving = ctConfig.isEnabled();
+
+        if (carverTypes == null && enableCarving && !fsConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
         carvedItemListener = getCarvedItemListener();
 
         if (carverConfig == null) {
-            carverConfig = ctConfig.getCarverConfiguration();
+            carverConfig = ctConfig.getConfiguration();
             carverConfig.configTask(confDir, carvedItemListener);
             carverTypes = carverConfig.getCarverTypes();
             ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
@@ -239,7 +243,7 @@ public class CarverTask extends BaseCarveTask {
 
     }
 
-    public CarvedItemListener getCarvedItemListener() {
+    private CarvedItemListener getCarvedItemListener() {
         if (carvedItemListener == null) {
             carvedItemListener = new CarvedItemListener() {
                 public void processCarvedItem(IItem parentEvidence, IItem carvedEvidence, long off) {
@@ -250,9 +254,7 @@ public class CarverTask extends BaseCarveTask {
         return carvedItemListener;
     }
 
-    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
-
-    public Carver getCarver(CarverType ct) {
+    private Carver getCarver(CarverType ct) {
         Carver carver = registeredCarvers.get(ct);
         try {
             if (carver == null) {

@@ -1,13 +1,10 @@
 package dpf.sp.gpinf.carver.api;
 
-import org.apache.tika.mime.MediaType;
-import org.arabidopsis.ahocorasick.AhoCorasick;
-
-import iped3.configuration.IConfigurationDirectory;
-
 import java.io.File;
 import java.util.HashMap;
-import java.util.Properties;
+
+import org.apache.tika.mime.MediaType;
+import org.arabidopsis.ahocorasick.AhoCorasick;
 
 public interface CarverConfiguration {
     /* returns the configured carverTypes */
@@ -31,10 +28,6 @@ public interface CarverConfiguration {
     /* Returns the populated state machine tree */
     public HashMap<CarverType, Carver> getRegisteredCarvers();
 
-    /* initializes the configuration with the parameters in the Properties object */
-    public void init(IConfigurationDirectory localConfig, Properties props) throws CarverConfigurationException;
-
-    /* */
     public Carver createCarverFromJSName(String scriptName);
 
     public boolean isToIgnoreCorrupted();
