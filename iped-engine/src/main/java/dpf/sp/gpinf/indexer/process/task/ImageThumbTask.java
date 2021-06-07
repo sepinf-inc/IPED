@@ -77,7 +77,6 @@ public class ImageThumbTask extends ThumbTask {
             if (!extConvPropInit.get()) {
                 String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
                 if (value != null && !value.trim().isEmpty()) {
-                    System.err.println("ENABLED=>"+value);
                     System.setProperty(ExternalImageConverter.enabledProp, Boolean.TRUE.toString());
                     if (value.trim().equalsIgnoreCase("graphicsmagick")) { //$NON-NLS-1$
                         System.setProperty(ExternalImageConverter.useGMProp, Boolean.TRUE.toString());

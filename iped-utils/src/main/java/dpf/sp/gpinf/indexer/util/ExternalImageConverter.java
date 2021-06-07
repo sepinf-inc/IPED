@@ -83,7 +83,6 @@ public class ExternalImageConverter implements Closeable {
         this.ownsExecutor = ownsExecutor;
 
         enabled = Boolean.valueOf(System.getProperty(enabledProp, "false").trim()); //$NON-NLS-1$
-        System.err.println("ExternalImageConverter:ENABLED = " + enabled);
         useGM = Boolean.valueOf(System.getProperty(useGMProp, "false").trim()); //$NON-NLS-1$
         winToolPathPrefix = System.getProperty(winToolPathPrefixProp, "").trim(); //$NON-NLS-1$
         lowDensity = Integer.parseInt(System.getProperty(lowDensityProp, "96").trim()); //$NON-NLS-1$
@@ -129,21 +128,16 @@ public class ExternalImageConverter implements Closeable {
     }
 
     public BufferedImage getImage(final InputStream in, final int maxDimension, final boolean highRes, Long imageSize) {
-        System.err.println("A");
         try {
-            System.err.println("B");
             return getImage(in, maxDimension, highRes, imageSize, false);
         } catch (TimeoutException e) {
-            System.err.println("C");
             return null;
         }
     }
 
     public Dimension getDimension(InputStream in) {
-        System.err.println("D");
         if (!enabled)
             return null;
-        System.err.println("E");
 
         ProcessBuilder pb = new ProcessBuilder();
         pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
@@ -169,17 +163,14 @@ public class ExternalImageConverter implements Closeable {
 
     public BufferedImage getImage(InputStream in, int maxDim, boolean highRes, Long imageSize, boolean throwTimeout)
             throws TimeoutException {
-        System.err.println("F");
         if (!enabled)
             return null;
-        System.err.println("G");
 
         ProcessBuilder pb = new ProcessBuilder();
         pb.environment().put(useGM ? GM_TEMP_PATH : IM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
 
         pb.command(getCmd(maxDim, highRes));
-        System.err.println("CMD>>" + Arrays.toString(getCmd(maxDim, highRes)));
         Process p = null;
         try {
             p = pb.start();
