@@ -1,19 +1,12 @@
 package dpf.sp.gpinf.carver;
 
-import dpf.sp.gpinf.carver.api.CarvedItemListener;
-import dpf.sp.gpinf.carver.api.Carver;
-import dpf.sp.gpinf.carver.api.CarverConfiguration;
-import dpf.sp.gpinf.carver.api.CarverConfigurationException;
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.Signature;
-import dpf.sp.gpinf.carving.JSCarver;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import gpinf.dev.data.Item;
-import iped3.IItem;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Properties;
+import java.util.TreeMap;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
@@ -24,13 +17,18 @@ import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.TreeMap;
+import dpf.sp.gpinf.carver.api.CarvedItemListener;
+import dpf.sp.gpinf.carver.api.Carver;
+import dpf.sp.gpinf.carver.api.CarverType;
+import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carver.api.Signature;
+import dpf.sp.gpinf.carving.JSCarver;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.Item;
+import iped3.IItem;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o
@@ -221,8 +219,8 @@ public class CarverTask extends BaseCarveTask {
 
         enableCarving = ctConfig.getCarvingEnabled();
 
-        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
-        if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
+        FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+        if (carverTypes == null && ctConfig.getCarvingEnabled() && !fsConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
         carvedItemListener = getCarvedItemListener();

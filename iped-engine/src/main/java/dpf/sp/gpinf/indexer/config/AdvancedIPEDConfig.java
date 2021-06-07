@@ -15,11 +15,10 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
      * 
      */
     private static final long serialVersionUID = 1L;
-    long unallocatedFragSize = 1024 * 1024 * 1024;
+
     long minItemSizeToFragment = 100 * 1024 * 1024;
 
     boolean embutirLibreOffice = true;
-    long minOrphanSizeToIgnore = -1;
     int searchThreads = 1;
     boolean autoManageCols = true;
 
@@ -49,14 +48,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         String value = null;
 
-        value = properties.getProperty("unallocatedFragSize"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            unallocatedFragSize = Long.valueOf(value);
-        }
-
         value = properties.getProperty("minItemSizeToFragment"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
@@ -71,14 +62,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         }
         if (value != null && !value.isEmpty()) {
             embutirLibreOffice = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("minOrphanSizeToIgnore"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            minOrphanSizeToIgnore = Long.valueOf(value);
         }
 
         value = properties.getProperty("searchThreads"); //$NON-NLS-1$
@@ -143,20 +126,12 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         return commitIntervalSeconds;
     }
 
-    public long getUnallocatedFragSize() {
-        return unallocatedFragSize;
-    }
-
     public long getMinItemSizeToFragment() {
         return minItemSizeToFragment;
     }
 
     public boolean isEmbutirLibreOffice() {
         return embutirLibreOffice;
-    }
-
-    public long getMinOrphanSizeToIgnore() {
-        return minOrphanSizeToIgnore;
     }
 
     public int getSearchThreads() {

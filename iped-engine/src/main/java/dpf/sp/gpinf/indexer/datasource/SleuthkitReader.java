@@ -30,7 +30,6 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
@@ -67,8 +66,7 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -307,10 +305,10 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            SleuthKitConfig sleuthKitConfig = ConfigurationManager.findObject(SleuthKitConfig.class);
-            if (sleuthKitConfig.isRobustImageReading())
+            FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+            if (fsConfig.isRobustImageReading()) {
                 Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
-
+            }
             Long[] range = getDecodedRangeId(image);
             if (range != null && args.isContinue()) {
                 synchronized (idRangeMap) {
@@ -706,11 +704,11 @@ public class SleuthkitReader extends DataSourceReader {
             return addEvidenceFile(content);
         }
 
-        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
+        FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
         if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
 
-            if (!ipedConfig.isToAddUnallocated()) {
+            if (!fsConfig.isToAddUnallocated()) {
                 return null;
             }
 
@@ -719,7 +717,7 @@ public class SleuthkitReader extends DataSourceReader {
             absFile.getRanges();
 
             AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-            long fragSize = advancedConfig.getUnallocatedFragSize();
+            long fragSize = fsConfig.getUnallocatedFragSize();
             int fragNum = 0;
             for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {
                 long len = offset + fragSize < absFile.getSize() ? fragSize : absFile.getSize() - offset;
@@ -749,9 +747,10 @@ public class SleuthkitReader extends DataSourceReader {
             return null;
         }
 
-        if (!ipedConfig.isToAddFileSlacks() && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK
-                && !isVolumeShadowCopy(absFile))
+        if (!fsConfig.isToAddFileSlacks() && absFile.getType() == TSK_DB_FILES_TYPE_ENUM.SLACK
+                && !isVolumeShadowCopy(absFile)) {
             return null;
+        }
 
         return addEvidenceFile(absFile);
 
@@ -790,9 +789,8 @@ public class SleuthkitReader extends DataSourceReader {
                     return null;
             }
 
-            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-            if (advancedConfig.getMinOrphanSizeToIgnore() != -1
-                    && absFile.getSize() >= advancedConfig.getMinOrphanSizeToIgnore())
+            FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+            if (fsConfig.getMinOrphanSizeToIgnore() != -1 && absFile.getSize() >= fsConfig.getMinOrphanSizeToIgnore())
                 return null;
         }
 

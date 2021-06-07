@@ -33,6 +33,7 @@ import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
@@ -67,6 +68,7 @@ public class Configuration {
     public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
     public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
     public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
+    private static final String CONF_DIR = "conf"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -152,8 +154,6 @@ public class Configuration {
         String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
         if (regripperFolder != null)
             System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
-
-        properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
     }
 
     public void loadLibsAndToolPaths() throws IOException {
@@ -206,7 +206,7 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectory(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
+        configDirectory = new ConfigurationDirectory(Paths.get(configPath + File.separator + CONF_DIR));
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
         addPluginJarsToConfigurationLookup(configDirectory);
@@ -230,7 +230,7 @@ public class Configuration {
         configManager.addObject(new IPEDConfig());
         configManager.addObject(new OCRConfig());
         configManager.addObject(new AdvancedIPEDConfig());
-        configManager.addObject(new SleuthKitConfig());
+        configManager.addObject(new FileSystemConfig());
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

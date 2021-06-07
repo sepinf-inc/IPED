@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
-import java.util.HashSet;
-import java.util.Set;
 
 public class PluginConfig extends AbstractPropertiesConfigurable {
 
@@ -19,14 +17,6 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
 
     public static final String OPTIONAL_JARS = "optional_jars";
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-
-    static Set<String> propNames = new HashSet<String>();
-    static {
-        propNames.add(IPEDConfig.CONFDIR);
-        propNames.add(IPEDConfig.TOADDUNALLOCATED);
-        propNames.add(IPEDConfig.TOADDFILESLACKS);
-        propNames.add(IPEDConfig.CONFIG_FILE);
-    }
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override

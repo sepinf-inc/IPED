@@ -4,27 +4,8 @@
 
 # PARSERS CAN BE ENABLED/DISABLED IN conf/ParserConfig.xml
 
-# Uses auxiliary processes to read the images. If Sleuthkit crashes, only
-# the auxiliary process is killed and restarted. Increases RAM usage often in about ~500MB per process. 
-# Increases a lot the processing speed of compressed E01 images or images in network.
-robustImageReading = false
-
-# Number of auxiliary image reading processes. 'auto' uses 1/4 of the number of logical CPU cores.
-# You can decrease the value if it uses too much RAM. Increasing the value is not efficient, because often
-# IO devices can not handle many reading requests simultaneously.
-numImageReaders = auto
-
 # Copies LibreOffice.zip (100 MB) to the output folder, allowing the visualization of dozens of different formats.
 embutirLibreOffice = true
-
-# Set this option to ignore orphaned files bigger than a certain size.
-# In rare cases, Sleuthkit can incorrectly recover thousands of giant orphaned files, 
-# which may render processing unfeasible.
-#minOrphanSizeToIgnore = 102400000
-
-# Size in bytes of the unallocated space segments. In cases where the carving of videos is important,
-# it may be useful to increase this value to minimize the loss of items that cross segment boundaries.
-unallocatedFragSize = 1073741824
 
 # Files larger than this value (in bytes) will be split before having their strings indexed. Large items without a specific parser 
 # are broken into 10 MB segments before being indexed, making it easier to highlight hits and to export 

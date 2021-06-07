@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
@@ -48,7 +48,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     static AtomicInteger idStart = new AtomicInteger();
 
     static {
-        SleuthKitConfig config = ConfigurationManager.findObject(SleuthKitConfig.class);
+        FileSystemConfig config = ConfigurationManager.findObject(FileSystemConfig.class);
         NUM_TSK_SERVERS = config.getNumImageReaders();
     }
 

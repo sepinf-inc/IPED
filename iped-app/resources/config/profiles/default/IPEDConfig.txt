@@ -27,11 +27,6 @@ enableYahooNSFWDetection = false
 # It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
 ignoreDuplicates = false
 
-# Ignores HFS+ hard links pointing to items already processed. The hard links are added to the case,
-# but their content is not processed (indexed, expanded, carved, etc).
-# Optimizes HFS+ image processing containing millions of hard links (such as Time Machine volumes).
-ignoreHardLinks = true
-
 # Exports the properties of all files in the case to file "Lista de Arquivos.csv"
 exportFileProps = true
 
@@ -81,12 +76,6 @@ indexFileContents = true
 # Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
 # Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
 enableAudioTranscription = false
-
-# Adds and processes files fileSlacks
-addFileSlacks = false
-
-# Adds and processes unallocated areas of images, via sleuthkit
-addUnallocated = false
 
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
 # By default carving runs on almost every item in the case. 
