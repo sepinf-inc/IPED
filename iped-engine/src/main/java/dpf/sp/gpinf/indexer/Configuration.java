@@ -37,11 +37,9 @@ import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
-import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
-import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
@@ -232,9 +230,7 @@ public class Configuration {
         configManager.addObject(new IPEDConfig());
         configManager.addObject(new OCRConfig());
         configManager.addObject(new AdvancedIPEDConfig());
-        configManager.addObject(new PDFToImageConfig());
         configManager.addObject(new SleuthKitConfig());
-        configManager.addObject(new UFEDReaderConfig());
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

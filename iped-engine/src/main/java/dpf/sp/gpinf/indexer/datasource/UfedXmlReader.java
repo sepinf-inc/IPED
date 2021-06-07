@@ -54,7 +54,7 @@ import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -206,7 +206,7 @@ public class UfedXmlReader extends DataSourceReader {
 
     private void configureParsers() {
 
-        UFEDReaderConfig ufedReaderConfig = ConfigurationManager.findObject(UFEDReaderConfig.class);
+        ParsingTaskConfig parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
 
         // TODO enable TelegramParser for UFDR in next major release
         if (!TelegramParser.isEnabledForUfdr()) {
@@ -214,11 +214,11 @@ public class UfedXmlReader extends DataSourceReader {
             SUPPORTED_APPS.remove(TelegramParser.TELEGRAM);
         }
 
-        if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
+        if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
 
-        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) { //$NON-NLS-1$
+        } else if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("external")) { //$NON-NLS-1$
             WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
             TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
         }
