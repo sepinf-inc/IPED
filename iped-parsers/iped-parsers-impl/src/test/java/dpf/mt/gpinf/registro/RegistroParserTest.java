@@ -14,6 +14,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import junit.framework.TestCase;
 
@@ -50,6 +51,62 @@ public class RegistroParserTest extends TestCase{
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SAM");
         ContentHandler handler = new ToTextContentHandler();
         InputStream stream = getStream("test-files/test_sam");
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
+        context.set(ItemInfo.class, itemInfo);
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        
+        String hts = handler.toString();
+        String mts = metadata.toString();
+        System.out.println(hts + mts);
+    }
+    
+    @Test
+    public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException{
+        RegistroParser parser = new RegistroParser();
+        Metadata metadata = new Metadata();
+        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SYSTEM");
+        ContentHandler handler = new ToTextContentHandler();
+        InputStream stream = getStream("test-files/test_system");
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
+        context.set(ItemInfo.class, itemInfo);
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        
+        String hts = handler.toString();
+        String mts = metadata.toString();
+        System.out.println(hts + mts);
+    }
+    
+    @Test
+    public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException{
+
+        RegistroParser parser = new RegistroParser();
+        Metadata metadata = new Metadata();
+        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SOFTWARE");
+        ContentHandler handler = new ToTextContentHandler();
+        InputStream stream = getStream("test-files/test_software");
+        ParseContext context = new ParseContext();
+        ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
+        context.set(ItemInfo.class, itemInfo);
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        
+        String hts = handler.toString();
+        String mts = metadata.toString();
+        System.out.println(hts + mts);
+    }
+    
+    @Test
+    public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException{
+
+        RegistroParser parser = new RegistroParser();
+        Metadata metadata = new Metadata();
+        metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "NTUSER.DAT");
+        ContentHandler handler = new ToTextContentHandler();
+        InputStream stream = getStream("test-files/test_ntuser.dat");
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
