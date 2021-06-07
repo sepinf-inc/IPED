@@ -27,11 +27,6 @@
             <version>1.15</version>
         </dependency>
         <dependency>
-      		<groupId>com.drewnoakes</groupId>
-      		<artifactId>metadata-extractor</artifactId>
-      		<version>2.16.0</version>
-    	</dependency>
-        <dependency>
             <groupId>iped</groupId>
             <artifactId>iped-api</artifactId>
             <version>${project.version}</version>
