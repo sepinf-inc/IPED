@@ -36,6 +36,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
 import iped3.io.IStreamSource;
@@ -115,12 +116,12 @@ public class ImageViewer extends Viewer implements ActionListener {
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
-                    image = ImageUtil.getThumb(in);
+                    image = ImageMetadataUtil.getThumb(in);
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
-                    int orientation = ImageUtil.getOrientation(in);
+                    int orientation = ImageMetadataUtil.getOrientation(in);
                     boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);

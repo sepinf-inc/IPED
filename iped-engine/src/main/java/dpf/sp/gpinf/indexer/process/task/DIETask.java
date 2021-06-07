@@ -24,8 +24,8 @@ import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
@@ -324,7 +324,7 @@ public class DIETask extends AbstractTask {
             if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

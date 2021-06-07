@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,6 +27,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
 
@@ -147,7 +147,7 @@ public class ImageThumbTask extends ThumbTask {
 
         // install a new exif reader to read thumb data.
         // must be installed at the beginning of the processing, see #532
-        ImageUtil.updateExifReaderToLoadThumbData();
+        ImageMetadataUtil.updateExifReaderToLoadThumbData();
     }
 
     @Override
@@ -293,7 +293,7 @@ public class ImageThumbTask extends ThumbTask {
             if (extractThumb && isJpeg(evidence)) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 }
                 performanceStats[img == null ? 2 : 0]++;
                 performanceStats[img == null ? 3 : 1] += System.currentTimeMillis() - t;
@@ -340,7 +340,7 @@ public class ImageThumbTask extends ThumbTask {
                 if (isJpeg(evidence)) {
                     // Ajusta rotacao da miniatura a partir do metadado orientacao
                     try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                        int orientation = ImageUtil.getOrientation(stream);
+                        int orientation = ImageMetadataUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();
                             img = ImageUtil.rotate(img, orientation);

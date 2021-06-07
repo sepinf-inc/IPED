@@ -72,6 +72,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
@@ -935,7 +936,7 @@ public class HTMLReportTask extends AbstractTask {
             if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

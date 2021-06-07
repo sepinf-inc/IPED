@@ -51,6 +51,7 @@ import dpf.sp.gpinf.indexer.util.ErrorIcon;
 import dpf.sp.gpinf.indexer.util.GalleryValue;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
@@ -230,7 +231,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     if (image == null && stream != null && ImageThumbTask.extractThumb
                             && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
-                        image = ImageUtil.getThumb(new CloseShieldInputStream(stream));
+                        image = ImageMetadataUtil.getThumb(new CloseShieldInputStream(stream));
                         stream.reset();
                     }
 
