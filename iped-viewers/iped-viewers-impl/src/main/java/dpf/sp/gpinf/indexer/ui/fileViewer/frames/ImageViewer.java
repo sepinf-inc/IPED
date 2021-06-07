@@ -33,7 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
@@ -50,7 +50,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     protected JToolBar toolBar;
     private JSlider sliderBrightness;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ExternalImageConverter externalImageConverter;
 
     public static final String HIGHLIGHT_LOCATION = ImageViewer.class.getName() + "HighlightLocation:";
 
@@ -111,7 +111,9 @@ public class ImageViewer extends Viewer implements ActionListener {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
+                    System.err.println("AQUI-->" + content);
+                    image = externalImageConverter.getImage(in, maxDim, true, sis.size());
+                    System.err.println("image-->" + image);
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
@@ -159,7 +161,7 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
         if (d == null) {
             try (InputStream is = content.getStream()) {
-                d = graphicsMagicConverter.getDimension(is);
+                d = externalImageConverter.getDimension(is);
             }
         }
         if (d == null)
@@ -211,8 +213,8 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public void init() {
-        graphicsMagicConverter = new GraphicsMagicConverter();
-        graphicsMagicConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
+        externalImageConverter = new ExternalImageConverter();
+        externalImageConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
     }
 
     @Override
@@ -226,9 +228,9 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void dispose() {
         try {
-            graphicsMagicConverter.close();
+            externalImageConverter.close();
         } catch (IOException e) {
-            LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+            LOGGER.warn("Error closing " + externalImageConverter, e);
         }
     }
 
