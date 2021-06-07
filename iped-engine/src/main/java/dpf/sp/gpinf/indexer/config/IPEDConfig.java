@@ -15,12 +15,10 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
     public static final String CONFDIR = "confdir"; //$NON-NLS-1$
     public static final String TOADDUNALLOCATED = "addUnallocated"; //$NON-NLS-1$
     public static final String TOADDFILESLACKS = "addFileSlacks"; //$NON-NLS-1$
-    public static final String ENABLEHTMLREPORT = "enableHTMLReport"; //$NON-NLS-1$
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
 
     private boolean toAddUnallocated = false;
     private boolean toAddFileSlacks = false;
-    private boolean enableHtmlReport = true;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -39,10 +37,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isToAddFileSlacks() {
         return toAddFileSlacks;
-    }
-
-    public boolean isHtmlReportEnabled() {
-        return enableHtmlReport;
     }
 
     @Override
@@ -71,11 +65,6 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
         }
         if (value != null && !value.isEmpty()) {
             toAddFileSlacks = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty(ENABLEHTMLREPORT);
-        if (value != null && !value.trim().isEmpty()) {
-            enableHtmlReport = Boolean.valueOf(value.trim());
         }
 
     }

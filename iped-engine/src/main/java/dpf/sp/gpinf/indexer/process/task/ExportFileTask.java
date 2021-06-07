@@ -66,7 +66,7 @@ import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -141,8 +141,8 @@ public class ExportFileTask extends AbstractTask {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
-        if (!caseData.containsReport() || !ipedConfig.isHtmlReportEnabled()) {
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.findObject(HtmlReportTaskConfig.class);
+        if (!caseData.containsReport() || !htmlReportConfig.isEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
