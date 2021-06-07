@@ -2,15 +2,11 @@ package br.gov.pf.labld.graph;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.zip.GZIPOutputStream;
 
 import org.neo4j.graphdb.GraphDatabaseService;
 import org.neo4j.graphdb.Node;
@@ -20,7 +16,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 
@@ -50,8 +45,8 @@ public class GraphGenerator {
         try {
             graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
             graphService.start(output);
-            GraphConfiguration config = GraphTask
-                    .loadConfiguration(new File(Configuration.getInstance().configPath, "conf"));
+            GraphConfiguration config = (GraphConfiguration) ConfigurationManager.findObject(GraphTaskConfig.class)
+                    .getConfiguration();
 
             runPostGenerationStatements(graphService, config);
             groupContacts(graphService, config);
@@ -105,7 +100,7 @@ public class GraphGenerator {
         try {
             graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
             graphService.start(new File(path));
-            GraphConfiguration config = GraphTask.loadConfiguration(new File(configPath));
+            GraphConfiguration config = GraphConfiguration.loadFrom(new File(configPath, GraphTaskConfig.CONFIG_FILE));
 
             GraphGenerator graphGenerator = new GraphGenerator();
             graphGenerator.groupContacts(graphService, config);

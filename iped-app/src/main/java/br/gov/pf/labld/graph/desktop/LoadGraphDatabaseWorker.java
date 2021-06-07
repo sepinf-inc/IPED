@@ -17,7 +17,8 @@ import br.gov.pf.labld.graph.GraphImportRunner.ImportListener;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
-import dpf.sp.gpinf.indexer.Configuration;
+import br.gov.pf.labld.graph.GraphTaskConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.desktop.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -38,9 +39,10 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         long t = System.currentTimeMillis();
         app.setEnabled(false);
-        boolean enabled = Boolean.valueOf(Configuration.getInstance().properties.getProperty(GraphTask.ENABLE_PARAM));
-        if (!enabled)
+        GraphTaskConfig config = ConfigurationManager.findObject(GraphTaskConfig.class);
+        if (!config.isEnabled()) {
             return null;
+        }
         List<IPEDSource> cases = App.get().appCase.getAtomicSources();
         if (cases.size() == 1) {
             loaded = initGraphService(new File(cases.get(0).getModuleDir(), GraphTask.DB_PATH));
