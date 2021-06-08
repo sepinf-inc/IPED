@@ -2,7 +2,6 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
