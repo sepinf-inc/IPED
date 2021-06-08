@@ -23,7 +23,6 @@ import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -544,11 +543,9 @@ public class OCRParser extends AbstractParser {
 
     private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output)
             throws IOException, SAXException, TikaException {
-        FileInputStream is = null;
         File imageFile = null;
         try {
-            is = new FileInputStream(input);
-            BufferedImage img = ImageUtil.getSubSampledImage(is, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
             if (img == null) {
                 try (ExternalImageConverter converter = new ExternalImageConverter()) {
                     img = converter.getImage(input, MAX_CONV_IMAGE_SIZE, true, input.length());
@@ -566,7 +563,6 @@ public class OCRParser extends AbstractParser {
                     parse(xhtml, imageFile, output);
             }
         } finally {
-            IOUtil.closeQuietly(is);
             if (imageFile != null)
                 imageFile.delete();
         }
