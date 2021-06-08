@@ -8,6 +8,8 @@ import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -586,5 +588,17 @@ public class ImageUtil {
         g.drawRenderedImage(src, null);
         g.dispose();
         return dest;
+    }
+    
+    public static boolean isCompressedBMP(File file) throws FileNotFoundException, IOException {
+        byte[] b = new byte[34];
+        if (file.length() >= b.length) {
+            try (FileInputStream is = new FileInputStream(file)) {
+                is.read(b);
+                if (b[30] == 0 && b[31] == 0 && b[32] == 0 && b[33] == 0)
+                    return false;
+            }
+        }
+        return true;
     }
 }

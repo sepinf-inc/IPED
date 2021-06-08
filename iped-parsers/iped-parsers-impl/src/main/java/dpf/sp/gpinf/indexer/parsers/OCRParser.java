@@ -395,7 +395,8 @@ public class OCRParser extends AbstractParser {
                     else if (mediaType.equals("image/tiff")) //$NON-NLS-1$
                         parseTiff(xhtml, tmp, input, tmpOutput);
 
-                    else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType)))
+                    else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
+                            || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input)))
                         parseNonStandard(xhtml, input, tmpOutput);
                     
                     else
