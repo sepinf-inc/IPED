@@ -39,7 +39,6 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
 import dpf.sp.gpinf.indexer.parsers.IndexDatParser;

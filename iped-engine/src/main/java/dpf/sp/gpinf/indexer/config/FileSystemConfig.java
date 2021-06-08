@@ -20,6 +20,7 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     private long unallocatedFragSize = 1 << 30;
     private long minOrphanSizeToIgnore = -1;
     private boolean ignoreHardLinks = true;
+    private String skipFolderRegex = "";
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -69,6 +70,15 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
             ignoreHardLinks = Boolean.valueOf(value.trim());
         }
 
+        value = properties.getProperty("skipFolderRegex"); //$NON-NLS-1$
+        if (value != null) {
+            skipFolderRegex = value.trim();
+        }
+
+    }
+
+    public String getSkipFolderRegex() {
+        return skipFolderRegex;
     }
 
     public boolean isToAddUnallocated() {

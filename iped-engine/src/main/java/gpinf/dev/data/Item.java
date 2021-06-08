@@ -33,7 +33,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;

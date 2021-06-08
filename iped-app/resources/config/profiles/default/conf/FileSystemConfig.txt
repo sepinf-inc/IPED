@@ -28,3 +28,7 @@ unallocatedFragSize = 1073741824
 # but their content is not processed (indexed, expanded, carved, etc).
 # Optimizes HFS+ image processing containing millions of hard links (such as Time Machine volumes).
 ignoreHardLinks = true
+
+# Regex pattern to skip matched folder trees when processing. Just works if processing mounted folders currently.
+# Matched folders are ignored and not included in case.
+skipFolderRegex =
