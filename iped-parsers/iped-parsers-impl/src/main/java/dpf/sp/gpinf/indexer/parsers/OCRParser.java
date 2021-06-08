@@ -22,7 +22,6 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -69,6 +68,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 
@@ -550,7 +550,9 @@ public class OCRParser extends AbstractParser {
             is = new FileInputStream(input);
             BufferedImage img = ImageUtil.getSubSampledImage(is, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
             if (img == null) {
-                // TODO: External conversion
+                try (ExternalImageConverter converter = new ExternalImageConverter()) {
+                    img = converter.getImage(input, MAX_CONV_IMAGE_SIZE, true, input.length());
+                }
             }
             if (img != null) {
                 if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
