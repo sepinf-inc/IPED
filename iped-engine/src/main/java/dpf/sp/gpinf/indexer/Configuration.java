@@ -25,7 +25,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +64,6 @@ public class Configuration {
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
     public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
     public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
-    public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
     private static final String CONF_DIR = "conf"; //$NON-NLS-1$
 
     private static Configuration singleton;
@@ -135,8 +133,6 @@ public class Configuration {
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
-        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
-                appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
@@ -206,6 +202,7 @@ public class Configuration {
         configDirectory = new ConfigurationDirectory(Paths.get(configPath + File.separator + CONF_DIR));
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
+        configDirectory.addPath(Paths.get(appRoot + "/" + CONF_DIR));
         addPluginJarsToConfigurationLookup(configDirectory);
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);

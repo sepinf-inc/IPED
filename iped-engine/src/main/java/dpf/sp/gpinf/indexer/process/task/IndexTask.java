@@ -60,10 +60,6 @@ public class IndexTask extends AbstractTask {
 
     private IndexTaskConfig indexConfig;
 
-    public IndexTask() {
-        this.autoParser = new IndexerDefaultParser();
-    }
-
     public static class IdLenPair {
 
         int id;
@@ -265,6 +261,8 @@ public class IndexTask extends AbstractTask {
 
         IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
+
+        this.autoParser = new IndexerDefaultParser();
 
     }
 

@@ -170,7 +170,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public ParsingTask() {
-        this.autoParser = new IndexerDefaultParser();
+        // no op
     }
 
     public ParsingTask(IItem evidence, IndexerDefaultParser parser) {
@@ -700,6 +700,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
 
         setupParsingOptions(parsingConfig);
+
+        this.autoParser = new IndexerDefaultParser();
 
     }
 

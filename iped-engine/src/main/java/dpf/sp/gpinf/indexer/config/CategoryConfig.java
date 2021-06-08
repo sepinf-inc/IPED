@@ -7,9 +7,9 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
+
+import iped3.util.MediaTypes;
 
 public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
 
@@ -20,15 +20,13 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
 
     private static final String CONFIG_FILE = "CategoriesByTypeConfig.txt";
 
-    private transient MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-
     private Map<String, String> mimetypeToCategoryMap = new HashMap<>();
 
     public String getCategory(MediaType type) {
 
-        String category;
         do {
-            category = mimetypeToCategoryMap.get(type.toString());
+            type = MediaTypes.normalize(type);
+            String category = mimetypeToCategoryMap.get(type.toString());
             if (category == null) {
                 category = mimetypeToCategoryMap.get(type.getType());
             }
@@ -36,7 +34,7 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
                 return category;
             }
 
-            type = registry.getSupertype(type);
+            type = MediaTypes.getParentType(type);
 
         } while (type != null);
 
@@ -83,10 +81,6 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
                     String mimeTypes = keyValuePair[1].trim();
                     for (String mimeType : mimeTypes.split(";")) { //$NON-NLS-1$
                         mimeType = mimeType.trim();
-                        MediaType mt = MediaType.parse(mimeType);
-                        if (mt != null) {
-                            mimeType = registry.normalize(mt).toString();
-                        }
                         mimetypeToCategoryMap.put(mimeType, category);
                     }
                 }

@@ -50,14 +50,9 @@ public class MakePreviewTask extends AbstractTask {
 
     private MakePreviewConfig previewConfig;
 
-    private IndexerDefaultParser parser = new IndexerDefaultParser();
+    private IndexerDefaultParser parser;
 
     private volatile Throwable exception;
-
-    public MakePreviewTask() {
-        parser.setPrintMetadata(false);
-        parser.setIgnoreStyle(false);
-    }
 
     public List<Configurable> getConfigurables() {
         return Arrays.asList(new MakePreviewConfig());
@@ -66,6 +61,10 @@ public class MakePreviewTask extends AbstractTask {
     @Override
     public void init(Properties confParams, File confDir) throws Exception {
         previewConfig = ConfigurationManager.findObject(MakePreviewConfig.class);
+
+        parser = new IndexerDefaultParser();
+        parser.setPrintMetadata(false);
+        parser.setIgnoreStyle(false);
     }
 
     @Override

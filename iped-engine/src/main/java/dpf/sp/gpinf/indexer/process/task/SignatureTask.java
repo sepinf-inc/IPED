@@ -11,13 +11,15 @@ import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.util.MediaTypes;
 import macee.core.Configurable;
 
 /**
@@ -27,19 +29,10 @@ public class SignatureTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(SignatureTask.class);
 
-    private static final String ENABLE_PARAM = "processFileSignatures";
-
     private static final String[] HFS_ATTR_SUFFIX = { ":DATA", ":DECOMP", ":RSRC" };
 
-    public static boolean processFileSignatures = true;
-
-    private TikaConfig config;
+    private boolean processFileSignatures = true;
     private Detector detector;
-
-    public SignatureTask() {
-        config = TikaConfig.getDefaultConfig();
-        detector = config.getDetector();
-    }
 
     @Override
     public boolean isEnabled() {
@@ -105,17 +98,24 @@ public class SignatureTask extends AbstractTask {
                         evidence.getPath(), evidence.getLength(), e.toString());
             }
         }
-        evidence.setMediaType(config.getMediaTypeRegistry().normalize(type));
+        evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
     }
 
     @Override
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+        return Arrays.asList(new SignatureConfig());
     }
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        processFileSignatures = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        SignatureConfig config = ConfigurationManager.findObject(SignatureConfig.class);
+        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
+        // check if setting property above works
+        if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
+            throw new Exception("Custom signature file not loaded!");
+        }
+        processFileSignatures = config.isEnabled();
+        detector = TikaConfig.getDefaultConfig().getDetector();
     }
 
     @Override

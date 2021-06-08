@@ -10,8 +10,6 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
-import dpf.sp.gpinf.indexer.process.Worker;
-
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType
  * reconhecido.
@@ -19,11 +17,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetTypeTask extends AbstractTask {
 
-    TikaConfig tikaConfig;
-
-    public SetTypeTask() {
-        tikaConfig = TikaConfig.getDefaultConfig();
-    }
+    private TikaConfig tikaConfig;
 
     @Override
     public void process(IItem evidence) throws Exception {
@@ -78,8 +72,7 @@ public class SetTypeTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
-        // TODO Auto-generated method stub
-
+        tikaConfig = TikaConfig.getDefaultConfig();
     }
 
     @Override

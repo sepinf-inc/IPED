@@ -10,9 +10,7 @@ import java.util.List;
 import java.util.Properties;
 import java.util.TreeMap;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
@@ -31,6 +29,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.util.MediaTypes;
 import macee.core.Configurable;
 
 /**
@@ -48,7 +47,6 @@ public class CarverTask extends BaseCarveTask {
     private static CarverType[] carverTypes;
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
-    private static MediaTypeRegistry registry;
 
     protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
     private CarvedItemListener carvedItemListener = null;
@@ -58,11 +56,6 @@ public class CarverTask extends BaseCarveTask {
     int len = 0, k = 0;
     byte[] buf = new byte[1024 * 1024];
     byte[] cBuf;
-
-    public CarverTask() {
-        if (registry == null)
-            registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-    }
 
     public static void setEnabled(boolean enabled) {
         enableCarving = enabled;
@@ -116,7 +109,7 @@ public class CarverTask extends BaseCarveTask {
                     // break;
                 }
 
-                type = registry.getSupertype(type);
+                type = MediaTypes.getParentType(type);
             }
 
             findSig(tis);
