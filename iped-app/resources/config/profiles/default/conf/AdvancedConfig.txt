@@ -7,11 +7,6 @@
 # Copies LibreOffice.zip (100 MB) to the output folder, allowing the visualization of dozens of different formats.
 embutirLibreOffice = true
 
-# Files larger than this value (in bytes) will be split before having their strings indexed. Large items without a specific parser 
-# are broken into 10 MB segments before being indexed, making it easier to highlight hits and to export 
-# segments containing hits belonging to big files, such as pagefiles, vss, etc.
-minItemSizeToFragment = 104857600
-
 # Interval to commit partial processing results, so processing can be resumed later if stopped.
 # Partial commits can be a very costly operation, be careful if you change the default.
 commitIntervalSeconds = 1800

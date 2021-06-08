@@ -60,11 +60,11 @@ import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
+import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
@@ -281,9 +281,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             times.put(parserName, time);
         }
 
-        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
+        SplitLargeBinaryConfig splitConfig = ConfigurationManager.findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
-                && ((evidence.getLength() == null || evidence.getLength() < advancedConfig.getMinItemSizeToFragment())
+                && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
                         || IndexerDefaultParser.isSpecificParser(parser))) {
             try {
                 depth++;

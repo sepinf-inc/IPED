@@ -64,9 +64,9 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -705,6 +705,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+        SplitLargeBinaryConfig splitConfig = ConfigurationManager.findObject(SplitLargeBinaryConfig.class);
+
         if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
 
@@ -716,7 +718,6 @@ public class SleuthkitReader extends DataSourceReader {
             // processamento caso haja lock de escrita no sqlite ao adicionar outra evidênca
             absFile.getRanges();
 
-            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
             long fragSize = fsConfig.getUnallocatedFragSize();
             int fragNum = 0;
             for (long offset = 0; offset < absFile.getSize(); offset += fragSize) {
@@ -729,7 +730,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
                 frag.setName(absFile.getName() + sufix);
                 frag.setLength(len);
-                if (len >= advancedConfig.getMinItemSizeToFragment())
+                if (len >= splitConfig.getMinItemSizeToFragment())
                     frag.setHash(""); //$NON-NLS-1$
 
                 setPath(frag, absFile.getUniquePath() + sufix);

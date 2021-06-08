@@ -16,8 +16,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
      */
     private static final long serialVersionUID = 1L;
 
-    long minItemSizeToFragment = 100 * 1024 * 1024;
-
     boolean embutirLibreOffice = true;
     int searchThreads = 1;
     boolean autoManageCols = true;
@@ -47,14 +45,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
         properties.load(resource.toFile());
 
         String value = null;
-
-        value = properties.getProperty("minItemSizeToFragment"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            minItemSizeToFragment = Long.valueOf(value);
-        }
 
         value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
         if (value != null) {
@@ -124,10 +114,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public int getCommitIntervalSeconds() {
         return commitIntervalSeconds;
-    }
-
-    public long getMinItemSizeToFragment() {
-        return minItemSizeToFragment;
     }
 
     public boolean isEmbutirLibreOffice() {

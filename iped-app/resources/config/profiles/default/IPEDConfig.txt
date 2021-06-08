@@ -70,6 +70,12 @@ enableGraphGeneration = true
 # May cause loss of hits surrounded by "random" content.
 entropyTest = true
 
+# Large binary files or those without a specific parser will be split before being processed. 
+# This makes hit/regex highlighting in large files (pagefile, VSS, unallocated...) a lot faster
+# and allows exporting relevant data chunks to reports without exporting the whole file.
+# The original file is kept in case, although it is not processed by most modules.
+enableSplitLargeBinary = true
+
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
