@@ -101,7 +101,11 @@ public class ImageUtil {
     }
 
     public static BufferedImage getSubSampledImage(InputStream source, int w, int h) {
-        return getSubSampledImage(source, w, h, null);
+        return doGetSubSampledImage(source, w, h, null);
+    }
+
+    public static BufferedImage getSubSampledImage(File source, int w, int h) {
+        return doGetSubSampledImage(source, w, h, null);
     }
 
     public static class BooleanWrapper {
@@ -122,6 +126,10 @@ public class ImageUtil {
 
     // Contribuição do PCF Wladimir e Nassif
     public static BufferedImage getSubSampledImage(InputStream source, int w, int h, BooleanWrapper renderException) {
+        return doGetSubSampledImage(source, w, h, renderException);
+    }
+
+    private static BufferedImage doGetSubSampledImage(Object source, int w, int h, BooleanWrapper renderException) {
         ImageInputStream iis = null;
         ImageReader reader = null;
         BufferedImage image = null;
