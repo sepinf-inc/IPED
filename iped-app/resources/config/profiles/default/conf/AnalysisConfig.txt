@@ -1,15 +1,9 @@
 ﻿########################################################################
-# Advanced Processing Settings
+# Analysis Settings
 ########################################################################
 
-# PARSERS CAN BE ENABLED/DISABLED IN conf/ParserConfig.xml
-
-# Copies LibreOffice.zip (100 MB) to the output folder, allowing the visualization of dozens of different formats.
-embutirLibreOffice = true
-
-########################################################################
-# Search Settings 
-########################################################################
+# Copies LibreOffice.zip (135 MB) to the output folder, allowing the visualization of dozens of different formats.
+embedLibreOffice = true
 
 # Number of threads used to search the index. Can speed up searches on large indexes.
 # High values can degrade the search if the index is on a slow disk.

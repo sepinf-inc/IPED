@@ -30,7 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.inc.sepinf.python.PythonParser;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
@@ -63,7 +63,6 @@ public class Configuration {
 
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-    public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
     public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
     public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
     public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
@@ -143,7 +142,6 @@ public class Configuration {
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
-        properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
 
         String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
         if (optional_jars != null) {
@@ -228,8 +226,8 @@ public class Configuration {
         configManager.addObject(new LocalConfig());
         configManager.addObject(new IPEDConfig());
         configManager.addObject(new OCRConfig());
-        configManager.addObject(new AdvancedIPEDConfig());
         configManager.addObject(new FileSystemConfig());
+        configManager.addObject(new AnalysisConfig());
 
         TaskInstallerConfig taskConfig = new TaskInstallerConfig();
         configManager.addObject(taskConfig);

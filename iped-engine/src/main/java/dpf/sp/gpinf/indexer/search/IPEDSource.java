@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -187,10 +187,10 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 tskCaseList.add(sleuthCase);
             }
 
-            AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-            if (advancedConfig.isPreOpenImagesOnSleuth() && iw == null) {
-                TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, advancedConfig.isOpenImagesCacheWarmUpEnabled(),
-                        advancedConfig.getOpenImagesCacheWarmUpThreads());
+            AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+            if (analysisConfig.isPreOpenImagesOnSleuth() && iw == null) {
+                TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, analysisConfig.isOpenImagesCacheWarmUpEnabled(),
+                        analysisConfig.getOpenImagesCacheWarmUpThreads());
             }
 
             openIndex(index, iw);
@@ -349,9 +349,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     protected void openSearcher() {
-        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-        if (advancedConfig.getSearchThreads() > 1) {
-            searchExecutorService = Executors.newFixedThreadPool(advancedConfig.getSearchThreads());
+        AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+        if (analysisConfig.getSearchThreads() > 1) {
+            searchExecutorService = Executors.newFixedThreadPool(analysisConfig.getSearchThreads());
             searcher = new IndexSearcher(reader, searchExecutorService);
         } else
             searcher = new IndexSearcher(reader);

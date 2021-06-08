@@ -9,22 +9,21 @@ import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
-public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
+public class AnalysisConfig extends AbstractPropertiesConfigurable {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    boolean embutirLibreOffice = true;
-    int searchThreads = 1;
-    boolean autoManageCols = true;
+    public static final String CONFIG_FILE = "AnalysisConfig.txt"; //$NON-NLS-1$
 
-    boolean preOpenImagesOnSleuth = false;
-    boolean openImagesCacheWarmUpEnabled = false;
-    int openImagesCacheWarmUpThreads = 255;
-
-    public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
+    private boolean embedLibreOffice = true;
+    private int searchThreads = 1;
+    private boolean autoManageCols = true;
+    private boolean preOpenImagesOnSleuth = false;
+    private boolean openImagesCacheWarmUpEnabled = false;
+    private int openImagesCacheWarmUpThreads = 255;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -43,14 +42,12 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
         properties.load(resource.toFile());
 
-        String value = null;
-
-        value = properties.getProperty("embutirLibreOffice"); //$NON-NLS-1$
+        String value = properties.getProperty("embedLibreOffice"); //$NON-NLS-1$
         if (value != null) {
             value = value.trim();
         }
         if (value != null && !value.isEmpty()) {
-            embutirLibreOffice = Boolean.valueOf(value);
+            embedLibreOffice = Boolean.valueOf(value);
         }
 
         value = properties.getProperty("searchThreads"); //$NON-NLS-1$
@@ -106,8 +103,8 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     }
 
-    public boolean isEmbutirLibreOffice() {
-        return embutirLibreOffice;
+    public boolean isEmbedLibreOffice() {
+        return embedLibreOffice;
     }
 
     public int getSearchThreads() {

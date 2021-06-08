@@ -61,7 +61,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
             OCRConfig ocrconfig = ConfigurationManager.findObject(OCRConfig.class);
             if (ocrconfig.isOCREnabled() == null) {
                 throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
-                        + AdvancedIPEDConfig.class.getSimpleName());
+                        + this.getClass().getSimpleName());
             }
             int div = ocrconfig.isOCREnabled() ? 1 : 2;
             numExternalParsers = (int) Math.ceil((float) Runtime.getRuntime().availableProcessors() / div);

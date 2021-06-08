@@ -43,7 +43,7 @@ import org.apache.lucene.util.Bits;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -203,8 +203,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private ColumnsManager() {
-        AdvancedIPEDConfig advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
-        autoManageCols = advancedConfig.isAutoManageCols();
+        AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+        autoManageCols = analysisConfig.isAutoManageCols();
 
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$

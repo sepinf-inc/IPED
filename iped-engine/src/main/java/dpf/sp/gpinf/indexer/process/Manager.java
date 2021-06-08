@@ -52,7 +52,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -132,7 +132,7 @@ public class Manager {
     private boolean isProcessingFinished = false;
 
     private LocalConfig localConfig;
-    private AdvancedIPEDConfig advancedConfig;
+    private AnalysisConfig analysisConfig;
     private IndexTaskConfig indexConfig;
     private CmdLineArgs args;
 
@@ -152,7 +152,7 @@ public class Manager {
     public Manager(List<File> sources, File output, File palavras) {
 
         this.localConfig = ConfigurationManager.findObject(LocalConfig.class);
-        this.advancedConfig = ConfigurationManager.findObject(AdvancedIPEDConfig.class);
+        this.analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
         this.indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
@@ -754,7 +754,7 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
                     new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
-            if (!advancedConfig.isEmbutirLibreOffice()) {
+            if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
