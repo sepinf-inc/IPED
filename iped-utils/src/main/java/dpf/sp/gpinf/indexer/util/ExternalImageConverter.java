@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -10,7 +11,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,11 +47,12 @@ public class ExternalImageConverter implements Closeable {
     private static final String GM_TEMP_PATH = "MAGICK_TMPDIR"; //$NON-NLS-1$
     private static final String MAGICK_AREA_LIMIT = "MAGICK_AREA_LIMIT"; //$NON-NLS-1$
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
+    private static final String INPUT = "INPUT"; //$NON-NLS-1$
 
     private static final int sampleFactor = 2;
 
     private String[] CMD = { "magick", "convert", "-limit", THREAD, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
-            SAMPLE_GEOMETRY, "-resize", RESIZE_GEOMETRY, "-", "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            SAMPLE_GEOMETRY, "-resize", RESIZE_GEOMETRY, INPUT, "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private final String winToolPathPrefix;
     private final String toolPath;
@@ -87,7 +88,7 @@ public class ExternalImageConverter implements Closeable {
         winToolPathPrefix = System.getProperty(winToolPathPrefixProp, "").trim(); //$NON-NLS-1$
         lowDensity = Integer.parseInt(System.getProperty(lowDensityProp, "96").trim()); //$NON-NLS-1$
         highDensity = Integer.parseInt(System.getProperty(highDensityProp, "250").trim()); //$NON-NLS-1$
-        magickAreaLimit = System.getProperty(magickAreaLimitProp, "32MP").trim(); //$NON-NLS-1$
+        magickAreaLimit = System.getProperty(magickAreaLimitProp, "32").trim() + "MP"; //$NON-NLS-1$  //$NON-NLS-2$
         minTimeout = Integer.parseInt(System.getProperty(minTimeoutProp, "20").trim()); //$NON-NLS-1$
         timeoutPerMB = Integer.parseInt(System.getProperty(timeoutPerMBProp, "2").trim()); //$NON-NLS-1$
         tmpDir = new File(System.getProperty(tmpDirProp, System.getProperty("java.io.tmpdir"))); //$NON-NLS-1$
@@ -111,7 +112,7 @@ public class ExternalImageConverter implements Closeable {
         this.numThreads = numThreads;
     }
 
-    private String[] getCmd(int maxDimension, boolean highRes) {
+    private String[] getCmd(int maxDimension, boolean highRes, Object objIn) {
         String[] cmd = CMD.clone();
         for (int i = 0; i < cmd.length; i++) {
             String c = CMD[i];
@@ -123,13 +124,23 @@ public class ExternalImageConverter implements Closeable {
                 cmd[i] = String.valueOf(numThreads);
             else if (c.equals(DENSITY))
                 cmd[i] = String.valueOf(highRes ? highDensity : lowDensity);
+            else if (c.equals(INPUT))
+                cmd[i] = objIn instanceof File ? ((File) objIn).getAbsolutePath() : "-";
         }
         return cmd;
     }
 
-    public BufferedImage getImage(final InputStream in, final int maxDimension, final boolean highRes, Long imageSize) {
+    public BufferedImage getImage(InputStream in, int maxDimension, boolean highRes, Long imageSize) {
         try {
-            return getImage(in, maxDimension, highRes, imageSize, false);
+            return doGetImage(in, maxDimension, highRes, imageSize, false);
+        } catch (TimeoutException e) {
+            return null;
+        }
+    }
+
+    public BufferedImage getImage(File in, int maxDimension, boolean highRes, Long imageSize) {
+        try {
+            return doGetImage(in, maxDimension, highRes, imageSize, false);
         } catch (TimeoutException e) {
             return null;
         }
@@ -163,6 +174,12 @@ public class ExternalImageConverter implements Closeable {
 
     public BufferedImage getImage(InputStream in, int maxDim, boolean highRes, Long imageSize, boolean throwTimeout)
             throws TimeoutException {
+        return doGetImage(in, maxDim, highRes, imageSize, throwTimeout);
+    }
+
+    private BufferedImage doGetImage(Object objIn, int maxDim, boolean highRes, Long imageSize, boolean throwTimeout)
+            throws TimeoutException {
+
         if (!enabled)
             return null;
 
@@ -170,22 +187,25 @@ public class ExternalImageConverter implements Closeable {
         pb.environment().put(useGM ? GM_TEMP_PATH : IM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(MAGICK_AREA_LIMIT, magickAreaLimit);
 
-        pb.command(getCmd(maxDim, highRes));
+        pb.command(getCmd(maxDim, highRes, objIn));
         Process p = null;
         try {
             p = pb.start();
-        } catch (IOException e1) {
+        } catch (IOException e) {
             logger.error("Error executing " + (useGM ? "graphicsMagick" : "imageMagick") + ". " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    + "Check if it is installed and if its path is configured!", e1); //$NON-NLS-1$
+                    + "Check if it is installed and if its path is configured!", e); //$NON-NLS-1$
         }
         BufferedImage result = null;
         if (p != null) {
-            Future<?> sendFuture = sendInputStream(in, p);
+            Future<?> sendFuture = objIn instanceof InputStream ? sendInputStream((InputStream) objIn, p) : null;
             ignoreErrorStream(p);
             Future<BufferedImage> resultFuture = getResultFuture(p);
             int timeout = getTotalTimeout(imageSize);
+            if (highRes) 
+                timeout *= 2;
             try {
-                sendFuture.get(timeout, TimeUnit.SECONDS);
+                if (sendFuture != null)
+                    sendFuture.get(timeout, TimeUnit.SECONDS);
                 result = resultFuture.get(timeout, TimeUnit.SECONDS);
             } catch (TimeoutException | InterruptedException e) {
                 if (throwTimeout) {
@@ -213,7 +233,6 @@ public class ExternalImageConverter implements Closeable {
                 }
             }
         }
-
         return result;
     }
 
@@ -229,7 +248,7 @@ public class ExternalImageConverter implements Closeable {
     }
 
     private void ignoreErrorStream(final Process p) {
-        Runnable runnable = new IgnoreErroStreamRunnable(p);
+        Runnable runnable = new IgnoreErrorStreamRunnable(p);
         submit(runnable);
     }
 
@@ -262,10 +281,10 @@ public class ExternalImageConverter implements Closeable {
         finish(10000);
     }
 
-    private static class IgnoreErroStreamRunnable implements Runnable {
+    private static class IgnoreErrorStreamRunnable implements Runnable {
         private final Process p;
 
-        private IgnoreErroStreamRunnable(Process p) {
+        private IgnoreErrorStreamRunnable(Process p) {
             this.p = p;
         }
 
