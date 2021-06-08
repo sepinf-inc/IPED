@@ -111,9 +111,7 @@ public class ImageViewer extends Viewer implements ActionListener {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    System.err.println("AQUI-->" + content);
                     image = externalImageConverter.getImage(in, maxDim, true, sis.size());
-                    System.err.println("image-->" + image);
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
