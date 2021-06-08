@@ -62,7 +62,7 @@ public class Configuration {
 
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-    public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
+
     public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
     private static final String CONF_DIR = "conf"; //$NON-NLS-1$
 
@@ -131,7 +131,6 @@ public class Configuration {
 
         System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
-        System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
         System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);

@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
+import dpf.sp.gpinf.indexer.config.ParsersConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
@@ -690,7 +691,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public List<Configurable> getConfigurables() {
-        return Arrays.asList(new ParsingTaskConfig(), new OCRConfig(), new CategoryToExpandConfig());
+        return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
+                new ParsersConfig());
     }
 
     @Override
@@ -706,6 +708,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     public static void setupParsingOptions(ParsingTaskConfig parsingConfig) {
+
+        ParsersConfig parserConfig = ConfigurationManager.findObject(ParsersConfig.class);
+        System.setProperty("tika.config", parserConfig.getTmpConfigFile().getAbsolutePath());
 
         // most options below are set using sys props because they are also used by
         // child external processes
