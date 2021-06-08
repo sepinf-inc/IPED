@@ -174,7 +174,7 @@ public class Manager {
 
         instance = this;
 
-        commitIntervalMillis = advancedConfig.getCommitIntervalSeconds() * 1000;
+        commitIntervalMillis = indexConfig.getCommitIntervalSeconds() * 1000;
     }
 
     public File getIndexTemp() {

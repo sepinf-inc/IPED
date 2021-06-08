@@ -23,7 +23,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean preOpenImagesOnSleuth = false;
     boolean openImagesCacheWarmUpEnabled = false;
     int openImagesCacheWarmUpThreads = 255;
-    int commitIntervalSeconds = 1800;
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
@@ -92,11 +91,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             openImagesCacheWarmUpThreads = Integer.parseInt(value.trim());
         }
 
-        value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            commitIntervalSeconds = Integer.parseInt(value.trim());
-        }
-
         value = properties.getProperty("openWithDoubleClick"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             value = value.trim();
@@ -110,10 +104,6 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
                 IOUtil.setExternalOpenConfig(ExternalOpenEnum.NEVER);
         }
 
-    }
-
-    public int getCommitIntervalSeconds() {
-        return commitIntervalSeconds;
     }
 
     public boolean isEmbutirLibreOffice() {

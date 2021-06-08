@@ -26,6 +26,7 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
     private boolean storeTermVectors = true;
     private int maxTokenLength = 255;
     private int[] extraCharsToIndexArray;
+    private int commitIntervalSeconds = 1800;
 
     @Override
     public String getTaskEnableProperty() {
@@ -90,6 +91,11 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty("forceMerge"); //$NON-NLS-1$
         if (value != null) {
             forceMerge = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("commitIntervalSeconds"); //$NON-NLS-1$
+        if (value != null) {
+            commitIntervalSeconds = Integer.parseInt(value.trim());
         }
 
     }
@@ -164,6 +170,10 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getMaxTokenLength() {
         return maxTokenLength;
+    }
+
+    public int getCommitIntervalSeconds() {
+        return commitIntervalSeconds;
     }
 
 }
