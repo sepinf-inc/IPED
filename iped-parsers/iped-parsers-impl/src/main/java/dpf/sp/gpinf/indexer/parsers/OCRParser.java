@@ -602,39 +602,6 @@ public class OCRParser extends AbstractParser {
         }
     }
 
-    /*
-     * private ITesseract tesseract;
-     * 
-     * private void parse(XHTMLContentHandler xhtml, File input, File output) throws
-     * IOException, SAXException, TikaException {
-     * 
-     * if(tesseract == null){ synchronized(OCRParser.class) { if(tesseract == null)
-     * try{ ITesseract tess = new Tesseract1(); // JNA //tesseract = new
-     * Tesseract(); // JNA direct if(!TOOL_PATH.isEmpty()) tess.setDatapath(new
-     * File(TOOL_PATH, "tessdata").getAbsolutePath()); tess.setLanguage(LANGUAGE);
-     * tess.setPageSegMode(Integer.valueOf(PAGESEGMODE)); tesseract = tess;
-     * 
-     * }catch(Exception e){ e.printStackTrace(); } }
-     * 
-     * }
-     * 
-     * //synchronized(OCRParser.class) {
-     * 
-     * try { String result = tesseract.doOCR(ImageIO.read(input));
-     * 
-     * if(result == null) result = ""; byte[] bytes = result.getBytes("UTF-8");
-     * 
-     * if(!result.isEmpty()) extractOutput(new ByteArrayInputStream(bytes), xhtml);
-     * 
-     * if(OUTPUT_BASE != null){ Files.write(output.toPath(), bytes,
-     * StandardOpenOption.CREATE); }
-     * 
-     * } catch (TesseractException e) { e.printStackTrace(); throw new
-     * TikaException(e.toString()); }
-     * 
-     * //} }
-     */
-
     private void parse(XHTMLContentHandler xhtml, File input, File output)
             throws IOException, SAXException, TikaException {
 
