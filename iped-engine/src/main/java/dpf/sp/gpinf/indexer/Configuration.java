@@ -28,7 +28,6 @@ import org.apache.commons.logging.impl.NoOpLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -39,13 +38,6 @@ import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
-import dpf.sp.gpinf.indexer.parsers.EDBParser;
-import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.RegistryParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
@@ -62,8 +54,6 @@ public class Configuration {
 
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-
-    public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
     private static final String CONF_DIR = "conf"; //$NON-NLS-1$
 
     private static Configuration singleton;
@@ -130,9 +120,6 @@ public class Configuration {
         configureLogger(configPath);
 
         System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
-        System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
-        System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
-        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
@@ -142,10 +129,6 @@ public class Configuration {
         if (optional_jars != null) {
             optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
         }
-
-        String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
-        if (regripperFolder != null)
-            System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
     }
 
     public void loadLibsAndToolPaths() throws IOException {
@@ -164,11 +147,6 @@ public class Configuration {
                 Util.loadNatLibs(nativelibs);
                 System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             }
-
-            System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
-            System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
-            System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
-            System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
 
             String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
             if (mplayerPath != null)

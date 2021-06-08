@@ -37,6 +37,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     private File indexerTemp, indexTemp;
     private int numThreads;
     private File hashDbFile;
+    private String regripperFolder;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -123,6 +124,15 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null) {
             setHashDbFile(new File(value.trim()));
         }
+
+        value = properties.getProperty("regripperFolder"); //$NON-NLS-1$
+        if (value != null) {
+            regripperFolder = value.trim();
+        }
+    }
+
+    public String getRegRipperFolder() {
+        return regripperFolder;
     }
 
     public void setIndexerTemp(File temp) {

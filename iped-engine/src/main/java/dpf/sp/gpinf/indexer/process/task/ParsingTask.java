@@ -62,19 +62,26 @@ import dpf.sp.gpinf.carver.CarverTask;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ExternalParsersConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.ParsersConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.parsers.EDBParser;
+import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import dpf.sp.gpinf.indexer.parsers.MultipleParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
 import dpf.sp.gpinf.indexer.parsers.PackageParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.RegistryParser;
 import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
+import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreCorruptedCarved;
@@ -692,7 +699,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
     public List<Configurable> getConfigurables() {
         return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
-                new ParsersConfig());
+                new ParsersConfig(), new ExternalParsersConfig());
     }
 
     @Override
@@ -723,12 +730,30 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // do not open extra processes for OCR if ForkParser is enabled
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, "false");
         }
+
+        String appRoot = Configuration.getInstance().appRoot;
+        ExternalParsersConfig extParsersConfig = ConfigurationManager.findObject(ExternalParsersConfig.class);
+        System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
+        System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, extParsersConfig.getTmpConfigFilePath());
         System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, String.valueOf(parsingConfig.isParseUnknownFiles()));
         System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, String.valueOf(parsingConfig.isParseCorruptedFiles()));
         System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, String.valueOf(ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)));
         System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
         System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
+        System.setProperty(PythonParser.PYTHON_PARSERS_FOLDER, appRoot + "/conf/parsers");
+
+        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+            System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
+            System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
+            System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
+            System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
+        }
+
+        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        if (localConfig.getRegRipperFolder() != null) {
+            System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
+        }
 
         setupOCROptions(ConfigurationManager.findObject(OCRConfig.class));
 
