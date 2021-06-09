@@ -24,7 +24,7 @@ import iped3.io.IStreamSource;
  */
 public class TikaHtmlViewer extends HtmlViewer {
 
-    private Parser parser = new AutoDetectParser();
+    private Parser parser;
 
     @Override
     public String getName() {
@@ -93,6 +93,9 @@ public class TikaHtmlViewer extends HtmlViewer {
             // context.set(Parser.class, parser);
             outStream = new BufferedOutputStream(new FileOutputStream(outFile));
             ToXMLContentHandler handler = new ToXMLContentHandler(outStream, "UTF-8"); //$NON-NLS-1$
+            if (parser == null) {
+                parser = new AutoDetectParser();
+            }
             parser.parse(tis, handler, metadata, context);
 
         } catch (Exception e) {

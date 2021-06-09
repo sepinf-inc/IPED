@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -15,7 +14,6 @@ import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
@@ -23,6 +21,7 @@ import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class MetadataUtil {
 
@@ -31,8 +30,6 @@ public class MetadataUtil {
     private static Map<String, Property> compositeProps = getCompositeProps();
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
-
-    private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
 
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
 
@@ -415,7 +412,7 @@ public class MetadataUtil {
                 includePrefix(metadata, ExtraProperties.OFFICE_META_PREFIX);
                 break;
             }
-            mediaType = registry.getSupertype(mediaType);
+            mediaType = MediaTypes.getParentType(mediaType);
         }
     }
 
@@ -445,7 +442,7 @@ public class MetadataUtil {
     public static final boolean isHtmlSubType(MediaType mediaType) {
         do {
             boolean hasParam = mediaType != null && mediaType.hasParameters();
-            mediaType = registry.getSupertype(mediaType);
+            mediaType = MediaTypes.getParentType(mediaType);
             if (!hasParam && isHtmlMediaType(mediaType))
                 return true;
 

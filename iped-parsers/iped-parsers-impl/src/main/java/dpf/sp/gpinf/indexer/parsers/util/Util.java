@@ -31,17 +31,19 @@ public class Util {
 
     private static final String imageThumbsDir = "../../../../indexador/thumbs/"; //$NON-NLS-1$
     private static final String videoThumbsDir = "../../../../indexador/view/"; //$NON-NLS-1$
-
-    private static IndexerDefaultParser autoParser = new IndexerDefaultParser();
-
-    static {
-        autoParser.setErrorParser(null);
-        autoParser.setPrintMetadata(false);
-    }
-
     private static final int MAX_PREVIEW_SIZE = 128;
-
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
+
+    private static IndexerDefaultParser autoParser;
+
+    private static IndexerDefaultParser getAutoParser() {
+        if (autoParser == null) {
+            autoParser = new IndexerDefaultParser();
+            autoParser.setErrorParser(null);
+            autoParser.setPrintMetadata(false);
+        }
+        return autoParser;
+    }
 
     private static String getContentPreview(InputStream is, Metadata m, String mimeType) {
         LimitedContentHandler contentHandler = new LimitedContentHandler(MAX_PREVIEW_SIZE);
@@ -54,7 +56,7 @@ public class Util {
         }
         boolean limitReached = false;
         try {
-            autoParser.parse(is, textHandler, m, new ParseContext());
+            getAutoParser().parse(is, textHandler, m, new ParseContext());
 
         } catch (TikaException | IOException e) {
             e.printStackTrace();

@@ -35,6 +35,7 @@ import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.SignatureTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 
@@ -102,6 +103,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
+                SignatureTask.installCustomSignatures();
                 ParsingTask.setupParsingOptions(ConfigurationManager.findObject(ParsingTaskConfig.class));
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
                 App.get().setAutoParser(autoParser);

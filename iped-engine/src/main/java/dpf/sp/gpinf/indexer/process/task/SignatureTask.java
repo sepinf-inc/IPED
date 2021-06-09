@@ -108,14 +108,19 @@ public class SignatureTask extends AbstractTask {
 
     @Override
     public void init(Properties confProps, File confDir) throws Exception {
+        installCustomSignatures();
+        SignatureConfig config = ConfigurationManager.findObject(SignatureConfig.class);
+        processFileSignatures = config.isEnabled();
+        detector = TikaConfig.getDefaultConfig().getDetector();
+    }
+
+    public static void installCustomSignatures() {
         SignatureConfig config = ConfigurationManager.findObject(SignatureConfig.class);
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
         // check if setting property above works
         if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {
-            throw new Exception("Custom signature file not loaded!");
+            throw new RuntimeException("Custom signature file not loaded!");
         }
-        processFileSignatures = config.isEnabled();
-        detector = TikaConfig.getDefaultConfig().getDetector();
     }
 
     @Override
