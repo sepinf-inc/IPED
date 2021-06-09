@@ -150,6 +150,12 @@
             <version>1.0.2-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>dpf.ap</groupId>
+            <artifactId>telegram-decoder-impl</artifactId>
+            <version>1.0.5-SNAPSHOT</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
     		<groupId>black.ninia</groupId>
   			<artifactId>jep</artifactId>
   			<version>3.9.1</version>
