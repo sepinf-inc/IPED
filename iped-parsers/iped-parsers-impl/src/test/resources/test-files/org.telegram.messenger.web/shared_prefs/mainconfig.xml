@@ -1,0 +1,71 @@
+<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
+<map>
+    <int name="callPacketTimeout" value="10000" />
+    <int name="maxFolderPinnedDialogsCount" value="100" />
+    <string name="pk">AIzaSyB0y3zA4LbA04ZPaHKsr_Xt5ZQWbMftj8I</string>
+    <int name="invitelinktime" value="1623265029" />
+    <int name="nextPromoInfoCheckTime" value="1623265928" />
+    <boolean name="keepAliveService" value="true" />
+    <int name="maxFaveStickersCount" value="5" />
+    <int name="maxRecentGifsCount" value="200" />
+    <boolean name="qrLoginCamera" value="true" />
+    <boolean name="newConfig" value="true" />
+    <int name="revokeTimeLimit" value="2147483647" />
+    <boolean name="blockedCountry" value="false" />
+    <int name="callReceiveTimeout" value="20000" />
+    <string name="diceSuccess">BQAAAATwn46wAAAAbgAAAEAAAAAE8J+PgAAAAG4AAAAFAAAABPCfjrMAAABuAAAABgAAAATwn46v&#10;AAAAPgAAAAYAAAAD4pq9bgAAAAUAAAA=&#10;    </string>
+    <boolean name="backgroundConnection" value="true" />
+    <string name="venueSearchBot">foursquare</string>
+    <boolean name="filtersEnabled" value="true" />
+    <int name="maxCaptionLength" value="1024" />
+    <set name="autologinDomains">
+        <string>instantview.telegram.org</string>
+        <string>contest.dev</string>
+        <string>bugs.telegram.org</string>
+        <string>themes.telegram.org</string>
+        <string>suggestions.telegram.org</string>
+        <string>contest.com</string>
+        <string>translations.telegram.org</string>
+    </set>
+    <int name="mapProvider" value="2" />
+    <set name="diceEmojies">
+        <string>🎲</string>
+        <string>🎰</string>
+        <string>🏀</string>
+        <string>⚽</string>
+        <string>🎯</string>
+        <string>🎳</string>
+    </set>
+    <string name="sms_hash">oLeq9AcOZkT</string>
+    <long name="proxy_dialog" value="0" />
+    <long name="intro_crashed_time" value="0" />
+    <int name="maxEditTime" value="172800" />
+    <boolean name="canRevokePmInbox" value="true" />
+    <string name="directShareHash2">90168b76-22b3-416e-9868-076010792fb3</string>
+    <int name="ratingDecay" value="2419200" />
+    <long name="lastReloadStatusTime" value="1623265029475" />
+    <int name="callConnectTimeout" value="30000" />
+    <string name="language">en</string>
+    <int name="maxGroupCount" value="200" />
+    <int name="revokeTimePmLimit" value="2147483647" />
+    <string name="dcDomainName2">apv3.stel.com</string>
+    <string name="emojiSounds">CwAAAAPimrCsAAAAuQrIRE//SEYX8jLrFQBgwQ8FQ4J1mxlfCHHw4f/SZrDgUQAABPCfjoQAAADt&#10;AAAAOcCxRtwUbdBkX4LGFQBgwQ8FPbqf9KVnPeIsCvxPxL+PygAACvCfp5/igI3imYIAywAAAL7C&#10;2ERMYfsJ4YVSNxUAYMEPBd46pkv1pA7BZCH11CT5LVMAAArwn6ef4oCN4pmAAM0AAAC+wthE2QDl&#10;NBriJH8VAGDBDwXzK4hTjb+0hGQOFvapsgi0AAAE8J+NkQAAAKwAAAC+wuBEaFzHFXMx3ZgVAGDB&#10;DwX/P0jJxWqNOot15Q2JO8/HAAAE8J+OigAAAOwAAAA5wLFGbdevDGazNnYVAGDBDwXPGDlnHqiW&#10;p3irJb68olYhAAAD4p2kwQAAAI5YGEV1xqASm7R8NhUAYMEPBbsW8iPjBgDonjN2gZG7c88AAATw&#10;n6efAAAAzAAAAL7C2EQGa3iXqVUUhBUAYMEPBQthGJEaN8PYzQv/9y6/hdYAAATwn6a+AAAA7gAA&#10;ADnAsUYcMKxfEbEChBUAYMEPBa+C0Kt9B6I35L3jC8E988YAAATwn46JAAAA6wAAADnAsUZhdLBm&#10;DdeFohUAYMEPBb23XEzVxd1LISkn4VOJ598AAATwn46DAAAAqwAAALkKyETFk1OlY23C4hUAYMEP&#10;BUBYmcwShXDOaw1Nj7ZVz+0AAA==&#10;    </string>
+    <int name="lastKeepMediaCheckTime" value="1623264988" />
+    <int name="needShowRoundHint2" value="2" />
+    <int name="maxRecentStickersCount" value="200" />
+    <int name="maxMessageLength" value="4096" />
+    <int name="maxPinnedDialogsCount" value="5" />
+    <string name="youtubePipType">inapp</string>
+    <string name="autologinToken">Clq2Bwio8hDciVF_Gjwtk9CHoG8JNE-VA-25aOM3QH1gwQ8FFQhfiCgA1WOH-1CXZP76epPoOxXgZ-Mq_zOtWgdKPTFAMlL0KS0</string>
+    <boolean name="firstloginshow" value="false" />
+    <int name="webFileDatacenterId" value="4" />
+    <string name="invitelink">https://telegram.org/dl</string>
+    <string name="suggestedLangCode">en</string>
+    <string name="gifSearchEmojies">CgAAAATwn5GNAAAABPCfmJgAAAAE8J+YjQAAAATwn5ihAAAABPCfpbMAAAAE8J+YggAAAATwn5iu&#10;AAAABPCfmYQAAAAE8J+YjgAAAATwn5GOAAAA&#10;    </string>
+    <string name="gifSearchBot">gif</string>
+    <boolean name="preloadFeaturedStickers" value="false" />
+    <string name="imageSearchBot">bing</string>
+    <int name="callRingTimeout" value="90000" />
+    <string name="linkPrefix">t.me</string>
+    <int name="maxMegagroupCount" value="200000" />
+</map>
