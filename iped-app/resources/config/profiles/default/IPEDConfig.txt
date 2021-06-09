@@ -12,6 +12,9 @@ enablePhotoDNA = false
 # Enables hash lookup on IPED database.
 enableHashDBLookup = false
 
+# Enables photoDNA lookup on IPED hash database.
+enablePhotoDNALookup = false
+
 # Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
 # and classeNudez (1 to 5) for ranking and/or filtering.
 enableLedDie = false

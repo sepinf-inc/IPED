@@ -30,13 +30,7 @@ public class PhotoDNAConfig extends AbstractTaskPropertiesConfig {
 
     private int minFileSize = 10000;
 
-    private int maxDistance = 40000;
-
     private boolean skipHashDBFiles = true;
-
-    private boolean rotateAndFlip = true;
-
-    private String statusHashDBFilter = "";
 
     public boolean isUseThumbnail() {
         return useThumbnail;
@@ -46,20 +40,8 @@ public class PhotoDNAConfig extends AbstractTaskPropertiesConfig {
         return minFileSize;
     }
 
-    public int getMaxDistance() {
-        return maxDistance;
-    }
-
     public boolean isSkipHashDBFiles() {
         return skipHashDBFiles;
-    }
-
-    public boolean isRotateAndFlip() {
-        return rotateAndFlip;
-    }
-
-    public String getStatusHashDBFilter() {
-        return statusHashDBFilter;
     }
 
     @Override
@@ -88,19 +70,6 @@ public class PhotoDNAConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty(SKIP_HASH_DB_FILES);
         if (value != null && !value.trim().isEmpty())
             skipHashDBFiles = Boolean.valueOf(value.trim());
-
-        value = properties.getProperty(STATUS_HASH_DB_FILTER);
-        if (value != null && !value.trim().isEmpty())
-            statusHashDBFilter = value.trim();
-
-        value = properties.getProperty(MAX_SIMILARITY_DISTANCE);
-        if (value != null && !value.trim().isEmpty())
-            maxDistance = Integer.valueOf(value.trim());
-
-        value = properties.getProperty(TEST_ROTATED_FLIPPED);
-        if (value != null && !value.trim().isEmpty())
-            rotateAndFlip = Boolean.valueOf(value.trim());
-
 
     }
 
