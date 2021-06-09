@@ -22,13 +22,30 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
 
     private Map<String, String> mimetypeToCategoryMap = new HashMap<>();
 
+    private transient Map<String, String> normalizedMap;
+
+    private Map<String, String> getNormalizedMap() {
+        if (normalizedMap == null) {
+            synchronized (this) {
+                if (normalizedMap == null) {
+                    normalizedMap = new HashMap<>();
+                    for(String key : mimetypeToCategoryMap.keySet()) {
+                        MediaType type = MediaTypes.normalize(MediaType.parse(key));
+                        String mime = type != null ? type.toString() : key;
+                        normalizedMap.put(mime, mimetypeToCategoryMap.get(key));
+                    }
+                }
+            }
+        }
+        return normalizedMap;
+    }
+
     public String getCategory(MediaType type) {
 
         do {
-            type = MediaTypes.normalize(type);
-            String category = mimetypeToCategoryMap.get(type.toString());
+            String category = getNormalizedMap().get(type.toString());
             if (category == null) {
-                category = mimetypeToCategoryMap.get(type.getType());
+                category = getNormalizedMap().get(type.getType());
             }
             if (category != null) {
                 return category;
