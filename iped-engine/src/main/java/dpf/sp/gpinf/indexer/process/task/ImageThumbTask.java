@@ -62,7 +62,7 @@ public class ImageThumbTask extends ThumbTask {
         return imgThumbConfig;
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new ImageThumbTaskConfig());
     }
 

@@ -309,5 +309,5 @@ public abstract class AbstractTask {
      * 
      * @return Configurable instance with task specific configurations
      */
-    public abstract List<Configurable> getConfigurables();
+    public abstract List<Configurable<?>> getConfigurables();
 }

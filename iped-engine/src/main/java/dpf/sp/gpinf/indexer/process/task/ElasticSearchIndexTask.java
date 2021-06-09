@@ -107,7 +107,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return elasticConfig.isEnabled();
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new ElasticSearchTaskConfig());
     }
 

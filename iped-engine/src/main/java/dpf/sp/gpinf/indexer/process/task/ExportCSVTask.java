@@ -251,7 +251,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
     }
 

@@ -697,7 +697,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 metadata.remove(p.getName());
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new ParsingTaskConfig(), new CategoryToExpandConfig(), new OCRConfig(),
                 new ParsersConfig(), new ExternalParsersConfig());
     }

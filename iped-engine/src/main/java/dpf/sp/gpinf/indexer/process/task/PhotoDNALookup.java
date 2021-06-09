@@ -66,7 +66,7 @@ public class PhotoDNALookup extends AbstractTask {
     private PhotoDNALookupConfig pdnaLookupConfig;
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new PhotoDNALookupConfig());
     }
 

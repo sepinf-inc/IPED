@@ -136,7 +136,7 @@ public class MinIOTask extends AbstractTask {
         return minIOConfig.isEnabled();
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new MinIOConfig());
     }
 

@@ -73,7 +73,7 @@ public class DocThumbTask extends ThumbTask {
     private Process convertProcess;
     private boolean tempSet;
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new DocThumbTaskConfig());
     }
 

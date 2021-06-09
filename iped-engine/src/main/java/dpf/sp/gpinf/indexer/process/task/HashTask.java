@@ -74,7 +74,7 @@ public class HashTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new HashTaskConfig());
     }
 

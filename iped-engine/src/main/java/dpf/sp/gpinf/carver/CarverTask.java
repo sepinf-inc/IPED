@@ -205,7 +205,7 @@ public class CarverTask extends BaseCarveTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new CarverTaskConfig());
     }
 

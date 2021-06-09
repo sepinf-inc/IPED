@@ -186,7 +186,7 @@ public class PythonTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         // TODO properly implement this
         return Collections.emptyList();
     }

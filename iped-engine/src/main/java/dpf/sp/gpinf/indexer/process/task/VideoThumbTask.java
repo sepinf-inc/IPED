@@ -176,7 +176,7 @@ public class VideoThumbTask extends ThumbTask {
         return meta;
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new VideoThumbsConfig());
     }
 

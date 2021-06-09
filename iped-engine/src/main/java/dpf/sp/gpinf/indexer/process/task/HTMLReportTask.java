@@ -195,7 +195,7 @@ public class HTMLReportTask extends AbstractTask {
         return htmlReportConfig.isEnabled();
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new HtmlReportTaskConfig());
     }
 

@@ -54,7 +54,7 @@ public class MakePreviewTask extends AbstractTask {
 
     private volatile Throwable exception;
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new MakePreviewConfig());
     }
 

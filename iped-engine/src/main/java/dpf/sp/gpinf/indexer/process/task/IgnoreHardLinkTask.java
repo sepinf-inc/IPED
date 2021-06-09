@@ -29,7 +29,7 @@ public class IgnoreHardLinkTask extends AbstractTask {
     private boolean taskEnabled = false;
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Collections.emptyList();
     }
 

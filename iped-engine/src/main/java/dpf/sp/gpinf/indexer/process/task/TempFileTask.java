@@ -35,7 +35,7 @@ public class TempFileTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Collections.emptyList();
     }
 

@@ -23,7 +23,7 @@ public class DatabaseTask extends AbstractTask {
     private ArrayList<IItem> itemList = new ArrayList<IItem>();
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Collections.emptyList();
     }
 

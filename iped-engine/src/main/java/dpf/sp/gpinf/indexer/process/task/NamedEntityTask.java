@@ -51,7 +51,7 @@ public class NamedEntityTask extends AbstractTask {
         return nerConfig.isEnabled();
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new NamedEntityTaskConfig());
     }
 

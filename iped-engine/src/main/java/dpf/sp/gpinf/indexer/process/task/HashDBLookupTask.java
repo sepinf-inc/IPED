@@ -66,7 +66,7 @@ public class HashDBLookupTask extends AbstractTask {
     private static final Map<String, Boolean> nsrlMergeByProdName = new HashMap<String, Boolean>();
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new HashDBLookupConfig());
     }
 

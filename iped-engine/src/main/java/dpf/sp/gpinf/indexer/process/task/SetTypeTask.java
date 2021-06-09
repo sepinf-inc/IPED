@@ -74,7 +74,7 @@ public class SetTypeTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Collections.emptyList();
     }
 

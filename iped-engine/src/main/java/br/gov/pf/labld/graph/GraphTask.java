@@ -104,7 +104,7 @@ public class GraphTask extends AbstractTask {
     private static Map<String, NodeValues> datasourceOwnerMap = new HashMap<>();
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new GraphTaskConfig());
     }
 

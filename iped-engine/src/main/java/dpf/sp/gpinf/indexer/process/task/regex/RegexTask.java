@@ -119,7 +119,7 @@ public class RegexTask extends AbstractTask {
         return enabled;
     }
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new RegexTaskConfig());
     }
 

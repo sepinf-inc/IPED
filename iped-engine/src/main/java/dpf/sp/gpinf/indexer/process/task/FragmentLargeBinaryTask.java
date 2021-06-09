@@ -28,7 +28,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     private IndexerDefaultParser autoParser;
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new SplitLargeBinaryConfig());
     }
 

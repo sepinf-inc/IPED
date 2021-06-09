@@ -166,7 +166,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new AudioTranscriptConfig());
     }
 

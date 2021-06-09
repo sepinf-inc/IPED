@@ -34,7 +34,7 @@ public class PhotoDNATask extends AbstractTask {
 
     private PhotoDNA photodna;
 
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new PhotoDNAConfig());
     }
 

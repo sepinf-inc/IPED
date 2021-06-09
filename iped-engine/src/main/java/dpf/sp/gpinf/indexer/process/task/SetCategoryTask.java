@@ -43,7 +43,7 @@ public class SetCategoryTask extends AbstractTask {
     private CategoryConfig categoryConfig;
 
     @Override
-    public List<Configurable> getConfigurables() {
+    public List<Configurable<?>> getConfigurables() {
         return Arrays.asList(new CategoryConfig());
     }
 
