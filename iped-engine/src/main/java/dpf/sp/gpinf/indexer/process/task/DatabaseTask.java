@@ -5,12 +5,13 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
-import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 
@@ -20,6 +21,11 @@ public class DatabaseTask extends AbstractTask {
     private Connection con;
 
     private ArrayList<IItem> itemList = new ArrayList<IItem>();
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Collections.emptyList();
+    }
 
     @Override
     public void init(Properties confParams, File confDir) throws Exception {

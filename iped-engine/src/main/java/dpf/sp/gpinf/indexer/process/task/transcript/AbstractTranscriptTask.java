@@ -9,6 +9,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
@@ -26,6 +28,7 @@ import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
+import macee.core.Configurable;
 
 public abstract class AbstractTranscriptTask extends AbstractTask {
 
@@ -160,6 +163,11 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         } catch (SQLException e) {
             throw new IOException(e);
         }
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Arrays.asList(new AudioTranscriptConfig());
     }
 
     @Override

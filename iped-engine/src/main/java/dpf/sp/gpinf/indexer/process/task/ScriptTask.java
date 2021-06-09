@@ -23,6 +23,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import javax.script.Invocable;
@@ -34,6 +36,7 @@ import javax.script.ScriptException;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class ScriptTask extends AbstractTask {
 
@@ -66,6 +69,12 @@ public class ScriptTask extends AbstractTask {
             inv = (Invocable) engine;
         }
 
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        // TODO properly implement this
+        return Collections.emptyList();
     }
 
     @Override

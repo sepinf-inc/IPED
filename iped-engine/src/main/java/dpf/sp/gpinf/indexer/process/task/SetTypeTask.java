@@ -2,8 +2,11 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.IItem;
+import macee.core.Configurable;
 
 import java.io.File;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import org.apache.tika.config.TikaConfig;
@@ -68,6 +71,11 @@ public class SetTypeTask extends AbstractTask {
 
         return ext.toLowerCase();
 
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Collections.emptyList();
     }
 
     @Override

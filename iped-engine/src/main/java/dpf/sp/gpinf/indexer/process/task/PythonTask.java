@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -20,6 +22,7 @@ import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
+import macee.core.Configurable;
 
 public class PythonTask extends AbstractTask {
 
@@ -180,6 +183,12 @@ public class PythonTask extends AbstractTask {
     @Override
     public String getName() {
         return scriptFile.getName();
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        // TODO properly implement this
+        return Collections.emptyList();
     }
 
     @Override

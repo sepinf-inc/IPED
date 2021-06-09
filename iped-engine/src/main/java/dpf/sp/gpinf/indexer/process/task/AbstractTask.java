@@ -309,8 +309,5 @@ public abstract class AbstractTask {
      * 
      * @return Configurable instance with task specific configurations
      */
-    public List<Configurable> getConfigurables() {
-        // TODO make abstract and implement in all tasks
-        return Collections.emptyList();
-    }
+    public abstract List<Configurable> getConfigurables();
 }

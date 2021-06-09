@@ -2,13 +2,15 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.process.Worker;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do
@@ -30,6 +32,11 @@ public class TempFileTask extends AbstractTask {
     @Override
     public boolean isEnabled() {
         return indexTempOnSSD;
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Collections.emptyList();
     }
 
     @Override

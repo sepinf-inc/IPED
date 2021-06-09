@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -31,6 +32,7 @@ import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 
 /**
  * Task to ignore already commited files into index. Commited containers without
@@ -67,6 +69,11 @@ public class SkipCommitedTask extends AbstractTask {
         }
         HashValue persistentId = new HashValue(Util.getPersistentId(item));
         return Arrays.binarySearch(commitedPersistentIds, persistentId) >= 0;
+    }
+
+    @Override
+    public List<Configurable> getConfigurables() {
+        return Collections.emptyList();
     }
 
     @Override
