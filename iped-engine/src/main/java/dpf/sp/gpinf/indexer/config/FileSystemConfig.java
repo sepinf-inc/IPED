@@ -35,6 +35,8 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     @Override
     public void processConfig(Path resource) throws IOException {
 
+        properties.load(resource.toFile());
+
         String value = properties.getProperty("addUnallocated"); // $NON-NLS-1$
         if (value != null) {
             toAddUnallocated = Boolean.valueOf(value.trim());

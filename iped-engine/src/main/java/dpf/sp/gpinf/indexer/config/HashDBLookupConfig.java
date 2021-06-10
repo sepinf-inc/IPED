@@ -60,7 +60,7 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
 
         if (resource.endsWith(CONFIG_FILE)) {
             UTF8Properties properties = new UTF8Properties();
-            properties.load(Files.newInputStream(resource));
+            properties.load(resource.toFile());
             String value = properties.getProperty(EXCLUDE_KNOWN);
             if (value != null) {
                 setExcludeKnown(Boolean.valueOf(value.trim()));

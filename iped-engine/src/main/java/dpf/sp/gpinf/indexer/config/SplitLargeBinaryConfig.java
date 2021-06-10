@@ -42,6 +42,8 @@ public class SplitLargeBinaryConfig extends AbstractTaskPropertiesConfig {
     @Override
     public void processTaskConfig(Path resource) throws IOException {
 
+        properties.load(resource.toFile());
+
         String value = properties.getProperty("minItemSizeToFragment"); //$NON-NLS-1$
         if (value != null) {
             minItemSizeToFragment = Long.valueOf(value.trim());
