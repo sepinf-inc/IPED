@@ -18,6 +18,7 @@ public class ExternalParsersConfig implements Configurable<String> {
     public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
 
     private String externalParsersXml;
+    private transient Path tmp;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -44,16 +45,17 @@ public class ExternalParsersConfig implements Configurable<String> {
         externalParsersXml = config;
     }
 
-    public String getTmpConfigFilePath() {
-        try {
-            Path tmp = Files.createTempFile("external-parsers", ".xml");
-            Files.write(tmp, externalParsersXml.getBytes(StandardCharsets.UTF_8));
-            tmp.toFile().deleteOnExit();
-            return tmp.toFile().getAbsolutePath();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public synchronized String getTmpConfigFilePath() {
+        if (tmp == null) {
+            try {
+                tmp = Files.createTempFile("external-parsers", ".xml");
+                Files.write(tmp, externalParsersXml.getBytes(StandardCharsets.UTF_8));
+                tmp.toFile().deleteOnExit();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return tmp.toFile().getAbsolutePath();
     }
 
 }

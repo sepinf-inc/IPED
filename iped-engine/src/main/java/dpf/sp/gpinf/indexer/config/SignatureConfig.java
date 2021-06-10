@@ -17,22 +17,24 @@ public class SignatureConfig extends AbstractTaskConfig<String> {
     public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
 
     private String customSignaturesXml;
+    private transient Path tmp;
 
     @Override
     public String getConfiguration() {
         return customSignaturesXml;
     }
 
-    public File getTmpConfigFile() {
-        try {
-            Path tmp = Files.createTempFile("custom-signatures", ".xml");
-            Files.write(tmp, customSignaturesXml.getBytes(StandardCharsets.UTF_8));
-            tmp.toFile().deleteOnExit();
-            return tmp.toFile();
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    public synchronized File getTmpConfigFile() {
+        if (tmp == null) {
+            try {
+                tmp = Files.createTempFile("custom-signatures", ".xml");
+                Files.write(tmp, customSignaturesXml.getBytes(StandardCharsets.UTF_8));
+                tmp.toFile().deleteOnExit();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return tmp.toFile();
     }
 
     @Override

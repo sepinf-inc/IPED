@@ -19,6 +19,7 @@ public class ParsersConfig implements Configurable<String> {
     private static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
 
     private String parserConfigXml;
+    private transient Path tmp;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
@@ -45,16 +46,18 @@ public class ParsersConfig implements Configurable<String> {
         parserConfigXml = config;
     }
 
-    public File getTmpConfigFile() {
-        try {
-            Path tmp = Files.createTempFile("parser-config", ".xml");
-            Files.write(tmp, parserConfigXml.getBytes(StandardCharsets.UTF_8));
-            tmp.toFile().deleteOnExit();
-            return tmp.toFile();
+    public synchronized File getTmpConfigFile() {
+        if (tmp == null) {
+            try {
+                tmp = Files.createTempFile("parser-config", ".xml");
+                Files.write(tmp, parserConfigXml.getBytes(StandardCharsets.UTF_8));
+                tmp.toFile().deleteOnExit();
 
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
+        return tmp.toFile();
     }
 
 }
