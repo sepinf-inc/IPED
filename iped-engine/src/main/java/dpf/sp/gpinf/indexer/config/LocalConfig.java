@@ -10,7 +10,6 @@ import java.util.Date;
 import org.slf4j.Logger;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.ConstantsViewer;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
 
@@ -89,7 +88,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (indexerTemp != null) {
             indexerTemp.mkdirs();
         }
-        ConstantsViewer.indexerTemp = indexerTemp;
 
         value = properties.getProperty("numThreads"); //$NON-NLS-1$
         if (value != null) {
@@ -138,7 +136,6 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
     public void setIndexerTemp(File temp) {
         indexerTemp = temp;
         indexTemp = new File(indexerTemp, "index"); //$NON-NLS-1$
-        ConstantsViewer.indexerTemp = indexerTemp;
     }
 
     public File getIndexerTemp() {

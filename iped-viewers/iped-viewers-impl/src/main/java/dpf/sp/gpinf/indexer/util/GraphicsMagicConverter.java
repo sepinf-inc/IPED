@@ -38,8 +38,6 @@ import javax.imageio.ImageIO;
 
 import org.apache.commons.io.IOUtils;
 
-import dpf.sp.gpinf.indexer.ConstantsViewer;
-
 public class GraphicsMagicConverter implements Closeable {
 
     private static final String WIDTH = "width"; //$NON-NLS-1$
@@ -71,30 +69,20 @@ public class GraphicsMagicConverter implements Closeable {
     private int numThreads = 1;
 
     static {
-        try {
-            if (!System.getProperty("os.name").startsWith("Windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-                toolPath = ""; //$NON-NLS-1$
-            } else
-                toolPath = "indexador" + winToolPath; //$NON-NLS-1$
-
-            tmpDir = new File(ConstantsViewer.indexerTemp, tmpDirName);
-            tmpDir.mkdirs();
-            startTmpDirCleaner();
-
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (!System.getProperty("os.name").startsWith("Windows")) {
+            toolPath = "";
+        } else {
+            toolPath = "indexador" + winToolPath;
         }
     }
 
     public GraphicsMagicConverter(ExecutorService executorService) {
-        super();
         this.executorService = executorService;
         this.ownsExecutor = false;
     }
 
     public GraphicsMagicConverter() {
-        super();
-        this.executorService = Executors.newCachedThreadPool();
+        this(Executors.newCachedThreadPool());
         this.ownsExecutor = true;
     }
 
@@ -118,7 +106,12 @@ public class GraphicsMagicConverter implements Closeable {
         enabled = isEnabled;
     }
 
-    private static void startTmpDirCleaner() {
+    private static synchronized void startTmpDirCleaner() {
+        if (tmpDir != null) {
+            return;
+        }
+        tmpDir = new File(System.getProperty("java.io.tmpdir"), tmpDirName);
+        tmpDir.mkdirs();
         Thread t = new Thread() {
             public void run() {
                 while (true) {
@@ -208,6 +201,7 @@ public class GraphicsMagicConverter implements Closeable {
     }
 
     public Dimension getDimension(InputStream in) {
+        startTmpDirCleaner();
         configureImageMagick();
 
         ProcessBuilder pb = new ProcessBuilder();
@@ -240,6 +234,7 @@ public class GraphicsMagicConverter implements Closeable {
         if (!enabled) {
             return null;
         }
+        startTmpDirCleaner();
 
         ProcessBuilder pb = new ProcessBuilder();
         pb.environment().put(GM_TEMP_PATH, tmpDir.getAbsolutePath());

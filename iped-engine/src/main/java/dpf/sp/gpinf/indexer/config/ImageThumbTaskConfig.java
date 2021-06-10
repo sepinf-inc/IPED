@@ -15,6 +15,7 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     private static final String CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
 
+    private boolean enableExternalConv = true;
     private boolean useGraphicsMagick = false;
     private boolean extractThumb = true;
     private boolean logGalleryRendering = false;
@@ -22,6 +23,10 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private int timeoutPerMB = 2;
     private int thumbSize = 160;
     private int galleryThreads = 1;
+
+    public boolean isEnableExternalConv() {
+        return enableExternalConv;
+    }
 
     public boolean isUseGraphicsMagick() {
         return useGraphicsMagick;
@@ -66,11 +71,14 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
         properties.load(resource.toFile());
 
-        String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            if (value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
-                useGraphicsMagick = true;
-            }
+        String value = properties.getProperty("enableExternalConv"); //$NON-NLS-1$
+        if (value != null) {
+            enableExternalConv = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
+        if (value != null && value.trim().equals("graphicsmagick")) {
+            useGraphicsMagick = true;
         } else {
             useGraphicsMagick = false;
         }

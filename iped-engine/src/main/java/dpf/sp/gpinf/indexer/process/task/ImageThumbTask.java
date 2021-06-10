@@ -74,7 +74,8 @@ public class ImageThumbTask extends ThumbTask {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
         }
-        GraphicsMagicConverter.setEnabled(imgThumbConfig.isUseGraphicsMagick());
+        GraphicsMagicConverter.setEnabled(imgThumbConfig.isEnableExternalConv());
+        GraphicsMagicConverter.setUseGM(imgThumbConfig.isUseGraphicsMagick());
         GraphicsMagicConverter.setMinTimeout(imgThumbConfig.getMinTimeout());
         GraphicsMagicConverter.setTimeoutPerMB(imgThumbConfig.getTimeoutPerMB());
 
