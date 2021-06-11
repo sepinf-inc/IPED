@@ -482,8 +482,7 @@ public class TelegramParserTest extends AbstractPkgTest{
         
         assertTrue(telegramtracker.messagebody.get(0).contains("Código de login: 73632. Não envie esse código para ninguém, nem mesmo que eles digam que são do Telegram!"));
         assertTrue(telegramtracker.messagebody.get(1).contains("Sacou?"));
-        assertTrue(telegramtracker.messagebody.get(150).contains("MENSAGEM DESCONHECIDA DO TIPO: TL_MESSAGEACTIONCHATMIGRATETO"));
-//
+ 
 //        assertEquals("2021-06-09T18:56:52Z", telegramtracker.messagedate.get(0));
 //        assertEquals("2021-06-09T01:34:33Z", telegramtracker.messagedate.get(1));
 //        assertEquals("2019-04-23T18:40:10Z", telegramtracker.messagedate.get(150));
