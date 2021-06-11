@@ -1,6 +1,0 @@
-<?xml version='1.0' encoding='utf-8' standalone='yes' ?>
-<map>
-    <string name="locales"></string>
-    <string name="remote">English|English|en|remote|8991959||en|0|0|0&amp;العربية|Arabic|ar|remote|0||ar|1|0|1&amp;Беларуская|Belarusian|be|remote|0||be|0|0|2&amp;Català|Catalan|ca|remote|0||ca|0|0|3&amp;Nederlands|Dutch|nl|remote|0||nl|0|0|4&amp;Français|French|fr|remote|0||fr|0|0|5&amp;Deutsch|German|de|remote|0||de|0|0|6&amp;Bahasa Indonesia|Indonesian|id|remote|0||id|0|0|7&amp;Italiano|Italian|it|remote|0||it|0|0|8&amp;한국어|Korean|ko|remote|0||ko|0|0|9&amp;Bahasa Melayu|Malay|ms|remote|0||ms|0|0|10&amp;فارسی|Persian|fa|remote|0||fa|1|0|11&amp;Polski|Polish|pl|remote|0||pl|0|0|12&amp;Português (Brasil)|Portuguese (Brazil)|pt_br|remote|0||pt|0|0|13&amp;Русский|Russian|ru|remote|0||ru|0|0|14&amp;Español|Spanish|es|remote|0||es|0|0|15&amp;Türkçe|Turkish|tr|remote|0||tr|0|0|16&amp;Українська|Ukrainian|uk|remote|0||uk|0|0|17&amp;O‘zbek|Uzbek|uz|remote|0||uz|0|0|18</string>
-    <string name="unofficial"></string>
-</map>

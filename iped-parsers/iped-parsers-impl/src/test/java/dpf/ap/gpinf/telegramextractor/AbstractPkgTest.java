@@ -23,6 +23,8 @@ import iped3.util.ExtraProperties;
 public abstract class AbstractPkgTest extends TestCase {
    protected ParseContext telegramContext;
    protected EmbeddedTelegramParser telegramtracker;
+   protected ParseContext telegramUserContext;
+   protected EmbeddedTelegramUserParser telegramusertracker;
 
    protected void setUp() throws Exception {
       super.setUp();
@@ -30,6 +32,11 @@ public abstract class AbstractPkgTest extends TestCase {
       telegramtracker = new EmbeddedTelegramParser();
       telegramContext = new ParseContext();
       telegramContext.set(Parser.class, telegramtracker);
+      
+      telegramusertracker = new EmbeddedTelegramUserParser();
+      telegramUserContext = new ParseContext();
+      telegramUserContext.set(Parser.class, telegramusertracker);
+      
    }
    
    @SuppressWarnings("serial")
@@ -75,6 +82,33 @@ public abstract class AbstractPkgTest extends TestCase {
           if(metadata.get(ExtraProperties.MESSAGE_DATE) != null)
               messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
       }
+   }
       
+      @SuppressWarnings("serial")
+      protected static class EmbeddedTelegramUserParser extends AbstractParser {
+          
+         protected List<String> title = new ArrayList<String>();
+         protected List<String> username = new ArrayList<String>();
+         protected List<String> userphone = new ArrayList<String>();
+         protected List<String> useraccount = new ArrayList<String>();
+         
+         
+         public Set<MediaType> getSupportedTypes(ParseContext context) {
+             return (new AutoDetectParser()).getSupportedTypes(context);
+         }
+
+         public void parse(InputStream stream, ContentHandler handler,
+                 Metadata metadata, ParseContext context) throws IOException,
+                 SAXException, TikaException {
+             if(metadata.get(TikaCoreProperties.TITLE) != null)
+                 title.add(metadata.get(TikaCoreProperties.TITLE));
+             if(metadata.get(ExtraProperties.USER_NAME) != null && metadata.get(ExtraProperties.USER_NAME) != "");
+                 username.add(metadata.get(ExtraProperties.USER_NAME));
+             if(metadata.get(ExtraProperties.USER_PHONE) != null)
+                 userphone.add(metadata.get(ExtraProperties.USER_PHONE));
+             if(metadata.get(ExtraProperties.USER_ACCOUNT) != null)
+                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));
+         }
+      }
    }  
-}
+
