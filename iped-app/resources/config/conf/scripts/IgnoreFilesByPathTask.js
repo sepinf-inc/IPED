@@ -9,6 +9,8 @@ function getName(){
 	return "IgnoreFilesByPathTask";
 }
 
+function getConfigurables() {}
+
 function init(confProps, configFolder){}
 
 function finish(){}

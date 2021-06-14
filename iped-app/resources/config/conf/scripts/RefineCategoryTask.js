@@ -9,6 +9,8 @@ function getName(){
 	return "RefineCategoryTask";
 }
 
+function getConfigurables() {}
+
 function init(confProps, configFolder){}
 
 function finish(){}

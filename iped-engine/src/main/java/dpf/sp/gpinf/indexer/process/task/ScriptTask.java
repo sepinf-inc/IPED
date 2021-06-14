@@ -33,6 +33,7 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
@@ -73,8 +74,13 @@ public class ScriptTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        // TODO properly implement this
-        return Collections.emptyList();
+        try {
+            List<Configurable<?>> configs = (List<Configurable<?>>) inv.invokeFunction("getConfigurables");
+            return configs != null ? configs : Collections.emptyList();
+
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -84,6 +90,7 @@ public class ScriptTask extends AbstractTask {
         engine.put("moduleDir", this.output); //$NON-NLS-1$
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
+        engine.put("configuration", ConfigurationManager.getInstance()); //$NON-NLS-1$
 
         inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
 

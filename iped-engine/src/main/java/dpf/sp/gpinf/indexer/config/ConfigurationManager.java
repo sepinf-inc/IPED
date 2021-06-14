@@ -96,15 +96,36 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         return null;
     }
 
-    public static boolean getEnableTaskProperty(String propertyName) {
-        Set<Configurable<?>> configs = singleton.findObjects(EnableTaskProperty.class);
+    public AbstractTaskConfig<?> getTaskConfigurable(String configFileName) {
+        for (Configurable<?> config : singleton.loadedConfigurables.keySet()) {
+            if (config instanceof AbstractTaskConfig) {
+                AbstractTaskConfig<?> taskConfig = (AbstractTaskConfig<?>) config;
+                if (taskConfig.getTaskConfigFileName().equals(configFileName)) {
+                    return taskConfig;
+                }
+            }
+        }
+        return null;
+    }
+
+    public EnableTaskProperty getEnableTaskConfigurable(String propertyName) {
+        Set<Configurable<?>> configs = findObjects(EnableTaskProperty.class);
         for(Configurable<?> config : configs) {
             EnableTaskProperty enableProp = (EnableTaskProperty) config;
             if (enableProp.getPropertyName().equals(propertyName)) {
-                return enableProp.isEnabled();
+                return enableProp;
             }
         }
-        return false;
+        return null;
+    }
+
+    public static boolean getEnableTaskProperty(String propertyName) {
+        EnableTaskProperty enableProp = singleton.getEnableTaskConfigurable(propertyName);
+        if (enableProp != null) {
+            return enableProp.isEnabled();
+        } else {
+            return false;
+        }
     }
 
     @Override

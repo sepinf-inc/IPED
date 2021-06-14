@@ -10,6 +10,13 @@ function getName(){
 	return "ExampleScriptTask";
 }
 
+/*
+ * Returns an optional list of configurable objects that can load/save parameters from/to config files. 
+ */
+function getConfigurables(){
+	return null;
+}
+
 /* Do some task initialization, like reading options and cofiguration files.
  * This method is executed before starting the processing of items.
  * It is executed by each processing thread.
