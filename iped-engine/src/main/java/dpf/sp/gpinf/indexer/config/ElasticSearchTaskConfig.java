@@ -118,10 +118,7 @@ public class ElasticSearchTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        UTF8Properties props = super.properties;
-        props.load(resource.toFile());
+    public void processProperties(UTF8Properties props) {
 
         enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
         host = props.getProperty(HOST_KEY).trim();

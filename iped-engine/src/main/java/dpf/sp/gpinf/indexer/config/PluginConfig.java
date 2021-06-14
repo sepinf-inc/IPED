@@ -6,6 +6,8 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 import java.nio.file.DirectoryStream.Filter;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class PluginConfig extends AbstractPropertiesConfigurable {
 
     /**
@@ -42,8 +44,7 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
         optional_jars = properties.getProperty(OPTIONAL_JARS);
     }
 

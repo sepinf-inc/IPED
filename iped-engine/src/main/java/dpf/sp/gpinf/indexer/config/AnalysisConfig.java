@@ -7,6 +7,7 @@ import java.nio.file.Path;
 
 import dpf.sp.gpinf.indexer.search.SaveStateThread;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.IOUtil.ExternalOpenEnum;
 
 public class AnalysisConfig extends AbstractPropertiesConfigurable {
@@ -38,9 +39,7 @@ public class AnalysisConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("embedLibreOffice"); //$NON-NLS-1$
         if (value != null) {

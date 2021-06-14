@@ -2,6 +2,9 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
+
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.nio.file.Path;
 
 import macee.core.EnabledInterface;
@@ -13,7 +16,7 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
      */
     private static final long serialVersionUID = 1L;
     private String propertyName;
-    private String value;
+    private boolean value = true;
 
     public EnableTaskProperty(String propertyName) {
         this.propertyName = propertyName;
@@ -30,11 +33,13 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
+        if (propertyName == null) {
+            return;
+        }
         String val = properties.getProperty(propertyName);
         if (val != null) {
-            value = val.trim();
+            value = Boolean.valueOf(val.trim());
         }
     }
 
@@ -42,18 +47,14 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
         return propertyName;
     }
 
-    public String getValue() {
+    @Override
+    public boolean isEnabled() {
         return value;
     }
 
     @Override
-    public boolean isEnabled() {
-        return Boolean.valueOf(value);
-    }
-
-    @Override
     public void setEnabled(boolean enabled) {
-        this.value = String.valueOf(enabled);
+        this.value = enabled;
     }
 
 }

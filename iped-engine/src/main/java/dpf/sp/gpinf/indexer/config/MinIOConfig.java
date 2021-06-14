@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class MinIOConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -37,9 +39,7 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         enabled = Boolean.valueOf(properties.getProperty(ENABLE_KEY).trim());
         host = properties.getProperty(HOST_KEY).trim();

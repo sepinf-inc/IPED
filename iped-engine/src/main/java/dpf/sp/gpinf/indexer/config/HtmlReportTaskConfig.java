@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import gpinf.dev.data.ReportInfo;
 
 public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
@@ -117,9 +118,7 @@ public class HtmlReportTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-        
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
         
         String value = properties.getProperty("ItemsPerPage"); //$NON-NLS-1$
         if (value != null) {

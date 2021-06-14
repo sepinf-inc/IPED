@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.nio.file.Path;
 
 /**
@@ -32,8 +34,8 @@ public class IPEDConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
+        // no op
     }
 
 }

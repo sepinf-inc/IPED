@@ -5,6 +5,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -39,9 +41,7 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
         if (value != null) {
@@ -100,7 +100,7 @@ public class IndexTaskConfig extends AbstractTaskPropertiesConfig {
 
     }
 
-    private int[] convertExtraCharsToIndex(String chars) throws FileNotFoundException, IOException {
+    private int[] convertExtraCharsToIndex(String chars) {
 
         ArrayList<Integer> codePoints = new ArrayList<Integer>();
         for (char c : chars.toCharArray()) {

@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -37,9 +39,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("parseCorruptedFiles"); //$NON-NLS-1$
         if (value != null) {

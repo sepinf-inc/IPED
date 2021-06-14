@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class HashTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -30,9 +32,8 @@ public class HashTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
+    public void processProperties(UTF8Properties properties) {
 
-        properties.load(resource.toFile());
         String hashes = properties.getProperty("hashes");
         if (hashes != null) {
             hashes = hashes.trim();

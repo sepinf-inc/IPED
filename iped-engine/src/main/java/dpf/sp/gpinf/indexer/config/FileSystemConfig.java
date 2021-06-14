@@ -2,6 +2,9 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
+
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.nio.file.Path;
 
 public class FileSystemConfig extends AbstractPropertiesConfigurable {
@@ -33,9 +36,7 @@ public class FileSystemConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("addUnallocated"); // $NON-NLS-1$
         if (value != null) {

@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -59,9 +61,7 @@ public class NamedEntityTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         nerImpl = properties.getProperty("NERImpl"); //$NON-NLS-1$
 

@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.nio.file.Path;
 
 public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
@@ -77,9 +79,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String langs = properties.getProperty(LANG_KEY).trim();
         if (LANG_AUTO_VAL.equalsIgnoreCase(langs)) {

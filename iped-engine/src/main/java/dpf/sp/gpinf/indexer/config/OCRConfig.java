@@ -3,6 +3,9 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
+
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.nio.file.Path;
 
 public class OCRConfig extends AbstractPropertiesConfigurable {
@@ -37,9 +40,7 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     }
 
     @Override
-    public void processConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("enableOCR"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {

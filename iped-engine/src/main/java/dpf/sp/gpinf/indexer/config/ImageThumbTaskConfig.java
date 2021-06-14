@@ -4,6 +4,8 @@ import java.io.IOException;
 
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -67,9 +69,7 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("enableExternalConv"); //$NON-NLS-1$
         if (value != null) {

@@ -6,6 +6,8 @@ import java.nio.file.Path;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -69,9 +71,7 @@ public class DocThumbTaskConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-        
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("pdfThumbs");
         if (value != null) {

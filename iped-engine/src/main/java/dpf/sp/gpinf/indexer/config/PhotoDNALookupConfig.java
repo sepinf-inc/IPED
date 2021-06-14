@@ -3,6 +3,8 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 public class PhotoDNALookupConfig extends AbstractTaskPropertiesConfig {
 
     /**
@@ -49,9 +51,7 @@ public class PhotoDNALookupConfig extends AbstractTaskPropertiesConfig {
     }
 
     @Override
-    public void processTaskConfig(Path resource) throws IOException {
-
-        properties.load(resource.toFile());
+    public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty(STATUS_HASH_DB_FILTER);
         if (value != null && !value.trim().isEmpty())
