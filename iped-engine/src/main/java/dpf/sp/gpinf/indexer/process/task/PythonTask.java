@@ -88,9 +88,13 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
+        return getJep(true);
+    }
+
+    private Jep getJep(boolean init) throws JepException {
         Jep jep = PythonParser.getJep();
         if (!scriptLoaded) {
-            loadScript(jep);
+            loadScript(jep, init);
             scriptLoaded = true;
         }
         return jep;
@@ -104,6 +108,7 @@ public class PythonTask extends AbstractTask {
         setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
         setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
         setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
+        setGlobalVar(jep, "configuration", ConfigurationManager.getInstance()); //$NON-NLS-1$
 
         LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
@@ -119,7 +124,7 @@ public class PythonTask extends AbstractTask {
         jep.eval(moduleName + "." + name + " = " + name);
     }
 
-    private void loadScript(Jep jep) throws JepException {
+    private void loadScript(Jep jep, boolean init) throws JepException {
 
         if (jep == null) {
             return;
@@ -146,7 +151,9 @@ public class PythonTask extends AbstractTask {
         jep.set(taskInstancePerThread, new TaskInstancePerThread(moduleName, this));
         jep.eval(moduleName + ".javaTask" + " = " + taskInstancePerThread);
 
-        jep.invoke(getInstanceMethod("init"), confParams, confDir);
+        if (init) {
+            jep.invoke(getInstanceMethod("init"), confParams, confDir);
+        }
 
         try {
             isEnabled = (Boolean) jep.invoke(getInstanceMethod("isEnabled"));
@@ -187,8 +194,14 @@ public class PythonTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        // TODO properly implement this
-        return Collections.emptyList();
+        try {
+            List<Configurable<?>> configs = (List<Configurable<?>>) getJep(false)
+                    .invoke(getInstanceMethod("getConfigurables"));
+            return configs != null ? configs : Collections.emptyList();
+
+        } catch (JepException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
@@ -200,7 +213,7 @@ public class PythonTask extends AbstractTask {
             if (jep == null) {
                 isEnabled = false;
             } else {
-                loadScript(jep);
+                loadScript(jep, true);
             }
         } catch (JepException e) {
             if (jepExceptionPerScript.get(scriptFile) == null) {

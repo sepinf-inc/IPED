@@ -13,6 +13,10 @@ class PythonScriptTask:
     def isEnabled(self):
         return True
 
+    # Returns an optional list of configurable objects that can load/save parameters from/to config files. 
+    def getConfigurables(self):
+        return []
+
     # Do some task initialization, like reading options, custom config files or model.
     # It is executed when application starts by each processing thread on its class instance.
     # @Params

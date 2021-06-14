@@ -170,7 +170,7 @@ public class AppMain {
                     LOGGER.info(Versao.APP_NAME);
             }
 
-            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
+            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();

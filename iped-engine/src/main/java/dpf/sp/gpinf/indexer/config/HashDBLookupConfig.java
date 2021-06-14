@@ -40,8 +40,7 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
 
     @Override
     public String getTaskConfigFileName() {
-        throw new UnsupportedOperationException(
-                HashDBLookupConfig.class.getSimpleName() + " uses multiple config files!");
+        return CONFIG_FILE;
     }
 
     @Override
