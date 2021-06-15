@@ -64,6 +64,7 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
@@ -347,7 +348,8 @@ public class OCRParser extends AbstractParser {
         if (!ENABLED)
             return;
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        CharCountContentHandler countHandler = new CharCountContentHandler(handler);
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
@@ -412,15 +414,17 @@ public class OCRParser extends AbstractParser {
                     String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
                     storeOcrTextInDb(outFileName, ocrText, outputBase);
 
-                } else
+                } else {
                     extractOutput(output, xhtml);
-
+                }
             }
 
         } finally {
             xhtml.endDocument();
-            if (tmpOutput != null)
+            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(countHandler.getCharCount()));
+            if (tmpOutput != null) {
                 tmpOutput.delete();
+            }
             tmp.dispose();
         }
     }
