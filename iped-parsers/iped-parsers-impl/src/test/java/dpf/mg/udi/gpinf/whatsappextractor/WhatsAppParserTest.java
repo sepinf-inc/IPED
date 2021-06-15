@@ -31,6 +31,8 @@ public class WhatsAppParserTest extends AbstractPkgTest{
         parser.setMergeDbs(false);
         parser.getSupportedTypes(whatsappContext);
         parser.parse(stream, handler, metadata, whatsappContext);
+        stream.close();
+        
         assertEquals(57, whatsapptracker.title.size());
     }
 
@@ -46,6 +48,7 @@ public class WhatsAppParserTest extends AbstractPkgTest{
       parser.setMergeDbs(false);
       parser.getSupportedTypes(whatsappContext);
       parser.parse(stream, handler, metadata, whatsappContext);
+      stream.close();
   }
 
     
