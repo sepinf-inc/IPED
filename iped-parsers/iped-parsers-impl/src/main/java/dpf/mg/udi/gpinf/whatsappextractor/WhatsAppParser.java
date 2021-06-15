@@ -176,26 +176,29 @@ public class WhatsAppParser extends SQLite3DBParser {
             throws IOException, SAXException, TikaException {
 
         String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-        if (mimetype == null)
+        if (mimetype == null) {
             mimetype = metadata.get(Metadata.CONTENT_TYPE);
-
-        if (mimetype.equals(WA_USER_XML.toString())) {
-            parseWhatsAppAccount(stream, context, handler, true);
-        } else if (mimetype.equals(WA_USER_PLIST.toString())) {
-            parseWhatsAppAccount(stream, context, handler, false);
-        } else if (mimetype.equals(MSG_STORE.toString())) {
-            if (mergeDbs)
-                checkIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
-            else
-                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
-        } else if (mimetype.equals(WA_DB.toString())) {
-            parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
-        } else if (mimetype.equals(CHAT_STORAGE.toString())) {
-            parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
-        } else if (mimetype.equals(CONTACTS_V2.toString())) {
-            parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
-        }else if(mimetype.equals(MSG_STORE_2.toString())) {
-            parseAllDBS(stream, handler, metadata, context, new ExtractorAndroidFactory());
+        }
+        try (TemporaryResources tmp = new TemporaryResources()) {
+            stream = TikaInputStream.get(stream, tmp);
+            if (mimetype.equals(WA_USER_XML.toString())) {
+                parseWhatsAppAccount(stream, context, handler, true);
+            } else if (mimetype.equals(WA_USER_PLIST.toString())) {
+                parseWhatsAppAccount(stream, context, handler, false);
+            } else if (mimetype.equals(MSG_STORE.toString())) {
+                if (mergeDbs)
+                    checkIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                else
+                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            } else if (mimetype.equals(WA_DB.toString())) {
+                parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            } else if (mimetype.equals(CHAT_STORAGE.toString())) {
+                parseWhatsappMessages(stream, handler, metadata, context, new ExtractorIOSFactory());
+            } else if (mimetype.equals(CONTACTS_V2.toString())) {
+                parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorIOSFactory());
+            } else if (mimetype.equals(MSG_STORE_2.toString())) {
+                parseAllDBS(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            }
         }
         
     }
