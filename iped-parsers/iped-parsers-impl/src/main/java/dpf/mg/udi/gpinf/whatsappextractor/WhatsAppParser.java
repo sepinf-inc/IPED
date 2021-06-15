@@ -662,7 +662,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     contact.setAvatar(bos.toByteArray());
 
                 } catch (IOException e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                 }
             }
         }
