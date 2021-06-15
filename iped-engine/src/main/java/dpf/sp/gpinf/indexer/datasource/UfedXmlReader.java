@@ -91,6 +91,7 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String MSISDN_PROP = "MSISDN";
 
     private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+    private static final String EMPTY_EXTRACTION_STR = "-";
 
     private static final Set<String> SUPPORTED_APPS = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
@@ -913,8 +914,8 @@ public class UfedXmlReader extends DataSourceReader {
                 String value = chars.toString().trim();
                 if (!value.isEmpty()) {
                     String extractiontName = extractionInfoMap.get(currentNode.atts.get("sourceExtraction"));
-                    if (extractiontName == null) {
-                        extractiontName = "-";
+                    if (extractiontName == null || extractiontName.trim().isEmpty()) {
+                        extractiontName = EMPTY_EXTRACTION_STR;
                     }
                     deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
                 }
@@ -1264,10 +1265,22 @@ public class UfedXmlReader extends DataSourceReader {
                 public int compare(String[] a, String[] b) {
                     int cmp = a[0].compareToIgnoreCase(b[0]);
                     if (cmp != 0) return cmp;
-                    if ((cmp = a[2].compareToIgnoreCase(b[2])) != 0) return cmp;
-                    return a[1].compareToIgnoreCase(b[1]);
+                    if ((cmp = a[1].compareToIgnoreCase(b[1])) != 0) return cmp;
+                    return a[2].compareToIgnoreCase(b[2]);
                 }
             });
+            // removes duplicate rows, depends on sorting above
+            List<String[]> uniqueDeviceInfo = new ArrayList<>();
+            for (int i = 0; i < deviceInfoData.size() - 1; i++) {
+                String[] a = deviceInfoData.get(i);
+                String[] b = deviceInfoData.get(i + 1);
+                if (!a[0].equalsIgnoreCase(b[0]) || !a[1].equalsIgnoreCase(b[1])
+                        || !(a[2].equalsIgnoreCase(b[2]) || a[2].equals(EMPTY_EXTRACTION_STR))) {
+                    uniqueDeviceInfo.add(a);
+                }
+            }
+            uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
+
             File file = new File(output, "view/deviceInfo/view-" + deviceInfo.getId() + ".html");
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
@@ -1289,7 +1302,7 @@ public class UfedXmlReader extends DataSourceReader {
                 bw.write("<th class=\"h\">" + Messages.getString("UfedXmlReader.Extraction") + "</th>");
                 bw.write("</tr>\n");
                 String[] prev = null;
-                for (String[] s : deviceInfoData) {
+                for (String[] s : uniqueDeviceInfo) {
                     if (!Arrays.equals(s, prev)) {
                         bw.write("<tr>");
                         bw.write("<td class=\"a\">" + SimpleHTMLEncoder.htmlEncode(s[0]) + "</td>");
