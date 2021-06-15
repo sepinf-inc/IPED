@@ -18,12 +18,12 @@ package org.apache.tika.parser.rtf;
 
 import java.nio.charset.Charset;
 
-import org.apache.tika.parser.rtf.GroupState;
+import org.apache.tika.parser.rtf.GroupState2;
 
 /* Holds all state associated with current RTF group, ie {
  * ... }. */
 
-class GroupState {
+class GroupState2 {
     public int depth;
     public boolean bold;
     public boolean italic;
@@ -50,12 +50,12 @@ class GroupState {
     public boolean annotation;
 
     // Create default (root) GroupState
-    public GroupState() {
+    public GroupState2() {
     }
 
     // Create new GroupState, inheriting all properties from current one, adding 1
     // to the depth
-    public GroupState(GroupState other) {
+    public GroupState2(GroupState2 other) {
         bold = other.bold;
         italic = other.italic;
         ignore = other.ignore;

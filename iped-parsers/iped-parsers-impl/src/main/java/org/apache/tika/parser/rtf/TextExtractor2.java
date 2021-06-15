@@ -43,9 +43,9 @@ import org.apache.tika.metadata.OfficeOpenXMLCore;
 import org.apache.tika.metadata.OfficeOpenXMLExtended;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
-import org.apache.tika.parser.rtf.GroupState;
-import org.apache.tika.parser.rtf.ListDescriptor;
-import org.apache.tika.parser.rtf.RTFEmbObjHandler;
+import org.apache.tika.parser.rtf.GroupState2;
+import org.apache.tika.parser.rtf.ListDescriptor2;
+import org.apache.tika.parser.rtf.RTFEmbObjHandler2;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.apache.tika.utils.CharsetUtils;
 import org.xml.sax.SAXException;
@@ -249,11 +249,11 @@ final class TextExtractor2 {
     // Group stack: when we open a new group, we push
     // the previous group state onto the stack; when we
     // close the group, we restore it
-    private final LinkedList<GroupState> groupStates = new LinkedList<GroupState>();
+    private final LinkedList<GroupState2> groupStates = new LinkedList<GroupState2>();
     private final StringBuilder pendingBuffer = new StringBuilder();
     private final XHTMLContentHandler out;
     private final Metadata metadata;
-    private final RTFEmbObjHandler embObjHandler;
+    private final RTFEmbObjHandler2 embObjHandler;
     // How many next ansi chars we should skip; this
     // is 0 except when we are still in the "ansi
     // shadow" after seeing a unicode escape, at which
@@ -280,7 +280,7 @@ final class TextExtractor2 {
     // Current group state; in theory this initial
     // GroupState is unused because the RTF doc should
     // immediately open the top group (start with {):
-    private GroupState groupState = new GroupState();
+    private GroupState2 groupState = new GroupState2();
     private boolean inHeader = true;
     // 0 not yet in font table, 1 in font table, 2 have processed font table
     private int fontTableState = 0;
@@ -294,10 +294,10 @@ final class TextExtractor2 {
     private int fieldState;
     // Non-zero list index
     private int pendingListEnd;
-    private Map<Integer, ListDescriptor> listTable = new HashMap<Integer, ListDescriptor>();
-    private Map<Integer, ListDescriptor> listOverrideTable = new HashMap<Integer, ListDescriptor>();
-    private Map<Integer, ListDescriptor> currentListTable;
-    private ListDescriptor currentList;
+    private Map<Integer, ListDescriptor2> listTable = new HashMap<Integer, ListDescriptor2>();
+    private Map<Integer, ListDescriptor2> listOverrideTable = new HashMap<Integer, ListDescriptor2>();
+    private Map<Integer, ListDescriptor2> currentListTable;
+    private ListDescriptor2 currentList;
     private int listTableLevel = -1;
     private boolean ignoreLists;
     // Non-null if we've seen the url for a HYPERLINK but not yet
@@ -309,7 +309,7 @@ final class TextExtractor2 {
     // Used when extracting CREATION date:
     private int year, month, day, hour, minute;
 
-    public TextExtractor2(XHTMLContentHandler out, Metadata metadata, RTFEmbObjHandler embObjHandler) {
+    public TextExtractor2(XHTMLContentHandler out, Metadata metadata, RTFEmbObjHandler2 embObjHandler) {
         this.metadata = metadata;
         this.out = out;
         this.embObjHandler = embObjHandler;
@@ -1004,7 +1004,7 @@ final class TextExtractor2 {
     }
 
     private boolean isUnorderedList(int listID) {
-        ListDescriptor list = listTable.get(listID);
+        ListDescriptor2 list = listTable.get(listID);
         if (list != null) {
             return list.isUnordered(groupState.listLevel);
         }
@@ -1083,7 +1083,7 @@ final class TextExtractor2 {
             // List table handling
             if (currentListTable != null) {
                 if (equals("list") || equals("listoverride")) {
-                    currentList = new ListDescriptor();
+                    currentList = new ListDescriptor2();
                     listTableLevel = -1;
                 } else if (currentList != null) {
                     if (equals("liststylename")) {
@@ -1312,7 +1312,7 @@ final class TextExtractor2 {
         groupStates.add(groupState);
 
         // Make new GroupState
-        groupState = new GroupState(groupState);
+        groupState = new GroupState2(groupState);
         assert groupStates.size() == groupState.depth : "size=" + groupStates.size() + " depth=" + groupState.depth;
 
         if (uprState == 0) {
@@ -1385,7 +1385,7 @@ final class TextExtractor2 {
         // TODO: log a warning?
         if (groupStates.size() > 0) {
             // Restore group state:
-            final GroupState outerGroupState = groupStates.removeLast();
+            final GroupState2 outerGroupState = groupStates.removeLast();
 
             // Close italic, if outer does not have italic or
             // bold changed:

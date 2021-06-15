@@ -28,7 +28,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFEmbObjHandler;
+import org.apache.tika.parser.rtf.RTFEmbObjHandler2;
 import org.apache.tika.parser.rtf.TextExtractor2;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
@@ -92,7 +92,7 @@ public class RTFParser2 extends AbstractParser {
         TaggedInputStream tagged = new TaggedInputStream(stream);
         try {
             XHTMLContentHandler xhtmlHandler = new XHTMLContentHandler(handler, metadata);
-            RTFEmbObjHandler embObjHandler = new RTFEmbObjHandler(xhtmlHandler, metadata, context,
+            RTFEmbObjHandler2 embObjHandler = new RTFEmbObjHandler2(xhtmlHandler, metadata, context,
                     getMemoryLimitInKb());
             final TextExtractor2 ert = new TextExtractor2(xhtmlHandler, metadata, embObjHandler);
             ert.extract(stream);

@@ -20,7 +20,7 @@ package org.apache.tika.parser.rtf;
  * Contains the information for a single list in the list or list override
  * tables.
  */
-public class ListDescriptor {
+public class ListDescriptor2 {
     public final static int NUMBER_TYPE_BULLET = 23;
 
     public int id;

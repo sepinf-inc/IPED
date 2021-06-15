@@ -31,7 +31,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.RTFMetadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFObjDataParser;
+import org.apache.tika.parser.rtf.RTFObjDataParser2;
 import org.apache.tika.parser.rtf.TextExtractor2;
 import org.apache.tika.sax.EmbeddedContentHandler;
 import org.xml.sax.ContentHandler;
@@ -57,7 +57,7 @@ import org.xml.sax.SAXException;
  * types of data. This information sometimes contains the name and even full
  * file path of the original file.
  */
-class RTFEmbObjHandler {
+class RTFEmbObjHandler2 {
 
     private static final String EMPTY_STRING = "";
     private final ContentHandler handler;
@@ -76,7 +76,7 @@ class RTFEmbObjHandler {
     private EMB_STATE state = EMB_STATE.NADA;
     private final int memoryLimitInKb;
 
-    protected RTFEmbObjHandler(ContentHandler handler, Metadata metadata, ParseContext context, int memoryLimitInKb) {
+    protected RTFEmbObjHandler2(ContentHandler handler, Metadata metadata, ParseContext context, int memoryLimitInKb) {
         this.handler = handler;
         this.embeddedDocumentUtil = new EmbeddedDocumentUtil(context);
         os = new ByteArrayOutputStream();
@@ -176,7 +176,7 @@ class RTFEmbObjHandler {
 
         byte[] bytes = os.toByteArray();
         if (state == EMB_STATE.OBJDATA) {
-            RTFObjDataParser objParser = new RTFObjDataParser(memoryLimitInKb);
+            RTFObjDataParser2 objParser = new RTFObjDataParser2(memoryLimitInKb);
             try {
                 byte[] objBytes = objParser.parse(bytes, metadata, unknownFilenameCount);
                 extractObj(objBytes, handler, metadata);
