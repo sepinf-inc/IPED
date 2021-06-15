@@ -22,7 +22,8 @@ public abstract class ThumbTask extends AbstractTask {
     protected File getThumbFile(IItem evidence) throws Exception {
         File thumbFile = null;
 
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.findObject(HtmlReportTaskConfig.class);
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
+                .findObject(HtmlReportTaskConfig.class);
         boolean storeThumbsInDb = !caseData.containsReport() || !htmlReportConfig.isEnabled();
         if (storeThumbsInDb) {
             return null;

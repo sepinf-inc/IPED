@@ -1,16 +1,14 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
-import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
@@ -112,18 +110,28 @@ public abstract class AbstractTask {
     }
 
     /**
-     * Método de inicialização da tarefa. Chamado em cada instância da tarefa pelo
-     * Worker no qual ela está instalada.
-     *
-     * @param confParams
-     *            Parâmetros obtidos do arquivo de configuração principal
-     * @param confDir
-     *            Diretório que pode conter um arquivo avançado de configuração da
-     *            tarefa
-     * @throws Exception
-     *             Se ocorreu erro durante a inicialização
+     * This method can return one or more Configurable instances holding specific
+     * task processing options. These configurables are loaded at start up and later
+     * passed to the task init(...). This method could be also used by an UI to
+     * query each task options. Each implementation is responsible to load/store
+     * processing options from/to configuration Files, Paths or other resources.
+     * 
+     * @return List of Configurable instances with task specific configurations.
      */
-    abstract public void init(final Properties confParams, File confDir) throws Exception;
+    public abstract List<Configurable<?>> getConfigurables();
+
+    /**
+     * Do some task initialization, like reading task options, custom configurations
+     * or models. It is executed when application starts by each processing thread
+     * on its own task instance.
+     *
+     * @param configurationManager
+     *            configuration manager by which task configurables can be retrieved
+     *            after populated.
+     * @throws Exception
+     *             if some error occurs while initializing the task.
+     */
+    public abstract void init(ConfigurationManager configurationManager) throws Exception;
 
     /**
      * Método chamado ao final do processamento em cada tarefa instanciada. Pode
@@ -299,15 +307,4 @@ public abstract class AbstractTask {
      */
     public void interrupted() {
     }
-
-    /**
-     * This method can return one or more Configurable instances holding specific
-     * task processing options. These configurables are loaded at start up and later
-     * passed to the task init(...). This method could be also used by an UI to
-     * query each task options. Each implementation is responsible to load/store
-     * processing options from/to configuration Files, Paths or other resources.
-     * 
-     * @return Configurable instance with task specific configurations
-     */
-    public abstract List<Configurable<?>> getConfigurables();
 }

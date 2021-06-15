@@ -18,12 +18,6 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.video.VideoProcessResult;
-import gpinf.video.VideoThumbsMaker;
-import gpinf.video.VideoThumbsOutputConfig;
-import iped3.IItem;
-import macee.core.Configurable;
-
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
@@ -34,7 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -53,10 +46,13 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.video.VideoProcessResult;
+import gpinf.video.VideoThumbsMaker;
+import gpinf.video.VideoThumbsOutputConfig;
+import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de
@@ -186,7 +182,7 @@ public class VideoThumbTask extends ThumbTask {
      * responsável pela extração de frames.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         // Instância objeto responsável pela extração de frames e inicializa parâmetros
         // de utilização
         videoThumbsMaker = new VideoThumbsMaker();
@@ -195,7 +191,7 @@ public class VideoThumbTask extends ThumbTask {
         tmpFolder = new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
         tempSuffix = Thread.currentThread().getId() + ".tmp"; //$NON-NLS-1$
 
-        videoConfig = ConfigurationManager.findObject(VideoThumbsConfig.class);
+        videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
 
         // Inicialização sincronizada
         synchronized (init) {

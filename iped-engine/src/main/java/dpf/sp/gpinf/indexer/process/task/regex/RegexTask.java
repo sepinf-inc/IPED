@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 
 import dk.brics.automaton.Automaton;
@@ -124,9 +123,9 @@ public class RegexTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        regexConfig = ConfigurationManager.findObject(RegexTaskConfig.class);
+        regexConfig = configurationManager.findObject(RegexTaskConfig.class);
 
         if (regexConfig.isEnabled() && regexList == null) {
 
@@ -136,7 +135,7 @@ public class RegexTask extends AbstractTask {
                         e.getRegex()));
             }
 
-            ExportByKeywordsConfig exportConfig = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
+            ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
             if (exportConfig.isEnabled()) {
                 for (String keyword : exportConfig.getKeywords()) {
                     String regex = RegexTaskConfig.replace(keyword);
@@ -150,7 +149,7 @@ public class RegexTask extends AbstractTask {
             Automaton automata = BasicOperations.union(automatonList);
             regexFull = new Regex("FULL", automata); //$NON-NLS-1$
 
-            initValidators(confDir);
+            initValidators(new File(output, "conf"));
         }
 
     }

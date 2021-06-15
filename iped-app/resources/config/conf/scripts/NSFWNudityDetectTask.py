@@ -102,7 +102,7 @@ class NSFWNudityDetectTask:
         from dpf.sp.gpinf.indexer.config import EnableTaskProperty
         return [EnableTaskProperty(enableProp)]
     
-    def init(self, confProps, configFolder):
+    def init(self, configuration):
         global enabled
         enabled = configuration.getEnableTaskProperty(enableProp)
         if enabled:

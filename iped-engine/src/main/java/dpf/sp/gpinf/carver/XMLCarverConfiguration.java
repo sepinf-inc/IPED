@@ -41,7 +41,6 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     protected HashSet<String> TYPES_TO_NOT_PROCESS = new HashSet<String>();
     protected HashSet<MediaType> TYPES_TO_CARVE = new HashSet<MediaType>();
     private ArrayList<CarverType> carverTypesArray = new ArrayList<CarverType>();
-    private File confDir;
 
     public void loadXMLConfigFile(File confFile) throws IOException {
         Document doc = null;
@@ -240,11 +239,9 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
      * Configures the Task passed as parameter
      */
     @Override
-    synchronized public void configTask(File confDir, CarvedItemListener carvedItemListener)
+    synchronized public void configListener(CarvedItemListener carvedItemListener)
             throws CarverConfigurationException {
         try {
-            this.confDir = confDir;
-
             CarverType[] carverTypes = carverTypesArray.toArray(new CarverType[0]);
 
             if (tree == null) {
@@ -277,8 +274,7 @@ public class XMLCarverConfiguration implements CarverConfiguration, Serializable
     }
 
     @Override
-    public Carver createCarverFromJSName(String scriptName) {
-        File file = new File(confDir, scriptName);
+    public Carver createCarverFromJSName(File file) {
         try {
             return (Carver) new JSCarver(file);
         } catch (Exception e) {

@@ -20,7 +20,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     IConfigurationDirectory directory;
     HashMap<Configurable<?>, Boolean> loadedConfigurables = new LinkedHashMap<>();
 
-    public static ConfigurationManager getInstance() {
+    public static ConfigurationManager get() {
         return singleton;
     }
 
@@ -87,7 +87,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         return result;
     }
 
-    public static <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
+    public <T extends Configurable<?>> T findObject(Class<? extends Configurable<?>> clazz) {
         for (Configurable<?> configurable : singleton.loadedConfigurables.keySet()) {
             if (configurable.getClass().equals(clazz)) {
                 return (T) configurable;
@@ -119,7 +119,7 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
         return null;
     }
 
-    public static boolean getEnableTaskProperty(String propertyName) {
+    public boolean getEnableTaskProperty(String propertyName) {
         EnableTaskProperty enableProp = singleton.getEnableTaskConfigurable(propertyName);
         if (enableProp != null) {
             return enableProp.isEnabled();

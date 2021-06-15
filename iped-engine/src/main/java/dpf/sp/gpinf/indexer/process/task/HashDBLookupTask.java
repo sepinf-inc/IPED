@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -19,7 +18,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashDBLookupConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -71,12 +69,12 @@ public class HashDBLookupTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                HashDBLookupConfig hashDBConfig = ConfigurationManager.findObject(HashDBLookupConfig.class);
+                HashDBLookupConfig hashDBConfig = configurationManager.findObject(HashDBLookupConfig.class);
                 if (hashDBConfig.isEnabled()) {
-                    HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
+                    HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
                     if (!hashConfig.isEnabled()) {
                         logger.warn("No hash enabled.");
                         taskEnabled = false;
@@ -89,7 +87,7 @@ public class HashDBLookupTask extends AbstractTask {
                                 hashesAttributes[idx] = hashType;
                             }
                         }
-                        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+                        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
                         if (localConfig.getHashDbFile() == null) {
                             logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                             taskEnabled = false;

@@ -12,7 +12,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
@@ -109,8 +108,8 @@ public class GraphTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        GraphTaskConfig config = ConfigurationManager.findObject(GraphTaskConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        GraphTaskConfig config = configurationManager.findObject(GraphTaskConfig.class);
         enabled = config.isEnabled();
         if (enabled) {
             configuration = config.getConfiguration();

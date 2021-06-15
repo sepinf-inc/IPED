@@ -105,7 +105,7 @@ class FaceRecognitionTask:
         return [DefaultTaskPropertiesConfig(enableProp, configFile)]
     
     # This method is executed before starting the processing of items.
-    def init(self, mainProps, configFolder):
+    def init(self, configuration):
         taskConfig = configuration.getTaskConfigurable(configFile)
         self.enabled = taskConfig.isEnabled()
         if not self.enabled:

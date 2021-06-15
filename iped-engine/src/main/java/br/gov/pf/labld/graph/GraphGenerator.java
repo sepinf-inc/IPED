@@ -45,7 +45,8 @@ public class GraphGenerator {
         try {
             graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
             graphService.start(output);
-            GraphConfiguration config = (GraphConfiguration) ConfigurationManager.findObject(GraphTaskConfig.class)
+            GraphConfiguration config = (GraphConfiguration) ConfigurationManager.get()
+                    .findObject(GraphTaskConfig.class)
                     .getConfiguration();
 
             runPostGenerationStatements(graphService, config);
@@ -60,7 +61,7 @@ public class GraphGenerator {
 
     private boolean importDB(ImportListener listener, File output, File... input) {
         try {
-            LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
             GraphImportRunner runner = new GraphImportRunner(listener, input);
             runner.run(output, GraphTask.DB_NAME, localConfig.isOutputOnSSD());
             return true;

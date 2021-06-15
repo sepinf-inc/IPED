@@ -141,7 +141,7 @@ public class ParsingReader extends Reader {
                 length = Long.parseLong(lengthStr);
             }
         }
-        ParsingTaskConfig parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
+        ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
         timeOutBySize = (int) (length / 1000000) * parsingConfig.getTimeOutPerMB();
 
         pipedReader = new FastPipedReader(128 * 1024, parsingConfig.getTimeOut(), timeOutBySize);

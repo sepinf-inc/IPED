@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -121,11 +120,11 @@ public class DIETask extends AbstractTask {
      * Initialize the task.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
@@ -163,7 +162,7 @@ public class DIETask extends AbstractTask {
             }
         }
 
-        ImageThumbTaskConfig imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
+        ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
         extractThumb = imgThumbConfig.isExtractThumb();
     }
 

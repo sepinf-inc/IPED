@@ -11,20 +11,20 @@ function getName(){
 }
 
 /*
- * Returns an optional list of configurable objects that can load/save parameters from/to config files. 
+ * Returns
+            an optional list of configurable objects that can load/save parameters from/to config files. 
  */
 function getConfigurables(){
 	return null;
 }
 
-/* Do some task initialization, like reading options and cofiguration files.
+/* Do some task initialization, like reading options and cofiguration params.
  * This method is executed before starting the processing of items.
  * It is executed by each processing thread.
  * @Params
- * confProps:    java properties file with general configuration options
- * configFolder: extra configuration folder, where task can place and load its custom configuration file
+ * configuration:    configuration manager by which configurables could be retrieved after populated.
  */
-function init(confProps, configFolder){
+function init(configuration){
 	//init code here
 }
 

@@ -1,10 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
@@ -24,8 +22,8 @@ public class EntropyTask extends AbstractTask {
     private boolean enableOption;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        enableOption = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        enableOption = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
     }
 
     @Override

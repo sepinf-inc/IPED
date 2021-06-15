@@ -9,11 +9,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -26,7 +24,7 @@ import com.eatthepath.jvptree.VPTree;
 import br.dpf.sepinf.photodna.api.PhotoDNATransforms;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.PhotoDNAConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.PhotoDNALookupConfig;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -71,9 +69,9 @@ public class PhotoDNALookup extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        pdnaLookupConfig = ConfigurationManager.findObject(PhotoDNALookupConfig.class);
+        pdnaLookupConfig = configurationManager.findObject(PhotoDNALookupConfig.class);
 
         synchronized (init) {
             if (!init.get()) {
@@ -86,11 +84,11 @@ public class PhotoDNALookup extends AbstractTask {
                         init.set(true);
                         return;
                     }
-                    String hashDBPath = confParams.getProperty("hashesDB");
-                    if (hashDBPath == null) {
+                    LocalConfig localConfig = (LocalConfig) configurationManager.findObject(LocalConfig.class);
+                    if (localConfig.getHashDbFile() == null) {
                         LOGGER.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
-                        File hashDBFile = new File(hashDBPath.trim());
+                        File hashDBFile = localConfig.getHashDbFile();
                         if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
                             String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
                             if (hasIpedDatasource()) {

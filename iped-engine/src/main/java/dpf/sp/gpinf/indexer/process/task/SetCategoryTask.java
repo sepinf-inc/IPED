@@ -18,10 +18,8 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
@@ -48,8 +46,8 @@ public class SetCategoryTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File configPath) throws Exception {
-        categoryConfig = ConfigurationManager.findObject(CategoryConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        categoryConfig = configurationManager.findObject(CategoryConfig.class);
     }
 
     @Override

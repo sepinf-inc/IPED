@@ -18,7 +18,7 @@ public class TaskInstaller {
 
     public void installProcessingTasks(Worker worker) throws Exception {
         
-        TaskInstallerConfig taskConfig = ConfigurationManager.findObject(TaskInstallerConfig.class);
+        TaskInstallerConfig taskConfig = ConfigurationManager.get().findObject(TaskInstallerConfig.class);
 
         List<AbstractTask> tasks = taskConfig.getNewTaskInstances();
         worker.tasks.addAll(tasks);

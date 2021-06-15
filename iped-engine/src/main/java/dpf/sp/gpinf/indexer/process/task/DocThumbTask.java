@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -78,10 +77,10 @@ public class DocThumbTask extends ThumbTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                docThumbsConfig = ConfigurationManager.findObject(DocThumbTaskConfig.class);
+                docThumbsConfig = configurationManager.findObject(DocThumbTaskConfig.class);
                 if (docThumbsConfig.isEnabled()) {
                     logger.info("Thumb Size: " + docThumbsConfig.getThumbSize());
                     logger.info("LibreOffice Conversion: " + (docThumbsConfig.isLoEnabled() ? "enabled" : "disabled"));

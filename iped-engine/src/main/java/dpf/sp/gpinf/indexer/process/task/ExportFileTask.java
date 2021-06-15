@@ -40,7 +40,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -141,7 +140,8 @@ public class ExportFileTask extends AbstractTask {
                 this.extractDir = new File(output, SUBITEM_DIR);
             }
         }
-        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.findObject(HtmlReportTaskConfig.class);
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
+                .findObject(HtmlReportTaskConfig.class);
         if (!caseData.containsReport() || !htmlReportConfig.isEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
@@ -714,16 +714,16 @@ public class ExportFileTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        automaticExportEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
-        exportByCategories = ConfigurationManager.findObject(ExportByCategoriesConfig.class);
-        exportByKeywords = ConfigurationManager.findObject(ExportByKeywordsConfig.class);
+        automaticExportEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        exportByCategories = configurationManager.findObject(ExportByCategoriesConfig.class);
+        exportByKeywords = configurationManager.findObject(ExportByKeywordsConfig.class);
         if (isAutomaticExportEnabled()) {
             caseData.setContainsReport(true);
         }
 
-        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
+        HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
         if (hashConfig.isEnabled()) {
             computeHash = true;
         }

@@ -225,7 +225,7 @@ public class MenuClass extends JPopupMenu {
 
         similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
         similarDocs.addActionListener(menuListener);
-        IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         similarDocs.setEnabled(indexConfig.isStoreTermVectors());
         this.add(similarDocs);
 

@@ -31,7 +31,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
@@ -104,7 +103,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
                 SignatureTask.installCustomSignatures();
-                ParsingTask.setupParsingOptions(ConfigurationManager.findObject(ParsingTaskConfig.class));
+                ParsingTask.setupParsingOptions(ConfigurationManager.get());
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
                 App.get().setAutoParser(autoParser);
 

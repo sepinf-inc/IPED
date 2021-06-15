@@ -19,7 +19,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
@@ -27,7 +26,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Properties;
 
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.slf4j.Logger;
@@ -79,8 +77,8 @@ public class HashTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
-        HashTaskConfig hashConfig = ConfigurationManager.findObject(HashTaskConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
 
         for (String algorithm : hashConfig.getAlgorithms()) {
             MessageDigest digest = null;

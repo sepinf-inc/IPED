@@ -1,10 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
@@ -107,15 +105,15 @@ public class SignatureTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         installCustomSignatures();
-        SignatureConfig config = ConfigurationManager.findObject(SignatureConfig.class);
+        SignatureConfig config = configurationManager.findObject(SignatureConfig.class);
         processFileSignatures = config.isEnabled();
         detector = TikaConfig.getDefaultConfig().getDetector();
     }
 
     public static void installCustomSignatures() {
-        SignatureConfig config = ConfigurationManager.findObject(SignatureConfig.class);
+        SignatureConfig config = ConfigurationManager.get().findObject(SignatureConfig.class);
         System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP, config.getTmpConfigFile().getAbsolutePath());
         // check if setting property above works
         if (MediaTypes.getParentType(MediaType.parse("message/x-chat-message")).equals(MediaType.OCTET_STREAM)) {

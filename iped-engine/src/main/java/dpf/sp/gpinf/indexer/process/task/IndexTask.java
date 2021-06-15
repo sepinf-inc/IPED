@@ -10,7 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
@@ -204,7 +203,7 @@ public class IndexTask extends AbstractTask {
     private ParseContext getTikaContext(IItem evidence) {
         ParsingTask pt = new ParsingTask(evidence, this.autoParser);
         pt.setWorker(worker);
-        pt.init(null, null);
+        pt.init(ConfigurationManager.get());
         ParseContext context = pt.getTikaContext();
         // this is to not create new items while indexing
         pt.setExtractEmbedded(false);
@@ -217,9 +216,9 @@ public class IndexTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties properties, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         
-        indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        indexConfig = configurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {

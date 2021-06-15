@@ -20,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -203,7 +202,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private ColumnsManager() {
-        AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         autoManageCols = analysisConfig.isAutoManageCols();
 
         dialog.setBounds(new Rectangle(400, 400));

@@ -1,11 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.commons.codec.binary.Hex;
@@ -39,9 +37,9 @@ public class PhotoDNATask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        pdnaConfig = ConfigurationManager.findObject(PhotoDNAConfig.class);
+        pdnaConfig = configurationManager.findObject(PhotoDNAConfig.class);
 
         if (!pdnaConfig.isEnabled())
             return;

@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -12,7 +11,6 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.elasticsearch.action.ActionListener;
@@ -112,7 +110,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         count.incrementAndGet();
 
@@ -120,7 +118,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             return;
         }
 
-        elasticConfig = ConfigurationManager.findObject(ElasticSearchTaskConfig.class);
+        elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         if (!elasticConfig.isEnabled()) {
             return;
@@ -349,7 +347,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             textReader = new StringReader(""); //$NON-NLS-1$
         }
 
-        IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
                 indexConfig.getTextOverlapSize());
         int fragNum = fragReader.estimateNumberOfFrags();

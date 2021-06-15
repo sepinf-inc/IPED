@@ -187,7 +187,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 tskCaseList.add(sleuthCase);
             }
 
-            AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+            AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
             if (analysisConfig.isPreOpenImagesOnSleuth() && iw == null) {
                 TouchSleuthkitImages.preOpenImagesOnSleuth(sleuthCase, analysisConfig.isOpenImagesCacheWarmUpEnabled(),
                         analysisConfig.getOpenImagesCacheWarmUpThreads());
@@ -349,7 +349,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     protected void openSearcher() {
-        AnalysisConfig analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
+        AnalysisConfig analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
         if (analysisConfig.getSearchThreads() > 1) {
             searchExecutorService = Executors.newFixedThreadPool(analysisConfig.getSearchThreads());
             searcher = new IndexSearcher(reader, searchExecutorService);

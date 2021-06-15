@@ -260,7 +260,7 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setPointsConfigMap(getPointsConfigMap());
 
             // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
-            IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
                 texto = IndexItem.normalize(texto, false);
             }

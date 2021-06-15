@@ -50,7 +50,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
 
-        IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
         hashAnalyzer.setConvertCharsToLower(true);

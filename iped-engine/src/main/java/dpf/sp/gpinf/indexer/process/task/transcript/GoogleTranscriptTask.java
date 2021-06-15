@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +28,7 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
@@ -59,9 +59,9 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
     private SpeechClient speechClient;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        super.init(confParams, confDir);
+        super.init(configurationManager);
         if (!transcriptConfig.isEnabled()) {
             return;
         }

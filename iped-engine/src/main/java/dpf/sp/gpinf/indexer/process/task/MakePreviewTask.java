@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -59,8 +58,8 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        previewConfig = ConfigurationManager.findObject(MakePreviewConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        previewConfig = configurationManager.findObject(MakePreviewConfig.class);
 
         parser = new IndexerDefaultParser();
         parser.setPrintMetadata(false);
@@ -142,7 +141,7 @@ public class MakePreviewTask extends AbstractTask {
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
-            ParsingTaskConfig parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
+            ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
 
             // ForkServer timeout
             if (evidence.getLength() != null) {

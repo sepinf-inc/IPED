@@ -94,7 +94,7 @@ public class FolderTreeReader extends DataSourceReader {
             evidenceName = file.getAbsolutePath().substring(0, 2);
         }
 
-        FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
         if (!fsConfig.getSkipFolderRegex().isEmpty()) {
             excludePattern = Pattern.compile(fsConfig.getSkipFolderRegex(), Pattern.CASE_INSENSITIVE);
         }

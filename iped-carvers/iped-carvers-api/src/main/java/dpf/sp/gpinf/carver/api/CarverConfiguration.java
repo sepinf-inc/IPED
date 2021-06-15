@@ -19,8 +19,8 @@ public interface CarverConfiguration {
     /* Verify if a mediaType is configured to be carved */
     public boolean isToCarve(MediaType mediaType);
 
-    /* Configures the Task passed as parameter */
-    public void configTask(File confDir, CarvedItemListener cil) throws CarverConfigurationException;
+    /* Configures the listener passed as parameter */
+    public void configListener(CarvedItemListener cil) throws CarverConfigurationException;
 
     /* Returns the populated state machine tree */
     public AhoCorasick getPopulatedTree();
@@ -28,7 +28,7 @@ public interface CarverConfiguration {
     /* Returns the populated state machine tree */
     public HashMap<CarverType, Carver> getRegisteredCarvers();
 
-    public Carver createCarverFromJSName(String scriptName);
+    public Carver createCarverFromJSName(File scriptFile);
 
     public boolean isToIgnoreCorrupted();
 

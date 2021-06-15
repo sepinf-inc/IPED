@@ -1,10 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
@@ -68,9 +66,9 @@ public class DuplicateTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        ignoreDuplicates = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        ignoreDuplicates = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(HASH_MAP);
         if (hashMap == null) {

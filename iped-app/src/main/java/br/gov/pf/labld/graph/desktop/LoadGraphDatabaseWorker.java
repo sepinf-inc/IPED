@@ -39,7 +39,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
     protected Void doInBackground() throws Exception {
         long t = System.currentTimeMillis();
         app.setEnabled(false);
-        GraphTaskConfig config = ConfigurationManager.findObject(GraphTaskConfig.class);
+        GraphTaskConfig config = ConfigurationManager.get().findObject(GraphTaskConfig.class);
         if (!config.isEnabled()) {
             return null;
         }

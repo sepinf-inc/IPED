@@ -32,7 +32,6 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
@@ -256,7 +255,7 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
 
@@ -270,7 +269,7 @@ public class ExportCSVTask extends AbstractTask {
             Files.delete(tmp.toPath());
         }
 
-        exportFileProps = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        exportFileProps = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
     }
 

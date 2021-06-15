@@ -121,7 +121,7 @@ public class IPEDReader extends DataSourceReader {
         caseData.setIpedReport(true);
 
         // Configuração para não expandir containers
-        CategoryToExpandConfig expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
+        CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
         expandConfig.setEnabled(false);
 
         CarverTask.setEnabled(false);

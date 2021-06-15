@@ -12,7 +12,6 @@ import java.text.NumberFormat;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
@@ -105,16 +105,16 @@ public class LedCarveTask extends BaseCarveTask {
     /**
      * Inicializa tarefa.
      */
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                boolean enableParam = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                boolean enableParam = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (enableParam) {
-                    String hashDBPath = confParams.getProperty("hashesDB");
-                    if (hashDBPath == null) {
+                    LocalConfig localConfig = (LocalConfig) configurationManager.findObject(LocalConfig.class);
+                    File hashDBFile = localConfig.getHashDbFile();
+                    if (hashDBFile == null) {
                         logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
                     } else {
-                        File hashDBFile = new File(hashDBPath.trim());
                         if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
                             String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
                             if (hasIpedDatasource()) {

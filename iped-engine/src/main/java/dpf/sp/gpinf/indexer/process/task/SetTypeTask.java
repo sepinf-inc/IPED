@@ -1,17 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.IItem;
-import macee.core.Configurable;
-
-import java.io.File;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
+
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import gpinf.dev.filetypes.GenericFileType;
+import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType
@@ -79,7 +78,7 @@ public class SetTypeTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         tikaConfig = TikaConfig.getDefaultConfig();
     }
 

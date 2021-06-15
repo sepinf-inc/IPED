@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -38,8 +37,6 @@ public class PythonTask extends AbstractTask {
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
     private String moduleName, instanceName;
-    private Properties confParams;
-    private File confDir;
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
     private boolean scriptLoaded = false;
@@ -108,9 +105,8 @@ public class PythonTask extends AbstractTask {
         setGlobalVar(jep, "logger", LOGGER); //$NON-NLS-1$
         setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
         setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
-        setGlobalVar(jep, "configuration", ConfigurationManager.getInstance()); //$NON-NLS-1$
 
-        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
     }
 
@@ -152,7 +148,7 @@ public class PythonTask extends AbstractTask {
         jep.eval(moduleName + ".javaTask" + " = " + taskInstancePerThread);
 
         if (init) {
-            jep.invoke(getInstanceMethod("init"), confParams, confDir);
+            jep.invoke(getInstanceMethod("init"), ConfigurationManager.get());
         }
 
         try {
@@ -205,9 +201,7 @@ public class PythonTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        this.confParams = confParams;
-        this.confDir = confDir;
+    public void init(ConfigurationManager configurationManager) throws Exception {
         try {
             Jep jep = PythonParser.getJep();
             if (jep == null) {

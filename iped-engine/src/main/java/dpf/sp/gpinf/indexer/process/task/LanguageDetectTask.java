@@ -1,12 +1,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -57,9 +55,9 @@ public class LanguageDetectTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        isEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+        isEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
         if (isEnabled && detector == null)
             detector = loadModels();

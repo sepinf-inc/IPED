@@ -50,7 +50,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -67,7 +66,6 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
@@ -76,7 +74,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
@@ -183,7 +180,7 @@ public class HTMLReportTask extends AbstractTask {
     private boolean extractThumb;
 
     private static Collator getCollator() {
-        LocaleConfig localeConfig = ConfigurationManager.findObject(LocaleConfig.class);
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
         Collator c = Collator.getInstance(localeConfig.getLocale());
         c.setStrength(Collator.TERTIARY);
@@ -204,9 +201,9 @@ public class HTMLReportTask extends AbstractTask {
      * principal.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        htmlReportConfig = ConfigurationManager.findObject(HtmlReportTaskConfig.class);
+        htmlReportConfig = configurationManager.findObject(HtmlReportTaskConfig.class);
 
         if (!init.get()) {
             if (htmlReportConfig.isEnabled()) {
@@ -252,7 +249,7 @@ public class HTMLReportTask extends AbstractTask {
             init.set(true);
         }
 
-        ImageThumbTaskConfig imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
+        ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
         extractThumb = imgThumbConfig.isExtractThumb();
     }
 
@@ -279,7 +276,7 @@ public class HTMLReportTask extends AbstractTask {
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
             if (!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = ConfigurationManager.findObject(LocaleConfig.class);
+                LocaleConfig localeConf = ConfigurationManager.get().findObject(LocaleConfig.class);
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
@@ -579,7 +576,7 @@ public class HTMLReportTask extends AbstractTask {
         });
         final CustomComparator comparator = new CustomComparator();
 
-        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];
@@ -611,7 +608,7 @@ public class HTMLReportTask extends AbstractTask {
         final int tot = regs.size();
         final int numPages = (tot + htmlReportConfig.getItemsPerPage() - 1) / htmlReportConfig.getItemsPerPage();
 
-        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];

@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -67,9 +66,9 @@ public class ImageThumbTask extends ThumbTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        imgThumbConfig = ConfigurationManager.findObject(ImageThumbTaskConfig.class);
+        imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
 
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
             GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);

@@ -1,8 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
@@ -60,7 +57,7 @@ public class ParsingTaskConfig extends AbstractTaskPropertiesConfig {
         if (value != null && !value.trim().equalsIgnoreCase("auto")) { //$NON-NLS-1$
             numExternalParsers = Integer.valueOf(value.trim());
         } else {
-            OCRConfig ocrconfig = ConfigurationManager.findObject(OCRConfig.class);
+            OCRConfig ocrconfig = ConfigurationManager.get().findObject(OCRConfig.class);
             if (ocrconfig.isOCREnabled() == null) {
                 throw new RuntimeException(OCRConfig.class.getSimpleName() + " must be loaded before "
                         + this.getClass().getSimpleName());

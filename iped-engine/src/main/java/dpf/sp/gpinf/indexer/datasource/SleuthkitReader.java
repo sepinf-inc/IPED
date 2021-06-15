@@ -305,7 +305,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
             if (fsConfig.isRobustImageReading()) {
                 Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
             }
@@ -704,8 +704,8 @@ public class SleuthkitReader extends DataSourceReader {
             return addEvidenceFile(content);
         }
 
-        FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
-        SplitLargeBinaryConfig splitConfig = ConfigurationManager.findObject(SplitLargeBinaryConfig.class);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        SplitLargeBinaryConfig splitConfig = ConfigurationManager.get().findObject(SplitLargeBinaryConfig.class);
 
         if (absFile != null && (absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNALLOC_BLOCKS
                 || absFile.getType() == TSK_DB_FILES_TYPE_ENUM.UNUSED_BLOCKS)) {
@@ -790,7 +790,7 @@ public class SleuthkitReader extends DataSourceReader {
                     return null;
             }
 
-            FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
             if (fsConfig.getMinOrphanSizeToIgnore() != -1 && absFile.getSize() >= fsConfig.getMinOrphanSizeToIgnore())
                 return null;
         }

@@ -1,14 +1,14 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import iped3.IItem;
 import macee.core.Configurable;
 
@@ -40,14 +40,9 @@ public class TempFileTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        String value = confParams.getProperty("indexTempOnSSD"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexTempOnSSD = Boolean.valueOf(value);
-        }
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        LocalConfig config = configurationManager.findObject(LocalConfig.class);
+        indexTempOnSSD = config.isIndexTempOnSSD();
 
     }
 

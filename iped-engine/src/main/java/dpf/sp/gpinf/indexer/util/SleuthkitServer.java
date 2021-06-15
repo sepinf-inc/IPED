@@ -69,7 +69,7 @@ public class SleuthkitServer {
             out.load();
 
             Configuration.getInstance().loadConfigurables(new File(dbPath).getParent() + "/indexador"); //$NON-NLS-1$
-            ConfigurationManager cm = ConfigurationManager.getInstance();
+            ConfigurationManager cm = ConfigurationManager.get();
             LocalConfig localConfig = new LocalConfig();
             cm.addObject(localConfig);
             cm.loadConfigs();

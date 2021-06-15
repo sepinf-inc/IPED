@@ -136,7 +136,7 @@ public class SimilarImagesFilterActions {
     }
 
     public static boolean isFeatureEnabled() {
-        IPEDConfig ipedConfig = ConfigurationManager.findObject(IPEDConfig.class);
+        IPEDConfig ipedConfig = ConfigurationManager.get().findObject(IPEDConfig.class);
         String enabled = ipedConfig.getConfiguration().getProperty(ImageSimilarityTask.enableParam);
         if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
             return true;

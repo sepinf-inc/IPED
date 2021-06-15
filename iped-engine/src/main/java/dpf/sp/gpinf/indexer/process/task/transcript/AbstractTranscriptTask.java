@@ -11,7 +11,6 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
@@ -171,9 +170,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        transcriptConfig = ConfigurationManager.findObject(AudioTranscriptConfig.class);
+        transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
         if (conn == null) {
             createConnection();

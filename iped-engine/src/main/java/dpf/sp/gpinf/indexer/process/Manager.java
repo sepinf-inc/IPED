@@ -70,7 +70,6 @@ import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
@@ -151,9 +150,9 @@ public class Manager {
 
     public Manager(List<File> sources, File output, File palavras) {
 
-        this.localConfig = ConfigurationManager.findObject(LocalConfig.class);
-        this.analysisConfig = ConfigurationManager.findObject(AnalysisConfig.class);
-        this.indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+        this.localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+        this.analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        this.indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;

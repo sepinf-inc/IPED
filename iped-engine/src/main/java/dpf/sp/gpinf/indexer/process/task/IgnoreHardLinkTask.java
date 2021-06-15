@@ -1,11 +1,9 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
@@ -34,8 +32,8 @@ public class IgnoreHardLinkTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        FileSystemConfig config = ConfigurationManager.findObject(FileSystemConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        FileSystemConfig config = configurationManager.findObject(FileSystemConfig.class);
         taskEnabled = config.isIgnoreHardLinks();
     }
 

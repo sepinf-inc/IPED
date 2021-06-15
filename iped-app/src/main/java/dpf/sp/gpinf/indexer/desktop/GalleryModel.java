@@ -42,7 +42,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -111,8 +111,7 @@ public class GalleryModel extends AbstractTableModel {
         if (imgThumbTask == null) {
             try {
                 imgThumbTask = new ImageThumbTask();
-                imgThumbTask.init(Configuration.getInstance().properties,
-                        new File(Configuration.getInstance().configPath + "/conf")); //$NON-NLS-1$
+                imgThumbTask.init(ConfigurationManager.get());
                 thumbSize = imgThumbTask.getImageThumbConfig().getThumbSize();
                 galleryThreads = Math.min(imgThumbTask.getImageThumbConfig().getGalleryThreads(), MAX_TSK_POOL_SIZE);
                 logRendering = imgThumbTask.getImageThumbConfig().isLogGalleryRendering();

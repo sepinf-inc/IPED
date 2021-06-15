@@ -16,7 +16,7 @@ public class ConfiguredFSDirectory {
     private static Logger LOGGER = LoggerFactory.getLogger(ConfiguredFSDirectory.class);
 
     public static FSDirectory open(File indexDir) throws IOException {
-        IndexTaskConfig config = ConfigurationManager.findObject(IndexTaskConfig.class);
+        IndexTaskConfig config = ConfigurationManager.get().findObject(IndexTaskConfig.class);
 
         FSDirectory result;
         if (config.isUseNIOFSDirectory()) {

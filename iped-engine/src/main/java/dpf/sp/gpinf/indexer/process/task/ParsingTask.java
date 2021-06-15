@@ -28,7 +28,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -289,7 +288,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             times.put(parserName, time);
         }
 
-        SplitLargeBinaryConfig splitConfig = ConfigurationManager.findObject(SplitLargeBinaryConfig.class);
+        SplitLargeBinaryConfig splitConfig = ConfigurationManager.get()
+                .findObject(SplitLargeBinaryConfig.class);
         if (((Item) evidence).getTextCache() == null
                 && ((evidence.getLength() == null || evidence.getLength() < splitConfig.getMinItemSizeToFragment())
                         || IndexerDefaultParser.isSpecificParser(parser))) {
@@ -703,20 +703,21 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     }
 
     @Override
-    public void init(Properties confProps, File confDir) {
+    public void init(ConfigurationManager configurationManager) {
 
-        parsingConfig = ConfigurationManager.findObject(ParsingTaskConfig.class);
-        expandConfig = ConfigurationManager.findObject(CategoryToExpandConfig.class);
+        parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
+        expandConfig = configurationManager.findObject(CategoryToExpandConfig.class);
 
-        setupParsingOptions(parsingConfig);
+        setupParsingOptions(configurationManager);
 
         this.autoParser = new IndexerDefaultParser();
 
     }
 
-    public static void setupParsingOptions(ParsingTaskConfig parsingConfig) {
+    public static void setupParsingOptions(ConfigurationManager configurationManager) {
 
-        ParsersConfig parserConfig = ConfigurationManager.findObject(ParsersConfig.class);
+        ParsingTaskConfig parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
+        ParsersConfig parserConfig = configurationManager.findObject(ParsersConfig.class);
         System.setProperty("tika.config", parserConfig.getTmpConfigFile().getAbsolutePath());
 
         // most options below are set using sys props because they are also used by
@@ -732,12 +733,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         }
 
         String appRoot = Configuration.getInstance().appRoot;
-        ExternalParsersConfig extParsersConfig = ConfigurationManager.findObject(ExternalParsersConfig.class);
+        ExternalParsersConfig extParsersConfig = configurationManager.findObject(ExternalParsersConfig.class);
         System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
         System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, extParsersConfig.getTmpConfigFilePath());
         System.setProperty(IndexerDefaultParser.FALLBACK_PARSER_PROP, String.valueOf(parsingConfig.isParseUnknownFiles()));
         System.setProperty(IndexerDefaultParser.ERROR_PARSER_PROP, String.valueOf(parsingConfig.isParseCorruptedFiles()));
-        System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP, String.valueOf(ConfigurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)));
+        System.setProperty(IndexerDefaultParser.ENTROPY_TEST_PROP,
+                String.valueOf(configurationManager.getEnableTaskProperty(EntropyTask.ENABLE_PARAM)));
         System.setProperty(PDFOCRTextParser.SORT_PDF_CHARS, String.valueOf(parsingConfig.isSortPDFChars()));
         System.setProperty(PDFOCRTextParser.PROCESS_INLINE_IMAGES, String.valueOf(parsingConfig.isProcessImagesInPDFs()));
         System.setProperty(RawStringParser.MIN_STRING_SIZE, String.valueOf(parsingConfig.getMinRawStringSize()));
@@ -750,12 +752,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
         }
 
-        LocalConfig localConfig = ConfigurationManager.findObject(LocalConfig.class);
+        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
         if (localConfig.getRegRipperFolder() != null) {
             System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + localConfig.getRegRipperFolder()); //$NON-NLS-1$
         }
 
-        setupOCROptions(ConfigurationManager.findObject(OCRConfig.class));
+        setupOCROptions(configurationManager.findObject(OCRConfig.class));
 
     }
 

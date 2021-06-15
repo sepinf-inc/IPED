@@ -25,7 +25,6 @@ import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -84,15 +83,14 @@ public class ScriptTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File configPath) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         engine.put("caseData", this.caseData); //$NON-NLS-1$
         engine.put("moduleDir", this.output); //$NON-NLS-1$
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
-        engine.put("configuration", ConfigurationManager.getInstance()); //$NON-NLS-1$
 
-        inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
+        inv.invokeFunction("init", configurationManager); //$NON-NLS-1$
 
         numInstances++;
     }

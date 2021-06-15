@@ -11,7 +11,7 @@ function getName(){
 
 function getConfigurables() {}
 
-function init(confProps, configFolder){}
+function init(configuration) {}
 
 function finish(){}
 

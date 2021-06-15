@@ -54,7 +54,7 @@ public class Configuration {
 
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-    private static final String CONF_DIR = "conf"; //$NON-NLS-1$
+    public static final String CONF_DIR = "conf"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();

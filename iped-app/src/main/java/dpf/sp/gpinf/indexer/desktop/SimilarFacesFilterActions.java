@@ -233,10 +233,10 @@ public class SimilarFacesFilterActions {
                     File script = new File(moduleDir, SCRIPT_PATH);
                     task = new PythonTask(script);
                     task.setCaseData(new CaseData(0));
-                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager
-                            .getInstance().getTaskConfigurable(CONF_FILE);
+                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
+                            .getTaskConfigurable(CONF_FILE);
                     taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
-                    task.init(null, null);
+                    task.init(ConfigurationManager.get());
                     Runtime.getRuntime().addShutdownHook(new Thread() {
                         public void run() {
                             dispose();

@@ -1,9 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task.transcript;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -21,12 +19,12 @@ public class AudioTranscriptTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        AudioTranscriptConfig transcriptConfig = ConfigurationManager.findObject(AudioTranscriptConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        AudioTranscriptConfig transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
         impl = (AbstractTranscriptTask) Class.forName(transcriptConfig.getClassName()).newInstance();
         impl.setWorker(worker);
-        impl.init(confParams, confDir);
+        impl.init(configurationManager);
     }
 
     public boolean isEnabled() {

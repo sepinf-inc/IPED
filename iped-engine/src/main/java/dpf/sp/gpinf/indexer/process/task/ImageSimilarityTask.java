@@ -2,10 +2,8 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -54,10 +52,10 @@ public class ImageSimilarityTask extends AbstractTask {
         return Arrays.asList(new EnableTaskProperty(enableParam));
     }
 
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = ConfigurationManager.getEnableTaskProperty(enableParam);
+                taskEnabled = configurationManager.getEnableTaskProperty(enableParam);
 
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$

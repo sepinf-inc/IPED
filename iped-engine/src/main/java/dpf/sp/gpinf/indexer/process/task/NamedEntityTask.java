@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.InputStream;
 import java.io.Reader;
 import java.net.URL;
@@ -11,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.tika.metadata.Metadata;
@@ -56,9 +54,9 @@ public class NamedEntityTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        nerConfig = ConfigurationManager.findObject(NamedEntityTaskConfig.class);
+        nerConfig = configurationManager.findObject(NamedEntityTaskConfig.class);
 
         if (inited.getAndSet(true))
             return;

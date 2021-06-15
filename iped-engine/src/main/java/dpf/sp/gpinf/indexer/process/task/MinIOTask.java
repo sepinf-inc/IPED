@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,7 +10,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tika.Tika;
@@ -22,7 +20,6 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.network.util.ProxySever;
 import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
@@ -74,9 +71,9 @@ public class MinIOTask extends AbstractTask {
     private MinIOInputInputStreamFactory inputStreamFactory;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        minIOConfig = ConfigurationManager.findObject(MinIOConfig.class);
+        minIOConfig = configurationManager.findObject(MinIOConfig.class);
 
         if (!minIOConfig.isEnabled()) {
             return;
@@ -141,7 +138,7 @@ public class MinIOTask extends AbstractTask {
     }
 
     public static boolean isTaskEnabled() {
-        MinIOConfig minIOConfig = ConfigurationManager.findObject(MinIOConfig.class);
+        MinIOConfig minIOConfig = ConfigurationManager.get().findObject(MinIOConfig.class);
         return minIOConfig.isEnabled();
     }
 

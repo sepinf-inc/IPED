@@ -19,10 +19,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -107,10 +105,10 @@ public class KnownMetCarveTask extends BaseCarveTask {
      * principal.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                taskEnabled = ConfigurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 if (taskEnabled) {
                     logger.info("Task enabled."); //$NON-NLS-1$
                 } else {

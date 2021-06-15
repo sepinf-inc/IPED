@@ -173,7 +173,7 @@ public class IndexItem extends BasicProps {
             FieldType field = new FieldType();
             field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
             field.setOmitNorms(true);
-            IndexTaskConfig indexConfig = ConfigurationManager.findObject(IndexTaskConfig.class);
+            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             field.setStoreTermVectors(indexConfig.isStoreTermVectors());
             contentField = field;
         }

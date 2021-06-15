@@ -1,9 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
@@ -33,8 +31,8 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        splitConfig = ConfigurationManager.findObject(SplitLargeBinaryConfig.class);
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         autoParser = new IndexerDefaultParser();
     }
 

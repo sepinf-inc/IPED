@@ -262,7 +262,7 @@ public class IndexFiles {
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = ConfigurationManager.findObject(PluginConfig.class);
+                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
                 jars.add(Configuration.getInstance().tskJarFile);
 

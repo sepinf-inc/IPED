@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
-import java.util.Properties;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -26,6 +25,7 @@ import com.microsoft.cognitiveservices.speech.SpeechRecognizer;
 import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
 public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
@@ -39,9 +39,9 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
     private SpeechConfig config;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        super.init(confParams, confDir);
+        super.init(configurationManager);
 
         if (!transcriptConfig.isEnabled()) {
             return;

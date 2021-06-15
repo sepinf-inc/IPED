@@ -7,7 +7,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
 import java.util.TreeMap;
 
 import org.apache.tika.mime.MediaType;
@@ -210,10 +209,10 @@ public class CarverTask extends BaseCarveTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        CarverTaskConfig ctConfig = ConfigurationManager.findObject(CarverTaskConfig.class);
-        FileSystemConfig fsConfig = ConfigurationManager.findObject(FileSystemConfig.class);
+        CarverTaskConfig ctConfig = configurationManager.findObject(CarverTaskConfig.class);
+        FileSystemConfig fsConfig = configurationManager.findObject(FileSystemConfig.class);
 
         enableCarving = ctConfig.isEnabled();
 
@@ -224,7 +223,7 @@ public class CarverTask extends BaseCarveTask {
 
         if (carverConfig == null) {
             carverConfig = ctConfig.getConfiguration();
-            carverConfig.configTask(confDir, carvedItemListener);
+            carverConfig.configListener(carvedItemListener);
             carverTypes = carverConfig.getCarverTypes();
             ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
         }
@@ -252,7 +251,8 @@ public class CarverTask extends BaseCarveTask {
         try {
             if (carver == null) {
                 if (ct.getCarverClass().equals(JSCarver.class.getName())) {
-                    carver = carverConfig.createCarverFromJSName(ct.getCarverScript());
+                    File script = new File(new File(this.output, "conf"), ct.getCarverScript());
+                    carver = carverConfig.createCarverFromJSName(script);
                     carver.registerCarvedItemListener(getCarvedItemListener());
                 } else {
                     Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());
