@@ -913,6 +913,9 @@ public class UfedXmlReader extends DataSourceReader {
                 String value = chars.toString().trim();
                 if (!value.isEmpty()) {
                     String extractiontName = extractionInfoMap.get(currentNode.atts.get("sourceExtraction"));
+                    if (extractiontName == null) {
+                        extractiontName = "-";
+                    }
                     deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
                 }
             }
