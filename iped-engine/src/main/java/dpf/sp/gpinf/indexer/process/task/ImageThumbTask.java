@@ -30,6 +30,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
+import iped3.util.MediaTypes;
 
 public class ImageThumbTask extends ThumbTask {
 
@@ -331,7 +332,7 @@ public class ImageThumbTask extends ThumbTask {
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     BooleanWrapper renderException = new BooleanWrapper();
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
-                            renderException);
+                            renderException, MediaTypes.getMimeTypeIfJBIG2(evidence));
                     if (img != null && renderException.value)
                         evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
