@@ -1,0 +1,37 @@
+########################################################################
+# OCR Settings
+########################################################################
+
+# Enables OCR in scanned images and PDFs. It can strongly increase processing time.
+# Results depend on the quality and resolution of the images, and on the size and type of the fonts used.
+enableOCR = false
+
+# Optionally, use the parameter -ocr "bookmark_name" to restrict the OCR to a particular bookmark (can be used multiple times)
+# Dictionary language to be used for OCR. Portuguese (por) and English (eng) are included. May be used in tandem: por+eng
+OCRLanguage = por
+
+# Tesseract layout analysis mode, e.g.: 1- with OSD (orientation & script detection); 3 - no OSD (Tesseract default) 
+pageSegMode = 1
+
+# Minimum file size (bytes) to submit to OCR
+minFileSize2OCR = 10000
+
+# Maximum file size (bytes) to submit to OCR
+maxFileSize2OCR = 100000000
+
+# Resolution (dpi) for PDF to image conversion. Increase if the document's fonts are small
+pdfToImgResolution = 250
+
+# Maximum characters of text per page a PDF can contain to be submitted to OCR
+maxPDFTextSize2OCR = 100
+
+# Library for converting PDFs to image before OCR.
+# Possible Values: pdfbox or icepdf (usually faster)
+pdfToImgLib = icepdf
+
+# Performs the conversion of PDFs to image in another process, isolating OutOfMemoryErrors
+# and CPU usage by unfinished threads. More stable, but makes the OCR slower.
+externalPdfToImgConv = true
+
+# Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
+externalConvMaxMem = 512M
