@@ -33,7 +33,9 @@ public class AppMain {
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 
     File casePath;
-    File testPath;// = new File("E:\\teste\\noteAcer-forensic-3.15-2");
+
+    // configure to debug the analysis UI with some case
+    File testPath;// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
@@ -83,11 +85,7 @@ public class AppMain {
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
             casePath = testPath;
-            return;
-        }
-
-        if ("true".equals(System.getProperty("Debugging"))) {
-            casePath = new File(System.getProperty("user.dir"));
+            libDir = new File(casePath + "/indexador/lib");
             return;
         }
 
@@ -172,7 +170,7 @@ public class AppMain {
                     LOGGER.info(Versao.APP_NAME);
             }
 
-            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
+            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();

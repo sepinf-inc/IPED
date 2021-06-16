@@ -28,7 +28,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -53,6 +52,8 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.tika.io.TemporaryResources;
+import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
@@ -64,7 +65,6 @@ import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
-import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -503,7 +503,12 @@ public class ExportFileTask extends AbstractTask {
         synchronized (hashLock) {
             if (hash == null || !(fileExists = outputFile.exists())) {
                 BufferedOutputStream bos = null;
-                try {
+                try (TemporaryResources tmp = new TemporaryResources()) {
+
+                    TikaInputStream tis = TikaInputStream.get(inputStream, tmp);
+                    InputStream poiInputStream = Util.getPOIFSInputStream(tis);
+                    inputStream = poiInputStream != null ? poiInputStream : tis;
+
                     long total = 0;
                     int i = 0;
                     while (i != -1 && !Thread.currentThread().isInterrupted()) {
@@ -619,6 +624,7 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
+        evidence.setExportedFile(null);
         evidence.setFile(null);
         evidence.setFileOffset(-1);
         evidence.setLength((long) len);

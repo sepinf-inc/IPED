@@ -2,7 +2,6 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -10,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -21,17 +20,14 @@ import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
-import jep.SharedInterpreter;
 
 public class PythonTask extends AbstractTask {
 
-    private static final String JEP_NOT_FOUND = Messages.getString("PythonTask.JepNotFound");
-    private static final String DISABLED = Messages.getString("PythonTask.ModuleDisabled");
-    private static final String SEE_MANUAL = Messages.getString("PythonTask.SeeManual");
+    private static final String DISABLED = PythonParser.DISABLED;
+    private static final String SEE_MANUAL = PythonParser.SEE_MANUAL;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PythonTask.class);
-    private static volatile JepException jepException = null;
-    private static final Map<Long, Jep> jepPerThread = new HashMap<>();
+    private static Map<File, JepException> jepExceptionPerScript = new ConcurrentHashMap<>();
     private static volatile File lastInstalledScript;
     private static volatile IPEDSource ipedCase;
     private static volatile int numInstances = 0;
@@ -44,6 +40,7 @@ public class PythonTask extends AbstractTask {
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
     private boolean scriptLoaded = false;
+    private boolean sendToNextTaskExists = true;
 
     public PythonTask(File scriptFile) {
         this.scriptFile = scriptFile;
@@ -88,40 +85,15 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
-        synchronized (jepPerThread) {
-            Jep jep = jepPerThread.get(Thread.currentThread().getId());
-            if (jep == null) {
-                jep = getNewJep();
-                jepPerThread.put(Thread.currentThread().getId(), jep);
-            }
-            if (!scriptLoaded) {
-                loadScript(jep);
-                scriptLoaded = true;
-            }
-            return jep;
+        Jep jep = PythonParser.getJep();
+        if (!scriptLoaded) {
+            loadScript(jep);
+            scriptLoaded = true;
         }
+        return jep;
     }
 
-    private Jep getNewJep() throws JepException {
-
-        Jep jep;
-        try {
-            jep = new SharedInterpreter();
-
-        } catch (UnsatisfiedLinkError e) {
-            if (jepException == null) {
-                String msg = JEP_NOT_FOUND + SEE_MANUAL;
-                jepException = new JepException(msg, e);
-                LOGGER.error(msg);
-                jepException.printStackTrace();
-            }
-            isEnabled = false;
-            return null;
-        }
-
-        jep.eval("from jep import redirect_streams");
-        jep.eval("redirect_streams.setup()");
-
+    private void setGlobalVars(Jep jep) throws JepException {
         setGlobalVar(jep, "caseData", this.caseData); //$NON-NLS-1$
         setGlobalVar(jep, "moduleDir", this.output); //$NON-NLS-1$
         setGlobalVar(jep, "worker", this.worker); //$NON-NLS-1$
@@ -133,11 +105,6 @@ public class PythonTask extends AbstractTask {
         LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
                 .iterator().next();
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
-
-        jep.eval("import sys");
-        jep.eval("sys.path.append('" + scriptFile.getParentFile().getAbsolutePath().replace("\\", "\\\\") + "')");
-
-        return jep;
     }
 
     private void setGlobalVar(Jep jep, String name, Object obj) throws JepException {
@@ -155,6 +122,11 @@ public class PythonTask extends AbstractTask {
         if (jep == null) {
             return;
         }
+
+        setGlobalVars(jep);
+
+        jep.eval("import sys");
+        jep.eval("sys.path.append('" + scriptFile.getParentFile().getAbsolutePath().replace("\\", "\\\\") + "')");
 
         String className = scriptFile.getName().replace(".py","");
         moduleName = className;
@@ -215,15 +187,19 @@ public class PythonTask extends AbstractTask {
     public void init(Properties confParams, File confDir) throws Exception {
         this.confParams = confParams;
         this.confDir = confDir;
-        try (Jep jep = getNewJep()) {
-            loadScript(jep);
-
+        try {
+            Jep jep = PythonParser.getJep();
+            if (jep == null) {
+                isEnabled = false;
+            } else {
+                loadScript(jep);
+            }
         } catch (JepException e) {
-            if (jepException == null) {
+            if (jepExceptionPerScript.get(scriptFile) == null) {
                 String msg = e.getMessage() + ". " + scriptFile.getName() + DISABLED + SEE_MANUAL;
-                jepException = new JepException(msg, e);
                 LOGGER.error(msg);
-                jepException.printStackTrace();
+                e.printStackTrace();
+                jepExceptionPerScript.put(scriptFile, e);
             }
             isEnabled = false;
         }
@@ -250,7 +226,7 @@ public class PythonTask extends AbstractTask {
             ipedCase.close();
         }
 
-        if (jepException == null && lastInstalledScript.equals(scriptFile)) {
+        if (isEnabled && lastInstalledScript.equals(scriptFile)) {
             getJep().close();
         }
 
@@ -260,12 +236,10 @@ public class PythonTask extends AbstractTask {
         super.sendToNextTask(item);
     }
     
-    private boolean methodExists = true;
-    
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
 
-        if (!isEnabled || !methodExists) {
+        if (!isEnabled || !sendToNextTaskExists) {
             super.sendToNextTask(item);
             return;
         }
@@ -274,7 +248,7 @@ public class PythonTask extends AbstractTask {
             
         }catch(JepException e) {
             if (e.toString().contains(" has no attribute ")) {
-                methodExists = false;
+                sendToNextTaskExists = false;
                 super.sendToNextTask(item);
             } else {
                 throw e;
@@ -301,9 +275,6 @@ public class PythonTask extends AbstractTask {
 
     @Override
     public void process(IItem item) throws Exception {
-
-        if (jepException != null)
-            throw jepException;
 
         try {
             getJep().invoke(getInstanceMethod("process"), item); //$NON-NLS-1$

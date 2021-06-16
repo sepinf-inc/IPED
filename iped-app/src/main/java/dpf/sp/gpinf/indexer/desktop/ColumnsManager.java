@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -47,8 +48,10 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.LanguageDetectTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
+import dpf.sp.gpinf.indexer.process.task.PhotoDNALookup;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
@@ -69,12 +72,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private static final File globalCols = getGlobalColsFile();
 
     private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155,
-            250, 2000);
+            155, 155, 250, 2000);
 
-    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"), //$NON-NLS-1$
-            Messages.getString("ColumnsManager.Advanced"), Messages.getString("ColumnsManager.Message"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.Audio"), Messages.getString("ColumnsManager.Image"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
+    public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
+            Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.HTML"), Messages.getString("ColumnsManager.Regex"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -85,7 +88,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
-        String locale = System.getProperty("iped-locale"); //$NON-NLS-1$
+        String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP); // $NON-NLS-1$
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
@@ -94,7 +97,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
             IndexItem.NAME, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
-            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.RECORDDATE, IndexItem.HASH, IndexItem.PATH };
+            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.RECORDDATE, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
+            IndexItem.HASH, IndexItem.PATH };
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
             IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
@@ -394,8 +398,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                     if (reader == null) {
                         reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
                         bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField("_num_" + field); //$NON-NLS-1$
-                        bits2 = reader.getDocsWithField("_" + field); //$NON-NLS-1$
+                        bits1 = reader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
+                        bits2 = reader.getDocsWithField(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
                     }
                     int doc = docs[i] - docBases[baseOrd];
                     if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
@@ -505,6 +509,28 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }
     }
 
+    public void moveTimelineColumns(int newPos) {
+        String[] timeFields = { BasicProps.TIMESTAMP, BasicProps.TIME_EVENT };
+        for (int i = 0; i < App.get().resultsTable.getColumnCount(); i++) {
+            TableColumn col = App.get().resultsTable.getColumnModel().getColumn(i);
+            String colName = col.getHeaderValue().toString();
+            for (int k = 0; k < timeFields.length; k++) {
+                if (colName.equalsIgnoreCase(timeFields[k])) {
+                    if (!colState.visibleFields.contains(timeFields[k])) {
+                        updateGUICol(colName, true);
+                    }
+                    App.get().resultsTable.moveColumn(i, newPos);
+                    if (newPos > i) {
+                        i--;
+                    } else {
+                        newPos++;
+                    }
+                    timeFields[k] = null;
+                }
+            }
+        }
+    }
+
     public void resetToLastLayout() {
         File cols = this.getColStateFile();
         try {
@@ -518,6 +544,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     public void resetToDefaultLayout() {
+        // resetColumns(Arrays.asList(defaultFields).stream().map(f ->
+        // BasicProps.getLocalizedField(f))
+        // .collect(Collectors.toList()), defaultWidths);
         resetColumns(Arrays.asList(defaultFields), defaultWidths);
     }
 
@@ -534,6 +563,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         int newPos = 2;
         for (String col : newCols) {
+            col = BasicProps.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
                 if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
@@ -575,12 +605,16 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> htmlFields = new ArrayList<String>();
         ArrayList<String> nerFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
+        ArrayList<String> hashDbFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
                 regexFields.add(f);
             else if (f.startsWith(LanguageDetectTask.LANGUAGE_PREFIX))
                 languageFields.add(f);
+            else if (f.startsWith(HashDBLookupTask.ATTRIBUTES_PREFIX)
+                    || f.startsWith(PhotoDNALookup.PHOTO_DNA_HIT_PREFIX))
+                hashDbFields.add(f);
             else
                 extraAttrs.add(f);
         }
@@ -604,7 +638,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 ufedFields.add(f);
         }
 
-        String[][] customGroups = new String[][] { defaultFields.clone(), extraAttrs.toArray(new String[0]), email,
+        String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
+                extraAttrs.toArray(new String[0]), email,
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
@@ -648,7 +683,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(f);
+                check.setText(BasicProps.getLocalizedField(f));
                 if (colState.visibleFields.contains(f))
                     check.setSelected(true);
                 check.addActionListener(this);
@@ -677,6 +712,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateGUICol(String colName, boolean insert) {
 
+        colName = BasicProps.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
             colState.visibleFields.add(colName);

@@ -8,6 +8,7 @@ import org.apache.tika.exception.TikaException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
@@ -95,6 +96,16 @@ public abstract class AbstractTask {
             this.caseData = worker.caseData;
             this.output = worker.output;
         }
+    }
+
+    public boolean hasIpedDatasource() {
+        CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+        for (File source : args.getDatasources()) {
+            if (source.getName().endsWith(".iped")) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -250,7 +261,7 @@ public abstract class AbstractTask {
     }
 
     /**
-     * Indica se itens ignorados, como KFF ignorable, devem ser processados pela
+     * Indica se itens ignorados (hash:status = ignore), devem ser processados pela
      * tarefa ou não. O valor padrão é false, assim itens ignorados não são
      * processados pelas tarefas seguintes. Tarefas específicas podem sobrescrever
      * esse comportamento.
@@ -275,5 +286,14 @@ public abstract class AbstractTask {
 
     public String getName() {
         return this.getClass().getSimpleName();
+    }
+    
+    /**
+     * This method can be overwritten by concrete tasks to detect when the processing is interrupted
+     * by the user (e.g. closing the application window) when the tasking *is running* (i.e. it is the 
+     * active task of a worker), and release resources (e.g. stop external processes). 
+     * Default implementation does nothing. 
+     */
+    public void interrupted() {
     }
 }

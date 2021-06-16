@@ -296,7 +296,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) != 0) {
+        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) != 0) {
             return;
         }
 
@@ -316,6 +316,10 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             return;
         }
 
+        if (GerenciadorMarcadores.get().hasSingleKeyShortcut()) {
+            return;
+        }
+        
         long t = System.currentTimeMillis();
         if (t - lastKeyTime > 500) {
             lastKeyString = ""; //$NON-NLS-1$

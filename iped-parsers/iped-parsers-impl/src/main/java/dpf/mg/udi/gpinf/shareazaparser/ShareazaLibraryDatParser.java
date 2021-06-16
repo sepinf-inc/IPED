@@ -93,7 +93,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("div");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("div");
 
         xhtml.startElement("table"); //$NON-NLS-1$
@@ -120,12 +120,12 @@ public class ShareazaLibraryDatParser extends AbstractParser {
             numRegistros += countLibraryFiles(folder);
         metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numRegistros));
 
-        int kffHits = 0;
+        int hashDBHits = 0;
         for (LibraryFolder folder : library.getLibraryFolders())
-            kffHits += countKffHits(folder);
+            hashDBHits += countHashDBHits(folder);
 
-        if (kffHits > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHits));
+        if (hashDBHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
 
     }
 
@@ -141,13 +141,13 @@ public class ShareazaLibraryDatParser extends AbstractParser {
                 metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
     }
 
-    private int countKffHits(LibraryFolder folder) {
+    private int countHashDBHits(LibraryFolder folder) {
         int result = 0;
         for (LibraryFolder f : folder.getLibraryFolders())
-            result += countKffHits(f);
+            result += countHashDBHits(f);
 
         for (LibraryFile file : folder.getLibraryFiles())
-            if (file.isKffHit())
+            if (file.isHashDBHit())
                 result++;
 
         return result;

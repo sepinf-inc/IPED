@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -50,10 +51,10 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -127,7 +128,9 @@ public class TelegramParser extends SQLite3DBParser {
             ParseContext context) throws IOException, SAXException, TikaException {
         try (Connection conn = getConnection(stream, metadata, context)) {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            Extractor e = new Extractor(conn);
+            DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS)
+                    .newInstance();
+            Extractor e = new Extractor(conn, d);
             e.setSearcher(searcher);
             e.extractContacts();
             ReportGenerator r = new ReportGenerator(searcher);
@@ -277,9 +280,9 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ATTACHMENT.toString());
                 meta.set(ExtraProperties.LINKED_ITEMS, BasicProps.HASH + ":" + m.getMediaHash()); //$NON-NLS-1$
                 if (!m.getChildPornSets().isEmpty()) {
-                    meta.set("kffstatus", "pedo");
+                    meta.set("hash:status", "pedo");
                     for (String set : m.getChildPornSets()) {
-                        meta.add("kffgroup", set);
+                        meta.add("hash:set", set);
                     }
                 }
                 // TODO store thumb in metadata?
@@ -292,7 +295,7 @@ public class TelegramParser extends SQLite3DBParser {
                 meta.add(ExtraProperties.MESSAGE_BODY, m.getType().toUpperCase());
             }
 
-            meta.set(BasicProps.HASH, "");
+            meta.set(BasicProps.LENGTH, "");
             extractor.parseEmbedded(new EmptyInputStream(), handler, meta, false);
         }
     }
@@ -392,10 +395,12 @@ public class TelegramParser extends SQLite3DBParser {
         XPath xpath = xPathfactory.newXPath();
         XPathExpression expr = xpath.compile("//string[@name=\"user\"]");
         NodeList nl = (NodeList) expr.evaluate(doc, XPathConstants.NODESET);
+        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(Extractor.DECODER_CLASS).newInstance();
+
         if (nl.getLength() > 0) {
             Element e = (Element) nl.item(0);
             byte[] b = DatatypeConverter.parseBase64Binary(e.getTextContent());
-            Contact user = Contact.getContactFromBytes(b);
+            Contact user = Contact.getContactFromBytes(b, d);
             return user;
         }
         return null;

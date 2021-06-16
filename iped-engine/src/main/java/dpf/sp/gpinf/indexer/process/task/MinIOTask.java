@@ -2,18 +2,17 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.tika.Tika;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +66,9 @@ public class MinIOTask extends AbstractTask {
     private static String server = "http://127.0.0.1:9000";
     private static String accessKey;
     private static String secretKey;
-    private static String bucket;
+    private static String bucket = null;
+
+    private static Tika tika;
 
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
@@ -91,8 +92,9 @@ public class MinIOTask extends AbstractTask {
         server = host + ":" + port;
 
         // case name is default bucket name
-        bucket = output.getParentFile().getName().toLowerCase();
-
+        if (bucket == null) {
+            bucket = output.getParentFile().getName().toLowerCase();
+        }
         loadCredentials(caseData);
 
         minioClient = MinioClient.builder().endpoint(server).credentials(accessKey, secretKey).build();
@@ -147,7 +149,62 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        
+
+    }
+
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
+        boolean exists = false;
+        try {
+            ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
+            exists = true;
+
+        } catch (ErrorResponseException e) {
+            ErrorCode code = e.errorResponse().errorCode();
+            if (code != ErrorCode.NO_SUCH_OBJECT && code != ErrorCode.NO_SUCH_KEY) {
+                throw e;
+            }
+        }
+
+        String bucketPath = buildPath(hash);
+        // if preview saves in a preview folder
+        if (preview) {
+            bucketPath = "preview/" + hash;
+        }
+        String fullPath = bucket + "/" + bucketPath;
+
+        if (exists) {
+            return fullPath;
+        }
+
+        // create directory structure
+        if (FOLDER_LEVELS > 0) {
+            String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(folder)
+                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1).build());
+        }
+
+        try {
+            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
+                    .contentType(mediatype).build());
+
+            return fullPath;
+
+        } catch (Exception e) {
+            throw new Exception("Error when uploading object ", e);
+        }
+
+    }
+
+    private static String getMimeType(String name) {
+        if (tika == null) {
+            synchronized (MinIOTask.class) {
+                if (tika == null) {
+                    tika = new Tika();
+                }
+            }
+        }
+        return tika.detect(name);
     }
 
     @Override
@@ -163,44 +220,30 @@ public class MinIOTask extends AbstractTask {
         // disable blocking proxy possibly enabled by HtmlViewer
         ProxySever.get().disable();
 
-        boolean exists = false;
-        try {
-            ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
-            exists = true;
-
-        } catch (ErrorResponseException e) {
-            ErrorCode code = e.errorResponse().errorCode();
-            if (code != ErrorCode.NO_SUCH_OBJECT && code != ErrorCode.NO_SUCH_KEY) {
-                throw e;
+        try (InputStream is = item.getBufferedStream()) {
+            String fullPath = insertItem(hash, is, item.getLength(), item.getMediaType().toString(), false);
+            if (fullPath != null) {
+                updateDataSource(item, fullPath);
             }
-        }
-
-        String bucketPath = buildPath(hash);
-        String fullPath = bucket + "/" + bucketPath;
-
-        if (exists) {
-            updateDataSource(item, fullPath);
-            return;
-        }
-
-        // create directory structure
-        if (FOLDER_LEVELS > 0) {
-            String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
-            minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(folder)
-                    .stream(new ByteArrayInputStream(new byte[0]), 0, -1).build());
-        }
-
-        try {
-            // Upload the file to the bucket with putObject
-            try (InputStream is = item.getBufferedStream()) {
-                minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath)
-                        .stream(is, item.getLength(), -1).contentType(item.getMediaType().toString()).build());
-
-            }
-            updateDataSource(item, fullPath);
-
         } catch (Exception e) {
-            logger.error("Error when uploading object " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+            // TODO: handle exception
+            logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
+        }
+        if (item.getViewFile() != null) {
+            try (InputStream is = new FileInputStream(item.getViewFile())) {
+                String fullPath = insertItem(hash, is, item.getViewFile().length(),
+                        getMimeType(item.getViewFile().getName()), true);
+                if (fullPath != null) {
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
+                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
+                }
+            } catch (Exception e) {
+                // TODO: handle exception
+                logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
+                        + item.getViewFile().length() + " bytes)", e);
+            }
         }
 
     }
@@ -298,9 +341,8 @@ public class MinIOTask extends AbstractTask {
                 try {
                     size = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(id).build()).length();
                 } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
-                        | InvalidBucketNameException
-                        | InvalidResponseException | NoSuchAlgorithmException | ServerException
-                        | XmlParserException e) {
+                        | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException
+                        | ServerException | XmlParserException e) {
                     throw new IOException(e);
                 }
             }
@@ -345,9 +387,9 @@ public class MinIOTask extends AbstractTask {
             try {
                 return minioClient.getObject(bucket, id, pos);
 
-            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException
-                    | InternalException | InvalidBucketNameException | InvalidResponseException
-                    | NoSuchAlgorithmException | ServerException | XmlParserException e) {
+            } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
+                    | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
+                    | XmlParserException e) {
                 throw new IOException(e);
             }
         }

@@ -135,8 +135,8 @@ public class ReportGenerator {
             if (thumb != null) {
                 if (getTitle(message).equals("video")) //$NON-NLS-1$
                     out.println(Messages.getString("WhatsAppReport.Video") + ":<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                out.println("<img class=\"thumb\" src=\""); //$NON-NLS-1$
-                out.println("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                out.print("<img class=\"thumb\" src=\""); //$NON-NLS-1$
+                out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
             } else if (message.getMediaMime() != null) {
@@ -171,7 +171,7 @@ public class ReportGenerator {
         }
 
         if (!message.getChildPornSets().isEmpty()) {
-            out.print("<p><i>" + Messages.getString("WhatsAppReport.LEDKFF") + " "
+            out.print("<p><i>" + Messages.getString("WhatsAppReport.FoundInPedoHashDB") + " "
                     + message.getChildPornSets().toString() + "</i></p>");
         }
 

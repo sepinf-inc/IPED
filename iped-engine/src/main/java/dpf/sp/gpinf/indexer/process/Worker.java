@@ -286,6 +286,9 @@ public class Worker extends Thread {
         if (evidence == null) {
             LOGGER.info("{} finished.", getName()); //$NON-NLS-1$
         } else {
+            AbstractTask task = runningTask;
+            if (task != null)
+                task.interrupted();
             LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
         }
     }

@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -310,8 +311,7 @@ public class DIETask extends AbstractTask {
      * Check if the evidence is a video.
      */
     public static boolean isVideoType(MediaType mediaType) {
-        return mediaType.getType().equals("video") //$NON-NLS-1$
-                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+        return MetadataUtil.isVideoType(mediaType);
     }
     
 
@@ -340,7 +340,7 @@ public class DIETask extends AbstractTask {
             if (img == null) {
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize(), evidence.getLength());
+                    img = graphicsMagicConverter.getImage(stream, die.getExpectedImageSize(), false, evidence.getLength());
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }

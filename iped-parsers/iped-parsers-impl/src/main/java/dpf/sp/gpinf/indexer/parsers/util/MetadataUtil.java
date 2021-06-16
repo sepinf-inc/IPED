@@ -12,6 +12,7 @@ import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
@@ -36,6 +37,32 @@ public class MetadataUtil {
     private static Map<String, String> metaCaseMap = new HashMap<String, String>();
 
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
+
+    private static final Map<String, String> renameMap = getRenameMap();
+
+    private static final Set<String> singleValueKeys = getSingleValKeys();
+
+    private static Set<String> getSingleValKeys() {
+        Set<String> singleValueKeys = new HashSet<>();
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Make");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Model");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Height");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return singleValueKeys;
+    }
+
+    private static Map<String, String> getRenameMap() {
+        Map<String, String> rename = new HashMap<String, String>();
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MAKE.getName(), ExtraProperties.IMAGE_META_PREFIX + "Make");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MODEL.getName(), ExtraProperties.IMAGE_META_PREFIX + "Model");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Width");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return rename;
+    }
 
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
@@ -158,6 +185,7 @@ public class MetadataUtil {
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
         removeIgnorable(metadata);
+        removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
@@ -166,6 +194,8 @@ public class MetadataUtil {
         prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
+        renameKeys(metadata);
+        removeExtraValsFromSingleValueKeys(metadata);
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {
@@ -175,6 +205,24 @@ public class MetadataUtil {
                 for (Property p : prop.getSecondaryExtractProperties())
                     metadata.remove(p.getName());
             }
+        }
+    }
+
+    private static void removeInvalidGPSMeta(Metadata metadata) {
+        String lat = metadata.get(Metadata.LATITUDE);
+        String lon = metadata.get(Metadata.LONGITUDE);
+        boolean remove = false;
+        try {
+            if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
+                remove = true;
+            }
+        } catch (NumberFormatException e) {
+            remove = true;
+        }
+        if (remove) {
+            metadata.remove(Metadata.LATITUDE.getName());
+            metadata.remove(Metadata.LONGITUDE.getName());
+            metadata.remove(Metadata.ALTITUDE.getName());
         }
     }
 
@@ -344,8 +392,14 @@ public class MetadataUtil {
             includePrefix(metadata, ExtraProperties.IMAGE_META_PREFIX);
     }
 
+    public static boolean isVideoType(MediaType mediaType) {
+        return mediaType.getType().equals("video") //$NON-NLS-1$
+                || mediaType.getBaseType().toString().equals("application/vnd.rn-realmedia"); //$NON-NLS-1$
+    }
+
     private static void prefixVideoMetadata(Metadata metadata) {
-        if (metadata.get(Metadata.CONTENT_TYPE).startsWith("video")) //$NON-NLS-1$
+        if (isVideoType(MediaType.parse(metadata.get(Metadata.CONTENT_TYPE)))
+                || isVideoType(MediaType.parse(metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE))))
             includePrefix(metadata, ExtraProperties.VIDEO_META_PREFIX);
     }
 
@@ -424,6 +478,29 @@ public class MetadataUtil {
             }
         }
         return clone;
+    }
+    
+    private static void renameKeys(Metadata metadata) {
+        for (String oldName : renameMap.keySet()) {
+            String[] values = metadata.getValues(oldName);
+            if (values != null) {
+                metadata.remove(oldName);
+                String newName = renameMap.get(oldName);
+                for (String val : values) {
+                    metadata.add(newName, val);
+                }
+            }
+        }
+    }
+
+    // currently keeps just last value, how to choose?
+    private static void removeExtraValsFromSingleValueKeys(Metadata metadata) {
+        for (String key : singleValueKeys) {
+            String[] values = metadata.getValues(key);
+            if (values != null && values.length > 1) {
+                metadata.set(key, values[values.length - 1]);
+            }
+        }
     }
 
 }

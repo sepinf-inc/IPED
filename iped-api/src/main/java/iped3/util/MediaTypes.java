@@ -14,6 +14,7 @@ public class MediaTypes {
     public static final MediaType UFED_CALL_MIME = MediaType.application("x-ufed-call"); //$NON-NLS-1$
     public static final MediaType UFED_SMS_MIME = MediaType.application("x-ufed-sms"); //$NON-NLS-1$
     public static final MediaType UFED_MMS_MIME = MediaType.application("x-ufed-mms"); //$NON-NLS-1$
+    public static final MediaType UFED_DEVICE_INFO = MediaType.application("x-ufed-deviceinfo"); //$NON-NLS-1$
     public static final MediaType UNALLOCATED = MediaType.application("x-unallocated"); //$NON-NLS-1$
 
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
@@ -42,6 +43,16 @@ public class MediaTypes {
 
     public static boolean isInstanceOf(MediaType instance, MediaType parent) {
         return instance != null && (instance.equals(parent) || isInstanceOf(getParentType(instance), parent));
+    }
+
+    public static boolean isMetadataEntryType(MediaType type) {
+        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
+            if (MediaTypes.METADATA_ENTRY.equals(type)) {
+                return true;
+            }
+            type = getParentType(type);
+        }
+        return false;
     }
 
 }

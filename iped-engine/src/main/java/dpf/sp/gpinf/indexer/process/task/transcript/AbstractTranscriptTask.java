@@ -40,6 +40,8 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     private static final String LANG_KEY = "language";
 
+    private static final String LANG_VAL_AUTO = "auto";
+
     private static final String MIMES_KEY = "mimesToProcess";
 
     private static final String CONVERT_CMD_KEY = "convertCommand";
@@ -198,9 +200,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         props.load(new File(confDir, CONF_FILE));
 
-        String langs = props.getProperty(LANG_KEY);
-        for (String lang : langs.split(";")) {
-            languages.add(lang.trim());
+        String langs = props.getProperty(LANG_KEY).trim();
+        if (LANG_VAL_AUTO.equalsIgnoreCase(langs)) {
+            languages.add(System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP));
+        } else {
+            for (String lang : langs.split(";")) {
+                languages.add(lang.trim());
+            }
         }
 
         convertCmd = props.getProperty(CONVERT_CMD_KEY).trim();
