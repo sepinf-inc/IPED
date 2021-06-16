@@ -73,7 +73,8 @@ public class HashDBLookupTask extends AbstractTask {
         synchronized (init) {
             if (!init.get()) {
                 HashDBLookupConfig hashDBConfig = configurationManager.findObject(HashDBLookupConfig.class);
-                if (hashDBConfig.isEnabled()) {
+                taskEnabled = hashDBConfig.isEnabled();
+                if (taskEnabled) {
                     HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
                     if (!hashConfig.isEnabled()) {
                         logger.warn("No hash enabled.");
