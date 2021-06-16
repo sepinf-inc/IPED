@@ -108,6 +108,8 @@ public class OCRParser extends AbstractParser {
 
     private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id LIKE ?;"; //$NON-NLS-1$
 
+    private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
+
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     public static final String LANGUAGE_PROP = "ocr.language"; //$NON-NLS-1$
@@ -391,19 +393,32 @@ public class OCRParser extends AbstractParser {
                     tmpOutput = new File(outputBase, "ocr-" + random.nextLong() + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
 
                     String mediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-                    if (mediaType.equals("application/pdf")) //$NON-NLS-1$
+                    if (mediaType.equals("application/pdf")) { //$NON-NLS-1$
                         parsePDF(xhtml, tmp, input, tmpOutput);
 
-                    else if (mediaType.equals("image/tiff")) //$NON-NLS-1$
-                        parseTiff(xhtml, tmp, input, tmpOutput);
-
-                    else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
-                            || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input)))
+                    } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
+                            || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input))) {
                         parseNonStandard(xhtml, input, tmpOutput);
                     
-                    else
-                        parse(xhtml, input, tmpOutput);
+                    } else {
+                        try {
+                            if (mediaType.equals("image/tiff")) {
+                                // tiff needs to be OCRed per page to avoid timeouts
+                                parseTiff(xhtml, tmp, input, tmpOutput);
+                            } else {
+                                parse(xhtml, input, tmpOutput);
+                            }
 
+                        } catch (TikaException e) {
+                            if (e.toString().contains(TESSERACT_ERROR_MSG)) {
+                                // retry possible corrupted images converting them before OCR
+                                parseNonStandard(xhtml, input, tmpOutput);
+                            } else {
+                                throw e;
+                            }
+                        }
+                    }
+                    
                     byte[] bytes;
                     if (tmpOutput.exists()) {
                         bytes = Files.readAllBytes(tmpOutput.toPath());
@@ -637,7 +652,7 @@ public class OCRParser extends AbstractParser {
         try {
             int status = process.waitFor();
             if (status != 0) {
-                throw new TikaException("tesseract returned error code " + status);
+                throw new TikaException(TESSERACT_ERROR_MSG + status);
             }
         } catch (InterruptedException e) {
             // System.out.println(new Date() + "\t[AVISO]\t" +
