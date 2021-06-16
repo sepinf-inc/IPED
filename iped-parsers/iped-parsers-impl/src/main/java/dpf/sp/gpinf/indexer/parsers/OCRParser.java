@@ -71,6 +71,7 @@ import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import iped3.util.MediaTypes;
 
 /**
  * Parser OCR para imagens e PDFs via Tesseract. No caso de PDFs, é gerada uma
@@ -203,6 +204,7 @@ public class OCRParser extends AbstractParser {
         types.add(MediaType.image("x-jp2-codestream")); //$NON-NLS-1$
         types.add(MediaType.image("x-rgb")); //$NON-NLS-1$
         types.add(MediaType.image("x-xbitmap")); //$NON-NLS-1$
+        types.add(MediaTypes.JBIG2);
         
         return types;
     }
@@ -398,7 +400,7 @@ public class OCRParser extends AbstractParser {
 
                     } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
                             || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input))) {
-                        parseNonStandard(xhtml, input, tmpOutput);
+                        parseNonStandard(xhtml, input, tmpOutput, mediaType);
                     
                     } else {
                         try {
@@ -412,7 +414,7 @@ public class OCRParser extends AbstractParser {
                         } catch (TikaException e) {
                             if (e.toString().contains(TESSERACT_ERROR_MSG)) {
                                 // retry possible corrupted images converting them before OCR
-                                parseNonStandard(xhtml, input, tmpOutput);
+                                parseNonStandard(xhtml, input, tmpOutput, mediaType);
                             } else {
                                 throw e;
                             }
@@ -561,11 +563,15 @@ public class OCRParser extends AbstractParser {
         }
     }
 
-    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output)
+    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output, String mediaType)
             throws IOException, SAXException, TikaException {
         File imageFile = null;
         try {
-            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+            if (!MediaTypes.JBIG2.toString().equals(mediaType)) {
+                mediaType = null; // just use mediaType for jbig2
+            }
+            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2,
+                    mediaType);
             if (img == null) {
                 try (ExternalImageConverter converter = new ExternalImageConverter()) {
                     img = converter.getImage(input, MAX_CONV_IMAGE_SIZE, true, input.length());
