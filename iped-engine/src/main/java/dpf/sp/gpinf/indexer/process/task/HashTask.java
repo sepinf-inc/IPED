@@ -66,9 +66,11 @@ public class HashTask extends AbstractTask {
 
     private HashMap<String, MessageDigest> digestMap = new LinkedHashMap<String, MessageDigest>();
 
+    private HashTaskConfig hashConfig;
+
     @Override
     public boolean isEnabled() {
-        return !digestMap.isEmpty();
+        return hashConfig.isEnabled();
     }
 
     @Override
@@ -78,7 +80,7 @@ public class HashTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
+        hashConfig = configurationManager.findObject(HashTaskConfig.class);
 
         for (String algorithm : hashConfig.getAlgorithms()) {
             MessageDigest digest = null;
