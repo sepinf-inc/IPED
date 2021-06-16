@@ -523,39 +523,37 @@ public class OCRParser extends AbstractParser {
             reader = ImageIO.getImageReaders(iis).next();
             reader.setInput(iis, false, true);
             int numPages = reader.getNumImages(true);
-            if (numPages > 3) {
-                for (int page = 0; page < numPages; page++) {
-                    File imageFile = null;
+            // OCR tiff per page to avoid timeouts
+            for (int page = 0; page < numPages; page++) {
+                File imageFile = null;
+                try {
+                    ImageReadParam params = reader.getDefaultReadParam();
+                    int w0 = reader.getWidth(page);
+                    int h0 = reader.getHeight(page);
+                    BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w0, h0);
+                    params.setDestination(image);
                     try {
-                        ImageReadParam params = reader.getDefaultReadParam();
-                        int w0 = reader.getWidth(page);
-                        int h0 = reader.getHeight(page);
-                        BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w0, h0);
-                        params.setDestination(image);
-                        try {
-                            reader.read(page, params);
-                        } catch (IOException e) {
-                        }
-
-                        image = getCompatibleImage(image);
-                        imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
-                        ImageIO.write(image, PDFToImage.EXT, imageFile);
-                        File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                        parse(xhtml, imageFile, imageText);
-                        if (imageText.exists()) {
-                            if (outputBase != null)
-                                IOUtil.copiaArquivo(imageText, output, true);
-                            imageText.delete();
-                        }
+                        reader.read(page, params);
                     } catch (IOException e) {
-                        // ignore and try next page
-                    } finally {
-                        if (imageFile != null)
-                            imageFile.delete();
                     }
+
+                    image = getCompatibleImage(image);
+                    imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
+                    ImageIO.write(image, PDFToImage.EXT, imageFile);
+                    File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
+                    parse(xhtml, imageFile, imageText);
+                    if (imageText.exists()) {
+                        if (outputBase != null)
+                            IOUtil.copiaArquivo(imageText, output, true);
+                        imageText.delete();
+                    }
+                } catch (IOException e) {
+                    // ignore and try next page
+                } finally {
+                    if (imageFile != null)
+                        imageFile.delete();
                 }
-            } else
-                parse(xhtml, input, output);
+            }
 
         } finally {
             if (reader != null)
