@@ -177,6 +177,17 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.18.1</version>
+                <configuration>
+                	<argLine>-Duser.timezone=UTC</argLine>
+                    <testFailureIgnore>true</testFailureIgnore>
+                    <aggregate>true</aggregate>
+                    <linkXRef>true</linkXRef>
+                </configuration>
+            </plugin>
     	</plugins>
     </build>
 </project>
