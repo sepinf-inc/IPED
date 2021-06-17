@@ -183,7 +183,6 @@
                 <version>2.18.1</version>
                 <configuration>
                 	<argLine>-Duser.timezone=UTC</argLine>
-                    <testFailureIgnore>true</testFailureIgnore>
                     <aggregate>true</aggregate>
                     <linkXRef>true</linkXRef>
                 </configuration>
