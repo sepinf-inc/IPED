@@ -78,14 +78,14 @@ public class WhatsAppParserTest extends AbstractPkgTest{
         assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(2));
         assertEquals("unknownAccount@", whatsapptracker.messageto.get(3));
         
-//        assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(0));
-//        assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(1));
-//        assertEquals("2021-06-14T19:02:25Z", whatsapptracker.messagedate.get(2));
-//        assertEquals("2021-06-14T19:02:33Z", whatsapptracker.messagedate.get(3));
-//        assertEquals("2021-06-16T17:01:34Z", whatsapptracker.messagedate.get(4));
-//        assertEquals("2016-04-29T21:15:08Z", whatsapptracker.messagedate.get(42));
-//        assertEquals("2021-06-14T18:52:46Z", whatsapptracker.messagedate.get(43));
-//        
+        assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(0));
+        assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(1));
+        assertEquals("2021-06-14T19:02:25Z", whatsapptracker.messagedate.get(2));
+        assertEquals("2021-06-14T19:02:33Z", whatsapptracker.messagedate.get(3));
+        assertEquals("2021-06-16T17:01:34Z", whatsapptracker.messagedate.get(4));
+        assertEquals("2016-04-29T21:15:08Z", whatsapptracker.messagedate.get(42));
+        assertEquals("2021-06-14T18:52:46Z", whatsapptracker.messagedate.get(43));
+        
     }
 
     @Test
