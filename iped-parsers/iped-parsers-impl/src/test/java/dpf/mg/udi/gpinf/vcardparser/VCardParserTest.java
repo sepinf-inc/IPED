@@ -1,7 +1,9 @@
 package dpf.mg.udi.gpinf.vcardparser;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -68,7 +70,7 @@ public class VCardParserTest extends TestCase{
         
         
     }
-//    
+    
 //    @Test
 //    public void testVCardCompleteInfoParser() throws IOException, SAXException, TikaException{
 //
@@ -82,10 +84,20 @@ public class VCardParserTest extends TestCase{
 //        
 //        String hts = handler.toString();
 //        String mts = metadata.toString();
+//        assertTrue(hts.contains("ratuxo")); 
+//        assertTrue(hts.contains("Outubro 24, 1996")); 
+//        assertTrue(hts.contains("nicolecity,")); 
+//        assertTrue(hts.contains("Test@paraparaparapara")); 
+//        assertTrue(hts.contains("www.rato.com.br")); 
+//        assertTrue(hts.contains("gosta muito de dançar para-pararato rato rato: esse cara é o rato")); 
 //        
-//        System.out.println(hts + "\n___\n" + mts);
-//        
-//        
+//
+//        assertTrue(mts.contains("userAddress=R. da Casa do Prof. Elder isso mesmo Bela Vista MS BR ZIP 79260-000")); 
+//        assertTrue(mts.contains("userUrls=www.rato.com.br")); 
+//        assertTrue(mts.contains("emailAddress=insuportavel@test.paraparapara")); 
+//        assertTrue(mts.contains("phoneNumber=021 (61)3468-2000")); 
+//        assertTrue(mts.contains("phoneNumber=021 (61)3011-7666")); 
+//        assertTrue(mts.contains("userOrganization=[nicolecity, dança]")); 
 //    }    
     
     @Test
@@ -124,5 +136,20 @@ public class VCardParserTest extends TestCase{
         
     }    
  
+    @Test
+    public void testVCardCompleteHTMLToString() throws IOException, SAXException, TikaException{
+
+        VCardParser parser = new VCardParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf");
+        ParseContext context = new ParseContext();
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").getFile());
+        PrintWriter out = new PrintWriter(file);
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        VCardParser.printHtmlFromString(out, stream.toString());
+    }
 
 }
