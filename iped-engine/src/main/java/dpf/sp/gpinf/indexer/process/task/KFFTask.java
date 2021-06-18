@@ -303,7 +303,7 @@ public class KFFTask extends AbstractTask {
             Integer attr = map.get(hash);
             if (attr != null) {
                 String[] product = products.get(Math.abs(attr));
-                if (attr > 0 || alertProducts.contains(product[0])) // evidence.addCategory(ALERT);
+                if (attr > 0 || (product != null && alertProducts.contains(product[0])))
                 {
                     evidence.setExtraAttribute(KFF_STATUS, "alert"); //$NON-NLS-1$
                 } else {
