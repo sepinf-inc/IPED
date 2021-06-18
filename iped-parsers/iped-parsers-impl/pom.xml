@@ -183,6 +183,8 @@
                 <version>2.18.1</version>
                 <configuration>
                 	<argLine>-Duser.timezone=GMT-3</argLine>
+                	<argLine>-Duser.country=BR</argLine>
+                	<argLine>-Duser.language=pt-BR</argLine>
                     <aggregate>true</aggregate>
                     <linkXRef>true</linkXRef>
                 </configuration>
