@@ -643,10 +643,11 @@ public class HashDBTool {
                                 throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
                             }
                         } else if (i == nsrlProductCodeCol) {
-                            val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                            int prodCode = Integer.parseInt(val);
+                            val = nsrlProdCodeToName.get(prodCode);
                             if (val == null) {
+                                val = "Product #" + prodCode; 
                                 totNoProd++;
-                                continue;
                             }
                         }
                         int idx = colIdx[i];
