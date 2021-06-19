@@ -146,7 +146,8 @@
         
         
         <parser class="dpf.sp.gpinf.indexer.parsers.OCRParser"></parser>
-        
+        <parser class="dpf.sp.gpinf.indexer.parsers.TiffPageParser"></parser>
+                
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/jpeg</mime>
             <params>
@@ -187,8 +188,7 @@
             <mime>image/tiff</mime>
             <params>
                 <param name="parserName" type="string">TiffParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser</param>
-            </params>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser;dpf.sp.gpinf.indexer.parsers.TiffPageParser</param>            </params>
         </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
