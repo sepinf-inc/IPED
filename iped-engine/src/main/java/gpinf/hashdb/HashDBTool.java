@@ -85,7 +85,7 @@ public class HashDBTool {
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
-    private int totIns, totRem, totUpd, totSkip, totComb, totIgn;
+    private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
@@ -526,7 +526,7 @@ public class HashDBTool {
 
     private boolean readFile(File file) {
         FileType type = getFileType(file);
-        totIns = totRem = totUpd = totSkip = totComb = totIgn = 0;
+        totIns = totRem = totUpd = totSkip = totComb = totIgn = totNoProd = 0;
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
@@ -644,6 +644,10 @@ public class HashDBTool {
                             }
                         } else if (i == nsrlProductCodeCol) {
                             val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                            if (val == null) {
+                                totNoProd++;
+                                continue;
+                            }
                         }
                         int idx = colIdx[i];
                         merge(properties, idx, val);
@@ -867,6 +871,7 @@ public class HashDBTool {
         if (totUpd > 0) System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
         if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
         if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
+        if (totNoProd > 0) System.out.println(totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
         if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
     }
 
