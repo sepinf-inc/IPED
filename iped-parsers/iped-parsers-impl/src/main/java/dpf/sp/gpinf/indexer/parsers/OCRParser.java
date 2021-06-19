@@ -543,10 +543,11 @@ public class OCRParser extends AbstractParser {
                     } catch (IOException e) {
                     }
 
+                    image = getCompatibleImage(image);
+
                     if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
                         image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
                     
-                    image = getCompatibleImage(image);
                     imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
                     ImageIO.write(image, PDFToImage.EXT, imageFile);
                     File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
@@ -585,10 +586,11 @@ public class OCRParser extends AbstractParser {
                 }
             }
             if (img != null) {
+                img = getCompatibleImage(img);
+
                 if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
                     img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
                 
-                img = getCompatibleImage(img);
                 imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
                 ImageIO.write(img, PDFToImage.EXT, imageFile);
 
