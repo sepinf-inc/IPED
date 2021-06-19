@@ -530,13 +530,22 @@ public class OCRParser extends AbstractParser {
                     ImageReadParam params = reader.getDefaultReadParam();
                     int w0 = reader.getWidth(page);
                     int h0 = reader.getHeight(page);
-                    BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w0, h0);
+                    
+                    int sampling = ImageUtil.getSamplingFactor(w0, h0, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+                    int w1 = (int) Math.ceil((float) w0 / sampling);
+                    int h1 = (int) Math.ceil((float) h0 / sampling);
+                    
+                    BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w1, h1);
                     params.setDestination(image);
+                    params.setSourceSubsampling(sampling, sampling, 0, 0);
                     try {
                         reader.read(page, params);
                     } catch (IOException e) {
                     }
 
+                    if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
+                        image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
+                    
                     image = getCompatibleImage(image);
                     imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
                     ImageIO.write(image, PDFToImage.EXT, imageFile);
