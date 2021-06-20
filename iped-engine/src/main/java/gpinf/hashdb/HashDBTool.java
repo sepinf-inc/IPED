@@ -872,8 +872,8 @@ public class HashDBTool {
         if (totUpd > 0) System.out.println(totUpd + " hash" + (totUpd == 1 ? "" : "es") + " updated.");
         if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
         if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
-        if (totNoProd > 0) System.out.println(totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
         if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
+        if (totNoProd > 0) System.out.println("WARNING: " + totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
     }
 
     private static void updatePercentage(double pct) {
