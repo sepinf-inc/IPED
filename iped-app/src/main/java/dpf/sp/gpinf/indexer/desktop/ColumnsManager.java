@@ -6,8 +6,6 @@ import java.awt.Dialog.ModalityType;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
@@ -20,7 +18,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -31,7 +28,6 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -55,6 +51,7 @@ import dpf.sp.gpinf.indexer.process.task.PhotoDNALookup;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
+import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItemId;
@@ -83,8 +80,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             Messages.getString("ColumnsManager.Language"), Messages.getString("ColumnsManager.NamedEntity"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.UFED"), Messages.getString("ColumnsManager.Other"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("ColumnsManager.All") }; //$NON-NLS-1$
-
-    private static final String emptyFilter = Messages.getString("ColumnsManager.Filter");
 
     private static final File getGlobalColsFile() {
         String name = "visibleCols"; //$NON-NLS-1$
@@ -129,7 +124,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private JPanel listPanel = new JPanel();
     private JComboBox<Object> combo;
     private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
-    private JTextField textFieldNameFilter;
+    private HintTextField textFieldNameFilter;
     private int firstColsToPin = 7;
 
     private boolean autoManageCols;
@@ -148,16 +143,10 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     public void setVisible() {
-        clearNameFilter();
         updateDinamicFields();
         updateList();
         dialog.setVisible(true);
         combo.requestFocus();
-    }
-
-    private void clearNameFilter() {
-        textFieldNameFilter.setText(emptyFilter);
-        textFieldNameFilter.setForeground(Color.gray);
     }
 
     public void setPinnedColumns(int firstColsToPin) {
@@ -226,25 +215,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         autoManage.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         autoManage.addActionListener(this);
 
-        textFieldNameFilter = new JTextField();
+        textFieldNameFilter = new HintTextField(Messages.getString("ColumnsManager.Filter"));
         textFieldNameFilter.setAlignmentX(0);
-        clearNameFilter();
-        textFieldNameFilter.addFocusListener(new FocusListener() {
-            public void focusLost(FocusEvent e) {
-                String text = textFieldNameFilter.getText().trim();
-                if (text.isEmpty() || text.equals(emptyFilter)) {
-                    clearNameFilter();
-                }
-            }
-
-            public void focusGained(FocusEvent e) {
-                String text = textFieldNameFilter.getText().trim();
-                if (text.equals(emptyFilter)) {
-                    textFieldNameFilter.setText("");
-                }
-                textFieldNameFilter.setForeground(Color.black);
-            }
-        });
         textFieldNameFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
                 changedUpdate(e);
@@ -674,12 +646,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private void updateList() {
         listPanel.removeAll();
         String[] fields = fieldGroups[combo.getSelectedIndex()];
-        String filter = textFieldNameFilter.getText();
-        if (filter.equals(emptyFilter)) {
-            filter = "";
-        } else {
-            filter = filter.trim().toLowerCase();
-        }
+        String filter = textFieldNameFilter.getText().trim().toLowerCase();
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
