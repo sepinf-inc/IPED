@@ -70,7 +70,6 @@ public class ThemeManager {
             UIManager.put(key, savedDefaults.get(key));
         }
         newTheme.apply();
-        UIManager.getDefaults().putDefaults(new Object[0]);
         currentTheme = newTheme;
         try {
             UIManager.setLookAndFeel(UIManager.getLookAndFeel());

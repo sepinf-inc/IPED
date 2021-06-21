@@ -18,7 +18,7 @@ public abstract class Theme {
     }
 
     public void put(Object key, Object value) {
-        //UIManager.put(key, value);
+        UIManager.put(key, value);
         UIManager.getLookAndFeelDefaults().put(key, value);
     }
 
