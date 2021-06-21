@@ -242,10 +242,16 @@ public class KFFTask extends AbstractTask {
             try {
                 String line = reader.readLine();
                 String[] ignoreStrs = { "\"\"", "\"D\"" }; //$NON-NLS-1$ //$NON-NLS-2$
+                int lineNum = 1;
                 while ((line = reader.readLine()) != null) {
                     String[] values = line.split(","); //$NON-NLS-1$
                     KffAttr attr = new KffAttr();
                     attr.group = Integer.valueOf(values[values.length - 3]);
+                    lineNum++;
+                    if (products.get(attr.group) == null) {
+                        LOGGER.error("NSRLFile line {} references inexistent product {} in NSRLProd.txt", lineNum,
+                                attr.group);
+                    }
                     if (values[values.length - 1].equals(ignoreStrs[0])
                             || values[values.length - 1].equals(ignoreStrs[1])) {
                         attr.group *= -1;
@@ -316,7 +322,9 @@ public class KFFTask extends AbstractTask {
                         evidence.setExtraAttribute(KFF_STATUS, "ignore"); //$NON-NLS-1$
                     }
                 }
-                evidence.setExtraAttribute(KFF_GROUP, product[0] + " " + product[1]); //$NON-NLS-1$
+                if (product != null) {
+                    evidence.setExtraAttribute(KFF_GROUP, product[0] + " " + product[1]); //$NON-NLS-1$
+                }
             }
         }
     }
