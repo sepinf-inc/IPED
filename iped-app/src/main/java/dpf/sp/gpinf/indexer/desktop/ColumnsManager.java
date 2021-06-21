@@ -120,7 +120,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private ArrayList<String> loadedFields = new ArrayList<String>();
 
-    private JDialog dialog = new JDialog();
+    private JDialog dialog = new JDialog(App.get());
     private JPanel listPanel = new JPanel();
     private JComboBox<Object> combo;
     private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
