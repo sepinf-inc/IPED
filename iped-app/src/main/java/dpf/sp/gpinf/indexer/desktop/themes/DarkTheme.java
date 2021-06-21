@@ -25,6 +25,7 @@ public class DarkTheme extends Theme {
         put("nimbusRed", new ColorUIResource(Color.BLUE));
         put("nimbusSelectedText", new ColorUIResource(new Color(255, 255, 255)));
         put("nimbusSelectionBackground", new ColorUIResource(new Color(124, 113, 146)));
+        put("nimbusSelection", new ColorUIResource(new Color(124, 113, 146)));
         put("text", new ColorUIResource(new Color(240, 240, 240)));
                 
         put("Table[Enabled+Selected].textForeground", new ColorUIResource(new Color(255, 255, 255)));
