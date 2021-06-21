@@ -69,9 +69,6 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -109,6 +106,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
+import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -175,7 +173,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     BookmarksTreeListener bookmarksListener;
     TimelineListener timelineListener;
     HitsTable parentItemTable;
-    CControl dockingControl;
+    public CControl dockingControl;
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
@@ -392,23 +390,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         ToolTipManager.sharedInstance().setInitialDelay(10);
 
         try {
-            boolean nimbusFound = false;
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) { //$NON-NLS-1$
-                    UIManager.put("nimbusOrange", new Color(47, 92, 180)); //$NON-NLS-1$
-                    UIManager.put("nimbusRed", Color.BLUE); //$NON-NLS-1$
-                    UIManager.setLookAndFeel(info.getClassName());
-                    UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-                    defaults.put("ScrollBar.thumbHeight", 12); //$NON-NLS-1$
-                    // Workaround JDK-8134828
-                    defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30)); //$NON-NLS-1$
-                    nimbusFound = true;
-                    break;
-                }
-            }
-            if (!nimbusFound) {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }
+            ThemeManager.getInstance().setLookAndFeel();
         } catch (Exception e) {
             e.printStackTrace();
         }
