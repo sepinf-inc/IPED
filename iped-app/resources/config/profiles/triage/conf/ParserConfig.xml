@@ -190,7 +190,8 @@
             <mime>image/tiff</mime>
             <params>
                 <param name="parserName" type="string">TiffParser</param>
-                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser;dpf.sp.gpinf.indexer.parsers.TiffPageParser</param>            </params>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser;dpf.sp.gpinf.indexer.parsers.TiffPageParser</param>
+            </params>
         </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
@@ -306,7 +307,6 @@
         <parser class="dpf.mg.udi.gpinf.bittorrent.TorrentFileParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.LNKShortcutParser"></parser>
         <!--parser class="dpf.sp.gpinf.indexer.parsers.GenericOLEParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.ImageOCRMetadataParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.FLVParserWrapper"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.EmptyVideoParser"></parser-->
