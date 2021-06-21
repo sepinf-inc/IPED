@@ -42,21 +42,21 @@
         <parser class="org.apache.tika.parser.html.HtmlParser"></parser>
         <parser class="org.apache.tika.parser.hwp.HwpV5Parser"></parser>
         <parser class="org.apache.tika.parser.image.BPGParser"></parser>
-        <parser class="org.apache.tika.parser.image.ImageParser"></parser>
-        <parser class="org.apache.tika.parser.image.PSDParser"></parser>
-        <parser class="org.apache.tika.parser.image.TiffParser"></parser>
-        <parser class="org.apache.tika.parser.image.WebPParser"></parser>
-        <parser class="org.apache.tika.parser.image.HeifParser"></parser>
+        <!--<parser class="org.apache.tika.parser.image.ImageParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.PSDParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.TiffParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.WebPParser"></parser>-->
+        <!--<parser class="org.apache.tika.parser.image.HeifParser"></parser>-->
         <parser class="org.apache.tika.parser.iptc.IptcAnpaParser"></parser>
         <parser class="org.apache.tika.parser.iwork.IWorkPackageParser"></parser>
-        <parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>
+        <!--<parser class="org.apache.tika.parser.jpeg.JpegParser"></parser>-->
         <!--We have our own impls
         <parser class="org.apache.tika.parser.mail.RFC822Parser"></parser>
         <parser class="org.apache.tika.parser.mbox.MboxParser"></parser>
         <parser class="org.apache.tika.parser.mbox.OutlookPSTParser"></parser>-->
         <!--Returns empty content for some EMFs. Used below in MultipleParser
         <parser class="org.apache.tika.parser.microsoft.EMFParser"></parser-->
-        <parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>
+        <!--<parser class="org.apache.tika.parser.microsoft.WMFParser"></parser>-->
         <!--TODO: compare to our old MDB parser and possibly switch to this 
         <parser class="org.apache.tika.parser.microsoft.JackcessParser"></parser>-->
         <parser class="org.apache.tika.parser.microsoft.MSOwnerFileParser"></parser>
