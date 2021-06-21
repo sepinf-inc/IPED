@@ -149,7 +149,6 @@
         
         <!--
         <parser class="dpf.sp.gpinf.indexer.parsers.OCRParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.TiffPageParser"></parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/jpeg</mime>
