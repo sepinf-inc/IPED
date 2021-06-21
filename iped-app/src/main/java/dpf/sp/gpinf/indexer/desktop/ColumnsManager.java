@@ -198,7 +198,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         dialog.setBounds(new Rectangle(400, 400));
         dialog.setTitle(Messages.getString("ColumnsManager.Title")); //$NON-NLS-1$
-        dialog.setAlwaysOnTop(true);
 
         JLabel label = new JLabel(Messages.getString("ColumnsManager.ShowCols")); //$NON-NLS-1$
         label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
