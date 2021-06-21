@@ -14,7 +14,7 @@ public class HintTextField extends JTextField {
         this.hint = hint;
         addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
-                String text = getText().trim();
+                String text = HintTextField.super.getText().trim();
                 if (text.isEmpty() || text.equals(hint)) {
                     setText(hint);
                     setForeground(getDisabledTextColor());
@@ -22,7 +22,7 @@ public class HintTextField extends JTextField {
             }
 
             public void focusGained(FocusEvent e) {
-                String text = getText().trim();
+                String text = HintTextField.super.getText().trim();
                 if (text.equals(hint))
                     setText("");
                 setForeground(null);
@@ -32,9 +32,22 @@ public class HintTextField extends JTextField {
         setForeground(getDisabledTextColor());
     }
 
+    @Override
     public void updateUI() {
         super.updateUI();
-        String text = getText().trim();
+        String text = super.getText();
         setForeground(text.equals(hint) ? getDisabledTextColor() : null);
+    }
+
+    public void setText(String text) {
+        if (text == null || text.isEmpty())
+            text = hint;
+        super.setText(text);
+        setForeground(text.equals(hint) ? getDisabledTextColor() : null);
+    }
+
+    public String getText() {
+        String text = super.getText();
+        return text.equals(hint) ? "" : text;
     }
 }
