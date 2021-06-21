@@ -129,9 +129,9 @@ public class PackageParserTest extends AbstractPkgTest{
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:02:00", df.format(date));
         if(getVersion() >= 9 && getVersion() < 12)
-            assertEquals("8 de abr de 2021 17:03:32", df.format(date));
+            assertEquals("8 de abr de 2021 17:02:00", df.format(date));
         if(getVersion() >= 12)
-            assertEquals("8 de abr. de 2021 17:03:32", df.format(date));
+            assertEquals("8 de abr. de 2021 17:02:00", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(4).substring(0,10));
         //assertEquals("17:02:00", tracker.modifieddate.get(4).substring(11,19));
         assertEquals("761D9CBE8BE4BDB94A8962074053CA85", tracker.itensmd5.get(4));

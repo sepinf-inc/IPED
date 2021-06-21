@@ -325,9 +325,9 @@ public class RARParserTest  extends AbstractPkgTest {
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:30", df.format(date));
         if(getVersion() >= 9  && getVersion() < 12)
-            assertEquals("9 de abr de 2021 12:25:20", df.format(date));
+            assertEquals("9 de abr de 2021 12:25:30", df.format(date));
         if(getVersion() >= 12)
-            assertEquals("9 de abr. de 2021 12:25:20", df.format(date));
+            assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
             
         //assertEquals("2021-04-09", tracker.modifieddate.get(15).substring(0,10));
         //assertEquals("12:25:30", tracker.modifieddate.get(15).substring(11,19));
