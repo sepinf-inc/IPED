@@ -20,8 +20,8 @@ import org.xml.sax.SAXException;
 
 public class TiffPageParser extends AbstractParser {
     private static final long serialVersionUID = 2340523222085300794L;
-    private static final String propNumPages = "tiff:NumPages";
-    private static final String propExifPageCount = "exif:PageCount";
+    public static final String propNumPages = "tiff:NumPages";
+    public static final String propExifPageCount = "exif:PageCount";
 
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.image("tiff"));
 
@@ -38,7 +38,6 @@ public class TiffPageParser extends AbstractParser {
             int numPages = reader.getNumImages(true);
             if (numPages > 0) {
                 metadata.set(propNumPages, String.valueOf(numPages));
-                metadata.remove(propExifPageCount);
             }
         } finally {
             if (reader != null)
