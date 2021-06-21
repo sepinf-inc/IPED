@@ -144,15 +144,81 @@
         <parser class="org.gagravarr.tika.OggParser"></parser>
         <parser class="org.gagravarr.tika.VorbisParser"></parser>
         
+        <parser class="dpf.sp.gpinf.indexer.parsers.OCRParser"></parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/jpeg</mime>
+            <params>
+                <param name="parserName" type="string">JPEGParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.jpeg.JpegParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/bmp</mime>
+            <mime>image/gif</mime>
+            <mime>image/png</mime>
+            <mime>image/vnd.wap.wbmp</mime>
+            <mime>image/x-jbig2</mime>
+            <params>
+                <param name="parserName" type="string">ImageParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.ImageParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/webp</mime>
+            <params>
+                <param name="parserName" type="string">WebpParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.WebPParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/vnd.adobe.photoshop</mime>
+            <params>
+                <param name="parserName" type="string">PSDParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.PSDParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/tiff</mime>
+            <params>
+                <param name="parserName" type="string">TiffParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.TiffParser;dpf.sp.gpinf.indexer.parsers.TiffPageParser</param>            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/heic</mime>
+            <mime>image/heic-sequence</mime>
+            <params>
+                <param name="parserName" type="string">HeicParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.HeifParser</param>
+            </params>
+        </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/emf</mime>
             <params>
                 <param name="parserName" type="string">EMFParser</param>
-                <param name="parsers" type="string">
-                    org.apache.tika.parser.microsoft.EMFParser;
-                    dpf.sp.gpinf.indexer.parsers.RawStringParser;
-                </param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.microsoft.EMFParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/wmf</mime>
+            <params>
+                <param name="parserName" type="string">WMFParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.microsoft.WMFParser</param>
+            </params>
+        </parser>
+        
+        <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
+            <mime>image/svg+xml</mime>
+            <params>
+                <param name="parserName" type="string">SVGXMLParser</param>
+                <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;dpf.sp.gpinf.indexer.parsers.XMLParser</param>
             </params>
         </parser>
         
@@ -187,7 +253,9 @@
         <parser class="dpf.sp.gpinf.indexer.parsers.IndexDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.PackageParser"></parser>    
         <parser class="dpf.sp.gpinf.indexer.parsers.SevenZipParser"></parser>
-        <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.XMLParser">
+            <mime-exclude>image/svg+xml</mime-exclude>
+        </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>

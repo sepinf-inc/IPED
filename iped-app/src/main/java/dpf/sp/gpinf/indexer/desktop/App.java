@@ -110,6 +110,7 @@ import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -296,6 +297,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         LOGGER = LoggerFactory.getLogger(App.class);
         LOGGER.info("Starting..."); //$NON-NLS-1$
 
+        // Force initialization of ImageThumbTask to load external conversion configuration
+        try {
+            new ImageThumbTask().init(Configuration.getInstance().properties,
+                    new File(Configuration.getInstance().configPath + "/conf"));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
         if (SwingUtilities.isEventDispatchThread()) {
             createGUI();
             LOGGER.info("GUI created"); //$NON-NLS-1$

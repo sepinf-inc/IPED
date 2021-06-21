@@ -69,9 +69,10 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
@@ -223,7 +224,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
-    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
 
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
@@ -446,7 +447,7 @@ public class HTMLReportTask extends AbstractTask {
             t = (System.currentTimeMillis() - t + 500) / 1000;
             logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
 
-            graphicsMagicConverter.close();
+            externalImageConverter.close();
         }
     }
 
@@ -935,7 +936,7 @@ public class HTMLReportTask extends AbstractTask {
             if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
@@ -951,7 +952,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (img == null) {
                     stream = evidence.getBufferedStream();
                     try {
-                        img = graphicsMagicConverter.getImage(stream, thumbSize, false, evidence.getLength());
+                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength());
                     } finally {
                         IOUtil.closeQuietly(stream);
                     }

@@ -20,6 +20,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.TiffPageParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -205,6 +206,9 @@ public class MetadataUtil {
                 for (Property p : prop.getSecondaryExtractProperties())
                     metadata.remove(p.getName());
             }
+        }
+        if (metadata.get(TiffPageParser.propNumPages) != null) {
+            metadata.remove(TiffPageParser.propExifPageCount);
         }
     }
 

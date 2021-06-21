@@ -8,10 +8,12 @@ import java.nio.file.Path;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 
 public class OCRConfig extends AbstractPropertiesConfigurable {
-    public static final String OCRLanguage = "OCRLanguage";
-    public static final String minFileSize2OCR = "minFileSize2OCR";
-    public static final String maxFileSize2OCR = "maxFileSize2OCR";
-    public static final String pageSegMode = "pageSegMode";
+    private static final String OCRLanguage = "OCRLanguage";
+    private static final String minFileSize2OCR = "minFileSize2OCR";
+    private static final String maxFileSize2OCR = "maxFileSize2OCR";
+    private static final String pageSegMode = "pageSegMode";
+    private static final String processNonStandard = "processNonStandard";
+    private static final String maxConvImageSize = "maxConvImageSize";
 
     public static final String CONFIG_FILE = "conf/AdvancedConfig.txt"; //$NON-NLS-1$
 
@@ -41,24 +43,34 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
             System.setProperty(OCRParser.ENABLE_PROP, value.trim());
         }
 
-        value = properties.getProperty("OCRLanguage"); //$NON-NLS-1$
+        value = properties.getProperty(OCRLanguage);
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(OCRParser.LANGUAGE_PROP, value.trim());
         }
 
-        value = properties.getProperty("minFileSize2OCR"); //$NON-NLS-1$
+        value = properties.getProperty(minFileSize2OCR);
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(OCRParser.MIN_SIZE_PROP, value.trim());
         }
 
-        value = properties.getProperty("maxFileSize2OCR"); //$NON-NLS-1$
+        value = properties.getProperty(maxFileSize2OCR);
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(OCRParser.MAX_SIZE_PROP, value.trim());
         }
 
-        value = properties.getProperty("pageSegMode"); //$NON-NLS-1$
+        value = properties.getProperty(pageSegMode);
         if (value != null && !value.trim().isEmpty()) {
             System.setProperty(OCRParser.PAGE_SEGMODE_PROP, value.trim());
+        }
+
+        value = properties.getProperty(processNonStandard);
+        if (value != null && !value.trim().isEmpty()) {
+            System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, value.trim());
+        }
+
+        value = properties.getProperty(maxConvImageSize);
+        if (value != null && !value.trim().isEmpty()) {
+            System.setProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP, value.trim());
         }
 
     }

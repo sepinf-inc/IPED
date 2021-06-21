@@ -155,6 +155,13 @@ externalConvMaxMem = 512M
 # Also, with this option the OCR of jbig2 images in PDFs doesn't work because Tesseract does not support this format. 
 processImagesInPDFs = false
 
+# Process non-standard image formats (not directly supported by Tesseract).
+processNonStandard = true
+
+# Maximum size (in pixels) of converted image dimensions to be submitted to OCR (used for
+# formats that are not supported by Tesseract and require conversion).
+maxConvImageSize = 3000
+
 ########################################################################
 # Search Settings 
 ########################################################################
