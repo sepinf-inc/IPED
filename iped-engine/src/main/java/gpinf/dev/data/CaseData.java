@@ -217,7 +217,7 @@ public class CaseData implements ICaseData {
 
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
         LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
-        while (queue.size() >= maxQueueSize) {
+        while (queuePriority == 0 && queue.size() >= maxQueueSize) {
             Thread.sleep(1000);
         }
 

@@ -291,6 +291,10 @@ public class VideoThumbTask extends ThumbTask {
             return;
         }
 
+        if (caseData.isIpedReport() && evidence.getViewFile() != null && evidence.getViewFile().length() > 0) {
+            return;
+        }
+
         File mainOutFile = Util.getFileFromHash(baseFolder, evidence.getHash(), "jpg"); //$NON-NLS-1$
 
         // Verifica se outro vídeo igual foi ou está em processamento

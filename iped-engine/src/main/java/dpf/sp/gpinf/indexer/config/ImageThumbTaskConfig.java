@@ -1,9 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-
-import java.nio.file.Path;
-
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
@@ -25,6 +21,9 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
     private int timeoutPerMB = 2;
     private int thumbSize = 160;
     private int galleryThreads = 1;
+    private int lowResDensity = 96;
+    private int highResDensity = 250;
+    private int maxMPixelsInMemory = 32;
 
     public boolean isEnableExternalConv() {
         return enableExternalConv;
@@ -56,6 +55,18 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
 
     public int getGalleryThreads() {
         return galleryThreads;
+    }
+
+    public int getLowResDensity() {
+        return lowResDensity;
+    }
+
+    public int getHighResDensity() {
+        return highResDensity;
+    }
+
+    public int getMaxMPixelsInMemory() {
+        return maxMPixelsInMemory;
     }
 
     @Override
@@ -113,6 +124,21 @@ public class ImageThumbTaskConfig extends AbstractTaskPropertiesConfig {
         value = properties.getProperty("logGalleryRendering"); //$NON-NLS-1$
         if (value != null && !value.trim().isEmpty()) {
             logGalleryRendering = Boolean.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            lowResDensity = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("highResDensity"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            highResDensity = Integer.valueOf(value.trim());
+        }
+
+        value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
+        if (value != null && !value.trim().isEmpty()) {
+            maxMPixelsInMemory = Integer.valueOf(value.trim());
         }
 
     }

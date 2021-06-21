@@ -773,6 +773,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             System.setProperty(PDFToImage.EXTERNAL_CONV_PROP, ocrConfig.getExternalPdfToImgConv());
             System.setProperty(PDFToImage.EXTERNAL_CONV_MAXMEM_PROP, ocrConfig.getExternalConvMaxMem());
             System.setProperty(PDFOCRTextParser.MAX_CHARS_TO_OCR, ocrConfig.getMaxPdfTextSize2OCR());
+            System.setProperty(OCRParser.PROCESS_NON_STANDARD_FORMATS_PROP, ocrConfig.getProcessNonStandard());
+            System.setProperty(OCRParser.MAX_CONV_IMAGE_SIZE_PROP, ocrConfig.getMaxConvImageSize());
         }
     }
 

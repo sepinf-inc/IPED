@@ -26,6 +26,8 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
     private String externalPdfToImgConv;
     private String externalConvMaxMem;
     private String maxPdfTextSize2OCR;
+    private String processNonStandard;
+    private String maxConvImageSize;
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -92,6 +94,16 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
             maxPdfTextSize2OCR = value.trim();
         }
 
+        value = properties.getProperty("processNonStandard");
+        if (value != null && !value.trim().isEmpty()) {
+            processNonStandard = value.trim();
+        }
+
+        value = properties.getProperty("maxConvImageSize");
+        if (value != null && !value.trim().isEmpty()) {
+            maxConvImageSize = value.trim();
+        }
+
     }
 
     public Boolean isOCREnabled() {
@@ -132,6 +144,14 @@ public class OCRConfig extends AbstractPropertiesConfigurable {
 
     public String getMaxPdfTextSize2OCR() {
         return maxPdfTextSize2OCR;
+    }
+
+    public String getProcessNonStandard() {
+        return processNonStandard;
+    }
+
+    public String getMaxConvImageSize() {
+        return maxConvImageSize;
     }
 
 }

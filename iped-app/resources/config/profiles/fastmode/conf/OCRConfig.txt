@@ -35,3 +35,10 @@ externalPdfToImgConv = true
 
 # Maximum heap memory to be used by each WORKER during external conversion of PDFs to image.
 externalConvMaxMem = 512M
+
+# Process non-standard image formats (not directly supported by Tesseract).
+processNonStandard = true
+
+# Maximum size (in pixels) of converted image dimensions to be submitted to OCR (used for
+# formats that are not supported by Tesseract and require conversion).
+maxConvImageSize = 3000
