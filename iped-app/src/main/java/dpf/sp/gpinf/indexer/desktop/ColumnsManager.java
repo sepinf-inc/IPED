@@ -29,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
@@ -121,7 +122,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     private ArrayList<String> loadedFields = new ArrayList<String>();
 
     private JDialog dialog = new JDialog(App.get());
-    private JPanel listPanel = new JPanel();
+    private final JPanel listPanel;
     private JComboBox<Object> combo;
     private JCheckBox autoManage = new JCheckBox(Messages.getString("ColumnsManager.AutoManageCols")); //$NON-NLS-1$
     private HintTextField textFieldNameFilter;
@@ -203,8 +204,16 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         label.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
         label.setAlignmentX(0);
 
+        listPanel = new JPanel() {
+            private static final long serialVersionUID = -4882872614411133375L;
+            
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBackground(new Color(UIManager.getColor("List.background").getRGB()));
+            }
+        };
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
-        listPanel.setBackground(Color.WHITE);
 
         combo = new JComboBox<Object>(groupNames);
         combo.setAlignmentX(0);
