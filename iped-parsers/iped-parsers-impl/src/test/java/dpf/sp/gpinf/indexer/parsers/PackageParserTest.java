@@ -76,7 +76,9 @@ public class PackageParserTest extends AbstractPkgTest{
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:03:32", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:03:32", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:03:32", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(0).substring(0,10));
         //assertEquals("17:03:32", tracker.modifieddate.get(0).substring(11,19));
@@ -87,7 +89,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:03:54", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:03:54", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:03:54", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(1).substring(0,10));
         //assertEquals("17:03:54", tracker.modifieddate.get(1).substring(11,19));
@@ -98,7 +102,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:06:14", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:06:14", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:06:14", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(2).substring(0,10));
         //assertEquals("17:06:14", tracker.modifieddate.get(2).substring(11,19));
@@ -109,7 +115,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:07:16", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:07:16", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:07:16", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(3).substring(0,10));
         //assertEquals("17:07:16", tracker.modifieddate.get(3).substring(11,19));
@@ -120,7 +128,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:02:00", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:03:32", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:03:32", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(4).substring(0,10));
         //assertEquals("17:02:00", tracker.modifieddate.get(4).substring(11,19));
@@ -131,7 +141,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
         if(getVersion() < 9)
             assertEquals("08/04/2021 17:02:14", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 17:02:14", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 17:02:14", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(5).substring(0,10));
         //assertEquals("17:02:14", tracker.modifieddate.get(5).substring(11,19));
@@ -142,7 +154,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(6));
         if(getVersion() < 9)
             assertEquals("09/04/2021 13:19:20", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 13:19:20", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 13:19:20", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
         //assertEquals("13:19:20", tracker.modifieddate.get(6).substring(11,19));
@@ -153,7 +167,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(7));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:28", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:28", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:28", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(7).substring(0,10));
         //assertEquals("12:26:28", tracker.modifieddate.get(7).substring(11,19));
@@ -164,7 +180,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(8));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:16", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:16", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:16", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(8).substring(0,10));
         //assertEquals("12:26:16", tracker.modifieddate.get(8).substring(11,19));
@@ -175,7 +193,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(9));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:00", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:00", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:00", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(9).substring(0,10));
         //assertEquals("12:26:00", tracker.modifieddate.get(9).substring(11,19));
@@ -225,7 +245,9 @@ public class PackageParserTest extends AbstractPkgTest{
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:42", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:42", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:42", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
         //assertEquals("12:25:42", tracker.modifieddate.get(0).substring(11,19));
@@ -236,7 +258,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:30", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:30", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
         //assertEquals("12:25:30", tracker.modifieddate.get(1).substring(11,19));
@@ -247,7 +271,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
         if(getVersion() < 9)
             assertEquals("09/04/2021 13:19:21", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 13:19:21", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 13:19:21", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
         //assertEquals("13:19:21", tracker.modifieddate.get(2).substring(11,19));
@@ -258,7 +284,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:28", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:28", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:28", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
         //assertEquals("12:26:28", tracker.modifieddate.get(3).substring(11,19));
@@ -269,7 +297,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:17", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:17", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:17", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
         //assertEquals("12:26:17", tracker.modifieddate.get(4).substring(11,19));
@@ -280,7 +310,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:01", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:01", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:01", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
         //assertEquals("12:26:01", tracker.modifieddate.get(5).substring(11,19));
@@ -291,7 +323,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(6));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:22", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:22", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:22", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
         //assertEquals("12:24:22", tracker.modifieddate.get(6).substring(11,19));
@@ -302,7 +336,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(7));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:12", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:12", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:12", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(7).substring(0,10));
         //assertEquals("12:24:12", tracker.modifieddate.get(7).substring(11,19));
@@ -313,7 +349,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(8));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:23:02", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:23:02", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:23:02", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(8).substring(0,10));
         //assertEquals("12:23:02", tracker.modifieddate.get(8).substring(11,19));
@@ -324,7 +362,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(9));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:22:54", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:22:54", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(9).substring(0,10));
         //assertEquals("12:22:54", tracker.modifieddate.get(9).substring(11,19));
@@ -373,7 +413,9 @@ public class PackageParserTest extends AbstractPkgTest{
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
         if(getVersion() < 9)
             assertEquals("09/04/2021 13:19:21", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 13:19:21", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 13:19:21", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
         //assertEquals("13:19:21", tracker.modifieddate.get(0).substring(11,19));
@@ -384,7 +426,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:42", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:42", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:42", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
         //assertEquals("12:25:42", tracker.modifieddate.get(1).substring(11,19));
@@ -395,7 +439,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:30", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:30", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
         //assertEquals("12:25:30", tracker.modifieddate.get(2).substring(11,19));
@@ -406,7 +452,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:28", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:28", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:28", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
         //assertEquals("12:26:28", tracker.modifieddate.get(3).substring(11,19));
@@ -417,7 +465,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:17", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:17", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:17", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
         //assertEquals("12:26:17", tracker.modifieddate.get(4).substring(11,19));
@@ -428,7 +478,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:26:01", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:26:01", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:26:01", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
         //assertEquals("12:26:01", tracker.modifieddate.get(5).substring(11,19));
@@ -439,7 +491,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(6));
         if(getVersion() < 9)
             assertEquals("08/04/2021 18:13:51", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("8 de abr de 2021 18:13:51", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("8 de abr. de 2021 18:13:51", df.format(date));
         //assertEquals("2021-04-08", tracker.modifieddate.get(6).substring(0,10));
         //assertEquals("18:13:51", tracker.modifieddate.get(6).substring(11,19));
@@ -450,7 +504,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(7));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:22", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:22", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:22", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(7).substring(0,10));
         //assertEquals("12:24:22", tracker.modifieddate.get(7).substring(11,19));
@@ -461,7 +517,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(8));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:12", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:12", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:12", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(8).substring(0,10));
         //assertEquals("12:24:12", tracker.modifieddate.get(8).substring(11,19));
@@ -472,7 +530,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(9));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:23:02", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:23:02", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:23:02", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(9).substring(0,10));
         //assertEquals("12:23:02", tracker.modifieddate.get(9).substring(11,19));
@@ -483,7 +543,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(10));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:22:54", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:22:54", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(10).substring(0,10));
         //assertEquals("12:22:54", tracker.modifieddate.get(10).substring(11,19));
@@ -539,7 +601,9 @@ public class PackageParserTest extends AbstractPkgTest{
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
         if(getVersion() < 9)
             assertEquals("30/04/2021 18:26:20", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("30 de abr de 2021 18:26:20", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("30 de abr. de 2021 18:26:20", df.format(date));
         //assertEquals("2021-04-30", tracker.modifieddate.get(0).substring(0,10));
         //assertEquals("18:26:20", tracker.modifieddate.get(0).substring(11,19));
@@ -550,7 +614,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
         if(getVersion() < 9)
             assertEquals("30/04/2021 18:26:20", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("30 de abr de 2021 18:26:20", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("30 de abr. de 2021 18:26:20", df.format(date));
         //assertEquals("2021-04-30", tracker.modifieddate.get(1).substring(0,10));
         //assertEquals("18:26:20", tracker.modifieddate.get(1).substring(11,19));
@@ -561,7 +627,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
         if(getVersion() < 9)
             assertEquals("30/04/2021 18:24:42", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("30 de abr de 2021 18:24:42", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("30 de abr. de 2021 18:24:42", df.format(date));
         //assertEquals("2021-04-30", tracker.modifieddate.get(2).substring(0,10));
         //assertEquals("18:24:42", tracker.modifieddate.get(2).substring(11,19));
@@ -611,7 +679,9 @@ public class PackageParserTest extends AbstractPkgTest{
         Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:42", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:42", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:42", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
         assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
@@ -620,7 +690,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:25:30", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:25:30", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
         assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
@@ -629,7 +701,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:22", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:22", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:22", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
         assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(2));
@@ -638,7 +712,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:24:12", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:24:12", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:24:12", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
         assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(3));
@@ -647,7 +723,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:23:02", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:23:02", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:23:02", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
         assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(4));
@@ -656,7 +734,9 @@ public class PackageParserTest extends AbstractPkgTest{
         date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
         if(getVersion() < 9)
             assertEquals("09/04/2021 12:22:54", df.format(date));
-        if(getVersion() >= 9)
+        if(getVersion() >= 9 && getVersion() < 12)
+            assertEquals("9 de abr de 2021 12:22:54", df.format(date));
+        if(getVersion() >= 12)
             assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
         //assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
         assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
@@ -706,7 +786,9 @@ public class PackageParserTest extends AbstractPkgTest{
     Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:25:42", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:25:42", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:25:42", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(0).substring(0,10));
     assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
@@ -715,7 +797,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:25:30", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:25:30", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
     assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
@@ -724,7 +808,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:24:22", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:24:22", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:24:22", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(2).substring(0,10));
     assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(2));
@@ -733,7 +819,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:24:12", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:24:12", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:24:12", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
     assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(3));
@@ -742,7 +830,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:23:02", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:23:02", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:23:02", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
     assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(4));
@@ -751,7 +841,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:22:54", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:22:54", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
     assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
@@ -803,7 +895,9 @@ public class PackageParserTest extends AbstractPkgTest{
     Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
     if(getVersion() < 9)
         assertEquals("04/05/2021 17:07:20", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("4 de mai de 2021 17:07:20", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("4 de mai. de 2021 17:07:20", df.format(date));
     //assertEquals("2021-05-04", tracker.modifieddate.get(0).substring(0,10));
     assertEquals("A8D50FC70640100E628B73138FB8F9BB", tracker.itensmd5.get(0));
@@ -812,7 +906,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:25:30", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:25:30", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:25:30", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(1).substring(0,10));
     assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(1));
@@ -821,7 +917,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(2));
     if(getVersion() < 9)
         assertEquals("04/05/2021 17:08:07", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("4 de mai de 2021 17:08:07", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("4 de mai. de 2021 17:08:07", df.format(date));
     //assertEquals("2021-05-04", tracker.modifieddate.get(2).substring(0,10));
     assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(2));
@@ -831,7 +929,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(3));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:24:22", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:24:22", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:24:22", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(3).substring(0,10));
     assertEquals("03C14E0C639186329CAB1B65054E0AA8", tracker.itensmd5.get(3));
@@ -840,7 +940,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(4));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:24:12", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:24:12", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:24:12", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(4).substring(0,10));
     assertEquals("0D6FC269C63F593B1F232D20F6E30462", tracker.itensmd5.get(4));
@@ -849,7 +951,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(5));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:23:02", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:23:02", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("9 de abr. de 2021 12:23:02", df.format(date));
     //assertEquals("2021-04-09", tracker.modifieddate.get(5).substring(0,10));
     assertEquals("F45BC2E86A3CC307776E851072003559", tracker.itensmd5.get(5));
@@ -858,8 +962,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(6));
     if(getVersion() < 9)
         assertEquals("09/04/2021 12:22:54", df.format(date));
-    if(getVersion() >= 9)
-        assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("9 de abr de 2021 12:22:54", df.format(date));
+    if(getVersion() >= 12)
     //assertEquals("2021-04-09", tracker.modifieddate.get(6).substring(0,10));
     assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(6));
 
@@ -867,7 +972,9 @@ public class PackageParserTest extends AbstractPkgTest{
     date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(7));
     if(getVersion() < 9)
         assertEquals("04/05/2021 17:08:20", df.format(date));
-    if(getVersion() >= 9)
+    if(getVersion() >= 9 && getVersion() < 12)
+        assertEquals("4 de mai de 2021 17:08:20", df.format(date));
+    if(getVersion() >= 12)
         assertEquals("4 de mai. de 2021 17:08:20", df.format(date));
     //assertEquals("2021-05-04", tracker.modifieddate.get(7).substring(0,10));
     assertEquals("BA61B70D7C45946AC670D39080C1DD42", tracker.itensmd5.get(7));
@@ -911,7 +1018,9 @@ public class PackageParserTest extends AbstractPkgTest{
       Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
       if(getVersion() < 9)
           assertEquals("01/01/1980 03:00:00", df.format(date));
-      if(getVersion() >= 9)
+      if(getVersion() >= 9 && getVersion() < 12)
+          assertEquals("1 de jan de 1980 03:00:00", df.format(date));
+      if(getVersion() >= 12)
           assertEquals("1 de jan. de 1980 03:00:00", df.format(date));
       //assertEquals("1980-01-01", tracker.modifieddate.get(0).substring(0,10));
       assertEquals("A7CBC749C317FA432BA2DB5A47131123", tracker.itensmd5.get(0));
@@ -921,7 +1030,9 @@ public class PackageParserTest extends AbstractPkgTest{
       date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
       if(getVersion() < 9)
           assertEquals("01/01/1980 03:00:00", df.format(date));
-      if(getVersion() >= 9)
+      if(getVersion() >= 9 && getVersion() < 12)
+          assertEquals("1 de jan de 1980 03:00:00", df.format(date));
+      if(getVersion() >= 12)
           assertEquals("1 de jan. de 1980 03:00:00", df.format(date));
       //assertEquals("1980-01-01", tracker.modifieddate.get(1).substring(0,10));
       assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
