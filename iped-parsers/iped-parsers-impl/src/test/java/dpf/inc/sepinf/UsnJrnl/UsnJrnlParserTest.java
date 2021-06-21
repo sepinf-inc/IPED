@@ -21,6 +21,16 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
+    
+    private static int getVersion() {
+        String version = System.getProperty("java.version");
+        if(version.startsWith("1.")) {
+            version = version.substring(2, 3);
+        } else {
+            int dot = version.indexOf(".");
+            if(dot != -1) { version = version.substring(0, dot); }
+        } return Integer.parseInt(version);
+    }
 
     @Test
     public void testUsnJrnlParsingHTML() throws IOException, SAXException, TikaException, ParseException {
@@ -49,21 +59,33 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
         Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(0));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.632 -03:00", usntracker.created.get(0));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(1));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(1));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(2));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(2));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(3));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3082));
         assertEquals("20/05/2021 14:55:03", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
         //assertEquals("2021-05-20 14:55:03.014 -03:00", usntracker.created.get(3082));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3083));
         assertEquals("20/05/2021 14:55:03", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
         //assertEquals("2021-05-20 14:55:03.014 -03:00", usntracker.created.get(3083));
 
         assertEquals("USN Journal Report 1", usntracker.title.get(0));
@@ -102,21 +124,33 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 
         Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(0));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.632 -03:00", usntracker.created.get(0));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(1));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(1));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(2));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(2));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3));
         assertEquals("20/05/2021 14:52:07", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:52:07", df.format(date));
         //assertEquals("2021-05-20 14:52:07.633 -03:00", usntracker.created.get(3));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3082));
         assertEquals("20/05/2021 14:55:03", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
         //assertEquals("2021-05-20 14:55:03.014 -03:00", usntracker.created.get(3082));
         date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(3083));
         assertEquals("20/05/2021 14:55:03", df.format(date));
+        if(getVersion() >= 9)
+            assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
         //assertEquals("2021-05-20 14:55:03.014 -03:00", usntracker.created.get(3083));
 
         assertEquals("USN Journal Report", usntracker.title.get(0));
