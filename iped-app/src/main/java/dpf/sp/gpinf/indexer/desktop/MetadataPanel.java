@@ -1122,8 +1122,6 @@ public class MetadataPanel extends JPanel
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();
-            clearTextFilter(listFilter, emptyListFilter);
-            clearTextFilter(propsFilter, emptyPropsFilter);
             clearFilter();
             props.removeAllItems();
             groups.setSelectedItem(null);
@@ -1136,6 +1134,8 @@ public class MetadataPanel extends JPanel
                 updateTabColor();
             }
         }
+        clearTextFilter(listFilter, emptyListFilter);
+        clearTextFilter(propsFilter, emptyPropsFilter);
     }
 
     private void setupFilter(JTextField field, String emptyFilter) {
