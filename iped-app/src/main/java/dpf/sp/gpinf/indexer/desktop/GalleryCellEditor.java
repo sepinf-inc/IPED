@@ -94,7 +94,12 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {
+            label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
+            label.setForeground(Color.red);
+            label.setText(GalleryCellRenderer.unsupportedIconText);
             label.setIcon(null);
         } else {
             label.setText(null);

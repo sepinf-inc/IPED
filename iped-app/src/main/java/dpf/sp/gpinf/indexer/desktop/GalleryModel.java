@@ -32,6 +32,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import javax.imageio.ImageIO;
+import javax.swing.ImageIcon;
 import javax.swing.SwingUtilities;
 import javax.swing.table.AbstractTableModel;
 
@@ -73,8 +74,8 @@ public class GalleryModel extends AbstractTableModel {
     public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
     private int maxCacheSize = 1000;
     private ErrorIcon errorIcon = new ErrorIcon();
-    private BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
-    private UnsupportedIcon unsupportedIcon = new UnsupportedIcon();
+    private static final BufferedImage errorImg = new BufferedImage(1, 1, BufferedImage.TYPE_BYTE_BINARY);
+    public static final ImageIcon unsupportedIcon = new ImageIcon();
     private ExecutorService executor;
     private GraphicsMagicConverter magickConverter;
 

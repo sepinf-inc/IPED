@@ -48,6 +48,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     Color color;
     Color background;
     public static int labelH;
+    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
 
     public GalleryCellRenderer() {
         super();
@@ -91,7 +92,13 @@ public class GalleryCellRenderer implements TableCellRenderer {
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {
+            label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
+            label.setForeground(Color.red);
+            System.err.println(unsupportedIconText);
+            label.setText(unsupportedIconText);
             label.setIcon(null);
         } else {
             label.setText(null);
