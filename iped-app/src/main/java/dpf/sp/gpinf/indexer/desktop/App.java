@@ -388,7 +388,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setIconImage(new ImageIcon(image).getImage());
         this.setVisible(true);
         ToolTipManager.sharedInstance().setInitialDelay(10);
-
+        
+        dockingControl = new CControl(this);
+        
         try {
             ThemeManager.getInstance().setLookAndFeel();
         } catch (Exception e) {
@@ -590,7 +592,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             // evidencePanel, null, 2); //$NON-NLS-1$
         }
 
-        dockingControl = new CControl(this);
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
         // This forces Eclipse theme to use rectangular tabs instead of curved ones, to
