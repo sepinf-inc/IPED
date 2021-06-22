@@ -77,8 +77,16 @@ public class ThemeManager {
         }
         updateUI(App.get());
         App.get().dockingControl.putProperty(EclipseTheme.ECLIPSE_COLOR_SCHEME, new EclipseColorScheme() {
+            @Override
             public void updateUI() {
                 super.updateUI();
+                Theme t = getCurrentTheme();
+                if (t != null) {
+                    Map<String, Color> map = t.getDockSettings();
+                    for (String key : map.keySet()) {
+                        setColor(key, map.get(key));
+                    }
+                }
             }
         });
     }
