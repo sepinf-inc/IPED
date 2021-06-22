@@ -1,12 +1,12 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.awt.Graphics;
 import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.EventObject;
 
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.TableModel;
 
 public class GalleryTable extends JTable {
@@ -20,6 +20,12 @@ public class GalleryTable extends JTable {
         super(tableModel);
     }
 
+    @Override
+    public void updateUI() {
+        super.updateUI();
+        setBackground(UIManager.getColor("Gallery.background"));
+    }
+    
     @Override
     public void changeSelection(int rowIndex, int columnIndex, boolean toggle, boolean extend) {
         int currentCell = rowIndex * this.getColumnCount() + columnIndex;

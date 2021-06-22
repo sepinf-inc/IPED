@@ -42,8 +42,8 @@ public class GalleryCellRenderer implements TableCellRenderer {
     // JLayeredPane panel = new JLayeredPane();
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
-    Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
-    Border border = BorderFactory.createLineBorder(new Color(200, 200, 200), 1, false);
+    Border selBorder;
+    Border border;
     Color selColor;
     Color color;
     Color background;
@@ -69,9 +69,11 @@ public class GalleryCellRenderer implements TableCellRenderer {
     }
     
     public void updateUI() {
-        selColor = new Color(UIManager.getColor("Gallery.cellSelected").getRGB());
-        color = new Color(UIManager.getColor("Gallery.cellBackground").getRGB());
-        background = new Color(UIManager.getColor("Gallery.background").getRGB());
+        selColor = UIManager.getColor("Gallery.cellSelected");
+        color = UIManager.getColor("Gallery.cellBackground");
+        background = UIManager.getColor("Gallery.background");
+        border = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellBorder"), 1);
+        selBorder = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellSelectBorder"), 1);
     }
 
     @Override

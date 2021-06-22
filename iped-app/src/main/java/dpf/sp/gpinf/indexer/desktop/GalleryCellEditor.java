@@ -48,7 +48,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     // JLayeredPane panel = new JLayeredPane();
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
-    Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
+    Border selBorder;
     Color selColor;
     Color background;
 
@@ -68,8 +68,9 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     }
     
     public void updateUI() {
-        selColor = new Color(UIManager.getColor("Gallery.cellSelected").getRGB());
-        background = new Color(UIManager.getColor("Gallery.background").getRGB());
+        selColor = UIManager.getColor("Gallery.cellSelected");
+        background = UIManager.getColor("Gallery.background");
+        selBorder = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellSelectBorder"), 1);
     }    
 
     @Override

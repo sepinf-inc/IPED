@@ -2,8 +2,6 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 
 import java.awt.Color;
 
-import javax.swing.plaf.ColorUIResource;
-
 public class LightTheme extends Theme {
     @Override
     public String getName() {
@@ -12,9 +10,11 @@ public class LightTheme extends Theme {
 
     @Override
     public void apply() {
-        put("nimbusFocus", new ColorUIResource(new Color(140, 190, 220)));
-        put("Gallery.cellSelected", new ColorUIResource(new Color(180, 200, 230)));
-        put("Gallery.cellBackground", new ColorUIResource(Color.white));
-        put("Gallery.background", new ColorUIResource(new Color(240, 240, 242)));
+        put("nimbusFocus", new Color(140, 190, 220));
+        put("Gallery.cellSelected", new Color(180, 200, 230));
+        put("Gallery.cellBackground", Color.white);
+        put("Gallery.background", new Color(240, 240, 242));
+        put("Gallery.cellSelectBorder", new Color(20, 50, 80));
+        put("Gallery.cellBorder", new Color(200, 200, 202));
     }
 }
