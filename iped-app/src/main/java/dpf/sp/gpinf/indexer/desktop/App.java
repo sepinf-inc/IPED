@@ -702,8 +702,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.addMouseListener(appletListener);
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
-        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
-        termo.getComponent(0).addMouseListener(appletListener);
+        updateUI();
 
         // Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
         gallery.repaint();
@@ -734,7 +733,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 return false;
             }
         });
-
+    }
+    
+    public void updateUI() {
+        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
+        termo.getComponent(0).addMouseListener(appletListener);
         new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
     }
 

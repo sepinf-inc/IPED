@@ -91,6 +91,7 @@ public class ThemeManager {
                 }
             }
         });
+        App.get().updateUI();
     }
 
     private void updateUI(Window window) {
