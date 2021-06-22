@@ -17,15 +17,15 @@ public class DarkTheme extends Theme {
         put("nimbusBase", new ColorUIResource(new Color(18, 30, 49)));
         put("nimbusAlertYellow", new ColorUIResource(new Color(248, 187, 0)));
         put("nimbusDisabledText", new ColorUIResource(new Color(128, 128, 128)));
-        put("nimbusFocus", new ColorUIResource(new Color(115, 164, 209)));
+        put("nimbusFocus", new ColorUIResource(new Color(150, 180, 210)));
         put("nimbusGreen", new ColorUIResource(new Color(176, 179, 50)));
         put("nimbusInfoBlue", new ColorUIResource(new Color(66, 139, 221)));
         put("nimbusLightBackground", new ColorUIResource(new Color(18, 30, 39)));
         put("nimbusOrange", new ColorUIResource(new Color(47, 92, 180)));
         put("nimbusRed", new ColorUIResource(Color.blue));
         put("nimbusSelectedText", new ColorUIResource(new Color(255, 255, 255)));
-        put("nimbusSelectionBackground", new ColorUIResource(new Color(60, 130, 200)));
-        put("nimbusSelection", new ColorUIResource(new Color(60, 130, 200)));
+        put("nimbusSelectionBackground", new ColorUIResource(new Color(100, 130, 160)));
+        put("nimbusSelection", new ColorUIResource(new Color(100, 130, 160)));
         put("text", new ColorUIResource(new Color(240, 240, 240)));
 
         putDock("stack.tab.text.selected.focused", Color.white);
