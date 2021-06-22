@@ -23,9 +23,6 @@ function process(e){
 	var length = e.getLength();
 	var ext = e.getExt().toLowerCase();
 
-	if(length == 0)
-		e.addCategory("Empty Files");
-
 	if(e.getExt().toLowerCase().equals("mts")){
 		e.setMediaTypeStr("video/mp2t");
 		e.setCategory("Videos");
@@ -104,6 +101,12 @@ function process(e){
 			}
 		}
 	}
+	
+	// Usually, conditions that overwrite the category (using setCategory()) 
+	// should go before the ones that add other categories (using addCategory()).
+
+	if(length == 0)
+		e.addCategory("Empty Files");
 
 	if(inRecycle(e)){
 		e.addCategory("Windows Recycle");

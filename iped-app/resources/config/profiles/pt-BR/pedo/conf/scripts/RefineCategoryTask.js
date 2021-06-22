@@ -29,9 +29,6 @@ function process(e){
 
 	var categorias = e.getCategories();
 	var length = e.getLength();
-
-	if(length == 0)
-		e.addCategory("Tamanho Zero");
 		
 	if(e.getExt().toLowerCase().equals("mts")){
 		e.setMediaTypeStr("video/mp2t");
@@ -113,6 +110,12 @@ function process(e){
 			}
 		}
 	}
+	
+	// Usually, conditions that overwrite the category (using setCategory()) 
+	// should go before the ones that add other categories (using addCategory()).
+
+	if(length == 0)
+		e.addCategory("Tamanho Zero");
 
 	if(inRecycle(e)){
 		e.addCategory("Lixeira do Windows");
