@@ -33,13 +33,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
+import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
+import iped3.util.MediaTypes;
 
 public class ImageViewer extends Viewer implements ActionListener {
 
@@ -49,7 +52,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     protected JToolBar toolBar;
     private JSlider sliderBrightness;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ExternalImageConverter externalImageConverter;
 
     public static final String HIGHLIGHT_LOCATION = ImageViewer.class.getName() + "HighlightLocation:";
 
@@ -104,23 +107,27 @@ public class ImageViewer extends Viewer implements ActionListener {
             InputStream in = null;
             try {
                 in = new BufferedInputStream(content.getStream());
-                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim);
+                // needed for embedded jbig2
+                String mimeType = content instanceof IItemBase
+                        ? MediaTypes.getMimeTypeIfJBIG2((IItemBase) content)
+                        : null;
+                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     SeekableInputStream sis = content.getStream();
                     in = new BufferedInputStream(sis);
-                    image = graphicsMagicConverter.getImage(in, maxDim, true, sis.size());
+                    image = externalImageConverter.getImage(in, maxDim, true, sis.size());
                 }
                 if (image == null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
-                    image = ImageUtil.getThumb(in);
+                    image = ImageMetadataUtil.getThumb(in);
                 }
                 if (image != null) {
                     IOUtil.closeQuietly(in);
                     in = new BufferedInputStream(content.getStream());
-                    int orientation = ImageUtil.getOrientation(in);
+                    int orientation = ImageMetadataUtil.getOrientation(in);
                     boolean isVideo = false;
                     if (orientation > 0) {
                         image = ImageUtil.rotate(image, orientation);
@@ -158,7 +165,7 @@ public class ImageViewer extends Viewer implements ActionListener {
         }
         if (d == null) {
             try (InputStream is = content.getStream()) {
-                d = graphicsMagicConverter.getDimension(is);
+                d = externalImageConverter.getDimension(is);
             }
         }
         if (d == null)
@@ -210,8 +217,8 @@ public class ImageViewer extends Viewer implements ActionListener {
 
     @Override
     public void init() {
-        graphicsMagicConverter = new GraphicsMagicConverter();
-        graphicsMagicConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
+        externalImageConverter = new ExternalImageConverter();
+        externalImageConverter.setNumThreads(Math.max(Runtime.getRuntime().availableProcessors() / 2, 1));
     }
 
     @Override
@@ -225,9 +232,9 @@ public class ImageViewer extends Viewer implements ActionListener {
     @Override
     public void dispose() {
         try {
-            graphicsMagicConverter.close();
+            externalImageConverter.close();
         } catch (IOException e) {
-            LOGGER.warn("Error closing " + graphicsMagicConverter, e);
+            LOGGER.warn("Error closing " + externalImageConverter, e);
         }
     }
 

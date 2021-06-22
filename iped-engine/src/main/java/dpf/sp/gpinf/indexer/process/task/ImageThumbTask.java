@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -25,11 +24,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
+import iped3.util.MediaTypes;
 
 public class ImageThumbTask extends ThumbTask {
 
@@ -55,7 +56,8 @@ public class ImageThumbTask extends ThumbTask {
 
     private boolean taskEnabled = false;
 
-    private GraphicsMagicConverter graphicsMagicConverter;
+    private ExternalImageConverter externalImageConverter;
+    private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
 
     private static final Map<String, long[]> performanceStatsPerType = new HashMap<String, long[]>();
     private static final AtomicBoolean logInit = new AtomicBoolean(false);
@@ -72,45 +74,48 @@ public class ImageThumbTask extends ThumbTask {
         File confFile = new File(confDir, TASK_CONFIG_FILE);
         properties.load(confFile);
 
-        String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            if (value.trim().equals("graphicsmagick")) { //$NON-NLS-1$
-                GraphicsMagicConverter.setUseGM(true);
+        synchronized (extConvPropInit) {
+            if (!extConvPropInit.get()) {
+                String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.enabledProp, Boolean.TRUE.toString());
+                    if (value.trim().equalsIgnoreCase("graphicsmagick")) { //$NON-NLS-1$
+                        System.setProperty(ExternalImageConverter.useGMProp, Boolean.TRUE.toString());
+                    }
+                }
+                value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.lowDensityProp, value.trim());
+                }
+                value = properties.getProperty("highResDensity"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.highDensityProp, value.trim());
+                }
+                value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.magickAreaLimitProp, value.trim());
+                }
+                value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.minTimeoutProp, value.trim());
+                }
+                value = properties.getProperty("imgConvTimeoutPerMB"); //$NON-NLS-1$
+                if (value != null && !value.trim().isEmpty()) {
+                    System.setProperty(ExternalImageConverter.timeoutPerMBProp, value.trim());
+                }
+                if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    System.setProperty(ExternalImageConverter.winToolPathPrefixProp, Configuration.getInstance().appRoot);
+                }
+                File tmpDir = new File(System.getProperty("java.io.tmpdir"), "ext-conv"); //$NON-NLS-1$  //$NON-NLS-2$
+                tmpDir.mkdirs();
+                System.setProperty(ExternalImageConverter.tmpDirProp, tmpDir.getAbsolutePath());
+                startTmpDirCleaner(tmpDir);
+                
+                extConvPropInit.set(true);
             }
-        } else {
-            GraphicsMagicConverter.setEnabled(false);
         }
 
-        if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-            GraphicsMagicConverter.setWinToolPathPrefix(Configuration.getInstance().appRoot);
-        }
-
-        value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setLowResDensity(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("highResDensity"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setHighResDensity(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setMaxMPixelsInMemory(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setMinTimeout(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("imgConvTimeoutPerMB"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            GraphicsMagicConverter.setTimeoutPerMB(Integer.valueOf(value.trim()));
-        }
-
-        value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
+        String value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
         if (value != null && !value.trim().equalsIgnoreCase("default")) { //$NON-NLS-1$
             galleryThreads = Integer.valueOf(value.trim());
         } else {
@@ -131,7 +136,7 @@ public class ImageThumbTask extends ThumbTask {
         if (value != null && !value.trim().isEmpty()) {
             logGalleryRendering = Boolean.valueOf(value.trim());
         }
-        graphicsMagicConverter = new GraphicsMagicConverter(executor);
+        externalImageConverter = new ExternalImageConverter(executor);
 
         synchronized (logInit) {
             if (taskEnabled && !logInit.get()) {
@@ -147,8 +152,32 @@ public class ImageThumbTask extends ThumbTask {
 
         // install a new exif reader to read thumb data.
         // must be installed at the beginning of the processing, see #532
-        ImageUtil.updateExifReaderToLoadThumbData();
+        ImageMetadataUtil.updateExifReaderToLoadThumbData();
     }
+    
+    private static void startTmpDirCleaner(File tmpDir) {
+        Thread t = new Thread() {
+            public void run() {
+                while (true) {
+                    long t = System.currentTimeMillis() - 60000;
+                    File[] subFiles = tmpDir.listFiles();
+                    if (subFiles != null) {
+                        for (File tmp : subFiles) {
+                            if (tmp.lastModified() < t)
+                                tmp.delete();
+                        }
+                    }
+                    try {
+                        Thread.sleep(2000);
+                    } catch (InterruptedException e) {
+                        break;
+                    }
+                }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }    
 
     @Override
     public boolean isEnabled() {
@@ -160,7 +189,7 @@ public class ImageThumbTask extends ThumbTask {
         if (!executor.isShutdown())
             executor.shutdownNow();
 
-        graphicsMagicConverter.close();
+        externalImageConverter.close();
         synchronized (finished) {
             if (taskEnabled && !finished.get()) {
                 finished.set(true);
@@ -244,7 +273,7 @@ public class ImageThumbTask extends ThumbTask {
 
         Future<?> future = executor.submit(new ThumbCreator(evidence, thumbFile));
         try {
-            int timeout = TIMEOUT_DELTA + GraphicsMagicConverter.getTotalTimeout(evidence.getLength());
+            int timeout = TIMEOUT_DELTA + externalImageConverter.getTotalTimeout(evidence.getLength());
             future.get(timeout, TimeUnit.SECONDS);
 
         } catch (TimeoutException e) {
@@ -293,7 +322,7 @@ public class ImageThumbTask extends ThumbTask {
             if (extractThumb && isJpeg(evidence)) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 }
                 performanceStats[img == null ? 2 : 0]++;
                 performanceStats[img == null ? 3 : 1] += System.currentTimeMillis() - t;
@@ -303,7 +332,7 @@ public class ImageThumbTask extends ThumbTask {
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     BooleanWrapper renderException = new BooleanWrapper();
                     img = ImageUtil.getSubSampledImage(stream, thumbSize * samplingRatio, thumbSize * samplingRatio,
-                            renderException);
+                            renderException, MediaTypes.getMimeTypeIfJBIG2(evidence));
                     if (img != null && renderException.value)
                         evidence.setExtraAttribute("thumbException", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
@@ -313,7 +342,7 @@ public class ImageThumbTask extends ThumbTask {
             if (img == null) {
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                    img = graphicsMagicConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
+                    img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength(), true);
                     if (img != null)
                         evidence.setExtraAttribute("externalThumb", "true"); //$NON-NLS-1$ //$NON-NLS-2$
                 } catch (TimeoutException e) {
@@ -340,7 +369,7 @@ public class ImageThumbTask extends ThumbTask {
                 if (isJpeg(evidence)) {
                     // Ajusta rotacao da miniatura a partir do metadado orientacao
                     try (BufferedInputStream stream = evidence.getBufferedStream()) {
-                        int orientation = ImageUtil.getOrientation(stream);
+                        int orientation = ImageMetadataUtil.getOrientation(stream);
                         if (orientation > 0) {
                             t = System.currentTimeMillis();
                             img = ImageUtil.rotate(img, orientation);
