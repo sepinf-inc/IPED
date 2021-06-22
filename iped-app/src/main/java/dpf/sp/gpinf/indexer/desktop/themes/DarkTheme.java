@@ -27,11 +27,5 @@ public class DarkTheme extends Theme {
         put("nimbusSelectionBackground", new ColorUIResource(new Color(124, 113, 146)));
         put("nimbusSelection", new ColorUIResource(new Color(124, 113, 146)));
         put("text", new ColorUIResource(new Color(240, 240, 240)));
-                
-        put("Table[Enabled+Selected].textForeground", new ColorUIResource(new Color(255, 255, 255)));
-        put("Menu[Enabled+Selected].backgroundPainter", new ColorPainter(new Color(124, 113, 146)));
-        put("MenuItem[MouseOver].backgroundPainter", new ColorPainter(new Color(124, 113, 146)));
-        put("RadioButtonMenuItem[MouseOver].backgroundPainter", new ColorPainter(new Color(124, 113, 146)));
-        put("RadioButtonMenuItem[MouseOver+Selected].backgroundPainter", new ColorPainter(new Color(124, 113, 146)));
     }
 }
