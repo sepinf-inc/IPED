@@ -27,5 +27,7 @@ public class DarkTheme extends Theme {
         put("nimbusSelectionBackground", new ColorUIResource(new Color(60, 130, 200)));
         put("nimbusSelection", new ColorUIResource(new Color(60, 130, 200)));
         put("text", new ColorUIResource(new Color(240, 240, 240)));
+
+        putDock("stack.tab.text.selected.focused", Color.white);
     }
 }
