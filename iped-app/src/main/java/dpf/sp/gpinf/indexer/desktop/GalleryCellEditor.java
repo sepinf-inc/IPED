@@ -32,6 +32,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
@@ -48,6 +49,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
     Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
+    Color selColor;
+    Color background;
 
     public GalleryCellEditor() {
         super();
@@ -60,7 +63,14 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         label.setHorizontalAlignment(JLabel.CENTER);
         check.addActionListener(this);
+        
+        updateUI();
     }
+    
+    public void updateUI() {
+        selColor = new Color(UIManager.getColor("Gallery.cellSelected").getRGB());
+        background = new Color(UIManager.getColor("Gallery.background").getRGB());
+    }    
 
     @Override
     public Object getCellEditorValue() {
@@ -74,7 +84,9 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue.id == null) {
-            return new JPanel();
+            JPanel panel = new JPanel();
+            panel.setBackground(background);
+            return panel;
         }
 
         check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
@@ -99,8 +111,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
             }
         }
 
-        panel.setBackground(new Color(180, 200, 230));
-        top.setBackground(new Color(180, 200, 230));
+        panel.setBackground(selColor);
+        top.setBackground(selColor);
         panel.setBorder(selBorder);
         this.row = row;
         this.col = col;

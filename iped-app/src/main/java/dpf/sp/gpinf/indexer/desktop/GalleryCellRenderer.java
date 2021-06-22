@@ -29,6 +29,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
@@ -43,6 +44,9 @@ public class GalleryCellRenderer implements TableCellRenderer {
     JCheckBox check = new JCheckBox();
     Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
     Border border = BorderFactory.createLineBorder(new Color(200, 200, 200), 1, false);
+    Color selColor;
+    Color color;
+    Color background;
     public static int labelH;
 
     public GalleryCellRenderer() {
@@ -60,6 +64,14 @@ public class GalleryCellRenderer implements TableCellRenderer {
          * label.setBounds(0,0, 100,100); check.setBounds(0, 0, 20, 20);
          */
         label.setHorizontalAlignment(JLabel.CENTER);
+
+        updateUI();
+    }
+    
+    public void updateUI() {
+        selColor = new Color(UIManager.getColor("Gallery.cellSelected").getRGB());
+        color = new Color(UIManager.getColor("Gallery.cellBackground").getRGB());
+        background = new Color(UIManager.getColor("Gallery.background").getRGB());
     }
 
     @Override
@@ -68,7 +80,9 @@ public class GalleryCellRenderer implements TableCellRenderer {
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue == null || cellValue.id == null) {
-            return new JPanel();
+            JPanel panel = new JPanel();
+            panel.setBackground(background);
+            return panel;
         }
 
         check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
@@ -93,15 +107,16 @@ public class GalleryCellRenderer implements TableCellRenderer {
             }
         }
 
+        Color c = null;
         if (isSelected) {
-            panel.setBackground(new Color(180, 200, 230));
+            c = selColor;
             panel.setBorder(selBorder);
-            top.setBackground(new Color(180, 200, 230));
         } else {
-            panel.setBackground(Color.WHITE);
+            c = color;
             panel.setBorder(border);
-            top.setBackground(Color.WHITE);
         }
+        panel.setBackground(c);
+        top.setBackground(c);
 
         return panel;
     }

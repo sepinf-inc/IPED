@@ -467,7 +467,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         gallery.setFillsViewportHeight(true);
         gallery.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         gallery.setShowGrid(false);
-        gallery.setBackground(Color.WHITE);
         gallery.setTableHeader(null);
         gallery.setIntercellSpacing(new Dimension(1, 1));
         gallery.setCellSelectionEnabled(true);
@@ -702,7 +701,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.addMouseListener(appletListener);
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
-        updateUI();
+        updateUI(false);
 
         // Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
         gallery.repaint();
@@ -735,10 +734,16 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
     }
     
-    public void updateUI() {
+    public void updateUI(boolean refresh) {
         termo.getEditor().getEditorComponent().addMouseListener(appletListener);
         termo.getComponent(0).addMouseListener(appletListener);
         new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        
+        if (refresh) {
+            ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
+            ((GalleryCellRenderer) gallery.getDefaultRenderer(GalleryCellRenderer.class)).updateUI();
+            gallery.repaint();
+        }
     }
 
     private void createAllDockables() {
