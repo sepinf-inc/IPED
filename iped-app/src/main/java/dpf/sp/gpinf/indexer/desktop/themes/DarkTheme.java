@@ -18,7 +18,7 @@ public class DarkTheme extends Theme {
         put("nimbusFocus", new Color(150, 180, 210));
         put("nimbusGreen", new Color(176, 179, 50));
         put("nimbusInfoBlue", new Color(66, 139, 221));
-        put("nimbusLightBackground", new Color(19, 28, 37));
+        put("nimbusLightBackground", new Color(29, 38, 47));
         put("nimbusOrange", new Color(47, 92, 180));
         put("nimbusRed", Color.blue);
         put("nimbusSelectedText", new Color(255, 255, 255));
@@ -26,10 +26,11 @@ public class DarkTheme extends Theme {
         put("nimbusSelection", new Color(100, 130, 160));
         put("text", new Color(249, 249, 250));
         put("Gallery.cellSelected", new Color(100, 130, 160));
-        put("Gallery.cellBackground", new Color(19, 28, 37));
-        put("Gallery.background", new Color(29, 33, 37));
+        put("Gallery.cellBackground", new Color(29, 38, 47));
+        put("Gallery.background", new Color(39, 43, 47));
         put("Gallery.cellSelectBorder", new Color(130, 160, 220));
         put("Gallery.cellBorder", new Color(53, 60, 67));
+        put("Table[Enabled+Selected].textForeground", Color.white);
         
         putDock("stack.tab.text.selected.focused", Color.white);
     }

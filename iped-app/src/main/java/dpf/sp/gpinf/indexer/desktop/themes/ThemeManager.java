@@ -33,10 +33,6 @@ public class ThemeManager {
         boolean nimbusFound = false;
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
             if ("Nimbus".equals(info.getName())) {
-                UIManager.put("nimbusOrange", new Color(47, 92, 180));
-                UIManager.put("nimbusRed", Color.blue);
-                UIManager.put("Table[Enabled+Selected].textForeground", Color.white);
-                UIManager.put("Gallery.selected", new Color(180, 200, 230));
                 UIManager.setLookAndFeel(info.getClassName());
                 UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
                 defaults.put("ScrollBar.thumbHeight", 12);
