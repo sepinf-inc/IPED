@@ -32,27 +32,28 @@ public class ThemeManager {
     public synchronized void setLookAndFeel() throws Exception {
         boolean nimbusFound = false;
         for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-            if ("Nimbus".equals(info.getName())) { //$NON-NLS-1$
-                UIManager.put("nimbusOrange", new Color(47, 92, 180)); //$NON-NLS-1$
-                UIManager.put("nimbusRed", Color.BLUE); //$NON-NLS-1$
+            if ("Nimbus".equals(info.getName())) {
+                UIManager.put("nimbusOrange", new Color(47, 92, 180));
+                UIManager.put("nimbusRed", Color.blue);
                 UIManager.setLookAndFeel(info.getClassName());
                 UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-                defaults.put("ScrollBar.thumbHeight", 12); //$NON-NLS-1$
+                defaults.put("ScrollBar.thumbHeight", 12);
                 // Workaround JDK-8134828
-                defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30)); //$NON-NLS-1$
+                defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
                 for (Object key : defaults.keySet()) {
                     savedDefaults.put(key, defaults.get(key));
                 }
-                themes.add(new LightTheme());
-                themes.add(new DarkTheme());
                 nimbusFound = true;
                 break;
             }
         }
-        if (nimbusFound)
+        if (nimbusFound) {
+            themes.add(new LightTheme());
+            themes.add(new DarkTheme());
             themes.get(0).apply(); // TODO
-        else
+        } else {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        }
     }
 
     public List<Theme> getThemes() {
