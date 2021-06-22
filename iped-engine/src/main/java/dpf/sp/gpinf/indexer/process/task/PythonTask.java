@@ -2,8 +2,9 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.slf4j.Logger;
@@ -20,6 +21,7 @@ import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
 import jep.NDArray;
+import macee.core.Configurable;
 
 public class PythonTask extends AbstractTask {
 
@@ -35,8 +37,6 @@ public class PythonTask extends AbstractTask {
     private ArrayList<String> globals = new ArrayList<>();
     private File scriptFile;
     private String moduleName, instanceName;
-    private Properties confParams;
-    private File confDir;
     private Boolean processQueueEnd;
     private boolean isEnabled = true;
     private boolean scriptLoaded = false;
@@ -85,9 +85,13 @@ public class PythonTask extends AbstractTask {
     }
 
     private Jep getJep() throws JepException {
+        return getJep(true);
+    }
+
+    private Jep getJep(boolean init) throws JepException {
         Jep jep = PythonParser.getJep();
         if (!scriptLoaded) {
-            loadScript(jep);
+            loadScript(jep, init);
             scriptLoaded = true;
         }
         return jep;
@@ -102,8 +106,7 @@ public class PythonTask extends AbstractTask {
         setGlobalVar(jep, "javaArray", new ArrayConverter()); //$NON-NLS-1$
         setGlobalVar(jep, "ImageUtil", new ImageUtil()); //$NON-NLS-1$
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         setGlobalVar(jep, "numThreads", Integer.valueOf(localConfig.getNumThreads()));
     }
 
@@ -117,7 +120,7 @@ public class PythonTask extends AbstractTask {
         jep.eval(moduleName + "." + name + " = " + name);
     }
 
-    private void loadScript(Jep jep) throws JepException {
+    private void loadScript(Jep jep, boolean init) throws JepException {
 
         if (jep == null) {
             return;
@@ -144,7 +147,9 @@ public class PythonTask extends AbstractTask {
         jep.set(taskInstancePerThread, new TaskInstancePerThread(moduleName, this));
         jep.eval(moduleName + ".javaTask" + " = " + taskInstancePerThread);
 
-        jep.invoke(getInstanceMethod("init"), confParams, confDir);
+        if (init) {
+            jep.invoke(getInstanceMethod("init"), ConfigurationManager.get());
+        }
 
         try {
             isEnabled = (Boolean) jep.invoke(getInstanceMethod("isEnabled"));
@@ -184,15 +189,25 @@ public class PythonTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        this.confParams = confParams;
-        this.confDir = confDir;
+    public List<Configurable<?>> getConfigurables() {
+        try {
+            List<Configurable<?>> configs = (List<Configurable<?>>) getJep(false)
+                    .invoke(getInstanceMethod("getConfigurables"));
+            return configs != null ? configs : Collections.emptyList();
+
+        } catch (JepException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
         try {
             Jep jep = PythonParser.getJep();
             if (jep == null) {
                 isEnabled = false;
             } else {
-                loadScript(jep);
+                loadScript(jep, true);
             }
         } catch (JepException e) {
             if (jepExceptionPerScript.get(scriptFile) == null) {

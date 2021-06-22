@@ -24,8 +24,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.util.SleuthkitServer.FLAGS;
 import iped3.io.SeekableInputStream;
@@ -48,8 +48,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     static AtomicInteger idStart = new AtomicInteger();
 
     static {
-        SleuthKitConfig config = (SleuthKitConfig) ConfigurationManager.getInstance().findObjects(SleuthKitConfig.class)
-                .iterator().next();
+        FileSystemConfig config = ConfigurationManager.get().findObject(FileSystemConfig.class);
         NUM_TSK_SERVERS = config.getNumImageReaders();
     }
 
@@ -156,8 +155,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
 
     private void start() {
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         String pipePath = localConfig.getIndexerTemp() + "/pipe-" + id; //$NON-NLS-1$
 
         String classpath = Configuration.getInstance().appRoot + "/lib/*"; //$NON-NLS-1$

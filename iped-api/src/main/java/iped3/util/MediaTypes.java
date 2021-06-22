@@ -35,6 +35,10 @@ public class MediaTypes {
         return mediaTypeRegistry;
     }
 
+    public static MediaType normalize(MediaType type) {
+        return getMediaTypeRegistry().normalize(type);
+    }
+
     public static MediaType getParentType(MediaType type) {
         MediaType parent = getMediaTypeRegistry().getSupertype(type);
         if (type != null && type.toString().contains(UFED_MIME_PREFIX) && MediaType.OCTET_STREAM.equals(parent)) {

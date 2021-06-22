@@ -52,8 +52,9 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
@@ -69,7 +70,6 @@ import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
@@ -131,7 +131,8 @@ public class Manager {
     private boolean isProcessingFinished = false;
 
     private LocalConfig localConfig;
-    private AdvancedIPEDConfig advancedConfig;
+    private AnalysisConfig analysisConfig;
+    private IndexTaskConfig indexConfig;
     private CmdLineArgs args;
 
     private Thread commitThread = null;
@@ -149,10 +150,9 @@ public class Manager {
 
     public Manager(List<File> sources, File output, File palavras) {
 
-        this.localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator()
-                .next();
-        this.advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        this.localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+        this.analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        this.indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;
@@ -173,7 +173,7 @@ public class Manager {
 
         instance = this;
 
-        commitIntervalMillis = advancedConfig.getCommitIntervalSeconds() * 1000;
+        commitIntervalMillis = indexConfig.getCommitIntervalSeconds() * 1000;
     }
 
     public File getIndexTemp() {
@@ -236,6 +236,7 @@ public class Manager {
             finalizarIndexacao();
 
         } catch (Exception e) {
+            e.printStackTrace();
             interromperIndexacao();
             throw e;
 
@@ -579,7 +580,7 @@ public class Manager {
             workers[k].finish();
         }
 
-        if (advancedConfig.isForceMerge()) {
+        if (indexConfig.isForceMerge()) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
             try {
@@ -752,7 +753,7 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
                     new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
-            if (!advancedConfig.isEmbutirLibreOffice()) {
+            if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 

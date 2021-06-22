@@ -108,6 +108,7 @@ import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -299,8 +300,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         // Force initialization of ImageThumbTask to load external conversion configuration
         try {
-            new ImageThumbTask().init(Configuration.getInstance().properties,
-                    new File(Configuration.getInstance().configPath + "/conf"));
+            new ImageThumbTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }

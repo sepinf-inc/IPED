@@ -111,7 +111,6 @@ public class ViewerController {
                     for (Viewer viewer : viewers) {
                         viewer.init();
                     }
-                    tika = new Tika();
 
                     // LibreOffice viewer initialization
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
@@ -343,6 +342,9 @@ public class ViewerController {
             return;
         if (!file.equals(viewFile)) {
             try {
+                if (tika == null) {
+                    tika = new Tika();
+                }
                 viewType = tika.detect(viewFile.getFile());
                 return;
             } catch (IOException e) {

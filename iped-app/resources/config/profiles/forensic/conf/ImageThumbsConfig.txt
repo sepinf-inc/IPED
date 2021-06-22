@@ -2,14 +2,14 @@
 # Image thumbnail extraction configuration
 ###########################################################################
 
-# It uses external tools to render hundreds of image formats not supported by Java (slower).
+# Uses external tools to render hundreds of image formats not supported by Java (slower).
 # Imagemagick tool is already distributed for Windows systems.
 # For other systems, like Linux, it must be installed and on system path.
+enableExternalConv = true
 
-# Configure "graphicsmagick" or "imagemagick" to external image rendering.
+# Choose between "graphicsmagick" or "imagemagick" for external image conversion.
 # ImageMagick supports about twice image formats and decoding of common formats was better in a past evaluation.
 # Eventually GraphicsMagick may decode some format better.
-# Comment out to disable external image decoding of java not supported image formats.
 externalConversionTool = imagemagick
 
 # Density used for external conversion of vector images, for low resolution output (thumbnails). 

@@ -9,7 +9,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +28,7 @@ import com.google.cloud.speech.v1p1beta1.SpeechRecognitionAlternative;
 import com.google.cloud.speech.v1p1beta1.SpeechRecognitionResult;
 import com.google.protobuf.ByteString;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 
@@ -38,8 +38,6 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
     // must be set in environment variable
     private static final String CREDENTIAL_KEY = "GOOGLE_APPLICATION_CREDENTIALS";
-
-    private static final String REQUEST_INTERVAL_KEY = "requestIntervalMillis";
 
     private static final MediaType mp3 = MediaType.audio("mpeg");
     private static final MediaType ogg = MediaType.audio("vorbis");
@@ -60,13 +58,11 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
     private SpeechClient speechClient;
 
-    private int requestIntervalMillis = 0;
-
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        super.init(confParams, confDir);
-        if (!isEnabled) {
+        super.init(configurationManager);
+        if (!transcriptConfig.isEnabled()) {
             return;
         }
 
@@ -87,8 +83,6 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
                     "To use Google transcription, you must specify environment variable " + CREDENTIAL_KEY);
         }
 
-        requestIntervalMillis = Integer.valueOf(props.getProperty(REQUEST_INTERVAL_KEY).trim());
-
         if (!super.isFfmpegOk()) {
             LOGGER.error("FFmpeg not detected, audios longer than 1min will not be transcribed!");
         }
@@ -98,7 +92,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
     @Override
     public void finish() throws Exception {
-        if (!isEnabled) {
+        if (!transcriptConfig.isEnabled()) {
             return;
         }
         super.finish();
@@ -173,8 +167,8 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         synchronized (lock) {
             long t = System.currentTimeMillis();
             long dif = t - lastTime;
-            if (dif < requestIntervalMillis) {
-                Thread.sleep(requestIntervalMillis - dif);
+            if (dif < transcriptConfig.getRequestIntervalMillis()) {
+                Thread.sleep(transcriptConfig.getRequestIntervalMillis() - dif);
             }
             lastTime = System.currentTimeMillis();
         }
@@ -182,9 +176,10 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         TextAndScore textAndScore = null;
         try {
             // The language of the supplied audio
-            String languageCode = languages.get(0);
+            String languageCode = transcriptConfig.getLanguages().get(0);
 
-            List<String> alternativeLangs = languages.subList(1, languages.size());
+            List<String> alternativeLangs = transcriptConfig.getLanguages().subList(1,
+                    transcriptConfig.getLanguages().size());
 
             Builder builder = RecognitionConfig.newBuilder().setLanguageCode(languageCode)
                     .addAllAlternativeLanguageCodes(alternativeLangs);
@@ -223,8 +218,9 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
             OperationFuture<LongRunningRecognizeResponse, LongRunningRecognizeMetadata> future = speechClient
                     .longRunningRecognizeAsync(request);
 
-            LongRunningRecognizeResponse response = future
-                    .get(MIN_TIMEOUT + (timeoutPerSec * tmpFile.length() / WAV_BYTES_PER_SEC), TimeUnit.SECONDS);
+            LongRunningRecognizeResponse response = future.get(
+                    MIN_TIMEOUT + (transcriptConfig.getTimeoutPerSec() * tmpFile.length() / WAV_BYTES_PER_SEC),
+                    TimeUnit.SECONDS);
 
             StringBuilder text = new StringBuilder();
             float confidence = 0;

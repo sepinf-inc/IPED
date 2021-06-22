@@ -25,8 +25,8 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
@@ -50,8 +50,10 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
 
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
+        hashAnalyzer.setConvertCharsToLower(true);
         analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
         analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), hashAnalyzer);
         analyzerPerField.put(HashTask.HASH.SHA1.toString(), hashAnalyzer);
@@ -60,11 +62,11 @@ public class AppAnalyzer {
         analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
         StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(false);
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
-        defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
-        defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
+        defaultAnalyzer.setMaxTokenLength(indexConfig.getMaxTokenLength());
+        defaultAnalyzer.setFilterNonLatinChars(indexConfig.isFilterNonLatinChars());
+        defaultAnalyzer.setConvertCharsToAscii(indexConfig.isConvertCharsToAscii());
+        defaultAnalyzer.setConvertCharsToLower(indexConfig.isConvertCharsToLowerCase());
+        defaultAnalyzer.setExtraCharsToIndex(indexConfig.getExtraCharsToIndex());
         return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
     }
 

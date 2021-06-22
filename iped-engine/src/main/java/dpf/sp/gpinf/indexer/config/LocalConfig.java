@@ -10,12 +10,20 @@ import java.util.Date;
 import org.slf4j.Logger;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class LocalConfig extends AbstractPropertiesConfigurable {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
 
     public static final String SYS_PROP_APPEND = "iped.appending"; //$NON-NLS-1$
+
+    private static final String HASH_DB = "hashesDB";
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -24,18 +32,20 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         }
     };
 
-    boolean indexTempOnSSD = false;
-    boolean outputOnSSD = false;
-    File indexerTemp, indexTemp;
-    int numThreads;
+    private boolean indexTempOnSSD = false;
+    private boolean outputOnSSD = false;
+    private File indexerTemp, indexTemp;
+    private int numThreads;
+    private File hashDbFile;
+    private String regripperFolder;
 
     @Override
     public Filter<Path> getResourceLookupFilter() {
         return filter;
     }
 
-    public void processConfig(Path resource) throws IOException {
-        super.processConfig(resource);
+    @Override
+    public void processProperties(UTF8Properties properties) {
 
         Logger logger = Configuration.getInstance().logger;
 
@@ -106,6 +116,20 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
         if (outputOnSSD || !indexTempOnSSD || Boolean.valueOf(System.getProperty(SYS_PROP_APPEND)))
             indexTemp = null;
+
+        value = properties.getProperty(HASH_DB);
+        if (value != null) {
+            setHashDbFile(new File(value.trim()));
+        }
+
+        value = properties.getProperty("regripperFolder"); //$NON-NLS-1$
+        if (value != null) {
+            regripperFolder = value.trim();
+        }
+    }
+
+    public String getRegRipperFolder() {
+        return regripperFolder;
     }
 
     public void setIndexerTemp(File temp) {
@@ -131,5 +155,13 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
 
     public int getNumThreads() {
         return numThreads;
+    }
+
+    public File getHashDbFile() {
+        return hashDbFile;
+    }
+
+    public void setHashDbFile(File hashDbFile) {
+        this.hashDbFile = hashDbFile;
     }
 }

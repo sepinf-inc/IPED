@@ -3,7 +3,7 @@
 #################################
 
 # Enable indexing to ElasticSearch cluster
-enable = false
+enableIndexToElasticSearch = false
 
 # Host name or ip address of Elastic cluster
 host = Sepinf-hpw03

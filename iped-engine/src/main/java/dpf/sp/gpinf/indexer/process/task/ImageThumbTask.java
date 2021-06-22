@@ -5,11 +5,11 @@ import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -24,125 +24,86 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil.BooleanWrapper;
-import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import iped3.IItem;
+import macee.core.Configurable;
 import iped3.util.MediaTypes;
 
 public class ImageThumbTask extends ThumbTask {
 
-    private static final String enableProperty = "enableImageThumbs"; //$NON-NLS-1$
-
     public static final String THUMB_TIMEOUT = "thumbTimeout"; //$NON-NLS-1$
-
-    private static final String TASK_CONFIG_FILE = "ImageThumbsConfig.txt"; //$NON-NLS-1$
     
     private static final int TIMEOUT_DELTA = 5;
 
     private static final int samplingRatio = 3;
 
-    public static boolean extractThumb = true;
+    private static final int numStats = 22;
 
-    private static ExecutorService executor = Executors.newCachedThreadPool();
-
-    public int thumbSize = 160;
-
-    public int galleryThreads = 1;
-
-    public boolean logGalleryRendering = false;
-
-    private boolean taskEnabled = false;
-
-    private ExternalImageConverter externalImageConverter;
-    private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
+    private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
 
     private static final Map<String, long[]> performanceStatsPerType = new HashMap<String, long[]>();
     private static final AtomicBoolean logInit = new AtomicBoolean(false);
     private static final AtomicBoolean finished = new AtomicBoolean(false);
-    private static final Logger logger = LoggerFactory.getLogger(ImageThumbTask.class);
-    private static final int numStats = 22;
+
+    private static ExecutorService executor = Executors.newCachedThreadPool();
+
+    private ImageThumbTaskConfig imgThumbConfig;
+
+    private ExternalImageConverter externalImageConverter;
+    private static final AtomicBoolean extConvPropInit = new AtomicBoolean(false);
+
+    private int thumbSize = 160;
+
+    public ImageThumbTaskConfig getImageThumbConfig() {
+        return imgThumbConfig;
+    }
+
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new ImageThumbTaskConfig());
+    }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        taskEnabled = Boolean.valueOf(confParams.getProperty(enableProperty));
-
-        UTF8Properties properties = new UTF8Properties();
-        File confFile = new File(confDir, TASK_CONFIG_FILE);
-        properties.load(confFile);
+        imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
 
         synchronized (extConvPropInit) {
             if (!extConvPropInit.get()) {
-                String value = properties.getProperty("externalConversionTool"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.enabledProp, Boolean.TRUE.toString());
-                    if (value.trim().equalsIgnoreCase("graphicsmagick")) { //$NON-NLS-1$
-                        System.setProperty(ExternalImageConverter.useGMProp, Boolean.TRUE.toString());
-                    }
-                }
-                value = properties.getProperty("lowResDensity"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.lowDensityProp, value.trim());
-                }
-                value = properties.getProperty("highResDensity"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.highDensityProp, value.trim());
-                }
-                value = properties.getProperty("maxMPixelsInMemory"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.magickAreaLimitProp, value.trim());
-                }
-                value = properties.getProperty("imgConvTimeout"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.minTimeoutProp, value.trim());
-                }
-                value = properties.getProperty("imgConvTimeoutPerMB"); //$NON-NLS-1$
-                if (value != null && !value.trim().isEmpty()) {
-                    System.setProperty(ExternalImageConverter.timeoutPerMBProp, value.trim());
-                }
+                System.setProperty(ExternalImageConverter.enabledProp, String.valueOf(imgThumbConfig.isEnableExternalConv()));
+                System.setProperty(ExternalImageConverter.useGMProp, String.valueOf(imgThumbConfig.isUseGraphicsMagick()));
+                System.setProperty(ExternalImageConverter.lowDensityProp, String.valueOf(imgThumbConfig.getLowResDensity()));
+                System.setProperty(ExternalImageConverter.highDensityProp, String.valueOf(imgThumbConfig.getHighResDensity()));
+                System.setProperty(ExternalImageConverter.magickAreaLimitProp, String.valueOf(imgThumbConfig.getMaxMPixelsInMemory()));
+                System.setProperty(ExternalImageConverter.minTimeoutProp, String.valueOf(imgThumbConfig.getMinTimeout()));
+                System.setProperty(ExternalImageConverter.timeoutPerMBProp, String.valueOf(imgThumbConfig.getTimeoutPerMB()));
+                
                 if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
-                    System.setProperty(ExternalImageConverter.winToolPathPrefixProp, Configuration.getInstance().appRoot);
+                    System.setProperty(ExternalImageConverter.winToolPathPrefixProp,
+                            Configuration.getInstance().appRoot);
                 }
-                File tmpDir = new File(System.getProperty("java.io.tmpdir"), "ext-conv"); //$NON-NLS-1$  //$NON-NLS-2$
+                
+                File tmpDir = new File(System.getProperty("java.io.tmpdir"), "ext-conv"); //$NON-NLS-1$ //$NON-NLS-2$
                 tmpDir.mkdirs();
                 System.setProperty(ExternalImageConverter.tmpDirProp, tmpDir.getAbsolutePath());
                 startTmpDirCleaner(tmpDir);
-                
+
                 extConvPropInit.set(true);
             }
         }
 
-        String value = properties.getProperty("galleryThreads"); //$NON-NLS-1$
-        if (value != null && !value.trim().equalsIgnoreCase("default")) { //$NON-NLS-1$
-            galleryThreads = Integer.valueOf(value.trim());
-        } else {
-            galleryThreads = Runtime.getRuntime().availableProcessors();
-        }
-
-        value = properties.getProperty("imgThumbSize"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            thumbSize = Integer.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("extractThumb"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            extractThumb = Boolean.valueOf(value.trim());
-        }
-
-        value = properties.getProperty("logGalleryRendering"); //$NON-NLS-1$
-        if (value != null && !value.trim().isEmpty()) {
-            logGalleryRendering = Boolean.valueOf(value.trim());
-        }
         externalImageConverter = new ExternalImageConverter(executor);
+        thumbSize = imgThumbConfig.getThumbSize();
 
         synchronized (logInit) {
-            if (taskEnabled && !logInit.get()) {
+            if (isEnabled() && !logInit.get()) {
                 logInit.set(true);
                 logger.info("Thumb Size: " + thumbSize); //$NON-NLS-1$
-                logger.info("Extract Thumb: " + extractThumb); //$NON-NLS-1$
+                logger.info("Extract Thumb: " + imgThumbConfig.isExtractThumb()); //$NON-NLS-1$
             }
         }
 
@@ -154,7 +115,7 @@ public class ImageThumbTask extends ThumbTask {
         // must be installed at the beginning of the processing, see #532
         ImageMetadataUtil.updateExifReaderToLoadThumbData();
     }
-    
+
     private static void startTmpDirCleaner(File tmpDir) {
         Thread t = new Thread() {
             public void run() {
@@ -177,11 +138,11 @@ public class ImageThumbTask extends ThumbTask {
         };
         t.setDaemon(true);
         t.start();
-    }    
+    }
 
     @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return imgThumbConfig.isEnabled();
     }
 
     @Override
@@ -191,7 +152,7 @@ public class ImageThumbTask extends ThumbTask {
 
         externalImageConverter.close();
         synchronized (finished) {
-            if (taskEnabled && !finished.get()) {
+            if (isEnabled() && !finished.get()) {
                 finished.set(true);
                 if (!performanceStatsPerType.isEmpty()) {
                     List<String> types = new ArrayList<String>(performanceStatsPerType.keySet());
@@ -261,7 +222,7 @@ public class ImageThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        if (!taskEnabled || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!isEnabled() || !isImageType(evidence.getMediaType()) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null || evidence.getThumb() != null) {
             return;
         }
@@ -319,7 +280,7 @@ public class ImageThumbTask extends ThumbTask {
         long[] performanceStats = new long[numStats];
         try {
             BufferedImage img = null;
-            if (extractThumb && isJpeg(evidence)) {
+            if (imgThumbConfig.isExtractThumb() && isJpeg(evidence)) { // $NON-NLS-1$
                 long t = System.currentTimeMillis();
                 try (BufferedInputStream stream = evidence.getBufferedStream()) {
                     img = ImageMetadataUtil.getThumb(stream);

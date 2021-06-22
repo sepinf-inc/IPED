@@ -17,5 +17,5 @@ public interface IConfigurationDirectory {
 
     public List<Path> lookUpResource(Predicate<Path> predicate) throws IOException;
 
-    public List<Path> lookUpResource(Configurable configurable) throws IOException;
+    public List<Path> lookUpResource(Configurable<?> configurable) throws IOException;
 }

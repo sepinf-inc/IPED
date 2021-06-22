@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.nio.charset.StandardCharsets;
 import java.text.Collator;
 import java.util.Enumeration;
 import java.util.Locale;
