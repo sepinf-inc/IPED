@@ -118,10 +118,12 @@ public class GraphicsMagicConverter implements Closeable {
         Thread t = new Thread() {
             public void run() {
                 while (true) {
+                    long t = System.currentTimeMillis() - 60000;
                     File[] subFiles = tmpDir.listFiles();
                     if (subFiles != null) {
                         for (File tmp : subFiles) {
-                            tmp.delete();
+                            if (tmp.lastModified() < t)
+                                tmp.delete();
                         }
                     }
                     try {
