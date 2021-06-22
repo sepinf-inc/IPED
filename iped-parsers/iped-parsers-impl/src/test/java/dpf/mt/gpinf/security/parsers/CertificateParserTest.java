@@ -24,6 +24,16 @@ public class CertificateParserTest extends TestCase{
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     } 
     
+    private static int getVersion() {
+        String version = System.getProperty("java.version");
+        if(version.startsWith("1.")) {
+            version = version.substring(2, 3);
+        } else {
+            int dot = version.indexOf(".");
+            if(dot != -1) { version = version.substring(0, dot); }
+        } return Integer.parseInt(version);
+    }
+    
     @Test
     public void testCertificateParsingDER() throws IOException, SAXException, TikaException{
 
@@ -51,9 +61,11 @@ public class CertificateParserTest extends TestCase{
         assertTrue(hts.contains("Issuer"));
         assertTrue(hts.contains("1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
         assertTrue(hts.contains("Valid from"));
-//        assertTrue(hts.contains("01/06/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/06/2021"));
         assertTrue(hts.contains("Valid to"));
-//        assertTrue(hts.contains("01/07/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/07/2021"));
         assertTrue(hts.contains("Alternative Names:"));
         assertTrue(hts.contains("This certificate has no alternative names."));
         
@@ -97,9 +109,11 @@ public class CertificateParserTest extends TestCase{
         assertTrue(hts.contains("Issuer"));
         assertTrue(hts.contains("1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
         assertTrue(hts.contains("Valid from"));
-//        assertTrue(hts.contains("01/06/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/06/2021"));
         assertTrue(hts.contains("Valid to"));
-//        assertTrue(hts.contains("01/07/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/07/2021"));
         assertTrue(hts.contains("Alternative Names:"));
         assertTrue(hts.contains("This certificate has no alternative names."));
         
@@ -143,9 +157,11 @@ public class CertificateParserTest extends TestCase{
         assertTrue(hts.contains("Issuer"));
         assertTrue(hts.contains("1.2.840.113549.1.9.1=#161b6775696c6865726d65616e64726575636540676d61696c2e636f6d,CN=pf.gov.br,OU=PF,O=Polícia Federal,L=Asa Sul,ST=Brasília,C=BR"));
         assertTrue(hts.contains("Valid from"));
-//        assertTrue(hts.contains("01/06/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/06/2021"));
         assertTrue(hts.contains("Valid to"));
-//        assertTrue(hts.contains("01/07/2021"));
+        if(getVersion() < 9)
+            assertTrue(hts.contains("01/07/2021"));
         assertTrue(hts.contains("Alternative Names:"));
         assertTrue(hts.contains("This certificate has no alternative names."));
         
