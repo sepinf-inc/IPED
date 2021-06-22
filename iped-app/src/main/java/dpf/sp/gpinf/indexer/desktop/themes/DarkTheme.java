@@ -20,7 +20,7 @@ public class DarkTheme extends Theme {
         put("nimbusFocus", new ColorUIResource(new Color(150, 180, 210)));
         put("nimbusGreen", new ColorUIResource(new Color(176, 179, 50)));
         put("nimbusInfoBlue", new ColorUIResource(new Color(66, 139, 221)));
-        put("nimbusLightBackground", new ColorUIResource(new Color(18, 30, 39)));
+        put("nimbusLightBackground", new ColorUIResource(new Color(19, 28, 37)));
         put("nimbusOrange", new ColorUIResource(new Color(47, 92, 180)));
         put("nimbusRed", new ColorUIResource(Color.blue));
         put("nimbusSelectedText", new ColorUIResource(new Color(255, 255, 255)));
