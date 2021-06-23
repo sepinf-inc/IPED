@@ -17,6 +17,7 @@ import java.util.TreeMap;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.tika.exception.TikaException;
@@ -47,7 +48,22 @@ public abstract class ATextViewer extends Viewer implements KeyListener {
         super(new GridLayout());
         appSearchParams = params;
         textViewerModel = new TextViewerModel();
-        textTable = new JTable(textViewerModel);
+        textTable = new JTable(textViewerModel) {
+            private static final long serialVersionUID = -5129153322350459095L;
+
+            @Override
+            public void updateUI() {
+                Color background = UIManager.getColor("Viewer.background");
+                if (background == null)
+                    background = Color.WHITE;
+                setBackground(background);
+
+                Color foreground = UIManager.getColor("Viewer.foreground");
+                setForeground(foreground);
+
+                super.updateUI();
+            }
+        };
         textTable.setFont(font);
         // textTable.getColumnModel().getColumn(0).setCellRenderer(new
         // ViewerCellRenderer());
@@ -56,7 +72,6 @@ public abstract class ATextViewer extends Viewer implements KeyListener {
         textTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         textTable.getColumnModel().getColumn(0).setPreferredWidth(2000);
         textTable.setShowGrid(false);
-        textTable.setBackground(Color.WHITE);
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
         this.getPanel().add(viewerScroll);
