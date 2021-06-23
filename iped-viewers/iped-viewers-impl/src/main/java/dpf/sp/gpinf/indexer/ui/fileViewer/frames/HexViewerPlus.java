@@ -3132,7 +3132,7 @@ class HVPSettings implements Serializable {
     public Color ColorCurrentMatchBackground = Color.GREEN;
     public Color ColorCursor = Color.BLACK;
 
-    public Color ColorHeaderText = new Color(28, 31, 37);
+    public Color ColorHeaderText = new Color(48, 49, 51);
     public Color ColorHeaderBackground = new Color(188, 191, 197);
 
     public static boolean saveObject(String path, HVPSettings obj) {
