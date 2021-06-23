@@ -67,7 +67,7 @@ Plain Texts = text
 
 Other files = application/octet-stream; application/x-nls
 
-Peer-to-peer = application/x-p2p
+Peer-to-peer = application/x-p2p; application/x-emule-preferences-inf; application/x-emule-preferences-dat
 
 Internet History = application/x-msie-cache; application/x-webcache; application/x-webcache-table; application/x-ufed-html-webhistory; application/x-firefox-places; application/x-firefox-history; application/x-firefox-downloads; application/x-chrome-sqlite; application/x-chrome-history; application/x-chrome-downloads; application/x-chrome-searches; application/x-edge-web-cache; application/x-edge-history; application/x-safari-sqlite; application/x-safari-history; application/x-safari-plist; application/x-safari-downloads; 
 
@@ -105,7 +105,7 @@ Logs = application/x-ufed-html-logs; application/x-ufed-logentry
 
 User Accounts = application/x-ufed-html-users; application/x-ufed-useraccount; application/x-ufed-user; contact/x-skype-account; application/x-whatsapp-account; application/x-telegram-account; application/x-gdrive-account-info;
 
-Searches = application/x-ufed-html-searches; application/x-ufed-searcheditem
+Searches = application/x-ufed-html-searches; application/x-ufed-searcheditem; application/x-emule-searches;
 
 Notes = application/x-ufed-html-notes; application/x-ufed-note
 

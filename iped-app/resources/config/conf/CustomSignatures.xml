@@ -631,6 +631,20 @@
         <glob pattern="known*.met"/>
     </mime-type>
     
+    <mime-type type="application/x-emule-searches">
+        <sub-class-of type="application/x-emule"/>
+        <glob pattern="AC_SearchStrings*.dat"/>
+    </mime-type>
+    
+    <mime-type type="application/x-emule-preferences-dat">
+        <sub-class-of type="application/x-emule"/>
+        <glob pattern="preferences*.dat"/>
+    </mime-type>
+     <mime-type type="application/x-emule-preferences-inf">
+        <sub-class-of type="application/x-emule"/>
+        <glob pattern="preferences*.inf"/>
+    </mime-type>
+    
     <mime-type type="application/x-preview-with-links">
         <sub-class-of type="text/html"/>
         <magic priority="50">
