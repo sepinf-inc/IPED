@@ -153,7 +153,7 @@ public class ThemeManager {
 
     private void saveThemeOption() {
         File file = getSelectedThemeFile();
-        if (!file.getParentFile().exists())
+        if (file != null && file.getParentFile() != null && !file.getParentFile().exists())
             file.getParentFile().mkdirs();
         try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
             out.write(currentTheme.getClass().getName());
