@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
@@ -11,11 +12,14 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
+import javax.swing.UIManager;
+
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.ColorUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
@@ -36,7 +40,7 @@ public class MetadataViewer extends Viewer {
 
     private TabPane tabPane;
     private JFXPanel jfxPanel;
-    private List<HtmlViewer> htmlViewers = new ArrayList<>();;
+    private List<HtmlViewer> htmlViewers = new ArrayList<>();
 
     private Collator collator;
 
@@ -161,15 +165,39 @@ public class MetadataViewer extends Viewer {
     }
 
     private String generatePreview(IItemBase item, int tabIndex) {
+        Color color1 = new Color(0xD7D7D7); 
+        Color color2 = new Color(0xF2F2F2);
+        Color color3 = new Color(0xF2F2F2);
+        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
+        if (background != null) {
+            color3 = background.brighter();
+            color2 = color3.brighter();
+            color1 = color2.brighter();
+        }
+        
         StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html>\n" //$NON-NLS-1$
-                + "<html>\n" //$NON-NLS-1$
-                + "<head>\n" //$NON-NLS-1$
-                + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n" //$NON-NLS-1$
-                + "<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {background-color:#D7D7D7; border: 1px solid black; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; background-color:#F2F2F2; width:170px; border: 1px solid black; text-align:left;} td.s2 {font-size:10pt; background-color:#F2F2F2; border: 1px solid black; word-break: break-all; word-wrap: break-word; text-align:left;}" //$NON-NLS-1$
-                + "textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}" //$NON-NLS-1$
-                + "</style></head>\n" //$NON-NLS-1$
-                + "<body>\n"); //$NON-NLS-1$
+        sb.append("<!DOCTYPE html>\n"); //$NON-NLS-1$
+        sb.append("<html>\n"); //$NON-NLS-1$
+        sb.append("<head>\n"); //$NON-NLS-1$
+        sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n"); //$NON-NLS-1$
+        sb.append("<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {");
+        sb.append("background-color:").append(ColorUtil.getHexRGB(color1)).append("; "); //$NON-NLS-1$  //$NON-NLS-2$
+        sb.append("border: 1px solid black; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; "); //$NON-NLS-1$
+        sb.append("background-color:").append(ColorUtil.getHexRGB(color2)).append("; "); //$NON-NLS-1$  //$NON-NLS-2$
+        sb.append("width:170px; border: 1px solid black; text-align:left;} td.s2 {font-size:10pt; "); //$NON-NLS-1$
+        sb.append("background-color:").append(ColorUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$  //$NON-NLS-2$
+        sb.append("border: 1px solid black; word-break: break-all; word-wrap: break-word; text-align:left;}\n"); //$NON-NLS-1$
+        sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n"); //$NON-NLS-1$
+        sb.append("</style></head>\n"); //$NON-NLS-1$
+        sb.append("<body style=\"");//$NON-NLS-1$
+
+        if (background != null)  
+            sb.append("background-color:").append(ColorUtil.getHexRGB(background)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+        Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
+        if (foreground != null)  
+            sb.append("color:").append(ColorUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+        sb.append("\">\n"); //$NON-NLS-1$
+        System.err.println(sb);
 
         if (tabIndex == 0)
             fillBasicProps(sb, item);
