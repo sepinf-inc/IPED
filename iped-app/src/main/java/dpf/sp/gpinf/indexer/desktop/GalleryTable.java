@@ -22,8 +22,8 @@ public class GalleryTable extends JTable {
 
     @Override
     public void updateUI() {
-        super.updateUI();
         setBackground(UIManager.getColor("Gallery.background"));
+        super.updateUI();
     }
     
     @Override
