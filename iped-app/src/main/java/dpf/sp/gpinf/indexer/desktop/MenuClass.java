@@ -203,16 +203,13 @@ public class MenuClass extends JPopupMenu {
             submenu = new JMenu("Tema de Cores"); //TODO
             this.add(submenu);
             for (Theme theme : themes) {
-                JRadioButtonMenuItem themeItem = new JRadioButtonMenuItem(theme.getName());
+                JRadioButtonMenuItem themeItem = new JRadioButtonMenuItem(theme.getName(), theme.equals(ThemeManager.getInstance().getCurrentTheme()));
                 submenu.add(themeItem);
                 themeItem.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                         ThemeManager.getInstance().setTheme(theme);
                     }
                 });
-                //TODO: This is not working
-                if (theme.equals(ThemeManager.getInstance().getCurrentTheme()))
-                    themeItem.setSelected(true);
             }
         }
 

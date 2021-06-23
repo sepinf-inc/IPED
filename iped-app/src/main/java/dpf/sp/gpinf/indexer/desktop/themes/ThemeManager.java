@@ -48,7 +48,7 @@ public class ThemeManager {
         if (nimbusFound) {
             themes.add(new LightTheme());
             themes.add(new DarkTheme());
-            themes.get(0).apply(); // TODO
+            setTheme(themes.get(0));
         } else {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
