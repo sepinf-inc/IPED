@@ -25,6 +25,7 @@ public class DarkTheme extends Theme {
         put("Gallery.cellSelectBorder", new Color(130, 160, 220));
         put("Gallery.cellBorder", new Color(53, 60, 67));
         put("Table[Enabled+Selected].textForeground", Color.white);
+        put("Viewer.background", new Color(39, 43, 47));
         
         putDock("stack.tab.text.selected.focused", Color.white);
     }

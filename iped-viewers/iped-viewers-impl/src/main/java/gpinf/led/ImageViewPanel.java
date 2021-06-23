@@ -100,6 +100,12 @@ public class ImageViewPanel extends JPanel {
                     g2.drawImage(image, (getWidth() - w) / 2, (getHeight() - h) / 2, w, h, null);
                 }
             }
+            
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBackground(UIManager.getColor("Viewer.background"));
+            }            
         };
         scrollPane = new JScrollPane(imgPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
