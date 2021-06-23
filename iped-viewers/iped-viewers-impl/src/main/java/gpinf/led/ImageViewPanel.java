@@ -1,6 +1,7 @@
 package gpinf.led;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -19,6 +20,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.UIManager;
 
 /**
  * Painel especializado em exibição de uma imagem. Já inclui rolagem e zoom da
@@ -91,6 +93,10 @@ public class ImageViewPanel extends JPanel {
                 if (image != null) {
                     int w = (int) Math.ceil(image.getWidth() * zoomFactor);
                     int h = (int) Math.ceil(image.getHeight() * zoomFactor);
+                    if (image.getColorModel().hasAlpha()) {
+                        g2.setColor(Color.white);
+                        g2.clearRect((getWidth() - w) / 2, (getHeight() - h) / 2, w, h);
+                    }
                     g2.drawImage(image, (getWidth() - w) / 2, (getHeight() - h) / 2, w, h, null);
                 }
             }
