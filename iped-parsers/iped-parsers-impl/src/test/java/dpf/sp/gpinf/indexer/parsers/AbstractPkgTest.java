@@ -19,6 +19,8 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.util.ExtraProperties;
 
 public abstract class AbstractPkgTest extends TestCase {
@@ -54,9 +56,11 @@ public abstract class AbstractPkgTest extends TestCase {
       trackingContext = new ParseContext();
       trackingContext.set(Parser.class, tracker);
       
+      ItemInfo itemInfo = new ItemInfo(0, MD5, null, null, MD5, false);
       autoDetectParser = new AutoDetectParser();
       recursingContext = new ParseContext();
       recursingContext.set(Parser.class, autoDetectParser);
+      recursingContext.set(ItemInfo.class, itemInfo);
    }
 
 

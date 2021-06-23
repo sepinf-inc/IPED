@@ -16,6 +16,8 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.apache.tika.fork.EmbeddedDocumentParser;
+import org.apache.tika.fork.*;
 
 public class PackageParserTest extends AbstractPkgTest{
 
@@ -41,8 +43,21 @@ public class PackageParserTest extends AbstractPkgTest{
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_mockZip.zip");
         parser.getSupportedTypes(recursingContext);
+        ClassLoader loader = new ClassLoader() {};
+        EmbeddedDocumentParser eparser = new EmbeddedDocumentParser(recursingContext);
+        EmbeddedDocumentExtractorProxy edep = new EmbeddedDocumentExtractorProxy(getVersion());
+        EmbeddedDocumentExtractorResource eder = new EmbeddedDocumentExtractorResource(edep, handler);
+        ExternalParsingParserFactory eppf = new ExternalParsingParserFactory(null);
+        ForkParser fp = new ForkParser(loader);
+        ForkParser2 fp2 = new ForkParser2();
+        ParseContextProxy pcp = new ParseContextProxy();
+        System.out.println(eparser.toString() + edep + eder + eppf + fp + fp2 + pcp);
+        fp.close();
         parser.parse(stream, handler, metadata, recursingContext);
-        
+        eparser.parseEmbedded(stream, handler, metadata, false);
+        edep.parseEmbedded(stream, handler, metadata, false);
+//        fp.parse(stream, handler, metadata, pcp);
+//        fp2.parse(stream, handler, metadata, pcp);
         String content = handler.toString();
         
         assertTrue(content.contains("mockdoc1.docx\n"

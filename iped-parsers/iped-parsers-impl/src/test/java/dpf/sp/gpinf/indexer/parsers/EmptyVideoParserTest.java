@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
+import org.apache.tika.parser.mp4.ISO6709Converter;
 
 public class EmptyVideoParserTest extends TestCase{
 
@@ -26,6 +27,8 @@ public class EmptyVideoParserTest extends TestCase{
         InputStream stream = getStream("test-files/test_videoMp4.mp4");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
+        ISO6709Converter converter = new ISO6709Converter();
+        converter.populateLocation(metadata, getName());
         parser.parse(stream, handler, metadata, context);
            
     }
