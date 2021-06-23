@@ -70,7 +70,7 @@ public abstract class ATextViewer extends Viewer implements KeyListener {
         viewerScroll = new JScrollPane(textTable);
         textTable.setFillsViewportHeight(true);
         textTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        textTable.getColumnModel().getColumn(0).setPreferredWidth(2000);
+        textTable.getColumnModel().getColumn(0).setPreferredWidth(4096);
         textTable.setShowGrid(false);
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
