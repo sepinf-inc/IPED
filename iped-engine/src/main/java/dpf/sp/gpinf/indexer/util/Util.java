@@ -49,7 +49,6 @@ import org.apache.poi.poifs.filesystem.DirectoryEntry;
 import org.apache.poi.poifs.filesystem.DocumentEntry;
 import org.apache.poi.poifs.filesystem.DocumentInputStream;
 import org.apache.poi.poifs.filesystem.POIFSFileSystem;
-import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -98,6 +97,16 @@ public class Util {
             return Messages.getString("JavaVersion.Arch"); //$NON-NLS-1$
 
         return null;
+    }
+
+    public static boolean isJavaFXPresent() {
+        try {
+            Class.forName("javafx.application.Platform");
+            return true;
+
+        } catch (Throwable t) {
+            return false;
+        }
     }
 
     public static String getRootName(String path) {
