@@ -3,6 +3,11 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Window;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,7 +53,11 @@ public class ThemeManager {
         if (nimbusFound) {
             themes.add(new LightTheme());
             themes.add(new DarkTheme());
-            setTheme(themes.get(0));
+
+            Theme selTheme = loadThemeOption();
+            if (selTheme == null)
+                selTheme = themes.get(0);
+            setTheme(selTheme);
         } else {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         }
@@ -98,6 +107,16 @@ public class ThemeManager {
                 App.get().updateUI(true);
             }
         });
+
+        saveThemeOption();
+        File file = getSelectedThemeFile();
+        if (!file.getParentFile().exists())
+            file.getParentFile().mkdirs();
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
+            out.write(currentTheme.getClass().getName());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     private void updateUI(Window window) {
@@ -105,5 +124,40 @@ public class ThemeManager {
             updateUI(child);
         }
         SwingUtilities.updateComponentTreeUI(window);
+    }
+
+    private static File getSelectedThemeFile() {
+        return new File(System.getProperty("user.home") + "/.indexador/theme.dat");
+    }
+
+    private Theme loadThemeOption() {
+        Theme selTheme = null;
+        File file = getSelectedThemeFile();
+        if (file.exists()) {
+            try {
+                List<String> l = Files.readAllLines(file.toPath());
+                if (!l.isEmpty()) {
+                    for (Theme theme : themes) {
+                        if (l.get(0).equals(theme.getClass().getName())) {
+                            selTheme = theme;
+                            break;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return selTheme;
+    }
+
+    private void saveThemeOption() {
+        File file = getSelectedThemeFile();
+        if (!file.getParentFile().exists())
+            file.getParentFile().mkdirs();
+        try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
+            out.write(currentTheme.getClass().getName());
+        } catch (IOException e) {
+        }
     }
 }
