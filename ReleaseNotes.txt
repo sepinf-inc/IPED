@@ -19,6 +19,7 @@ Fixes:
 #607: Some apps in tools folder depend on MS DLL not always present in processing machine (Luis Nassif)
 #582: Files with 0 bytes not included in "Empty Files" category (Wladimir Leite)
 #571: Processing rarely aborting when some file with corrupted metadata is indexed (Luis Nassif)
+#621: Warning on GUI and exit if user doesn't have JavaFX installed instead of displaying error null (Luis Nassif)
 #576: Deadlock if (100k+numThreads) sqlites are found (Luis Nassif)
 #609: Typing some keys cause an undesired advance to the next item in the main table (Wladimir Leite)
 #590: Inconsistent ocrCharCount in Text and Metadata viewers (Wladimir Leite)
