@@ -1,6 +1,5 @@
 package br.gov.pf.iped.webapi;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -19,9 +18,8 @@ import org.apache.tika.parser.Parser;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.xml.sax.ContentHandler;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import io.swagger.annotations.Api;
@@ -63,7 +61,7 @@ public class Text {
 
     public static ParseContext getTikaContext(IItem item, Parser parser, IPEDSource source) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) parser);
-        expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+        expander.init(ConfigurationManager.get());
         ParseContext context = expander.getTikaContext(source);
         expander.setExtractEmbedded(false);
         return context;

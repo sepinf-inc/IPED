@@ -28,21 +28,27 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Properties;
+import java.util.List;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
 public class ExportCSVTask extends AbstractTask {
+
+    private static final String ENABLE_PARAM = "exportFileProps"; //$NON-NLS-1$
 
     private static int MIN_FLUSH_SIZE = 1 << 23;
     private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
@@ -244,7 +250,12 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
 
@@ -258,13 +269,7 @@ public class ExportCSVTask extends AbstractTask {
             Files.delete(tmp.toPath());
         }
 
-        String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            exportFileProps = Boolean.valueOf(value);
-        }
+        exportFileProps = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
     }
 

@@ -13,12 +13,15 @@ class PythonScriptTask:
     def isEnabled(self):
         return True
 
+    # Returns an optional list of configurable objects that can load/save parameters from/to config files. 
+    def getConfigurables(self):
+        return []
+
     # Do some task initialization, like reading options, custom config files or model.
     # It is executed when application starts by each processing thread on its class instance.
     # @Params
-    # confProps: java Properties object with main processing options (IPEDConfig.txt)
-    # configFolder: java File object pointing 'conf' folder in profile folder, where a custom script config file can be created.
-    def init(self, confProps, configFolder):
+    # configuration:    configuration manager by which configurables can be retrieved after populated.
+    def init(configuration):
         #print("init")
         return
     

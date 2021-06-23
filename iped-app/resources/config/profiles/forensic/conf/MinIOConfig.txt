@@ -3,7 +3,7 @@
 #################################
 
 # Enable exporting files to MinIO object storage
-enable = false
+enableMinIO = false
 
 # Host name or ip address of MinIO
 host = http://127.0.0.1
