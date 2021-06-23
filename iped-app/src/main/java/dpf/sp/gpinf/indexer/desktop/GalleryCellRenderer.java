@@ -71,10 +71,26 @@ public class GalleryCellRenderer implements TableCellRenderer {
     
     public void updateUI() {
         selColor = UIManager.getColor("Gallery.cellSelected");
+        if (selColor == null)
+            selColor = new Color(180, 200, 230);
+        
         color = UIManager.getColor("Gallery.cellBackground");
+        if (color == null)
+            color = Color.white;
+        
         background = UIManager.getColor("Gallery.background");
-        border = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellBorder"), 1);
-        selBorder = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellSelectBorder"), 1);
+        if (background == null)
+            background = new Color(240, 240, 242);
+        
+        Color borderColor = UIManager.getColor("Gallery.cellBorder");
+        if (borderColor == null)
+            borderColor = new Color(200, 200, 202);
+        border = BorderFactory.createLineBorder(borderColor, 1);
+        
+        Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
+        if (selBorderColor == null)
+            selBorderColor = new Color(20, 50, 80);
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
     }
 
     @Override

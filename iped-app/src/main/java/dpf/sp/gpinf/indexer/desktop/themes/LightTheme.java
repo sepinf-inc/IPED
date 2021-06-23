@@ -8,11 +8,6 @@ public class LightTheme extends Theme {
         put("nimbusRed", Color.blue);
         put("nimbusFocus", new Color(140, 190, 220));
         put("Table[Enabled+Selected].textForeground", Color.white);
-        put("Gallery.cellSelected", new Color(180, 200, 230));
-        put("Gallery.cellBackground", Color.white);
-        put("Gallery.background", new Color(240, 240, 242));
-        put("Gallery.cellSelectBorder", new Color(20, 50, 80));
-        put("Gallery.cellBorder", new Color(200, 200, 202));
     }
 
     @Override

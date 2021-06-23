@@ -69,9 +69,18 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     
     public void updateUI() {
         selColor = UIManager.getColor("Gallery.cellSelected");
+        if (selColor == null)
+            selColor = new Color(180, 200, 230);
+        
         background = UIManager.getColor("Gallery.background");
-        selBorder = BorderFactory.createLineBorder(UIManager.getColor("Gallery.cellSelectBorder"), 1);
-    }    
+        if (background == null)
+            background = new Color(240, 240, 242);
+        
+        Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
+        if (selBorderColor == null)
+            selBorderColor = new Color(20, 50, 80);
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);    
+    }
 
     @Override
     public Object getCellEditorValue() {
