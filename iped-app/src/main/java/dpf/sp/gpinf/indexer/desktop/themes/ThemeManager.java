@@ -158,6 +158,7 @@ public class ThemeManager {
         try (BufferedWriter out = new BufferedWriter(new FileWriter(file))) {
             out.write(currentTheme.getClass().getName());
         } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 }
