@@ -119,7 +119,7 @@ import iped3.io.SeekableInputStream;
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
     private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
-            + File.separator + "default.hvp";
+            + File.separator + "iped.hvp";
 
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
@@ -190,7 +190,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     FilterComboBox fcbCharset;
 
     private HVPSettings defaultSettings = new HVPSettings();
-    boolean defaultSettingsFileExists = false;
 
     private ActionListener menuListener;
 
@@ -414,24 +413,16 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         // Load Defaults
         defaultSettings = null;
         File defaultSettingsFile = new File(defaultSettingsPath);
-        if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile()) {
-            if (defaultSettingsFile.canRead()) {
-                defaultSettings = HVPSettings.loadObject(defaultSettingsPath);
-                if (defaultSettings != null) {
-                    defaultSettingsFileExists = true;
-                } else {// something is wrong, make default hard coded
-                    defaultSettings = new HVPSettings();
-                }
-                loadSettings(defaultSettings);
-            }
-        } else { // there is no default.hvp, make new one
-            defaultSettings = new HVPSettings();
-            defaultSettingsFileExists = HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
-            loadSettings(defaultSettings);
+        if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile() && defaultSettingsFile.canRead()) {
+            defaultSettings = HVPSettings.loadObject(defaultSettingsPath);
         }
+        if (defaultSettings == null) {
+            // No default found (or couldn't be read)
+            defaultSettings = new HVPSettings();
+        }
+        loadSettings(defaultSettings);
 
         codeArea.repaint();
-
     }
     
     static class CustomTextField extends JTextField {
@@ -1278,10 +1269,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 saveSettings(defaultSettings);
 
                 // Try persist the defaults on disc
-                if (defaultSettingsFileExists) {
-                    HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
-                }
-
+                HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
             }
         });
 
@@ -3132,7 +3120,7 @@ class HVPSettings implements Serializable {
     public Color ColorCurrentMatchBackground = Color.GREEN;
     public Color ColorCursor = Color.BLACK;
 
-    public Color ColorHeaderText = new Color(48, 49, 51);
+    public Color ColorHeaderText = new Color(28, 31, 37);
     public Color ColorHeaderBackground = new Color(188, 191, 197);
 
     public static boolean saveObject(String path, HVPSettings obj) {
@@ -3141,15 +3129,18 @@ class HVPSettings implements Serializable {
             return false;
         }
 
+        ObjectOutputStream out = null;
         try {
-            FileOutputStream fileOut = new FileOutputStream(path);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            File file = new File(path);
+            if (file != null && file.getParentFile() != null && !file.getParentFile().exists())
+                file.getParentFile().mkdirs();
+            out = new ObjectOutputStream(new FileOutputStream(file));
             out.writeObject(obj);
-            out.close();
-            fileOut.close();
         } catch (Exception ex) {
             LOGGER.warn("Failed to save HexviewerPlus settings file. Error:{}", ex.toString());
             return false;
+        } finally {
+            IOUtil.closeQuietly(out);
         }
         return true;
 
@@ -3158,15 +3149,15 @@ class HVPSettings implements Serializable {
     public static HVPSettings loadObject(String path) {
 
         HVPSettings obj = null;
+        ObjectInputStream in = null;
         try {
-            FileInputStream fileIn = new FileInputStream(path);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
+            in = new ObjectInputStream(new FileInputStream(path));
             obj = (HVPSettings) in.readObject();
-            in.close();
-            fileIn.close();
         } catch (Exception ex) {
             LOGGER.warn("Failed to load HexviewerPlus settings file. Corrupted?. Error:{}", ex.toString());
             return null;
+        } finally {
+            IOUtil.closeQuietly(in);
         }
         return obj;
 
