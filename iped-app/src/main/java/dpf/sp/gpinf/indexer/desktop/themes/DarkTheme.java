@@ -3,13 +3,7 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 import java.awt.Color;
 
 public class DarkTheme extends Theme {
-    @Override
-    public String getName() {
-        return "Escuro";
-    }
-
-    @Override
-    public void apply() {
+    public DarkTheme() {
         put("control", new Color(128, 128, 128));
         put("info", new Color(128, 128, 128));
         put("nimbusBase", new Color(18, 30, 49));
@@ -33,5 +27,10 @@ public class DarkTheme extends Theme {
         put("Table[Enabled+Selected].textForeground", Color.white);
         
         putDock("stack.tab.text.selected.focused", Color.white);
+    }
+    
+    @Override
+    public String getName() {
+        return "Escuro";
     }
 }

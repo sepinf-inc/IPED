@@ -65,8 +65,12 @@ public class ThemeManager {
     public synchronized void setTheme(Theme newTheme) {
         if (newTheme == null || newTheme.equals(currentTheme))
             return;
+        if (currentTheme != null)
+            currentTheme.clean();
         for (Object key : savedDefaults.keySet()) {
-            UIManager.put(key, savedDefaults.get(key));
+            Object value = savedDefaults.get(key);
+            UIManager.put(key, value);
+            UIManager.getLookAndFeelDefaults().put(key, value);
         }
         newTheme.apply();
         currentTheme = newTheme;
