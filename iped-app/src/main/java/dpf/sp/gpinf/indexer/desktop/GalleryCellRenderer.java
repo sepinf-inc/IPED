@@ -113,7 +113,6 @@ public class GalleryCellRenderer implements TableCellRenderer {
             label.setIcon(null);
         } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
             label.setForeground(Color.red);
-            System.err.println(unsupportedIconText);
             label.setText(unsupportedIconText);
             label.setIcon(null);
         } else {
