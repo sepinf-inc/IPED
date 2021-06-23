@@ -221,6 +221,13 @@ public class ViewerController {
         }
     }
 
+    public void reload() {
+        boolean currFixed = isFixed;
+        isFixed = true;
+        loadFile(this.file, this.viewFile, this.contentType, this.highlightTerms);
+        isFixed = currFixed; 
+    }
+
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
         checkInit();
         this.file = file;

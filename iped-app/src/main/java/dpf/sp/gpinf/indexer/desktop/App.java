@@ -743,6 +743,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
             ((GalleryCellRenderer) gallery.getDefaultRenderer(GalleryCellRenderer.class)).updateUI();
             gallery.repaint();
+            viewerController.reload();
         }
     }
 
