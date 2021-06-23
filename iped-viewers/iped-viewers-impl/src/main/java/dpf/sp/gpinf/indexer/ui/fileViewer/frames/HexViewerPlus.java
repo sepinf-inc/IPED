@@ -206,8 +206,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     private int max_hits = 1;
     private int max_terms = 10000;
 
-    Color labelColor = new Color(214, 217, 223);
-
     public interface HexSearcher {
 
         abstract void doSearch(CodeArea codeArea, HighlightCodeAreaPainter painter, Hits hits, SeekableInputStream data,
@@ -221,20 +219,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
         this.hexSearcher = hexSearcher;
 
-        posicao = new JTextField();
-        posicao.setHorizontalAlignment(SwingConstants.RIGHT);
-        posicao.setBackground(labelColor);
-        posicao.setEditable(false);
-
-        selecao_inicial = new JTextField();
-        selecao_inicial.setEditable(false);
-        selecao_inicial.setBackground(labelColor);
-        selecao_inicial.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        selecao_final = new JTextField();
-        selecao_final.setBackground(labelColor);
-        selecao_final.setHorizontalAlignment(SwingConstants.RIGHT);
-        selecao_final.setEditable(false);
+        posicao = new CustomTextField();
+        selecao_inicial = new CustomTextField();
+        selecao_final = new CustomTextField();
 
         codeArea = new CodeArea();
         codeArea.setHandleClipboard(true);
@@ -445,6 +432,21 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
         codeArea.repaint();
 
+    }
+    
+    static class CustomTextField extends JTextField {
+        private static final long serialVersionUID = 8242772209066411493L;
+
+        public CustomTextField() {
+            setHorizontalAlignment(SwingConstants.RIGHT);
+            setEditable(false);
+        }
+        
+        @Override
+        public void updateUI() {
+            super.updateUI();
+            setBackground(new Color(UIManager.getColor("Panel.background").getRGB()));
+        }
     }
 
     @Override
@@ -3118,8 +3120,8 @@ class HVPSettings implements Serializable {
 
     public Color ColorFontMain = Color.BLACK;
     public Color ColorFontAlt = Color.BLACK;
-    public Color ColorBackgroundMain = new Color(214, 217, 223);
-    public Color ColorBackgroundAlt = new Color(198, 201, 207);
+    public Color ColorBackgroundMain = new Color(246, 248, 253);
+    public Color ColorBackgroundAlt = new Color(230, 232, 237);
     public Color ColorSelectionMainText = Color.WHITE;
     public Color ColorSelectionMainBackground = Color.BLUE;
     public Color ColorSelectionMirrorText = Color.WHITE;
@@ -3130,8 +3132,8 @@ class HVPSettings implements Serializable {
     public Color ColorCurrentMatchBackground = Color.GREEN;
     public Color ColorCursor = Color.BLACK;
 
-    public Color ColorHeaderText = Color.BLACK;
-    public Color ColorHeaderBackground = new Color(198, 201, 207);
+    public Color ColorHeaderText = new Color(28, 31, 37);
+    public Color ColorHeaderBackground = new Color(188, 191, 197);
 
     public static boolean saveObject(String path, HVPSettings obj) {
 
