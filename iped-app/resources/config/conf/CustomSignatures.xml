@@ -632,17 +632,18 @@
     </mime-type>
     
     <mime-type type="application/x-emule-searches">
-        <sub-class-of type="application/x-emule"/>
-        <glob pattern="AC_SearchStrings*.dat"/>
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="AC_SearchStrings.dat"/>
     </mime-type>
     
     <mime-type type="application/x-emule-preferences-dat">
-        <sub-class-of type="application/x-emule"/>
-        <glob pattern="preferences*.dat"/>
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="preferences.dat"/>
     </mime-type>
-     <mime-type type="application/x-emule-preferences-inf">
-        <sub-class-of type="application/x-emule"/>
-        <glob pattern="preferences*.inf"/>
+	
+     <mime-type type="application/x-emule-preferences-ini">
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="preferences.ini"/>
     </mime-type>
     
     <mime-type type="application/x-preview-with-links">

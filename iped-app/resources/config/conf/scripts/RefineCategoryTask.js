@@ -363,6 +363,19 @@ function process(e){
 	{
 		e.addCategory("RFB Program Files");
 	}
+	//emule files
+	if(e.getPath().toLowerCase().contains("emule")){
+		if(e.getName().equals("AC_SearchStrings.dat")){
+			e.setMediaTypeStr("application/x-emule-searches");
+			e.addCategory("Searches");
+		}
+		if(e.getName().equals("preferences.ini")){
+			e.setMediaTypeStr("application/x-emule-preferences-ini");
+			e.addCategory("Peer-to-peer");
+
+		}
+	}
+	
 }
 
 

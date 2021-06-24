@@ -308,6 +308,8 @@
             <mime>application/skype</mime>
             <mime>application/irpf</mime>
             <mime>application/x-nls</mime>
+			<mime>application/x-emule-searches</mime>
+			<mime>application/x-emule-preferences-ini</mime>
         </parser>
         <parser class="dpf.mt.gpinf.mapas.parsers.GeofileParser"></parser>
         <parser class="dpf.inc.sepinf.winx.parsers.WinXTimelineParser"></parser>
