@@ -740,10 +740,13 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
         
         if (refresh) {
-            ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
-            ((GalleryCellRenderer) gallery.getDefaultRenderer(GalleryCellRenderer.class)).updateUI();
-            gallery.repaint();
-            viewerController.reload();
+            if (gallery != null) {
+                ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
+                ((GalleryCellRenderer) gallery.getDefaultRenderer(GalleryCellRenderer.class)).updateUI();
+                gallery.repaint();
+            }
+            if (viewerController != null)
+                viewerController.reload();
         }
     }
 
