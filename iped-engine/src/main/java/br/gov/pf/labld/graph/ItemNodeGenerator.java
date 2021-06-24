@@ -15,6 +15,7 @@ import br.gov.pf.labld.graph.GraphConfiguration.GraphEntity;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 /**
  * Old code of GraphTask not used for now was moved to this class.
@@ -122,7 +123,7 @@ public class ItemNodeGenerator {
             nodeProperties.put("hash", hash);
         }
 
-        Object reader = evidence.getExtraAttribute("X-Reader");
+        Object reader = evidence.getExtraAttribute(ExtraProperties.DATASOURCE_READER);
         if (reader != null && !reader.toString().isEmpty()) {
             nodeProperties.put("source", reader.toString());
         }
