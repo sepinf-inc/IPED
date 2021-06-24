@@ -465,7 +465,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         @Override
         public void updateUI() {
             super.updateUI();
-            setBackground(new Color(UIManager.getColor("Panel.background").getRGB()));
+            Color c = UIManager.getColor("Panel.background");
+            if (c != null)
+                setBackground(new Color(c.getRGB()));
         }
     }
 

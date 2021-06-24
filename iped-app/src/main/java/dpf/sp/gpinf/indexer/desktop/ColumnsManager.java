@@ -210,7 +210,9 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             @Override
             public void updateUI() {
                 super.updateUI();
-                setBackground(new Color(UIManager.getColor("List.background").getRGB()));
+                Color c = UIManager.getColor("List.background");
+                if (c != null)
+                    setBackground(new Color(c.getRGB()));
             }
         };
         listPanel.setLayout(new BoxLayout(listPanel, BoxLayout.Y_AXIS));
