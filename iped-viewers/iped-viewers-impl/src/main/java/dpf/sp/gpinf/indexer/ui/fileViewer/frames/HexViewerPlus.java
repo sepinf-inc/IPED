@@ -106,6 +106,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.ColorUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.io.IStreamSource;
@@ -411,18 +412,46 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         createMenuAndDialogs();
 
         // Load Defaults
-        defaultSettings = null;
         File defaultSettingsFile = new File(defaultSettingsPath);
         if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile() && defaultSettingsFile.canRead()) {
-            defaultSettings = HVPSettings.loadObject(defaultSettingsPath);
-        }
-        if (defaultSettings == null) {
-            // No default found (or couldn't be read)
-            defaultSettings = new HVPSettings();
+            HVPSettings storedDefaultSettings = HVPSettings.loadObject(defaultSettingsPath);
+            if (storedDefaultSettings != null)
+                defaultSettings = storedDefaultSettings;
         }
         loadSettings(defaultSettings);
 
         codeArea.repaint();
+
+        //Auxiliary label, just to capture updateUI()
+        bottomPanel2.add(new JLabel("") {
+            private static final long serialVersionUID = -2163271443358544934L;
+
+            @Override
+            public void updateUI() {
+                super.updateUI();
+
+                // Check if user is still using initial default settings
+                File defaultSettingsFile = new File(defaultSettingsPath);
+                if (defaultSettingsFile != null && defaultSettingsFile.exists())
+                    return;
+
+                // If it is the case, update settings
+                defaultSettings = new HVPSettings();
+                Color background = UIManager.getColor("Viewer.background");
+                Color foreground = UIManager.getColor("Viewer.foreground");
+                if (background != null && foreground != null) {
+                    defaultSettings.ColorFontMain = foreground;
+                    defaultSettings.ColorFontAlt = foreground;
+                    defaultSettings.ColorBackgroundMain = ColorUtil.mix(background, Color.gray, 0.9);
+                    defaultSettings.ColorBackgroundAlt = ColorUtil.mix(background, Color.gray, 0.8);
+                    defaultSettings.ColorCursor = foreground;
+                    defaultSettings.ColorHeaderText = ColorUtil.mix(foreground, Color.gray, 0.4);
+                    defaultSettings.ColorHeaderBackground = ColorUtil.mix(background, Color.gray, 0.4);
+                }
+                loadSettings(defaultSettings);
+                codeArea.repaint();
+            }
+        });
     }
     
     static class CustomTextField extends JTextField {
