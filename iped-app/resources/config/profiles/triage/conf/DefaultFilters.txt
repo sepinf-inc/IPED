@@ -2,7 +2,6 @@
 # Default Filters
 ############################
 
-OST Mailboxes (not processed) = type:ost
 Filter Known Hashes = *:* -hashDb\\:status:known
 Hash Alert = hashDb\\:status:alert
 Hash Alert (Child Porn) = hashDb\\:status:pedo

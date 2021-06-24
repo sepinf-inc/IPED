@@ -1,23 +1,5 @@
 package dpf.sp.gpinf.indexer.analysis;
 
-/**
- * Licensed to the Apache Software Foundation (ASF) under one or more contributor license
- * agreements. See the NOTICE file distributed with this work for additional information regarding
- * copyright ownership. The ASF licenses this file to You under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance with the License. You may obtain a
- * copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software distributed under the License
- * is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express
- * or implied. See the License for the specific language governing permissions and limitations under
- * the License.
- */
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.util.ArrayList;
-
 import org.apache.lucene.analysis.util.CharTokenizer;
 
 /*
@@ -27,15 +9,17 @@ import org.apache.lucene.analysis.util.CharTokenizer;
  */
 public class LetterDigitTokenizer extends CharTokenizer {
 
-    public static boolean convertCharsToLowerCase = true;
+    private final boolean convertCharsToLowerCase;
 
-    private static int[] extraCodePoints;
+    private final int[] extraCodePoints;
 
     /**
      * Construct a new LetterTokenizer.
      */
-    public LetterDigitTokenizer() {
+    public LetterDigitTokenizer(boolean convertCharsToLowerCase, int[] extraCodePoints) {
         super();
+        this.convertCharsToLowerCase = convertCharsToLowerCase;
+        this.extraCodePoints = extraCodePoints;
     }
 
     private static final boolean[] isChar = getCharMap();
@@ -63,25 +47,7 @@ public class LetterDigitTokenizer extends CharTokenizer {
         return isChar[c] || (extraCodePoints != null && isExtraCodePoints(c));
     }
 
-    public static void load(String chars) throws FileNotFoundException, IOException {
-
-        ArrayList<Integer> codePoints = new ArrayList<Integer>();
-
-        for (char c : chars.toCharArray()) { // $NON-NLS-1$
-            if (c != ' ')
-                codePoints.add((int) c);
-        }
-
-        if (codePoints.size() > 0) {
-            extraCodePoints = new int[codePoints.size()];
-            for (int i = 0; i < extraCodePoints.length; i++) {
-                extraCodePoints[i] = codePoints.get(i);
-            }
-        }
-
-    }
-
-    private static final boolean isExtraCodePoints(int c) {
+    private final boolean isExtraCodePoints(int c) {
 
         for (int i = 0; i < extraCodePoints.length; i++) {
             if (c == extraCodePoints[i]) {

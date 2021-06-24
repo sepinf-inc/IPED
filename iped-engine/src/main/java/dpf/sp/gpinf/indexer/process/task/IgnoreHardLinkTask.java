@@ -1,17 +1,20 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 import org.sleuthkit.datamodel.Content;
 import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 public class IgnoreHardLinkTask extends AbstractTask {
 
@@ -24,16 +27,14 @@ public class IgnoreHardLinkTask extends AbstractTask {
     private boolean taskEnabled = false;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
 
-        String value = confParams.getProperty("ignoreHardLinks"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            taskEnabled = Boolean.valueOf(value);
-        }
-
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        FileSystemConfig config = configurationManager.findObject(FileSystemConfig.class);
+        taskEnabled = config.isIgnoreHardLinks();
     }
 
     @Override

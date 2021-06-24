@@ -42,7 +42,7 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HTMLReportTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -69,7 +69,7 @@ public class GalleryModel extends AbstractTableModel {
     private int thumbSize = 160;
     private int galleryThreads = 1;
     private boolean logRendering = false;
-    ImageThumbTask imgThumbTask;
+    private ImageThumbTask imgThumbTask;
 
     public Map<IItemId, GalleryValue> cache = Collections.synchronizedMap(new LinkedHashMap<IItemId, GalleryValue>());
     private int maxCacheSize = 1000;
@@ -112,11 +112,10 @@ public class GalleryModel extends AbstractTableModel {
         if (imgThumbTask == null) {
             try {
                 imgThumbTask = new ImageThumbTask();
-                imgThumbTask.init(Configuration.getInstance().properties,
-                        new File(Configuration.getInstance().configPath + "/conf")); //$NON-NLS-1$
-                thumbSize = imgThumbTask.thumbSize;
-                galleryThreads = Math.min(imgThumbTask.galleryThreads, MAX_TSK_POOL_SIZE);
-                logRendering = imgThumbTask.logGalleryRendering;
+                imgThumbTask.init(ConfigurationManager.get());
+                thumbSize = imgThumbTask.getImageThumbConfig().getThumbSize();
+                galleryThreads = Math.min(imgThumbTask.getImageThumbConfig().getGalleryThreads(), MAX_TSK_POOL_SIZE);
+                logRendering = imgThumbTask.getImageThumbConfig().isLogGalleryRendering();
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -229,7 +228,7 @@ public class GalleryModel extends AbstractTableModel {
                         stream.reset();
                     }
 
-                    if (image == null && stream != null && ImageThumbTask.extractThumb
+                    if (image == null && stream != null && imgThumbTask.getImageThumbConfig().isExtractThumb()
                             && mediaType.equals("image/jpeg")) { //$NON-NLS-1$
                         image = ImageMetadataUtil.getThumb(new CloseShieldInputStream(stream));
                         stream.reset();

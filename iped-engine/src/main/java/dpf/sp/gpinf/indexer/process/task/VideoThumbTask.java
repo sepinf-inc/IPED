@@ -18,21 +18,16 @@
  */
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.video.VideoProcessResult;
-import gpinf.video.VideoThumbsMaker;
-import gpinf.video.VideoThumbsOutputConfig;
-import iped3.IItem;
-
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -48,11 +43,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.video.VideoProcessResult;
+import gpinf.video.VideoThumbsMaker;
+import gpinf.video.VideoThumbsOutputConfig;
+import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de geração de imagem com miniaturas (thumbs) de cenas extraídas de
@@ -61,6 +61,60 @@ import dpf.sp.gpinf.indexer.util.Util;
  * @author Wladimir Leite
  */
 public class VideoThumbTask extends ThumbTask {
+    
+    /**
+     * Indica se a tarefa está habilitada ou não.
+     */
+    private static boolean taskEnabled = false;
+
+    /**
+     * Executável, incluindo caminho do MPlayer.
+     */
+    private static String mplayer = "mplayer"; //$NON-NLS-1$
+
+    /**
+     * Caminho relativo para o MPlayer distribuído para Windows
+     */
+    public static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
+
+    /**
+     * Objeto estático de inicialização. Necessário para garantir que seja feita
+     * apenas uma vez.
+     */
+    private static final AtomicBoolean init = new AtomicBoolean(false);
+
+    /**
+     * Objeto estático para sincronizar finalização.
+     */
+    private static final AtomicBoolean finished = new AtomicBoolean(false);
+
+    /**
+     * Objeto estático com total de videos processados .
+     */
+    private static final AtomicLong totalProcessed = new AtomicLong();
+
+    /**
+     * Objeto estático com total de videos que falharam.
+     */
+    private static final AtomicLong totalFailed = new AtomicLong();
+
+    /**
+     * Objeto estático com total de tempo gasto no processamento de vídeos, em
+     * milisegundos.
+     */
+    private static final AtomicLong totalTime = new AtomicLong();
+
+    private static final AtomicLong totalTimeGallery = new AtomicLong();
+    private static final AtomicLong totalGallery = new AtomicLong();
+
+    private static final Logger logger = LoggerFactory.getLogger(VideoThumbTask.class);
+
+    /**
+     * Mapa com resultado do processamento dos vídeos
+     */
+    private static final HashMap<String, VideoProcessResult> processedVideos = new HashMap<String, VideoProcessResult>();
+
+    private static final Map<String, String> videoToTikaMetadata = getVideoToTikaMetadata();
 
     /**
      * Instância da classe reponsável pelo processo de geração de thumbs.
@@ -93,107 +147,9 @@ public class VideoThumbTask extends ThumbTask {
      */
     private String tempSuffix;
 
-    /**
-     * Indica se a tarefa está habilitada ou não.
-     */
-    private static boolean taskEnabled = false;
-
-    /**
-     * Constante com o nome utilizado para o arquivo de propriedades.
-     */
-    private static final String configFileName = "VideoThumbsConfig.txt"; //$NON-NLS-1$
-
-    /**
-     * Executável, incluindo caminho do MPlayer.
-     */
-    private static String mplayer = "mplayer"; //$NON-NLS-1$
-
-    /**
-     * Caminho relativo para o MPlayer distribuído para Windows
-     */
-    public static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
-
-    /**
-     * Largura da imagem das cenas geradas.
-     */
-    private static int width = 200;
-
-    /**
-     * Número de colunas.
-     */
-    private static int columns = 3;
-
-    /**
-     * Número de linhas.
-     */
-    private static int rows = 6;
-
-    /**
-     * Timeout da primeira execução do MPlayer. É maior para tratar possível
-     * processamento de fontes.
-     */
-    private static int timeoutFirst = 180000;
-
-    /**
-     * Timeout na chamada de obtenção de propriedades do vídeo.
-     */
-    private static int timeoutInfo = 10000;
-
-    /**
-     * Timeout na chamada normal de processamento do vídeo.
-     */
-    private static int timeoutProcess = 15000;
-
-    /**
-     * Opção de redirecionamento da saída do MPlayer para o log, apenas para
-     * depuração de problemas.
-     */
-    private static boolean verbose = false;
-
-    /**
-     * Objeto estático de inicialização. Necessário para garantir que seja feita
-     * apenas uma vez.
-     */
-    private static final AtomicBoolean init = new AtomicBoolean(false);
-
-    /**
-     * Objeto estático para sincronizar finalização.
-     */
-    private static final AtomicBoolean finished = new AtomicBoolean(false);
-
-    /**
-     * Objeto estático com total de videos processados .
-     */
-    private static final AtomicLong totalProcessed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de videos que falharam.
-     */
-    private static final AtomicLong totalFailed = new AtomicLong();
-
-    /**
-     * Objeto estático com total de tempo gasto no processamento de vídeos, em
-     * milisegundos.
-     */
-    private static final AtomicLong totalTime = new AtomicLong();
-
-    private static final AtomicLong totalTimeGallery = new AtomicLong();
-    private static final AtomicLong totalGallery = new AtomicLong();
-
-    private static int galleryThumbWidth = -1;
-    private static int galleryMinThumbs = -1;
-    private static int galleryMaxThumbs = -1;
-
-    private static final Logger logger = LoggerFactory.getLogger(VideoThumbTask.class);
-
-    /**
-     * Mapa com resultado do processamento dos vídeos
-     */
-    private static final HashMap<String, VideoProcessResult> processedVideos = new HashMap<String, VideoProcessResult>();
-
-    private static final Map<String, String> videoToTikaMetadata = getVideoToTikaMetadata();
-
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
+
+    private VideoThumbsConfig videoConfig;
 
     private static final Map<String, String> getVideoToTikaMetadata() {
         Map<String, String> map = new HashMap<>();
@@ -216,13 +172,17 @@ public class VideoThumbTask extends ThumbTask {
         return meta;
     }
 
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new VideoThumbsConfig());
+    }
+
     /**
      * Inicializa a tarefa de processamento de vídeos. Carrega configurações sobre o
      * tamanho/layout a ser gerado e camimnho do MPlayer, que é o programa
      * responsável pela extração de frames.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         // Instância objeto responsável pela extração de frames e inicializa parâmetros
         // de utilização
         videoThumbsMaker = new VideoThumbsMaker();
@@ -231,69 +191,18 @@ public class VideoThumbTask extends ThumbTask {
         tmpFolder = new File(System.getProperty("java.io.tmpdir")); //$NON-NLS-1$
         tempSuffix = Thread.currentThread().getId() + ".tmp"; //$NON-NLS-1$
 
+        videoConfig = configurationManager.findObject(VideoThumbsConfig.class);
+
         // Inicialização sincronizada
         synchronized (init) {
             if (!init.get()) {
                 // Verifica se tarefa está habilitada
-                String value = confParams.getProperty("enableVideoThumbs"); //$NON-NLS-1$
-                if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
+                if (videoConfig.isEnabled()) {
                     taskEnabled = true;
                 } else {
                     logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
                     return;
-                }
-
-                // Lê parâmetros do arquivo de configuração
-                UTF8Properties properties = new UTF8Properties();
-                File confFile = new File(confDir, configFileName);
-                try {
-                    properties.load(confFile);
-
-                    // Layout
-                    value = properties.getProperty("Layout"); //$NON-NLS-1$
-                    if (value != null) {
-                        String[] vals = value.trim().split(","); //$NON-NLS-1$
-                        if (vals.length == 3) {
-                            width = Integer.parseInt(vals[0].trim());
-                            columns = Integer.parseInt(vals[1].trim());
-                            rows = Integer.parseInt(vals[2].trim());
-                        }
-                    }
-
-                    // Verbose do MPlayer
-                    value = properties.getProperty("Verbose"); //$NON-NLS-1$
-                    if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
-                        verbose = true;
-                    }
-
-                    // Timeouts
-                    value = properties.getProperty("Timeouts"); //$NON-NLS-1$
-                    if (value != null) {
-                        String[] vals = value.trim().split(","); //$NON-NLS-1$
-                        if (vals.length == 3) {
-                            timeoutFirst = 1000 * Integer.parseInt(vals[0].trim());
-                            timeoutInfo = 1000 * Integer.parseInt(vals[1].trim());
-                            timeoutProcess = 1000 * Integer.parseInt(vals[2].trim());
-                        }
-                    }
-
-                    // Gallery Thumbs Configuration
-                    value = properties.getProperty("GalleryThumbs"); //$NON-NLS-1$
-                    if (value != null) {
-                        String[] vals = value.trim().split(","); //$NON-NLS-1$
-                        if (vals.length == 3) {
-                            galleryThumbWidth = Integer.parseInt(vals[0].trim());
-                            galleryMinThumbs = Integer.parseInt(vals[1].trim());
-                            galleryMaxThumbs = Integer.parseInt(vals[2].trim());
-                        }
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    logger.error("Error loading conf file: " + confFile.getAbsolutePath()); //$NON-NLS-1$
-                    taskEnabled = false;
-                    init.set(true);
-                    throw new IPEDException("Error loading conf file: " + confFile.getAbsolutePath()); //$NON-NLS-1$
                 }
 
                 if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
@@ -323,14 +232,14 @@ public class VideoThumbTask extends ThumbTask {
 
         // Inicializa parâmetros
         videoThumbsMaker.setMPlayer(mplayer);
-        videoThumbsMaker.setVerbose(verbose);
-        videoThumbsMaker.setTimeoutFirstCall(timeoutFirst);
-        videoThumbsMaker.setTimeoutProcess(timeoutProcess);
-        videoThumbsMaker.setTimeoutInfo(timeoutInfo);
+        videoThumbsMaker.setVerbose(videoConfig.isVerbose());
+        videoThumbsMaker.setTimeoutFirstCall(videoConfig.getTimeoutFirst());
+        videoThumbsMaker.setTimeoutProcess(videoConfig.getTimeoutProcess());
+        videoThumbsMaker.setTimeoutInfo(videoConfig.getTimeoutInfo());
 
         // Cria configurações de extração de cenas
         configs = new ArrayList<VideoThumbsOutputConfig>();
-        configs.add(mainConfig = new VideoThumbsOutputConfig(null, width, columns, rows, 2));
+        configs.add(mainConfig = new VideoThumbsOutputConfig(null, videoConfig.getWidth(), videoConfig.getColumns(), videoConfig.getRows(), 2));
 
         // Inicializa diretório de saída
         baseFolder = new File(output, "view"); //$NON-NLS-1$
@@ -341,7 +250,7 @@ public class VideoThumbTask extends ThumbTask {
 
     @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return videoConfig.isEnabled();
     }
 
     /**
@@ -465,6 +374,7 @@ public class VideoThumbTask extends ThumbTask {
 
             // If enabled (galleryThumbWidth > 0) create a thumb to be shown in the gallery,
             // with fewer frames
+            int galleryThumbWidth = videoConfig.getGalleryThumbWidth();
             if (galleryThumbWidth > 0 && r.isSuccess()) {
                 try {
                     long t = System.currentTimeMillis();
@@ -473,7 +383,7 @@ public class VideoThumbTask extends ThumbTask {
                     String comment = (String) read[1];
                     int galleryThumbHeight = galleryThumbWidth / 30 * 29;
                     BufferedImage img = ImageUtil.getBestFramesFit(fullImg, comment, galleryThumbWidth,
-                            galleryThumbHeight, galleryMinThumbs, galleryMaxThumbs);
+                            galleryThumbHeight, videoConfig.getGalleryMinThumbs(), videoConfig.getGalleryMaxThumbs());
 
                     if (img != null && !img.equals(fullImg)) {
                         if (img.getWidth() > galleryThumbWidth || img.getHeight() > galleryThumbHeight) {

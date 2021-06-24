@@ -57,6 +57,7 @@ import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
@@ -108,6 +109,7 @@ import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -122,6 +124,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
@@ -299,8 +302,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         // Force initialization of ImageThumbTask to load external conversion configuration
         try {
-            new ImageThumbTask().init(Configuration.getInstance().properties,
-                    new File(Configuration.getInstance().configPath + "/conf"));
+            new ImageThumbTask().init(ConfigurationManager.get());
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -389,6 +391,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     public void createGUI() {
+
+        if (!Util.isJavaFXPresent()) {
+            JOptionPane.showMessageDialog(this, Messages.get("NoJavaFX.Error"), "Error", JOptionPane.ERROR_MESSAGE);
+            System.exit(1);
+        }
 
         String tab = "     "; //$NON-NLS-1$
         this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$

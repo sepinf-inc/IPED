@@ -1,8 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Properties;
+import java.util.List;
 
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
@@ -10,11 +10,14 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.SortedDocValues;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import iped3.IHashValue;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de verificação de arquivos duplicados. Ignora o arquivo caso
@@ -25,12 +28,19 @@ public class DuplicateTask extends AbstractTask {
 
     public static String HASH_MAP = HashTask.class.getSimpleName() + "HashMap"; //$NON-NLS-1$
 
+    private static final String ENABLE_PARAM = "ignoreDuplicates"; //$NON-NLS-1$
+
     private HashMap<IHashValue, IHashValue> hashMap;
 
     private static boolean ignoreDuplicates = false;
 
     public static boolean isIgnoreDuplicatesEnabled() {
         return ignoreDuplicates;
+    }
+
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
     }
 
     public void process(IItem evidence) {
@@ -56,15 +66,9 @@ public class DuplicateTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        String value = confProps.getProperty("ignoreDuplicates"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            ignoreDuplicates = Boolean.valueOf(value);
-        }
+        ignoreDuplicates = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
         hashMap = (HashMap<IHashValue, IHashValue>) caseData.getCaseObject(HASH_MAP);
         if (hashMap == null) {

@@ -30,8 +30,8 @@ import javax.swing.KeyStroke;
 import org.apache.tika.metadata.Metadata;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
 import iped3.util.MediaTypes;
@@ -225,9 +225,8 @@ public class MenuClass extends JPopupMenu {
 
         similarDocs = new JMenuItem(Messages.getString("MenuClass.FindSimilarDocs")); //$NON-NLS-1$
         similarDocs.addActionListener(menuListener);
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        similarDocs.setEnabled(advancedConfig.isStoreTermVectors());
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+        similarDocs.setEnabled(indexConfig.isStoreTermVectors());
         this.add(similarDocs);
 
         submenu = new JMenu(Messages.getString("MenuClass.FindSimilarImages")); //$NON-NLS-1$

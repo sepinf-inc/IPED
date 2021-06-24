@@ -73,8 +73,8 @@ import org.apache.tika.utils.DateUtils;
 import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -173,9 +173,8 @@ public class IndexItem extends BasicProps {
             FieldType field = new FieldType();
             field.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
             field.setOmitNorms(true);
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
-            field.setStoreTermVectors(advancedConfig.isStoreTermVectors());
+            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+            field.setStoreTermVectors(indexConfig.isStoreTermVectors());
             contentField = field;
         }
         return contentField;

@@ -54,6 +54,16 @@ public class PythonParser extends AbstractParser {
 
     private File scriptFile;
 
+    static {
+        // fix for https://github.com/sepinf-inc/IPED/issues/586
+        try {
+            JepConfig config = new JepConfig();
+            config.setClassEnquirer(JEPClassFinder.getInstance());
+            SharedInterpreter.setConfig(config);
+        } catch (JepException e1) {
+            throw new RuntimeException(e1);
+        }
+    }
 
     @SuppressWarnings("unchecked")
     public PythonParser(){
@@ -63,15 +73,6 @@ public class PythonParser extends AbstractParser {
                 return;
             }
             inited = true;
-
-            // fix for https://github.com/sepinf-inc/IPED/issues/586
-            try {
-                JepConfig config = new JepConfig();
-                config.setClassEnquirer(JEPClassFinder.getInstance());
-                SharedInterpreter.setConfig(config);
-            } catch (JepException e1) {
-                throw new RuntimeException(e1);
-            }
 
             File pythonParsersFolder = new File(System.getProperty(PYTHON_PARSERS_FOLDER));
             File[] scripts = pythonParsersFolder.listFiles();

@@ -1,16 +1,17 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
-import java.util.Properties;
+import java.util.Arrays;
+import java.util.List;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 /**
  * Breaks large binary files (indexed by strings) into smaller pieces to be
@@ -21,13 +22,17 @@ import iped3.sleuthkit.ISleuthKitItem;
  */
 public class FragmentLargeBinaryTask extends BaseCarveTask {
 
-    private static final int FRAG_SIZE = 10 * 1024 * 1024;
-    private static final int OVERLAP = 1024;
-
+    private SplitLargeBinaryConfig splitConfig;
     private IndexerDefaultParser autoParser;
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new SplitLargeBinaryConfig());
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        splitConfig = configurationManager.findObject(SplitLargeBinaryConfig.class);
         autoParser = new IndexerDefaultParser();
     }
 
@@ -45,17 +50,16 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     @Override
     protected void process(IItem evidence) throws Exception {
 
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-
-        if (evidence.getLength() != null && evidence.getLength() >= advancedConfig.getMinItemSizeToFragment()
+        if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
                 && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
                 && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
                         || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
 
             int fragNum = 0;
-            for (long offset = 0; offset < evidence.getLength(); offset += FRAG_SIZE - OVERLAP) {
-                long len = offset + FRAG_SIZE < evidence.getLength() ? FRAG_SIZE : evidence.getLength() - offset;
+            int fragSize = splitConfig.getItemFragmentSize();
+            int overlap = splitConfig.getFragmentOverlapSize();
+            for (long offset = 0; offset < evidence.getLength(); offset += fragSize - overlap) {
+                long len = offset + fragSize < evidence.getLength() ? fragSize : evidence.getLength() - offset;
                 this.addFragmentFile(evidence, offset, len, fragNum++);
                 if (Thread.currentThread().isInterrupted())
                     return;

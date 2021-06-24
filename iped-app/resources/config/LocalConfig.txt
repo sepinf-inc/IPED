@@ -25,10 +25,6 @@ numThreads = default
 # preferably SSD, and not the same used as "indexTemp", if other disk is available.
 #hashesDB = C:/IPED/iped-hashes.db
 
-# File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
-# It is supported models from LED version 1.21 or higher.
-ledDie = models/rfdie.dat
-
 # Full path for sleuthkit-4.x.x.jar built on Linux OS.
 # It is distributed a Windows only version with some optimization patches.
 # It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
