@@ -45,6 +45,7 @@ import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 
 public class FolderTreeReader extends DataSourceReader {
 
@@ -186,7 +187,7 @@ public class FolderTreeReader extends DataSourceReader {
                     item.addParentIds(parentIds);
 
                     if (parentIds.size() == 2) {
-                        item.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+                        item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
                     }
                 } else {
                     item.setRoot(true);
