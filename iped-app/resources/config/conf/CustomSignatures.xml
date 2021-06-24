@@ -638,12 +638,10 @@
     
     <mime-type type="application/x-emule-preferences-dat">
         <sub-class-of type="application/x-p2p"/>
-        <glob pattern="preferences.dat"/>
     </mime-type>
 	
      <mime-type type="application/x-emule-preferences-ini">
         <sub-class-of type="application/x-p2p"/>
-        <glob pattern="preferences.ini"/>
     </mime-type>
     
     <mime-type type="application/x-preview-with-links">
