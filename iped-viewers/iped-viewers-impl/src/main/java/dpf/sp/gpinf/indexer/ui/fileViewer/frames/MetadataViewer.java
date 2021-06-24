@@ -170,9 +170,9 @@ public class MetadataViewer extends Viewer {
         Color color3 = new Color(0xF2F2F2);
         Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
         if (background != null) {
-            color3 = background.brighter();
-            color2 = color3.brighter();
-            color1 = color2.brighter();
+            color3 = ColorUtil.mix(background, Color.gray, 0.8);
+            color2 = ColorUtil.mix(background, Color.gray, 0.6);
+            color1 = ColorUtil.mix(background, Color.gray, 0.4);
         }
         
         StringBuilder sb = new StringBuilder();
@@ -197,7 +197,6 @@ public class MetadataViewer extends Viewer {
         if (foreground != null)  
             sb.append("color:").append(ColorUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
         sb.append("\">\n"); //$NON-NLS-1$
-        System.err.println(sb);
 
         if (tabIndex == 0)
             fillBasicProps(sb, item);
