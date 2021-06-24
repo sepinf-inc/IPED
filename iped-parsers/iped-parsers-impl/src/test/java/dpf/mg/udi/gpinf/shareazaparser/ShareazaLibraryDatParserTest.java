@@ -11,9 +11,10 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import junit.framework.TestCase;
+import iped3.util.ExtraProperties;
 
-public class ShareazaLibraryDatParserTest extends TestCase{
+
+public class ShareazaLibraryDatParserTest extends AbstractPkgTest{
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -26,9 +27,8 @@ public class ShareazaLibraryDatParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToTextContentHandler();
         InputStream stream = getStream("test-files/test_shareazaLibrary1.dat");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
+        parser.getSupportedTypes(shareazalibdatContext);
+        parser.parse(stream, handler, metadata, shareazalibdatContext);
         
         String hts = handler.toString();
         String mts = metadata.toString();
@@ -39,8 +39,9 @@ public class ShareazaLibraryDatParserTest extends TestCase{
         assertTrue(hts.contains("ImprimeGRUSimples.pdf"));
         assertTrue(hts.contains("Michael Jackson - Bad.mp3"));
         
-        assertTrue(mts.contains("Content-Type=application/x-shareaza-library-dat"));
-        assertTrue(mts.contains("p2pHistoryEntries=127"));
+        assertEquals("application/x-shareaza-library-dat", metadata.get(Metadata.CONTENT_TYPE));
+        assertEquals("127", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
+//        assertEquals("sharedHashes=7889fa596625fc06972db9c24fcd84b6", shareazalibdattracker.sharedhashes.get(0));
         assertTrue(mts.contains("sharedHashes=7889fa596625fc06972db9c24fcd84b6"));
         assertTrue(mts.contains("sharedHashes=3f4d4e6f4e6d7618d61d238754937a43"));
         assertTrue(mts.contains("sharedHashes=5ff811cbb56fa306f01aca1890f1a70a"));
@@ -54,9 +55,8 @@ public class ShareazaLibraryDatParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToTextContentHandler();
         InputStream stream = getStream("test-files/test_shareazaLibrary2.dat");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
+        parser.getSupportedTypes(shareazalibdatContext);
+        parser.parse(stream, handler, metadata, shareazalibdatContext);
         
         String hts = handler.toString();
         String mts = metadata.toString();

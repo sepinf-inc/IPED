@@ -40,14 +40,14 @@ public class GDriveMainParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
 
         assertTrue(hts.contains("Google Drive.lnk"));
         assertTrue(hts.contains("12jDbJlY6dA7uqMuiQAEDOD43QCKz3Ird"));
         assertTrue(hts.contains("testRFC822_quoted"));
         assertTrue(hts.contains("testRFC822-multipart"));
         assertTrue(hts.contains("Md5Checker.exe"));
-        assertTrue(mts.contains("Content-Type=application/x-gdrive-cloud-graph"));
+        
+        assertEquals("application/x-gdrive-cloud-graph", metadata.get(Metadata.CONTENT_TYPE));
      
 
     }
@@ -66,14 +66,14 @@ public class GDriveMainParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
 
         assertTrue(hts.contains("Segurança Computacional CIC"));
         assertTrue(hts.contains("Cheat Engine.lnk"));
         assertTrue(hts.contains("testRFC822_quoted"));
         assertTrue(hts.contains("mockrar5.rar"));
         assertTrue(hts.contains("a4tosticker9.png"));
-        assertTrue(mts.contains("Content-Type=application/x-gdrive-snapshot"));
+        
+        assertEquals("application/x-gdrive-snapshot", metadata.get(Metadata.CONTENT_TYPE));
 
     }
     
