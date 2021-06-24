@@ -15,6 +15,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.inc.sepinf.UsnJrnl.Util;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 
 public class PreferencesDatParser extends AbstractParser {
 
@@ -47,7 +48,7 @@ public class PreferencesDatParser extends AbstractParser {
         xhtml.startElement("tr");
 
         xhtml.startElement("td");
-        xhtml.characters("Version");
+        xhtml.characters(Messages.getString("PreferencesDat.Version"));
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(Integer.toString(version));
@@ -58,7 +59,7 @@ public class PreferencesDatParser extends AbstractParser {
         xhtml.startElement("tr");
 
         xhtml.startElement("td");
-        xhtml.characters("User Hash");
+        xhtml.characters(Messages.getString("PreferencesDat.UserHash"));
         xhtml.endElement("td");
         xhtml.startElement("td");
         xhtml.characters(Util.byteArrayToHex(b));
