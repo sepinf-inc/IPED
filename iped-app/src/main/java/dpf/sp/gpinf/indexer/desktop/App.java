@@ -167,7 +167,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public HitsTable hitsTable;
     AppGraphAnalytics appGraphAnalytics;
 
-    HitsTable subItemTable, duplicatesTable;
+    HitsTable subItemTable, duplicatesTable, referencesTable;
     JTree tree, bookmarksTree, categoryTree;
     MetadataPanel metadataPanel;
     JScrollPane categoriesPanel, bookmarksPanel;
@@ -181,7 +181,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
     DefaultSingleCDockable tableTabDock, galleryTabDock, graphDock;
-    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock;
+    public DefaultSingleCDockable hitsDock, subitemDock, parentDock, duplicateDock, referencesDock;
     DefaultSingleCDockable compositeViewerDock;
 
     private List<DefaultSingleCDockable> viewerDocks;
@@ -190,7 +190,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color defaultColor;
     Color defaultFocusedColor;
     Color defaultSelectedColor;
-    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll;
+    private JScrollPane hitsScroll, subItemScroll, parentItemScroll, duplicatesScroll, referencesScroll;
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
@@ -198,9 +198,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     public ResultTableModel resultsModel;
     List resultSortKeys;
+
     SubitemTableModel subItemModel = new SubitemTableModel();
     ParentTableModel parentItemModel = new ParentTableModel();
     DuplicatesTableModel duplicatesModel = new DuplicatesTableModel();
+    ReferencesTableModel referencesModel = new ReferencesTableModel();
+
     GalleryModel galleryModel = new GalleryModel();
 
     Color alertColor = Color.RED;
@@ -564,6 +567,18 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         parentItemTable.setShowGrid(false);
 
+        referencesTable = new HitsTable(referencesModel);
+        referencesTable.setFillsViewportHeight(true);
+        referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
+        referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
+        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        referencesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
+        referencesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
+        referencesTable.setShowGrid(false);
+        referencesScroll = new JScrollPane(referencesTable);
+
         categoryTree = new JTree(new Object[0]);
         categoryTree.setRootVisible(true);
         categoryTree.setExpandsSelectedPaths(false);
@@ -707,6 +722,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.getSelectionModel().addListSelectionListener(parentItemModel);
         duplicatesTable.addMouseListener(duplicatesModel);
         duplicatesTable.getSelectionModel().addListSelectionListener(duplicatesModel);
+        referencesTable.addMouseListener(referencesModel);
+        referencesTable.getSelectionModel().addListSelectionListener(referencesModel);
 
         hitsTable.addMouseListener(appletListener);
         // filtro.addMouseListener(appletListener);
@@ -853,6 +870,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 parentItemScroll);
         duplicateDock = createDockable("duplicatestab", Messages.getString("DuplicatesTableModel.Duplicates"), //$NON-NLS-1$ //$NON-NLS-2$
                 duplicatesScroll);
+        referencesDock = createDockable("referencedbytab", Messages.getString("ReferencesTab.Title"),
+                referencesScroll);
 
         dockingControl.addDockable(categoriesTabDock);
         dockingControl.addDockable(metadataTabDock);
@@ -875,6 +894,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(subitemDock);
         dockingControl.addDockable(duplicateDock);
         dockingControl.addDockable(parentDock);
+        dockingControl.addDockable(referencesDock);
 
         List<Viewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
@@ -994,7 +1014,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         List<DefaultSingleCDockable> docks = new ArrayList<>();
         docks.addAll(Arrays.asList(hitsDock, subitemDock, duplicateDock, parentDock, tableTabDock, galleryTabDock,
-                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock));
+                bookmarksTabDock, evidenceTabDock, metadataTabDock, categoriesTabDock, graphDock, referencesDock));
         docks.addAll(viewerDocks);
         docks.addAll(rsTabDock);
         rsTabDock.clear();
@@ -1169,6 +1189,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             duplicateDock.setLocation(nextLocation);
             duplicateDock.setVisible(true);
+            nextLocation = duplicateDock.getBaseLocation().aside();
+
+            referencesDock.setLocation(nextLocation);
+            referencesDock.setVisible(true);
 
             for (int i = 0; i < viewerDocks.size(); i++) {
                 DefaultSingleCDockable dock = viewerDocks.get(i);
@@ -1242,6 +1266,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             duplicateDock.setLocation(nextLocation);
             duplicateDock.setVisible(true);
+            nextLocation = duplicateDock.getBaseLocation().aside();
+
+            referencesDock.setLocation(nextLocation);
+            referencesDock.setVisible(true);
 
             categoriesTabDock.setLocation(CLocation.base().normalWest(0.20).north(0.5));
             categoriesTabDock.setVisible(true);

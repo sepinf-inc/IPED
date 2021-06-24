@@ -147,7 +147,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, App.get().getParams().highlightTerms);
 
         if (listRelated) {
-            // listRelatedItens();
             App.get().subItemModel.listSubItens(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
@@ -155,6 +154,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             App.get().parentItemModel.listParents(doc);
 
             App.get().duplicatesModel.listDuplicates(doc);
+
+            App.get().referencesModel.listReferencingItems(doc);
         }
     }
 
@@ -207,33 +208,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 }
             }.start();
         }
-    }
-
-    private Thread listTask;
-
-    private void listRelatedItens() {
-        if (listTask != null) {
-            listTask.interrupt();
-        }
-
-        listTask = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock2) {
-                    App.get().subItemModel.listSubItens(doc);
-                    if (Thread.currentThread().isInterrupted()) {
-                        return;
-                    }
-                    App.get().parentItemModel.listParents(doc);
-                    App.get().duplicatesModel.listDuplicates(doc);
-                }
-
-            }
-        });
-        synchronized (lock2) {
-            listTask.start();
-        }
-
     }
 
 }
