@@ -12,9 +12,11 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import junit.framework.TestCase;
 
-public class VCardParserTest extends TestCase{
+import iped3.util.ExtraProperties;
+
+
+public class VCardParserTest extends AbstractPkgTest{
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -26,17 +28,17 @@ public class VCardParserTest extends TestCase{
         VCardParser parser = new VCardParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_contacts.vcf");
         ParseContext context = new ParseContext();
+        InputStream stream = getStream("test-files/test_contacts.vcf");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
-
+        
         assertTrue(hts.contains("Internet"));
         assertTrue(hts.contains("guilhermeandreuce@gmail.com"));
-        assertTrue(mts.contains("emailAddress=guilhermeandreuce@gmail.com"));
+
+        assertEquals("guilhermeandreuce@gmail.com", metadata.get(ExtraProperties.USER_EMAIL));
         
     }
     
@@ -47,13 +49,11 @@ public class VCardParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_contactsMultiple.vcf");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
+        parser.getSupportedTypes(vcardContext);
+        parser.parse(stream, handler, metadata, vcardContext);
         
         String hts = handler.toString();
         String mts = metadata.toString();
-        
 
         assertTrue(hts.contains("Family: Flamingo"));
         assertTrue(hts.contains("Given: Sushi"));
@@ -61,6 +61,9 @@ public class VCardParserTest extends TestCase{
         assertTrue(hts.contains("myContacts"));
         assertTrue(hts.contains("021 (61)3468-2000"));
         assertTrue(hts.contains("99592-3794"));
+        
+//        assertEquals("021 (61)3468-2000", vcardtracker.userphone.get(0));
+        
         assertTrue(mts.contains("phoneNumber=021 (61)3468-2000"));
         assertTrue(mts.contains("phoneNumber=021 (61)3011-7666"));
         assertTrue(mts.contains("phoneNumber=99592-3794"));
@@ -78,12 +81,13 @@ public class VCardParserTest extends TestCase{
 //        Metadata metadata = new Metadata();
 //        ContentHandler handler = new BodyContentHandler();
 //        InputStream stream = getStream("test-files/test_contactsCompleteInfo.vcf");
-//        ParseContext context = new ParseContext();
-//        parser.getSupportedTypes(context);
-//        parser.parse(stream, handler, metadata, context);
+//        parser.getSupportedTypes(vcardContext);
+//        parser.parse(stream, handler, metadata, vcardContext);
 //        
 //        String hts = handler.toString();
 //        String mts = metadata.toString();
+//        System.out.println(hts + mts);
+//        
 //        assertTrue(hts.contains("ratuxo")); 
 //        assertTrue(hts.contains("Outubro 24, 1996")); 
 //        assertTrue(hts.contains("nicolecity,")); 
@@ -107,9 +111,8 @@ public class VCardParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumb.vcf");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
+        parser.getSupportedTypes(vcardContext);
+        parser.parse(stream, handler, metadata, vcardContext);
         
         String hts = handler.toString();
         String mts = metadata.toString();
@@ -143,12 +146,11 @@ public class VCardParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf");
-        ParseContext context = new ParseContext();
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").getFile());
         PrintWriter out = new PrintWriter(file);
-        parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
+        parser.getSupportedTypes(vcardContext);
+        parser.parse(stream, handler, metadata, vcardContext);
         VCardParser.printHtmlFromString(out, stream.toString());
     }
 

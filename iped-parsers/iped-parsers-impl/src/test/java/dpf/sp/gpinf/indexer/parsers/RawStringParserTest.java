@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -9,6 +11,9 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import dpf.sp.gpinf.indexer.parsers.util.LimitedContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ToCSVContentHandler;
 import junit.framework.TestCase;
 
 public class RawStringParserTest extends TestCase{
@@ -121,6 +126,38 @@ public class RawStringParserTest extends TestCase{
         RawStringParser parser = new RawStringParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
+        InputStream stream = getStream("test-files/test_utf16iso88591utf8");
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        String hts = handler.toString();
+        assertTrue(hts.contains("Essa p4rte está em ISO8859-1issO"));
+        assertTrue(hts.contains("Essa part3 está em UTF8."));
+        assertTrue(hts.contains("Essa pa5te está em UTF16."));
+    }
+
+    @Test
+    public void testRawStringCSV() throws IOException, SAXException, TikaException{
+
+        RawStringParser parser = new RawStringParser();
+        Metadata metadata = new Metadata();
+        OutputStream outStream = new OutputStream() {
+            @Override
+            public void write(int b) throws IOException {}
+        };
+        ContentHandler handler = new ToCSVContentHandler(outStream, "UTF-8");
+        ParseContext context = new ParseContext();
+        InputStream stream = getStream("test-files/test_utf16iso88591utf8");
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+    }
+    
+    @Test
+    public void testRawStringLimited() throws IOException, SAXException, TikaException{
+
+        RawStringParser parser = new RawStringParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new LimitedContentHandler(500);
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_utf16iso88591utf8");
         parser.getSupportedTypes(context);
