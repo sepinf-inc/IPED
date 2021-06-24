@@ -207,6 +207,10 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     private void configureParsers() {
+        configureParsers(false);
+    }
+
+    private void configureParsers(boolean isIOS) {
 
         UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
                 .findObjects(UFEDReaderConfig.class).iterator().next();
@@ -214,6 +218,10 @@ public class UfedXmlReader extends DataSourceReader {
         PhoneParsingConfig.setUfdrReaderName(UfedXmlReader.class.getSimpleName());
 
         if (!TelegramParser.isEnabledForUfdr()) {
+            supportedApps.remove(TelegramParser.TELEGRAM);
+        }
+
+        if (isIOS && !TelegramParser.isEnabledForIOSUfdr()) {
             supportedApps.remove(TelegramParser.TELEGRAM);
         }
 
@@ -620,6 +628,14 @@ public class UfedXmlReader extends DataSourceReader {
             XmlNode parentNode = null;
             if (nodeSeq.size() > 0)
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
+
+            String metadataSection = parentNode != null ? parentNode.atts.get("section") : null;
+            if ("Extraction Data".equals(metadataSection) || "Device Info".equals(metadataSection)) {
+                String val = chars.toString().toLowerCase();
+                if (val.contains("apple") || val.contains("iphone")) {
+                    configureParsers(true);
+                }
+            }
 
             if (("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null
                     && "Device Info".equals(parentNode.atts.get("section"))) {

@@ -90,6 +90,7 @@ public class TelegramParser extends SQLite3DBParser {
     private static final String ATTACHMENT_MESSAGE = ATTACHMENT_PREFIX + "Attachment: ";
 
     private static boolean enabledForUfdr = false;
+    private static boolean enabledForIOSUfdr = false;
 
     private boolean extractMessages = true;
 
@@ -101,9 +102,18 @@ public class TelegramParser extends SQLite3DBParser {
         return enabledForUfdr;
     }
 
+    public static boolean isEnabledForIOSUfdr() {
+        return enabledForIOSUfdr;
+    }
+
     @Field
     public void setEnabledForUfdr(boolean enable) {
         enabledForUfdr = enable;
+    }
+
+    @Field
+    public void setEnabledForIOSUfdr(boolean enable) {
+        enabledForIOSUfdr = enable;
     }
 
     @Field
@@ -458,6 +468,9 @@ public class TelegramParser extends SQLite3DBParser {
             parseTelegramDBAndroid(stream, handler, metadata, context);
         }
         if (mimetype.equals(TELEGRAM_DB_IOS.toString())) {
+            if (!enabledForIOSUfdr && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
+                return;
+            }
             try {
                 parseTelegramDBIOS(stream, handler, metadata, context);
             } catch (Exception e) {
