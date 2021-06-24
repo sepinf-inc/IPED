@@ -193,8 +193,8 @@ public class PythonTask extends AbstractTask {
     public List<Configurable<?>> getConfigurables() {
         try {
             Jep j = getJep(false);
-            List<Configurable<?>> configs=null;
-            if(j!=null) {
+            List<Configurable<?>> configs = null;
+            if (j != null) {
                 configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
             }
             return configs != null ? configs : Collections.emptyList();
