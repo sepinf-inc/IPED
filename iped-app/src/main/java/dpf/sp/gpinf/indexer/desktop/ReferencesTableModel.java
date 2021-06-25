@@ -37,7 +37,6 @@ import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import iped3.search.LuceneSearchResult;
-import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
 public class ReferencesTableModel extends AbstractTableModel
@@ -50,7 +49,6 @@ public class ReferencesTableModel extends AbstractTableModel
 
     private LuceneSearchResult results = new LuceneSearchResult(0);
     private int selectedIndex = -1;
-    private String nameToScroll;
 
     @Override
     public int getColumnCount() {
@@ -152,13 +150,10 @@ public class ReferencesTableModel extends AbstractTableModel
         selectedIndex = lsm.getMinSelectionIndex();
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
-        if (nameToScroll != null) {
-            App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(nameToScroll);
-        }
-
         FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
         parsingTask.execute();
 
+        App.get().parentItemModel.fireTableDataChanged();
     }
 
     public void listReferencingItems(Document doc) {
@@ -171,6 +166,8 @@ public class ReferencesTableModel extends AbstractTableModel
                 .collect(Collectors.joining(" "));
         String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
         textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+
+        System.out.println(textQuery);
 
         try {
             IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
@@ -185,14 +182,10 @@ public class ReferencesTableModel extends AbstractTableModel
                         App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
                     }
                 });
-                nameToScroll = doc.get(BasicProps.HASH);
-            } else {
-                nameToScroll = null;
             }
 
         } catch (Exception e) {
             results = new LuceneSearchResult(0);
-            nameToScroll = null;
             e.printStackTrace();
         }
 

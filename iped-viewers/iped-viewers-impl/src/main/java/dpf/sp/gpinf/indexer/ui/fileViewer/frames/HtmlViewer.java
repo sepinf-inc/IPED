@@ -33,7 +33,9 @@ import netscape.javascript.JSObject;
 public class HtmlViewer extends Viewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
-
+    /**
+     *
+     */
     private static final long serialVersionUID = 1L;
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
@@ -44,8 +46,7 @@ public class HtmlViewer extends Viewer {
             + Messages.getString("HtmlViewer.OpenExternally") //$NON-NLS-1$
             + "</a></body></html>"; //$NON-NLS-1$
 
-    private static String idToScroll;
-    private static String nameToScroll;
+    private static String positionToScroll;
 
     WebView htmlViewer;
     WebEngine webEngine;
@@ -57,12 +58,8 @@ public class HtmlViewer extends Viewer {
     protected Set<String> highlightTerms;
 
     // TODO change viewer api and move this to loadFile method
-    public void setElementIDToScroll(String id) {
-        idToScroll = id;
-    }
-
-    public void setElementNameToScroll(String name) {
-        nameToScroll = name;
+    public static void setPositionToScroll(String position) {
+        positionToScroll = position;
     }
 
     protected int getMaxHtmlSize() {
@@ -220,8 +217,8 @@ public class HtmlViewer extends Viewer {
                                 currTerm = queryTerms.length > 0 ? 0 : -1;
                                 scrollToNextHit(true);
                             }
-                            if (doc != null) {
-                                scrollToPosition();
+                            if (doc != null && positionToScroll != null) {
+                                scrollToPosition(positionToScroll);
 
                             }
                         }
@@ -239,18 +236,10 @@ public class HtmlViewer extends Viewer {
         }
     }
 
-    private void scrollToPosition() {
+    private void scrollToPosition(String position) {
         try {
-            if (idToScroll != null) {
-                webEngine.executeScript("document.getElementById(\"" + idToScroll + "\").scrollIntoView(false);"); //$NON-NLS-1$
-
-            } else if (nameToScroll != null) {
-                webEngine.executeScript("var x = document.getElementsByName(\"" + nameToScroll + "\");"
-                        + "x[0].scrollIntoView(false);");
-            }
-            idToScroll = null;
-            nameToScroll = null;
-
+            webEngine.executeScript("document.getElementById(\"" + position + "\").scrollIntoView(false);"); //$NON-NLS-1$
+            positionToScroll = null;
         } catch (Exception e) {
             // ignore
         }
