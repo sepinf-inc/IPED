@@ -32,10 +32,14 @@ import javax.swing.table.AbstractTableModel;
 
 import org.apache.lucene.document.Document;
 
+import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
+import dpf.sp.gpinf.indexer.parsers.AresParser;
+import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import iped3.IItem;
 import iped3.search.LuceneSearchResult;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
@@ -50,7 +54,7 @@ public class ReferencesTableModel extends AbstractTableModel
 
     private LuceneSearchResult results = new LuceneSearchResult(0);
     private int selectedIndex = -1;
-    private String nameToScroll;
+    private Document refDoc;
 
     @Override
     public int getColumnCount() {
@@ -152,11 +156,25 @@ public class ReferencesTableModel extends AbstractTableModel
         selectedIndex = lsm.getMinSelectionIndex();
         App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
+        int id = results.getLuceneIds()[selectedIndex];
+        IItem item = App.get().appCase.getItemByLuceneID(id);
+
+        String nameToScroll = null;
+        if (KnownMetParser.EMULE_MIME_TYPE.equals(item.getMediaType().toString())) {
+            nameToScroll = refDoc.get(HashTask.HASH.EDONKEY.toString());
+        } else if (AresParser.ARES_MIME_TYPE.equals(item.getMediaType().toString())) {
+            nameToScroll = refDoc.get(HashTask.HASH.SHA1.toString());
+        } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(item.getMediaType().toString())) {
+            nameToScroll = refDoc.get(HashTask.HASH.MD5.toString());
+        } else {
+            nameToScroll = refDoc.get(BasicProps.HASH);
+        }
+
         if (nameToScroll != null) {
             App.get().getViewerController().getHtmlLinkViewer().setElementNameToScroll(nameToScroll);
         }
 
-        FileProcessor parsingTask = new FileProcessor(results.getLuceneIds()[selectedIndex], false);
+        FileProcessor parsingTask = new FileProcessor(id, false);
         parsingTask.execute();
 
     }
@@ -185,14 +203,14 @@ public class ReferencesTableModel extends AbstractTableModel
                         App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
                     }
                 });
-                nameToScroll = doc.get(BasicProps.HASH);
+                refDoc = doc;
             } else {
-                nameToScroll = null;
+                refDoc = null;
             }
 
         } catch (Exception e) {
             results = new LuceneSearchResult(0);
-            nameToScroll = null;
+            refDoc = null;
             e.printStackTrace();
         }
 
