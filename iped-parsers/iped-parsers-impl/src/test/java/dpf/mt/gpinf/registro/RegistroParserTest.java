@@ -19,7 +19,6 @@ import org.xml.sax.SAXException;
 import dpf.mt.gpinf.registro.model.HiveCell;
 import dpf.mt.gpinf.registro.model.KeyNode;
 import dpf.mt.gpinf.registro.model.RegistryFile;
-import dpf.sp.gpinf.indexer.parsers.SevenZipParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import junit.framework.TestCase;
 

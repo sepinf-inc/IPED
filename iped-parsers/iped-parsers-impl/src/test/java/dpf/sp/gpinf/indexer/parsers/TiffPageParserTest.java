@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -8,15 +7,14 @@ import java.io.InputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.image.ImageParser;
-import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
+import junit.framework.TestCase;
 
-public class TiffPageParserTest {
+public class TiffPageParserTest extends TestCase{
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
