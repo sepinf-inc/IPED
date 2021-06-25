@@ -75,6 +75,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().duplicatesModel.fireTableDataChanged();
         App.get().parentItemModel.results = new LuceneSearchResult(0);
         App.get().parentItemModel.fireTableDataChanged();
+        App.get().referencesModel.clear();
 
         try {
             PesquisarIndice task;

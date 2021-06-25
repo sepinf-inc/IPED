@@ -56,6 +56,11 @@ public class ReferencesTableModel extends AbstractTableModel
     private int selectedIndex = -1;
     private Document refDoc;
 
+    public void clear() {
+        results = new LuceneSearchResult(0);
+        fireTableDataChanged();
+    }
+
     @Override
     public int getColumnCount() {
         return 3;
