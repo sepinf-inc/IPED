@@ -246,7 +246,7 @@ public class HtmlViewer extends Viewer {
 
             } else if (nameToScroll != null) {
                 webEngine.executeScript("var x = document.getElementsByName(\"" + nameToScroll + "\");"
-                        + "x[0].scrollIntoView(false);");
+                        + "x[0].scrollIntoView({block: \"center\", inline: \"nearest\"});");
             }
             idToScroll = null;
             nameToScroll = null;

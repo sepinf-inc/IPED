@@ -159,20 +159,21 @@ public class ReferencesTableModel extends AbstractTableModel
         }
 
         selectedIndex = lsm.getMinSelectionIndex();
-        App.get().getTextViewer().textTable.scrollRectToVisible(new Rectangle());
 
         int id = results.getLuceneIds()[selectedIndex];
         IItem item = App.get().appCase.getItemByLuceneID(id);
 
         String nameToScroll = null;
-        if (KnownMetParser.EMULE_MIME_TYPE.equals(item.getMediaType().toString())) {
-            nameToScroll = refDoc.get(HashTask.HASH.EDONKEY.toString());
-        } else if (AresParser.ARES_MIME_TYPE.equals(item.getMediaType().toString())) {
-            nameToScroll = refDoc.get(HashTask.HASH.SHA1.toString());
-        } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(item.getMediaType().toString())) {
-            nameToScroll = refDoc.get(HashTask.HASH.MD5.toString());
-        } else {
-            nameToScroll = refDoc.get(BasicProps.HASH);
+        if (refDoc != null) {
+            if (KnownMetParser.EMULE_MIME_TYPE.equals(item.getMediaType().toString())) {
+                nameToScroll = refDoc.get(HashTask.HASH.EDONKEY.toString());
+            } else if (AresParser.ARES_MIME_TYPE.equals(item.getMediaType().toString())) {
+                nameToScroll = refDoc.get(HashTask.HASH.SHA1.toString());
+            } else if (ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE.equals(item.getMediaType().toString())) {
+                nameToScroll = refDoc.get(HashTask.HASH.MD5.toString());
+            } else {
+                nameToScroll = refDoc.get(BasicProps.HASH);
+            }
         }
 
         if (nameToScroll != null) {
