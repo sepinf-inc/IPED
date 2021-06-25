@@ -40,6 +40,7 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
@@ -204,7 +205,12 @@ public class AresParser extends AbstractParser {
                 Arrays.fill(colClass, 8, 13, "z");
             }
 
-            xhtml.startElement("tr", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
+            AttributesImpl attributes = new AttributesImpl();
+            attributes.addAttribute("", "class", "class", "CDATA", trClass);
+            if (e != null && e.getHash() != null && !e.getHash().isEmpty()) {
+                attributes.addAttribute("", "name", "name", "CDATA", e.getHash().toUpperCase());
+            }
+            xhtml.startElement("tr", attributes);
             for (int j = 0; j < cells.size(); j++) {
                 if (present[j]) {
                     xhtml.startElement("td", "class", colClass[j]); //$NON-NLS-1$ //$NON-NLS-2$

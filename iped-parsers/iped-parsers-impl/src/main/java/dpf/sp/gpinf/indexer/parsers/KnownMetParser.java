@@ -205,7 +205,12 @@ public class KnownMetParser extends AbstractParser {
                 bytTrf += toSum(e.getBytesTransfered());
             }
 
-            xhtml.startElement("tr", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
+            AttributesImpl attributes = new AttributesImpl();
+            attributes.addAttribute("", "class", "class", "CDATA", trClass);
+            if (e != null && e.getHash() != null && !e.getHash().isEmpty()) {
+                attributes.addAttribute("", "name", "name", "CDATA", e.getHash().toUpperCase());    
+            }
+            xhtml.startElement("tr", attributes);
             for (int j = 0; j < cells.size(); j++) {
                 xhtml.startElement("td", "class", colClass[j]); //$NON-NLS-1$ //$NON-NLS-2$
                 if (i < 0 || i >= l.size())
