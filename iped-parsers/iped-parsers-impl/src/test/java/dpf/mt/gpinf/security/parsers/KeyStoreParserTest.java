@@ -8,7 +8,6 @@ import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
