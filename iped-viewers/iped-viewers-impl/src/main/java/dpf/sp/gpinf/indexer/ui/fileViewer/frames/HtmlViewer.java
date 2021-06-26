@@ -44,8 +44,8 @@ public class HtmlViewer extends Viewer {
             + Messages.getString("HtmlViewer.OpenExternally") //$NON-NLS-1$
             + "</a></body></html>"; //$NON-NLS-1$
 
-    private static String idToScroll;
-    private static String nameToScroll;
+    private String idToScroll;
+    private String nameToScroll;
 
     WebView htmlViewer;
     WebEngine webEngine;
@@ -239,20 +239,42 @@ public class HtmlViewer extends Viewer {
         }
     }
 
-    private void scrollToPosition() {
+    protected void scrollToPosition() {
+        boolean done = false;
+        boolean exception = false;
         try {
             if (idToScroll != null) {
-                webEngine.executeScript("document.getElementById(\"" + idToScroll + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                done = (Boolean) webEngine.executeScript(""
+                        + "function find(){"
+                        + "  x = document.getElementById(\"" + idToScroll + "\");"
+                        + "  if(x != null){"
+                        + "    x.scrollIntoView(false);"
+                        + "    return true;"
+                        + "  }"
+                        + "  return false;"
+                        + "}"
+                        + "find();");
 
             } else if (nameToScroll != null) {
-                webEngine.executeScript("var x = document.getElementsByName(\"" + nameToScroll + "\");"
-                        + "x[0].scrollIntoView({block: \"center\", inline: \"nearest\"});");
+                done = (Boolean) webEngine.executeScript(""
+                        + "function find(){"
+                        + "  var x = document.getElementsByName(\"" + nameToScroll + "\");"
+                        + "  if(x != null && x.length > 0){"
+                        + "    x[0].scrollIntoView({block: \"center\", inline: \"nearest\"});"
+                        + "    return true;"
+                        + "  }"
+                        + "  return false;"
+                        + "}"
+                        + "find();");
             }
-            idToScroll = null;
-            nameToScroll = null;
 
         } catch (Exception e) {
-            // ignore
+            e.printStackTrace();
+            exception = true;
+        }
+        if(done || exception) {
+            idToScroll = null;
+            nameToScroll = null;
         }
     }
 
