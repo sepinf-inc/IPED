@@ -69,6 +69,7 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Worker.State newState) {
                         if (newState == Worker.State.SUCCEEDED) {
                             updateSelection();
+                            scrollToPosition();
                         }
                         if (newState == Worker.State.RUNNING) {
                             mediaHashesInView.clear();
@@ -93,6 +94,9 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
                             Number newValue) {
                         addJavascriptListener(webEngine);
                         updateSelection();
+                        if (newValue.floatValue() > 0) {
+                            scrollToPosition();
+                        }
                     }
                 });
             }
