@@ -1,4 +1,4 @@
-06/23/2021: IPED-3.18.7
+06/28/2021: IPED-3.18.7
 News:
 #49:  From a selected media file, go to related conversations / p2p histories (Luis Nassif)
 #562: 15x Faster PSD images rendering using a Java library to read them (Wladimir Leite)
@@ -6,6 +6,7 @@ News:
 #611: Makes processing robust against imported NSRL databases with product code inconsistencies (Luis Nassif & Wladimir Leite)
 #548: Optimize linked items searching when creating reports (Luis Nassif)
 #560: Add file signature for TS videos (Wladimir Leite)
+#547: Signature and classification for NSF Lotus Notes files (Luis Nassif)
 #604: Removes duplicate device information from UFDR reports with no source extraction id (Luis Nassif)
 #581: Meaningful error message with the --continue flag if the output folder is empty (Luis Nassif)
 #550: Improved message for Sleuthkit errors (Wladimir Leite)
