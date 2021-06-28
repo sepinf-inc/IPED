@@ -1,36 +1,35 @@
 package dpf.sp.gpinf.carver;
 
-import dpf.sp.gpinf.carver.api.CarvedItemListener;
-import dpf.sp.gpinf.carver.api.Carver;
-import dpf.sp.gpinf.carver.api.CarverConfiguration;
-import dpf.sp.gpinf.carver.api.CarverConfigurationException;
-import dpf.sp.gpinf.carver.api.CarverType;
-import dpf.sp.gpinf.carver.api.Hit;
-import dpf.sp.gpinf.carver.api.Signature;
-import dpf.sp.gpinf.carving.JSCarver;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
-import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
-import dpf.sp.gpinf.indexer.util.IOUtil;
-import gpinf.dev.data.Item;
-import iped3.IItem;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.TreeMap;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 import org.arabidopsis.ahocorasick.AhoCorasick;
 import org.arabidopsis.ahocorasick.SearchResult;
 import org.arabidopsis.ahocorasick.Searcher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Properties;
-import java.util.TreeMap;
+import dpf.sp.gpinf.carver.api.CarvedItemListener;
+import dpf.sp.gpinf.carver.api.Carver;
+import dpf.sp.gpinf.carver.api.CarverType;
+import dpf.sp.gpinf.carver.api.Hit;
+import dpf.sp.gpinf.carver.api.Signature;
+import dpf.sp.gpinf.carving.JSCarver;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.Item;
+import iped3.IItem;
+import iped3.util.MediaTypes;
+import macee.core.Configurable;
 
 /**
  * Classe responsável pelo Data Carving. Utiliza o algoritmo aho-corasick, o
@@ -41,7 +40,6 @@ import java.util.TreeMap;
  */
 public class CarverTask extends BaseCarveTask {
 
-    private static final long serialVersionUID = 1L;
     public static boolean enableCarving = false;
     public static boolean ignoreCorrupted = true;
 
@@ -49,21 +47,14 @@ public class CarverTask extends BaseCarveTask {
     private static Logger LOGGER = LoggerFactory.getLogger(CarverTask.class);
     private static int largestPatternLen = 100;
 
+    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
     private CarvedItemListener carvedItemListener = null;
-
-    private static MediaTypeRegistry registry;
-
     IItem evidence;
 
     long prevLen = 0;
     int len = 0, k = 0;
     byte[] buf = new byte[1024 * 1024];
     byte[] cBuf;
-
-    public CarverTask() {
-        if (registry == null)
-            registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-    }
 
     public static void setEnabled(boolean enabled) {
         enableCarving = enabled;
@@ -117,7 +108,7 @@ public class CarverTask extends BaseCarveTask {
                     // break;
                 }
 
-                type = registry.getSupertype(type);
+                type = MediaTypes.getParentType(type);
             }
 
             findSig(tis);
@@ -213,24 +204,26 @@ public class CarverTask extends BaseCarveTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new CarverTaskConfig());
+    }
 
-        AppCarverTaskConfig ctConfig = new AppCarverTaskConfig();
-        ConfigurationManager.getInstance().addObject(ctConfig);
-        ConfigurationManager.getInstance().loadConfigs();
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        enableCarving = ctConfig.getCarvingEnabled();
+        CarverTaskConfig ctConfig = configurationManager.findObject(CarverTaskConfig.class);
+        FileSystemConfig fsConfig = configurationManager.findObject(FileSystemConfig.class);
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
-        if (carverTypes == null && ctConfig.getCarvingEnabled() && !ipedConfig.isToAddUnallocated())
+        enableCarving = ctConfig.isEnabled();
+
+        if (carverTypes == null && enableCarving && !fsConfig.isToAddUnallocated())
             LOGGER.error("addUnallocated is disabled, so carving will NOT be done in unallocated space!"); //$NON-NLS-1$
 
         carvedItemListener = getCarvedItemListener();
 
         if (carverConfig == null) {
-            carverConfig = ctConfig.getCarverConfiguration();
-            carverConfig.configTask(confDir, carvedItemListener);
+            carverConfig = ctConfig.getConfiguration();
+            carverConfig.configListener(carvedItemListener);
             carverTypes = carverConfig.getCarverTypes();
             ignoreCorrupted = carverConfig.isToIgnoreCorrupted();
         }
@@ -242,7 +235,7 @@ public class CarverTask extends BaseCarveTask {
 
     }
 
-    public CarvedItemListener getCarvedItemListener() {
+    private CarvedItemListener getCarvedItemListener() {
         if (carvedItemListener == null) {
             carvedItemListener = new CarvedItemListener() {
                 public void processCarvedItem(IItem parentEvidence, IItem carvedEvidence, long off) {
@@ -253,14 +246,13 @@ public class CarverTask extends BaseCarveTask {
         return carvedItemListener;
     }
 
-    protected HashMap<CarverType, Carver> registeredCarvers = new HashMap<CarverType, Carver>();
-
-    public Carver getCarver(CarverType ct) {
+    private Carver getCarver(CarverType ct) {
         Carver carver = registeredCarvers.get(ct);
         try {
             if (carver == null) {
                 if (ct.getCarverClass().equals(JSCarver.class.getName())) {
-                    carver = carverConfig.createCarverFromJSName(ct.getCarverScript());
+                    File script = new File(new File(this.output, "conf"), ct.getCarverScript());
+                    carver = carverConfig.createCarverFromJSName(script);
                     carver.registerCarvedItemListener(getCarvedItemListener());
                 } else {
                     Class<?> classe = this.getClass().getClassLoader().loadClass(ct.getCarverClass());

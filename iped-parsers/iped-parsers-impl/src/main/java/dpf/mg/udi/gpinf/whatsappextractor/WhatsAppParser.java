@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.IItem;
@@ -144,10 +145,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private boolean extractMessages = true;
 
-    public static void setSupportedTypes(Set<MediaType> supportedTypes) {
-        SUPPORTED_TYPES = supportedTypes;
-    }
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         if (!sha256Checked.getAndSet(true)) {
@@ -174,6 +171,11 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
+
+        IItemBase item = context.get(IItemBase.class);
+        if (PhoneParsingConfig.isExternalPhoneParsersOnly() && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
+            return;
+        }
 
         String mimetype = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         if (mimetype == null) {

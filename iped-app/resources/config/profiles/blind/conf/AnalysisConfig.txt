@@ -1,0 +1,33 @@
+﻿########################################################################
+# Analysis Settings
+########################################################################
+
+# Copies LibreOffice.zip (135 MB) to the output folder, allowing the visualization of dozens of different formats.
+embedLibreOffice = true
+
+# Number of threads used to search the index. Can speed up searches on large indexes.
+# High values can degrade the search if the index is on a slow disk.
+searchThreads = 1
+
+# Número máximo de backups do estado da análise (marcadores, seleções, histórico de busca)
+# Os backups são salvos na pasta do caso em indexador/bkp
+maxBackups = 10
+
+# Intervalo (em segundos) entre a realização dos backups
+backupInterval = 3600
+
+# Automatically manage visible columns
+autoManageCols = true
+
+# Open all disk images on program start up. By default, open each image only when it is accessed. 
+preOpenImagesOnSleuth = false
+
+# If preOpenImages is enabled, this enables a disk image cache warm up.
+# It should improve opening of segmented E01 images stored on local area networks.
+openImagesCacheWarmUpEnabled = false
+
+# Maximum number of threads used for image cache warm up.
+openImagesCacheWarmUpThreads = 256
+
+# Double click behaviour. Possible values: never, ask_always, ask_if_exe, always
+openWithDoubleClick = ask_if_exe

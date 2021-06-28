@@ -46,7 +46,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.util.SpinnerDialog;
 import iped3.IIPEDSource;
@@ -407,7 +406,7 @@ public class MenuListener implements ActionListener {
             if (chatId != -1) {
                 String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 // TODO change viewer api to pass this
-                HtmlViewer.setPositionToScroll(position);
+                App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(position);
                 ItemId chatItemId = new ItemId(itemId.getSourceId(), chatId);
                 int luceneId = App.get().appCase.getLuceneId(chatItemId);
                 new FileProcessor(luceneId, false).execute();

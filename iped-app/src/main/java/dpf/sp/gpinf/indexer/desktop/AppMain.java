@@ -170,12 +170,11 @@ public class AppMain {
                     LOGGER.info(Versao.APP_NAME);
             }
 
-            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath(), true);
+            Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance()
-                        .findObjects(PluginConfig.class).iterator().next();
+                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
                 jars.add(Configuration.getInstance().tskJarFile);
 
