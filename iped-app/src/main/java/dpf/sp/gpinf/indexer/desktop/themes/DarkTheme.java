@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 
 import java.awt.Color;
 
+import dpf.sp.gpinf.indexer.desktop.Messages;
+
 public class DarkTheme extends Theme {
     public DarkTheme() {
         put("control", new Color(128, 128, 128));
@@ -33,6 +35,6 @@ public class DarkTheme extends Theme {
     
     @Override
     public String getName() {
-        return "Escuro";
+        return Messages.getString("Theme.Dark");
     }
 }

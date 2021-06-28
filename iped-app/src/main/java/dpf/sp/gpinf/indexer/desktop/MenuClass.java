@@ -200,7 +200,7 @@ public class MenuClass extends JPopupMenu {
         
         List<Theme> themes = ThemeManager.getInstance().getThemes();
         if (themes.size() > 1) {
-            submenu = new JMenu("Tema de Cores"); //TODO
+            submenu = new JMenu(Messages.getString("MenuClass.ColorTheme")); //$NON-NLS-1$
             this.add(submenu);
             for (Theme theme : themes) {
                 JRadioButtonMenuItem themeItem = new JRadioButtonMenuItem(theme.getName(), theme.equals(ThemeManager.getInstance().getCurrentTheme()));

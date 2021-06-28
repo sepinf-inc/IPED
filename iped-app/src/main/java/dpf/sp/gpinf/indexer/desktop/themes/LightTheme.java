@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 
 import java.awt.Color;
 
+import dpf.sp.gpinf.indexer.desktop.Messages;
+
 public class LightTheme extends Theme {
     public LightTheme() {
         put("nimbusOrange", new Color(47, 92, 180));
@@ -12,6 +14,6 @@ public class LightTheme extends Theme {
 
     @Override
     public String getName() {
-        return "Claro (padrão)";
+        return Messages.getString("Theme.Light");
     }
 }
