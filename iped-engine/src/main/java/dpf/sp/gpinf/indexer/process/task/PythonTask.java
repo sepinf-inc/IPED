@@ -10,12 +10,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.sun.imageio.plugins.common.ImageUtil;
+
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped3.ICaseData;
 import iped3.IItem;
 import jep.Jep;
@@ -191,8 +192,11 @@ public class PythonTask extends AbstractTask {
     @Override
     public List<Configurable<?>> getConfigurables() {
         try {
-            List<Configurable<?>> configs = (List<Configurable<?>>) getJep(false)
-                    .invoke(getInstanceMethod("getConfigurables"));
+            Jep j = getJep(false);
+            List<Configurable<?>> configs = null;
+            if (j != null) {
+                configs = (List<Configurable<?>>) j.invoke(getInstanceMethod("getConfigurables"));
+            }
             return configs != null ? configs : Collections.emptyList();
 
         } catch (JepException e) {

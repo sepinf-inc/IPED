@@ -33,9 +33,7 @@ import netscape.javascript.JSObject;
 public class HtmlViewer extends Viewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(HtmlViewer.class);
-    /**
-     *
-     */
+
     private static final long serialVersionUID = 1L;
     private JFXPanel jfxPanel;
     private static int MAX_SIZE = 10000000;
@@ -46,7 +44,8 @@ public class HtmlViewer extends Viewer {
             + Messages.getString("HtmlViewer.OpenExternally") //$NON-NLS-1$
             + "</a></body></html>"; //$NON-NLS-1$
 
-    private static String positionToScroll;
+    private String idToScroll;
+    private String nameToScroll;
 
     WebView htmlViewer;
     WebEngine webEngine;
@@ -58,8 +57,12 @@ public class HtmlViewer extends Viewer {
     protected Set<String> highlightTerms;
 
     // TODO change viewer api and move this to loadFile method
-    public static void setPositionToScroll(String position) {
-        positionToScroll = position;
+    public void setElementIDToScroll(String id) {
+        idToScroll = id;
+    }
+
+    public void setElementNameToScroll(String name) {
+        nameToScroll = name;
     }
 
     protected int getMaxHtmlSize() {
@@ -217,8 +220,8 @@ public class HtmlViewer extends Viewer {
                                 currTerm = queryTerms.length > 0 ? 0 : -1;
                                 scrollToNextHit(true);
                             }
-                            if (doc != null && positionToScroll != null) {
-                                scrollToPosition(positionToScroll);
+                            if (doc != null) {
+                                scrollToPosition();
 
                             }
                         }
@@ -236,12 +239,42 @@ public class HtmlViewer extends Viewer {
         }
     }
 
-    private void scrollToPosition(String position) {
+    protected void scrollToPosition() {
+        boolean done = false;
+        boolean exception = false;
         try {
-            webEngine.executeScript("document.getElementById(\"" + position + "\").scrollIntoView(false);"); //$NON-NLS-1$
-            positionToScroll = null;
+            if (idToScroll != null) {
+                done = (Boolean) webEngine.executeScript(""
+                        + "function find(){"
+                        + "  x = document.getElementById(\"" + idToScroll + "\");"
+                        + "  if(x != null){"
+                        + "    x.scrollIntoView(false);"
+                        + "    return true;"
+                        + "  }"
+                        + "  return false;"
+                        + "}"
+                        + "find();");
+
+            } else if (nameToScroll != null) {
+                done = (Boolean) webEngine.executeScript(""
+                        + "function find(){"
+                        + "  var x = document.getElementsByName(\"" + nameToScroll + "\");"
+                        + "  if(x != null && x.length > 0){"
+                        + "    x[0].scrollIntoView({block: \"center\", inline: \"nearest\"});"
+                        + "    return true;"
+                        + "  }"
+                        + "  return false;"
+                        + "}"
+                        + "find();");
+            }
+
         } catch (Exception e) {
-            // ignore
+            e.printStackTrace();
+            exception = true;
+        }
+        if(done || exception) {
+            idToScroll = null;
+            nameToScroll = null;
         }
     }
 

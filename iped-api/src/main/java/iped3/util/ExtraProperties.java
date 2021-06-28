@@ -13,6 +13,8 @@ public class ExtraProperties {
 
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
+    public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$
+
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
 
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
