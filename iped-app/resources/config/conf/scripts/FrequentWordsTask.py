@@ -40,10 +40,10 @@ class FrequentWordsTask:
 
         #Import stopwords from language settings in LocalConfig.txt 
         language = System.getProperty('iped-locale')
-        if language == 'en':
-           All_stopwords = stopwords.words('en')
-        else:
+        if language == 'pt-BR':
            All_stopwords = stopwords.words('portuguese')
+        else:
+           All_stopwords = stopwords.words('english')
         
         #Function to remove stopwords from text
         def remove_stopwords(words, stopwords):
