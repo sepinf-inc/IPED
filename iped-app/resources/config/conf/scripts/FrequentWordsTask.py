@@ -14,8 +14,11 @@ class FrequentWordsTask:
     
     def isEnabled(self):
         return True
+    
+    def getConfigurables(self):
+        return
         
-    def init(self, confProps, configFolder):
+    def init(self, configManager):
         return
     
     def finish(self):      
