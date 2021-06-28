@@ -30,7 +30,7 @@ Outros Documentos = application/vnd.ms-xpsdocument; application/vnd.visio; appli
 
 Emails = message/rfc822; message/x-emlx; application/vnd.ms-outlook; message/outlook-pst; application/x-ufed-html-mails; message/x-ufed-email
 
-Caixas de Emails = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail
+Caixas de Emails = application/vnd.ms-outlook-pst; application/outlook-dbx; application/mbox; application/x-incredimail; application/vnd.lotus-notes
 
 Atividades de Usuário = application/x-win10-timeline;
 

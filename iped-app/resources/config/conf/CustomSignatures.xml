@@ -439,6 +439,21 @@
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
     </mime-type>
+    
+    <mime-type type="application/vnd.lotus-notes">
+        <magic priority="60">
+            <match value="0x1A00" type="string" offset="0">
+                <match value="0x10000000" type="string" offset="6"/>
+                <match value="0x11000000" type="string" offset="6"/>
+                <match value="0x14000000" type="string" offset="6"/>
+                <match value="0x29000000" type="string" offset="6"/>
+                <match value="0x2B000000" type="string" offset="6"/>
+                <match value="0x30000000" type="string" offset="6"/>
+                <match value="0x33000000" type="string" offset="6"/>
+            </match>    
+        </magic>  
+        <glob pattern="*.nsf"/>      	
+    </mime-type>
 
 	<mime-type type="application/x-mssql">
         <magic priority="50">
