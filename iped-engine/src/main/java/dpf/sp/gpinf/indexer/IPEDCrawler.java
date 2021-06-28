@@ -6,14 +6,12 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.parser.mp4.MP4Parser;
 
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -45,14 +43,11 @@ public class IPEDCrawler {
                 MediaType.application("vnd.oasis.opendocument.flat.spreadsheet"),
                 MediaType.application("x-sas-data"),
                 MediaType.application("vnd.adobe.indesign-idml-package") };
-        for (MediaType mime : new MP4Parser().getSupportedTypes(null)) {
-            queryStr += "\"" + mime.toString() + "\" ";
-        }
-        queryStr += ")";
-        final String query = queryStr;
+
+        final String query = "contentType:\"application vnd.lotus-notes\"";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\mp4-crawling");
+        File exportFolder = new File("F:\\teste-files\\NSF-crawling");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
