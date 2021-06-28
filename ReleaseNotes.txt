@@ -1,7 +1,7 @@
 xx/xx/2021: IPED-4.0.0-alpha
 News:
 #361: Face recognition functionality (Rui Santana & Luis Nassif)
-#118: Refactor hash database importing and look up for different hashsets: NSRL, ProjectVic, LED, PhotoDNA, CSV (Wladimir Leite)
+#118: Centralized hash database, refactor importing and look up for different hashsets: NSRL, ProjectVic, LED, PhotoDNA, CSV (Wladimir Leite)
 #451: Unified Timeline Table View and Event Filtering (Luis Nassif)
 #515: Run OCR on HEIC, PSD, WEBP, WMF, EMF, SVG, JBIG2 and other non standard image types (Wladimir Leite & Luis Nassif)
 #619: Run OCR on partially corrupted images (Luis Nassif)
@@ -49,12 +49,15 @@ Fixes:
 #487: Fix debugging analysis UI from eclipse IDE (Luis Nassif)
 #471: Log Console Error (Wladimir Leite)
 
-06/23/2021: IPED-3.18.7
+06/28/2021: IPED-3.18.7
 News:
+#49:  From a selected media file, go to related conversations / p2p histories (Luis Nassif)
 #562: 15x Faster PSD images rendering using a Java library to read them (Wladimir Leite)
+#623: Change TelegramParser to handle just Android databases by default when processing UFDR (Luis Nassif)
 #611: Makes processing robust against imported NSRL databases with product code inconsistencies (Luis Nassif & Wladimir Leite)
 #548: Optimize linked items searching when creating reports (Luis Nassif)
 #560: Add file signature for TS videos (Wladimir Leite)
+#547: Signature and classification for NSF Lotus Notes files (Luis Nassif)
 #604: Removes duplicate device information from UFDR reports with no source extraction id (Luis Nassif)
 #581: Meaningful error message with the --continue flag if the output folder is empty (Luis Nassif)
 #550: Improved message for Sleuthkit errors (Wladimir Leite)
@@ -63,11 +66,13 @@ Fixes:
 #601: "NoSuchFieldError: annotation" in RTFParser2 can cause parsing error with PST/OST and enableExternalParsing = true (Luis Nassif)
 #603: NullPointerException when creating device info from UFDR with empty extraction name (Luis Nassif)
 #559: Automatic export files by keywords feature is ignoring just a few diacritics (Luis Nassif)
+#607: Some apps in tools folder depend on MS DLL not always present in processing machine (Luis Nassif)
 #592: Invalid video thumbs in reports when creating report from Linux or cmd line on Windows (Luis Nassif)
+#621: Warning on GUI and exit if user doesn't have JavaFX installed instead of displaying error null (Luis Nassif)
 #577: Exception in ImageSimilarity if thumbnail dimension exceeds standard dimensions (Wladimir Leite)
 #549: NullPointerException in VcardParser when parsing vcards pointing to external thumbnail (Luis Nassif)
 #620: Image thumbnail creation for non standard formats fails for about 1% of them (Wladimir Leite)
-#607: Some apps in tools folder depend on MS DLL not always present in processing machine (Luis Nassif)
+#624: Processing UFDR + HDD together can cause WhatsApp & Telegram DBs from HDD to be ignored depending on configs (Luis Nassif)
 #582: Files with 0 bytes not included in "Empty Files" category (Wladimir Leite)
 #571: Processing rarely aborting when some file with corrupted metadata is indexed (Luis Nassif)
 #576: Deadlock if (100k+numThreads) sqlites are found (Luis Nassif)
