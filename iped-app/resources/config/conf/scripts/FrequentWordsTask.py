@@ -11,6 +11,7 @@ class FrequentWordsTask:
     
     enabled = False
     configDir = None
+    stopWordsSet = None
     
     def isEnabled(self):
         return True
@@ -19,6 +20,12 @@ class FrequentWordsTask:
         return
         
     def init(self, configManager):
+        #Import stopwords from language settings in LocalConfig.txt 
+        language = System.getProperty('iped-locale')
+        if language == 'pt-BR':
+           self.stopWordsSet = set(stopwords.words('portuguese'))
+        else:
+           self.stopWordsSet = set(stopwords.words('english'))
         return
     
     def finish(self):      
@@ -37,31 +44,14 @@ class FrequentWordsTask:
         #Tokenization
         tokenizer = RegexpTokenizer(r'\w+')
         Text_separed_from_words = tokenizer.tokenize(text)   
-
-        #Import stopwords from language settings in LocalConfig.txt 
-        language = System.getProperty('iped-locale')
-        if language == 'pt-BR':
-           All_stopwords = stopwords.words('portuguese')
-        else:
-           All_stopwords = stopwords.words('english')
         
         #Function to remove stopwords from text
         def remove_stopwords(words, stopwords):
+           #Remove stopwords, small words and laughs as "kk"
            words_without_stopwords = []
            for item in words:
-              if item not in stopwords:
+              if item not in stopwords and len(item) >= 3 and 'kk' not in item:
                  words_without_stopwords.append(item)
-           #Remove words with less then 3 letters
-           for item in words_without_stopwords:
-              if len(item) < 3:
-                 words_without_stopwords.remove(item)
-           #Remove laughter as "kkk" 
-           for item in words_without_stopwords:
-              characters_word = item.split()
-              for i in characters_word:
-                contLetra = i.count('k')
-                if contLetra >= 2:
-                   words_without_stopwords.remove(item)                 
            return words_without_stopwords
         
         #Function to create Bag of Words
@@ -75,7 +65,7 @@ class FrequentWordsTask:
            return wordfreq
         
         #Removing imported stopwords from text
-        words_without_stopwords = remove_stopwords(Text_separed_from_words, All_stopwords)
+        words_without_stopwords = remove_stopwords(Text_separed_from_words, self.stopWordsSet)
         
         #Stemming function - Stemming is the process of reducing a word to its word stem that affixes to suffixes and prefixes or to the roots of words known as a lemma.
         def stemming(words):
