@@ -21,6 +21,7 @@ import time
 import sys
 from java.lang import System
 
+enableProp = 'enableYahooNSFWDetection'
 targetSize = (224, 224)
 videoFramesTime = 0
 arrayConvTime = 0
@@ -96,10 +97,14 @@ class NSFWNudityDetectTask:
         
     def processQueueEnd(self):
         return True
+        
+    def getConfigurables(self):
+        from dpf.sp.gpinf.indexer.config import EnableTaskProperty
+        return [EnableTaskProperty(enableProp)]
     
-    def init(self, confProps, configFolder):
+    def init(self, configuration):
         global enabled
-        enabled = confProps.getProperty('enableYahooNSFWDetection').lower() == 'true'
+        enabled = configuration.getEnableTaskProperty(enableProp)
         if enabled:
             loadModel()
         createSemaphore()

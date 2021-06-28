@@ -19,9 +19,8 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
-import java.io.File;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -29,10 +28,13 @@ import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.emule.KnownMetEntry;
 import gpinf.emule.KnownMetParser;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.
@@ -40,6 +42,8 @@ import iped3.IItem;
  * @author Wladimir Leite
  */
 public class KnownMetCarveTask extends BaseCarveTask {
+
+    private static final String ENABLE_PARAM = "enableKnownMetCarving";
 
     private static Logger logger = LoggerFactory.getLogger(KnownMetCarveTask.class);
 
@@ -91,23 +95,24 @@ public class KnownMetCarveTask extends BaseCarveTask {
         return taskEnabled;
     }
 
+    @Override
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
     /**
      * Inicializa tarefa, realizando controle de alocação de apenas uma thread
      * principal.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                // Verifica se tarefa está habilitada
-                String value = confParams.getProperty("enableKnownMetCarving"); //$NON-NLS-1$
-                if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
-                    taskEnabled = true;
+                taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                if (taskEnabled) {
                     logger.info("Task enabled."); //$NON-NLS-1$
                 } else {
                     logger.info("Task disabled."); //$NON-NLS-1$
-                    init.set(true);
-                    return;
                 }
                 init.set(true);
             }

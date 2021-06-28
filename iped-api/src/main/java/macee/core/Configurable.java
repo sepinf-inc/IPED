@@ -1,32 +1,26 @@
 package macee.core;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This interface is used to indicate a configurable object that holds
- * configuration for both the application and the user.
- * 
- * COMENTÁRIO (Werneck): era usado em App só pra separar a configuração global
- * da configuração de usuário. Não define carregamento ou salvamento de
- * configurações. Poderia ser usado nos módulos, sendo AppConfig uma
- * configuração global do aplicative e UserConfig, uma configuração própria do
- * módulo.
- * 
- * TO DO: mudar nomes dos métodos para atender o comentário acima.
+ * configuration for some module.
  *
  * @param <AppConfig>
  *            the type used for the application configuration
  * @param <UserConfig>
  *            the type used for the user configuration
  * @author Bruno W. P. Hoelz
+ * @author Luis Nassif
  */
-public interface Configurable<AppConfig, UserConfig> {
+public interface Configurable<T> extends Serializable {
 
-    /*
+    /**
      * Returns a filter to be used for resource lookup on the configuration
      * directory system
      * 
@@ -34,32 +28,40 @@ public interface Configurable<AppConfig, UserConfig> {
      */
     public DirectoryStream.Filter<Path> getResourceLookupFilter();
 
-    /*
-     * Returns a filter to be used for resource lookup on the configuration
-     * directory system
+    /**
+     * Process the configuration resources found after applying the lookup filter.
      * 
-     * @return the filter to be used
+     * @param resources
+     *            the filtered configuration resources.
      */
-    public void processConfigs(List<Path> resources) throws IOException;
+    default public void processConfigs(List<Path> resources) throws IOException {
+        for (Iterator<Path> iterator = resources.iterator(); iterator.hasNext();) {
+            Path path = iterator.next();
+            processConfig(path);
+        }
+    }
 
     /**
-     * Gets the application configuration object.
-     *
-     * @return the application configuration object.
+     * Process a configuration resource found after applying the lookup filter.
+     * 
+     * @param resource
+     *            a configuration resource.
      */
-    AppConfig getApplicationConfiguration();
-
-    void setApplicationConfiguration(AppConfig config);
-
-    Set<String> getApplicationPropertyNames();
+    public void processConfig(Path resource) throws IOException;
 
     /**
-     * Gets the user configuration object.
+     * Gets the configuration object.
      *
-     * @return the user configuration object.
+     * @return the configuration object.
      */
-    UserConfig getUserConfiguration();
+    T getConfiguration();
 
-    void setUserConfiguration(UserConfig config);
+    /**
+     * Sets the configuration object.
+     *
+     * @param config
+     *            the configuration object.
+     */
+    void setConfiguration(T config);
 
 }

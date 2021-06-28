@@ -19,7 +19,7 @@ import javax.swing.filechooser.FileFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.Item;
@@ -28,7 +28,7 @@ import iped3.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
-    private static final GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
 
     public static void clear() {
         clear(true);
@@ -83,7 +83,7 @@ public class SimilarImagesFilterActions {
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
-                        img = graphicsMagicConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
+                        img = externalImageConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
                     } catch (Exception e) {
                     } finally {
                         IOUtil.closeQuietly(is);
@@ -136,9 +136,8 @@ public class SimilarImagesFilterActions {
     }
 
     public static boolean isFeatureEnabled() {
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
-        String enabled = ipedConfig.getApplicationConfiguration().getProperty(ImageSimilarityTask.enableParam);
+        IPEDConfig ipedConfig = ConfigurationManager.get().findObject(IPEDConfig.class);
+        String enabled = ipedConfig.getConfiguration().getProperty(ImageSimilarityTask.enableParam);
         if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
             return true;
         }

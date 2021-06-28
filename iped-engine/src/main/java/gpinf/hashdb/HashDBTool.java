@@ -85,7 +85,7 @@ public class HashDBTool {
     private final Map<String, Integer> propertyNameToId = new HashMap<String, Integer>();
     private Map<Integer, String> nsrlProdCodeToName;
     private ProcessMode mode = ProcessMode.UNDEFINED;
-    private int totIns, totRem, totUpd, totSkip, totComb, totIgn;
+    private int totIns, totRem, totUpd, totSkip, totComb, totIgn, totNoProd;
     private boolean dbExists = true, skipOpt, inputFolderUsed;
 
     public static void main(String[] args) {
@@ -526,7 +526,7 @@ public class HashDBTool {
 
     private boolean readFile(File file) {
         FileType type = getFileType(file);
-        totIns = totRem = totUpd = totSkip = totComb = totIgn = 0;
+        totIns = totRem = totUpd = totSkip = totComb = totIgn = totNoProd = 0;
         System.out.println("\nReading " + (type == FileType.INPUT ? "" : type.toString() + " ") + "file " + file.getPath() + "...");
         if (type == FileType.NSRL_PROD) return readNSRLProd(file);
         if (type == FileType.PROJECT_VIC) return readProjectVIC(file);
@@ -643,7 +643,12 @@ public class HashDBTool {
                                 throw new RuntimeException("Record #" + cnt + ": invalid PhotoDna size content:\n" + record);
                             }
                         } else if (i == nsrlProductCodeCol) {
-                            val = nsrlProdCodeToName.get(Integer.parseInt(val));
+                            int prodCode = Integer.parseInt(val);
+                            val = nsrlProdCodeToName.get(prodCode);
+                            if (val == null) {
+                                val = "Product #" + prodCode; 
+                                totNoProd++;
+                            }
                         }
                         int idx = colIdx[i];
                         merge(properties, idx, val);
@@ -868,6 +873,7 @@ public class HashDBTool {
         if (totSkip > 0) System.out.println(totSkip + " hash" + (totSkip == 1 ? " was" : "es were") + " already in the database.");
         if (totIgn > 0) System.out.println(totIgn + " zero length hash" + (totIgn == 1 ? " was" : "es were") + " ignored.");
         if (totComb > 0) System.out.println(totComb + " record" + (totComb == 1 ? "" : "s") + " combined.");
+        if (totNoProd > 0) System.out.println("WARNING: " + totNoProd + " NSRL record" + (totNoProd == 1 ? "" : "s") + " with invalid product code.");
     }
 
     private static void updatePercentage(double pct) {

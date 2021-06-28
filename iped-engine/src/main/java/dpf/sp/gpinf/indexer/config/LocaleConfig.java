@@ -2,12 +2,19 @@ package dpf.sp.gpinf.indexer.config;
 
 import java.nio.file.DirectoryStream.Filter;
 import java.util.Locale;
+
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
+
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
 
 public class LocaleConfig extends AbstractPropertiesConfigurable {
 
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
     public static final String CONFIG_FILE = "LocalConfig.txt"; //$NON-NLS-1$
     private static final String HOST_COUNTRY = "hostCountryCode";
 
@@ -37,8 +44,8 @@ public class LocaleConfig extends AbstractPropertiesConfigurable {
         return filter;
     }
 
-    public void processConfig(Path resource) throws IOException {
-        super.processConfig(resource);
+    @Override
+    public void processProperties(UTF8Properties properties) {
 
         String value;
 
