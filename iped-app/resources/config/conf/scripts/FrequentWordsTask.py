@@ -8,14 +8,19 @@ from nltk.stem.wordnet import WordNetLemmatizer
 from nltk.tokenize import RegexpTokenizer
 import time
 import threading
+from org.apache.commons.lang3 import StringUtils
 
-timeLock = threading.Lock()
-statsLogged = False
 t0 = 0
 t1 = 0
 t2 = 0
 t3 = 0
 t4 = 0
+t0Lock = threading.Lock()
+t1Lock = threading.Lock()
+t2Lock = threading.Lock()
+t3Lock = threading.Lock()
+t4Lock = threading.Lock()
+statsLogged = False
 
 class FrequentWordsTask:
     
@@ -43,7 +48,7 @@ class FrequentWordsTask:
     def finish(self):
         global statsLogged
         if not statsLogged:
-           logger.info('remove numbers time: ' + str(t0))
+           logger.info('to lower case time: ' + str(t0))
            logger.info('tokenization time: ' + str(t1))
            logger.info('remove stopwords time: ' + str(t2))
            logger.info('bag of words time: ' + str(t3))
@@ -73,18 +78,16 @@ class FrequentWordsTask:
     def process(self, item):
         
         #Just Chats and Email
-        categories = item.getCategorySet().toString()
-        if not ("Chats" in categories or "Emails" in categories):
-           return 
+        #categories = item.getCategorySet().toString()
+        #if not ("Chats" in categories or "Emails" in categories):
+        #   return 
         
         ti = time.time()
         
-        text = str(item.getParsedTextCache()).lower()
-        #Remove numbers
-        text = re.sub(r'\d+','',text)
+        text = StringUtils.lowerCase(item.getParsedTextCache())
         
         tj = time.time()
-        with timeLock:
+        with t0Lock:
             global t0
             t0 += tj - ti
         ti = tj
@@ -94,7 +97,7 @@ class FrequentWordsTask:
         text_separed_from_words = tokenizer.tokenize(text)
         
         tj = time.time()
-        with timeLock:
+        with t1Lock:
             global t1
             t1 += tj - ti
         ti = tj
@@ -103,7 +106,7 @@ class FrequentWordsTask:
         words_without_stopwords = self.remove_stopwords(text_separed_from_words, self.stopWordsSet)
         
         tj = time.time()
-        with timeLock:
+        with t2Lock:
             global t2
             t2 += tj - ti
         ti = tj
@@ -112,7 +115,7 @@ class FrequentWordsTask:
         bag_of_words = self.create_bag_of_words(words_without_stopwords)
         
         tj = time.time()
-        with timeLock:
+        with t3Lock:
             global t3
             t3 += tj - ti
         ti = tj
@@ -121,7 +124,7 @@ class FrequentWordsTask:
         most_freq = heapq.nlargest(10, bag_of_words, key=bag_of_words.get)
         
         tj = time.time()
-        with timeLock:
+        with t4Lock:
             global t4
             t4 += tj - ti
         
