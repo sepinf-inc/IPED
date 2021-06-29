@@ -55,6 +55,7 @@ public class HtmlViewer extends Viewer {
 
     protected volatile File file;
     protected Set<String> highlightTerms;
+    private volatile boolean scrollToPositionDone = false;
 
     // TODO change viewer api and move this to loadFile method
     public void setElementIDToScroll(String id) {
@@ -115,7 +116,7 @@ public class HtmlViewer extends Viewer {
         Platform.runLater(new Runnable() {
             @Override
             public void run() {
-
+                scrollToPositionDone = false;
                 webEngine.load(null);
                 if (content != null) {
                     try {
@@ -218,11 +219,12 @@ public class HtmlViewer extends Viewer {
                                 LOGGER.info("Null DOM to highlight!"); //$NON-NLS-1$
                                 queryTerms = highlightTerms.toArray(new String[0]);
                                 currTerm = queryTerms.length > 0 ? 0 : -1;
-                                scrollToNextHit(true);
+                                if (shouldScrollToHit()) {
+                                    scrollToNextHit(true);
+                                }
                             }
                             if (doc != null) {
                                 scrollToPosition();
-
                             }
                         }
                     }
@@ -237,6 +239,10 @@ public class HtmlViewer extends Viewer {
             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
             window.setMember("app", fileHandler); //$NON-NLS-1$
         }
+    }
+
+    private boolean shouldScrollToHit() {
+        return idToScroll == null && nameToScroll == null && !scrollToPositionDone;
     }
 
     protected void scrollToPosition() {
@@ -266,6 +272,9 @@ public class HtmlViewer extends Viewer {
                         + "  return false;"
                         + "}"
                         + "find();");
+            }
+            if (done) {
+                scrollToPositionDone = true;
             }
 
         } catch (Exception e) {
@@ -353,8 +362,10 @@ public class HtmlViewer extends Viewer {
                             subnode.setNodeValue(value.substring(idx + term.length()));
                             if (totalHits == 1) {
                                 termNode.setAttribute("style", "color:white; background-color:blue"); //$NON-NLS-1$ //$NON-NLS-2$
-                                webEngine.executeScript("document.getElementById(\"indexerHit-" + ++currentHit //$NON-NLS-1$
-                                        + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                                if (shouldScrollToHit()) {
+                                    webEngine.executeScript("document.getElementById(\"indexerHit-" + ++currentHit //$NON-NLS-1$
+                                            + "\").scrollIntoView(false);"); //$NON-NLS-1$
+                                }
                             }
 
                         }
@@ -368,29 +379,6 @@ public class HtmlViewer extends Viewer {
         }
     }
 
-    /*
-     * public void loadFile2(File file){ if(file!= null &&
-     * (file.getName().endsWith(".html") || file.getName().endsWith(".htm")))
-     * loadFile2(getHtmlVersion(file)); else loadFile2(file); }
-     * 
-     * private File getHtmlVersion(File file){
-     * 
-     * try { Metadata metadata = new Metadata();
-     * //metadata.set(Metadata.CONTENT_TYPE, contentType); TikaInputStream tis =
-     * TikaInputStream.get(file); ParseContext context = new ParseContext();
-     * //context.set(IndexerContext.class, new
-     * IndexerContext(file.getAbsolutePath(), null)); File outFile =
-     * File.createTempFile("indexador", ".html"); outFile.deleteOnExit();
-     * OutputStream outStream = new BufferedOutputStream(new
-     * FileOutputStream(outFile)); ToHTMLContentHandler handler = new
-     * ToHTMLContentHandler(outStream, "windows-1252");
-     * ((Parser)App.get().autoParser).parse(tis, handler, metadata, context);
-     * tis.close(); return outFile;
-     * 
-     * } catch (Exception e) { e.printStackTrace(); } return null;
-     * 
-     * }
-     */
     @Override
     public void init() {
 
@@ -416,9 +404,11 @@ public class HtmlViewer extends Viewer {
                 if (forward) {
                     if (doc != null) {
                         if (currentHit < totalHits - 1) {
-                            Element termNode = (Element) hits.get(currentHit);
-                            termNode.setAttribute("style", "color:black; background-color:yellow"); //$NON-NLS-1$ //$NON-NLS-2$
-                            termNode = (Element) hits.get(++currentHit);
+                            if (currentHit >= 0) {
+                                Element termNode = (Element) hits.get(currentHit);
+                                termNode.setAttribute("style", "color:black; background-color:yellow"); //$NON-NLS-1$ //$NON-NLS-2$
+                            }
+                            Element termNode = (Element) hits.get(++currentHit);
                             termNode.setAttribute("style", "color:white; background-color:blue"); //$NON-NLS-1$ //$NON-NLS-2$
                             webEngine.executeScript("document.getElementById(\"indexerHit-" + (currentHit) //$NON-NLS-1$
                                     + "\").scrollIntoView(false);"); //$NON-NLS-1$
