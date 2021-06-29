@@ -20,13 +20,15 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     } 
     
+
+//  Using external program:
+//  private String TOOL_PATH = "C:\\Users\\guilh\\Downloads\\libpff-main\\libesedb-main\\vs2019\\Release\\Win32\\"; //$NON-NLS-1$
+    
+    
     @Test
     public void testEdgeBookmarkParser() throws IOException, SAXException, TikaException{
 
-        //This parser uses edbparser. Edbparser uses external software. 
-        //I'll add this and other softwares like regripper later.
-        //For now, i'll be testing parsers that need external softwares locally.
-        //Need smaller webcache.dat
+        
         EdgeWebCacheParser parser = new EdgeWebCacheParser();
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE,
@@ -38,13 +40,16 @@ public class EdgeWebCacheParserTest extends AbstractPkgTest{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.setExtractEntries(true);
-//        parser.parse(stream, handler, metadata, edgeContext);
+        try {
+        parser.parse(stream, handler, metadata, edgeContext);
         
         assertEquals(0, edgetracker.bookmarktitle.size());
         assertEquals(0, edgetracker.bookmarkurl.size());
         assertEquals(0, edgetracker.bookmarkcreated.size());
         assertEquals(0, edgetracker.bookmarkmodified.size());
-        
+        } catch (Exception e) {
+            System.out.println(e);
+        }
 
         
     }
