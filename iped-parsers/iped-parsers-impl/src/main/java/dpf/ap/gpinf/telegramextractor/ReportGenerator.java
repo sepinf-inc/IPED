@@ -175,23 +175,19 @@ public class ReportGenerator {
 
             TagHtml img = getThumbTag(message, "videoImg iped-show");
 
+            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
+                    message.getMediaExtension());
+            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
+                    .getSourceFileIfExists(message.getMediaFile());
+
             img.setAtribute("title", "Video");
+            img.setAtribute("data-src1", reportSource);
+            img.setAtribute("data-src2", originalSource);
+
             link.getInner().add(img);
 
             div.getInner().add(link);
 
-            TagHtml video = new TagHtml("video");
-            video.setAtribute("class", "thumb iped-hide");
-            video.setAtribute("controls", null);
-            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
-                    message.getMediaExtension());
-            video.getInner().add("<source src=\"" + reportSource + "\"/>");
-            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
-                    .getSourceFileIfExists(message.getMediaFile());
-            if (originalSource != null) {
-                video.getInner().add("<source src=\"" + originalSource + "\"/>");
-            }
-            div.getInner().add(video);
 
             out.println(div.toString());
             out.println("<br/>");
@@ -226,17 +222,21 @@ public class ReportGenerator {
             link.getInner().add(img);
             div.getInner().add(link);
 
-            TagHtml audio = new TagHtml("audio");
-            audio.setAtribute("class", "iped-hide");
-            audio.setAtribute("controls", null);
             String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
                     message.getMediaExtension());
-            audio.getInner().add("<source src=\"" + reportSource + "\"/>");
             String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
                     .getSourceFileIfExists(message.getMediaFile());
-            if (originalSource != null) {
-                audio.getInner().add("<source src=\"" + originalSource + "\"/>");
+
+            TagHtml audio = new TagHtml("div");
+            audio.setAtribute("class", "audioImg iped-audio");
+            audio.setAtribute("title", "Audio");
+            if (reportSource != null) {
+                audio.setAtribute("data-src1", reportSource);
             }
+            if (originalSource != null) {
+                audio.setAtribute("data-src2", originalSource);
+            }
+
             div.getInner().add(audio);
             out.println(div.toString());
 
