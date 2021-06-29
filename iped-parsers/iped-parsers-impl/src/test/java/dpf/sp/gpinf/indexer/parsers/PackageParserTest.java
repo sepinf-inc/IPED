@@ -51,7 +51,6 @@ public class PackageParserTest extends AbstractPkgTest{
         ForkParser fp = new ForkParser(loader);
         ForkParser2 fp2 = new ForkParser2();
         ParseContextProxy pcp = new ParseContextProxy();
-        System.out.println(eparser.toString() + edep + eder + eppf + fp + fp2 + pcp);
         fp.close();
         parser.parse(stream, handler, metadata, recursingContext);
         eparser.parseEmbedded(stream, handler, metadata, false);
