@@ -16,7 +16,6 @@ t1 = 0
 t2 = 0
 t3 = 0
 t4 = 0
-t5 = 0
 
 class FrequentWordsTask:
     
@@ -47,9 +46,8 @@ class FrequentWordsTask:
            logger.info('remove numbers time: ' + str(t0))
            logger.info('tokenization time: ' + str(t1))
            logger.info('remove stopwords time: ' + str(t2))
-           logger.info('stemming time: ' + str(t3))
-           logger.info('bag of words time: ' + str(t4))
-           logger.info('select top words time: ' + str(t5))
+           logger.info('bag of words time: ' + str(t3))
+           logger.info('select top words time: ' + str(t4))
            statsLogged = True
         return
         
@@ -71,12 +69,6 @@ class FrequentWordsTask:
           else:
              wordfreq[item] += 1     
        return wordfreq
-       
-    #Stemming function - Stemming is the process of reducing a word to its word stem that affixes to suffixes and prefixes or to the roots of words known as a lemma.
-    def stem(self, words):
-        for item in words:
-           item = self.stemmer.stem(item)
-        return words
     
     def process(self, item):
         
@@ -89,21 +81,23 @@ class FrequentWordsTask:
         
         text = str(item.getParsedTextCache()).lower()
         #Remove numbers
-        #text = re.sub(r'\d+','',text)
+        text = re.sub(r'\d+','',text)
         
         tj = time.time()
         with timeLock:
             global t0
             t0 += tj - ti
+        ti = tj
         
         #Tokenization
         tokenizer = RegexpTokenizer(r'\w+')
         text_separed_from_words = tokenizer.tokenize(text)
         
-        ti = time.time()
+        tj = time.time()
         with timeLock:
             global t1
-            t1 += ti - tj
+            t1 += tj - ti
+        ti = tj
         
         #Removing imported stopwords from text
         words_without_stopwords = self.remove_stopwords(text_separed_from_words, self.stopWordsSet)
@@ -112,30 +106,24 @@ class FrequentWordsTask:
         with timeLock:
             global t2
             t2 += tj - ti
-        
-        #Stemming words in text
-        words_without_stopwords = self.stem(words_without_stopwords)
-        
-        ti = time.time()
-        with timeLock:
-            global t3
-            t3 += ti - tj
+        ti = tj
         
         #Creating Bag of Words from stemming words
         bag_of_words = self.create_bag_of_words(words_without_stopwords)
         
         tj = time.time()
         with timeLock:
-            global t4
-            t4 += tj - ti
+            global t3
+            t3 += tj - ti
+        ti = tj
         
         #Selection of the top 10 words by frequency
         most_freq = heapq.nlargest(10, bag_of_words, key=bag_of_words.get)
         
-        ti = time.time()
+        tj = time.time()
         with timeLock:
-            global t5
-            t5 += ti - tj
+            global t4
+            t4 += tj - ti
         
         #Setting most frequency words in Extra Attributes in FrequentWords
         item.setExtraAttribute('FrequentWords', most_freq) 
