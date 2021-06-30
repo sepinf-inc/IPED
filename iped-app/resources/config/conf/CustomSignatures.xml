@@ -632,16 +632,12 @@
     </mime-type>
     
     <mime-type type="application/x-emule-searches">
-        <sub-class-of type="application/x-p2p"/>
+        <sub-class-of type="text/plain"/>
         <glob pattern="AC_SearchStrings.dat"/>
-    </mime-type>
-    
-    <mime-type type="application/x-emule-preferences-dat">
-        <sub-class-of type="application/x-p2p"/>
-    </mime-type>
+    </mime-type>  
 	
      <mime-type type="application/x-emule-preferences-ini">
-        <sub-class-of type="application/x-p2p"/>
+        <sub-class-of type="text/plain"/>
     </mime-type>
     
     <mime-type type="application/x-preview-with-links">
