@@ -132,6 +132,7 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
         if (value != null) {
             mplayerWinPath = value.trim();
         }
+
     }
 
     public String getMplayerWinPath() {

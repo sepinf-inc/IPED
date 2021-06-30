@@ -175,7 +175,7 @@ public class AppMain {
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
-                jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
+                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
                 jars.add(Configuration.getInstance().tskJarFile);
 
                 System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,

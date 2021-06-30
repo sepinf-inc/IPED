@@ -26,7 +26,8 @@
         <lib.dir>${release.dir}/lib</lib.dir>
         <tools.dir>${release.dir}/tools</tools.dir>
         <conf.dir>${release.dir}/conf</conf.dir>
-        <optional.dir>${release.dir}/../optional_jars</optional.dir>
+        <plugin.dir>${release.dir}/../plugins</plugin.dir>
+        <plugin.rsc>${basedir}/resources/plugins</plugin.rsc>
         
         <!--dependencies-->
         <tika.version>1.26</tika.version>

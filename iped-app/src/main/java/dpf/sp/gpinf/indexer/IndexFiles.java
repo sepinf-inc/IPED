@@ -263,7 +263,7 @@ public class IndexFiles {
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
-                jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
+                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
                 jars.add(Configuration.getInstance().tskJarFile);
 
                 // currently with --nogui, user can not open analysis app, so no need to load

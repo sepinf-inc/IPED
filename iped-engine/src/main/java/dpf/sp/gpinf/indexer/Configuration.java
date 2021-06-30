@@ -61,7 +61,6 @@ public class Configuration {
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    private File optionalJarDir;
     public File tskJarFile;
     public String loaddbPathWin;
 
@@ -76,14 +75,6 @@ public class Configuration {
     }
 
     private Configuration() {
-    }
-
-    public String getPluginDir() {
-        try {
-            return optionalJarDir.getCanonicalPath();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     private String getAppRoot(String configPath) {
@@ -122,11 +113,6 @@ public class Configuration {
 
         properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
-
-        String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
-        if (optional_jars != null) {
-            optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-        }
     }
 
     public void loadLibsAndToolPaths() throws IOException {
@@ -174,12 +160,14 @@ public class Configuration {
         configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
         configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
         configDirectory.addPath(Paths.get(appRoot + "/" + CONF_DIR));
-        addPluginJarsToConfigurationLookup(configDirectory);
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-
         configManager.addObject(new LocaleConfig());
-        configManager.addObject(new PluginConfig());
+
+        PluginConfig pluginConfig = new PluginConfig();
+        configManager.addObject(pluginConfig);
+        configManager.loadConfig(pluginConfig);
+        addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
         loadLibsAndToolPaths();
 
@@ -212,23 +200,19 @@ public class Configuration {
     }
 
     // add plugin jars to the configuration resource look up engine
-    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory) {
-        if (optionalJarDir != null) {
-            File[] jars = optionalJarDir.listFiles();
-            if (jars != null) {
-                for (File jar : jars) {
-                    if (jar.getName().endsWith(".jar")) {
-                        try {
-                            configDirectory.addZip(jar.toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if (jar.isDirectory()) {
-                        configDirectory.addPath(jar.toPath());
-                    }
+    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory, PluginConfig pluginConfig) {
+        File[] jars = pluginConfig.getPluginJars();
+        for (File jar : jars) {
+            if (jar.getName().endsWith(".jar")) {
+                try {
+                    configDirectory.addZip(jar.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
+            }
+
+            if (jar.isDirectory()) {
+                configDirectory.addPath(jar.toPath());
             }
         }
     }
