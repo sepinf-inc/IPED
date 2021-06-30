@@ -16,7 +16,7 @@ import org.xml.sax.SAXException;
 
 import dpf.inc.sepinf.UsnJrnl.Util;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import iped3.io.IItemBase;
+
 public class PreferencesDatParser extends AbstractParser {
 
     public static final String EMULE_PREFERENCES_MIME_TYPE = "application/x-emule-preferences-dat"; //$NON-NLS-1$
@@ -34,53 +34,53 @@ public class PreferencesDatParser extends AbstractParser {
     }
 
     @Override
-    public void parse(InputStream is, ContentHandler handler, Metadata metadata, ParseContext context)
+    public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
         // TODO Auto-generated method stub
-        IItemBase item = context.get(IItemBase.class);
-        try (iped3.io.SeekableInputStream stream = item.getStream()) {
-            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-            xhtml.startDocument();
-            int version = -1;
-            byte b[] = new byte[16];
-            if (stream.size() > 16) {
-                version = stream.read();
-                for (int i = 0; i < b.length;) {
-                    i += stream.read(b, i, b.length - i);
-                }
 
-                xhtml.startElement("table", "border", "1");
-                xhtml.startElement("tr");
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        xhtml.startDocument();
+        int version = -1;
+        byte b[] = new byte[16];
 
-                xhtml.startElement("td");
-                xhtml.characters(Messages.getString("PreferencesDat.Version"));
-                xhtml.endElement("td");
-                xhtml.startElement("td");
-                xhtml.characters(Integer.toString(version));
-                xhtml.endElement("td");
-
-                xhtml.endElement("tr");
-
-                xhtml.startElement("tr");
-
-                xhtml.startElement("td");
-                xhtml.characters(Messages.getString("PreferencesDat.UserHash"));
-                xhtml.endElement("td");
-                xhtml.startElement("td");
-
-                xhtml.characters(Util.byteArrayToHex(b));
-
-                xhtml.endElement("td");
-
-                xhtml.endElement("tr");
-
-                xhtml.endElement("table");
+        version = stream.read();
+        for (int i = 0; i < b.length;) {
+            int readbytes = stream.read(b, i, b.length - i);
+            if (readbytes > 0) {
+                i += stream.read(b, i, b.length - i);
             } else {
-                xhtml.characters("Invalid file");
+                throw new TikaException("Invalid file");
             }
-
-            xhtml.endDocument();
         }
+
+        xhtml.startElement("table", "border", "1");
+        xhtml.startElement("tr");
+
+        xhtml.startElement("td");
+        xhtml.characters(Messages.getString("PreferencesDat.Version"));
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+        xhtml.characters(Integer.toString(version));
+        xhtml.endElement("td");
+
+        xhtml.endElement("tr");
+
+        xhtml.startElement("tr");
+
+        xhtml.startElement("td");
+        xhtml.characters(Messages.getString("PreferencesDat.UserHash"));
+        xhtml.endElement("td");
+        xhtml.startElement("td");
+
+        xhtml.characters(Util.byteArrayToHex(b));
+
+        xhtml.endElement("td");
+
+        xhtml.endElement("tr");
+
+        xhtml.endElement("table");
+
+        xhtml.endDocument();
 
     }
 
