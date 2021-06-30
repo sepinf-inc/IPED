@@ -17,7 +17,6 @@ import javax.swing.SortOrder;
 import javax.swing.filechooser.FileFilter;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -136,11 +135,6 @@ public class SimilarImagesFilterActions {
     }
 
     public static boolean isFeatureEnabled() {
-        IPEDConfig ipedConfig = ConfigurationManager.get().findObject(IPEDConfig.class);
-        String enabled = ipedConfig.getConfiguration().getProperty(ImageSimilarityTask.enableParam);
-        if (enabled != null && enabled.trim().equalsIgnoreCase(Boolean.TRUE.toString())) {
-            return true;
-        }
-        return false;
+        return ConfigurationManager.get().getEnableTaskProperty(ImageSimilarityTask.enableParam);
     }
 }

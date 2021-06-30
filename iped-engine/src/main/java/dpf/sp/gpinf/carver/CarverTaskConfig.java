@@ -4,8 +4,8 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AbstractTaskConfig;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 
 public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration> {
 
@@ -26,7 +26,7 @@ public class CarverTaskConfig extends AbstractTaskConfig<XMLCarverConfiguration>
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(IPEDConfig.CONFIG_FILE) || entry.endsWith(getTaskConfigFileName())
+                return entry.endsWith(Configuration.CONFIG_FILE) || entry.endsWith(getTaskConfigFileName())
                         || (entry.getFileName() != null && entry.getFileName().startsWith(CARVER_CONFIG_PREFIX)
                                 && entry.getFileName().startsWith(CARVER_CONFIG_SUFFIX));
             }

@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 import java.nio.file.Path;
@@ -27,7 +28,7 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(IPEDConfig.CONFIG_FILE);
+                return entry.endsWith(Configuration.CONFIG_FILE);
             }
         };
     }
