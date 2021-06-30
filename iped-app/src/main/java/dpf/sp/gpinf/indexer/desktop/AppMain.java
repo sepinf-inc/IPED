@@ -176,7 +176,7 @@ public class AppMain {
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
-                jars.add(Configuration.getInstance().tskJarFile);
+                jars.add(pluginConfig.getTskJarFile());
 
                 System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                         new File(libDir, "nativeview").getAbsolutePath());

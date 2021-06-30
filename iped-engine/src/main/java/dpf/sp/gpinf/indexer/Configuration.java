@@ -39,7 +39,6 @@ import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.configuration.IConfigurationDirectory;
@@ -61,7 +60,6 @@ public class Configuration {
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    public File tskJarFile;
     public String loaddbPathWin;
 
     public static Configuration getInstance() {
@@ -115,7 +113,7 @@ public class Configuration {
         properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
     }
 
-    public void loadLibsAndToolPaths() throws IOException {
+    public void loadNativeLibs() throws IOException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
             String arch = "x86"; //$NON-NLS-1$
@@ -132,16 +130,6 @@ public class Configuration {
                 System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-        } else {
-            String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
-            if (tskJarPath != null && !tskJarPath.isEmpty())
-                tskJarPath = tskJarPath.trim();
-            else
-                throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
-
-            tskJarFile = new File(tskJarPath);
-            if (!tskJarFile.exists())
-                throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
 
@@ -169,7 +157,7 @@ public class Configuration {
         configManager.loadConfig(pluginConfig);
         addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
-        loadLibsAndToolPaths();
+        loadNativeLibs();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
                 .equals(CustomURLClassLoader.class.getName())) {

@@ -264,7 +264,7 @@ public class IndexFiles {
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
-                jars.add(Configuration.getInstance().tskJarFile);
+                jars.add(pluginConfig.getTskJarFile());
 
                 // currently with --nogui, user can not open analysis app, so no need to load
                 // libreoffice jars
