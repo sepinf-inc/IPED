@@ -47,7 +47,7 @@ public class PreferencesDatParser extends AbstractParser {
         for (int i = 0; i < b.length;) {
             int readbytes = stream.read(b, i, b.length - i);
             if (readbytes > 0) {
-                i += stream.read(b, i, b.length - i);
+                i += readbytes;
             } else {
                 throw new TikaException("Invalid file");
             }
