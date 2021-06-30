@@ -14,7 +14,7 @@ public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledI
      * 
      */
     private static final long serialVersionUID = 1L;
-    protected EnableTaskProperty enabledProp;
+    protected EnableTaskProperty enabledProp = new EnableTaskProperty(getTaskEnableProperty());
 
     public abstract String getTaskEnableProperty();
 
@@ -35,7 +35,6 @@ public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledI
     @Override
     public void processConfig(Path resource) throws IOException {
         if (Configuration.CONFIG_FILE.equals(resource.getFileName().toString())) {
-            enabledProp = new EnableTaskProperty(getTaskEnableProperty());
             enabledProp.processConfig(resource);
         } else {
             processTaskConfig(resource);

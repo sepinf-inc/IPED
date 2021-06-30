@@ -52,6 +52,7 @@ public class Configuration {
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
+    private static final String PROFILE_DIR = "profiles"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -77,7 +78,7 @@ public class Configuration {
 
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
-        if (appRoot.contains("profiles")) //$NON-NLS-1$
+        if (appRoot.contains(PROFILE_DIR))
             appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
@@ -109,8 +110,8 @@ public class Configuration {
         System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
-        properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
-        properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
+        properties.load(new File(appRoot, LOCAL_CONFIG));
+        properties.load(new File(configPath, CONFIG_FILE));
     }
 
     public void loadNativeLibs() throws IOException {
@@ -137,6 +138,11 @@ public class Configuration {
         loadConfigurables(configPathStr, false);
     }
 
+    private void addProfileToConfigDirectory(ConfigurationDirectory configDirectory, File profile) {
+        configDirectory.addPath(new File(profile, CONFIG_FILE).toPath());
+        configDirectory.addPath(new File(profile, CONF_DIR).toPath());
+    }
+
     public void loadConfigurables(String configPathStr, boolean loadAll) throws IOException {
 
         if (loaded.getAndSet(true))
@@ -144,10 +150,15 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectory(Paths.get(configPath + File.separator + CONF_DIR));
-        configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
-        configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
-        configDirectory.addPath(Paths.get(appRoot + "/" + CONF_DIR));
+        configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
+        configDirectory.addPath(Paths.get(appRoot, CONF_DIR));
+
+        File defaultProfile = Paths.get(appRoot, PROFILE_DIR, "default").toFile(); //$NON-NLS-1$
+        File currentProfile = new File(configPathStr);
+        addProfileToConfigDirectory(configDirectory, defaultProfile);
+        if (!defaultProfile.equals(currentProfile)) {
+            addProfileToConfigDirectory(configDirectory, currentProfile);
+        }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
         configManager.addObject(new LocaleConfig());

@@ -3,12 +3,15 @@ package dpf.sp.gpinf.indexer.config;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Path;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -38,7 +41,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
     private List<String> xmls = new ArrayList<>();
 
     public List<AbstractTask> getNewTaskInstances() {
-        List<AbstractTask> tasks = new ArrayList<>();
+        Map<String, AbstractTask> tasks = new LinkedHashMap<>();
         for (String xml : xmls) {
             try {
                 loadTasks(xml, tasks);
@@ -47,7 +50,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
                 throw new RuntimeException(e);
             }
         }
-        return tasks;
+        return tasks.values().stream().collect(Collectors.toList());
     }
 
     @Override
@@ -66,7 +69,7 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
         this.xmls.add(new String(bytes, StandardCharsets.UTF_8));
     }
 
-    private List<AbstractTask> loadTasks(String xml, List<AbstractTask> tasks) throws InstantiationException,
+    private void loadTasks(String xml, Map<String, AbstractTask> tasks) throws InstantiationException,
             IllegalAccessException, IOException, ClassNotFoundException, ParserConfigurationException, SAXException {
 
         DocumentBuilder dombuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
@@ -77,17 +80,15 @@ public class TaskInstallerConfig implements Configurable<List<String>> {
             Node attr = node.getAttributes().getNamedItem("class"); //$NON-NLS-1$
             if (attr != null) {
                 String className = attr.getNodeValue();
-                tasks.add((AbstractTask) Class.forName(className).newInstance());
+                tasks.putIfAbsent(className, (AbstractTask) Class.forName(className).newInstance());
             }
             attr = node.getAttributes().getNamedItem("script"); //$NON-NLS-1$
             if (attr != null) {
                 String scriptName = attr.getNodeValue();
                 File scriptDir = new File(Configuration.getInstance().appRoot, SCRIPT_BASE);
-                tasks.add(getScriptTask(scriptDir, scriptName));
+                tasks.putIfAbsent(scriptName, getScriptTask(scriptDir, scriptName));
             }
         }
-
-        return tasks;
     }
 
     private AbstractTask getScriptTask(File scriptDir, String name) {

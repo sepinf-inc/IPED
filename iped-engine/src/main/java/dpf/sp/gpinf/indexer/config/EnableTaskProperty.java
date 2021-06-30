@@ -17,7 +17,7 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
      */
     private static final long serialVersionUID = 1L;
     private String propertyName;
-    private boolean value = true;
+    private boolean value = false;
 
     public EnableTaskProperty(String propertyName) {
         this.propertyName = propertyName;
@@ -35,7 +35,8 @@ public class EnableTaskProperty extends AbstractPropertiesConfigurable implement
 
     @Override
     public void processProperties(UTF8Properties properties) {
-        if (propertyName == null) {
+        if (propertyName == null || propertyName.isEmpty()) {
+            value = true;
             return;
         }
         String val = properties.getProperty(propertyName);
