@@ -39,7 +39,6 @@ import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
@@ -147,10 +146,6 @@ public class Configuration {
                 Util.loadNatLibs(nativelibs);
                 System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             }
-
-            String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
-            if (mplayerPath != null)
-                VideoThumbTask.mplayerWin = mplayerPath.trim();
 
         } else {
             String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$

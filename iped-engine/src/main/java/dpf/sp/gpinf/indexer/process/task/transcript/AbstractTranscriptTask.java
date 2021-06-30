@@ -22,8 +22,8 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.AudioTranscriptConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
@@ -189,7 +189,9 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         ProcessBuilder pb = new ProcessBuilder();
         String[] cmd = transcriptConfig.getConvertCmd().split(" ");
         if (SystemUtils.IS_OS_WINDOWS) {
-            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + VideoThumbTask.mplayerWin);
+            LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+            String mplayerWin = localConfig.getMplayerWinPath();
+            cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
             if (SystemUtils.IS_OS_WINDOWS) {
