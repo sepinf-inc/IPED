@@ -29,8 +29,14 @@ public class SafariPlistParserTest extends AbstractPkgTest{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.setExtractEntries(true);
-//        parser.parse(stream, handler, metadata, safariContext);
-        
+        try {
+        parser.parse(stream, handler, metadata, safariContext);
+        String hts = handler.toString();
+        String mts = metadata.toString();
+        System.out.println(hts + mts);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
         
     }
 

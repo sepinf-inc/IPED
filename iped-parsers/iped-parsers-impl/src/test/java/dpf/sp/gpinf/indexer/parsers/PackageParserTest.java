@@ -55,8 +55,7 @@ public class PackageParserTest extends AbstractPkgTest{
         parser.parse(stream, handler, metadata, recursingContext);
         eparser.parseEmbedded(stream, handler, metadata, false);
         edep.parseEmbedded(stream, handler, metadata, false);
-//        fp.parse(stream, handler, metadata, pcp);
-//        fp2.parse(stream, handler, metadata, pcp);
+        System.out.println(fp.toString() + fp2.toString() + pcp.toString() + eder.toString() + eppf.toString());
         String content = handler.toString();
         
         assertTrue(content.contains("mockdoc1.docx\n"

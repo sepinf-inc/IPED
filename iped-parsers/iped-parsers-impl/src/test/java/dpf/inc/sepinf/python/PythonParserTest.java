@@ -6,15 +6,12 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
 import junit.framework.TestCase;
 
 public class PythonParserTest extends TestCase{
@@ -33,10 +30,14 @@ public class PythonParserTest extends TestCase{
         InputStream stream = getStream("test-files/test_setup.py");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-//        parser.parse(stream, handler, metadata, context);
+        try {
+        parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
         String mts = metadata.toString();
         System.out.println(hts + "\n" + mts);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
            
     }
 

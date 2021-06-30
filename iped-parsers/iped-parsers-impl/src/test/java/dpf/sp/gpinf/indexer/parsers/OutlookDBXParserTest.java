@@ -29,11 +29,16 @@ public class OutlookDBXParserTest  extends TestCase{
         InputStream stream = getStream("test-files/test_entryBox.dbx");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-//        parser.parse(stream, handler, metadata, context);
+        
+        try {
+        parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString(); 
         String mts = metadata.toString();
         System.out.println(hts + mts);
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
     
 }
