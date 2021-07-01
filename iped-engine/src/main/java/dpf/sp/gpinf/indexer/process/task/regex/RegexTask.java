@@ -41,8 +41,6 @@ public class RegexTask extends AbstractTask {
 
     private static Regex regexFull;
 
-    private boolean enabled = true;
-
     private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
@@ -115,7 +113,7 @@ public class RegexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return regexConfig.isEnabled();
     }
 
     public List<Configurable<?>> getConfigurables() {
@@ -171,7 +169,7 @@ public class RegexTask extends AbstractTask {
 
         Item evidence = (Item) item;
 
-        if (!enabled || evidence.getTextCache() == null || !evidence.isToAddToCase())
+        if (evidence.getTextCache() == null || !evidence.isToAddToCase())
             return;
 
         try (Reader reader = evidence.getTextReader()) {
