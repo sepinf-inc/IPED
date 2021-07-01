@@ -29,9 +29,7 @@ public class PreferencesDatParserTest extends TestCase{
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
-        assertTrue(hts.contains("Versão"));
         assertTrue(hts.contains("20"));
-        assertTrue(hts.contains("Hash do usuário "));
         assertTrue(hts.contains("02237df8aa0e92ae78f7bfe1d79a6fb2"));
 
         
