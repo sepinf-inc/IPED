@@ -1,7 +1,8 @@
-package dpf.sp.gpinf.indexer.parsers;
+package gpinf.emule;
 
 import java.io.IOException;
 import java.io.InputStream;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -9,9 +10,11 @@ import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
-import junit.framework.TestCase;
 
-public class KnownMetParserTest extends TestCase{
+import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import iped3.util.ExtraProperties;
+
+public class KnownMetParserTest extends AbstractPkgTest{
     
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -23,8 +26,8 @@ public class KnownMetParserTest extends TestCase{
         KnownMetParser parser = new KnownMetParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_known.met");
         ParseContext context = new ParseContext();
+        InputStream stream = getStream("test-files/test_known.met");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
@@ -45,14 +48,22 @@ public class KnownMetParserTest extends TestCase{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_known.met");
-        ParseContext context = new ParseContext();
-        parser.parse(stream, handler, metadata, context);
-        String mts = metadata.toString();
+        parser.parse(stream, handler, metadata, knownmetContext);
+        String[] sharedhashes;
+        sharedhashes = metadata.getValues(ExtraProperties.SHARED_HASHES);
         
-
-        assertTrue(mts.contains("sharedHashes=77481ddd95730681cba7686a8fa7e613"));
-        assertTrue(mts.contains("sharedHashes=2b871d30675d0815d2a4dfb995ad7220"));
-        assertTrue(mts.contains("p2pHistoryEntries=2"));
+//        As embbededtracker was not working, iterating with getvalues.
+//        for (String string : sharedhashes) {
+//            System.out.println(string);
+//        }
         
+        assertEquals("77481ddd95730681cba7686a8fa7e613", sharedhashes[0]);
+        assertEquals("2b871d30675d0815d2a4dfb995ad7220", sharedhashes[1]);
+        assertEquals("2", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
+        
+//        String mts = metadata.toString();
+//        assertTrue(mts.contains("sharedHashes=77481ddd95730681cba7686a8fa7e613"));
+//        assertTrue(mts.contains("sharedHashes=2b871d30675d0815d2a4dfb995ad7220"));
+//        assertTrue(mts.contains("p2pHistoryEntries=2"));
     }
 }
