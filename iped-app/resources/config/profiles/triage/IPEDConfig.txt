@@ -2,124 +2,13 @@
 # Processing Settings
 ########################################################################
 
-# Enables file hashes calculation.
 enableHash = false
-
-# Enables photoDNA hash calculation. If you have rights to use it (law enforcement that fight against child exploitation)
-# and have received the library, you must put it into plugin/optional_jars folder
-enablePhotoDNA = false
-
-# Enables hash lookup on IPED database.
-enableHashDBLookup = false
-
-# Enables photoDNA lookup on IPED hash database.
-enablePhotoDNALookup = false
-
-# Enables nudity detection. For each image it creates attributes "scoreNudez" (1 to 1000)
-# and classeNudez (1 to 5) for ranking and/or filtering.
-enableLedDie = false
-
-# Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
-# You MUST install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules
-# This is about 7.5 times slower than LedDie algorithm on the CPU, using a good GPU is recommended.
-# It has better accuracy for some images and videos, worse for others.
-# An attribute nsfw_nudity_score from 0 to 100 will be created.
-enableYahooNSFWDetection = false
-
-# Ignores/discards duplicated files from the rest of processing (and from the case)
-# It can strongly speed up processing of cases with backups. Hash calculation is need to be enabled.
-ignoreDuplicates = false
-
-# Exports the properties of all files in the case to file "Lista de Arquivos.csv"
-exportFileProps = true
-
-# Processes the signatures of files
 processFileSignatures = false
-
-# Enables parsing of files contents. It's necessary for several functions like
-# containers expansion, detection of encrypted content, metadata indexing, previews generation, etc.
-enableFileParsing = true
-
-# Expands containers, like compressed files, e-mail boxes, emails e MS-Office documents.
-# File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
 expandContainers = false
-
-# Searches texts extracted from items by regular expressions 
-# like social numbers, emails, URLs, credit cards, money values, etc. 
-# New expressions can be configured in file "conf/RegexConfig.txt"
-enableRegexSearch = true
-
-# Enables automatic file exporting to case folder based on categories or keywords.
-# If enabled, just the exported files are included in case, others are ignored, and the case becomes datasource independent.
-# Relevant categories and keywords can be configured in CategoriesToExport.txt and KeywordsToExport.txt.
-enableAutomaticExportFiles = false
-
-# Enables detection of more than 70 idioms in document files.
 enableLanguageDetect = false
-
-# Feature to recognize named entities: people, organizations or places.
-# StanfordCoreNLP 3.8 language models must be downloaded from https://stanfordnlp.github.io/CoreNLP/history.html and put in optional_jars folder.
-# This feature is CPU heavy, it can increase processing time by 4x.
-# Advanced settings can be modified in "conf/NamedEntityRecognitionConfig.txt" file.
-enableNamedEntityRecogniton = false
-
-# Feature to create link graphs of communications (calls, messages, emails...)
-# Optionally it can create entities and links based on nearby regex hits (experimental). It could be enabled in conf/GraphConfig.json
 enableGraphGeneration = false
-
-# Perform test for randomness of binary items and unknown file types.
-# This is used to detect possible encrypted items.
-# Also makes indexing faster and reduces index size, specially when indexing unallocated space.
-# May cause loss of hits surrounded by "random" content.
 entropyTest = false
-
-# Large binary files or those without a specific parser will be split before being processed. 
-# This makes hit/regex highlighting in large files (pagefile, VSS, unallocated...) a lot faster
-# and allows exporting relevant data chunks to reports without exporting the whole file.
-# The original file is kept in case, although it is not processed by most modules.
 enableSplitLargeBinary = false
-
-# Indexes files contents. If disabled, indexes only the properties of files.
-indexFileContents = true
-
-# Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
-# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
-enableAudioTranscription = false
-
-# Enables carving. "addUnallocated" must be enabled to unallocated area be searched.
-# By default carving runs on almost every item in the case. 
-# File types to be searched and retrieved can be set in file "conf/CarvingConfig.txt"
-enableCarving = false
-
-# Enables carving that retrieves known files from the LED base, based on the beginning (64K) of the file.
-# It's necessary to enable "addUnallocated" and to configure "hashesDB" (with LED hashes data imported).
-enableLedCarving = false
-
-# Enables specific carving of e-Mule "known.met" files. "addUnallocated" must be enabled.
-enableKnownMetCarving = false
-
-# Enables generation of images thumbnails during processing.
-# It can slow down processing, but strongly speeds up image preview in the gallery
 enableImageThumbs = false
-
-# Enables the generation of images features during processing, allowing the search
-# for visually similar images. "enableImageThumbs" must be enabled.
-enableImageSimilarity = false
-
-# [Experimental] Enables face recognition feature.
-# You MUST install python and some dependencies, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#facerecognition
-# Advanced configuration options can be found in conf/FaceRecognitionConfig.txt.
-# If enabled, you can search for faces from the analysis interface, check the options menu.
-enableFaceRecognition = false
-
-# Enables extraction of image frames from video files
-# Extraction settings can be modified in file "conf/VideoThumbsConfig.txt"
 enableVideoThumbs = false
-
-# [Experimental] Enables thumbnail creation for PDFs and many formats supported by LibreOffice.
-# Advanced configurations can be found at conf/DocThumbsConfig.txt.
-enableDocThumbs = false
-
-# Enables HTML report generation on automatic extractions or from selected items.
-# Generation settings can be modified in file "conf/HTMLReportConfig.txt"
 enableHTMLReport = false
