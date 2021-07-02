@@ -22,10 +22,10 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -37,7 +37,6 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -57,6 +56,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -198,7 +198,7 @@ public class TelegramParser extends SQLite3DBParser {
                 chatName += "_" + frag++; //$NON-NLS-1$
 
             Metadata chatMetadata = new Metadata();
-            chatMetadata.set(TikaCoreProperties.TITLE, chatName);
+            chatMetadata.set(TikaCoreProperties.TITLE, Util.escape(chatName, StandardCharsets.UTF_8));
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));

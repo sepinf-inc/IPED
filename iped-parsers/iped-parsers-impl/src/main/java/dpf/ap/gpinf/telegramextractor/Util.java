@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
@@ -80,6 +81,9 @@ public class Util {
         // TLRPC.User u = TLRPC.User.TLdeserialize(s, s.readInt32(false), false);
     }
 
+    public static String escape(String val, Charset charset) {
+        return new String(val.getBytes(charset), charset);
+    }
     public static String hashFile(InputStream is) {
         String hash = null;
 
