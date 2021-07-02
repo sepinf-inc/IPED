@@ -188,8 +188,8 @@ public class ExportCSVTask extends AbstractTask {
         if (!output.exists()) {
             writeHeader(output);
         }
-        try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardOpenOption.APPEND)) {
-            writer.write(staticList.toString());
+        try (OutputStream os = Files.newOutputStream(output.toPath(), StandardOpenOption.APPEND)) {
+            os.write(staticList.toString().getBytes(StandardCharsets.UTF_8));
         }
         staticList = new StringBuilder();
     }
