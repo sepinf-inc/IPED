@@ -45,6 +45,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
@@ -280,6 +281,9 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         fillMetadata(evidence);
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
+        if (parser instanceof EmptyParser) {
+            return;
+        }
 
         String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
         AtomicLong time = times.get(parserName);
