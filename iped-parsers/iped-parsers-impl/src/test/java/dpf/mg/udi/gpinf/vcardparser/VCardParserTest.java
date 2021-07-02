@@ -14,9 +14,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import iped3.util.ExtraProperties;
+import junit.framework.TestCase;
 
 
-public class VCardParserTest extends AbstractPkgTest{
+public class VCardParserTest extends TestCase{
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -49,12 +50,16 @@ public class VCardParserTest extends AbstractPkgTest{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_contactsMultiple.vcf");
-        parser.getSupportedTypes(vcardContext);
-        parser.parse(stream, handler, metadata, vcardContext);
+        ParseContext context = new ParseContext();
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
-
+        String[] phonenumbers;
+        String[] usernames;
+        phonenumbers = metadata.getValues(ExtraProperties.USER_PHONE);
+        usernames = metadata.getValues(ExtraProperties.USER_NAME);
+        
         assertTrue(hts.contains("Family: Flamingo"));
         assertTrue(hts.contains("Given: Sushi"));
         assertTrue(hts.contains("Additional"));
@@ -62,47 +67,52 @@ public class VCardParserTest extends AbstractPkgTest{
         assertTrue(hts.contains("021 (61)3468-2000"));
         assertTrue(hts.contains("99592-3794"));
         
-//        assertEquals("021 (61)3468-2000", vcardtracker.userphone.get(0));
         
-        assertTrue(mts.contains("phoneNumber=021 (61)3468-2000"));
-        assertTrue(mts.contains("phoneNumber=021 (61)3011-7666"));
-        assertTrue(mts.contains("phoneNumber=99592-3794"));
-        assertTrue(mts.contains("userName=Taxi Lago Norte"));
-        assertTrue(mts.contains("userName=Sushi Loko Flamingo"));
-        assertTrue(mts.contains("userName=Smart Assistência Técnica"));
-        
-        
+        assertEquals("021 (61)3468-2000", phonenumbers[0]);
+        assertEquals("021 (61)3011-7666", phonenumbers[1]);
+        assertEquals("99592-3794", phonenumbers[2]);
+        assertEquals("Taxi Lago Norte", usernames[0]);
+        assertEquals("Sushi Loko Flamingo", usernames[1]);
+        assertEquals("Smart Assistência Técnica", usernames[2]);
     }
     
-//    @Test
-//    public void testVCardCompleteInfoParser() throws IOException, SAXException, TikaException{
-//
-//        VCardParser parser = new VCardParser();
-//        Metadata metadata = new Metadata();
-//        ContentHandler handler = new BodyContentHandler();
-//        InputStream stream = getStream("test-files/test_contactsCompleteInfo.vcf");
-//        parser.getSupportedTypes(vcardContext);
-//        parser.parse(stream, handler, metadata, vcardContext);
-//        
-//        String hts = handler.toString();
-//        String mts = metadata.toString();
-//        System.out.println(hts + mts);
-//        
-//        assertTrue(hts.contains("ratuxo")); 
-//        assertTrue(hts.contains("Outubro 24, 1996")); 
-//        assertTrue(hts.contains("nicolecity,")); 
-//        assertTrue(hts.contains("Test@paraparaparapara")); 
-//        assertTrue(hts.contains("www.rato.com.br")); 
-//        assertTrue(hts.contains("gosta muito de dançar para-pararato rato rato: esse cara é o rato")); 
-//        
-//
-//        assertTrue(mts.contains("userAddress=R. da Casa do Prof. Elder isso mesmo Bela Vista MS BR ZIP 79260-000")); 
-//        assertTrue(mts.contains("userUrls=www.rato.com.br")); 
-//        assertTrue(mts.contains("emailAddress=insuportavel@test.paraparapara")); 
-//        assertTrue(mts.contains("phoneNumber=021 (61)3468-2000")); 
-//        assertTrue(mts.contains("phoneNumber=021 (61)3011-7666")); 
-//        assertTrue(mts.contains("userOrganization=[nicolecity, dança]")); 
-//    }    
+    @Test
+    public void testVCardCompleteInfoParser() throws IOException, SAXException, TikaException{
+
+        VCardParser parser = new VCardParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/test_contactsCompleteInfo.vcf");
+        ParseContext context = new ParseContext();
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        
+        String hts = handler.toString();
+        String[] phonenumbers;
+        String[] useraddresses;
+        String[] useremails;
+        String[] userurls;
+        String[] userorganizations;
+        phonenumbers = metadata.getValues(ExtraProperties.USER_PHONE);
+        useraddresses = metadata.getValues(ExtraProperties.USER_ADDRESS);
+        useremails = metadata.getValues(ExtraProperties.USER_EMAIL);
+        userurls = metadata.getValues(ExtraProperties.USER_URLS);
+        userorganizations = metadata.getValues(ExtraProperties.USER_ORGANIZATION);
+        
+        assertTrue(hts.contains("ratuxo")); 
+        assertTrue(hts.contains("Outubro 24, 1996")); 
+        assertTrue(hts.contains("nicolecity,")); 
+        assertTrue(hts.contains("Test@paraparaparapara")); 
+        assertTrue(hts.contains("www.rato.com.br")); 
+        assertTrue(hts.contains("gosta muito de dançar para-pararato rato rato: esse cara é o rato")); 
+        
+        assertEquals("R. da Casa do Prof. Elder isso mesmo Bela Vista MS BR ZIP 79260-000", useraddresses[0]);
+        assertEquals("www.rato.com.br", userurls[0]);
+        assertEquals("insuportavel@test.paraparapara", useremails[0]);
+        assertEquals("021 (61)3468-2000", phonenumbers[0]);
+        assertEquals("021 (61)3011-7666", phonenumbers[1]);
+        assertEquals("[nicolecity, dança]", userorganizations[0]);
+    }    
     
     @Test
     public void testVCardCompleteWithoutThumbParser() throws IOException, SAXException, TikaException{
@@ -110,12 +120,27 @@ public class VCardParserTest extends AbstractPkgTest{
         VCardParser parser = new VCardParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
+        ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumb.vcf");
-        parser.getSupportedTypes(vcardContext);
-        parser.parse(stream, handler, metadata, vcardContext);
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
         
         String hts = handler.toString();
-        String mts = metadata.toString();
+        String[] phonenumbers;
+        String[] useraddresses;
+        String[] useremails;
+        String[] userurls;
+        String[] userorganizations;
+        String[] usernotes;
+        String[] usernames;
+        phonenumbers = metadata.getValues(ExtraProperties.USER_PHONE);
+        useraddresses = metadata.getValues(ExtraProperties.USER_ADDRESS);
+        useremails = metadata.getValues(ExtraProperties.USER_EMAIL);
+        userurls = metadata.getValues(ExtraProperties.USER_URLS);
+        userorganizations = metadata.getValues(ExtraProperties.USER_ORGANIZATION);
+        usernotes = metadata.getValues(ExtraProperties.USER_NOTES);
+        usernames = metadata.getValues(ExtraProperties.USER_NAME);
+       
         
         assertTrue(hts.contains("Magnanimo Test@paraparaparapara el raton para el"));
         assertTrue(hts.contains("ratuxo"));
@@ -127,16 +152,13 @@ public class VCardParserTest extends AbstractPkgTest{
         assertTrue(hts.contains("CEO do para para"));
         assertTrue(hts.contains("gosta muito de dançar para-pararato rato rato: esse cara é o rato"));
         
-        assertTrue(mts.contains("userAddress=R. da Casa do Prof. Elder isso mesmo Bela Vista MS BR ZIP 79260-000"));
-        assertTrue(mts.contains("userUrls=www.rato.com.br"));
-        assertTrue(mts.contains("emailAddress=insuportavel@test.paraparapara"));
-        assertTrue(mts.contains("phoneNumber=99 99998-6219"));
-        assertTrue(mts.contains("userOrganization=[nicolecity, dança]"));
-        assertTrue(mts.contains("userName=Magnanimo Test@paraparaparapara el raton para el"));
-        assertTrue(mts.contains("userNotes=gosta muito de dançar para-para"));
-        assertTrue(mts.contains("rato rato rato: esse cara é o rato"));
-        
-        
+        assertEquals("R. da Casa do Prof. Elder isso mesmo Bela Vista MS BR ZIP 79260-000", useraddresses[0]);
+        assertEquals("www.rato.com.br", userurls[0]);
+        assertEquals("insuportavel@test.paraparapara", useremails[0]);
+        assertEquals("99 99998-6219", phonenumbers[0]);
+        assertEquals("[nicolecity, dança]", userorganizations[0]);
+        assertEquals("gosta muito de dançar para-para\r\nrato rato rato: esse cara é o rato", usernotes[0]);
+        assertEquals("Magnanimo Test@paraparaparapara el raton para el", usernames[0]);
     }    
  
     @Test
@@ -149,8 +171,9 @@ public class VCardParserTest extends AbstractPkgTest{
         ClassLoader classLoader = getClass().getClassLoader();
         File file = new File(classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").getFile());
         PrintWriter out = new PrintWriter(file);
-        parser.getSupportedTypes(vcardContext);
-        parser.parse(stream, handler, metadata, vcardContext);
+        ParseContext context = new ParseContext();
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
         VCardParser.printHtmlFromString(out, stream.toString());
     }
 

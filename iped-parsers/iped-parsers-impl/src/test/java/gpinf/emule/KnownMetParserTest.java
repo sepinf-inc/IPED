@@ -50,20 +50,12 @@ public class KnownMetParserTest extends AbstractPkgTest{
         InputStream stream = getStream("test-files/test_known.met");
         parser.parse(stream, handler, metadata, knownmetContext);
         String[] sharedhashes;
+        String[] p2pregistrycount;
         sharedhashes = metadata.getValues(ExtraProperties.SHARED_HASHES);
-        
-//        As embbededtracker was not working, iterating with getvalues.
-//        for (String string : sharedhashes) {
-//            System.out.println(string);
-//        }
+        p2pregistrycount = metadata.getValues(ExtraProperties.P2P_REGISTRY_COUNT);
         
         assertEquals("77481ddd95730681cba7686a8fa7e613", sharedhashes[0]);
         assertEquals("2b871d30675d0815d2a4dfb995ad7220", sharedhashes[1]);
-        assertEquals("2", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
-        
-//        String mts = metadata.toString();
-//        assertTrue(mts.contains("sharedHashes=77481ddd95730681cba7686a8fa7e613"));
-//        assertTrue(mts.contains("sharedHashes=2b871d30675d0815d2a4dfb995ad7220"));
-//        assertTrue(mts.contains("p2pHistoryEntries=2"));
+        assertEquals("2", p2pregistrycount[0]);
     }
 }
