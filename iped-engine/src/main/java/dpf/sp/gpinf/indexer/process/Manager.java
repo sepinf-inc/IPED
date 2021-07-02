@@ -762,10 +762,13 @@ public class Manager {
                     new File(output, "htmlreport")); //$NON-NLS-1$
             // copy default conf folder
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
-                    true);
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
-                    new File(output, Configuration.CONFIG_FILE));
+            // copy profiles
+            File defaultProfile = new File(Configuration.getInstance().appRoot, Configuration.DEFAULT_PROFILE);
+            IOUtil.copiaDiretorio(defaultProfile, output, true);
+            File currentProfile = new File(Configuration.getInstance().configPath);
+            if (!currentProfile.equals(defaultProfile)) {
+                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.PROFILE_DIR), true);
+            }
             IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, Configuration.LOCAL_CONFIG),
                     new File(output, Configuration.LOCAL_CONFIG));
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$

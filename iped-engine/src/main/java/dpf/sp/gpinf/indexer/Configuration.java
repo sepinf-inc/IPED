@@ -52,7 +52,9 @@ public class Configuration {
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
-    private static final String PROFILE_DIR = "profiles"; //$NON-NLS-1$
+    private static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
+    public static final String PROFILE_DIR = "profile"; //$NON-NLS-1$
+    public static final String DEFAULT_PROFILE = PROFILES_DIR + "/default"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -78,7 +80,7 @@ public class Configuration {
 
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
-        if (appRoot.contains(PROFILE_DIR))
+        if (appRoot.contains(PROFILES_DIR))
             appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
@@ -153,10 +155,15 @@ public class Configuration {
         configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
         configDirectory.addPath(Paths.get(appRoot, CONF_DIR));
 
-        File defaultProfile = Paths.get(appRoot, PROFILE_DIR, "default").toFile(); //$NON-NLS-1$
+        File defaultProfile = Paths.get(appRoot, DEFAULT_PROFILE).toFile();
         File currentProfile = new File(configPathStr);
+        if (!defaultProfile.exists()) {
+            // we are loading from GUI
+            defaultProfile = currentProfile;
+            currentProfile = new File(configPathStr, PROFILE_DIR);
+        }
         addProfileToConfigDirectory(configDirectory, defaultProfile);
-        if (!defaultProfile.equals(currentProfile)) {
+        if (currentProfile.exists() && !defaultProfile.equals(currentProfile)) {
             addProfileToConfigDirectory(configDirectory, currentProfile);
         }
 
