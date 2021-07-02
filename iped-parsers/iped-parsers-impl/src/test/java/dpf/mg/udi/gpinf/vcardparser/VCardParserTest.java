@@ -157,7 +157,8 @@ public class VCardParserTest extends TestCase{
         assertEquals("insuportavel@test.paraparapara", useremails[0]);
         assertEquals("99 99998-6219", phonenumbers[0]);
         assertEquals("[nicolecity, dança]", userorganizations[0]);
-        assertEquals("gosta muito de dançar para-para\r\nrato rato rato: esse cara é o rato", usernotes[0]);
+        assertEquals("gosta muito de dançar para-para", usernotes[0].substring(0, 31));
+        assertEquals("rato rato rato: esse cara é o rato", usernotes[0].substring(33, 67));
         assertEquals("Magnanimo Test@paraparaparapara el raton para el", usernames[0]);
     }    
  
