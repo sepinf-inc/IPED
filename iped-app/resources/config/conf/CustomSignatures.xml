@@ -116,6 +116,14 @@
         </magic>
         <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="application/x-plist">
+        <_comment>Apple Binary Property List File </_comment>
+        <magic priority="60">
+            <match value="0x62706C697374" type="string" offset="0"/>
+        </magic>
+        <glob pattern="*.plist"/>
+    </mime-type>
    
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
@@ -207,7 +215,7 @@
     </mime-type>
     
     <mime-type type="application/x-safari-plist">     
-        <sub-class-of type="application/x-bplist"/>
+        <sub-class-of type="application/x-plist"/>
         <glob pattern="History.plist"/>
         <glob pattern="Downloads.plist"/>
         <glob pattern="Bookmarks.plist"/>
@@ -435,21 +443,6 @@
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
     </mime-type>
-    
-    <mime-type type="application/vnd.lotus-notes">
-        <magic priority="60">
-            <match value="0x1A00" type="string" offset="0">
-                <match value="0x10000000" type="string" offset="6"/>
-                <match value="0x11000000" type="string" offset="6"/>
-                <match value="0x14000000" type="string" offset="6"/>
-                <match value="0x29000000" type="string" offset="6"/>
-                <match value="0x2B000000" type="string" offset="6"/>
-                <match value="0x30000000" type="string" offset="6"/>
-                <match value="0x33000000" type="string" offset="6"/>
-            </match>    
-        </magic>  
-        <glob pattern="*.nsf"/>      	
-    </mime-type>
 
 	<mime-type type="application/x-mssql">
         <magic priority="50">
@@ -646,15 +639,6 @@
         <glob pattern="known*.met"/>
     </mime-type>
     
-    <mime-type type="application/x-emule-searches">
-        <sub-class-of type="text/plain"/>
-        <glob pattern="AC_SearchStrings.dat"/>
-    </mime-type>  
-	
-     <mime-type type="application/x-emule-preferences-ini">
-        <sub-class-of type="text/plain"/>
-    </mime-type>
-    
     <mime-type type="application/x-preview-with-links">
         <sub-class-of type="text/html"/>
         <magic priority="50">
@@ -714,23 +698,6 @@
         </magic>
         <glob pattern="*.MTS"/>
 		<glob pattern="*.m2ts"/>
-    </mime-type>
-    
-    <mime-type type="video/ts">
-    	<magic priority="50">
-            <match value="G" type="string" offset="0">
-	            <match value="G" type="string" offset="188">
-		            <match value="G" type="string" offset="376">
-			            <match value="G" type="string" offset="564">
-				            <match value="G" type="string" offset="752">
-					            <match value="G" type="string" offset="940"/>
-				            </match>
-			            </match>
-		            </match>
-	            </match>
-            </match>
-        </magic>
-        <glob pattern="*.ts"/>
     </mime-type>
     
     <mime-type type="application/x-lnk">
@@ -1002,6 +969,12 @@
         </magic>
     </mime-type>
     
+    <mime-type type="application/x-jabber-chat">
+    	<magic priority="64">
+    		<match value="Conversation with" type="string" offset="86:200"/>
+        </magic>
+    </mime-type>
+
     <mime-type type="application/x-ufed-chats-txt">
     	<sub-class-of type="text/plain"/>
     	<magic priority="60">
@@ -1100,7 +1073,7 @@
     </mime-type>
     
     <mime-type type="application/x-whatsapp-user-plist">
-        <sub-class-of type="application/x-bplist"/>
+        <sub-class-of type="application/x-plist"/>
         <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
     </mime-type>
     
@@ -1122,4 +1095,3 @@
     
    
 </mime-info>
-
