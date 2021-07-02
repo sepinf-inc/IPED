@@ -18,7 +18,6 @@
  */
 package dpf.ap.gpinf.telegramextractor;
 
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import dpf.ap.gpinf.interfacetelegram.ContactInterface;
@@ -52,7 +51,7 @@ public class Contact implements ContactInterface {
     }
 
     public void setName(String name) {
-        this.name = Util.escape(name, StandardCharsets.UTF_8);
+        this.name = name;
     }
 
     public String getPhone() {
@@ -111,7 +110,7 @@ public class Contact implements ContactInterface {
     }
 
     public void setLastName(String lastName) {
-        this.lastName = Util.escape(lastName, StandardCharsets.UTF_8);
+        this.lastName = lastName;
     }
 
     @Override
