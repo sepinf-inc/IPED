@@ -52,9 +52,8 @@ public class Configuration {
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
-    private static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
-    public static final String PROFILE_DIR = "profile"; //$NON-NLS-1$
-    public static final String DEFAULT_PROFILE = PROFILES_DIR + "/default"; //$NON-NLS-1$
+    public static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
+    public static final String CASE_PROFILE_DIR = "profile"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -155,16 +154,14 @@ public class Configuration {
         configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
         configDirectory.addPath(Paths.get(appRoot, CONF_DIR));
 
-        File defaultProfile = Paths.get(appRoot, DEFAULT_PROFILE).toFile();
+        File defaultProfile = new File(appRoot);
         File currentProfile = new File(configPathStr);
-        if (!defaultProfile.exists()) {
-            // we are loading from GUI
-            defaultProfile = currentProfile;
-            currentProfile = new File(configPathStr, PROFILE_DIR);
-        }
+        File caseProfile = new File(appRoot, CASE_PROFILE_DIR);
         addProfileToConfigDirectory(configDirectory, defaultProfile);
-        if (currentProfile.exists() && !defaultProfile.equals(currentProfile)) {
+        if (!currentProfile.equals(defaultProfile)) {
             addProfileToConfigDirectory(configDirectory, currentProfile);
+        } else if (caseProfile.exists()) {
+            addProfileToConfigDirectory(configDirectory, caseProfile);
         }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);

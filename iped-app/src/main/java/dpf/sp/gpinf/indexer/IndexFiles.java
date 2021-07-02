@@ -54,7 +54,6 @@ public class IndexFiles {
     private static Logger LOGGER = null;
 
     String rootPath, configPath;
-    String profile;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -128,8 +127,6 @@ public class IndexFiles {
     private void setConfigPath() throws Exception {
         URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 
-        boolean isReportFromCaseFolder = false;
-
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
         } else {
@@ -137,22 +134,15 @@ public class IndexFiles {
             // test for report generation from case folder
             if (rootPath.endsWith("indexador" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
-                isReportFromCaseFolder = true;
             }
         }
 
         configPath = rootPath;
 
-        profile = null;
-
-        if (cmdLineParams.getProfile() != null) {
-            profile = cmdLineParams.getProfile();
-        } else if (!isReportFromCaseFolder) {
-            profile = "default"; //$NON-NLS-1$
+        String profile = cmdLineParams.getProfile();
+        if (profile != null) {
+            configPath = new File(configPath, Configuration.PROFILES_DIR + "/" + profile).getAbsolutePath(); //$NON-NLS-1$
         }
-        if (profile != null)
-            configPath = new File(configPath, "profiles/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
-
         if (!new File(configPath).exists())
             throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
     }
