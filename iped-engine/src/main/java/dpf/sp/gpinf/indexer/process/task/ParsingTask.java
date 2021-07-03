@@ -282,6 +282,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
         if (parser instanceof EmptyParser) {
+            ((Item) evidence).setParsedTextCache(new TextCache());
             return;
         }
 
