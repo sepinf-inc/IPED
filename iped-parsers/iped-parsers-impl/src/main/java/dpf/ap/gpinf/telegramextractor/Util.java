@@ -81,14 +81,23 @@ public class Util {
         // TLRPC.User u = TLRPC.User.TLdeserialize(s, s.readInt32(false), false);
     }
 
-    // strange, it needs to be sanitized against ISO_8859_1 or US_ASCII;
+    public static String removeSurrogates(String val) {
+        if (val == null)
+            return null;
+        StringBuilder sb = new StringBuilder(val.length());
+        for (char c : val.toCharArray()) {
+            if (!Character.isSurrogate(c))
+                sb.append(c);
+        }
+        return sb.toString();
+    }
     public static String escape(String val) {
-        return escape(val, StandardCharsets.ISO_8859_1);
+        return escape(val, StandardCharsets.UTF_8);
     }
     public static String escape(String val, Charset charset) {
         if (val == null)
             return null;
-        return new String(val.getBytes(charset), charset);
+        return new String(removeSurrogates(val).getBytes(charset), charset);
     }
     public static String hashFile(InputStream is) {
         String hash = null;
