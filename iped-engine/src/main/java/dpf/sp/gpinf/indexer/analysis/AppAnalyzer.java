@@ -44,12 +44,14 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.RECORDDATE, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
+
+        analyzerPerField.put(IndexItem.CREATED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.MODIFIED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.ACCESSED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.RECORDDATE, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordLowerCaseAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
@@ -72,7 +74,7 @@ public class AppAnalyzer {
         return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
             protected Analyzer getWrappedAnalyzer(String fieldName) {
                 if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
-                    return new KeywordAnalyzer();
+                    return new KeywordLowerCaseAnalyzer();
                 }
                 return super.getWrappedAnalyzer(fieldName);
             }
