@@ -152,7 +152,6 @@ public class Configuration {
         getConfiguration(configPathStr);
 
         configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
-        configDirectory.addPath(Paths.get(appRoot, CONF_DIR));
 
         File defaultProfile = new File(appRoot);
         File currentProfile = new File(configPathStr);
