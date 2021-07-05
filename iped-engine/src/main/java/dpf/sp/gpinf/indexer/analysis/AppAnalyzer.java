@@ -46,6 +46,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
+        analyzerPerField.put(IndexItem.RECORDDATE, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
 
