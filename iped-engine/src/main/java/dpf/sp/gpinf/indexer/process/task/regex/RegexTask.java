@@ -1,8 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +20,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
@@ -37,6 +49,10 @@ public class RegexTask extends AbstractTask {
 
     private static final int MAX_RESULTS = 50000; // OOME protection for files with tons of hits
 
+    private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
+
+    private static final File cacheFile = new File(System.getProperty("user.home"), ".indexador/regexAutomata.cache");
+
     private static List<Regex> regexList;
 
     private static Regex regexFull;
@@ -47,7 +63,12 @@ public class RegexTask extends AbstractTask {
 
     private RegexTaskConfig regexConfig;
 
-    static class Regex {
+    static class Regex implements Serializable {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
         String name;
         int prefix, sufix;
@@ -124,32 +145,85 @@ public class RegexTask extends AbstractTask {
     public void init(ConfigurationManager configurationManager) throws Exception {
 
         regexConfig = configurationManager.findObject(RegexTaskConfig.class);
+        logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
+
+        ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
 
         if (regexConfig.isEnabled() && regexList == null) {
 
-            regexList = new ArrayList<Regex>();
-            for (RegexEntry e : regexConfig.getRegexList()) {
-                regexList.add(new Regex(e.getRegexName(), e.getPrefix(), e.getSuffix(), e.isIgnoreCase(), false,
-                        e.getRegex()));
-            }
-
-            ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
-            if (exportConfig.isEnabled()) {
-                for (String keyword : exportConfig.getKeywords()) {
-                    String regex = RegexTaskConfig.replace(keyword);
-                    regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
+            if (loadCache(regexConfig, exportConfig)) {
+                logger.info("Regex cache loaded from {}", cacheFile.getAbsolutePath());
+            } else {
+                regexList = new ArrayList<Regex>();
+                for (RegexEntry e : regexConfig.getRegexList()) {
+                    regexList.add(new Regex(e.getRegexName(), e.getPrefix(), e.getSuffix(), e.isIgnoreCase(), false,
+                            e.getRegex()));
                 }
-            }
+                int num = regexList.size();
+                logger.info("Created {} automata for each regex configured.", num);
 
-            ArrayList<Automaton> automatonList = new ArrayList<Automaton>();
-            for (Regex regex : regexList)
-                automatonList.add(regex.automaton);
-            Automaton automata = BasicOperations.union(automatonList);
-            regexFull = new Regex("FULL", automata); //$NON-NLS-1$
+                if (exportConfig.isEnabled()) {
+                    for (String keyword : exportConfig.getKeywords()) {
+                        String regex = RegexTaskConfig.replace(keyword);
+                        regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
+                    }
+                }
+                logger.info("Created {} automata for each keyword to export configured.", regexList.size() - num);
+
+                ArrayList<Automaton> automatonList = new ArrayList<Automaton>();
+                for (Regex regex : regexList) {
+                    automatonList.add(regex.automaton);
+                }
+                Automaton automata = BasicOperations.union(automatonList);
+                regexFull = new Regex("FULL", automata); //$NON-NLS-1$
+                logger.info("Created the unique automaton for all regexes.");
+
+                writeCache(regexConfig, exportConfig);
+                logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
+            }
 
             initValidators(new File(output, "conf"));
         }
 
+    }
+
+    private void writeCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) throws IOException {
+        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
+                ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+            oos.write(md5);
+            oos.writeObject(regexList);
+            oos.writeObject(regexFull);
+        }
+    }
+
+    private boolean loadCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig)
+            throws IOException, ClassNotFoundException {
+        if (!cacheFile.exists()) {
+            return false;
+        }
+        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(cacheFile));
+                ObjectInputStream ois = new ObjectInputStream(bis)) {
+            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+            byte[] cacheMd5 = new byte[16];
+            ois.readFully(cacheMd5);
+            if (!new String(md5).equals(new String(cacheMd5))) {
+                return false;
+            }
+            regexList = (List<Regex>) ois.readObject();
+            regexFull = (Regex) ois.readObject();
+            return true;
+        }
+    }
+
+    private byte[] getMd5FromConfigs(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig)
+            throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(regexConfig);
+            oos.writeObject(exportConfig);
+        }
+        return DigestUtils.md5(baos.toByteArray());
     }
 
     private synchronized void initValidators(File confDir) {

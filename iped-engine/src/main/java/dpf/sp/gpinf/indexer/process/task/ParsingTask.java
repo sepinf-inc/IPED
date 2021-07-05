@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.ParsersConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
@@ -730,7 +731,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         if (parsingConfig.isEnableExternalParsing()) {
             ForkParser2.setEnabled(true);
-            ForkParser2.setPluginDir(Configuration.getInstance().getPluginDir());
+            PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
+            ForkParser2.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser2.setPoolSize(parsingConfig.getNumExternalParsers());
             ForkParser2.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
             // do not open extra processes for OCR if ForkParser is enabled

@@ -1,12 +1,18 @@
 package dpf.sp.gpinf.indexer.config;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import iped3.configuration.IConfigurationDirectory;
@@ -17,8 +23,8 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
 
     private static ConfigurationManager singleton = null;
 
-    IConfigurationDirectory directory;
-    HashMap<Configurable<?>, Boolean> loadedConfigurables = new LinkedHashMap<>();
+    private IConfigurationDirectory directory;
+    private Map<Configurable<?>, Boolean> loadedConfigurables = new LinkedHashMap<>();
 
     public static ConfigurationManager get() {
         return singleton;
@@ -150,6 +156,21 @@ public class ConfigurationManager implements ObjectManager<Configurable<?>> {
     @Override
     public void removeObject(Configurable<?> aObject) {
         loadedConfigurables.remove(aObject);
+    }
+    
+    public void saveSerializedConfig(File file) throws FileNotFoundException, IOException {
+        try(FileOutputStream fos = new FileOutputStream(file);
+                ObjectOutputStream oos = new ObjectOutputStream(fos)){
+            oos.writeObject(loadedConfigurables);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public void loadSerializedConfig(File file)
+            throws FileNotFoundException, IOException, ClassNotFoundException {
+        try (FileInputStream fis = new FileInputStream(file); ObjectInputStream ois = new ObjectInputStream(fis)) {
+            loadedConfigurables = (Map<Configurable<?>, Boolean>) ois.readObject();
+        }
     }
 
 }

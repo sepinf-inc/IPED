@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.config;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +33,12 @@ public class RegexTaskConfig extends AbstractTaskConfig<Pair<Boolean, List<?>>> 
         return regexList;
     }
 
-    public static class RegexEntry {
+    public static class RegexEntry implements Serializable {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
         private String regexName;
         private int prefix, suffix;
