@@ -32,16 +32,13 @@ import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.configuration.IConfigurationDirectory;
@@ -55,6 +52,8 @@ public class Configuration {
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
     public static final String CONF_DIR = "conf"; //$NON-NLS-1$
+    public static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
+    public static final String CASE_PROFILE_DIR = "profile"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
@@ -63,8 +62,6 @@ public class Configuration {
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    private File optionalJarDir;
-    public File tskJarFile;
     public String loaddbPathWin;
 
     public static Configuration getInstance() {
@@ -80,17 +77,9 @@ public class Configuration {
     private Configuration() {
     }
 
-    public String getPluginDir() {
-        try {
-            return optionalJarDir.getCanonicalPath();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
-        if (appRoot.contains("profiles")) //$NON-NLS-1$
+        if (appRoot.contains(PROFILES_DIR))
             appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
@@ -122,16 +111,11 @@ public class Configuration {
         System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
-        properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
-        properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
-
-        String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
-        if (optional_jars != null) {
-            optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-        }
+        properties.load(new File(appRoot, LOCAL_CONFIG));
+        properties.load(new File(configPath, CONFIG_FILE));
     }
 
-    public void loadLibsAndToolPaths() throws IOException {
+    public void loadNativeLibs() throws IOException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
             String arch = "x86"; //$NON-NLS-1$
@@ -148,25 +132,16 @@ public class Configuration {
                 System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
-            if (mplayerPath != null)
-                VideoThumbTask.mplayerWin = mplayerPath.trim();
-
-        } else {
-            String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
-            if (tskJarPath != null && !tskJarPath.isEmpty())
-                tskJarPath = tskJarPath.trim();
-            else
-                throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
-
-            tskJarFile = new File(tskJarPath);
-            if (!tskJarFile.exists())
-                throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
 
     public void loadConfigurables(String configPathStr) throws IOException {
         loadConfigurables(configPathStr, false);
+    }
+
+    private void addProfileToConfigDirectory(ConfigurationDirectory configDirectory, File profile) {
+        configDirectory.addPath(new File(profile, CONFIG_FILE).toPath());
+        configDirectory.addPath(new File(profile, CONF_DIR).toPath());
     }
 
     public void loadConfigurables(String configPathStr, boolean loadAll) throws IOException {
@@ -176,18 +151,27 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectory(Paths.get(configPath + File.separator + CONF_DIR));
-        configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
-        configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
-        configDirectory.addPath(Paths.get(appRoot + "/" + CONF_DIR));
-        addPluginJarsToConfigurationLookup(configDirectory);
+        configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
+
+        File defaultProfile = new File(appRoot);
+        File currentProfile = new File(configPathStr);
+        File caseProfile = new File(appRoot, CASE_PROFILE_DIR);
+        addProfileToConfigDirectory(configDirectory, defaultProfile);
+        if (!currentProfile.equals(defaultProfile)) {
+            addProfileToConfigDirectory(configDirectory, currentProfile);
+        } else if (caseProfile.exists()) {
+            addProfileToConfigDirectory(configDirectory, caseProfile);
+        }
 
         ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
-
         configManager.addObject(new LocaleConfig());
-        configManager.addObject(new PluginConfig());
 
-        loadLibsAndToolPaths();
+        PluginConfig pluginConfig = new PluginConfig();
+        configManager.addObject(pluginConfig);
+        configManager.loadConfig(pluginConfig);
+        addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
+
+        loadNativeLibs();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
                 .equals(CustomURLClassLoader.class.getName())) {
@@ -198,7 +182,6 @@ public class Configuration {
         }
 
         configManager.addObject(new LocalConfig());
-        configManager.addObject(new IPEDConfig());
         configManager.addObject(new OCRConfig());
         configManager.addObject(new FileSystemConfig());
         configManager.addObject(new AnalysisConfig());
@@ -219,23 +202,19 @@ public class Configuration {
     }
 
     // add plugin jars to the configuration resource look up engine
-    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory) {
-        if (optionalJarDir != null) {
-            File[] jars = optionalJarDir.listFiles();
-            if (jars != null) {
-                for (File jar : jars) {
-                    if (jar.getName().endsWith(".jar")) {
-                        try {
-                            configDirectory.addZip(jar.toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if (jar.isDirectory()) {
-                        configDirectory.addPath(jar.toPath());
-                    }
+    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory, PluginConfig pluginConfig) {
+        File[] jars = pluginConfig.getPluginJars();
+        for (File jar : jars) {
+            if (jar.getName().endsWith(".jar")) {
+                try {
+                    configDirectory.addZip(jar.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
                 }
+            }
+
+            if (jar.isDirectory()) {
+                configDirectory.addPath(jar.toPath());
             }
         }
     }

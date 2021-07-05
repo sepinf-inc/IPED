@@ -8,6 +8,7 @@ import java.nio.file.DirectoryStream.Filter;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>> {
@@ -48,7 +49,7 @@ public class HashDBLookupConfig extends AbstractTaskConfig<Pair<Boolean, String>
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(IPEDConfig.CONFIG_FILE) || entry.endsWith(CONFIG_FILE)
+                return entry.endsWith(Configuration.CONFIG_FILE) || entry.endsWith(CONFIG_FILE)
                         || entry.endsWith(NSRL_CONFIG_FILE);
             }
         };

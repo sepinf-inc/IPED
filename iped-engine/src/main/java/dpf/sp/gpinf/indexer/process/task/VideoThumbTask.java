@@ -44,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.VideoThumbsConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
@@ -75,7 +76,7 @@ public class VideoThumbTask extends ThumbTask {
     /**
      * Caminho relativo para o MPlayer distribuído para Windows
      */
-    public static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
+    private static String mplayerWin = "../mplayer/mplayer.exe"; //$NON-NLS-1$
 
     /**
      * Objeto estático de inicialização. Necessário para garantir que seja feita
@@ -206,6 +207,8 @@ public class VideoThumbTask extends ThumbTask {
                 }
 
                 if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
+                    mplayerWin = localConfig.getMplayerWinPath();
                     mplayer = Configuration.getInstance().appRoot + "/" + mplayerWin; //$NON-NLS-1$
                 }
                 videoThumbsMaker.setMPlayer(mplayer);

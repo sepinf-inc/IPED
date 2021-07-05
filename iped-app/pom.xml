@@ -419,7 +419,7 @@
   									<version>3.8.0</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -438,7 +438,7 @@
     								<version>1.1-p5</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -457,7 +457,7 @@
     								<version>1.0.5-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -753,19 +753,19 @@
                             </resources>
                         </configuration>
                     </execution>
-                    <!-- COPY OPTIONAL -->
+                    <!-- COPY PLUGIN RESOURCES -->
                     <execution>
-                        <id>copy-optional</id>
+                        <id>copy-plugin-resources</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${optional.dir}</outputDirectory>
+                            <outputDirectory>${plugin.dir}</outputDirectory>
                             <resources>
                                 <resource>
                                     <filtering>false</filtering>
-                                    <directory>${resources.dir}/optional_jars</directory>
+                                    <directory>${plugin.rsc}</directory>
                                 </resource>
                             </resources>
                         </configuration>

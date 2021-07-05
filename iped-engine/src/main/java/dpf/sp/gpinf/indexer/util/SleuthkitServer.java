@@ -73,7 +73,7 @@ public class SleuthkitServer {
             LocalConfig localConfig = new LocalConfig();
             cm.addObject(localConfig);
             cm.loadConfigs();
-            Configuration.getInstance().loadLibsAndToolPaths();
+            Configuration.getInstance().loadNativeLibs();
 
             SleuthkitCase sleuthCase = SleuthkitCase.openCase(dbPath);
             HashMap<Long, SleuthkitInputStream> sisMap = new HashMap<>();

@@ -760,14 +760,19 @@ public class Manager {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
-            // copy default conf folder
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
-                    true);
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
-                    new File(output, Configuration.CONFIG_FILE));
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, Configuration.LOCAL_CONFIG),
-                    new File(output, Configuration.LOCAL_CONFIG));
+
+            // copy default configs
+            File defaultProfile = new File(Configuration.getInstance().appRoot);
+            IOUtil.copiaDiretorio(new File(defaultProfile, "conf"), new File(output, "conf"));
+            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+
+            // copy non default profile
+            File currentProfile = new File(Configuration.getInstance().configPath);
+            if (!currentProfile.equals(defaultProfile)) {
+                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+            }
+
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
                 IOUtil.copiaDiretorio(binDir, output.getParentFile()); // $NON-NLS-1$
