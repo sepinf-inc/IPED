@@ -18,12 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.analysis;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -65,7 +65,15 @@ public class AppAnalyzer {
         defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
         defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
         defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
-        return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
+
+        return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
+            protected Analyzer getWrappedAnalyzer(String fieldName) {
+                if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
+                    return new KeywordAnalyzer();
+                }
+                return super.getWrappedAnalyzer(fieldName);
+            }
+        };
     }
 
 }
