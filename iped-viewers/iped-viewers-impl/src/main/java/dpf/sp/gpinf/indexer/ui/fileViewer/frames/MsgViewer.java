@@ -127,9 +127,9 @@ public class MsgViewer extends HtmlViewer {
         preview.append("<html>");
         preview.append("<head>");
         preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
+        preview.append(EmailViewer.getHeaderThemeStyle());
         preview.append("</head>");
-        preview.append(
-                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">");
+        preview.append("<body style=\"margin:0px;\">");
 
         Index index = new Index();
         try {
@@ -161,6 +161,8 @@ public class MsgViewer extends HtmlViewer {
         String to[] = null;
         String cc[] = null;
         String bcc[] = null;
+
+        preview.append("<div class=\"ipedtheme mailheader\">");
 
         ArrayList<Object[]> RecipientList = new ArrayList<Object[]>();
 
@@ -355,7 +357,7 @@ public class MsgViewer extends HtmlViewer {
                 if (attachmentList.length() > 0) {
                     attachmentList.append(separator);
                 }
-                attachmentList.append("<a href=\"\" onclick=\"app.open(" + index.index + ")\">"
+                attachmentList.append("<a class=\"ipedtheme\" href=\"\" onclick=\"app.open(" + index.index + ")\">"
                         + SimpleHTMLEncoder.htmlEncode(attachName) + "</a>");
 
                 String fileExt = "";
@@ -392,7 +394,8 @@ public class MsgViewer extends HtmlViewer {
                     if (attachmentList.length() > 0) {
                         attachmentList.append(separator);
                     }
-                    attachmentList.append("<a href=\"#embedded_msg_" + count + "\">" + subject + ".msg" + "</a>");
+                    attachmentList.append(
+                            "<a class=\"ipedtheme\" href=\"#embedded_msg_" + count + "\">" + subject + ".msg" + "</a>");
                 }
             }
             count++;
@@ -404,6 +407,7 @@ public class MsgViewer extends HtmlViewer {
         }
 
         preview.append("<hr>");
+        preview.append("</div>");
 
         boolean noHtml = false;
         String corpo = "";
