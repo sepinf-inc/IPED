@@ -15,6 +15,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import iped3.io.IStreamSource;
@@ -116,7 +117,8 @@ public class HtmlViewer extends Viewer {
             @Override
             public void run() {
 
-                webEngine.load(null);
+                webEngine.loadContent(UiUtil.getUIEmptyHtml());
+
                 if (content != null) {
                     try {
                         file = content.getFile();

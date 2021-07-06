@@ -2,6 +2,8 @@ package dpf.sp.gpinf.indexer.util;
 
 import java.awt.Color;
 
+import javax.swing.UIManager;
+
 public class UiUtil {
     public static String getHexRGB(Color c) {
         return "#" + Integer.toHexString(c.getRGB() & 0xFFFFFF);
@@ -17,5 +19,16 @@ public class UiUtil {
         int g = (int) Math.round(c1.getGreen() * weight + c2.getGreen() * (1 - weight));
         int b = (int) Math.round(c1.getBlue() * weight + c2.getBlue() * (1 - weight));
         return new Color(r, g, b);
+    }
+
+    public static String getUIEmptyHtml() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<html><body style=\""); //$NON-NLS-1$
+        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
+        if (background != null) {
+            sb.append("background-color:").append(getHexRGB(background)).append(";"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        sb.append("\"></body></html>"); //$NON-NLS-1$
+        return sb.toString();
     }
 }
