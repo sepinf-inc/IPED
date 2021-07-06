@@ -342,12 +342,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append(Messages.getString("ProgressFrame.VolumeFound")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
         long discoveredVol = Statistics.get().caseData.getDiscoveredVolume() / (1 << 20);
-        msg.append(NumberFormat.getNumberInstance().format(discoveredVol) + " MB"); //$NON-NLS-1$
+        msg.append(sizeFormat.format(discoveredVol) + " MB"); //$NON-NLS-1$
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.VolumeProcessed")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(NumberFormat.getNumberInstance().format(Statistics.get().getVolume() / (1 << 20)) + " MB"); //$NON-NLS-1$
+        msg.append(sizeFormat.format(Statistics.get().getVolume() / (1 << 20)) + " MB"); //$NON-NLS-1$
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ItemsFound")); //$NON-NLS-1$
