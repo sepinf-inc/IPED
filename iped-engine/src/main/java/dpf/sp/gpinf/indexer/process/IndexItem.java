@@ -144,11 +144,18 @@ public class IndexItem extends BasicProps {
 
     private static FieldType contentField;
     private static FieldType storedTokenizedNoNormsField = new FieldType();
+    private static FieldType dateField = new FieldType();
 
     static {
         storedTokenizedNoNormsField.setIndexOptions(IndexOptions.DOCS_AND_FREQS_AND_POSITIONS);
         storedTokenizedNoNormsField.setOmitNorms(true);
         storedTokenizedNoNormsField.setStored(true);
+        storedTokenizedNoNormsField.freeze();
+
+        dateField.setIndexOptions(IndexOptions.DOCS);
+        dateField.setStored(true);
+        dateField.setOmitNorms(true);
+        dateField.freeze();
 
         ignoredMetadata.add(Metadata.CONTENT_TYPE);
         ignoredMetadata.add(Metadata.CONTENT_LENGTH);
@@ -175,6 +182,7 @@ public class IndexItem extends BasicProps {
             field.setOmitNorms(true);
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
             field.setStoreTermVectors(indexConfig.isStoreTermVectors());
+            field.freeze();
             contentField = field;
         }
         return contentField;
@@ -315,7 +323,7 @@ public class IndexItem extends BasicProps {
         } else {
             value = ""; //$NON-NLS-1$
         }
-        doc.add(new StringField(CREATED, value, Field.Store.YES));
+        doc.add(new Field(CREATED, value, dateField));
         doc.add(new SortedDocValuesField(CREATED, new BytesRef(value)));
         timeEventSet.add(new TimeStampEvent(value, CREATED));
 
@@ -325,7 +333,7 @@ public class IndexItem extends BasicProps {
         } else {
             value = ""; //$NON-NLS-1$
         }
-        doc.add(new StringField(ACCESSED, value, Field.Store.YES));
+        doc.add(new Field(ACCESSED, value, dateField));
         doc.add(new SortedDocValuesField(ACCESSED, new BytesRef(value)));
         timeEventSet.add(new TimeStampEvent(value, ACCESSED));
 
@@ -335,7 +343,7 @@ public class IndexItem extends BasicProps {
         } else {
             value = ""; //$NON-NLS-1$
         }
-        doc.add(new StringField(MODIFIED, value, Field.Store.YES));
+        doc.add(new Field(MODIFIED, value, dateField));
         doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
         timeEventSet.add(new TimeStampEvent(value, MODIFIED));
 
@@ -345,7 +353,7 @@ public class IndexItem extends BasicProps {
         } else {
             value = ""; //$NON-NLS-1$
         }
-        doc.add(new StringField(RECORDDATE, value, Field.Store.YES));
+        doc.add(new Field(RECORDDATE, value, dateField));
         doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
         timeEventSet.add(new TimeStampEvent(value, RECORDDATE));
 
@@ -482,7 +490,7 @@ public class IndexItem extends BasicProps {
             }
             tse.timeEvent = tse.timeEvent.toLowerCase();
 
-            doc.add(new StringField(TIMESTAMP, tse.timeStamp, Field.Store.YES));
+            doc.add(new Field(TIMESTAMP, tse.timeStamp, dateField));
             doc.add(new SortedSetDocValuesField(TIMESTAMP, new BytesRef(tse.timeStamp)));
             doc.add(new Field(TIME_EVENT, tse.timeEvent, storedTokenizedNoNormsField));
             doc.add(new SortedSetDocValuesField(TIME_EVENT, new BytesRef(tse.timeEvent)));
@@ -579,8 +587,7 @@ public class IndexItem extends BasicProps {
         }
         if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
-            // query parser converts range queries to lowercase
-            doc.add(new StringField(key, value.toLowerCase(), Field.Store.YES));
+            doc.add(new Field(key, value, dateField));
             if (!isMultiValued)
                 doc.add(new SortedDocValuesField(key, new BytesRef(value)));
             else
@@ -1128,9 +1135,7 @@ public class IndexItem extends BasicProps {
 
     public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {
         if (Date.class.equals(c)) {
-            // it was stored lowercase because query parser converts range queries to
-            // lowercase
-            String value = f.stringValue().toUpperCase();
+            String value = f.stringValue();
             try {
                 return DateUtil.stringToDate(value);
             } catch (ParseException e) {
