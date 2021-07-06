@@ -681,7 +681,9 @@ public class MetadataPanel extends JPanel
         min = Double.MAX_VALUE;
         max = Double.MIN_VALUE;
         interval = 0;
-
+        long[] actualMin = null;
+        long[] actualMax = null;
+        
         if (isNumeric && numValues != null) {
             Bits docsWithField = reader.getDocsWithField(field);
             if (logScale) {
@@ -723,6 +725,20 @@ public class MetadataPanel extends JPanel
                 }
                 valueCount = new int[10];
                 interval = (max - min) / valueCount.length;
+                long[] rangeMin = null;
+                long[] rangeMax = null;
+                if (!isFloat && !isDouble) {
+                    rangeMin = new long[valueCount.length];
+                    rangeMax = new long[valueCount.length];
+                    for (int i = 0; i < valueCount.length; i++) {
+                        rangeMin[i] = i == 0 ? (long) Math.floor(i * interval + min) : rangeMax[i - 1] + 1;
+                        rangeMax[i] = (long) Math.ceil((i + 1) * interval + min);
+                    }
+                    actualMin = new long[valueCount.length];
+                    actualMax = new long[valueCount.length];
+                    Arrays.fill(actualMin, Long.MAX_VALUE);
+                    Arrays.fill(actualMax, Long.MIN_VALUE);
+                }
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
                     if (docsWithField.get(doc)) {
@@ -734,6 +750,19 @@ public class MetadataPanel extends JPanel
                         int ord = (int) ((val - min) / interval);
                         if (ord == valueCount.length)
                             ord = valueCount.length - 1;
+                        if (!isFloat && !isDouble) {
+                            long lval = (long) val;
+                            for (int i = Math.max(0, ord - 1); i <= ord + 1 && i < valueCount.length; i++) {
+                                if (lval >= rangeMin[i] && lval <= rangeMax[i]) {
+                                    ord = i;
+                                    break;
+                                }
+                            }
+                            if (lval < actualMin[ord])
+                                actualMin[ord] = lval;
+                            if (lval > actualMax[ord])
+                                actualMax[ord] = lval;
+                        }
                         valueCount[ord]++;
                     }
                 }
@@ -783,6 +812,20 @@ public class MetadataPanel extends JPanel
                 }
                 valueCount = new int[10];
                 interval = (max - min) / valueCount.length;
+                long[] rangeMin = null;
+                long[] rangeMax = null;
+                if (!isFloat && !isDouble) {
+                    rangeMin = new long[valueCount.length];
+                    rangeMax = new long[valueCount.length];
+                    for (int i = 0; i < valueCount.length; i++) {
+                        rangeMin[i] = i == 0 ? (long) Math.floor(i * interval + min) : rangeMax[i - 1] + 1;
+                        rangeMax[i] = (long) Math.ceil((i + 1) * interval + min);
+                    }
+                    actualMin = new long[valueCount.length];
+                    actualMax = new long[valueCount.length];
+                    Arrays.fill(actualMin, Long.MAX_VALUE);
+                    Arrays.fill(actualMax, Long.MIN_VALUE);
+                }
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
                     numValuesSet.setDocument(doc);
@@ -796,6 +839,19 @@ public class MetadataPanel extends JPanel
                         int ord = (int) ((val - min) / interval);
                         if (ord == valueCount.length)
                             ord = valueCount.length - 1;
+                        if (!isFloat && !isDouble) {
+                            long lval = (long) val;
+                            for (int j = Math.max(0, ord - 1); j <= ord + 1 && j < valueCount.length; j++) {
+                                if (lval >= rangeMin[j] && lval <= rangeMax[j]) {
+                                    ord = j;
+                                    break;
+                                }
+                            }
+                            if (lval < actualMin[ord])
+                                actualMin[ord] = lval;
+                            if (lval > actualMax[ord])
+                                actualMax[ord] = lval;
+                        }
                         if (ord != prevOrd)
                             valueCount[ord]++;
                         prevOrd = ord;
@@ -848,9 +904,13 @@ public class MetadataPanel extends JPanel
                             list.add(new RangeCount(start, end, ord, valueCount[ord]));
                         }
                     } else {
-                        double start = min + ord * interval;
-                        double end = min + (ord + 1) * interval;
-                        list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                        if (actualMin != null) {
+                            list.add(new RangeCount(actualMin[ord], actualMax[ord], ord, valueCount[ord]));
+                        } else {
+                            double start = min + ord * interval;
+                            double end = min + (ord + 1) * interval;
+                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                        }
                     }
                 }
         } else if (docValues != null) {
