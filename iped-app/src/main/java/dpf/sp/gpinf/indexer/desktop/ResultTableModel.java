@@ -141,8 +141,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     }
 
     public void updateLengthHeader(long mb) {
+        String lengthField = BasicProps.getLocalizedField(IndexItem.LENGTH);
         for (int i = 0; i < columnNames.length; i++) {
-            if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
+            if (lengthField.equalsIgnoreCase(columnNames[i])) {
                 int col = App.get().resultsTable.convertColumnIndexToView(i);
                 if (col == -1)
                     return;
@@ -152,6 +153,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
                             columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
+                break;
             }
         }
 
