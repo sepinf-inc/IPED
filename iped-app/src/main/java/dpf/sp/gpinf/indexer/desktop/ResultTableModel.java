@@ -56,6 +56,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             IndexItem.CREATED, IndexItem.RECORDDATE);
 
     private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
+    private static final String lengthField = BasicProps.getLocalizedField(IndexItem.LENGTH);
 
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
     public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
@@ -143,7 +144,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     }
 
     public void updateLengthHeader(long mb) {
-        String lengthField = BasicProps.getLocalizedField(IndexItem.LENGTH);
         for (int i = 0; i < columnNames.length; i++) {
             if (lengthField.equalsIgnoreCase(columnNames[i])) {
                 int col = App.get().resultsTable.convertColumnIndexToView(i);
@@ -191,7 +191,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public Class<?> getColumnClass(int c) {
         if (c == 1) {
             return Boolean.class;
-        } else if (columnNames[c].equalsIgnoreCase(IndexItem.LENGTH)) {
+        } else if (columnNames[c].equalsIgnoreCase(lengthField)) {
             return Integer.class;
         } else {
             return String.class;
