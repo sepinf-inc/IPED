@@ -53,6 +53,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 
 /**
@@ -72,7 +73,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     private WorkerProvider task;
     private Date indexStart;
     private Worker[] workers;
-    private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
+    private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ProgressFrame.DateFormat")); //$NON-NLS-1$
     private boolean paused = false;
 
