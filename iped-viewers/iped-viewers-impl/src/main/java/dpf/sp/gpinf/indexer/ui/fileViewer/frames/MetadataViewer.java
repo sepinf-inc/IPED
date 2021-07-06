@@ -19,7 +19,7 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.ColorUtil;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
@@ -164,24 +164,20 @@ public class MetadataViewer extends Viewer {
         });
     }
 
-    private String generateEmptyPreview() {
-        return generatePreview(null, 0);
-    }
-
     private String generatePreview(IItemBase item, int tabIndex) {
         Color color1 = new Color(0xD7D7D7); 
         Color color2 = new Color(0xF2F2F2);
         Color color3 = new Color(0xF2F2F2);
         Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
         if (background != null) {
-            color3 = ColorUtil.mix(background, Color.gray, 0.9);
-            color2 = ColorUtil.mix(background, Color.gray, 0.7);
-            color1 = ColorUtil.mix(background, Color.gray, 0.5);
+            color3 = UiUtil.mix(background, Color.gray, 0.9);
+            color2 = UiUtil.mix(background, Color.gray, 0.7);
+            color1 = UiUtil.mix(background, Color.gray, 0.5);
         }
         String borderColor = "black"; //$NON-NLS-1$
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground != null && background != null)
-            borderColor = ColorUtil.getHexRGB(ColorUtil.mix(background, foreground, 0.5));
+            borderColor = UiUtil.getHexRGB(UiUtil.mix(background, foreground, 0.5));
         
         StringBuilder sb = new StringBuilder();
         sb.append("<!DOCTYPE html>\n"); //$NON-NLS-1$
@@ -189,20 +185,20 @@ public class MetadataViewer extends Viewer {
         sb.append("<head>\n"); //$NON-NLS-1$
         sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n"); //$NON-NLS-1$
         sb.append("<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {");
-        sb.append("background-color:").append(ColorUtil.getHexRGB(color1)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(color1)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("border: 1px solid ").append(borderColor).append("; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("background-color:").append(ColorUtil.getHexRGB(color2)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(color2)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("width:170px; border: 1px solid ").append(borderColor).append("; text-align:left;} td.s2 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("background-color:").append(ColorUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("border: 1px solid ").append(borderColor).append("; word-break: break-all; word-wrap: break-word; text-align:left;}\n"); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n"); //$NON-NLS-1$
         sb.append("</style></head>\n"); //$NON-NLS-1$
         sb.append("<body style=\"");//$NON-NLS-1$
 
         if (background != null)  
-            sb.append("background-color:").append(ColorUtil.getHexRGB(background)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+            sb.append("background-color:").append(UiUtil.getHexRGB(background)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
         if (foreground != null)  
-            sb.append("color:").append(ColorUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+            sb.append("color:").append(UiUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
         sb.append("\">\n"); //$NON-NLS-1$
 
         if (item != null) {

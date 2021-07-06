@@ -106,7 +106,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.ColorUtil;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.io.IStreamSource;
@@ -442,11 +442,11 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 if (background != null && foreground != null) {
                     defaultSettings.ColorFontMain = foreground;
                     defaultSettings.ColorFontAlt = foreground;
-                    defaultSettings.ColorBackgroundMain = ColorUtil.mix(background, Color.gray, 0.9);
-                    defaultSettings.ColorBackgroundAlt = ColorUtil.mix(background, Color.gray, 0.8);
+                    defaultSettings.ColorBackgroundMain = UiUtil.mix(background, Color.gray, 0.9);
+                    defaultSettings.ColorBackgroundAlt = UiUtil.mix(background, Color.gray, 0.8);
                     defaultSettings.ColorCursor = foreground;
-                    defaultSettings.ColorHeaderText = ColorUtil.mix(foreground, Color.gray, 0.4);
-                    defaultSettings.ColorHeaderBackground = ColorUtil.mix(background, Color.gray, 0.4);
+                    defaultSettings.ColorHeaderText = UiUtil.mix(foreground, Color.gray, 0.4);
+                    defaultSettings.ColorHeaderBackground = UiUtil.mix(background, Color.gray, 0.4);
                 }
                 loadSettings(defaultSettings);
                 codeArea.repaint();
