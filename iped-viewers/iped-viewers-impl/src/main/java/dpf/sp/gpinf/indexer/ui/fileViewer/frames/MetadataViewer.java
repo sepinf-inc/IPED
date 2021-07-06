@@ -136,7 +136,7 @@ public class MetadataViewer extends Viewer {
 
                 for (HtmlViewer viewer : htmlViewers) {
                     WebEngine webEngine = viewer.webEngine;
-                    webEngine.load(null);
+                    webEngine.loadContent(generateEmptyPreview());
 
                     if (content instanceof IItemBase) {
                         viewer.highlightTerms = terms;
@@ -162,6 +162,10 @@ public class MetadataViewer extends Viewer {
 
             }
         });
+    }
+
+    private String generateEmptyPreview() {
+        return generatePreview(null, 0);
     }
 
     private String generatePreview(IItemBase item, int tabIndex) {
@@ -201,12 +205,14 @@ public class MetadataViewer extends Viewer {
             sb.append("color:").append(ColorUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
         sb.append("\">\n"); //$NON-NLS-1$
 
-        if (tabIndex == 0)
-            fillBasicProps(sb, item);
-        if (tabIndex == 1)
-            fillAdvancedProps(sb, item);
-        if (tabIndex == 2)
-            fillMetadata(sb, item.getMetadata());
+        if (item != null) {
+            if (tabIndex == 0)
+                fillBasicProps(sb, item);
+            if (tabIndex == 1)
+                fillAdvancedProps(sb, item);
+            if (tabIndex == 2)
+                fillMetadata(sb, item.getMetadata());
+        }
 
         sb.append("</body>"); //$NON-NLS-1$
         sb.append("</html>"); //$NON-NLS-1$
