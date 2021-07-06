@@ -74,7 +74,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     private Date indexStart;
     private Worker[] workers;
     private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
-    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ProgressFrame.DateFormat")); //$NON-NLS-1$
     private boolean paused = false;
 
     private class RestrictedSizeLabel extends JLabel {
