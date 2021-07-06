@@ -21,7 +21,6 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.text.Collator;
-import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -43,6 +42,7 @@ import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DateUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
@@ -54,8 +54,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
             IndexItem.CREATED, IndexItem.RECORDDATE);
-
-    private static final NumberFormat numberFormat = NumberFormat.getNumberInstance();
 
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
     public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
@@ -152,7 +150,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(columnNames[i] + " (...)"); //$NON-NLS-1$
                 } else {
                     App.get().resultsTable.getColumnModel().getColumn(col).setHeaderValue(
-                            columnNames[i] + " (" + NumberFormat.getNumberInstance().format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
+                            columnNames[i] + " (" + LocalizedFormat.format(mb) + "MB)"); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -329,7 +327,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(IndexItem.LENGTH)) {
-                value = numberFormat.format(Long.valueOf(value));
+                value = LocalizedFormat.format(Long.valueOf(value));
 
             } else if (field.equals(IndexItem.NAME)) {
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
