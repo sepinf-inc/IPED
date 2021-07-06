@@ -332,10 +332,12 @@ public class MetadataPanel extends JPanel
             NumberFormat nf = LocalizedFormat.getNumberInstance(); 
             StringBuilder sb = new StringBuilder();
             sb.append(nf.format(start));
-            sb.append(' ');
-            sb.append(RANGE_SEPARATOR);
-            sb.append(' ');
-            sb.append(nf.format(end));
+            if (start != end) {
+                sb.append(' ');
+                sb.append(RANGE_SEPARATOR);
+                sb.append(' ');
+                sb.append(nf.format(end));
+            }
             sb.append(" ("); //$NON-NLS-1$
             sb.append(count);
             sb.append(')');
