@@ -87,6 +87,7 @@ public class MetadataPanel extends JPanel
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
+    private static final String RANGE_SEPARATOR = Messages.getString("MetadataPanel.RangeSeparator"); //$NON-NLS-1$
     private static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
     private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
 
@@ -329,9 +330,16 @@ public class MetadataPanel extends JPanel
         @Override
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance(); 
-            String startStr = nf.format(start);
-            String endStr = nf.format(end);
-            return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            StringBuilder sb = new StringBuilder();
+            sb.append(nf.format(start));
+            sb.append(' ');
+            sb.append(RANGE_SEPARATOR);
+            sb.append(' ');
+            sb.append(nf.format(end));
+            sb.append(" ("); //$NON-NLS-1$
+            sb.append(count);
+            sb.append(')');
+            return sb.toString();
         }
     }
 
