@@ -31,4 +31,23 @@ public class UiUtil {
         sb.append("\"></body></html>"); //$NON-NLS-1$
         return sb.toString();
     }
+
+    public static String getUIHtmlStyle() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("data:,.ipedtheme { "); //$NON-NLS-1$
+        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
+        if (background != null) {
+            sb.append("background-color:").append(getHexRGB(background)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
+        if (foreground != null) {
+            sb.append("color:").append(getHexRGB(foreground)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        sb.append("}"); //$NON-NLS-1$
+        Color htmlLink = UIManager.getColor("Viewer.htmlLink"); //$NON-NLS-1$
+        if (htmlLink != null) {
+            sb.append(" .ipedtheme a:link, a:visited {color:").append(getHexRGB(htmlLink)).append(" !important;}"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
+        return sb.toString();
+    }
 }
