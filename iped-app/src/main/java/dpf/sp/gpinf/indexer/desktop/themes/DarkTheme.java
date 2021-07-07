@@ -29,6 +29,7 @@ public class DarkTheme extends Theme {
         put("Table[Enabled+Selected].textForeground", Color.white);
         put("Viewer.background", new Color(29, 38, 47));
         put("Viewer.foreground", Color.white);
+        put("Viewer.htmlLink",new Color(200, 200, 255));
         put("Graph.defaultEdge", new Color(128, 128, 128));
         put("Graph.defaultNode", Color.white);
         put("Graph.selectedNodeBox", Color.white);
