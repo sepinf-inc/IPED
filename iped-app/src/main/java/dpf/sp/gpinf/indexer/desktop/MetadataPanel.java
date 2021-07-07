@@ -9,8 +9,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -37,7 +35,6 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSlider;
-import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -67,6 +64,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import iped3.IItemId;
 import iped3.exception.ParseException;
@@ -98,10 +96,12 @@ public class MetadataPanel extends JPanel
     JComboBox<String> props = new JComboBox<String>();
     JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
     JButton update = new JButton();
-    JTextField listFilter = new JTextField();
+    HintTextField listFilter = new HintTextField(
+            "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char) 0x2193);
     JButton copyResultToClipboard = new JButton();
     private final JButton reset = new JButton();
-    private final JTextField propsFilter = new JTextField();
+    private final HintTextField propsFilter = new HintTextField(
+            "[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char) 0x2191);
     
     private Object lastPropSel;
 
@@ -122,14 +122,8 @@ public class MetadataPanel extends JPanel
     volatile boolean logScale = false;
     volatile double min, max, interval;
 
-    /**
-     * 
-     */
     private static final long serialVersionUID = 1L;
 
-    private static final String emptyPropsFilter = "[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char)0x2191;
-    private static final String emptyListFilter = "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char)0x2193;
-    
     public MetadataPanel() {
         super(new BorderLayout());
 
@@ -196,9 +190,6 @@ public class MetadataPanel extends JPanel
         l3c.add(listFilter);
         l3.add(l3c, BorderLayout.CENTER);
         
-        setupFilter(propsFilter, emptyPropsFilter);
-        setupFilter(listFilter, emptyListFilter);
-
         propsFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
                 changedUpdate(e);
@@ -365,12 +356,11 @@ public class MetadataPanel extends JPanel
         props.removeAllItems();
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
-            String filterStr = propsFilter.getText();
-            filterStr = filterStr.isEmpty() || filterStr.equals(emptyPropsFilter) ? null : filterStr.toLowerCase();
+            String filterStr = propsFilter.getText().toLowerCase();
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
             for (String f : fields){
                 f = BasicProps.getLocalizedField(f);
-                if (filterStr == null || f.toLowerCase().contains(filterStr))
+                if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
             }
             props.setSelectedItem(lastPropSel);
@@ -393,7 +383,7 @@ public class MetadataPanel extends JPanel
 
     private ValueCount[] filter(ValueCount[] values) {
         String searchValue = listFilter.getText();
-        if (searchValue.isEmpty() || searchValue.equals(emptyListFilter)) {
+        if (searchValue.isEmpty()) {
             return values;
         }
         searchValue = searchValue.toLowerCase();
@@ -1122,8 +1112,6 @@ public class MetadataPanel extends JPanel
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();
-            clearTextFilter(listFilter, emptyListFilter);
-            clearTextFilter(propsFilter, emptyPropsFilter);
             clearFilter();
             props.removeAllItems();
             groups.setSelectedItem(null);
@@ -1136,30 +1124,7 @@ public class MetadataPanel extends JPanel
                 updateTabColor();
             }
         }
-    }
-
-    private void setupFilter(JTextField field, String emptyFilter) {
-        field.addFocusListener(new FocusListener() {
-            public void focusLost(FocusEvent e) {
-                String text = field.getText().trim();
-                if (text.isEmpty() || text.equals(emptyFilter)) {
-                    clearTextFilter(field, emptyFilter);
-                }
-            }
-
-            public void focusGained(FocusEvent e) {
-                String text = field.getText().trim();
-                if (text.equals(emptyFilter)) {
-                    field.setText("");
-                }
-                field.setForeground(Color.black);
-            }
-        });
-        clearTextFilter(field, emptyFilter);
-    }
-    
-    private void clearTextFilter(JTextField field, String emptyFilter) {
-        field.setText(emptyFilter);
-        field.setForeground(new Color(140, 140, 140));
+        listFilter.setText("");
+        propsFilter.setText("");
     }
 }
