@@ -132,13 +132,24 @@ public class MsgViewer extends HtmlViewer {
                 "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">");
 
         Index index = new Index();
+        boolean started = false;
         try {
             MAPIMessage msg = new MAPIMessage(msgFile);
+            started = true;
             parseMsg(msg, preview, attachs, index);
 
         } catch (Exception e) {
             LOGGER.warn("Failed to parse msg e-mail file. Error:{}", e.toString());
             e.printStackTrace();
+            if (!started) {
+                String bodyStart = "<body ";
+                int pos = preview.indexOf(bodyStart);
+                if (pos > 0)
+                    preview.insert(pos + bodyStart.length(), "class=\"ipedtheme\" ");
+            }
+            preview.append("<br><center>");
+            preview.append(Messages.getString("MsgViewer.OpenError"));
+            preview.append("</center>");
         }
 
         preview.append("</body>");
