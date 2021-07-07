@@ -129,7 +129,7 @@ public class MsgViewer extends HtmlViewer {
         preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
         preview.append("</head>");
         preview.append(
-                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">");
+                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">");
 
         Index index = new Index();
         try {
@@ -162,6 +162,8 @@ public class MsgViewer extends HtmlViewer {
         String cc[] = null;
         String bcc[] = null;
 
+        preview.append("<div class=\"ipedtheme\">");
+        
         ArrayList<Object[]> RecipientList = new ArrayList<Object[]>();
 
         try {
@@ -404,6 +406,7 @@ public class MsgViewer extends HtmlViewer {
         }
 
         preview.append("<hr>");
+        preview.append("</div>");        
 
         boolean noHtml = false;
         String corpo = "";
