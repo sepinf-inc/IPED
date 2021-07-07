@@ -519,6 +519,31 @@
         <glob pattern="*.imm"/>
     </mime-type>
     
+    <mime-type type="message/x-rfc822-mac">
+      <magic priority="50">
+        <match minShouldMatch="3">
+          <match value="\rDate:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rDelivered-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rFrom:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMIME-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReceived:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rRelay-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReturn-Path:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rStatus:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSubject:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rTo:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rUser-Agent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMessage-ID:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Mailer:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Originating-IP:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Original-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-DKIM:" type="stringignorecase" offset="0:4096"/>
+        </match>
+      </magic>
+      <sub-class-of type="message/rfc822"/>
+    </mime-type>
+    
     <mime-type type="application/x-unallocated">
     </mime-type>
     
