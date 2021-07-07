@@ -208,6 +208,11 @@ public class HtmlViewer extends Viewer {
                             doc = webEngine.getDocument();
 
                             if (doc != null) {
+                                String style = UiUtil.getUIHtmlStyle();
+                                if (style != null) {
+                                    webEngine.setUserStyleSheetLocation(style);
+                                }
+                                
                                 // System.out.println("Highlighting");
                                 currentHit = -1;
                                 totalHits = 0;
