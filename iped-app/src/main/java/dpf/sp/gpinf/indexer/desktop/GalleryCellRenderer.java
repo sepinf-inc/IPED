@@ -47,6 +47,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
     Color selColor;
     Color color;
     Color background;
+    Color warningColor;
     public static int labelH;
     static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
 
@@ -91,6 +92,10 @@ public class GalleryCellRenderer implements TableCellRenderer {
         if (selBorderColor == null)
             selBorderColor = new Color(20, 50, 80);
         selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
+        
+        warningColor = UIManager.getColor("Gallery.warning");
+        if (warningColor == null)
+            warningColor = Color.red;        
     }
 
     @Override
@@ -112,7 +117,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
             label.setText("..."); //$NON-NLS-1$
             label.setIcon(null);
         } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
-            label.setForeground(Color.red);
+            label.setForeground(warningColor);
             label.setText(unsupportedIconText);
             label.setIcon(null);
         } else {

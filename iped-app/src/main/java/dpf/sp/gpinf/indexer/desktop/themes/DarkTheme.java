@@ -26,6 +26,7 @@ public class DarkTheme extends Theme {
         put("Gallery.background", new Color(39, 43, 47));
         put("Gallery.cellSelectBorder", new Color(130, 160, 220));
         put("Gallery.cellBorder", new Color(53, 60, 67));
+        put("Gallery.warning", new Color(200, 100, 100));
         put("Table[Enabled+Selected].textForeground", Color.white);
         put("Viewer.background", new Color(29, 38, 47));
         put("Viewer.foreground", Color.white);
