@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
-import java.awt.Color;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,8 +17,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-
-import javax.swing.UIManager;
 
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.codec.DecodeMonitor;
@@ -55,7 +52,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.io.IStreamSource;
 
 public class EmailViewer extends HtmlViewer {
@@ -132,22 +128,6 @@ public class EmailViewer extends HtmlViewer {
         }
     }
 
-    public static String getHeaderThemeStyle() {
-        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
-        Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
-        if (background == null)
-            background = Color.WHITE;
-        if (foreground == null)
-            foreground = Color.BLACK;
-        StringBuilder sb = new StringBuilder();
-        sb.append("<style>.ipedtheme, a.ipedtheme:link, a.ipedtheme:visited {"); //$NON-NLS-1$
-        sb.append("background-color:").append(UiUtil.getHexRGB(background)).append(";"); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("color:").append(UiUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$ //$NON-NLS-2$
-        sb.append("} .mailheader {text-align:left;font-family:arial;font-size:14px;margin:0px;}");
-        sb.append("</style>");
-        return sb.toString();
-    }
-
     class MailContentHandler implements ContentHandler {
 
         private boolean strictParsing = false;
@@ -213,10 +193,9 @@ public class EmailViewer extends HtmlViewer {
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
             writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + bodyCharset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
-            writer.write(getHeaderThemeStyle());
             writer.write("</head>"); //$NON-NLS-1$
-            writer.write("<body style=\"margin:0px;\">"); //$NON-NLS-1$
-            writer.write("<div class=\"ipedtheme mailheader\">");
+            writer.write(
+                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">"); //$NON-NLS-1$
 
             String[][] names = {
                     { TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE.getName(),
@@ -272,8 +251,11 @@ public class EmailViewer extends HtmlViewer {
                     if (!firstAtt) {
                         text += ", "; //$NON-NLS-1$
                     }
-                    text += "<a class=\"ipedtheme\" href=\"\" onclick=\"app.open(" + i //$NON-NLS-1$ //$NON-NLS-2$
-                            + ")\">" + attName + "</a>"; //$NON-NLS-1$
+                    text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attName + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    // writer.write("<a href=\"" + attName + "\" >"+ attName
+                    // +"</a><br><hr>");
+                    // writer.write("<a href=\"\" onClick=\"alert('aaaaaa');\">"+values[i++]
+                    // + "</a>");
                     firstAtt = false;
                     count++;
                 }
@@ -285,9 +267,8 @@ public class EmailViewer extends HtmlViewer {
                 writer.write(text);
             }
 
-            writer.write("<hr>"); //$NON-NLS-1$
-            writer.write("</div>"); //$NON-NLS-1$
             writer.write("</body>"); //$NON-NLS-1$
+            writer.write("<hr>"); //$NON-NLS-1$
             writer.write("</html>"); //$NON-NLS-1$
             writer.flush();
         }
