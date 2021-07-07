@@ -40,6 +40,7 @@ import org.apache.james.mime4j.stream.BodyDescriptor;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.james.mime4j.util.CharsetUtil;
+import org.apache.poi.util.ReplacingInputStream;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -48,10 +49,12 @@ import org.apache.tika.parser.ParseContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LuceneSimpleHTMLEncoder;
+import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 
 public class EmailViewer extends HtmlViewer {
@@ -103,7 +106,12 @@ public class EmailViewer extends HtmlViewer {
 
         TikaInputStream tagged = null;
         try {
-            tagged = TikaInputStream.get(content.getStream());
+            InputStream stream = content.getStream();
+            if (content instanceof IItemBase
+                    && RFC822Parser.RFC822_MAC_MIME.equals(((IItemBase) content).getMediaType())) {
+                stream = new ReplacingInputStream(new ReplacingInputStream(stream, "\r\n", "\n"), "\r", "\n");
+            }
+            tagged = TikaInputStream.get(stream);
             parser.parse(tagged);
 
         } catch (Exception e) {
