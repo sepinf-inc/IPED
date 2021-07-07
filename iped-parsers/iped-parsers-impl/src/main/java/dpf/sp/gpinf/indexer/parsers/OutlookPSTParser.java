@@ -449,7 +449,7 @@ public class OutlookPSTParser extends AbstractParser {
             preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
             preview.append("</head>"); //$NON-NLS-1$
             preview.append(
-                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:1px;\">"); //$NON-NLS-1$
+                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
 
             preview.append("<div class=\"ipedtheme\">"); //$NON-NLS-1$
             preview.append("<b>" + Messages.getString("OutlookPSTParser.Subject") + ": " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -561,7 +561,7 @@ public class OutlookPSTParser extends AbstractParser {
     private void writeInternetHeaders(String headers, StringBuilder preview) {
         if (!headers.isEmpty()) {
             preview.append(
-                    "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:1px;\">"); //$NON-NLS-1$
+                    "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:0px;\">"); //$NON-NLS-1$
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
             String[] lines = headers.split("\n"); //$NON-NLS-1$
