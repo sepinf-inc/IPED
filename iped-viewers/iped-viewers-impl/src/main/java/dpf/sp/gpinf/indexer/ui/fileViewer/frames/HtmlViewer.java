@@ -139,6 +139,7 @@ public class HtmlViewer extends Viewer {
                             if (enableProxy) {
                                 ProxySever.get().enable();
                             }
+                            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
                             webEngine.load(file.toURI().toURL().toString());
 
                         } else {
@@ -208,11 +209,6 @@ public class HtmlViewer extends Viewer {
                             doc = webEngine.getDocument();
 
                             if (doc != null) {
-                                String style = UiUtil.getUIHtmlStyle();
-                                if (style != null) {
-                                    webEngine.setUserStyleSheetLocation(style);
-                                }
-                                
                                 // System.out.println("Highlighting");
                                 currentHit = -1;
                                 totalHits = 0;
