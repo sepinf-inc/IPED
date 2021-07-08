@@ -27,7 +27,6 @@ import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
@@ -74,7 +73,6 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     private Date indexStart;
     private Worker[] workers;
     private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
-    private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ProgressFrame.DateFormat")); //$NON-NLS-1$
     private boolean paused = false;
 
     private class RestrictedSizeLabel extends JLabel {
