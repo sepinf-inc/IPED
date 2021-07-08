@@ -53,6 +53,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 
 /**
@@ -72,7 +73,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     private WorkerProvider task;
     private Date indexStart;
     private Worker[] workers;
-    private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
+    private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("ProgressFrame.DateFormat")); //$NON-NLS-1$
     private boolean paused = false;
 
@@ -343,12 +344,12 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         msg.append(Messages.getString("ProgressFrame.VolumeFound")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
         long discoveredVol = Statistics.get().caseData.getDiscoveredVolume() / (1 << 20);
-        msg.append(NumberFormat.getNumberInstance().format(discoveredVol) + " MB"); //$NON-NLS-1$
+        msg.append(sizeFormat.format(discoveredVol) + " MB"); //$NON-NLS-1$
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.VolumeProcessed")); //$NON-NLS-1$
         msg.append("</td><td>"); //$NON-NLS-1$
-        msg.append(NumberFormat.getNumberInstance().format(Statistics.get().getVolume() / (1 << 20)) + " MB"); //$NON-NLS-1$
+        msg.append(sizeFormat.format(Statistics.get().getVolume() / (1 << 20)) + " MB"); //$NON-NLS-1$
         msg.append("</td></tr>"); //$NON-NLS-1$
         msg.append("<tr><td>"); //$NON-NLS-1$
         msg.append(Messages.getString("ProgressFrame.ItemsFound")); //$NON-NLS-1$
