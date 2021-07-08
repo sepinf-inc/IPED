@@ -143,7 +143,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
     public void updateLengthHeader(long mb) {
         for (int i = 0; i < columnNames.length; i++) {
-            if (IndexItem.LENGTH.equalsIgnoreCase(columnNames[i])) {
+            if (lengthField.equalsIgnoreCase(columnNames[i])) {
                 int col = App.get().resultsTable.convertColumnIndexToView(i);
                 if (col == -1)
                     return;
