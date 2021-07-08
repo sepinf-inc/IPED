@@ -1,4 +1,6 @@
-package dpf.sp.gpinf.indexer.parsers.external;
+package dpf.sp.gpinf.indexer.parsers.ufed;
+
+import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,25 +13,21 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import junit.framework.TestCase;
-
-public class ExternalParserTest extends TestCase {
+public class UFEDChatParserTest extends AbstractPkgTest {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
     @Test
-    public void testExternalParserParsing() throws IOException, SAXException, TikaException {
+    public void testUFEDChatParsing() throws IOException, SAXException, TikaException {
 
-        ExternalParser parser = new ExternalParser();
-        Metadata metadata = new Metadata();
+        UFEDChatParser parser = new UFEDChatParser();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_pdfResumes.pdf");
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
+        InputStream stream = getStream("test-files/whatsapp/msgstore.db");
+        parser.getSupportedTypes(ufedContext);
         try {
-            // parser.parse(stream, handler, metadata, context);
+            parser.parse(stream, handler, metadata, ufedContext);
             String hts = handler.toString();
             String mts = metadata.toString();
             System.out.println(hts + mts);
