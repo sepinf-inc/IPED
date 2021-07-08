@@ -66,6 +66,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -316,8 +317,9 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String toString() {
-            String startStr = NumberFormat.getNumberInstance().format(start);
-            String endStr = NumberFormat.getNumberInstance().format(end);
+            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+            String startStr = nf.format(start);
+            String endStr = nf.format(end);            
             return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
     }
