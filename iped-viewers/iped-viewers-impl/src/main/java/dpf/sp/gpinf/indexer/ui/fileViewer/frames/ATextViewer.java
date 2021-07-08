@@ -9,7 +9,6 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -18,6 +17,7 @@ import java.util.TreeMap;
 
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.tika.exception.TikaException;
@@ -29,7 +29,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ITextParser;
 
-public abstract class ATextViewer extends Viewer implements KeyListener, MouseListener {
+public abstract class ATextViewer extends Viewer implements KeyListener {
 
     public static Font font = new Font("Courier New", Font.PLAIN, 11); //$NON-NLS-1$
 
@@ -48,19 +48,32 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
         super(new GridLayout());
         appSearchParams = params;
         textViewerModel = new TextViewerModel();
-        textTable = new JTable(textViewerModel);
+        textTable = new JTable(textViewerModel) {
+            private static final long serialVersionUID = -5129153322350459095L;
+
+            @Override
+            public void updateUI() {
+                Color background = UIManager.getColor("Viewer.background");
+                if (background == null)
+                    background = Color.WHITE;
+                setBackground(background);
+
+                Color foreground = UIManager.getColor("Viewer.foreground");
+                setForeground(foreground);
+
+                super.updateUI();
+            }
+        };
         textTable.setFont(font);
         // textTable.getColumnModel().getColumn(0).setCellRenderer(new
         // ViewerCellRenderer());
         viewerScroll = new JScrollPane(textTable);
         textTable.setFillsViewportHeight(true);
         textTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        textTable.getColumnModel().getColumn(0).setPreferredWidth(2000);
+        textTable.getColumnModel().getColumn(0).setPreferredWidth(4096);
         textTable.setShowGrid(false);
-        textTable.setBackground(Color.WHITE);
         textTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         textTable.addKeyListener(this);
-        textTable.addMouseListener(this);
         this.getPanel().add(viewerScroll);
     }
 
@@ -269,35 +282,4 @@ public abstract class ATextViewer extends Viewer implements KeyListener, MouseLi
                 .getCellRect(appSearchParams.hitsTable.getSelectionModel().getLeadSelectionIndex(), 0, false));
 
     }
-
-    @Override
-    public void mouseClicked(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mouseEntered(MouseEvent arg0) {
-        // This kind of dependency should be avoided!
-        // WLAD appSearchParams.viewerControl.releaseLibreOfficeFocus();
-    }
-
-    @Override
-    public void mouseExited(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mousePressed(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void mouseReleased(MouseEvent arg0) {
-        // TODO Auto-generated method stub
-
-    }
-
 }

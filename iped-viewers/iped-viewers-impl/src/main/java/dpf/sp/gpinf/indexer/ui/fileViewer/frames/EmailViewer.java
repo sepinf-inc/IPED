@@ -195,8 +195,9 @@ public class EmailViewer extends HtmlViewer {
             writer.write("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + bodyCharset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
             writer.write("</head>"); //$NON-NLS-1$
             writer.write(
-                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">"); //$NON-NLS-1$
-
+                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
+            writer.write("<div class=\"ipedtheme\">");
+            
             String[][] names = {
                     { TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE.getName(),
                             Messages.getString("EmailViewer.Subject") }, //$NON-NLS-1$
@@ -267,8 +268,9 @@ public class EmailViewer extends HtmlViewer {
                 writer.write(text);
             }
 
-            writer.write("</body>"); //$NON-NLS-1$
             writer.write("<hr>"); //$NON-NLS-1$
+            writer.write("</div>"); //$NON-NLS-1$
+            writer.write("</body>"); //$NON-NLS-1$
             writer.write("</html>"); //$NON-NLS-1$
             writer.flush();
         }

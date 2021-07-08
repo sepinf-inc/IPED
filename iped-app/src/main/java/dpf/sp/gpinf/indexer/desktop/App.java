@@ -70,9 +70,6 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
-import javax.swing.UIDefaults;
-import javax.swing.UIManager;
-import javax.swing.UIManager.LookAndFeelInfo;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -111,6 +108,7 @@ import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
+import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
@@ -179,7 +177,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     BookmarksTreeListener bookmarksListener;
     TimelineListener timelineListener;
     HitsTable parentItemTable;
-    CControl dockingControl;
+    public CControl dockingControl;
     DefaultSingleCDockable categoriesTabDock, metadataTabDock, bookmarksTabDock, evidenceTabDock;
     List<DefaultSingleCDockable> rsTabDock = new ArrayList<DefaultSingleCDockable>();
 
@@ -409,25 +407,11 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         this.setIconImage(new ImageIcon(image).getImage());
         this.setVisible(true);
         ToolTipManager.sharedInstance().setInitialDelay(10);
-
+        
+        dockingControl = new CControl(this);
+        
         try {
-            boolean nimbusFound = false;
-            for (LookAndFeelInfo info : UIManager.getInstalledLookAndFeels()) {
-                if ("Nimbus".equals(info.getName())) { //$NON-NLS-1$
-                    UIManager.put("nimbusOrange", new Color(47, 92, 180)); //$NON-NLS-1$
-                    UIManager.put("nimbusRed", Color.BLUE); //$NON-NLS-1$
-                    UIManager.setLookAndFeel(info.getClassName());
-                    UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-                    defaults.put("ScrollBar.thumbHeight", 12); //$NON-NLS-1$
-                    // Workaround JDK-8134828
-                    defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30)); //$NON-NLS-1$
-                    nimbusFound = true;
-                    break;
-                }
-            }
-            if (!nimbusFound) {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            }
+            ThemeManager.getInstance().setLookAndFeel();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -502,7 +486,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         gallery.setFillsViewportHeight(true);
         gallery.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
         gallery.setShowGrid(false);
-        gallery.setBackground(Color.WHITE);
         gallery.setTableHeader(null);
         gallery.setIntercellSpacing(new Dimension(1, 1));
         gallery.setCellSelectionEnabled(true);
@@ -639,7 +622,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             // evidencePanel, null, 2); //$NON-NLS-1$
         }
 
-        dockingControl = new CControl(this);
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
         // This forces Eclipse theme to use rectangular tabs instead of curved ones, to
@@ -752,8 +734,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.addMouseListener(appletListener);
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
-        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
-        termo.getComponent(0).addMouseListener(appletListener);
+        updateUI(false);
 
         // Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
         gallery.repaint();
@@ -784,8 +765,22 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 return false;
             }
         });
-
+    }
+    
+    public void updateUI(boolean refresh) {
+        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
+        termo.getComponent(0).addMouseListener(appletListener);
         new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        
+        if (refresh) {
+            if (gallery != null) {
+                ((GalleryCellEditor) gallery.getDefaultEditor(GalleryCellRenderer.class)).updateUI();
+                ((GalleryCellRenderer) gallery.getDefaultRenderer(GalleryCellRenderer.class)).updateUI();
+                gallery.repaint();
+            }
+            if (viewerController != null)
+                viewerController.reload();
+        }
     }
 
     private void createAllDockables() {
