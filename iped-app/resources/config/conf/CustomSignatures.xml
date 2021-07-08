@@ -543,6 +543,8 @@
         </match>
       </magic>
       <sub-class-of type="message/rfc822"/>
+      <glob pattern="*.olk15MsgSource"/>
+      <glob pattern="*.olk15MsgAttachment"/>
     </mime-type>
     
     <mime-type type="application/x-unallocated">
