@@ -45,6 +45,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.html.HtmlMapper;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
 import dpf.sp.gpinf.indexer.config.ParsersConfig;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
+import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.EDBParser;
@@ -280,6 +282,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         fillMetadata(evidence);
 
         Parser parser = autoParser.getLeafParser(evidence.getMetadata());
+        if (parser instanceof EmptyParser) {
+            ((Item) evidence).setParsedTextCache(new TextCache());
+            return;
+        }
 
         String parserName = getParserName(parser, evidence.getMetadata().get(Metadata.CONTENT_TYPE));
         AtomicLong time = times.get(parserName);
@@ -725,7 +731,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
 
         if (parsingConfig.isEnableExternalParsing()) {
             ForkParser2.setEnabled(true);
-            ForkParser2.setPluginDir(Configuration.getInstance().getPluginDir());
+            PluginConfig pluginConfig = configurationManager.findObject(PluginConfig.class);
+            ForkParser2.setPluginDir(pluginConfig.getPluginFolder().getAbsolutePath());
             ForkParser2.setPoolSize(parsingConfig.getNumExternalParsers());
             ForkParser2.setServerMaxHeap(parsingConfig.getExternalParsingMaxMem());
             // do not open extra processes for OCR if ForkParser is enabled

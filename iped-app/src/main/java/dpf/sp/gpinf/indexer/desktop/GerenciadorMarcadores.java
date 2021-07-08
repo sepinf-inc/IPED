@@ -70,7 +70,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
-    JDialog dialog = new JDialog();
+    JDialog dialog = new JDialog(App.get());
     JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
     JRadioButton highlighted = new JRadioButton();
     JRadioButton checked = new JRadioButton();
@@ -144,7 +144,6 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
-        dialog.setAlwaysOnTop(true);
 
         group.add(highlighted);
         group.add(checked);

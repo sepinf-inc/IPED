@@ -301,8 +301,9 @@ public class LibpffPSTParser extends AbstractParser {
         preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
         preview.append("</head>"); //$NON-NLS-1$
         preview.append(
-                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">"); //$NON-NLS-1$
+                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
 
+        preview.append("<div class=\"ipedtheme\">"); //$NON-NLS-1$
         writeHeader(file, metadata, preview);
         writeRecipients(file, metadata, preview);
         writeOtherProps(file, metadata, preview);
@@ -318,6 +319,7 @@ public class LibpffPSTParser extends AbstractParser {
         }
 
         preview.append("<hr>"); //$NON-NLS-1$
+        preview.append("</div>\n"); //$NON-NLS-1$
 
         writeBody(file, metadata, preview);
 
@@ -544,9 +546,9 @@ public class LibpffPSTParser extends AbstractParser {
     private void writeInternetHeaders(File file, StringBuilder preview) {
         File internetHeaders = new File(file, "InternetHeaders.txt"); //$NON-NLS-1$
         if (internetHeaders.exists()) {
-            preview.append("<hr>"); //$NON-NLS-1$
             preview.append(
-                    "<div style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:5px;\">"); //$NON-NLS-1$
+                    "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:0px;\">"); //$NON-NLS-1$
+            preview.append("<hr>"); //$NON-NLS-1$
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
             List<String> lines = readAllLines(internetHeaders);
             for (String line : lines) {

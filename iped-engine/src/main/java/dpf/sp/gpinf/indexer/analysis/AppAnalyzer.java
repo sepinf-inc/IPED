@@ -18,12 +18,12 @@
  */
 package dpf.sp.gpinf.indexer.analysis;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
@@ -44,11 +44,14 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
+
+        analyzerPerField.put(IndexItem.CREATED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.MODIFIED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.ACCESSED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.RECORDDATE, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordLowerCaseAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
@@ -67,7 +70,15 @@ public class AppAnalyzer {
         defaultAnalyzer.setConvertCharsToAscii(indexConfig.isConvertCharsToAscii());
         defaultAnalyzer.setConvertCharsToLower(indexConfig.isConvertCharsToLowerCase());
         defaultAnalyzer.setExtraCharsToIndex(indexConfig.getExtraCharsToIndex());
-        return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
+
+        return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
+            protected Analyzer getWrappedAnalyzer(String fieldName) {
+                if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
+                    return new KeywordLowerCaseAnalyzer();
+                }
+                return super.getWrappedAnalyzer(fieldName);
+            }
+        };
     }
 
 }

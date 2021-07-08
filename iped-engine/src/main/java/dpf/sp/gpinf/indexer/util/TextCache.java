@@ -1,15 +1,18 @@
 package dpf.sp.gpinf.indexer.util;
 
+import java.io.BufferedWriter;
 import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
-import java.nio.file.StandardOpenOption;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +47,7 @@ public class TextCache implements Closeable {
     public void write(char[] buf, int off, int len) throws IOException {
         if (tmp == null && sb != null && sb.length() + len > MAX_MEMORY_CHARS && diskCacheEnabled) {
             tmp = File.createTempFile("text", null);
-            writer = Files.newBufferedWriter(tmp.toPath(), StandardOpenOption.APPEND);
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(tmp), StandardCharsets.UTF_8));
             writer.write(sb.toString());
             sb = null;
         }

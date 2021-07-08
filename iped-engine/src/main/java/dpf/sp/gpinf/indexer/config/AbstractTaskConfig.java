@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 
+import dpf.sp.gpinf.indexer.Configuration;
 import macee.core.Configurable;
 import macee.core.EnabledInterface;
 
@@ -26,15 +27,17 @@ public abstract class AbstractTaskConfig<T> implements Configurable<T>, EnabledI
         return new Filter<Path>() {
             @Override
             public boolean accept(Path entry) throws IOException {
-                return entry.endsWith(getTaskConfigFileName()) || entry.endsWith(IPEDConfig.CONFIG_FILE);
+                return entry.endsWith(getTaskConfigFileName()) || entry.endsWith(Configuration.CONFIG_FILE);
             }
         };
     }
 
     @Override
     public void processConfig(Path resource) throws IOException {
-        if (IPEDConfig.CONFIG_FILE.equals(resource.getFileName().toString())) {
-            enabledProp = new EnableTaskProperty(getTaskEnableProperty());
+        if (Configuration.CONFIG_FILE.equals(resource.getFileName().toString())) {
+            if (enabledProp == null) {
+                enabledProp = new EnableTaskProperty(getTaskEnableProperty());
+            }
             enabledProp.processConfig(resource);
         } else {
             processTaskConfig(resource);
