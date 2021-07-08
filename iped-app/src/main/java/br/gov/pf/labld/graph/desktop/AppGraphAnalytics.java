@@ -25,6 +25,7 @@ import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 import javax.swing.SwingUtilities;
 import javax.swing.SwingWorker;
+import javax.swing.UIManager;
 
 import org.kharon.Edge;
 import org.kharon.EdgeListener;
@@ -102,19 +103,50 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
         init();
     }
 
+    private void updateThemeColors() {
+        Color background = UIManager.getColor("Viewer.background");
+        if (background == null)
+            background = Color.WHITE;
+        Color foreground = UIManager.getColor("Viewer.foreground");
+        if (foreground == null)
+            foreground = Color.BLACK;
+        Color defaultEdgeColor = UIManager.getColor("Graph.defaultEdge");
+        if (defaultEdgeColor == null)
+            defaultEdgeColor = Color.BLUE;
+        Color defaultNodeColor = UIManager.getColor("Graph.defaultNode");
+        if (defaultNodeColor == null)
+            defaultNodeColor = Color.BLACK;
+        Color selectedNodeBoxColor = UIManager.getColor("Graph.selectedNodeBox");
+        if (selectedNodeBoxColor == null)
+            selectedNodeBoxColor = Color.BLUE;
+        Color selectionBoxColor = UIManager.getColor("Graph.selectionBox");
+        if (selectionBoxColor == null)
+            selectionBoxColor = Color.BLUE;
+        this.graphPane.setBackground(background);
+        this.graphPane.setForeground(foreground);
+        this.graph.getSettings().setDefaultEdgeColor(defaultEdgeColor);
+        this.graph.getSettings().setDefaultLabelColor(defaultNodeColor);
+        this.graph.getSettings().setDefaultNodeColor(defaultNodeColor);
+        this.graph.getSettings().setDefaultSelectionColor(selectedNodeBoxColor);
+        this.graph.getSettings().setSelectionColor(selectionBoxColor);
+    }
+
     private void init() {
         this.graph = new Graph();
-        this.graph.getSettings().setDefaultEdgeColor(Color.BLUE);
-        this.graph.getSettings().setDefaultLabelColor(Color.BLACK);
-        this.graph.getSettings().setDefaultNodeColor(Color.BLACK);
 
-        this.graphPane = new GraphPane(graph);
+        this.graphPane = new GraphPane(graph) {
+            @Override
+            public void updateUI() {
+                updateThemeColors();
+                super.updateUI();
+            }
+        };
 
         this.graphPane.addNodeListener(new AppNodeListener());
         this.graphPane.addStageListener(new AppStageListerner());
         this.graphPane.addEdgeListener(new AppEdgeListener());
         this.graphPane.setHistoryEnabled(true);
-        this.graphPane.setBackground(Color.WHITE);
+        this.graphPane.updateUI();
 
         Renderers renderers = this.graphPane.getRenderers();
         renderers.registerNodeRenderer(GraphConfiguration.PERSON_LABEL, new PersonNodeRenderer());

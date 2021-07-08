@@ -106,6 +106,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.io.IStreamSource;
@@ -119,7 +120,7 @@ import iped3.io.SeekableInputStream;
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
     private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
-            + File.separator + "default.hvp";
+            + File.separator + "iped.hvp";
 
     private CodeArea codeArea;
     private FilterComboBox charsetComboBox;
@@ -190,7 +191,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     FilterComboBox fcbCharset;
 
     private HVPSettings defaultSettings = new HVPSettings();
-    boolean defaultSettingsFileExists = false;
 
     private ActionListener menuListener;
 
@@ -206,8 +206,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     private int max_hits = 1;
     private int max_terms = 10000;
 
-    Color labelColor = new Color(214, 217, 223);
-
     public interface HexSearcher {
 
         abstract void doSearch(CodeArea codeArea, HighlightCodeAreaPainter painter, Hits hits, SeekableInputStream data,
@@ -221,20 +219,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
         this.hexSearcher = hexSearcher;
 
-        posicao = new JTextField();
-        posicao.setHorizontalAlignment(SwingConstants.RIGHT);
-        posicao.setBackground(labelColor);
-        posicao.setEditable(false);
-
-        selecao_inicial = new JTextField();
-        selecao_inicial.setEditable(false);
-        selecao_inicial.setBackground(labelColor);
-        selecao_inicial.setHorizontalAlignment(SwingConstants.RIGHT);
-
-        selecao_final = new JTextField();
-        selecao_final.setBackground(labelColor);
-        selecao_final.setHorizontalAlignment(SwingConstants.RIGHT);
-        selecao_final.setEditable(false);
+        posicao = new CustomTextField();
+        selecao_inicial = new CustomTextField();
+        selecao_final = new CustomTextField();
 
         codeArea = new CodeArea();
         codeArea.setHandleClipboard(true);
@@ -425,26 +412,63 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         createMenuAndDialogs();
 
         // Load Defaults
-        defaultSettings = null;
         File defaultSettingsFile = new File(defaultSettingsPath);
-        if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile()) {
-            if (defaultSettingsFile.canRead()) {
-                defaultSettings = HVPSettings.loadObject(defaultSettingsPath);
-                if (defaultSettings != null) {
-                    defaultSettingsFileExists = true;
-                } else {// something is wrong, make default hard coded
-                    defaultSettings = new HVPSettings();
-                }
-                loadSettings(defaultSettings);
-            }
-        } else { // there is no default.hvp, make new one
-            defaultSettings = new HVPSettings();
-            defaultSettingsFileExists = HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
-            loadSettings(defaultSettings);
+        if (defaultSettingsFile != null && defaultSettingsFile.exists() && defaultSettingsFile.isFile() && defaultSettingsFile.canRead()) {
+            HVPSettings storedDefaultSettings = HVPSettings.loadObject(defaultSettingsPath);
+            if (storedDefaultSettings != null)
+                defaultSettings = storedDefaultSettings;
         }
+        loadSettings(defaultSettings);
 
         codeArea.repaint();
 
+        //Auxiliary label, just to capture updateUI()
+        bottomPanel2.add(new JLabel("") {
+            private static final long serialVersionUID = -2163271443358544934L;
+
+            @Override
+            public void updateUI() {
+                super.updateUI();
+
+                // Check if user is still using initial default settings
+                File defaultSettingsFile = new File(defaultSettingsPath);
+                if (defaultSettingsFile != null && defaultSettingsFile.exists())
+                    return;
+
+                // If it is the case, update settings
+                defaultSettings = new HVPSettings();
+                Color background = UIManager.getColor("Viewer.background");
+                Color foreground = UIManager.getColor("Viewer.foreground");
+                if (background != null && foreground != null) {
+                    defaultSettings.ColorFontMain = foreground;
+                    defaultSettings.ColorFontAlt = foreground;
+                    defaultSettings.ColorBackgroundMain = UiUtil.mix(background, Color.gray, 0.9);
+                    defaultSettings.ColorBackgroundAlt = UiUtil.mix(background, Color.gray, 0.8);
+                    defaultSettings.ColorCursor = foreground;
+                    defaultSettings.ColorHeaderText = UiUtil.mix(foreground, Color.gray, 0.4);
+                    defaultSettings.ColorHeaderBackground = UiUtil.mix(background, Color.gray, 0.4);
+                }
+                loadSettings(defaultSettings);
+                codeArea.repaint();
+            }
+        });
+    }
+    
+    static class CustomTextField extends JTextField {
+        private static final long serialVersionUID = 8242772209066411493L;
+
+        public CustomTextField() {
+            setHorizontalAlignment(SwingConstants.RIGHT);
+            setEditable(false);
+        }
+        
+        @Override
+        public void updateUI() {
+            super.updateUI();
+            Color c = UIManager.getColor("Panel.background");
+            if (c != null)
+                setBackground(new Color(c.getRGB()));
+        }
     }
 
     @Override
@@ -1276,10 +1300,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 saveSettings(defaultSettings);
 
                 // Try persist the defaults on disc
-                if (defaultSettingsFileExists) {
-                    HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
-                }
-
+                HVPSettings.saveObject(defaultSettingsPath, defaultSettings);
             }
         });
 
@@ -3118,8 +3139,8 @@ class HVPSettings implements Serializable {
 
     public Color ColorFontMain = Color.BLACK;
     public Color ColorFontAlt = Color.BLACK;
-    public Color ColorBackgroundMain = new Color(214, 217, 223);
-    public Color ColorBackgroundAlt = new Color(198, 201, 207);
+    public Color ColorBackgroundMain = new Color(246, 248, 253);
+    public Color ColorBackgroundAlt = new Color(230, 232, 237);
     public Color ColorSelectionMainText = Color.WHITE;
     public Color ColorSelectionMainBackground = Color.BLUE;
     public Color ColorSelectionMirrorText = Color.WHITE;
@@ -3130,8 +3151,8 @@ class HVPSettings implements Serializable {
     public Color ColorCurrentMatchBackground = Color.GREEN;
     public Color ColorCursor = Color.BLACK;
 
-    public Color ColorHeaderText = Color.BLACK;
-    public Color ColorHeaderBackground = new Color(198, 201, 207);
+    public Color ColorHeaderText = new Color(28, 31, 37);
+    public Color ColorHeaderBackground = new Color(188, 191, 197);
 
     public static boolean saveObject(String path, HVPSettings obj) {
 
@@ -3139,15 +3160,18 @@ class HVPSettings implements Serializable {
             return false;
         }
 
+        ObjectOutputStream out = null;
         try {
-            FileOutputStream fileOut = new FileOutputStream(path);
-            ObjectOutputStream out = new ObjectOutputStream(fileOut);
+            File file = new File(path);
+            if (file != null && file.getParentFile() != null && !file.getParentFile().exists())
+                file.getParentFile().mkdirs();
+            out = new ObjectOutputStream(new FileOutputStream(file));
             out.writeObject(obj);
-            out.close();
-            fileOut.close();
         } catch (Exception ex) {
             LOGGER.warn("Failed to save HexviewerPlus settings file. Error:{}", ex.toString());
             return false;
+        } finally {
+            IOUtil.closeQuietly(out);
         }
         return true;
 
@@ -3156,15 +3180,15 @@ class HVPSettings implements Serializable {
     public static HVPSettings loadObject(String path) {
 
         HVPSettings obj = null;
+        ObjectInputStream in = null;
         try {
-            FileInputStream fileIn = new FileInputStream(path);
-            ObjectInputStream in = new ObjectInputStream(fileIn);
+            in = new ObjectInputStream(new FileInputStream(path));
             obj = (HVPSettings) in.readObject();
-            in.close();
-            fileIn.close();
         } catch (Exception ex) {
             LOGGER.warn("Failed to load HexviewerPlus settings file. Corrupted?. Error:{}", ex.toString());
             return null;
+        } finally {
+            IOUtil.closeQuietly(in);
         }
         return obj;
 

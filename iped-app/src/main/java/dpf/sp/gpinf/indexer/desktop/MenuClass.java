@@ -19,12 +19,15 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.util.List;
 
 import javax.swing.JComponent;
 import javax.swing.JMenu;
 import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
+import javax.swing.JRadioButtonMenuItem;
 import javax.swing.KeyStroke;
 
 import org.apache.tika.metadata.Metadata;
@@ -32,6 +35,8 @@ import org.apache.tika.metadata.Metadata;
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.desktop.themes.Theme;
+import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
 import iped3.util.MediaTypes;
@@ -192,7 +197,22 @@ public class MenuClass extends JPopupMenu {
         disposicao = new JMenuItem(Messages.getString("MenuClass.ChangeLayout")); //$NON-NLS-1$
         disposicao.addActionListener(menuListener);
         this.add(disposicao);
-
+        
+        List<Theme> themes = ThemeManager.getInstance().getThemes();
+        if (themes.size() > 1) {
+            submenu = new JMenu(Messages.getString("MenuClass.ColorTheme")); //$NON-NLS-1$
+            this.add(submenu);
+            for (Theme theme : themes) {
+                JRadioButtonMenuItem themeItem = new JRadioButtonMenuItem(theme.getName(), theme.equals(ThemeManager.getInstance().getCurrentTheme()));
+                submenu.add(themeItem);
+                themeItem.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        ThemeManager.getInstance().setTheme(theme);
+                    }
+                });
+            }
+        }
+        
         copiarPreview = new JMenuItem(Messages.getString("MenuClass.CopyViewerImage")); //$NON-NLS-1$
         copiarPreview.addActionListener(menuListener);
         this.add(copiarPreview);
