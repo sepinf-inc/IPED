@@ -41,6 +41,7 @@ import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.james.mime4j.util.CharsetUtil;
 import org.apache.poi.util.ReplacingInputStream;
+import org.apache.tika.Tika;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
@@ -109,6 +110,7 @@ public class EmailViewer extends HtmlViewer {
             InputStream stream = content.getStream();
             if (content instanceof IItemBase
                     && RFC822Parser.RFC822_MAC_MIME.equals(((IItemBase) content).getMediaType())) {
+                mch.isOutlookMacMail = true;
                 stream = new ReplacingInputStream(new ReplacingInputStream(stream, "\r\n", "\n"), "\r", "\n");
             }
             tagged = TikaInputStream.get(stream);
@@ -154,6 +156,8 @@ public class EmailViewer extends HtmlViewer {
         private ArrayList<Object[]> attachs = new ArrayList<Object[]>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
+
+        private boolean isOutlookMacMail = false;
 
         MailContentHandler(int num, Metadata metadata, ParseContext context, boolean strictParsing) {
             this.metadata = metadata;
@@ -290,6 +294,12 @@ public class EmailViewer extends HtmlViewer {
             String charset = body.getCharset();
             String type = body.getMimeType();
 
+            if (isOutlookMacMail) {
+                System.out.println("Tika detection");
+                is = TikaInputStream.get(is);
+                type = new Tika().detect(is);
+            }
+
             try {
                 Charset.forName(charset);
             } catch (Exception e) {
@@ -335,7 +345,7 @@ public class EmailViewer extends HtmlViewer {
 
             outStream.close();
 
-            Object[] obj = { attach, body.getMimeType(),
+            Object[] obj = { attach, type,
                     (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName) }; //$NON-NLS-1$
 
             if (isAttach) {
@@ -392,6 +402,8 @@ public class EmailViewer extends HtmlViewer {
                     File attFile = (File) obj[0];
                     String type = (String) obj[1];
                     String attName = (String) obj[2];
+
+                    System.out.println(type);
 
                     if (type.startsWith("image")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
