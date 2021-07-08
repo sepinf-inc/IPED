@@ -295,7 +295,6 @@ public class EmailViewer extends HtmlViewer {
             String type = body.getMimeType();
 
             if (isOutlookMacMail) {
-                System.out.println("Tika detection");
                 is = TikaInputStream.get(is);
                 type = new Tika().detect(is);
             }
@@ -402,8 +401,6 @@ public class EmailViewer extends HtmlViewer {
                     File attFile = (File) obj[0];
                     String type = (String) obj[1];
                     String attName = (String) obj[2];
-
-                    System.out.println(type);
 
                     if (type.startsWith("image")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
