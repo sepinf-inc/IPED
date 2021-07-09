@@ -78,6 +78,7 @@ public class MetadataUtil {
         return singleValueKeys;
     }
 
+    // if this map is updated, new prefixes should be put in removePrefix(key) see #522
     private static Map<String, String> getRenameMap() {
         Map<String, String> rename = new HashMap<String, String>();
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MAKE.getName(), ExtraProperties.IMAGE_META_PREFIX + "Make");
