@@ -14,7 +14,8 @@ from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from iped3.util import ExtraProperties
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
 from dpf.sp.gpinf.indexer.util import EmptyInputStream
-from dpf.mg.udi.gpinf.whatsappextractor import Util 
+from dpf.mg.udi.gpinf.whatsappextractor import Util
+from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser 
 import os
 import sys
 import re
@@ -110,7 +111,6 @@ class PythonParserJabber:
 
 
             soup = BeautifulSoup(open(tmpFilePath,'r'), "html.parser")
-            # soup = BeautifulSoup(open('r'), "html.parser")
             body = soup.find("body")
             title =soup.find('title').text
             temp_to_date = title.split(" on ",1)[0]
@@ -242,7 +242,7 @@ class PythonParserJabber:
                 # xhtml.characters(" - ".join([iped_date, iped_sender, iped_text]))
                 new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
 
-            #GERAR HTML NO FORMATO DO WHATSAPP
+            # generate html in whatsapp format
             formatted_msgs = []
             sorted_msgs_list = sorted(new_messages_list, key=lambda k: k['date'])
             for res in sorted_msgs_list:
@@ -261,16 +261,16 @@ class PythonParserJabber:
             formatted_text = "\n".join(formatted_msgs)
             util = Util()
             html_chat_template = util.readResourceAsString("wachat-html-template.txt")
-            # css_template = util.readResourceAsString("whatsapp.css")
-            # js_template = util.readResourceAsString("whatsapp.js")
-            # avatar = util.getImageResourceAsEmbedded("img/avatar.png")
-            # favicon = util.getImageResourceAsEmbedded("img/favicon.ico")
+            css_template = util.readResourceAsString("css/whatsapp.css") 
+            js_template = util.readResourceAsString("js/whatsapp.js")
+            avatar = util.getImageResourceAsEmbedded("img/avatar.png")
+            favicon = util.getImageResourceAsEmbedded("img/favicon.ico")
 
 
             final_html = html_chat_template.replace("${messages}", formatted_text).replace("${title}",title)\
-                            # .replace("${css}",css_template).replace("${javascript}",js_template)\
-                            # .replace("${favicon}",favicon).replace("${avatar}",avatar)\
-                            # .replace("${id}","0")
+                            .replace("${css}",css_template).replace("${javascript}",js_template)\
+                            .replace("${favicon}",favicon).replace("${avatar}",avatar)\
+                            .replace("${id}",os.path.split(tmpFilePath)[1])
 
 
         except Exception as exc:
@@ -281,8 +281,8 @@ class PythonParserJabber:
             error_function = os.path.split(exc_tb.tb_frame.f_code.co_name)[1]
             error_raised = """ERROR: %s LINE: %s FUNCTION: %s File %s, """\
                         % (exc_obj, error_line, error_function, fname)
-            error_msg = "Error during parsing of file %s. %s"%(tmpFilePath, error_raised)
-            print(error_msg)
+
+            print("Error during parsing of file %s"%tmpFilePath,error_raised)
             #<class 'TypeError'>: exceptions must derive from BaseException
             # raise TikaException(error_msg)
 
