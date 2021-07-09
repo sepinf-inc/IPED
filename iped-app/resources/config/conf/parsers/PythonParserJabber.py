@@ -14,14 +14,16 @@ from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from iped3.util import ExtraProperties
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
 from dpf.sp.gpinf.indexer.util import EmptyInputStream
-from dpf.mg.udi.gpinf.whatsappextractor import Util
+from dpf.mg.udi.gpinf.whatsappextractor import Util 
 import os
+import sys
 import re
 import sys
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
 
 class PythonParserJabber:
+
     '''
     Example of a python parser. This class must be thread safe.
     One way of achieving this is creating an immutable class i.e. do not create instance attributes.
@@ -32,18 +34,20 @@ class PythonParserJabber:
         Returns:
             list of supported media types handled by this parser
         '''
-        return ["application/xxxxxx"]
-    
-    
-    # def getSupportedTypesQueueOrder(self):
-        '''
-        This method is optional. You only need to implement it if your parser
-        needs to access other case items different from the item being processed.
-        E.G. you want to access case multimedia files while processing a chat database
-        to insert the attachments in the chats being decoded. To work, you need to
-        process the database mediaType after the attachments, in a later queue,
-        so the attachments will be already indexed and ready to be searched for.
-        Default queue number is 0 (first queue) if not defined for a mediaType.
+        return ["application/x-jabber-chat"]
+
+        # return ["application/xxxxxx"]
+
+
+# def getSupportedTypesQueueOrder(self):
+    '''
+    This method is optional. You only need to implement it if your parser
+    needs to access other case items different from the item being processed.
+    E.G. you want to access case multimedia files while processing a chat database
+    to insert the attachments in the chats being decoded. To work, you need to
+    process the database mediaType after the attachments, in a later queue,
+    so the attachments will be already indexed and ready to be searched for.
+    Default queue number is 0 (first queue) if not defined for a mediaType.
         
         Returns:
             dictionary mapping mediaTypes to a queue number
@@ -56,7 +60,7 @@ class PythonParserJabber:
          Parses each item found in case of the supported types.
          
          Parameters:
-            stream: java.io.InputStream
+            stream: java.io.InputStreareadResourceAsStringm
                 the raw (binary) content of the file
             handler: org.xml.sax.ContentHandler
                 the content handler where you should output parsed content
@@ -92,7 +96,7 @@ class PythonParserJabber:
         try:
             '''
             Read file contents from the stream using the java.io.InputStream API.
-            Do not hold too much data in memory. If you need, you can spool to file
+            Do not hold too much data in memory. If you neUtil.readResourceAsString("wachat-html-template.txt")ed, you can spool to file
             using the following code to create a temp file with the contents:
             
             from org.apache.tika.io import TikaInputStream
@@ -105,7 +109,8 @@ class PythonParserJabber:
             tmpFilePath = tis.getFile().getAbsolutePath()
 
 
-            soup = BeautifulSoup(open('r'), "html.parser")
+            soup = BeautifulSoup(open(tmpFilePath,'r'), "html.parser")
+            # soup = BeautifulSoup(open('r'), "html.parser")
             body = soup.find("body")
             title =soup.find('title').text
             temp_to_date = title.split(" on ",1)[0]
@@ -210,7 +215,7 @@ class PythonParserJabber:
                 other_participant = [x for x in participants if x not in [y.split("/",1)[0] for y in participant_nickname_dict.values()]][-1]
                 participant_nickname_dict[other_participant] = other_participant
             
-            new_messages_list=[]            
+            new_messages_list = []            
             for m in messages_list:
                 iped_date = m["message_date"]
                 iped_sender = participant_nickname_dict[m["message_sender"]]
@@ -254,28 +259,35 @@ class PythonParserJabber:
 
 
             formatted_text = "\n".join(formatted_msgs)
-            html_chat_template = Util.readResourceAsString("wachat-html-template.txt")
-            css_template = Util.readResourceAsString("whatsapp.css")
-            js_template = Util.readResourceAsString("whatsapp.js")
-            avatar = Util.getImageResourceAsEmbedded("img/avatar.png")
-            favicon = Util.getImageResourceAsEmbedded("img/favicon.ico")
+            util = Util()
+            html_chat_template = util.readResourceAsString("wachat-html-template.txt")
+            # css_template = util.readResourceAsString("whatsapp.css")
+            # js_template = util.readResourceAsString("whatsapp.js")
+            # avatar = util.getImageResourceAsEmbedded("img/avatar.png")
+            # favicon = util.getImageResourceAsEmbedded("img/favicon.ico")
 
 
             final_html = html_chat_template.replace("${messages}", formatted_text).replace("${title}",title)\
-                            .replace("${css}",css_template).replace("${javascript}",js_template)\
-                            .replace("${favicon}",favicon).replace("${avatar}",avatar)\
-                            .replace("${id}","0")
+                            # .replace("${css}",css_template).replace("${javascript}",js_template)\
+                            # .replace("${favicon}",favicon).replace("${avatar}",avatar)\
+                            # .replace("${id}","0")
 
 
         except Exception as exc:
-            raise TikaException("Problema no arquivo %s"%tmpFilePath)
-            # error_msg = self.create_error_msg(sys.exc_info())
+            _info = sys.exc_info()
+            exc_type, exc_obj, exc_tb = _info[0], _info[1], _info[2]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            error_line = exc_tb.tb_lineno
+            error_function = os.path.split(exc_tb.tb_frame.f_code.co_name)[1]
+            error_raised = """ERROR: %s LINE: %s FUNCTION: %s File %s, """\
+                        % (exc_obj, error_line, error_function, fname)
+            error_msg = "Error during parsing of file %s. %s"%(tmpFilePath, error_raised)
+            print(error_msg)
+            #<class 'TypeError'>: exceptions must derive from BaseException
             # raise TikaException(error_msg)
 
 
         finally:
-            # xhtml.characters("END TESTE AW")
-            # xhtml.endElement("p")
 
             xhtml.endDocument()
 #            if tmpResources is used above you must close itEmbeddedDocumentExtractor.class
