@@ -183,6 +183,7 @@ public class ReportGenerator {
             img.setAtribute("title", "Video");
             img.setAtribute("data-src1", reportSource);
             img.setAtribute("data-src2", originalSource);
+            img.setAtribute("class", img.getAtribute("class") + " iped-video");
 
             link.getInner().add(img);
 
@@ -399,24 +400,8 @@ public class ReportGenerator {
                 + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "<style>\n" + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
-                + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>\n" //$NON-NLS-3$
-                + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
-                + "css.type = \"text/css\";\n" //$NON-NLS-1$
-                + "var inHtml = \"\";\n" //$NON-NLS-1$
-                + "if (navigator.userAgent.search(\"JavaFX\") >= 0) {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: none; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: inline-block; }\";\n" //$NON-NLS-1$
-                + "} else {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: inline-block; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: none; }\";\n" //$NON-NLS-1$
-                + "}\n" //$NON-NLS-1$
-                + "css.innerHTML = inHtml;\n" //$NON-NLS-1$
-                + "document.head.appendChild(css);\n" //$NON-NLS-1$
-                + "function openIfExists(url2, url1){\r\n"
-                + "    if (navigator.userAgent.search(\"JavaFX\") >= 0) return;\r\n" + "    var img1 = new Image();\r\n"
-                + "    img1.onload = () => window.location = url1;\r\n"
-                + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
-                + "</script>\n" //$NON-NLS-1$
+                + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>"
+                + Util.readResourceAsString("js/media.js") + "</script>"
                 + dpf.mg.udi.gpinf.vcardparser.VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
                 + "<style>.check {vertical-align: top;}</style>" + "<body style='background-image:url(" //$NON-NLS-2$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg")
