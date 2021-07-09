@@ -1,6 +1,12 @@
 # List of known Metadata types
 # For metadata not listed below, will be done a best effort to guess its type (used for sorting and range queries)
 
+id = java.lang.Integer
+parentId = java.lang.Integer
+subitemId = java.lang.Integer
+sleuthId = java.lang.Integer
+ftkId = java.lang.Integer
+size = java.lang.Long
 metaAddress = java.lang.String
 MFTSequence = java.lang.String
 fileSystemId = java.lang.String
