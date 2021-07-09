@@ -188,6 +188,7 @@ public class RegexTask extends AbstractTask {
     }
 
     private void writeCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) throws IOException {
+        cacheFile.getParentFile().mkdirs();
         try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
                 ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
