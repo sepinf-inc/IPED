@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -39,6 +40,7 @@ import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IIPEDSource;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -315,7 +317,7 @@ public class QueryBuilder implements IQueryBuilder {
 
         HashMap<String, PointsConfig> pointsConfigMap = new HashMap<>();
 
-        DecimalFormat nf = new DecimalFormat();
+        NumberFormat nf = LocalizedFormat.getNumberInstance();
         PointsConfig configLong = new PointsConfig(nf, Long.class);
         PointsConfig configInt = new PointsConfig(nf, Integer.class);
         PointsConfig configFloat = new PointsConfig(nf, Float.class);
