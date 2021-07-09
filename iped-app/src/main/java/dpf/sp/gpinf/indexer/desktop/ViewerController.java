@@ -23,6 +23,7 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
@@ -79,6 +80,11 @@ public class ViewerController {
             @Override
             public boolean isFixed() {
                 return isFixed;
+            }
+
+            @Override
+            public boolean isNumeric(String field) {
+                return IndexItem.isNumeric(field);
             }
         });
         viewers.add(viewersRepository = new ViewersRepository());

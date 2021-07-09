@@ -7,6 +7,7 @@ subitemId = java.lang.Integer
 sleuthId = java.lang.Integer
 ftkId = java.lang.Integer
 size = java.lang.Long
+textSize = java.lang.Long
 metaAddress = java.lang.String
 MFTSequence = java.lang.String
 fileSystemId = java.lang.String
