@@ -32,14 +32,41 @@ public class MetadataUtil {
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
 
-    private static Map<String, String> metaCaseMap = new HashMap<String, String>();
-
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
 
     private static final Map<String, String> renameMap = getRenameMap();
 
     private static final Set<String> singleValueKeys = getSingleValKeys();
 
+    private static Map<String, String> metaCaseMap = getMetaCaseMap();
+
+    private static Map<String, String> getMetaCaseMap() {
+        Map<String, String> metaCaseMap = new HashMap<String, String>();
+        for(String key : renameMap.values()) {
+            key = removePrefix(key);
+            metaCaseMap.put(key.toLowerCase(), key);
+        }
+        return metaCaseMap; 
+    }
+    
+    private static String removePrefix(String key) {
+        if (key.startsWith(ExtraProperties.IMAGE_META_PREFIX))
+            return key.substring(ExtraProperties.IMAGE_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.VIDEO_META_PREFIX))
+            return key.substring(ExtraProperties.VIDEO_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.AUDIO_META_PREFIX))
+            return key.substring(ExtraProperties.AUDIO_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.PDF_META_PREFIX))
+            return key.substring(ExtraProperties.PDF_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.HTML_META_PREFIX))
+            return key.substring(ExtraProperties.HTML_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.OFFICE_META_PREFIX))
+            return key.substring(ExtraProperties.OFFICE_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.GENERIC_META_PREFIX))
+            return key.substring(ExtraProperties.GENERIC_META_PREFIX.length());
+        return key;
+    }
+    
     private static Set<String> getSingleValKeys() {
         Set<String> singleValueKeys = new HashSet<>();
         singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Make");
