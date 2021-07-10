@@ -323,13 +323,6 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     // e.printStackTrace();
                 }
 
-            // TODO remove this because #644 gave a better solution
-            if (Date.class.equals(IndexItem.getMetadataTypes().get(field))) {
-                // it was stored lowercase because query parser converts range queries to
-                // lowercase
-                value = value.toUpperCase();
-            }
-
             if (IndexItem.isNumeric(field)) {
                 value = numberFormat.format(Double.valueOf(value));
 
