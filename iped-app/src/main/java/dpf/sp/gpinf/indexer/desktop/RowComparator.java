@@ -58,8 +58,8 @@ public class RowComparator implements Comparator<Integer> {
 
     private String field;
     private HashSet<String> fieldsToLoad = new HashSet<String>();
-    private boolean isLongField = false;
-    private boolean isDoubleField = false;
+    private boolean isIntegerNumber = false;
+    private boolean isRealNumber = false;
     private boolean isTimeStamp = false;
     private boolean isTimeEvent = false;
     private boolean isCategory = false;
@@ -102,12 +102,9 @@ public class RowComparator implements Comparator<Integer> {
     private void loadDocValues(String indexedField) {
         field = indexedField;
         fieldsToLoad.add(field);
-        String[] fixedNumericFields = { IndexItem.ID, IndexItem.PARENTID, IndexItem.SLEUTHID, IndexItem.LENGTH };
-        isLongField = Arrays.asList(fixedNumericFields).contains(field)
-                || Integer.class.equals(IndexItem.getMetadataTypes().get(field))
-                || Long.class.equals(IndexItem.getMetadataTypes().get(field));
-        isDoubleField = Float.class.equals(IndexItem.getMetadataTypes().get(field))
-                || Double.class.equals(IndexItem.getMetadataTypes().get(field));
+
+        isIntegerNumber = IndexItem.isIntegerNumber(field);
+        isRealNumber = IndexItem.isRealNumber(field);
 
         isTimeStamp = BasicProps.TIMESTAMP.equals(field);
         isTimeEvent = BasicProps.TIME_EVENT.equals(field);
@@ -383,12 +380,12 @@ public class RowComparator implements Comparator<Integer> {
             } else if (v2 == null || v2.isEmpty())
                 return 1;
 
-            if (isLongField) {
+            if (isIntegerNumber) {
                 long l1 = Long.parseLong(v1);
                 long l2 = Long.parseLong(v2);
                 return Long.compare(l1, l2);
             }
-            if (isDoubleField) {
+            if (isRealNumber) {
                 double d1 = Double.parseDouble(v1);
                 double d2 = Double.parseDouble(v2);
                 return Double.compare(d1, d2);

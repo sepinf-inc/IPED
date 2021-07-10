@@ -138,9 +138,9 @@ public class IndexItem extends BasicProps {
         }
     }
 
-    private static Map<String, Class> typesMap = Collections
-            .synchronizedMap(new TreeMap<String, Class>(new StringComparator()));
-    private static Map<String, Class> newtypesMap = new ConcurrentHashMap<String, Class>();
+    private static Map<String, Class<?>> typesMap = Collections
+            .synchronizedMap(new TreeMap<String, Class<?>>(new StringComparator()));
+    private static Map<String, Class<?>> newtypesMap = new ConcurrentHashMap<String, Class<?>>();
 
     private static FieldType contentField;
     private static FieldType storedTokenizedNoNormsField = new FieldType();
@@ -188,6 +188,43 @@ public class IndexItem extends BasicProps {
         return contentField;
     }
 
+    public static boolean isByte(String field) {
+        return Byte.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isShort(String field) {
+        return Short.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isInteger(String field) {
+        return Integer.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isLong(String field) {
+        return Long.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isFloat(String field) {
+        return Float.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isDouble(String field) {
+        return Double.class.equals(typesMap.get(field));
+    }
+
+    public static boolean isNumeric(String field) {
+        Class<?> type = typesMap.get(field);
+        return type != null && Number.class.isAssignableFrom(type);
+    }
+
+    public static boolean isIntegerNumber(String field) {
+        return isByte(field) || isShort(field) || isInteger(field) || isLong(field);
+    }
+
+    public static boolean isRealNumber(String field) {
+        return isFloat(field) || isDouble(field);
+    }
+
     public static Map<String, Class> getMetadataTypes() {
         return Collections.unmodifiableMap(typesMap);
     }
@@ -195,7 +232,7 @@ public class IndexItem extends BasicProps {
     public static void saveMetadataTypes(File confDir) throws IOException {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
-        for (Entry<String, Class> e : typesMap.entrySet()) {
+        for (Entry<String, Class<?>> e : typesMap.entrySet()) {
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
@@ -451,13 +488,11 @@ public class IndexItem extends BasicProps {
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
-                    if (!typesMap.containsKey(entry.getKey()))
-                        typesMap.put(entry.getKey(), val.getClass());
+                    typesMap.putIfAbsent(entry.getKey(), val.getClass());
                     addExtraAttributeToDoc(doc, entry.getKey(), val, false, true, timeEventSet);
                 }
             } else {
-                if (!typesMap.containsKey(entry.getKey()))
-                    typesMap.put(entry.getKey(), entry.getValue().getClass());
+                typesMap.putIfAbsent(entry.getKey(), entry.getValue().getClass());
                 addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false, timeEventSet);
             }
         }
@@ -595,21 +630,14 @@ public class IndexItem extends BasicProps {
 
             timeEventSet.add(new TimeStampEvent(value, key));
 
-        } else if (oValue instanceof Byte) {
-            doc.add(new IntPoint(key, (Byte) oValue));
-            doc.add(new StoredField(key, (Byte) oValue));
+        } else if (oValue instanceof Byte || oValue instanceof Short || oValue instanceof Integer) {
+            int intVal = ((Number) oValue).intValue();
+            doc.add(new IntPoint(key, intVal));
+            doc.add(new StoredField(key, intVal));
             if (!isMultiValued)
-                doc.add(new NumericDocValuesField(key, (Byte) oValue));
+                doc.add(new NumericDocValuesField(key, intVal));
             else
-                doc.add(new SortedNumericDocValuesField(key, (Byte) oValue));
-
-        } else if (oValue instanceof Integer) {
-            doc.add(new IntPoint(key, (Integer) oValue));
-            doc.add(new StoredField(key, (Integer) oValue));
-            if (!isMultiValued)
-                doc.add(new NumericDocValuesField(key, (Integer) oValue));
-            else
-                doc.add(new SortedNumericDocValuesField(key, (Integer) oValue));
+                doc.add(new SortedNumericDocValuesField(key, intVal));
 
         } else if (oValue instanceof Long) {
             doc.add(new LongPoint(key, (Long) oValue));
@@ -705,13 +733,12 @@ public class IndexItem extends BasicProps {
     private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued,
             MediaType mimetype, Set<TimeStampEvent> timeEventSet) {
         Object oValue = value;
-        Class type = typesMap.get(key);
+        Class<?> type = typesMap.get(key);
 
         if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
             return;
 
-        if (type == null || !type.equals(String.class)) {
-
+        if (type == null || isNumeric(key)) {
             try {
                 if (type == null || type.equals(Double.class)) {
                     oValue = Double.valueOf(value);

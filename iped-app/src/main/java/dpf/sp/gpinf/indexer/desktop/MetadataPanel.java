@@ -66,6 +66,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -316,8 +317,9 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String toString() {
-            String startStr = NumberFormat.getNumberInstance().format(start);
-            String endStr = NumberFormat.getNumberInstance().format(end);
+            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+            String startStr = nf.format(start);
+            String endStr = nf.format(end);            
             return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
     }
@@ -464,19 +466,6 @@ public class MetadataPanel extends JPanel
         eventSetToOrdsCache.clear();
     }
 
-    public static final boolean isFloat(String field) {
-        return Float.class.equals(IndexItem.getMetadataTypes().get(field));
-    }
-
-    public static final boolean isDouble(String field) {
-        return Double.class.equals(IndexItem.getMetadataTypes().get(field));
-    }
-
-    public static final boolean mayBeNumeric(String field) {
-        return IndexItem.getMetadataTypes().get(field) == null
-                || !IndexItem.getMetadataTypes().get(field).equals(String.class);
-    }
-
     private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) {
         long[] ords = eventSetToOrdsCache.get(eventSet);
         if (ords != null) {
@@ -494,15 +483,15 @@ public class MetadataPanel extends JPanel
 
     private MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet) {
 
-        boolean mayBeNumeric = mayBeNumeric(field);
-        boolean isFloat = isFloat(field);
-        boolean isDouble = isDouble(field);
+        boolean isNumeric = IndexItem.isNumeric(field);
+        boolean isFloat = IndexItem.isFloat(field);
+        boolean isDouble = IndexItem.isDouble(field);
         boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         ArrayList<IItemId> items = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int k = 0;
-        if (mayBeNumeric && numValues != null) {
+        if (isNumeric && numValues != null) {
             Bits docsWithField = null;
             try {
                 docsWithField = reader.getDocsWithField(field);
@@ -538,7 +527,7 @@ public class MetadataPanel extends JPanel
                 }
                 k++;
             }
-        } else if (mayBeNumeric && numValuesSet != null) {
+        } else if (isNumeric && numValuesSet != null) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
@@ -629,10 +618,9 @@ public class MetadataPanel extends JPanel
 
         loadDocValues(field);
 
-        boolean mayBeNumeric = mayBeNumeric(field);
-        final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
-        boolean isFloat = isFloat(field);
-        boolean isDouble = isDouble(field);
+        boolean isNumeric = IndexItem.isNumeric(field);
+        boolean isFloat = IndexItem.isFloat(field);
+        boolean isDouble = IndexItem.isDouble(field);
         boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         SwingUtilities.invokeLater(new Runnable() {

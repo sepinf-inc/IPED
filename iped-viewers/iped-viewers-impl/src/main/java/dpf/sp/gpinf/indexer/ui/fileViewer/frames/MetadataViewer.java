@@ -7,9 +7,12 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.text.Collator;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.swing.UIManager;
@@ -20,6 +23,7 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.UiUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
@@ -36,7 +40,9 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-public class MetadataViewer extends Viewer {
+public abstract class MetadataViewer extends Viewer {
+
+    private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 
     private TabPane tabPane;
     private JFXPanel jfxPanel;
@@ -83,6 +89,8 @@ public class MetadataViewer extends Viewer {
         this.getPanel().add(jfxPanel);
 
     }
+
+    public abstract boolean isNumeric(String field);
 
     @Override
     public String getName() {
@@ -228,10 +236,21 @@ public class MetadataViewer extends Viewer {
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
             sb.append(meta);
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
-            if (!metadata.isMultiValued(meta))
-                sb.append(SimpleHTMLEncoder.htmlEncode(metadata.get(meta)));
-            else
-                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(metadata.getValues(meta)).toString()));
+            if (!metadata.isMultiValued(meta)) {
+                String val = metadata.get(meta);
+                if (isNumeric(meta)) {
+                    val = df.format(Double.valueOf(val));
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(val));
+            } else {
+                String[] vals = metadata.getValues(meta);
+                if (isNumeric(meta)) {
+                    for (int i = 0; i < vals.length; i++) {
+                        vals[i] = df.format(Double.valueOf(vals[i]));
+                    }
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(vals).toString()));
+            }
             sb.append("</td></tr>"); //$NON-NLS-1$
         }
         sb.append("</table>"); //$NON-NLS-1$
@@ -281,6 +300,20 @@ public class MetadataViewer extends Viewer {
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
             sb.append("<tr><td class=\"s1\">" + key + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (isNumeric(key)) {
+                if (value instanceof Number) {
+                    value = df.format(Double.valueOf(((Number) value).doubleValue()));
+                } else if (value instanceof Collection) {
+                    ArrayList<Object> formattedVals = new ArrayList<>();
+                    for (Object v : (Collection) value) {
+                        if (v instanceof Number) {
+                            v = df.format(Double.valueOf(((Number) v).doubleValue()));
+                        }
+                        formattedVals.add(v);
+                    }
+                    value = formattedVals;
+                }
+            }
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
