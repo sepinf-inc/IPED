@@ -260,7 +260,7 @@ public abstract class MetadataViewer extends Viewer {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
-        fillProp(sb, BasicProps.LENGTH, df.format(item.getLength()));
+        fillProp(sb, BasicProps.LENGTH, item.getLength());
         fillProp(sb, BasicProps.TYPE, item.getTypeExt());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
@@ -277,11 +277,11 @@ public abstract class MetadataViewer extends Viewer {
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.AdvancedProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.CONTENTTYPE, item.getMediaType());
-        fillProp(sb, BasicProps.ID, df.format(item.getId()));
-        fillProp(sb, BasicProps.PARENTID, df.format(item.getParentId()));
+        fillProp(sb, BasicProps.ID, item.getId());
+        fillProp(sb, BasicProps.PARENTID, item.getParentId());
         fillProp(sb, BasicProps.EVIDENCE_UUID, item.getDataSource());
         fillProp(sb, BasicProps.SUBITEM, item.isSubItem());
-        fillProp(sb, BasicProps.SUBITEMID, df.format(item.getSubitemId()));
+        fillProp(sb, BasicProps.SUBITEMID, item.getSubitemId());
         fillProp(sb, BasicProps.CARVED, item.isCarved());
         fillProp(sb, BasicProps.ISDIR, item.isDir());
         fillProp(sb, BasicProps.HASCHILD, item.hasChildren());
