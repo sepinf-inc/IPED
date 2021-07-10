@@ -739,13 +739,15 @@ public class IndexItem extends BasicProps {
             return;
 
         if (type == null || isNumeric(key)) {
+            if (type == null) {
+                // try generic number
+                type = Double.class;
+                newtypesMap.put(key, type);
+                typesMap.put(key, type);
+            }
             try {
-                if (type == null || type.equals(Double.class)) {
+                if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
-                    if (type == null) {
-                        newtypesMap.put(key, Double.class);
-                        typesMap.put(key, Double.class);
-                    }
                 } else if (type.equals(Integer.class)) {
                     oValue = Integer.valueOf(value);
                 } else if (type.equals(Float.class)) {
