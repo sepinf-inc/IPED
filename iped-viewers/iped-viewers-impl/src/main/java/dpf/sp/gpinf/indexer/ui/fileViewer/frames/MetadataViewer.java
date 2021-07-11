@@ -20,6 +20,7 @@ import javax.swing.UIManager;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.UiUtil;
@@ -234,7 +235,7 @@ public abstract class MetadataViewer extends Viewer {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
-            sb.append(meta);
+            sb.append(LocalizedProperties.getLocalizedField(meta));
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
             if (!metadata.isMultiValued(meta)) {
                 String val = metadata.get(meta);
@@ -299,7 +300,7 @@ public abstract class MetadataViewer extends Viewer {
 
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
-            sb.append("<tr><td class=\"s1\">" + key + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
             if (isNumeric(key)) {
                 if (value instanceof Number) {
                     value = df.format(Double.valueOf(((Number) value).doubleValue()));

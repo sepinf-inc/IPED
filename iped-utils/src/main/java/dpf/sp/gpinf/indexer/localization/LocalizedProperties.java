@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.localization;
 
-import java.text.Collator;
 import java.util.Enumeration;
 import java.util.Locale;
 import java.util.Map;
@@ -13,14 +12,8 @@ public class LocalizedProperties {
 
     private static ResourceBundle RESOURCE_BUNDLE;
 
-    private static Map<String, String> map = new TreeMap<>(getCollator());
-    private static Map<String, String> invertedMap = new TreeMap<>(getCollator());
-
-    private static Collator getCollator() {
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        return collator;
-    }
+    private static Map<String, String> map = new TreeMap<>();
+    private static Map<String, String> invertedMap = new TreeMap<>();
 
     private static synchronized void loadLocalizedProps() {
         if (!map.isEmpty()) {
@@ -34,7 +27,7 @@ public class LocalizedProperties {
         while (keys.hasMoreElements()) {
             String key = keys.nextElement();
             String value = RESOURCE_BUNDLE.getString(key).trim();
-            map.put(key.toLowerCase().trim(), value);
+            map.put(key.trim(), value);
             invertedMap.put(value, key.trim());
         }
     }
