@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -544,7 +545,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         int newPos = 2;
         for (String col : newCols) {
-            col = BasicProps.getLocalizedField(col);
+            col = LocalizedProperties.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
                 if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
@@ -659,7 +660,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(BasicProps.getLocalizedField(f));
+                check.setText(LocalizedProperties.getLocalizedField(f));
                 if (colState.visibleFields.contains(f))
                     check.setSelected(true);
                 check.addActionListener(this);
@@ -688,7 +689,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateGUICol(String colName, boolean insert) {
 
-        colName = BasicProps.getNonLocalizedField(colName);
+        colName = LocalizedProperties.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
             colState.visibleFields.add(colName);

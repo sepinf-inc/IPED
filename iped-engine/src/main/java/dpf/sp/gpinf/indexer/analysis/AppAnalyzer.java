@@ -28,6 +28,7 @@ import org.apache.lucene.analysis.core.KeywordAnalyzer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.PhotoDNATask;
@@ -40,7 +41,8 @@ public class AppAnalyzer {
     public static Analyzer get() {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
         analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(true));
-        analyzerPerField.put(IndexItem.getLocalizedField(IndexItem.CATEGORY), new StandardASCIIAnalyzer(true));
+        analyzerPerField.put(LocalizedProperties.getLocalizedField(IndexItem.CATEGORY),
+                new StandardASCIIAnalyzer(true));
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());

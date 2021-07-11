@@ -57,6 +57,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -361,7 +362,7 @@ public class MetadataPanel extends JPanel
             String filterStr = propsFilter.getText().toLowerCase();
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
             for (String f : fields){
-                f = BasicProps.getLocalizedField(f);
+                f = LocalizedProperties.getLocalizedField(f);
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
             }
@@ -614,7 +615,7 @@ public class MetadataPanel extends JPanel
             sortAndUpdateList(filteredArray);
             return;
         }
-        field = BasicProps.getNonLocalizedField(field.trim());
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         loadDocValues(field);
 
@@ -963,7 +964,7 @@ public class MetadataPanel extends JPanel
         }
 
         String field = (String) props.getSelectedItem();
-        field = BasicProps.getNonLocalizedField(field.trim());
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
         for (ValueCount value : list.getSelectedValuesList()) {

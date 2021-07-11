@@ -39,6 +39,7 @@ import org.apache.lucene.search.WildcardQuery;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IIPEDSource;
@@ -110,7 +111,7 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     private String getNonLocalizedField(String field) {
-        return BasicProps.getNonLocalizedField(field);
+        return LocalizedProperties.getNonLocalizedField(field);
     }
 
     public Query getNonLocalizedQuery(Query query) {
@@ -324,7 +325,7 @@ public class QueryBuilder implements IQueryBuilder {
         PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
         // TODO remove when all localized properties are handled
-        pointsConfigMap.put(IndexItem.getLocalizedField(IndexItem.LENGTH), configLong);
+        pointsConfigMap.put(LocalizedProperties.getLocalizedField(IndexItem.LENGTH), configLong);
 
         for (String field : LoadIndexFields.getFields(Arrays.asList(ipedCase))) {
             Class<?> type = IndexItem.getMetadataTypes().get(field);

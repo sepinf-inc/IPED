@@ -39,6 +39,7 @@ import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -56,7 +57,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
             IndexItem.CREATED, IndexItem.RECORDDATE);
 
-    private static final String lengthField = BasicProps.getLocalizedField(IndexItem.LENGTH);
+    private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
     public static String SCORE_COL = Messages.getString("ResultTableModel.score"); //$NON-NLS-1$
 
@@ -110,7 +111,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
         fields = ColumnsManager.getInstance().getLoadedCols();
         for (String col : fields) {
-            col = BasicProps.getLocalizedField(col);
+            col = LocalizedProperties.getLocalizedField(col);
             cols.add(col.substring(0, 1).toUpperCase() + col.substring(1));
         }
 
@@ -278,7 +279,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
             
-            if (BasicProps.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
+            if (LocalizedProperties.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
                 for (int i = 0; i < values.length; i++) {
                     values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
                 }
