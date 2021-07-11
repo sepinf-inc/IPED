@@ -17,7 +17,7 @@ import java.util.List;
 import com.github.openjson.JSONArray;
 import com.github.openjson.JSONObject;
 
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 
 public class ReportInfo implements Serializable {
 
