@@ -324,9 +324,6 @@ public class QueryBuilder implements IQueryBuilder {
         PointsConfig configFloat = new PointsConfig(nf, Float.class);
         PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
-        // TODO remove when all localized properties are handled
-        pointsConfigMap.put(LocalizedProperties.getLocalizedField(IndexItem.LENGTH), configLong);
-
         for (String field : LoadIndexFields.getFields(Arrays.asList(ipedCase))) {
             Class<?> type = IndexItem.getMetadataTypes().get(field);
             if (type == null)
@@ -339,6 +336,11 @@ public class QueryBuilder implements IQueryBuilder {
                 pointsConfigMap.put(field, configFloat);
             else if (type.equals(Double.class))
                 pointsConfigMap.put(field, configDouble);
+        }
+
+        for (String field : pointsConfigMap.keySet().toArray(new String[0])) {
+            String localizedField = LocalizedProperties.getLocalizedField(field);
+            pointsConfigMap.put(localizedField, pointsConfigMap.get(field));
         }
 
         synchronized (lock) {
