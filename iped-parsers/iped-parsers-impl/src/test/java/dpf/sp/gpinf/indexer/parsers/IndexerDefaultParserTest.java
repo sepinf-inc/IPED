@@ -92,17 +92,17 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("video:framerate: 29.97002997002997"));
         assertTrue(hts.contains("video:hasAudio: true"));
         assertTrue(hts.contains("video:hasVideo: true"));
-        assertTrue(hts.contains("video:height: 144.0"));
+        assertTrue(hts.contains("video:Height: 144.0"));
         assertTrue(hts.contains("video:major_brand: isom"));
         assertTrue(hts.contains("video:minor_version: 512"));
         assertTrue(hts.contains("video:stereo: true"));
         assertTrue(hts.contains("video:videocodecid: 2.0"));
         assertTrue(hts.contains("video:videodatarate: 195.3125"));
-        assertTrue(hts.contains("video:width: 256.0"));
+        assertTrue(hts.contains("video:Width: 256.0"));
 
         assertTrue(mts.contains("Content-Type=video/x-flv"));
-        assertTrue(mts.contains("video:height=144.0"));
-        assertTrue(mts.contains("video:width=256.0"));
+        assertTrue(mts.contains("video:Height=144.0"));
+        assertTrue(mts.contains("video:Width=256.0"));
         assertTrue(mts.contains("video:framerate=29.97002997002997"));
 
        }
@@ -153,7 +153,7 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("office:meta:paragraph-count: 6"));
         assertTrue(hts.contains("office:meta:word-count: 504"));
         assertTrue(hts.contains("office:xmpTPg:NPages: 1"));
-
+        
         assertTrue(mts.contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
         assertTrue(mts.contains("office:meta:character-count=2724"));
         assertTrue(mts.contains("office:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
