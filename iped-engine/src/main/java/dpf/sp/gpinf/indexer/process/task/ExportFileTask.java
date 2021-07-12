@@ -59,13 +59,13 @@ import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;

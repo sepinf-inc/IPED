@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.config;
+package dpf.sp.gpinf.indexer.localization;
 
 import java.text.Collator;
 import java.util.Enumeration;

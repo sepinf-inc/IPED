@@ -57,7 +57,7 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.microsoft.POIFSContainerDetector;
 
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;

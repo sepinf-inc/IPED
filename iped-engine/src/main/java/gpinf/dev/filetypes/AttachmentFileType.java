@@ -3,7 +3,7 @@ package gpinf.dev.filetypes;
 import java.io.File;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import iped3.IItem;
 
 public class AttachmentFileType extends EvidenceFileType {

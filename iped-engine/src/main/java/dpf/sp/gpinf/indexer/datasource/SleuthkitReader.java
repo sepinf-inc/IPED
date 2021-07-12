@@ -62,11 +62,11 @@ import org.sqlite.SQLiteException;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
