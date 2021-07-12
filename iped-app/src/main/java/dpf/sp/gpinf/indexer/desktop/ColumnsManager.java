@@ -12,12 +12,14 @@ import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -54,6 +56,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItemId;
@@ -655,13 +658,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateList() {
         listPanel.removeAll();
-        String[] fields = fieldGroups[combo.getSelectedIndex()];
+        List<String> fields = Arrays.asList(fieldGroups[combo.getSelectedIndex()]);
+        fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+        Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
         String filter = textFieldNameFilter.getText().trim().toLowerCase();
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(LocalizedProperties.getLocalizedField(f));
-                if (colState.visibleFields.contains(f))
+                check.setText(f);
+                if (colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(f)))
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
