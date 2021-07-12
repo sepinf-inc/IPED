@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -68,6 +69,7 @@ import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -360,9 +362,10 @@ public class MetadataPanel extends JPanel
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
             String filterStr = propsFilter.getText().toLowerCase();
-            String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields){
-                f = LocalizedProperties.getLocalizedField(f);
+            List<String> fields = Arrays.asList(ColumnsManager.getInstance().fieldGroups[selIdx]);
+            fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+            Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
+            for (String f : fields) {
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
             }
