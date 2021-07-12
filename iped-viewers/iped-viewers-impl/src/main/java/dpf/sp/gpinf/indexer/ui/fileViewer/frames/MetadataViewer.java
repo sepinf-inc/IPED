@@ -6,13 +6,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.text.Collator;
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import javax.swing.UIManager;
@@ -23,9 +22,9 @@ import org.apache.tika.mime.MediaType;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
@@ -41,6 +40,7 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
+@SuppressWarnings("restriction")
 public abstract class MetadataViewer extends Viewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
@@ -49,7 +49,16 @@ public abstract class MetadataViewer extends Viewer {
     private JFXPanel jfxPanel;
     private List<HtmlViewer> htmlViewers = new ArrayList<>();
 
-    private Collator collator;
+    public static class FieldComparator implements Comparator<String> {
+        @Override
+        public int compare(String a, String b) {
+            a = LocalizedProperties.getLocalizedField(a);
+            b = LocalizedProperties.getLocalizedField(b);
+            return a.compareToIgnoreCase(b);
+        }
+    };
+
+    private FieldComparator comparator = new FieldComparator();
 
     public MetadataViewer() {
         super(new GridLayout());
@@ -109,12 +118,8 @@ public abstract class MetadataViewer extends Viewer {
 
     @Override
     public void init() {
-
         for (HtmlViewer viewer : htmlViewers)
             viewer.init();
-
-        collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
     }
 
     @SuppressWarnings("restriction")
@@ -230,7 +235,7 @@ public abstract class MetadataViewer extends Viewer {
             return;
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Arrays.sort(metas, collator);
+        Arrays.sort(metas, comparator);
         for (String meta : metas) {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
@@ -290,7 +295,7 @@ public abstract class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
-        Arrays.sort(keys, collator);
+        Arrays.sort(keys, comparator);
         for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
