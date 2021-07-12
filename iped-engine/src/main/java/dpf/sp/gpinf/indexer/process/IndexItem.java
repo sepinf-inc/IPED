@@ -82,6 +82,7 @@ import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -131,15 +132,8 @@ public class IndexItem extends BasicProps {
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
-    private static class StringComparator implements Comparator<String> {
-        @Override
-        public int compare(String o1, String o2) {
-            return o1.compareToIgnoreCase(o2);
-        }
-    }
-
     private static Map<String, Class<?>> typesMap = Collections
-            .synchronizedMap(new TreeMap<String, Class<?>>(new StringComparator()));
+            .synchronizedMap(new TreeMap<String, Class<?>>(StringUtil.getIgnoreCaseComparator()));
     private static Map<String, Class<?>> newtypesMap = new ConcurrentHashMap<String, Class<?>>();
 
     private static FieldType contentField;
