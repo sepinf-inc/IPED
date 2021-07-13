@@ -148,7 +148,7 @@ public class ReportGenerator {
         TagHtml img;
         if (thumb != null) {
             img = new TagHtml("img");
-            img.setAtribute("class", "thumb iped-show");
+            img.setAtribute("class", "thumb");
             img.setAtribute("src",
                     "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
         } else {
@@ -173,7 +173,7 @@ public class ReportGenerator {
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
-            TagHtml img = getThumbTag(message, "videoImg iped-show");
+            TagHtml img = getThumbTag(message, "videoImg");
 
             String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
                     message.getMediaExtension());
@@ -194,7 +194,7 @@ public class ReportGenerator {
             out.println("<br/>");
 
         } else {
-            out.println(getThumbTag(message, "videoImg iped-show").toString()); //$NON-NLS-1$
+            out.println(getThumbTag(message, "videoImg").toString()); //$NON-NLS-1$
         }
 
     }
@@ -228,7 +228,7 @@ public class ReportGenerator {
             if (originalSource != null) {
                 img.setAtribute("data-src2", originalSource);
             }
-            img.setAtribute("class", "audioImg iped-show iped-audio");
+            img.setAtribute("class", "audioImg iped-audio");
 
             link.getInner().add(img);
             div.getInner().add(link);
@@ -322,7 +322,7 @@ public class ReportGenerator {
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
-        out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
                 + "', this.checked)\" name=\"" + hash + "\" />");
     }
 
