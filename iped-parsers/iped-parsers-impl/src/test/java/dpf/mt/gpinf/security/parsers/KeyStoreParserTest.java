@@ -6,6 +6,7 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.ToTextContentHandler;
@@ -35,9 +36,8 @@ public class KeyStoreParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        String mts = metadata.toString();
-        assertTrue(mts.contains("Indexer-Content-Type=application/x-java-keystore"));
-        assertTrue(mts.contains("keystore:password=changeit"));
+        assertEquals("application/x-java-keystore",metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
+        assertEquals("changeit",metadata.get(KeystoreParser.PASSWORD));
         
     }
     
@@ -55,12 +55,8 @@ public class KeyStoreParserTest extends TestCase{
         String alias = "server certificate";
         parser.getSupportedTypes(context);
         parser.parseCertificate(alias, stream, handler, metadata, context);
-        String mts = metadata.toString();
-        assertTrue(mts.contains("dc:title=server certificate"));
-        assertTrue(mts.contains("Indexer-Content-Type=application/pkix-cert"));
-        assertTrue(mts.contains("title=server certificate"));
-        assertTrue(mts.contains("Content-Type=application/pkix-cert"));
-        
+        assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
+        assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
     }
 
 }

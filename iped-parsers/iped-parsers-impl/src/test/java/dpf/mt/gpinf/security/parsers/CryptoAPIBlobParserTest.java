@@ -35,11 +35,9 @@ public class CryptoAPIBlobParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        String mts = metadata.toString();
-        assertTrue(mts.contains("capi:hasPublicKey=false"));
-        assertTrue(mts.contains("capi:alias="));
-        assertTrue(mts.contains("Indexer-Content-Type=application/crypto-api-file"));
-        assertTrue(mts.contains("capi:hasPrivateKey=false"));
+        assertEquals("false",metadata.get(CryptoAPIBlobParser.HASPUBLICKEY));
+        assertEquals("",metadata.get(CryptoAPIBlobParser.ALIAS));
+        assertEquals("false",metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
     }
 
 }

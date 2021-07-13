@@ -24,7 +24,7 @@ public class UFEDChatParserTest extends AbstractPkgTest {
         InputStream stream = getStream("test-files/whatsapp/msgstore.db");
         parser.getSupportedTypes(ufedContext);
         try {
-            parser.parse(stream, handler, metadata, ufedContext);
+//            parser.parse(stream, handler, metadata, ufedContext);
             String hts = handler.toString();
             String mts = metadata.toString();
             System.out.println(hts + mts);

@@ -32,6 +32,7 @@ public class PDFOCRTextParserTest extends TestCase{
         
     }
     
+    @SuppressWarnings("deprecation")
     @Test
     public void testPDFOCRTextParsingICE() throws IOException, SAXException, TikaException{
 
@@ -45,12 +46,13 @@ public class PDFOCRTextParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         
         String mts = metadata.toString();
-        assertTrue(mts.contains("creator=PScript5.dll"));
-        assertTrue(mts.contains("subject=Speeches by Andrew G Haldane"));
-        assertTrue(mts.contains("Author=The Bank of England"));
-        assertTrue(mts.contains("Creation-Date=April 28"));
-        assertTrue(mts.contains("title=Rethinking the Financial Network, Speech by Andrew G Haldane,"
-                + " Executive Director, Financial Stability delivered at the Financial Student Association"));
+        
+        assertEquals("PScript5.dll Version 5.2", metadata.get(Metadata.CREATOR));
+        assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
+        assertEquals("The Bank of England", metadata.get(Metadata.AUTHOR));
+        assertEquals("April 28, 2009 10:06:56 (UTC +01:00)", metadata.get(Metadata.CREATION_DATE));
+        assertEquals("Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009", metadata.get(Metadata.TITLE));
+        assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
         assertTrue(mts.contains("Content-Type=application/pdf"));
         
     }
