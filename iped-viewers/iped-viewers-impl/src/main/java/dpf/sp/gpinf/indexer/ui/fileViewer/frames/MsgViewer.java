@@ -419,12 +419,14 @@ public class MsgViewer extends HtmlViewer {
         boolean noRtf = false;
         if (noHtml) {
             try {
-                RTF2HTMLConverter converter = RTF2HTMLConverterRFCCompliant.INSTANCE;
-                corpo = msg.getRtfBody().trim();
-                corpo = converter.rtf2html(corpo);
-                if (!corpo.toLowerCase().contains("<br>")) {
+                corpo = getTikaRTFToHTML(msg).trim();
+                if (corpo.isEmpty() || hasOnlyBasicChars(corpo)) {
+                    RTF2HTMLConverter converter = RTF2HTMLConverterRFCCompliant.INSTANCE;
+                    String rtfString = msg.getRtfBody().trim();
+                    corpo = converter.rtf2html(rtfString);
+                }
+                if (!corpo.matches(".*<(br|BR)/?>.*")) {
                     corpo = "<pre>" + corpo + "</pre>";
-                    // corpo = getTikaRTFToHTML(msg);
                 }
                 corpo = adjustBody(corpo, cids);
                 preview.append(corpo);
@@ -500,6 +502,15 @@ public class MsgViewer extends HtmlViewer {
         MAPIRtfAttribute rtf = new MAPIRtfAttribute(MAPIProperty.RTF_COMPRESSED, Types.BINARY.getId(),
                 chunk.getValue());
         return rtf.getData();
+    }
+
+    private boolean hasOnlyBasicChars(String text) {
+        for (char c : text.toCharArray()) {
+            if (c > 255 && (c < 0x2000 || c > 0x202F)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getTikaRTFToHTML(MAPIMessage msg) {
