@@ -395,7 +395,7 @@ public class ReportGenerator {
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "<style>\n" + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
                 + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>"
-                + Util.readResourceAsString("js/media.js") + "</script>"
+                + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("js/whatsapp.js") + "</script>"
                 + dpf.mg.udi.gpinf.vcardparser.VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
                 + "<style>.check {vertical-align: top;}</style>" + "<body style='background-image:url(" //$NON-NLS-2$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg")
