@@ -202,7 +202,6 @@ public class ReportGenerator {
     private void printAudio(PrintWriter out, Message message) {
 
         TagHtml img = new TagHtml("div");
-        img.setAtribute("class", "audioImg");
         img.setAtribute("title", "Audio");
 
         if (message.getMediaHash() != null) {
@@ -218,30 +217,25 @@ public class ReportGenerator {
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
-            img.setAtribute("class", "audioImg iped-show");
-
-            link.getInner().add(img);
-            div.getInner().add(link);
-
             String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
                     message.getMediaExtension());
             String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
                     .getSourceFileIfExists(message.getMediaFile());
 
-            TagHtml audio = new TagHtml("div");
-            audio.setAtribute("class", "audioImg iped-audio");
-            audio.setAtribute("title", "Audio");
             if (reportSource != null) {
-                audio.setAtribute("data-src1", reportSource);
+                img.setAtribute("data-src1", reportSource);
             }
             if (originalSource != null) {
-                audio.setAtribute("data-src2", originalSource);
+                img.setAtribute("data-src2", originalSource);
             }
+            img.setAtribute("class", "audioImg iped-show iped-audio");
 
-            div.getInner().add(audio);
+            link.getInner().add(img);
+            div.getInner().add(link);
             out.println(div.toString());
 
         } else {
+            img.setAtribute("class", "audioImg");
             out.println(img.toString());
         }
 
