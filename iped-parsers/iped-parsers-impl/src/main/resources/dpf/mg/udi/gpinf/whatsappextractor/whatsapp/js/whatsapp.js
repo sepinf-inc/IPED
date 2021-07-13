@@ -12,9 +12,11 @@ function createMediaElement(elementType, imgElement) {
     mediaElement.setAttributeNode(controls);
     var src1 = imgElement.getAttribute("data-src1");
     if (src1) {
-        var src1Attr = document.createAttribute("src");
-        src1Attr.value = src1;
-        mediaElement.setAttributeNode(src1Attr); 
+        var sourceElement = document.createElement("source");
+        var srcAttr = document.createAttribute("src");
+        srcAttr.value = src1;
+        sourceElement.setAttributeNode(srcAttr);
+        mediaElement.appendChild(sourceElement);
     }
     var src2 = imgElement.getAttribute("data-src2");
     if (src2) {
