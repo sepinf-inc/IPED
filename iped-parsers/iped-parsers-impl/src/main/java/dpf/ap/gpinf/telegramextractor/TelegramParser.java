@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -36,6 +37,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -55,7 +57,6 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
-import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -149,7 +150,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, Util.escape(c.getName()));
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -197,7 +198,7 @@ public class TelegramParser extends SQLite3DBParser {
                 chatName += "_" + frag++; //$NON-NLS-1$
 
             Metadata chatMetadata = new Metadata();
-            chatMetadata.set(TikaCoreProperties.TITLE, Util.escape(chatName));
+            chatMetadata.set(TikaCoreProperties.TITLE, chatName);
             chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CHAT.toString());
             chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Long.toString(c.getId()));
             chatMetadata.set(ExtraProperties.CHAT_RECOVERED, Boolean.toString(c.isDeleted()));
@@ -245,7 +246,7 @@ public class TelegramParser extends SQLite3DBParser {
         int msgCount = 0;
         for (Message m : messages) {
             Metadata meta = new Metadata();
-            meta.set(TikaCoreProperties.TITLE, Util.escape(chatName) + "_message_" + msgCount++); //$NON-NLS-1$
+            meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_MESSAGE.toString());
             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, Long.toString(parentId));
             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(m.getId()));
@@ -330,7 +331,7 @@ public class TelegramParser extends SQLite3DBParser {
                     byte[] bytes = r.genarateContactHtml(c);
                     Metadata cMetadata = new Metadata();
                     cMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_CONTACT.toString());
-                    cMetadata.set(TikaCoreProperties.TITLE, Util.escape(c.getName()));
+                    cMetadata.set(TikaCoreProperties.TITLE, c.getName());
                     cMetadata.set(ExtraProperties.USER_NAME, c.getName());
                     cMetadata.set(ExtraProperties.USER_PHONE, c.getPhone());
                     cMetadata.set(ExtraProperties.USER_ACCOUNT, c.getId() + "");
@@ -432,7 +433,7 @@ public class TelegramParser extends SQLite3DBParser {
             throws IOException, SAXException {
         Metadata meta = new Metadata();
         meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, TELEGRAM_ACCOUNT.toString());
-        meta.set(TikaCoreProperties.TITLE, "Telegram - " + Util.escape(user.getFullname()));
+        meta.set(TikaCoreProperties.TITLE, "Telegram - " + user.getFullname());
         meta.set(ExtraProperties.USER_NAME, user.getName());
         meta.set(ExtraProperties.USER_PHONE, user.getPhone());
         meta.set(ExtraProperties.USER_ACCOUNT, user.getUsername());

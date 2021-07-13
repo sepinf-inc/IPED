@@ -22,7 +22,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 
@@ -81,24 +80,6 @@ public class Util {
         // TLRPC.User u = TLRPC.User.TLdeserialize(s, s.readInt32(false), false);
     }
 
-    public static String removeSurrogates(String val) {
-        if (val == null)
-            return null;
-        StringBuilder sb = new StringBuilder(val.length());
-        for (char c : val.toCharArray()) {
-            if (!Character.isSurrogate(c))
-                sb.append(c);
-        }
-        return sb.toString();
-    }
-    public static String escape(String val) {
-        return escape(val, StandardCharsets.UTF_8);
-    }
-    public static String escape(String val, Charset charset) {
-        if (val == null)
-            return null;
-        return new String(removeSurrogates(val).getBytes(charset), charset);
-    }
     public static String hashFile(InputStream is) {
         String hash = null;
 
