@@ -52,7 +52,7 @@ public class AppAnalyzer {
         analyzerPerField.put(IndexItem.CREATED, new KeywordLowerCaseAnalyzer());
         analyzerPerField.put(IndexItem.MODIFIED, new KeywordLowerCaseAnalyzer());
         analyzerPerField.put(IndexItem.ACCESSED, new KeywordLowerCaseAnalyzer());
-        analyzerPerField.put(IndexItem.RECORDDATE, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.CHANGED, new KeywordLowerCaseAnalyzer());
         analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordLowerCaseAnalyzer());
 
         IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);

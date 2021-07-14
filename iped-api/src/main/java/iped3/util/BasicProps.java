@@ -15,7 +15,7 @@ public class BasicProps {
     public static final String CREATED = "created"; //$NON-NLS-1$
     public static final String ACCESSED = "accessed"; //$NON-NLS-1$
     public static final String MODIFIED = "modified"; //$NON-NLS-1$
-    public static final String RECORDDATE = "recordDate"; //$NON-NLS-1$
+    public static final String CHANGED = "changed"; //$NON-NLS-1$
     public static final String PATH = "path"; //$NON-NLS-1$
     public static final String CATEGORY = "category"; //$NON-NLS-1$
     public static final String DELETED = "deleted"; //$NON-NLS-1$
@@ -55,7 +55,7 @@ public class BasicProps {
         basicProps.add(CREATED);
         basicProps.add(ACCESSED);
         basicProps.add(MODIFIED);
-        basicProps.add(RECORDDATE);
+        basicProps.add(CHANGED);
         basicProps.add(PATH);
         basicProps.add(CATEGORY);
         basicProps.add(DELETED);

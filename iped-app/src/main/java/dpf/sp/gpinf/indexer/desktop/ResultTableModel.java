@@ -55,7 +55,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     private static final long serialVersionUID = 1L;
 
     private static final List<String> basicDateFields = Arrays.asList(IndexItem.ACCESSED, IndexItem.MODIFIED,
-            IndexItem.CREATED, IndexItem.RECORDDATE);
+            IndexItem.CREATED, IndexItem.CHANGED);
 
     private static final String lengthField = LocalizedProperties.getLocalizedField(IndexItem.LENGTH);
     public static String BOOKMARK_COL = Messages.getString("ResultTableModel.bookmark"); //$NON-NLS-1$
