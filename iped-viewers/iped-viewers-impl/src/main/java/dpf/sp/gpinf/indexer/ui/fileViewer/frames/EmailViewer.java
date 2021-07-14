@@ -10,13 +10,18 @@ import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.apache.james.mime4j.MimeException;
 import org.apache.james.mime4j.codec.DecodeMonitor;
@@ -129,12 +134,21 @@ public class EmailViewer extends HtmlViewer {
     public class AttachmentOpen extends FileHandler {
 
         public void open(int attNum) {
-            Object[] att = mch.attachs.get(attNum);
-            File file = (File) att[0];
-            String attachName = (String) att[2];
-            if (IOUtil.isToOpenExternally(attachName, IOUtil.getExtension(file))) {
-                this.openFile(file);
+            AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
+            if (IOUtil.isToOpenExternally(info.name, IOUtil.getExtension(info.tmpFile))) {
+                this.openFile(info.tmpFile);
             }
+        }
+    }
+
+    private static class AttachInfo {
+        private String name, mime;
+        private File tmpFile;
+
+        private AttachInfo(File tmpFile, String mime, String name) {
+            this.tmpFile = tmpFile;
+            this.name = name;
+            this.mime = mime;
         }
     }
 
@@ -142,18 +156,16 @@ public class EmailViewer extends HtmlViewer {
 
         private boolean strictParsing = false;
 
-        // private XHTMLContentHandler handler;
         private Metadata metadata;
         private boolean inPart = false;
 
         File previewFile, bodyFile;
         ArrayList<File> filesList = new ArrayList<File>();
-        // boolean isAttach;
         String bodyCharset = "windows-1252"; //$NON-NLS-1$
 
         private String attachName, contentID;
         private boolean textBody = false, htmlBody = false, isAttach = false;
-        private ArrayList<Object[]> attachs = new ArrayList<Object[]>();
+        private Map<String, AttachInfo> attachments = new LinkedHashMap<>();
 
         private DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat")); //$NON-NLS-1$
 
@@ -217,7 +229,6 @@ public class EmailViewer extends HtmlViewer {
                     { Message.MESSAGE_CC, Messages.getString("EmailViewer.Cc") }, //$NON-NLS-1$
                     { Message.MESSAGE_BCC, Messages.getString("EmailViewer.Bcc") }, //$NON-NLS-1$
                     { TikaCoreProperties.CREATED.getName(), Messages.getString("EmailViewer.Date") } }; //$NON-NLS-1$
-            // {MESSAGE_ATTACH, "Anexos"}};
 
             String text;
             for (String[] name : names) {
@@ -257,17 +268,12 @@ public class EmailViewer extends HtmlViewer {
             boolean firstAtt = true;
             int i = 0, count = 0;
             text = ""; //$NON-NLS-1$
-            for (final Object[] obj : attachs) {
-                String attName = (String) obj[2];
-                if (attName != null) {
+            for (AttachInfo attach : attachments.values()) {
+                if (attach.name != null) {
                     if (!firstAtt) {
                         text += ", "; //$NON-NLS-1$
                     }
-                    text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attName + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    // writer.write("<a href=\"" + attName + "\" >"+ attName
-                    // +"</a><br><hr>");
-                    // writer.write("<a href=\"\" onClick=\"alert('aaaaaa');\">"+values[i++]
-                    // + "</a>");
+                    text += "<a href=\"\" onclick=\"app.open(" + i + ")\">" + attach.name + "</a>"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     firstAtt = false;
                     count++;
                 }
@@ -315,11 +321,6 @@ public class EmailViewer extends HtmlViewer {
                 fileExt = attachName.substring(attachName.lastIndexOf(".")); //$NON-NLS-1$
             }
 
-            /*
-             * try{ attach = new File(System.getProperty("java.io.tmpdir"), contentID +
-             * fileExt); }catch(Exception e ){ attach = File.createTempFile("attach",
-             * fileExt); }
-             */
             attach = File.createTempFile("attach", fileExt); //$NON-NLS-1$
             outStream = new BufferedOutputStream(new FileOutputStream(attach));
             attach.deleteOnExit();
@@ -332,10 +333,7 @@ public class EmailViewer extends HtmlViewer {
                     if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
                         text = LuceneSimpleHTMLEncoder.htmlEncode(text);
                         text = text.replaceAll("\n", "<br>"); //$NON-NLS-1$ //$NON-NLS-2$
-                    } else {
-                        text = text.replaceAll("cid:", ""); //$NON-NLS-1$ //$NON-NLS-2$
                     }
-
                     outStream.write(text.getBytes(charset));
                 }
             } else {
@@ -344,15 +342,15 @@ public class EmailViewer extends HtmlViewer {
 
             outStream.close();
 
-            Object[] obj = { attach, type,
-                    (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName) }; //$NON-NLS-1$
+            AttachInfo attachInfo = new AttachInfo(attach, type,
+                    (attachName == null ? Messages.getString("EmailViewer.UnNamed") : attachName)); //$NON-NLS-1$
 
             if (isAttach) {
-                attachs.add(obj);
+                attachments.put(contentID, attachInfo);
 
             } else if (type.equalsIgnoreCase("text/plain")) { //$NON-NLS-1$
                 if (textBody || htmlBody || attachName != null) {
-                    attachs.add(obj);
+                    attachments.put(contentID, attachInfo);
                 } else {
                     bodyCharset = charset;
                     bodyFile = attach;
@@ -361,7 +359,7 @@ public class EmailViewer extends HtmlViewer {
 
             } else if (type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
                 if (htmlBody || attachName != null) {
-                    attachs.add(obj);
+                    attachments.put(contentID, attachInfo);
                 } else {
                     bodyCharset = charset;
                     bodyFile = attach;
@@ -370,7 +368,7 @@ public class EmailViewer extends HtmlViewer {
 
             } else {
                 // images (inline or not) and other mimes as attachs
-                attachs.add(obj);
+                attachments.put(contentID, attachInfo);
             }
 
             filesList.add(attach);
@@ -385,46 +383,50 @@ public class EmailViewer extends HtmlViewer {
                 previewFile.deleteOnExit();
                 OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
                 createHeader(outStream);
+
+                Set<String> inlined = new HashSet<>();
                 if (bodyFile != null) {
-                    InputStream bodyStream = new FileInputStream(bodyFile);
-                    IOUtil.copiaArquivo(bodyStream, outStream);
-                    bodyStream.close();
+                    Charset charset = Charset.forName(bodyCharset);
+                    String body = new String(Files.readAllBytes(bodyFile.toPath()), charset);
+                    // handle inline images
+                    for (Entry<String, AttachInfo> e : attachments.entrySet()) {
+                        String newBody = body.replace("cid:" + e.getKey(), e.getValue().tmpFile.toURI().toString());
+                        if (newBody.length() != body.length()) {
+                            inlined.add(e.getKey());
+                        }
+                        body = newBody;
+                    }
+                    outStream.write(body.getBytes(charset));
                     bodyFile.delete();
                 }
 
-                // String[] values = metadata.getValues(MESSAGE_ATTACH);
-                // if(values.length > 0){
                 OutputStreamWriter writer = new OutputStreamWriter(outStream, bodyCharset);
-                // writer.write("<html><body><hr>");
 
-                for (final Object[] obj : attachs) {
-                    File attFile = (File) obj[0];
-                    String type = (String) obj[1];
-                    String attName = (String) obj[2];
-
-                    if (type.startsWith("image")) { //$NON-NLS-1$
+                inlined.stream().forEach(a -> attachments.remove(a));
+                for (AttachInfo attach : attachments.values()) {
+                    if (attach.mime.startsWith("image")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
-                        if (attName != null) {
-                            writer.write(attName + ":<br>"); //$NON-NLS-1$
+                        if (attach.name != null) {
+                            writer.write(attach.name + ":<br>"); //$NON-NLS-1$
                         }
 
-                        writer.write("<img src=\"" + attFile.getName() + "\" style=\"max-width:100%;\">"); //$NON-NLS-1$ //$NON-NLS-2$
+                        writer.write(
+                                "<img src=\"" + attach.tmpFile.toURI().toString() + "\" style=\"max-width:100%;\">"); //$NON-NLS-1$ //$NON-NLS-2$
 
-                    } else if (type.equalsIgnoreCase("text/plain") || type.equalsIgnoreCase("text/html")) { //$NON-NLS-1$ //$NON-NLS-2$
+                    } else if (attach.mime.equalsIgnoreCase("text/plain") //$NON-NLS-1$
+                            || attach.mime.equalsIgnoreCase("text/html")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
-                        if (attName != null) {
-                            writer.write(attName + ":<br>"); //$NON-NLS-1$
+                        if (attach.name != null) {
+                            writer.write(attach.name + ":<br>"); //$NON-NLS-1$
                         }
 
                         writer.flush();
-                        InputStream stream = new FileInputStream(attFile);
+                        InputStream stream = new FileInputStream(attach.tmpFile);
                         IOUtil.copiaArquivo(stream, outStream);
                         stream.close();
                     }
                 }
-                // writer.write("</body></html>");
                 writer.flush();
-                // }
 
                 outStream.close();
 
@@ -653,7 +655,7 @@ public class EmailViewer extends HtmlViewer {
         public void startHeader() throws MimeException {
             attachName = null;
             isAttach = false;
-            contentID = null;
+            contentID = UUID.randomUUID().toString();
         }
 
         @Override
