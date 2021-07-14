@@ -211,8 +211,7 @@ public class EmailViewer extends HtmlViewer {
             return value;
         }
 
-        private void createHeader(OutputStream outStream) throws IOException {
-            OutputStreamWriter writer = new OutputStreamWriter(outStream, bodyCharset);
+        private void createHeader(OutputStreamWriter writer) throws IOException {
 
             writer.write("<html>"); //$NON-NLS-1$
             writer.write("<head>"); //$NON-NLS-1$
@@ -379,14 +378,20 @@ public class EmailViewer extends HtmlViewer {
         public void endMessage() throws MimeException {
 
             try {
-                previewFile = File.createTempFile("message", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+                previewFile = File.createTempFile("message", ".html");
                 previewFile.deleteOnExit();
-                OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
-                createHeader(outStream);
+            } catch (IOException e1) {
+                throw new RuntimeException(e1);
+            }
+
+            Charset charset = Charset.forName(bodyCharset);
+            try (OutputStream outStream = new BufferedOutputStream(new FileOutputStream(previewFile));
+                    OutputStreamWriter writer = new OutputStreamWriter(outStream, charset)) {
+
+                createHeader(writer);
 
                 Set<String> inlined = new HashSet<>();
                 if (bodyFile != null) {
-                    Charset charset = Charset.forName(bodyCharset);
                     String body = new String(Files.readAllBytes(bodyFile.toPath()), charset);
                     // handle inline images
                     for (Entry<String, AttachInfo> e : attachments.entrySet()) {
@@ -396,11 +401,9 @@ public class EmailViewer extends HtmlViewer {
                         }
                         body = newBody;
                     }
-                    outStream.write(body.getBytes(charset));
+                    writer.write(body);
                     bodyFile.delete();
                 }
-
-                OutputStreamWriter writer = new OutputStreamWriter(outStream, bodyCharset);
 
                 inlined.stream().forEach(a -> attachments.remove(a));
                 for (AttachInfo attach : attachments.values()) {
@@ -421,14 +424,9 @@ public class EmailViewer extends HtmlViewer {
                         }
 
                         writer.flush();
-                        InputStream stream = new FileInputStream(attach.tmpFile);
-                        IOUtil.copiaArquivo(stream, outStream);
-                        stream.close();
+                        Files.copy(attach.tmpFile.toPath(), outStream);
                     }
                 }
-                writer.flush();
-
-                outStream.close();
 
             } catch (IOException e) {
                 e.printStackTrace();
