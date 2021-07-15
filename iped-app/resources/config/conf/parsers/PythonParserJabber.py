@@ -12,6 +12,7 @@ from org.apache.tika.metadata import Metadata, Message
 from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
 from iped3.util import ExtraProperties
+from iped3.util import BasicProps
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
 from dpf.sp.gpinf.indexer.util import EmptyInputStream
 from dpf.mg.udi.gpinf.whatsappextractor import Util
@@ -24,6 +25,8 @@ from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
 
 class PythonParserJabber:
+    
+    instant_message_mime = "message/x-jabber-message"
 
     '''
     Example of a python parser. This class must be thread safe.
@@ -232,11 +235,12 @@ class PythonParserJabber:
                     iped_direction = "incoming from"
 
                 meta = Metadata()
+                meta.set(BasicProps.LENGTH, "")
                 meta.set(Message.MESSAGE_FROM, iped_sender)
                 meta.set(Message.MESSAGE_TO, iped_receiver)
                 meta.set(ExtraProperties.MESSAGE_DATE,iped_date)
                 meta.set(ExtraProperties.MESSAGE_BODY,iped_text)
-                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-jabber-chat")
+                meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, self.instant_message_mime)
                 extractor.parseEmbedded(EmptyInputStream(), handler, meta, False)
 
                 # xhtml.characters(" - ".join([iped_date, iped_sender, iped_text]))

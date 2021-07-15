@@ -93,7 +93,7 @@ SMS Messages = application/x-ufed-html-sms; application/x-ufed-sms
 
 MMS Messages = application/x-ufed-html-mms; application/x-ufed-mms
 
-Instant Messages = application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer; message/x-telegram-message;
+Instant Messages = message/x-chat-message; application/x-ufed-instantmessage; message/x-whatsapp-message; message/x-skype-message; message/x-skype-filetransfer; message/x-telegram-message;
 
 Bluetooth Devices = application/x-ufed-html-bluetooth; application/x-ufed-bluetoothdevice
 

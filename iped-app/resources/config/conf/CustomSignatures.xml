@@ -1154,5 +1154,9 @@
        </magic>
        <sub-class-of type="text/html"/>
     </mime-type>
+    
+    <mime-type type="message/x-jabber-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
  
 </mime-info>
