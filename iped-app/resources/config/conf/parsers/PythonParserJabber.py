@@ -283,17 +283,7 @@ class PythonParserJabber:
 
 
         except Exception as exc:
-            _info = sys.exc_info()
-            exc_type, exc_obj, exc_tb = _info[0], _info[1], _info[2]
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            error_line = exc_tb.tb_lineno
-            error_function = os.path.split(exc_tb.tb_frame.f_code.co_name)[1]
-            error_raised = """ERROR: %s LINE: %s FUNCTION: %s File %s, """\
-                        % (exc_obj, error_line, error_function, fname)
-
-            print("Error during parsing of file %s"%tmpFilePath,error_raised)
-            #<class 'TypeError'>: exceptions must derive from BaseException
-            # raise TikaException(error_msg)
+            raise exc
 
 
         finally:
