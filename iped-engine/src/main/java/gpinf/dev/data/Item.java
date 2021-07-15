@@ -160,7 +160,7 @@ public class Item implements ISleuthKitItem {
     /**
      * Data de última alteração do registro no sistema de arquivos.
      */
-    private Date recordDate;
+    private Date changeDate;
 
     /**
      * Tamanho do arquivo em bytes.
@@ -909,12 +909,12 @@ public class Item implements ISleuthKitItem {
         this.accessDate = accessDate;
     }
 
-    public Date getRecordDate() {
-        return recordDate;
+    public Date getChangeDate() {
+        return changeDate;
     }
 
-    public void setRecordDate(Date recordDate) {
-        this.recordDate = recordDate;
+    public void setChangeDate(Date changeDate) {
+        this.changeDate = changeDate;
     }
 
     /**

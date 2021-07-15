@@ -378,15 +378,15 @@ public class IndexItem extends BasicProps {
         doc.add(new SortedDocValuesField(MODIFIED, new BytesRef(value)));
         timeEventSet.add(new TimeStampEvent(value, MODIFIED));
 
-        date = evidence.getRecordDate();
+        date = evidence.getChangeDate();
         if (date != null) {
             value = DateUtil.dateToString(date);
         } else {
             value = ""; //$NON-NLS-1$
         }
-        doc.add(new Field(RECORDDATE, value, dateField));
-        doc.add(new SortedDocValuesField(RECORDDATE, new BytesRef(value)));
-        timeEventSet.add(new TimeStampEvent(value, RECORDDATE));
+        doc.add(new Field(CHANGED, value, dateField));
+        doc.add(new SortedDocValuesField(CHANGED, new BytesRef(value)));
+        timeEventSet.add(new TimeStampEvent(value, CHANGED));
 
         value = evidence.getPath();
         if (value == null) {
@@ -896,9 +896,9 @@ public class IndexItem extends BasicProps {
                 evidence.setModificationDate(DateUtil.stringToDate(value));
             }
 
-            value = doc.get(IndexItem.RECORDDATE);
+            value = doc.get(IndexItem.CHANGED);
             if (value != null && !value.isEmpty()) {
-                evidence.setRecordDate(DateUtil.stringToDate(value));
+                evidence.setChangeDate(DateUtil.stringToDate(value));
             }
 
             evidence.setPath(doc.get(IndexItem.PATH));

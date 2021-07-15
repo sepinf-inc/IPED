@@ -872,7 +872,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
         time = absFile.getCtime();
         if (time != 0)
-            evidence.setRecordDate(new Date(time * 1000));
+            evidence.setChangeDate(new Date(time * 1000));
 
         if (absFile.getMetaAddr() != 0) {
             evidence.setExtraAttribute(BasicProps.META_ADDRESS, Long.toString(absFile.getMetaAddr()));

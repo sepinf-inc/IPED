@@ -82,7 +82,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
             fragFile.setExtraAttribute(SleuthkitReader.IN_FAT_FS, true);
         fragFile.setCreationDate(parentEvidence.getCreationDate());
         fragFile.setModificationDate(parentEvidence.getModDate());
-        fragFile.setRecordDate(parentEvidence.getRecordDate());
+        fragFile.setChangeDate(parentEvidence.getChangeDate());
         fragFile.setExtraAttribute(FILE_FRAGMENT, true);
         addOffsetFile(fragFile, parentEvidence);
     }

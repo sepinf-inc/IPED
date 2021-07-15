@@ -93,7 +93,7 @@ public class AD1DataSourceReader extends DataSourceReader {
             item.setModificationDate(header.getMTime());
             item.setAccessDate(header.getATime());
             item.setCreationDate(header.getCTime());
-            item.setRecordDate(header.getRTime());
+            item.setChangeDate(header.getRTime());
             item.setDeleted(header.isDeleted());
             item.setHasChildren(header.hasChildren());
 

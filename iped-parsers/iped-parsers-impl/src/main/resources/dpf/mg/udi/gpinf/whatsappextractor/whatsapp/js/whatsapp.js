@@ -12,9 +12,11 @@ function createMediaElement(elementType, el) {
     mediaElement.setAttributeNode(controls);
     const src1 = el.getAttribute("data-src1");
     if (src1) {
-        const src1Attr = document.createAttribute("src");
-        src1Attr.value = src1;
-        mediaElement.setAttributeNode(src1Attr); 
+        const sourceElement = document.createElement("source");
+        const srcAttr = document.createAttribute("src");
+        srcAttr.value = src1;
+        sourceElement.setAttributeNode(srcAttr);
+        mediaElement.appendChild(sourceElement);
     }
     const src2 = el.getAttribute("data-src2");
     if (src2) {

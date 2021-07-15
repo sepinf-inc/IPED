@@ -504,9 +504,9 @@ public class IPEDReader extends DataSourceReader {
                 evidence.setModificationDate(DateUtil.stringToDate(value));
             }
 
-            value = doc.get(IndexItem.RECORDDATE);
+            value = doc.get(IndexItem.CHANGED);
             if (!value.isEmpty()) {
-                evidence.setRecordDate(DateUtil.stringToDate(value));
+                evidence.setChangeDate(DateUtil.stringToDate(value));
             }
 
             String path = doc.get(IndexItem.PATH);
