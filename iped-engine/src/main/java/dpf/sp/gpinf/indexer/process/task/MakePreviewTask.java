@@ -34,7 +34,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.io.IItemBase;
@@ -119,8 +118,9 @@ public class MakePreviewTask extends AbstractTask {
             evidence.setViewFile(viewFile);
 
         } catch (Throwable e) {
-            Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString()); //$NON-NLS-1$//$NON-NLS-2$
-
+            LOGGER.warn("Error generating preview of {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), //$NON-NLS-1$
+                    e.toString());
+            LOGGER.debug("", e);
         }
 
     }
