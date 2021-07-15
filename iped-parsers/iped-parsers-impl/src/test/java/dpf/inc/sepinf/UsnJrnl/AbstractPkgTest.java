@@ -191,9 +191,6 @@ public abstract class AbstractPkgTest extends TestCase {
           public Integer getSubitemId() {return getSubitemId();}
           
           @Override
-          public Date getRecordDate() {return null;}
-          
-          @Override
           public String getPath() {return "";}
           
           @Override
@@ -363,6 +360,9 @@ public abstract class AbstractPkgTest extends TestCase {
           
           @Override
           public Date getAccessDate() {return null;}
+
+        @Override
+        public Date getChangeDate() {return null;}
       };      
       usntracker = new EmbeddedUsnParser();
       usnContext = new ParseContext();

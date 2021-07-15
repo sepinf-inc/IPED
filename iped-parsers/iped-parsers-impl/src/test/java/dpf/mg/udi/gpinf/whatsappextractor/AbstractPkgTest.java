@@ -291,12 +291,7 @@ public abstract class AbstractPkgTest extends TestCase {
                 
             }
             
-            @Override
-            public void setRecordDate(Date recordDate) {
-                // TODO Auto-generated method stub
-                
-            }
-            
+
             @Override
             public void setQueueEnd(boolean isQueueEnd) {
                 // TODO Auto-generated method stub
@@ -597,11 +592,6 @@ public abstract class AbstractPkgTest extends TestCase {
                 return null;
             }
             
-            @Override
-            public Date getRecordDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
             
             @Override
             public String getParsedTextCache() {
@@ -746,6 +736,18 @@ public abstract class AbstractPkgTest extends TestCase {
                 // TODO Auto-generated method stub
                 
             }
+
+            @Override
+            public Date getChangeDate() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public void setChangeDate(Date changeDate) {
+                // TODO Auto-generated method stub
+                
+            }
         };
         itemInfo = new ItemInfo(0, getName(), null, null, getName(), false);
         itemBase = new IItemBase() {
@@ -846,11 +848,6 @@ public abstract class AbstractPkgTest extends TestCase {
                 return null;
             }
             
-            @Override
-            public Date getRecordDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
             
             @Override
             public String getPath() {
@@ -962,6 +959,12 @@ public abstract class AbstractPkgTest extends TestCase {
             
             @Override
             public Date getAccessDate() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public Date getChangeDate() {
                 // TODO Auto-generated method stub
                 return null;
             }
@@ -1176,11 +1179,6 @@ public abstract class AbstractPkgTest extends TestCase {
                                 return null;
                             }
 
-                            @Override
-                            public Date getRecordDate() {
-                                // TODO Auto-generated method stub
-                                return null;
-                            }
 
                             @Override
                             public String getPath() {
@@ -1291,6 +1289,12 @@ public abstract class AbstractPkgTest extends TestCase {
 
                             @Override
                             public Date getAccessDate() {
+                                // TODO Auto-generated method stub
+                                return null;
+                            }
+
+                            @Override
+                            public Date getChangeDate() {
                                 // TODO Auto-generated method stub
                                 return null;
                             }

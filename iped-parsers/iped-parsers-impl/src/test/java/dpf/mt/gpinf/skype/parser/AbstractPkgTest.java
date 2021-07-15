@@ -185,8 +185,6 @@ public abstract class AbstractPkgTest extends TestCase {
           @Override
           public Integer getSubitemId() {return getSubitemId();}
           
-          @Override
-          public Date getRecordDate() {return null;}
           
           @Override
           public String getPath() {return file.getAbsolutePath();}
@@ -358,6 +356,9 @@ public abstract class AbstractPkgTest extends TestCase {
           
           @Override
           public Date getAccessDate() {return null;}
+
+        @Override
+        public Date getChangeDate() {return null;}
       };
 
 
