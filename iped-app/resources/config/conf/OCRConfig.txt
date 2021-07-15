@@ -14,10 +14,10 @@ OCRLanguage = por
 pageSegMode = 1
 
 # Minimum file size (bytes) to submit to OCR
-minFileSize2OCR = 10000
+minFileSize2OCR = 1000
 
 # Maximum file size (bytes) to submit to OCR
-maxFileSize2OCR = 100000000
+maxFileSize2OCR = 200000000
 
 # Resolution (dpi) for PDF to image conversion. Increase if the document's fonts are small
 pdfToImgResolution = 250

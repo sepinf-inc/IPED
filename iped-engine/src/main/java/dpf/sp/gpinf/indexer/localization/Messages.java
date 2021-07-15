@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer;
+package dpf.sp.gpinf.indexer.localization;
 
 import java.util.Locale;
 import java.util.MissingResourceException;

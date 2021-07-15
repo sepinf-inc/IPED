@@ -6,9 +6,11 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.text.Collator;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 
@@ -17,10 +19,12 @@ import javax.swing.UIManager;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.UiUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
@@ -36,13 +40,25 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-public class MetadataViewer extends Viewer {
+@SuppressWarnings("restriction")
+public abstract class MetadataViewer extends Viewer {
+
+    private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 
     private TabPane tabPane;
     private JFXPanel jfxPanel;
     private List<HtmlViewer> htmlViewers = new ArrayList<>();
 
-    private Collator collator;
+    public static class FieldComparator implements Comparator<String> {
+        @Override
+        public int compare(String a, String b) {
+            a = LocalizedProperties.getLocalizedField(a);
+            b = LocalizedProperties.getLocalizedField(b);
+            return a.compareToIgnoreCase(b);
+        }
+    };
+
+    private FieldComparator comparator = new FieldComparator();
 
     public MetadataViewer() {
         super(new GridLayout());
@@ -84,6 +100,8 @@ public class MetadataViewer extends Viewer {
 
     }
 
+    public abstract boolean isNumeric(String field);
+
     @Override
     public String getName() {
         return Messages.getString("MetadataViewer.TabTitle"); //$NON-NLS-1$
@@ -100,12 +118,8 @@ public class MetadataViewer extends Viewer {
 
     @Override
     public void init() {
-
         for (HtmlViewer viewer : htmlViewers)
             viewer.init();
-
-        collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
     }
 
     @SuppressWarnings("restriction")
@@ -221,17 +235,28 @@ public class MetadataViewer extends Viewer {
             return;
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Arrays.sort(metas, collator);
+        Arrays.sort(metas, comparator);
         for (String meta : metas) {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
-            sb.append(meta);
+            sb.append(LocalizedProperties.getLocalizedField(meta));
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
-            if (!metadata.isMultiValued(meta))
-                sb.append(SimpleHTMLEncoder.htmlEncode(metadata.get(meta)));
-            else
-                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(metadata.getValues(meta)).toString()));
+            if (!metadata.isMultiValued(meta)) {
+                String val = metadata.get(meta);
+                if (isNumeric(meta)) {
+                    val = df.format(Double.valueOf(val));
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(val));
+            } else {
+                String[] vals = metadata.getValues(meta);
+                if (isNumeric(meta)) {
+                    for (int i = 0; i < vals.length; i++) {
+                        vals[i] = df.format(Double.valueOf(vals[i]));
+                    }
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(vals).toString()));
+            }
             sb.append("</td></tr>"); //$NON-NLS-1$
         }
         sb.append("</table>"); //$NON-NLS-1$
@@ -248,7 +273,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());
         fillProp(sb, BasicProps.MODIFIED, item.getModDate());
         fillProp(sb, BasicProps.ACCESSED, item.getAccessDate());
-        fillProp(sb, BasicProps.RECORDDATE, item.getRecordDate());
+        fillProp(sb, BasicProps.CHANGED, item.getChangeDate());
         fillProp(sb, BasicProps.HASH, item.getHash());
         fillProp(sb, BasicProps.PATH, item.getPath());
         sb.append("</table>"); //$NON-NLS-1$
@@ -270,7 +295,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
-        Arrays.sort(keys, collator);
+        Arrays.sort(keys, comparator);
         for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
@@ -280,7 +305,21 @@ public class MetadataViewer extends Viewer {
 
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
-            sb.append("<tr><td class=\"s1\">" + key + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (isNumeric(key)) {
+                if (value instanceof Number) {
+                    value = df.format(Double.valueOf(((Number) value).doubleValue()));
+                } else if (value instanceof Collection) {
+                    ArrayList<Object> formattedVals = new ArrayList<>();
+                    for (Object v : (Collection) value) {
+                        if (v instanceof Number) {
+                            v = df.format(Double.valueOf(((Number) v).doubleValue()));
+                        }
+                        formattedVals.add(v);
+                    }
+                    value = formattedVals;
+                }
+            }
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }

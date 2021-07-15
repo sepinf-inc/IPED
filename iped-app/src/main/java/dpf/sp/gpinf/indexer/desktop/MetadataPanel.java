@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -56,7 +57,8 @@ import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
@@ -66,6 +68,8 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -316,8 +320,9 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String toString() {
-            String startStr = NumberFormat.getNumberInstance().format(start);
-            String endStr = NumberFormat.getNumberInstance().format(end);
+            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+            String startStr = nf.format(start);
+            String endStr = nf.format(end);            
             return startStr + " TO " + endStr + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         }
     }
@@ -357,9 +362,10 @@ public class MetadataPanel extends JPanel
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
             String filterStr = propsFilter.getText().toLowerCase();
-            String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields){
-                f = BasicProps.getLocalizedField(f);
+            List<String> fields = Arrays.asList(ColumnsManager.getInstance().fieldGroups[selIdx]);
+            fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+            Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
+            for (String f : fields) {
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);
             }
@@ -464,19 +470,6 @@ public class MetadataPanel extends JPanel
         eventSetToOrdsCache.clear();
     }
 
-    public static final boolean isFloat(String field) {
-        return Float.class.equals(IndexItem.getMetadataTypes().get(field));
-    }
-
-    public static final boolean isDouble(String field) {
-        return Double.class.equals(IndexItem.getMetadataTypes().get(field));
-    }
-
-    public static final boolean mayBeNumeric(String field) {
-        return IndexItem.getMetadataTypes().get(field) == null
-                || !IndexItem.getMetadataTypes().get(field).equals(String.class);
-    }
-
     private long[] getEventOrdsFromEventSet(SortedSetDocValues eventDocValues, String eventSet) {
         long[] ords = eventSetToOrdsCache.get(eventSet);
         if (ords != null) {
@@ -494,15 +487,15 @@ public class MetadataPanel extends JPanel
 
     private MultiSearchResult getIdsWithOrd(MultiSearchResult result, String field, Set<Integer> ordsToGet) {
 
-        boolean mayBeNumeric = mayBeNumeric(field);
-        boolean isFloat = isFloat(field);
-        boolean isDouble = isDouble(field);
+        boolean isNumeric = IndexItem.isNumeric(field);
+        boolean isFloat = IndexItem.isFloat(field);
+        boolean isDouble = IndexItem.isDouble(field);
         boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         ArrayList<IItemId> items = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int k = 0;
-        if (mayBeNumeric && numValues != null) {
+        if (isNumeric && numValues != null) {
             Bits docsWithField = null;
             try {
                 docsWithField = reader.getDocsWithField(field);
@@ -538,7 +531,7 @@ public class MetadataPanel extends JPanel
                 }
                 k++;
             }
-        } else if (mayBeNumeric && numValuesSet != null) {
+        } else if (isNumeric && numValuesSet != null) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
@@ -625,14 +618,13 @@ public class MetadataPanel extends JPanel
             sortAndUpdateList(filteredArray);
             return;
         }
-        field = BasicProps.getNonLocalizedField(field.trim());
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         loadDocValues(field);
 
-        boolean mayBeNumeric = mayBeNumeric(field);
-        final boolean isNumeric = mayBeNumeric && (numValues != null || numValuesSet != null);
-        boolean isFloat = isFloat(field);
-        boolean isDouble = isDouble(field);
+        boolean isNumeric = IndexItem.isNumeric(field);
+        boolean isFloat = IndexItem.isFloat(field);
+        boolean isDouble = IndexItem.isDouble(field);
         boolean isTimeEvent = BasicProps.TIME_EVENT.equals(field);
 
         SwingUtilities.invokeLater(new Runnable() {
@@ -975,7 +967,7 @@ public class MetadataPanel extends JPanel
         }
 
         String field = (String) props.getSelectedItem();
-        field = BasicProps.getNonLocalizedField(field.trim());
+        field = LocalizedProperties.getNonLocalizedField(field.trim());
 
         Set<Integer> ords = new HashSet<>();
         for (ValueCount value : list.getSelectedValuesList()) {

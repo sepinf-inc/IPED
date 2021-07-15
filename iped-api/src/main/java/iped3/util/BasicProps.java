@@ -1,9 +1,6 @@
 package iped3.util;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 public class BasicProps {
@@ -18,7 +15,7 @@ public class BasicProps {
     public static final String CREATED = "created"; //$NON-NLS-1$
     public static final String ACCESSED = "accessed"; //$NON-NLS-1$
     public static final String MODIFIED = "modified"; //$NON-NLS-1$
-    public static final String RECORDDATE = "recordDate"; //$NON-NLS-1$
+    public static final String CHANGED = "changed"; //$NON-NLS-1$
     public static final String PATH = "path"; //$NON-NLS-1$
     public static final String CATEGORY = "category"; //$NON-NLS-1$
     public static final String DELETED = "deleted"; //$NON-NLS-1$
@@ -44,41 +41,6 @@ public class BasicProps {
     public static final String TIMESTAMP = "timeStamp";
     public static final String TIME_EVENT = "timeEvent";
 
-    private static Map<String, String> toNonLocalizedMap = getNonLocalizationMap();
-    private static Map<String, String> toLocalizedMap = invertMap(toNonLocalizedMap);
-
-    private static final Map<String, String> getNonLocalizationMap() {
-        Map<String, String> map = new HashMap<>();
-        map.put(Messages.getString("BasicProps.name"), NAME);
-        map.put(Messages.getString("BasicProps.type"), TYPE);
-        map.put(Messages.getString("BasicProps.size"), LENGTH);
-        map.put(Messages.getString("BasicProps.created"), CREATED);
-        map.put(Messages.getString("BasicProps.accessed"), ACCESSED);
-        map.put(Messages.getString("BasicProps.modified"), MODIFIED);
-        map.put(Messages.getString("BasicProps.recordDate"), RECORDDATE);
-        map.put(Messages.getString("BasicProps.path"), PATH);
-        map.put(Messages.getString("BasicProps.category"), CATEGORY);
-        map.put(Messages.getString("BasicProps.deleted"), DELETED);
-        map.put(Messages.getString("BasicProps.content"), CONTENT);
-        return map;
-    }
-
-    private static final Map<String, String> invertMap(Map<String, String> map) {
-        Map<String, String> invertedMap = new HashMap<>();
-        for (Entry<String, String> entry : map.entrySet()) {
-            invertedMap.put(entry.getValue(), entry.getKey());
-        }
-        return invertedMap;
-    }
-
-    public static final String getNonLocalizedField(String localizedField) {
-        return toNonLocalizedMap.getOrDefault(localizedField, localizedField);
-    }
-
-    public static final String getLocalizedField(String nonLocalizedField) {
-        return toLocalizedMap.getOrDefault(nonLocalizedField, nonLocalizedField);
-    }
-
     public static final Set<String> SET = getBasicProps();
 
     private static Set<String> getBasicProps() {
@@ -93,7 +55,7 @@ public class BasicProps {
         basicProps.add(CREATED);
         basicProps.add(ACCESSED);
         basicProps.add(MODIFIED);
-        basicProps.add(RECORDDATE);
+        basicProps.add(CHANGED);
         basicProps.add(PATH);
         basicProps.add(CATEGORY);
         basicProps.add(DELETED);

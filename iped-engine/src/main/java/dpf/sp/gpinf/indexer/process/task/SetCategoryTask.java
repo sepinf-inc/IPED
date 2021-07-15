@@ -21,9 +21,9 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.util.Arrays;
 import java.util.List;
 
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import iped3.IItem;
 import iped3.util.BasicProps;
 import macee.core.Configurable;

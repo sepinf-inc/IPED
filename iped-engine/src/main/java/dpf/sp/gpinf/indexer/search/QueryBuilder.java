@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,10 +36,12 @@ import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.TermRangeQuery;
 import org.apache.lucene.search.WildcardQuery;
 
-import dpf.sp.gpinf.indexer.config.CategoryLocalization;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IIPEDSource;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -108,7 +111,7 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     private String getNonLocalizedField(String field) {
-        return BasicProps.getNonLocalizedField(field);
+        return LocalizedProperties.getNonLocalizedField(field);
     }
 
     public Query getNonLocalizedQuery(Query query) {
@@ -315,24 +318,17 @@ public class QueryBuilder implements IQueryBuilder {
 
         HashMap<String, PointsConfig> pointsConfigMap = new HashMap<>();
 
-        DecimalFormat nf = new DecimalFormat();
+        NumberFormat nf = LocalizedFormat.getNumberInstance();
         PointsConfig configLong = new PointsConfig(nf, Long.class);
         PointsConfig configInt = new PointsConfig(nf, Integer.class);
         PointsConfig configFloat = new PointsConfig(nf, Float.class);
         PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
-        pointsConfigMap.put(IndexItem.LENGTH, configLong);
-        pointsConfigMap.put(IndexItem.getLocalizedField(IndexItem.LENGTH), configLong);
-        pointsConfigMap.put(IndexItem.ID, configInt);
-        pointsConfigMap.put(IndexItem.SLEUTHID, configInt);
-        pointsConfigMap.put(IndexItem.PARENTID, configInt);
-        pointsConfigMap.put(IndexItem.FTKID, configInt);
-
         for (String field : LoadIndexFields.getFields(Arrays.asList(ipedCase))) {
             Class<?> type = IndexItem.getMetadataTypes().get(field);
             if (type == null)
                 continue;
-            if (type.equals(Integer.class) || type.equals(Byte.class))
+            if (type.equals(Integer.class) || type.equals(Short.class) || type.equals(Byte.class))
                 pointsConfigMap.put(field, configInt);
             else if (type.equals(Long.class))
                 pointsConfigMap.put(field, configLong);
@@ -340,6 +336,11 @@ public class QueryBuilder implements IQueryBuilder {
                 pointsConfigMap.put(field, configFloat);
             else if (type.equals(Double.class))
                 pointsConfigMap.put(field, configDouble);
+        }
+
+        for (String field : pointsConfigMap.keySet().toArray(new String[0])) {
+            String localizedField = LocalizedProperties.getLocalizedField(field);
+            pointsConfigMap.put(localizedField, pointsConfigMap.get(field));
         }
 
         synchronized (lock) {

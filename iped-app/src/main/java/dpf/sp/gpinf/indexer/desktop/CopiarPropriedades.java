@@ -99,7 +99,7 @@ public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements
 
                     if (values.length > 0 && !values[0].isEmpty()
                             && (field.equals(IndexItem.ACCESSED) || field.equals(IndexItem.CREATED)
-                                    || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.RECORDDATE))) {
+                                    || field.equals(IndexItem.MODIFIED) || field.equals(IndexItem.CHANGED))) {
                         values[0] = df.format(DateUtil.stringToDate(values[0]));
                     }
                     String value = ""; //$NON-NLS-1$

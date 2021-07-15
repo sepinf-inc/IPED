@@ -37,19 +37,19 @@ public class UiUtil {
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         Color htmlLink = UIManager.getColor("Viewer.htmlLink"); //$NON-NLS-1$
 
-        if (background == null && foreground == null && htmlLink == null) {
-            return null;
+        if (background == null) {
+            background = Color.white;
+        }
+        if (foreground == null) {
+            foreground = Color.black;
         }
 
         StringBuilder sb = new StringBuilder();
         sb.append("data:,.ipedtheme { "); //$NON-NLS-1$
-        if (background != null) {
-            sb.append("background-color:").append(getHexRGB(background)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
-        if (foreground != null) {
-            sb.append("color:").append(getHexRGB(foreground)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
-        }
+        sb.append("background-color:").append(getHexRGB(background)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("color:").append(getHexRGB(foreground)).append(" !important;"); //$NON-NLS-1$ //$NON-NLS-2$
         sb.append("}"); //$NON-NLS-1$
+
         if (htmlLink != null) {
             sb.append(" .ipedtheme a:link, a:visited {color:").append(getHexRGB(htmlLink)).append(" !important;}"); //$NON-NLS-1$ //$NON-NLS-2$
         }

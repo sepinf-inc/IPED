@@ -474,7 +474,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
                 .timeField(BasicProps.CREATED, item.getCreationDate()).timeField(BasicProps.MODIFIED, item.getModDate())
                 .timeField(BasicProps.ACCESSED, item.getAccessDate())
-                .timeField(BasicProps.RECORDDATE, item.getRecordDate()).field(BasicProps.EXPORT, item.getFileToIndex())
+                .timeField(BasicProps.CHANGED, item.getChangeDate()).field(BasicProps.EXPORT, item.getFileToIndex())
                 .field(BasicProps.CATEGORY, item.getCategorySet())
                 .field(BasicProps.CONTENTTYPE, item.getMediaType().toString()).field(BasicProps.HASH, item.getHash())
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())

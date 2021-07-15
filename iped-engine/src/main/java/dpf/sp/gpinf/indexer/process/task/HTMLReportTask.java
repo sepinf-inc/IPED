@@ -62,7 +62,6 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -70,11 +69,13 @@ import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
@@ -618,7 +619,7 @@ public class HTMLReportTask extends AbstractTask {
             (threads[i] = new Thread() {
                 public void run() {
                     DateFormat dateFormat = new SimpleDateFormat(Messages.getString("HTMLReportTask.Dateformat")); //$NON-NLS-1$
-                    NumberFormat longFormat = new DecimalFormat("#,##0"); //$NON-NLS-1$
+                    NumberFormat longFormat = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
                     for (int page = 1; page <= numPages; page++) {
                         if (page % numThreads != idx)
                             continue;

@@ -12,12 +12,14 @@ import java.io.Serializable;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -42,6 +44,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -53,6 +56,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.LoadIndexFields;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItemId;
@@ -93,7 +97,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
             IndexItem.NAME, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
-            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.RECORDDATE, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
+            IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
             IndexItem.HASH, IndexItem.PATH };
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
@@ -544,7 +548,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
         int newPos = 2;
         for (String col : newCols) {
-            col = BasicProps.getLocalizedField(col);
+            col = LocalizedProperties.getLocalizedField(col);
             for (int i = 0; i < App.get().resultsTable.getColumnModel().getColumnCount(); i++) {
                 TableColumn tc = App.get().resultsTable.getColumnModel().getColumn(i);
                 if (tc.getHeaderValue() instanceof String && ((String) tc.getHeaderValue())
@@ -654,13 +658,15 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateList() {
         listPanel.removeAll();
-        String[] fields = fieldGroups[combo.getSelectedIndex()];
+        List<String> fields = Arrays.asList(fieldGroups[combo.getSelectedIndex()]);
+        fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
+        Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
         String filter = textFieldNameFilter.getText().trim().toLowerCase();
         for (String f : fields) {
             if (filter.isEmpty() || f.toLowerCase().indexOf(filter) >= 0) {
                 JCheckBox check = new JCheckBox();
-                check.setText(BasicProps.getLocalizedField(f));
-                if (colState.visibleFields.contains(f))
+                check.setText(f);
+                if (colState.visibleFields.contains(LocalizedProperties.getNonLocalizedField(f)))
                     check.setSelected(true);
                 check.addActionListener(this);
                 listPanel.add(check);
@@ -688,7 +694,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private void updateGUICol(String colName, boolean insert) {
 
-        colName = BasicProps.getNonLocalizedField(colName);
+        colName = LocalizedProperties.getNonLocalizedField(colName);
         int modelIdx = loadedFields.indexOf(colName);
         if (insert) {
             colState.visibleFields.add(colName);
