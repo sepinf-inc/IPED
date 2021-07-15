@@ -218,8 +218,11 @@ class PythonParserJabber:
                 other_participant = [x for x in participants if x not in [y.split("/",1)[0] for y in participant_nickname_dict.values()]][-1]
                 participant_nickname_dict[other_participant] = other_participant
             
-            new_messages_list = []            
-            for m in messages_list:
+            new_messages_list = []
+            msg_num = 0
+            msg_name_prefix = "Jabber chat message "
+            sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
+            for m in sorted_msgs_list:
                 iped_date = m["message_date"]
                 iped_sender = participant_nickname_dict[m["message_sender"]]
                 if iped_sender == host_system:
@@ -236,6 +239,7 @@ class PythonParserJabber:
 
                 meta = Metadata()
                 meta.set(BasicProps.LENGTH, "")
+                meta.set(Metadata.RESOURCE_NAME_KEY, msg_name_prefix + str(msg_num))
                 meta.set(Message.MESSAGE_FROM, iped_sender)
                 meta.set(Message.MESSAGE_TO, iped_receiver)
                 meta.set(ExtraProperties.MESSAGE_DATE,iped_date)
@@ -245,11 +249,12 @@ class PythonParserJabber:
 
                 # xhtml.characters(" - ".join([iped_date, iped_sender, iped_text]))
                 new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
+                
+                msg_num += 1
 
             # generate html in whatsapp format
             formatted_msgs = []
-            sorted_msgs_list = sorted(new_messages_list, key=lambda k: k['date'])
-            for res in sorted_msgs_list:
+            for res in new_messages_list:
                 if not isinstance(res["msg"], str):
                     res["msg"] = res["msg"].text
                 msg_template = MSG_TEMPLATE
