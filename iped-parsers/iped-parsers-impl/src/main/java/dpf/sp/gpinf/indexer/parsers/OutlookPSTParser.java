@@ -99,7 +99,6 @@ public class OutlookPSTParser extends AbstractParser {
 
     private SimpleDateFormat df = new SimpleDateFormat(Messages.getString("OutlookPSTParser.DateFormat")); //$NON-NLS-1$
     private LibpffPSTParser libpffParser = new LibpffPSTParser();
-
     private boolean recoverDeleted = true;
     private boolean useLibpffParser = true;
 

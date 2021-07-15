@@ -109,7 +109,6 @@ public class SkypeParser extends AbstractParser {
 
                 if (searcher != null)
                     sqlite.searchMediaCache(searcher);
-
                 ReportGenerator r = new ReportGenerator(handler, metadata, sqlite.getSkypeName());
 
                 Collection<SkypeContact> contatos = sqlite.extraiContatos();

@@ -47,6 +47,7 @@ import net.sf.sevenzipjbinding.impl.RandomAccessFileInStream;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchive;
 import net.sf.sevenzipjbinding.simple.ISimpleInArchiveItem;
 
+
 public class SevenZipParser extends AbstractParser {
 
     /**
@@ -271,13 +272,15 @@ public class SevenZipParser extends AbstractParser {
                 entrydata.set(TikaCoreProperties.CREATED, item.getCreationTime());
                 entrydata.set(TikaCoreProperties.MODIFIED, item.getLastWriteTime());
                 entrydata.set(ExtraProperties.ACCESSED, item.getLastAccessTime());
-
                 if (item.isFolder())
                     entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
 
                 if (extractor.shouldParseEmbedded(entrydata))
                     extractor.parseEmbedded(is, handler, entrydata, true);
 
+
+                
+                
             } catch (SevenZipException e) {
                 LOGGER.warn("Error extracting subitem {} {}", subitemPath, e.getMessage()); //$NON-NLS-1$
             }

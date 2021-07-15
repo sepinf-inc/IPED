@@ -614,25 +614,25 @@ public class FirefoxSqliteParser extends AbstractSqliteBrowserParser {
         return downloads;
     }
 
-    public static void main(String[] args) {
-
-        try {
-            String filepath = "/tmp/places.sqlite"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            FirefoxSqliteParser parser = new FirefoxSqliteParser();
-            ParseContext context = new ParseContext();
-            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                    MediaType.application("x-firefox-places").toString()); //$NON-NLS-1$
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-        } catch (Exception e1) {
-            e1.printStackTrace();
-        }
-
-    }
+//    public static void main(String[] args) {
+//
+//        try {
+//            String filepath = "/tmp/places.sqlite"; //$NON-NLS-1$
+//            InputStream input = new FileInputStream(filepath);
+//            FirefoxSqliteParser parser = new FirefoxSqliteParser();
+//            ParseContext context = new ParseContext();
+//            ToXMLContentHandler handler = new ToXMLContentHandler(new FileOutputStream("/tmp/saida.html"), "UTF-8"); //$NON-NLS-1$
+//            Metadata metadata = new Metadata();
+//            metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+//                    MediaType.application("x-firefox-places").toString()); //$NON-NLS-1$
+//            context.set(Parser.class, parser);
+//
+//            parser.parse(input, handler, metadata, context);
+//
+//        } catch (Exception e1) {
+//            e1.printStackTrace();
+//        }
+//
+//    }
 
 }

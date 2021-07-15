@@ -76,32 +76,6 @@ public class MSAccessParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("x-msaccess")); //$NON-NLS-1$
     public static final String ACCESS_MIME_TYPE = "application/x-msaccess"; //$NON-NLS-1$
 
-    public static void main(String[] args) {
-        // teste
-        try {
-            String filepath = "E:/mdbs/A7472C6B74B24F740ACA8777BC93F8FE.MDB"; //$NON-NLS-1$
-            InputStream input = new FileInputStream(filepath);
-            MSAccessParser parser = new MSAccessParser();
-            ParseContext context = new ParseContext();
-            BodyContentHandler handler = new BodyContentHandler(
-                    new BufferedWriter(new FileWriter("E:/mdbs/saida.txt"))); //$NON-NLS-1$
-            Metadata metadata = new Metadata();
-            metadata.add(TikaMetadataKeys.RESOURCE_NAME_KEY, filepath);
-            context.set(Parser.class, parser);
-
-            parser.parse(input, handler, metadata, context);
-
-            String[] names = metadata.names();
-            Arrays.sort(names);
-            for (String name : names)
-                System.out.print(name + ": " + metadata.get(name) + "\n"); //$NON-NLS-1$ //$NON-NLS-2$
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-    }
-
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
         return SUPPORTED_TYPES;

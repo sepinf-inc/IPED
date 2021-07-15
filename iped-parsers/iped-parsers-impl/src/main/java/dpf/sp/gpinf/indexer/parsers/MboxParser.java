@@ -143,6 +143,7 @@ public class MboxParser extends AbstractParser {
         }
 
         String subject = mailMetadata.get(ExtraProperties.MESSAGE_SUBJECT);
+
         if (subject == null || subject.trim().isEmpty())
             subject = Messages.getString("MboxParser.NoSubject"); //$NON-NLS-1$
 

@@ -33,12 +33,12 @@ public class RegistryKeyParserManager {
     }
 
     private void loadConfigPath() {
-        File dir;
+        File dir, dir2;
         try {
             String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
 
-            dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
-
+            dir2 = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
+            dir = new File("C:\\Users\\guilh\\git\\IPED\\target\\release\\iped-4.0.0-snapshot\\conf\\ParsersCustomConfigs\\dpf.mt.gpinf.registro.RegistroParser");
             File[] files = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
