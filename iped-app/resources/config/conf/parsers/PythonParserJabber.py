@@ -16,7 +16,9 @@ from iped3.util import BasicProps
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
 from dpf.sp.gpinf.indexer.util import EmptyInputStream
 from dpf.mg.udi.gpinf.whatsappextractor import Util
-from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser 
+from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser
+from org.apache.commons.codec.binary import StringUtils
+from java.io import ByteArrayInputStream
 import os
 import sys
 import re
@@ -280,6 +282,9 @@ class PythonParserJabber:
                             .replace("${css}",css_template).replace("${javascript}",js_template)\
                             .replace("${favicon}",favicon).replace("${avatar}",avatar)\
                             .replace("${id}",os.path.split(tmpFilePath)[1])
+            
+            byteInputStream = ByteArrayInputStream(StringUtils.getBytesUtf8(final_html))
+            IndentityHtmlParser().parse(byteInputStream, context, xhtml)
 
 
         except Exception as exc:
