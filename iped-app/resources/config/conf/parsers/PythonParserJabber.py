@@ -11,6 +11,8 @@ from org.apache.tika.io import TemporaryResources
 from org.apache.tika.metadata import Metadata, Message
 from org.apache.tika.exception import TikaException
 from org.apache.tika.extractor import EmbeddedDocumentExtractor
+from org.apache.tika.sax import EmbeddedContentHandler
+from org.apache.tika.parser.html import HtmlParser
 from iped3.util import ExtraProperties
 from iped3.util import BasicProps
 from dpf.sp.gpinf.indexer.parsers import IndexerDefaultParser
@@ -113,7 +115,9 @@ class PythonParserJabber:
             extractor = context.get(EmbeddedDocumentExtractor)
             tis = TikaInputStream.get(stream, tmpResources)
             tmpFilePath = tis.getFile().getAbsolutePath()
-
+            
+            # extract text from html chat to be indexed, searched for regexes and so on...
+            HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
 
             soup = BeautifulSoup(open(tmpFilePath,'r'), "html.parser")
             body = soup.find("body")
@@ -254,7 +258,9 @@ class PythonParserJabber:
                 
                 msg_num += 1
 
-            # generate html in whatsapp format
+            # Code below generates html in whatsapp format. For now we are giving
+            # preference to original jabber html, so this is commented out.
+            ''' 
             formatted_msgs = []
             for res in new_messages_list:
                 if not isinstance(res["msg"], str):
@@ -285,7 +291,7 @@ class PythonParserJabber:
             
             byteInputStream = ByteArrayInputStream(StringUtils.getBytesUtf8(final_html))
             IndentityHtmlParser().parse(byteInputStream, context, xhtml)
-
+            '''
 
         except Exception as exc:
             raise exc
