@@ -1148,6 +1148,15 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
     
-   
+    <mime-type type="application/x-jabber-chat">
+       <magic priority="50">
+            <match value=".{0,114}Conversation with.{1,50}at.{21}on" type="regex" offset="86"/>
+       </magic>
+       <sub-class-of type="text/html"/>
+    </mime-type>
+    
+    <mime-type type="message/x-jabber-message">
+        <sub-class-of type="message/x-chat-message"/>
+    </mime-type>
+ 
 </mime-info>
-
