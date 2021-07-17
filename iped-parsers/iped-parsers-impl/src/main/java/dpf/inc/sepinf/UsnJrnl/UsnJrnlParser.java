@@ -61,11 +61,11 @@ public class UsnJrnlParser extends AbstractParser {
         this.extractEntries = extractEntries;
     }
 
-    public boolean findNextEntry(InputStream in) throws IOException {
+    public boolean findNextEntry(SeekableInputStream in) throws IOException {
         byte[] b = new byte[8];
         int rb = 0;
         do {
-            in.mark(8);
+            long pos = in.position();
             rb = IOUtils.read(in, b, 0, 8);
 
             // if all zeros read next 8 bytes
@@ -73,7 +73,7 @@ public class UsnJrnlParser extends AbstractParser {
                 continue;
             }
 
-            in.reset();
+            in.seek(pos);
             // usn entry version 2.0
             if (b[4] == 2 && (b[5] | b[6] | b[7]) == 0) {
                 return true;
