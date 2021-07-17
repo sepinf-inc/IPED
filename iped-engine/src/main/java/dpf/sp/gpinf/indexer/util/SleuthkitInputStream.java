@@ -65,21 +65,11 @@ public class SleuthkitInputStream extends SeekableInputStream {
     }
 
     @Override
-    public boolean markSupported() {
-        return rcis.markSupported();
-    }
-
-    @Override
-    public void mark(int mark) {
-        rcis.mark(mark);
-    }
-
-    @Override
     public void reset() throws IOException {
         if (closed) {
             throw new IOException("Stream was closed."); //$NON-NLS-1$
         }
-        rcis.reset();
+        super.reset();
     }
 
     @Override
