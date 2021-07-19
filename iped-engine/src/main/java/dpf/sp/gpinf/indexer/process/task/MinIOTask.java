@@ -305,7 +305,7 @@ public class MinIOTask extends AbstractTask {
         private MinioClient minioClient;
         private String bucket, id;
         private Long size;
-        private long pos = 0, markPos;
+        private long pos = 0;
         private InputStream is;
 
         public MinIOSeekableInputStream(MinioClient minioClient, String bucket, String id) {
@@ -407,25 +407,6 @@ public class MinIOTask extends AbstractTask {
 
             return pos - oldPos;
 
-        }
-
-        @Override
-        public boolean markSupported() {
-            return true;
-        }
-
-        @Override
-        public void mark(int mark) {
-            markPos = pos;
-        }
-
-        @Override
-        public void reset() throws IOException {
-            pos = markPos;
-            if (is != null) {
-                is.close();
-                is = getInputStream(pos);
-            }
         }
 
         @Override

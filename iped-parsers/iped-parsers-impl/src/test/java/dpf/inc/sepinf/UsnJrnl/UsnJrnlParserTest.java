@@ -40,8 +40,6 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
         ContentHandler handler = new ToTextContentHandler();
         parser.setExtractEntries(true);
         parser.getSupportedTypes(usnContext);
-        parser.findNextEntry(stream);
-        parser.setReportType(ReportType.HTML);
         parser.parse(stream, handler, metadata, usnContext);
         stream.close();
         
@@ -121,8 +119,6 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
         ContentHandler handler = new ToTextContentHandler();
         parser.setExtractEntries(true);
         parser.getSupportedTypes(usnContext);
-        parser.findNextEntry(stream);
-        parser.setReportType(ReportType.CSV);
         parser.parse(stream, handler, metadata, usnContext);
         stream.close();
         
