@@ -52,7 +52,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
         assertEquals(3085, usntracker.title.size());
         assertEquals(3084, usntracker.created.size());
 
-        assertEquals("application/x-usnjournal-report-html", usntracker.contenttype.get(0));
+        assertEquals("application/x-usnjournal-report-csv", usntracker.contenttype.get(0));
         assertEquals("application/x-usnjournal-registry", usntracker.contenttype.get(2));
 
         Date date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").parse(usntracker.created.get(0));
@@ -102,7 +102,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
             assertEquals("20 de mai. de 2021 14:55:03", df.format(date));
 
 
-        assertEquals("USN Journal Report 1", usntracker.title.get(0));
+        assertEquals("USN Journal Report", usntracker.title.get(0));
         assertEquals("USN journal Entry 6098518016", usntracker.title.get(1));
         assertEquals("USN journal Entry 6098518192", usntracker.title.get(2));
         assertEquals("USN journal Entry 6098518360", usntracker.title.get(3));
