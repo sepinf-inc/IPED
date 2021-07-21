@@ -2,7 +2,10 @@ package dpf.sp.gpinf.indexer.desktop.themes;
 
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.Window;
+import java.awt.geom.GeneralPath;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -14,6 +17,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.swing.Painter;
 import javax.swing.SwingUtilities;
 import javax.swing.UIDefaults;
 import javax.swing.UIManager;
@@ -40,9 +44,11 @@ public class ThemeManager {
             if ("Nimbus".equals(info.getName())) {
                 UIManager.setLookAndFeel(info.getClassName());
                 UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
+                System.err.println(defaults.get("Tree[Enabled].collapsedIconPainter"));
                 defaults.put("ScrollBar.thumbHeight", 12);
                 // Workaround JDK-8134828
                 defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
+                fixTreeExpandIcons(defaults);
                 for (Object key : defaults.keySet()) {
                     savedDefaults.put(key, defaults.get(key));
                 }
@@ -159,6 +165,47 @@ public class ThemeManager {
             out.write(currentTheme.getClass().getName());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    private void fixTreeExpandIcons(UIDefaults defaults) {
+        defaults.put("Tree[Enabled].collapsedIconPainter", new TreeIconPainter(false, false));
+        defaults.put("Tree[Enabled].expandedIconPainter", new TreeIconPainter(true, false));
+        defaults.put("Tree[Enabled+Selected].collapsedIconPainter", new TreeIconPainter(false, true));
+        defaults.put("Tree[Enabled+Selected].expandedIconPainter", new TreeIconPainter(true, true));
+    }
+
+    @SuppressWarnings("rawtypes")
+    private static class TreeIconPainter implements Painter {
+        private final boolean expanded;
+        private final boolean selected;
+        private static final Color defaultColor = new Color(100,100,101); 
+
+        public TreeIconPainter(boolean expanded, boolean selected) {
+            this.expanded = expanded;
+            this.selected = selected;
+        }
+
+        public void paint(Graphics2D g, Object object, int width, int height) {
+            g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            if (selected) {
+                Color c = UIManager.getColor("Tree.expandIconSel");
+                g.setColor(c == null ? Color.white : c);
+            } else {
+                Color c = UIManager.getColor("Tree.expandIcon");
+                g.setColor(c == null ? defaultColor : c);
+            }
+            GeneralPath gp = new GeneralPath();
+            gp.moveTo(0, 0);
+            if (expanded) {
+                gp.lineTo(7, 0);
+                gp.lineTo(3.5, 7);
+            } else {
+                gp.lineTo(0, 7);
+                gp.lineTo(7, 3.5);
+            }
+            gp.closePath();
+            g.fill(gp);
         }
     }
 }
