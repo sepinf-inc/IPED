@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import junit.framework.TestCase;
 
 public class PythonParserTest extends TestCase{
@@ -26,6 +27,7 @@ public class PythonParserTest extends TestCase{
         File file = new File("/test-files/test_setup.py/");
         PythonParser parser = new PythonParser(file);
         Metadata metadata = new Metadata();
+        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-sh");
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_setup.py");
         ParseContext context = new ParseContext();

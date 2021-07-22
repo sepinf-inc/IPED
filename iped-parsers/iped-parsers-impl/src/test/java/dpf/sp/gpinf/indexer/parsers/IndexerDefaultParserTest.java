@@ -356,5 +356,25 @@ public class IndexerDefaultParserTest extends TestCase{
         
 
        }
+    
+    @Test
+    public void testIndexerDefaultParserParsingPython() throws IOException, SAXException, TikaException{
+
+        IndexerDefaultParser parser = new IndexerDefaultParser();
+        Metadata metadata = new Metadata();
+        ContentHandler handler = new BodyContentHandler();
+        InputStream stream = getStream("test-files/test_setup.py");
+        ParseContext context = new ParseContext();
+        parser.getSupportedTypes(context);
+        parser.parse(stream, handler, metadata, context);
+        
+        String mts = metadata.toString();
+        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
+        assertTrue(mts.contains("Indexer-Content-Type=application/x-sh"));
+        assertTrue(mts.contains("Content-Encoding=windows-1252"));
+        assertTrue(mts.contains("charset=windows-1252"));
+        
+
+       }
 
 }
