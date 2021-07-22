@@ -371,10 +371,7 @@ public class IndexerDefaultParserTest extends TestCase{
         String mts = metadata.toString();
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
         assertTrue(mts.contains("Indexer-Content-Type=application/x-sh"));
-        assertTrue(mts.contains("Content-Encoding=windows-1252"));
-        assertTrue(mts.contains("charset=windows-1252"));
         
-
        }
 
 }
