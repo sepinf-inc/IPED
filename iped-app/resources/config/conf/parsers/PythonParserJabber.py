@@ -22,11 +22,11 @@ from dpf.sp.gpinf.indexer.parsers.util import IndentityHtmlParser
 from org.apache.commons.codec.binary import StringUtils
 from java.io import ByteArrayInputStream
 import os
-import sys
 import re
 import sys
 from bs4 import BeautifulSoup
 from bs4.element import NavigableString, Tag
+from datetime import datetime, tzinfo
 
 class PythonParserJabber:
     
@@ -128,7 +128,13 @@ class PythonParserJabber:
             client = temp_client_app[0].strip("/")
             host_system = "sistema_%s_%s"%(app,client)
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
-            message_day = temp_to_date.split(" at ",1)[1].split(" ",1)[0]
+            # message_day = temp_to_date.split(" at ",1)[1].split(" ",1)[0]
+            message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
+            try:
+                filedate = os.path.basename(tmpFilePath).replace(".html","").replace("BRT","")
+                filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
+            except Exception as exc:
+                raise(TikaException(exc))
 
             messages_list=[]
             all_lines = body.find_all('br')
@@ -138,11 +144,27 @@ class PythonParserJabber:
             # 2: <font color="#A82F2F"><font size="2">(12:05:01)</font> <b>Coyote.:</b></font> <body>N viajei esse ano n</body><br/>
             # Find out which format
             possible_tags = ["span","font"]
+            curr_tag = None
+
+            # This code catches the rare exceptions for unkown tags, but increases the processing time.
+            # Leaving the original code then
+
+            # for tag in possible_tags:
+            #     for i in range(0,len(all_lines)):
+            #         test_syntax = all_lines[i].find_previous_sibling(tag)
+            #         if test_syntax:
+            #             curr_tag = tag
+            #             break
+            # if not curr_tag:
+            #     print("STOP: %s"%all_lines)
+                
             for tag in possible_tags:
                 test_syntax = all_lines[0].find_previous_sibling(tag)
                 if test_syntax:
                     curr_tag = tag
-            
+
+
+
             html_messages = [x.find_previous_sibling(curr_tag) for x in all_lines]
             # Older versions (curr_tag = "font"), text messages with multiple <br> are not structured using html tags. Remove duplicated
             if curr_tag == "font":
@@ -188,19 +210,21 @@ class PythonParserJabber:
                 idict={}
                 if curr_tag == "span":
                     if curr_metadata.find(curr_tag,style=True):                
-                        idict["message_sender"] = curr_metadata.find("b").text.strip(":")
-                        message_time = curr_metadata.find(curr_tag,style=True).text.strip(")").strip("(")
+                        # Skipping the suffix (it will capture  alice@jabber.br if the user is alice@jabber.br/7433774929690452792)
+                        idict["message_sender"] = curr_metadata.find("b").text.rsplit("/",1)[0]
+
                     else:
                         idict["message_sender"] =  host_system
-                        message_time = curr_metadata.text.strip(")").strip("(")
                 elif curr_tag == "font":
-                    message_time = curr_metadata.text.strip("(").split(")",1)[0]
                     if curr_metadata.find("b"):
-                        idict["message_sender"] = curr_metadata.find("b").text.strip(":")
+                        idict["message_sender"] = curr_metadata.find("b").text.rsplit("/",1)[0]
                     else:
                         idict["message_sender"] =  host_system
 
-                idict["message_date"] = "%sT%s"%(message_day, message_time)
+                message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
+                dateobj = datetime.strptime("%sT%s"%(message_day,message_time),"%d/%m/%YT%H:%M:%S")
+                idict["message_date"] = dateobj.replace(tzinfo = filedate_tz).isoformat()
+
                 idict["message_text"] = curr_content
                 messages_list.append(idict)
 
@@ -208,21 +232,21 @@ class PythonParserJabber:
 
             # This validation is based in at least one username being a substring of the nickname, normally the client app in which the chat data was captured.
             #eg: username: alice@jabber.br nickname: alice@jabber.br/7433774929690452792
-            nicknames = list(set([x["message_sender"] for x in messages_list]))
+            # nicknames = list(set([x["message_sender"] for x in messages_list]))
 
-            participant_nickname_dict = {}
-            for curr_nick in nicknames:
-                if client in curr_nick or curr_nick == host_system:
-                    participant_nickname_dict[curr_nick] = curr_nick
-                # Normally there is only one nickame (eg bob2020) which is remote. The other ones follow the format alice@jabber.br/0123456789
-                # Host_system is not a participant, it is create by the parser to be the sender from the system messages.
-                else:
-                    participant_nickname_dict[curr_nick] = [x for x in participants if client not in x][-1]
+            # participant_nickname_dict = {}
+            # for curr_nick in nicknames:
+            #     if client in curr_nick or curr_nick == host_system:
+            #         participant_nickname_dict[curr_nick] = curr_nick
+            #     # Normally there is only one nickame (eg bob2020) which is remote. The other ones follow the format alice@jabber.br/0123456789
+            #     # Host_system is not a participant, it is create by the parser to be the sender from the system messages.
+            #     else:
+            #         participant_nickname_dict[curr_nick] = [x for x in participants if client not in x][-1]
 
-            # make sure there is a receiver in chat files comprising only one user and the host_system
-            if len(nicknames) == 1 or (len(nicknames) == 2 and host_system in nicknames):
-                other_participant = [x for x in participants if x not in [y.split("/",1)[0] for y in participant_nickname_dict.values()]][-1]
-                participant_nickname_dict[other_participant] = other_participant
+            # # make sure there is a receiver in chat files comprising only one user and the host_system
+            # if len(nicknames) == 1 or (len(nicknames) == 2 and host_system in nicknames):
+            #     other_participant = [x for x in participants if x not in [y.split("/",1)[0] for y in participant_nickname_dict.values()]][-1]
+            #     participant_nickname_dict[other_participant] = other_participant
             
             new_messages_list = []
             msg_num = 0
@@ -230,13 +254,13 @@ class PythonParserJabber:
             sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
             for m in sorted_msgs_list:
                 iped_date = m["message_date"]
-                iped_sender = participant_nickname_dict[m["message_sender"]]
+                iped_sender = m["message_sender"]
                 if iped_sender == host_system:
                     iped_receiver = client
                 else:
                     # remote participant sent the message
-                    receiver_nickname = [x for x in participant_nickname_dict.keys() if x not in [m["message_sender"],host_system]][-1]
-                    iped_receiver = participant_nickname_dict[receiver_nickname]
+                    iped_receiver = [x for x in participants if x not in [iped_sender,host_system]][-1]
+
                 iped_text = m["message_text"]
                 if client in iped_sender:
                     iped_direction = "outgoing to"
