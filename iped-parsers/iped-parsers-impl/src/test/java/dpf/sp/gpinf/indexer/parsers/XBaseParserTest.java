@@ -29,21 +29,21 @@ public class XBaseParserTest {
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         
-        String fileContent = handler.toString();
-        assertTrue(fileContent.contains("Kauai Dive"));
-        assertTrue(fileContent.contains("4-976"));
-        assertTrue(fileContent.contains("Sugarloaf"));
-        assertTrue(fileContent.contains("Hwy"));
-        assertTrue(fileContent.contains("Kapaa"));
-        assertTrue(fileContent.contains("HI"));
-        assertTrue(fileContent.contains("94766"));
-        assertTrue(fileContent.contains("U.S.A."));
-        assertTrue(fileContent.contains("808-555-0269"));
-        assertTrue(fileContent.contains("6215.0"));
-        assertTrue(fileContent.contains("Underwater"));
-        assertTrue(fileContent.contains("SCUBA Company"));
-        assertTrue(fileContent.contains("PO"));
-        assertTrue(fileContent.contains("B"));
+        String hts = handler.toString();
+        assertTrue(hts.contains("Kauai Dive"));
+        assertTrue(hts.contains("4-976"));
+        assertTrue(hts.contains("Sugarloaf"));
+        assertTrue(hts.contains("Hwy"));
+        assertTrue(hts.contains("Kapaa"));
+        assertTrue(hts.contains("HI"));
+        assertTrue(hts.contains("94766"));
+        assertTrue(hts.contains("U.S.A."));
+        assertTrue(hts.contains("808-555-0269"));
+        assertTrue(hts.contains("6215.0"));
+        assertTrue(hts.contains("Underwater"));
+        assertTrue(hts.contains("SCUBA Company"));
+        assertTrue(hts.contains("PO"));
+        assertTrue(hts.contains("B"));
 
     }
 
@@ -58,8 +58,8 @@ public class XBaseParserTest {
         context.set(Parser.class, parser);
         parser.parse(stream, handler, metadata, context);
         
-        String fileContent = handler.toString();
-        assertTrue(fileContent.contains("Archimède et Lius à Châteauneu"));
+        String hts = handler.toString();
+        assertTrue(hts.contains("Archimède et Lius à Châteauneu"));
 
 
     }

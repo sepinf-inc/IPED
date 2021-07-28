@@ -67,42 +67,42 @@ public class MSAccessParserTest extends TestCase{
             context.set(Parser.class, parser);
             parser.parse(stream, handler, metadata, context);
 
-            String bodyText = handler.toString();
+            String hts = handler.toString();
             
-            assertTrue(bodyText.contains("Email_Address"));
-            assertTrue(bodyText.contains("test@test.pf.com"));
-            assertTrue(bodyText.contains("gege@baba.pf.com"));
-            assertTrue(bodyText.contains("sergiomorales@moral.com"));
+            assertTrue(hts.contains("Email_Address"));
+            assertTrue(hts.contains("test@test.pf.com"));
+            assertTrue(hts.contains("gege@baba.pf.com"));
+            assertTrue(hts.contains("sergiomorales@moral.com"));
             
-            assertTrue(bodyText.contains("First_Name"));
-            assertTrue(bodyText.contains("pftest"));
-            assertTrue(bodyText.contains("geraldo"));
-            assertTrue(bodyText.contains("sérgio"));
+            assertTrue(hts.contains("First_Name"));
+            assertTrue(hts.contains("pftest"));
+            assertTrue(hts.contains("geraldo"));
+            assertTrue(hts.contains("sérgio"));
             
-            assertTrue(bodyText.contains("Last_Name"));
-            assertTrue(bodyText.contains("supertest"));
-            assertTrue(bodyText.contains("barba"));
-            assertTrue(bodyText.contains("mörales"));
+            assertTrue(hts.contains("Last_Name"));
+            assertTrue(hts.contains("supertest"));
+            assertTrue(hts.contains("barba"));
+            assertTrue(hts.contains("mörales"));
     
-            assertTrue(bodyText.contains("Address"));
-            assertTrue(bodyText.contains("asasul"));
-            assertTrue(bodyText.contains("praia do cabo"));
-            assertTrue(bodyText.contains("sèrgiocitý"));
+            assertTrue(hts.contains("Address"));
+            assertTrue(hts.contains("asasul"));
+            assertTrue(hts.contains("praia do cabo"));
+            assertTrue(hts.contains("sèrgiocitý"));
     
-            assertTrue(bodyText.contains("City"));
-            assertTrue(bodyText.contains("brasilia"));
-            assertTrue(bodyText.contains("rio de fevereiro"));
-            assertTrue(bodyText.contains("curitiba"));
+            assertTrue(hts.contains("City"));
+            assertTrue(hts.contains("brasilia"));
+            assertTrue(hts.contains("rio de fevereiro"));
+            assertTrue(hts.contains("curitiba"));
 
-            assertTrue(bodyText.contains("State"));
-            assertTrue(bodyText.contains("df"));
-            assertTrue(bodyText.contains("rf"));
-            assertTrue(bodyText.contains("pr"));
+            assertTrue(hts.contains("State"));
+            assertTrue(hts.contains("df"));
+            assertTrue(hts.contains("rf"));
+            assertTrue(hts.contains("pr"));
 
-            assertTrue(bodyText.contains("Country"));
-            assertTrue(bodyText.contains("brazil"));
-            assertTrue(bodyText.contains("uniao dos estados do brazil"));
-            assertTrue(bodyText.contains("federação brasileira"));
+            assertTrue(hts.contains("Country"));
+            assertTrue(hts.contains("brazil"));
+            assertTrue(hts.contains("uniao dos estados do brazil"));
+            assertTrue(hts.contains("federação brasileira"));
     
     }    
     

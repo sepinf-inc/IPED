@@ -25,21 +25,21 @@ public class XMLParserTest extends TestCase {
             parser.getSupportedTypes(context);
             parser.parse(stream, handler, metadata, context);
             
-            String bodyText = handler.toString();
-            assertTrue(bodyText.contains("<dc:title>Tika test document</dc:title>"));
-            assertTrue(bodyText.contains("<dc:creator>Rida Benjelloun</dc:creator>"));
-            assertTrue(bodyText.contains("<dc:subject>Java</dc:subject>"));
-            assertTrue(bodyText.contains("<dc:subject>XML</dc:subject>"));
-            assertTrue(bodyText.contains("<dc:subject>XSLT</dc:subject>"));
-            assertTrue(bodyText.contains("<dc:subject>JDOM</dc:subject>"));
-            assertTrue(bodyText.contains("<dc:subject>Indexation</dc:subject>"));
-            assertTrue(bodyText.contains("<dc:description>Framework d'indexation des documents XML, HTML, PDF etc.. </dc:description>"));
-            assertTrue(bodyText.contains("<dc:identifier>http://www.apache.org</dc:identifier>"));
-            assertTrue(bodyText.contains("<dc:date>2000-12-01T00:00:00.000Z</dc:date>"));
-            assertTrue(bodyText.contains("<dc:type>test</dc:type>"));           
-            assertTrue(bodyText.contains("<dc:format>application/msword</dc:format>"));
-            assertTrue(bodyText.contains("<dc:language>Fr</dc:language>"));
-            assertTrue(bodyText.contains("<dc:rights>Archimède et Lius à Châteauneuf testing chars en été</dc:rights>"));
+            String hts = handler.toString();
+            assertTrue(hts.contains("<dc:title>Tika test document</dc:title>"));
+            assertTrue(hts.contains("<dc:creator>Rida Benjelloun</dc:creator>"));
+            assertTrue(hts.contains("<dc:subject>Java</dc:subject>"));
+            assertTrue(hts.contains("<dc:subject>XML</dc:subject>"));
+            assertTrue(hts.contains("<dc:subject>XSLT</dc:subject>"));
+            assertTrue(hts.contains("<dc:subject>JDOM</dc:subject>"));
+            assertTrue(hts.contains("<dc:subject>Indexation</dc:subject>"));
+            assertTrue(hts.contains("<dc:description>Framework d'indexation des documents XML, HTML, PDF etc.. </dc:description>"));
+            assertTrue(hts.contains("<dc:identifier>http://www.apache.org</dc:identifier>"));
+            assertTrue(hts.contains("<dc:date>2000-12-01T00:00:00.000Z</dc:date>"));
+            assertTrue(hts.contains("<dc:type>test</dc:type>"));           
+            assertTrue(hts.contains("<dc:format>application/msword</dc:format>"));
+            assertTrue(hts.contains("<dc:language>Fr</dc:language>"));
+            assertTrue(hts.contains("<dc:rights>Archimède et Lius à Châteauneuf testing chars en été</dc:rights>"));
             stream.close();
     }
     
@@ -53,8 +53,8 @@ public class XMLParserTest extends TestCase {
 
         parser.parse(stream, handler, metadata, context);    
         final String expected = "Archim\u00E8de et Lius \u00E0 Ch\u00E2teauneuf testing chars en \u00E9t\u00E9";
-        String bodyText = handler.toString();
-        assertTrue(bodyText.contains(expected));
+        String hts = handler.toString();
+        assertTrue(hts.contains(expected));
         stream.close();
         
     }

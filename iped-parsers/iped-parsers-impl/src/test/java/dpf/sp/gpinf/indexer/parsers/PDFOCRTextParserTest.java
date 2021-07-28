@@ -67,6 +67,7 @@ public class PDFOCRTextParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_pdfProtected.pdf");
         parser.parse(stream, handler, metadata, context);
+
         assertEquals("Rethinking the Financial Network, Speech by Andrew G Haldane,"
                 + " Executive Director, Financial Stability delivered at the Financial"
                 + " Student Association, Amsterdam on 28 April 2009",
@@ -88,11 +89,12 @@ public class PDFOCRTextParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_pdfProtected.pdf");
         parser.parse(stream, handler, metadata, context);
-        String bodyText = handler.toString();
-        assertTrue(bodyText.contains("RETHINKING THE FINANCIAL NETWORK"));
-        assertTrue(bodyText.contains("This paper considers the financial system as a complex adaptive system."));
-        assertTrue(bodyText.contains("In recent years the pace of change and innovation in financial markets and"));
-        assertTrue(bodyText.contains("• Whose diversity was gradually eroded by institutions’"));
+
+        String hts = handler.toString();
+        assertTrue(hts.contains("RETHINKING THE FINANCIAL NETWORK"));
+        assertTrue(hts.contains("This paper considers the financial system as a complex adaptive system."));
+        assertTrue(hts.contains("In recent years the pace of change and innovation in financial markets and"));
+        assertTrue(hts.contains("• Whose diversity was gradually eroded by institutions’"));
         
     }
     @Test
@@ -118,11 +120,12 @@ public class PDFOCRTextParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_pdfResumes.pdf");
         parser.parse(stream, handler, metadata, context);
-        String bodyText = handler.toString();
-        assertTrue(bodyText.contains("Freshman Resume"));
-        assertTrue(bodyText.contains("Leadership MIT Undergraduate Giving Campaign Cambridge"));
-        assertTrue(bodyText.contains("Manage a $1,000 budget to put on events such as “study-breaks”"));
-        assertTrue(bodyText.contains("•   Managed 25 science journalists,"));
+
+        String hts = handler.toString();
+        assertTrue(hts.contains("Freshman Resume"));
+        assertTrue(hts.contains("Leadership MIT Undergraduate Giving Campaign Cambridge"));
+        assertTrue(hts.contains("Manage a $1,000 budget to put on events such as “study-breaks”"));
+        assertTrue(hts.contains("•   Managed 25 science journalists,"));
       
     }     
     
@@ -150,6 +153,7 @@ public class PDFOCRTextParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_pdfImages.pdf");
         parser.parse(stream, handler, metadata, context);
+
         assertEquals("g2free.lo", metadata.get(TikaCoreProperties.TITLE));
         assertEquals("QuarkXPress(tm) 4.11", metadata.get(TikaCoreProperties.CREATOR_TOOL));
         assertEquals("E", metadata.get(TikaCoreProperties.CREATOR));
@@ -166,11 +170,12 @@ public class PDFOCRTextParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_pdfImages.pdf");
         parser.parse(stream, handler, metadata, context);
-        String bodyText = handler.toString();
-        assertTrue(bodyText.contains("Polygon-based representations of 3D"));
-        assertTrue(bodyText.contains("finite polygon size (see Figure 1)."));
-        assertTrue(bodyText.contains("William T. Freeman, Thouis R. Jones, and"));
-        assertTrue(bodyText.contains("To generate our training set, we start from a collec"));
+        
+        String hts = handler.toString();
+        assertTrue(hts.contains("Polygon-based representations of 3D"));
+        assertTrue(hts.contains("finite polygon size (see Figure 1)."));
+        assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
+        assertTrue(hts.contains("To generate our training set, we start from a collec"));
         
     }
     

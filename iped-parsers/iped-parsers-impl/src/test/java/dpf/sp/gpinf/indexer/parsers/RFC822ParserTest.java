@@ -73,8 +73,8 @@ public class RFC822ParserTest extends TestCase {
         parser.parse(stream, handler, metadata, new ParseContext());
         
         //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
-        String bodyText = handler.toString();
-        assertTrue(bodyText.contains("logo.gif"));
+        String hts = handler.toString();
+        assertTrue(hts.contains("logo.gif"));
 
     }
     
@@ -88,10 +88,10 @@ public class RFC822ParserTest extends TestCase {
         parser.parse(stream, handler, metadata, context);
         stream.close();
         //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
-        String bodyText = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
-        assertTrue(bodyText.contains("Düsseldorf has non-ascii."));
-        assertTrue(bodyText.contains("Lines can be split like this."));
-        assertFalse(bodyText.contains("=")); //there should be no escape sequences
+        String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
+        assertTrue(mts.contains("Düsseldorf has non-ascii."));
+        assertTrue(mts.contains("Lines can be split like this."));
+        assertFalse(mts.contains("=")); //there should be no escape sequences
 
     }
 
@@ -103,8 +103,8 @@ public class RFC822ParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         parser.parse(stream, handler, metadata, new ParseContext());
         //tests correct decoding of base64 text, including ISO-8859-1 bytes into Unicode
-        String bodyText = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
-        assertTrue(bodyText.contains("Here is some text, with international characters, voil\u00E0!"));
+        String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
+        assertTrue(mts.contains("Here is some text, with international characters, voil\u00E0!"));
 
     }
     
