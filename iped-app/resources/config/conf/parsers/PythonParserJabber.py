@@ -115,6 +115,7 @@ class PythonParserJabber:
             extractor = context.get(EmbeddedDocumentExtractor)
             tis = TikaInputStream.get(stream, tmpResources)
             tmpFilePath = tis.getFile().getAbsolutePath()
+            origFileName = metadata.get(Metadata.RESOURCE_NAME_KEY)
             
             # extract text from html chat to be indexed, searched for regexes and so on...
             HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
@@ -130,7 +131,7 @@ class PythonParserJabber:
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
             # message_day = temp_to_date.split(" at ",1)[1].split(" ",1)[0]
             message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
-            filedate = os.path.basename(tmpFilePath).replace(".html","").replace("BRT","")
+            filedate = os.path.basename(origFileName).replace(".html","").replace("BRT","")
             filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
 
             messages_list=[]
