@@ -32,6 +32,7 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
     boolean storeTermVectors = true;
     boolean filterNonLatinChars = false;
     boolean convertCharsToAscii = true;
+    boolean convertCharsToLowerCase = true;
     int maxTokenLength = 255;
     boolean preOpenImagesOnSleuth = false;
     boolean openImagesCacheWarmUpEnabled = false;
@@ -147,7 +148,8 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
             value = value.trim();
         }
         if (value != null && !value.isEmpty()) {
-            LetterDigitTokenizer.convertCharsToLowerCase = Boolean.valueOf(value);
+            convertCharsToLowerCase = Boolean.valueOf(value);
+            LetterDigitTokenizer.convertCharsToLowerCase = convertCharsToLowerCase;
         }
 
         value = properties.getProperty("storeTermVectors"); //$NON-NLS-1$
@@ -351,5 +353,9 @@ public class AdvancedIPEDConfig extends AbstractPropertiesConfigurable {
 
     public boolean isStoreTextCacheOnDisk() {
         return storeTextCacheOnDisk;
+    }
+
+    public boolean isConvertCharsToLowerCase() {
+        return convertCharsToLowerCase;
     }
 }

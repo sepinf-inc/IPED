@@ -135,14 +135,18 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_QUERY_REWRITE);
             parser.setNumericConfigMap(getNumericConfigMap());
 
-            // remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
             AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
                     .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
                 char[] input = texto.toCharArray();
                 char[] output = new char[input.length * 4];
                 FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
                 texto = (new String(output)).trim();
+            }
+            // see #678
+            if (!advConfig.isConvertCharsToLowerCase()) {
+                parser.setLowercaseExpandedTerms(false);
             }
 
             try {
