@@ -130,11 +130,8 @@ class PythonParserJabber:
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
             # message_day = temp_to_date.split(" at ",1)[1].split(" ",1)[0]
             message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
-            try:
-                filedate = os.path.basename(tmpFilePath).replace(".html","").replace("BRT","")
-                filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
-            except Exception as exc:
-                raise(TikaException(exc))
+            filedate = os.path.basename(tmpFilePath).replace(".html","").replace("BRT","")
+            filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
 
             messages_list=[]
             all_lines = body.find_all('br')
