@@ -44,7 +44,6 @@ public class ThemeManager {
             if ("Nimbus".equals(info.getName())) {
                 UIManager.setLookAndFeel(info.getClassName());
                 UIDefaults defaults = UIManager.getLookAndFeel().getDefaults();
-                System.err.println(defaults.get("Tree[Enabled].collapsedIconPainter"));
                 defaults.put("ScrollBar.thumbHeight", 12);
                 // Workaround JDK-8134828
                 defaults.put("ScrollBar.minimumThumbSize", new Dimension(30, 30));
