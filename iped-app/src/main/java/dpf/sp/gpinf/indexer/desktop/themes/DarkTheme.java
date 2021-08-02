@@ -35,6 +35,8 @@ public class DarkTheme extends Theme {
         put("Graph.defaultNode", Color.white);
         put("Graph.selectedNodeBox", Color.white);
         put("Graph.selectionBox", Color.white);
+        put("Tree.expandIcon", new Color(210, 210, 211));
+        put("Tree.expandIconSel", Color.white);
         
         putDock("stack.tab.text.selected.focused", Color.white);
     }
