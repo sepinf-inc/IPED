@@ -2,6 +2,8 @@ package dpf.mt.gpinf.mapas;
 
 import java.awt.Canvas;
 import java.awt.Component;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.HashMap;
 
 import javafx.application.Platform;
@@ -10,6 +12,8 @@ abstract public class AbstractMapaCanvas extends Canvas {
     MapSelectionListener mapSelectionListener = null;
     MarkerEventListener markerEventListener = null;
     MarkerCheckBoxListener markerCheckBoxListener = null;
+
+    ActionListener onChangeTileServer = null;
 
     protected HashMap<String, Boolean> selecoesAfazer;
     protected Runnable saveRunnable;
@@ -72,4 +76,15 @@ abstract public class AbstractMapaCanvas extends Canvas {
             this.selecoesAfazer.put(marks[i], selecoes.get(marks[i]));
         }
     }
+
+    public void setOnChangeTileServer(ActionListener actionListener) {
+    	this.onChangeTileServer = actionListener;
+    }
+
+    public void fireChangeTileServer() {
+    	if(this.onChangeTileServer!=null) {
+    		this.onChangeTileServer.actionPerformed(new ActionEvent(this,1,"changeTileServer"));
+    	}
+    }
+
 }

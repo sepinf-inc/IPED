@@ -1,24 +1,25 @@
-package dpf.mt.gpinf.mapas.webkit;
+package dpf.mt.gpinf.mapas.googlemaps;
 
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.StringTokenizer;
 
 import dpf.mt.gpinf.mapas.MapSelectionListener;
 import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
 import dpf.mt.gpinf.mapas.MarkerEventListener;
+import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import netscape.javascript.JSObject;
 
-public class JSInterfaceFunctions {
+public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
 
     MapaCanvasWebkit map;
 
-    public JSInterfaceFunctions(MapaCanvasWebkit map) {
+    public JSGoogleInterfaceFunctions(MapaCanvasWebkit map) {
         this.map = map;
     }
 
-    public void selecionaMarcadorBF(JSObject markers) {
+    @Override
+	public void selecionaMarcadorBF(JSObject markers) {
         String arguments = markers.toString();
         StringTokenizer st = new StringTokenizer(arguments, ","); //$NON-NLS-1$
         String o[] = new String[st.countTokens()];
@@ -35,11 +36,13 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void alert(String alert) {
+    @Override
+	public void alert(String alert) {
         System.out.println("App.Alert:" + alert); //$NON-NLS-1$
     }
 
-    public void markerMouseClickedBF(String markerId, int button, String modfJS) {
+    @Override
+	public void markerMouseClickedBF(String markerId, int button, String modfJS) {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             int modf = 0;
@@ -64,11 +67,13 @@ public class JSInterfaceFunctions {
 
     }
 
-    public void markerMouseDblClickedBF(String markerId, int button) {
+    @Override
+	public void markerMouseDblClickedBF(String markerId, int button) {
         markerMouseClickedBF(markerId, button, ""); //$NON-NLS-1$
     }
 
-    public void markerMousePressedBF(String markerId) {
+    @Override
+	public void markerMousePressedBF(String markerId) {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             MouseEvent e = new MouseEvent(map.getContainer(), 1, (new Date()).getTime(), 0, 0, // x
@@ -81,7 +86,8 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void markerMouseReleasedBF(String markerId) {
+    @Override
+	public void markerMouseReleasedBF(String markerId) {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             MouseEvent e = new MouseEvent(map.getContainer(), 1, (new Date()).getTime(), 0, 0, // x
@@ -94,7 +100,8 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void markerMouseEnteredBF(String markerId) {
+    @Override
+	public void markerMouseEnteredBF(String markerId) {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             MouseEvent e = new MouseEvent(map.getContainer(), 1, (new Date()).getTime(), 0, 0, // x
@@ -107,7 +114,8 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void markerMouseExitedBF(String markerId) {
+    @Override
+	public void markerMouseExitedBF(String markerId) {
         MarkerEventListener l = map.getMarkerEventListener();
         if (l != null) {
             MouseEvent e = new MouseEvent(map.getContainer(), 1, (new Date()).getTime(), 0, 0, // x
@@ -120,7 +128,8 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void marcaMarcadorBF(String markerId, boolean checked) {
+    @Override
+	public void marcaMarcadorBF(String markerId, boolean checked) {
         MarkerCheckBoxListener l = map.getMarkerCheckBoxListener();
         if (l != null) {
             int id = 0;
@@ -129,7 +138,8 @@ public class JSInterfaceFunctions {
         }
     }
 
-    public void exportarKmlBF() {
+    @Override
+	public void exportarKmlBF() {
         Runnable save = map.getSaveRunnable();
         (new Thread(save)).start();
     }

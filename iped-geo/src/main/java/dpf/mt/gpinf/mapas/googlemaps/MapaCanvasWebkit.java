@@ -1,4 +1,4 @@
-package dpf.mt.gpinf.mapas.webkit;
+package dpf.mt.gpinf.mapas.googlemaps;
 
 import java.awt.Component;
 import java.awt.event.MouseEvent;
@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -25,14 +26,24 @@ import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
+import javafx.scene.CacheHint;
 import netscape.javascript.JSObject;
 
 public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
+    
+    private static final boolean USE_GOOGLE = true; 
+    
+    static {
+        if(!USE_GOOGLE) {
+            File file = new File(System.getProperty("java.io.tmpdir") + "/mapcache");
+            file.mkdirs();
+        }
+    }
 
     WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
-    JSInterfaceFunctions jsInterface = new JSInterfaceFunctions(this);
+    JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);
     String googleApiKey = "";
     File keyStore = new File(System.getProperty("user.home") + "/.indexador/googleApi.key");
 
@@ -44,8 +55,15 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
         Platform.runLater(new Runnable() {
             public void run() {
                 browser = new WebView();
+                browser.setCache(true);
+                browser.setCacheHint(CacheHint.SPEED);
+                
                 jfxPanel.setScene(new Scene(browser));
                 webEngine = browser.getEngine();
+                
+                String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36 OPR/63.0.3368.94";
+                webEngine.setUserAgent(USER_AGENT);
+                
                 webEngine.setJavaScriptEnabled(true);
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     public void handle(WebEvent<String> event) {
@@ -60,12 +78,20 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
                         if (newState == State.SUCCEEDED) {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
+                            window.setMember("javalog", new LogBridge());
+                            //webEngine.executeScript("console.log = function(message) { window.javalog.log(message); }");
                         }
                     }
                 });
 
             }
         });
+    }
+    
+    public class LogBridge {
+        public void log(String text) {
+            System.out.println(text);
+        }
     }
 
     @Override

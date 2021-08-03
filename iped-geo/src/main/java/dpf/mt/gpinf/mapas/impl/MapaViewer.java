@@ -28,7 +28,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
     DefaultSingleCDockable dockable; // dockable where the viewer is installed
 
     public static volatile boolean desabilitaTemp = false;
-    public static volatile boolean updatingSelection = false;
+    public static volatile boolean updatingCheckbox = false;
 
     public MapaViewer() {
     }
@@ -70,7 +70,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
          * if(e.getColumn()==-1) { if((e.getFirstRow()==0)) { return; } }
          */
         if (e.getColumn() == 1) {// se o evento foi disparado pelo check box que fica na coluna 1
-            updatingSelection = true;
+            updatingCheckbox = true;
             IItemId item = resultsProvider.getResults().getItem(e.getFirstRow());
 
             Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
@@ -84,13 +84,13 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
 
             /* somente chamado se o tab de mapas estiver sendo exibido */
             if (dockable != null && dockable.isShowing()) {
-                if (!updatingSelection)
+                if (!updatingCheckbox)
                     mapaPanel.redesenhaMapa();
                 else {
                     mapaPanel.redesenha();
                 }
 
-                updatingSelection = false;
+                updatingCheckbox = false;
             }
         } else {
             // reabilita renderização automatica pela alteração no modelo
@@ -136,7 +136,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
 
     @Override
     public void updateSelection() {
-        updatingSelection = true;
+        updatingCheckbox = true;
     }
 
     @Override
