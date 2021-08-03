@@ -518,7 +518,7 @@ public class FrontIPED extends javax.swing.JFrame {
 
         jLabel8.setText("Caminho para o arquivo com lista de expressões (opcional)");
 
-        btnListExpress.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnListExpress.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnListExpress.setToolTipText("Clique para localizar");
         btnListExpress.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnListExpress.setNextFocusableComponent(pathAsapFileText);
@@ -532,7 +532,7 @@ public class FrontIPED extends javax.swing.JFrame {
 
         pathAsapFileText.setNextFocusableComponent(btnASAP);
 
-        btnASAP.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnASAP.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnASAP.setToolTipText("Clique para localizar");
         btnASAP.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnASAP.setNextFocusableComponent(jcProfiles);
@@ -617,7 +617,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnDestino.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnDestino.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnDestino.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnDestino.setNextFocusableComponent(btnSaveProject);
         btnDestino.addActionListener(new java.awt.event.ActionListener() {
@@ -733,7 +733,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnAddInput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/install-icon.png"))); // NOI18N
+        btnAddInput.setIcon(new javax.swing.ImageIcon(getClass().getResource("install-icon.png"))); // NOI18N
         btnAddInput.setToolTipText(
                 "Preencha o campo \"Caminho\" (imagem/pasta) ou clique no botão ao lado para localizá-lo e depois clique aqui adicioná-lo como uma fonte de dados.");
         btnAddInput.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
@@ -744,7 +744,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnRemInput.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/remove-icon.png"))); // NOI18N
+        btnRemInput.setIcon(new javax.swing.ImageIcon(getClass().getResource("remove-icon.png"))); // NOI18N
         btnRemInput.setToolTipText("Escolha um ou mais itens na lista abaixo e clique aqui para removê-lo.");
         btnRemInput.setEnabled(false);
         btnRemInput.addActionListener(new java.awt.event.ActionListener() {
@@ -762,7 +762,7 @@ public class FrontIPED extends javax.swing.JFrame {
 
         jLabel6.setText("Caminho: (Imagem / Pasta)");
 
-        btnOrigem.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnOrigem.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnOrigem.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnOrigem.setNextFocusableComponent(DNameCheckBox);
         btnOrigem.addActionListener(new java.awt.event.ActionListener() {
@@ -913,7 +913,7 @@ public class FrontIPED extends javax.swing.JFrame {
                         .addGroup(PainelOrigemLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                 .addComponent(FAppendCheckBox).addComponent(PortableCheckBox))));
 
-        btnSaveProject.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/disk.png"))); // NOI18N
+        btnSaveProject.setIcon(new javax.swing.ImageIcon(getClass().getResource("disk.png"))); // NOI18N
         btnSaveProject.setText("  Salvar Projeto");
         btnSaveProject.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnSaveProject.setNextFocusableComponent(btnIniciarProcesso);
@@ -1205,7 +1205,7 @@ public class FrontIPED extends javax.swing.JFrame {
                 new java.awt.Component[] { enableCarvingCheckBox, enableHTMLReportCheckBox, enableImageThumbsCheckBox,
                         enableKFFCarvingCheckBox, enableOCRCheckBox, enableVideoThumbsCheckBox });
 
-        btnSaveProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/disk.png"))); // NOI18N
+        btnSaveProfile.setIcon(new javax.swing.ImageIcon(getClass().getResource("disk.png"))); // NOI18N
         btnSaveProfile.setText("  Salvar Perfil Personalizado");
         btnSaveProfile.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1280,7 +1280,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnKffPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnKffPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnKffPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnKffPath.setEnabled(false);
         btnKffPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1307,7 +1307,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnHashLEDPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnHashLEDPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnHashLEDPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnHashLEDPath.setEnabled(false);
         btnHashLEDPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1335,7 +1335,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnDiePath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnDiePath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnDiePath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnDiePath.setEnabled(false);
         btnDiePath.addActionListener(new java.awt.event.ActionListener() {
@@ -1354,7 +1354,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnTskJarPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnTskJarPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnTskJarPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnTskJarPath.setEnabled(false);
         btnTskJarPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1473,7 +1473,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnDirTemp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnDirTemp.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnDirTemp.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnDirTemp.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -1607,7 +1607,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnMplayerPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnMplayerPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnMplayerPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnMplayerPath.setEnabled(false);
         btnMplayerPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1634,7 +1634,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnOptionalJarsPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnOptionalJarsPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnOptionalJarsPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnOptionalJarsPath.setEnabled(false);
         btnOptionalJarsPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1661,7 +1661,7 @@ public class FrontIPED extends javax.swing.JFrame {
             }
         });
 
-        btnRegripperFolderPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/folder_explore.png"))); // NOI18N
+        btnRegripperFolderPath.setIcon(new javax.swing.ImageIcon(getClass().getResource("folder_explore.png"))); // NOI18N
         btnRegripperFolderPath.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnRegripperFolderPath.setEnabled(false);
         btnRegripperFolderPath.addActionListener(new java.awt.event.ActionListener() {
@@ -1726,7 +1726,7 @@ public class FrontIPED extends javax.swing.JFrame {
                                         javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(22, 22, 22)));
 
-        btnSalvar.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/disk.png"))); // NOI18N
+        btnSalvar.setIcon(new javax.swing.ImageIcon(getClass().getResource("disk.png"))); // NOI18N
         btnSalvar.setText("  Salvar Configurações Locais");
         btnSalvar.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnSalvar.addActionListener(new java.awt.event.ActionListener() {
@@ -1769,7 +1769,7 @@ public class FrontIPED extends javax.swing.JFrame {
 
         jPanel1.setBorder(javax.swing.BorderFactory.createEtchedBorder());
 
-        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/images/LOGO_PF_Mono.png"))); // NOI18N
+        jLabel9.setIcon(new javax.swing.ImageIcon(getClass().getResource("/dpf/sp/gpinf/indexer/desktop/search.png"))); // NOI18N
 
         jLabel10.setFont(new java.awt.Font("Tahoma", 1, 14)); // NOI18N
         jLabel10.setText("SETEC/GO");
@@ -1841,7 +1841,7 @@ public class FrontIPED extends javax.swing.JFrame {
 
         jtpPrincipal.addTab("Sobre", jpSobre);
 
-        btnIniciarProcesso.setIcon(new javax.swing.ImageIcon(getClass().getResource("/icons/lightning.png"))); // NOI18N
+        btnIniciarProcesso.setIcon(new javax.swing.ImageIcon(getClass().getResource("lightning.png"))); // NOI18N
         btnIniciarProcesso.setText("  Iniciar Processamento");
         btnIniciarProcesso.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
         btnIniciarProcesso.addActionListener(new java.awt.event.ActionListener() {
@@ -1869,7 +1869,7 @@ public class FrontIPED extends javax.swing.JFrame {
         jtpPrincipal.getAccessibleContext().setAccessibleName("Projeto");
 
         pack();
-        // setLocationRelativeTo(null);
+        setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
 
     private void btnSalvarActionPerformed(java.awt.event.ActionEvent evt) {// GEN-FIRST:event_btnSalvarActionPerformed
