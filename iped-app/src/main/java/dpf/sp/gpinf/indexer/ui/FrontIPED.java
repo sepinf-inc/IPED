@@ -16,12 +16,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.DefaultListModel;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 //import java.lang.management.ManagementFactory;
 
 /**
@@ -30,10 +31,12 @@ import javax.swing.JTextField;
  */
 public class FrontIPED extends javax.swing.JFrame {
 
+    private static final Logger logger = LoggerFactory.getLogger(FrontIPED.class);
+
     private DefaultListModel listmodel = new DefaultListModel();
     private String base_path = System.getProperty("user.dir") + File.separator;
-    private String default_path = System.getProperty("user.dir") + File.separator + "profiles" + File.separator
-            + "pt-BR" + File.separator + "default" + File.separator;
+    private String default_path = System.getProperty("user.dir") + File.separator;
+
     private File ipedJAR = new File(this.base_path + "iped.jar");
     private String[] Command = null;
     private String ProjectName = null;
@@ -64,12 +67,12 @@ public class FrontIPED extends javax.swing.JFrame {
                     try {
                         this.backup(bkpLocalConfig);
                     } catch (IOException ex) {
-                        Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.error("Error:", ex);
                     }
                     try {
                         this.backup(bkpIpedConfig);
                     } catch (IOException ex) {
-                        Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+                        logger.error("Error:", ex);
                     }
                     JOptionPane.showMessageDialog(null, "Os arquivos de configuração foram salvos com sucesso!");
                 }
@@ -275,7 +278,7 @@ public class FrontIPED extends javax.swing.JFrame {
             this.outputOnSSDCheckBox.setSelected(Boolean.valueOf(p.getProperty("outputOnSSD")));
 
         } catch (IOException ex) {
-            Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("Error:", ex);
         }
     }
 
@@ -323,7 +326,7 @@ public class FrontIPED extends javax.swing.JFrame {
                     .setSelected(Boolean.valueOf(p.getProperty("enableNamedEntityRecogniton")));
             this.indexCorruptedFilesCheckBox.setSelected(Boolean.valueOf(p.getProperty("indexCorruptedFiles")));
         } catch (IOException ex) {
-            Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("Error:", ex);
         }
     }
 
@@ -342,7 +345,7 @@ public class FrontIPED extends javax.swing.JFrame {
             output.close();
         } // end try
         catch (IOException ioException) {
-            ioException.printStackTrace();
+            logger.error("Error:", ioException);
         } // end catch
 
     } // end method saveProperties
@@ -362,7 +365,7 @@ public class FrontIPED extends javax.swing.JFrame {
             output.close();
         } // end try
         catch (IOException ioException) {
-            ioException.printStackTrace();
+            logger.error("Error:", ioException);
         } // end catch
 
     } // end method saveProperties
@@ -1958,10 +1961,10 @@ public class FrontIPED extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(null,
                             "O IPED Finalizou Seu Trabalho! Sempre Verifique os Arquivos de Log de Cada Processamento!");
                 } catch (InterruptedException ex) {
-                    Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+                    logger.error("Error:", ex);
                 }
             } catch (IOException iOException) {
-                iOException.printStackTrace();
+                logger.error("Error:", iOException);
             }
         } else {
             JOptionPane.showMessageDialog(null, "Salve seu projeto primeiro para poder executá-lo!");
@@ -2203,7 +2206,7 @@ public class FrontIPED extends javax.swing.JFrame {
             try {
                 this.createScript(nameFile, outputfolder, command);
             } catch (IOException ex) {
-                Logger.getLogger(FrontIPED.class.getName()).log(Level.SEVERE, null, ex);
+                logger.error("Error:", ex);
             }
             this.Command = command;
         }
