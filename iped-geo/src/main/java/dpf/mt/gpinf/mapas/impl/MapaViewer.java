@@ -106,26 +106,25 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
         if ((!mapaPanel.mapaDesatualizado)) {
             ListSelectionModel lsm = (ListSelectionModel) e.getSource();
             HashMap<String, Boolean> selecoes = new HashMap<String, Boolean>();
-            if (resultsTable.getSelectedRowCount() > 0)
-                for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
-                    boolean selected = lsm.isSelectedIndex(i);
+            for (int i = e.getFirstIndex(); i <= e.getLastIndex(); i++) {
+                boolean selected = lsm.isSelectedIndex(i);
 
-                    int rowModel = resultsTable.convertRowIndexToModel(i);
-                    IItemId item = resultsProvider.getResults().getItem(rowModel);
+                int rowModel = resultsTable.convertRowIndexToModel(i);
+                IItemId item = resultsProvider.getResults().getItem(rowModel);
 
-                    if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
-                        List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
-                        if (subitems == null) {
-                            String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                if (mapaPanel.kmlResult != null && mapaPanel.kmlResult.getGPSItems().containsKey(item)) {
+                    List<Integer> subitems = mapaPanel.kmlResult.getGPSItems().get(item);
+                    if (subitems == null) {
+                        String gid = "marker_" + item.getSourceId() + "_" + item.getId(); //$NON-NLS-1$ //$NON-NLS-2$
+                        selecoes.put(gid, selected);
+                    } else {
+                        for (Integer subitem : subitems) {
+                            String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
                             selecoes.put(gid, selected);
-                        } else {
-                            for (Integer subitem : subitems) {
-                                String gid = "marker_" + item.getSourceId() + "_" + item.getId() + "_" + subitem; //$NON-NLS-1$ //$NON-NLS-2$
-                                selecoes.put(gid, selected);
-                            }
                         }
                     }
                 }
+            }
             mapaPanel.browserCanvas.enviaSelecoes(selecoes);
 
             if (dockable.isShowing()) {
