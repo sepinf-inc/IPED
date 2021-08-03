@@ -589,7 +589,7 @@
                             </archive>
                         </configuration>
                     </execution>
-                    <!--execution>
+                    <execution>
                         <id>create-gui-jar</id>
                         <goals>
                             <goal>jar</goal>
@@ -606,11 +606,12 @@
                                 <manifest>
                                     <addClasspath>true</addClasspath>
                                     <classpathPrefix>lib/</classpathPrefix>
-                                    <mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass>
+                                    <!--mainClass>br.gov.pf.labld.cases.CaseManagement</mainClass-->
+                                    <mainClass>dpf.sp.gpinf.indexer.ui.FrontIPED</mainClass>
                                 </manifest>
                             </archive>
                         </configuration>
-                    </execution-->
+                    </execution>
                     <execution>
                         <id>create-search-jar</id>
                         <goals>
