@@ -156,6 +156,7 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
             html = html.replace("{{layers_img}}", layers_img);
             html = html.replace("{{markerclusterjs}}", markerclusterjs);
             html = html.replace("{{tileServerUrl}}", url);
+            html = html.replace("{{toolbar}}", getToolBarHtml());
 
             
             String b64_selecionado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$

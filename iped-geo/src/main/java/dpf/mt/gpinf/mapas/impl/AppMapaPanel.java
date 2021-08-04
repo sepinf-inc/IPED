@@ -40,7 +40,8 @@ public class AppMapaPanel extends JPanel {
     boolean mapSrcSelected=false;
     ActionListener changeTileServer = null;
     
-    String tilesSourceURL = null;
+    String tilesSourceURL = null, savedTilesSourceURL = null;
+	private MapaPanelConfig mpConfig;
 
     public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -75,6 +76,17 @@ public class AppMapaPanel extends JPanel {
 				redesenhaMapa();
 			}
 		});
+        
+        savedTilesSourceURL = JMapOptionsPane.getSavedTilesSourceURL();
+        
+		mpConfig = new MapaPanelConfig();
+
+		try {
+			ConfigurationManager.getInstance().addObject(mpConfig);
+			ConfigurationManager.getInstance().loadConfigs();
+		}catch(Exception e) {
+			tilesSourceURL=null;
+		}
         
         final Component self = this;
         changeTileServer= new ActionListener() {
@@ -117,21 +129,20 @@ public class AppMapaPanel extends JPanel {
 
     		browserCanvas = mcf.createMapCanvas(url);
 
-
             this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
     	}
     }
 
-    public void redesenhaMapa() {
+    public void redesenhaMapa() {    	
     	if(tilesSourceURL==null) {
-    		MapaPanelConfig mpConfig = new MapaPanelConfig();
-    		try {
-    			ConfigurationManager.getInstance().addObject(mpConfig);
-    			ConfigurationManager.getInstance().loadConfigs();
-
-    			tilesSourceURL=mpConfig.getTileServerUrlPattern();
-    		}catch(Exception e) {
-    			tilesSourceURL=null;
+    		if(savedTilesSourceURL!=null) {
+    			tilesSourceURL=savedTilesSourceURL;
+    		}else {
+        		try {
+        			tilesSourceURL=mpConfig.getTileServerUrlPattern();
+        		}catch(Exception e) {
+        			tilesSourceURL=null;
+        		}
     		}
 
         	if(tilesSourceURL==null) {

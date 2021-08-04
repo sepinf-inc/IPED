@@ -11,6 +11,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
@@ -30,13 +38,16 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
+import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class JMapOptionsPane extends JOptionPane {
 	
 	static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
 	static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
-	
+
+	static File tileServerUrlFile=null;
+
 	JDialog dialog = null;
 	static JMapOptionsPane singleton = null;
 	String url = "";
@@ -50,7 +61,7 @@ public class JMapOptionsPane extends JOptionPane {
 	private JMapOptionsPane(Component parentComponent){
     	Window window = SwingUtilities.windowForComponent(parentComponent);
 
-    	dialog = new JDialog((Frame)window, "Selecione a fonte de mapas a ser usada" , true);
+    	dialog = new JDialog((Frame)window, Messages.getString("JMapOptionsPane.title") , true);
 
         int style = JRootPane.PLAIN_DIALOG;
 
@@ -65,7 +76,7 @@ public class JMapOptionsPane extends JOptionPane {
         paneGoogle.setLayout(new BorderLayout());
         JPanel paneGoogleKey = new JPanel();
         JTextField txGoogleApiKey = new JTextField();
-        JLabel lbGoogleApiKey = new JLabel("Entre uma chave licenciada para utilizar a API do google Maps.");
+        JLabel lbGoogleApiKey = new JLabel(Messages.getString("JMapOptionsPane.GoogleApiKeyLabel"));
 		
         txGoogleApiKey.getDocument().addDocumentListener(new DocumentListener() {		 
 			 @Override 
@@ -93,10 +104,10 @@ public class JMapOptionsPane extends JOptionPane {
 		});
         
         JPanel paneLeaflet = new JPanel();
-    	JRadioButton btnLeaflet = new JRadioButton("Usar o leaflet");
+    	JRadioButton btnLeaflet = new JRadioButton(Messages.getString("JMapOptionsPane.UseLeaflet"));
     	paneLeaflet.setLayout(new BorderLayout());
     	paneLeaflet.add(btnLeaflet, BorderLayout.BEFORE_FIRST_LINE);        
-    	JLabel lbTileLayerURL = new JLabel("Entre com o padrão de URLs para a origem dos mapas:");
+    	JLabel lbTileLayerURL = new JLabel(Messages.getString("JMapOptionsPane.UrlPatternLabel"));
     	paneLeaflet.add(lbTileLayerURL, BorderLayout.LINE_START);
         txTileLayerURl = new JTextField();
         
@@ -128,8 +139,10 @@ public class JMapOptionsPane extends JOptionPane {
         JPanel paneTileUrlSelect = new JPanel();
 
         JComboBox cbTileSrcs = new JComboBox();
+
         MapaPanelConfig mpc = (MapaPanelConfig) ConfigurationManager.getInstance().findObjects(MapaPanelConfig.class).toArray()[0];
         defaultTilesSources = mpc.getDefaultTilesSources();
+
         Set<String> ms=defaultTilesSources.keySet();
         for (Iterator iterator = ms.iterator(); iterator.hasNext();) {
 			String key = (String) iterator.next();
@@ -138,7 +151,7 @@ public class JMapOptionsPane extends JOptionPane {
 		}
         
         JRadioButton rbList =  new JRadioButton("");
-        JRadioButton rbOutra =  new JRadioButton("Outra URL");
+        JRadioButton rbOutra =  new JRadioButton(Messages.getString("JMapOptionsPane.AnotherURL"));
         
         ButtonGroup bgTileUrl = new ButtonGroup();
         
@@ -155,7 +168,7 @@ public class JMapOptionsPane extends JOptionPane {
     	paneLeaflet.add(txTileLayerURl, BorderLayout.AFTER_LAST_LINE);
         pane.add(paneLeaflet);
 
-        btnGoogleMaps = new JRadioButton("Usar o GoogleMaps");
+        btnGoogleMaps = new JRadioButton(Messages.getString("JMapOptionsPane.UseGoogleMaps"));
     	paneGoogle.add(btnGoogleMaps,BorderLayout.BEFORE_FIRST_LINE);
     	paneGoogleKey.setLayout(new BorderLayout());
     	paneGoogleKey.add(lbGoogleApiKey,BorderLayout.BEFORE_FIRST_LINE);
@@ -277,7 +290,44 @@ public class JMapOptionsPane extends JOptionPane {
         }
         dialog.dispose();
 	}
+	
+	public static File getTempTileSourceURLFile() {
+    	try {
+    		if(tileServerUrlFile==null) {
+    	    	String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
+    	        if (tempdir == null)
+    	            tempdir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
+    	        tileServerUrlFile = new File(tempdir, "iped_tileserver" + ".tmp"); //$NON-NLS-1$
+    		}
+			tileServerUrlFile.createNewFile();
+		} catch (Exception e) {
+			tileServerUrlFile=null;
+		}
+		return tileServerUrlFile;
+	}
 
+	public static String getSavedTilesSourceURL() {
+		File f = getTempTileSourceURLFile();
+		String tileSourceURL=null;
+		try {
+			if(f!=null) {
+				DataInputStream dis;
+				dis = new DataInputStream(new FileInputStream(f));
+				tileSourceURL = dis.readLine();
+				if(tileSourceURL==null) return null;
+				if(tileSourceURL.length()<=2) {
+					return null;
+				}else {
+					return tileSourceURL;
+				}
+			}
+		} catch (FileNotFoundException e) {
+		} catch (IOException e) {
+		}
+		return null;
+	}
+	
+	
     public static String showOptionsDialog(Component parentComponent)
         throws HeadlessException {
 
@@ -289,6 +339,17 @@ public class JMapOptionsPane extends JOptionPane {
     	
     	if(singleton.canceled) {
     		return null;
+    	}
+    	
+    	if(tileServerUrlFile!=null) {
+        	try {
+	            FileWriter fw = new FileWriter(tileServerUrlFile);
+	            fw.write(singleton.getUrl()+"\n");
+	            fw.flush();
+	            fw.close();
+			} catch (IOException e) {
+				//skip temp cache
+			}
     	}
 
     	return singleton.getUrl();

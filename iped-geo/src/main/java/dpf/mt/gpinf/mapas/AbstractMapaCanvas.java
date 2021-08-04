@@ -4,8 +4,14 @@ import java.awt.Canvas;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Set;
 
+import org.apache.commons.io.IOUtils;
+
+import dpf.mt.gpinf.mapas.util.Messages;
 import javafx.application.Platform;
 
 abstract public class AbstractMapaCanvas extends Canvas {
@@ -85,6 +91,25 @@ abstract public class AbstractMapaCanvas extends Canvas {
     	if(this.onChangeTileServer!=null) {
     		this.onChangeTileServer.actionPerformed(new ActionEvent(this,1,"changeTileServer"));
     	}
+    }
+
+    public String replaceLocalizedMarks(String src, String prefix) throws IOException {
+    	StringBuffer html = new StringBuffer(src);
+    	
+    	Set<String> keys=Messages.getKeys();
+    	for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
+			String key = (String) iterator.next();
+			if(key.startsWith(prefix)) {
+				int i = html.indexOf("{{"+key+"}}");
+				html.replace(i, i+key.length()+4, Messages.getString(key));
+			}
+		}
+    	
+    	return html.toString();
+    }
+
+    public String getToolBarHtml() throws IOException {
+    	return replaceLocalizedMarks(IOUtils.toString(AbstractMapaCanvas.class.getResourceAsStream("toolbar.html"), "UTF-8"), "toolbar");
     }
 
 }
