@@ -14,7 +14,6 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
-import dpf.inc.sepinf.UsnJrnl.UsnJrnlParser.ReportType;
 
 public class UsnJrnlParserTest extends AbstractPkgTest {
 
