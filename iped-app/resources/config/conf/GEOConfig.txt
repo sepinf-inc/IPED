@@ -1,0 +1,4 @@
+tileServerUrlPattern=http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1
+
+Bing=http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1
+Open Street Maps=https://tile.openstreetmap.org/${z}/${x}/${y}.png
