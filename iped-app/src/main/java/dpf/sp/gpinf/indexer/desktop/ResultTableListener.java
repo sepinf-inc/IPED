@@ -117,6 +117,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
                 App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
                 App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
+                App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
 
                 FileProcessor parsingTask = new FileProcessor(docId, true);
                 parsingTask.execute();
@@ -293,77 +294,78 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         }
     }
 
+    /**
+     * Add a simple "type-to-find" feature to the table.
+     * It works on the currently sorted column, if it uses a String comparator,
+     * so it will not work on numeric and date columns.
+     */
     @Override
     public void keyTyped(KeyEvent evt) {
         char c = evt.getKeyChar();
-        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK)) != 0) {
+        if (c == ' ' || (evt.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) != 0 ||
+               c == KeyEvent.VK_TAB || c == KeyEvent.VK_ESCAPE || c == KeyEvent.VK_BACK_SPACE || c == KeyEvent.VK_DELETE)
             return;
-        }
 
         JTable table = App.get().resultsTable;
         List<? extends SortKey> sortKeys = table.getRowSorter().getSortKeys();
-        if (sortKeys.isEmpty()) {
+        if (sortKeys.isEmpty())
             return;
-        }
+
         int sortCol = sortKeys.get(0).getColumn();
         int viewCol = table.convertColumnIndexToView(sortCol);
 
-        // Provisoriamente as colunas estão fixas
-        // (colunas onde a comparação de String não funcionaria, porque ordenação é
-        // numérica ou de Data)
+        // Only works on String columns 
         if (!((RowComparator) ((ResultTableRowSorter) table.getRowSorter()).getComparator(sortCol))
-                .isStringComparator()) {
+                .isStringComparator())
             return;
-        }
 
+        if (GerenciadorMarcadores.get().hasSingleKeyShortcut())
+            return;
+        
         long t = System.currentTimeMillis();
-        if (t - lastKeyTime > 500) {
+        if (t - lastKeyTime > 500)
             lastKeyString = ""; //$NON-NLS-1$
-        }
+
         lastKeyTime = t;
-        if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c) {
+        if (lastKeyString.length() != 1 || lastKeyString.charAt(0) != c)
             lastKeyString += c;
-        }
+
         int initialRow = table.getSelectedRow();
-        if (initialRow < 0) {
+        if (initialRow < 0)
             initialRow = table.getRowCount() - 1;
-        }
 
         int currRow = initialRow;
         int foundRow = findRow(table, currRow + 1, table.getRowCount() - 1, viewCol, lastKeyString);
-        if (foundRow < 0) {
+        if (foundRow < 0)
             foundRow = findRow(table, 0, currRow - 1, viewCol, lastKeyString);
-        }
         if (foundRow >= 0) {
             table.setRowSelectionInterval(foundRow, foundRow);
             table.scrollRectToVisible(table.getCellRect(foundRow, viewCol, true));
         }
+        evt.consume();
     }
 
     private int findRow(JTable table, int from, int to, int col, String search) {
         while (from < to) {
             int mid = (from + to) >> 1;
             int cmp = compare(getCell(table, mid, col), search);
-            if (cmp > 0) {
+            if (cmp > 0)
                 to = mid - 1;
-            } else if (cmp < 0) {
+            else if (cmp < 0)
                 from = mid + 1;
-            } else {
+            else
                 to = mid;
-            }
         }
-        if (from == to) {
-            if (compare(getCell(table, from, col), search) == 0) {
-                return from;
-            }
-        }
+        if (from == to && compare(getCell(table, from, col), search) == 0)
+            return from;
         return -1;
     }
 
     private int compare(String a, String b) {
-        if (a.length() > b.length()) {
+        if (a.isEmpty() && !b.isEmpty())
+            return -1;
+        if (a.length() > b.length())
             a = a.substring(0, b.length());
-        }
         return collator.compare(a, b);
     }
 

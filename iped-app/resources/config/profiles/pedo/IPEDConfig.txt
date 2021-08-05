@@ -1,0 +1,12 @@
+﻿########################################################################
+# Processing Settings
+########################################################################
+
+enablePhotoDNA = true
+enableHashDBLookup = true
+enablePhotoDNALookup = true
+enableLedDie = true
+enableCarving = true
+enableLedCarving = true
+enableKnownMetCarving = true
+enableImageSimilarity = true

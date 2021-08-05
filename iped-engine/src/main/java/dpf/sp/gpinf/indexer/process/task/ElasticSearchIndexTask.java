@@ -1,22 +1,18 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.elasticsearch.ElasticsearchStatusException;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -46,15 +42,18 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ElasticSearchTaskConfig;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 import repackaged.org.apache.http.HttpHost;
 import repackaged.org.apache.http.auth.AuthScope;
 import repackaged.org.apache.http.auth.UsernamePasswordCredentials;
@@ -67,42 +66,21 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static Logger LOGGER = LoggerFactory.getLogger(ElasticSearchIndexTask.class);
 
-    private static final String CONF_FILE_NAME = "ElasticSearchConfig.txt";
-
-    private static final String ENABLED_KEY = "enable";
-    private static final String HOST_KEY = "host";
-    private static final String PORT_KEY = "port";
-    private static final String PROTOCOL_KEY = "protocol";
     private static final String MAX_FIELDS_KEY = "index.mapping.total_fields.limit";
+    private static final String IGNORE_MALFORMED = "index.mapping.ignore_malformed";
     private static final String INDEX_SHARDS_KEY = "index.number_of_shards";
     private static final String INDEX_REPLICAS_KEY = "index.number_of_replicas";
     private static final String INDEX_POLICY_KEY = "index.lifecycle.name";
-    private static final String MIN_BULK_SIZE_KEY = "min_bulk_size";
-    private static final String MIN_BULK_ITEMS_KEY = "min_bulk_items";
-    private static final String MAX_ASYNC_REQUESTS_KEY = "max_async_requests";
-    private static final String TIMEOUT_MILLIS_KEY = "timeout_millis";
-    private static final String CONNECT_TIMEOUT_KEY = "connect_timeout_millis";
-    private static final String CMD_FIELDS_KEY = "elastic";
-    private static final String CUSTOM_ANALYZER_KEY = "useCustomAnalyzer";
 
+    private static final String CMD_FIELDS_KEY = "elastic";
     private static final String INDEX_NAME_KEY = "indexName";
     private static final String USER_KEY = "user";
     private static final String PASSWORD_KEY = "password";
 
-    private static boolean enabled = false;
-    private static String host;
-    private static String protocol;
-    private static int port = 9200;
-    private static int max_fields = 10000;
-    private static int min_bulk_size = 1 << 23;
-    private static int min_bulk_items = 1000;
-    private static int connect_timeout = 5000;
-    private static int timeout_millis = 3600000;
-    private static int max_async_requests = 5;
-    private static int index_shards = 1;
-    private static int index_replicas = 1;
-    private static String index_policy = "default_policy";
-    private static boolean useCustomAnalyzer;
+    public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
+    public static final String KEY_VAL_SEPARATOR = ":";
+
+    private ElasticSearchTaskConfig elasticConfig;
 
     private static RestHighLevelClient client;
 
@@ -124,11 +102,15 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return elasticConfig.isEnabled();
+    }
+
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new ElasticSearchTaskConfig());
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         count.incrementAndGet();
 
@@ -136,9 +118,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             return;
         }
 
-        loadConfFile(new File(confDir, CONF_FILE_NAME));
+        elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
-        if (!enabled) {
+        if (!elasticConfig.isEnabled()) {
             return;
         }
 
@@ -152,11 +134,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
             indexName = output.getParentFile().getName();
         }
 
-        RestClientBuilder clientBuilder = RestClient.builder(new HttpHost(host, port, protocol))
+        RestClientBuilder clientBuilder = RestClient
+                .builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort(), elasticConfig.getProtocol()))
                 .setRequestConfigCallback(new RestClientBuilder.RequestConfigCallback() {
                     @Override
                     public RequestConfig.Builder customizeRequestConfig(RequestConfig.Builder requestConfigBuilder) {
-                        return requestConfigBuilder.setConnectTimeout(connect_timeout).setSocketTimeout(timeout_millis);
+                        return requestConfigBuilder.setConnectTimeout(elasticConfig.getConnect_timeout())
+                                .setSocketTimeout(elasticConfig.getTimeout_millis());
                     }
                 });
 
@@ -175,13 +159,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         boolean ping = client.ping(RequestOptions.DEFAULT);
         if (!ping) {
-            throw new IOException("ElasticSearch cluster at " + host + ":" + port + " not responding to ping.");
+            throw new IOException("ElasticSearch cluster at " + elasticConfig.getHost() + ":" + elasticConfig.getPort()
+                    + " not responding to ping.");
         }
 
         if (args.isRestart()) {
             deleteIndex(indexName);
         }
-        
+
         if (!args.isAppendIndex() && !args.isContinue()) {
             if (indexExists(indexName)) {
                 throw new IPEDException("ElasticSearch index already exists: " + indexName);
@@ -209,26 +194,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private void loadConfFile(File file) throws IOException {
-        UTF8Properties props = new UTF8Properties();
-        props.load(file);
-
-        enabled = Boolean.valueOf(props.getProperty(ENABLED_KEY).trim());
-        host = props.getProperty(HOST_KEY).trim();
-        port = Integer.valueOf(props.getProperty(PORT_KEY).trim());
-        protocol = props.getProperty(PROTOCOL_KEY);
-        max_fields = Integer.valueOf(props.getProperty(MAX_FIELDS_KEY).trim());
-        min_bulk_size = Integer.valueOf(props.getProperty(MIN_BULK_SIZE_KEY).trim());
-        min_bulk_items = Integer.valueOf(props.getProperty(MIN_BULK_ITEMS_KEY).trim());
-        connect_timeout = Integer.valueOf(props.getProperty(CONNECT_TIMEOUT_KEY).trim());
-        timeout_millis = Integer.valueOf(props.getProperty(TIMEOUT_MILLIS_KEY).trim());
-        max_async_requests = Integer.valueOf(props.getProperty(MAX_ASYNC_REQUESTS_KEY).trim());
-        index_shards = Integer.valueOf(props.getProperty(INDEX_SHARDS_KEY).trim());
-        index_replicas = Integer.valueOf(props.getProperty(INDEX_REPLICAS_KEY).trim());
-        index_policy = props.getProperty(INDEX_POLICY_KEY).trim();
-        useCustomAnalyzer = Boolean.valueOf(props.getProperty(CUSTOM_ANALYZER_KEY).trim());
-    }
-
     private boolean indexExists(String indexName) throws IOException {
         GetIndexRequest request = new GetIndexRequest(indexName);
         return client.indices().exists(request, RequestOptions.DEFAULT);
@@ -237,10 +202,16 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void createIndex(String indexName) throws IOException {
 
         CreateIndexRequest request = new CreateIndexRequest(indexName);
-        Builder builder = Settings.builder().put(MAX_FIELDS_KEY, max_fields).put(INDEX_SHARDS_KEY, index_shards)
-                .put(INDEX_REPLICAS_KEY, index_replicas).put(INDEX_POLICY_KEY, index_policy);
+        Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
+                .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas())
+                .put(IGNORE_MALFORMED, true);
 
-        if (useCustomAnalyzer) {
+        if (!elasticConfig.getIndex_policy().isEmpty()) {
+            builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
+        }
+
+        if (elasticConfig.isUseCustomAnalyzer()) {
             builder.put("analysis.tokenizer.latinExtB.type", "simple_pattern") //$NON-NLS-1$ //$NON-NLS-2$
                     .put("analysis.tokenizer.latinExtB.pattern", getLatinExtendedBPattern()) //$NON-NLS-1$ //$NON-NLS-2$
                     .put("analysis.analyzer.default.type", "custom") //$NON-NLS-1$ //$NON-NLS-2$
@@ -286,6 +257,16 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
 
+        // mapping the parent-child relation
+        /*
+         * "document_content": { "type": "join", "relations": { "document": "content" }
+         * }
+         */
+        HashMap<String, Object> documentContentRelation = new HashMap<>();
+        documentContentRelation.put("type", "join");
+        documentContentRelation.put("relations", Collections.singletonMap("document", "content"));
+        properties.put("document_content", documentContentRelation);
+
         HashMap<String, Object> jsonMap = new HashMap<>();
         jsonMap.put("properties", properties);
         PutMappingRequest putMappings = new PutMappingRequest(indexName);
@@ -324,6 +305,25 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
+    private IndexRequest createIndexRequest(String id, String route, XContentBuilder jsonData) throws IOException {
+
+        IndexRequest indexRequest = Requests.indexRequest(indexName);
+
+        indexRequest.id(id);
+
+        // routing is required when using parent-child relations
+        indexRequest.routing(route);
+
+        // json data to be inserted
+        indexRequest.source(jsonData);
+
+        indexRequest.timeout(TimeValue.timeValueMillis(elasticConfig.getTimeout_millis()));
+        indexRequest.opType(OpType.CREATE);
+
+        return indexRequest;
+
+    }
+
     @Override
     protected void process(IItem item) throws Exception {
 
@@ -346,32 +346,41 @@ public class ElasticSearchIndexTask extends AbstractTask {
                     + (item.getLength() != null ? item.getLength() : "null") + " bytes)");
             textReader = new StringReader(""); //$NON-NLS-1$
         }
-        FragmentingReader fragReader = new FragmentingReader(textReader);
+
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
+                indexConfig.getTextOverlapSize());
         int fragNum = fragReader.estimateNumberOfFrags();
         if (fragNum == -1) {
             fragNum = 1;
         }
-        String originalId = Util.getPersistentId(item);
+
+        String parentId = Util.getPersistentId(item);
+
         try {
+            // creates the father;
+            XContentBuilder jsonMetadata = getJsonMetadataBuilder(item);
+            IndexRequest parentIndexRequest = createIndexRequest(parentId, parentId, jsonMetadata);
+            bulkRequest.add(parentIndexRequest);
+            idToPath.put(parentId, item.getPath());
+
             do {
-                String id = Util.generatePersistentIdForTextFrag(originalId, --fragNum);
-                item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
+                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum--);
 
-                XContentBuilder jsonBuilder = getJsonItemBuilder(item, fragReader);
+                // creates the json _source of the fragment
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentPersistentId);
 
-                IndexRequest indexRequest = Requests.indexRequest(indexName);
-                indexRequest.id(id);
-                indexRequest.source(jsonBuilder);
-                indexRequest.timeout(TimeValue.timeValueMillis(timeout_millis));
-                indexRequest.opType(OpType.CREATE);
+                // creates the request
+                IndexRequest contentRequest = createIndexRequest(contentPersistentId, parentId, jsonContent);
 
-                bulkRequest.add(indexRequest);
-                idToPath.put(id, item.getPath());
+                bulkRequest.add(contentRequest);
+
+                idToPath.put(contentPersistentId, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
-                if (bulkRequest.estimatedSizeInBytes() >= min_bulk_size
-                        || bulkRequest.numberOfActions() >= min_bulk_items) {
+                if (bulkRequest.estimatedSizeInBytes() >= elasticConfig.getMin_bulk_size()
+                        || bulkRequest.numberOfActions() >= elasticConfig.getMin_bulk_items()) {
                     sendBulkRequest();
                     bulkRequest = new BulkRequest();
                     idToPath = new HashMap<>();
@@ -380,7 +389,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } finally {
-            item.setExtraAttribute(IndexItem.PERSISTENT_ID, originalId);
+            item.setExtraAttribute(IndexItem.PERSISTENT_ID, parentId);
             fragReader.close();
         }
 
@@ -389,7 +398,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     private void sendBulkRequest() throws IOException {
         try {
             synchronized (lock) {
-                if (++numRequests > max_async_requests) {
+                if (++numRequests > elasticConfig.getMax_async_requests()) {
                     lock.wait();
                 }
             }
@@ -446,14 +455,14 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
-    private XContentBuilder getJsonItemBuilder(IItem item, Reader textReader) throws IOException {
+    private XContentBuilder getJsonMetadataBuilder(IItem item) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
         String inputStreamSrcPath = getInputStreamSourcePath(item);
-
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
-                .field(BasicProps.ID, item.getId()).field(BasicProps.SUBITEMID, item.getSubitemId())
-                .field(BasicProps.PARENTID, item.getParentId()).field(BasicProps.PARENTIDs, item.getParentIds())
+                .field(BasicProps.ID, item.getId()).field("document_content", "document")
+                .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
+                .field(BasicProps.PARENTIDs, item.getParentIds())
                 .field(IndexItem.SLEUTHID,
                         item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
@@ -465,7 +474,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
                 .timeField(BasicProps.CREATED, item.getCreationDate()).timeField(BasicProps.MODIFIED, item.getModDate())
                 .timeField(BasicProps.ACCESSED, item.getAccessDate())
-                .timeField(BasicProps.RECORDDATE, item.getRecordDate()).field(BasicProps.EXPORT, item.getFileToIndex())
+                .timeField(BasicProps.CHANGED, item.getChangeDate()).field(BasicProps.EXPORT, item.getFileToIndex())
                 .field(BasicProps.CATEGORY, item.getCategorySet())
                 .field(BasicProps.CONTENTTYPE, item.getMediaType().toString()).field(BasicProps.HASH, item.getHash())
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())
@@ -473,11 +482,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.HASCHILD, item.hasChildren()).field(BasicProps.ISDIR, item.isDir())
                 .field(BasicProps.ISROOT, item.isRoot()).field(BasicProps.CARVED, item.isCarved())
                 .field(BasicProps.SUBITEM, item.isSubItem()).field(BasicProps.OFFSET, item.getFileOffset())
-                .field("extraAttributes", item.getExtraAttributeMap())
-                .field(BasicProps.CONTENT, getStringFromReader(textReader));
+                .field("extraAttributes", item.getExtraAttributeMap());
 
         for (String key : getMetadataKeys(item)) {
-            if (key != null) {
+            if (PREVIEW_IN_DATASOURCE.equals(key)) {
+                HashMap<String, String> previewInDataSource = new HashMap<>();
+                for (String preview : item.getMetadata().getValues(key)) {
+                    String[] prevIt = preview.split(KEY_VAL_SEPARATOR);
+                    if (prevIt.length == 2) {
+                        previewInDataSource.put(prevIt[0], prevIt[1]);
+                    }
+                }
+                builder.field(key, previewInDataSource);
+
+            } else if (key != null) {
                 builder.array(key, item.getMetadata().getValues(key));
             }
         }
@@ -485,6 +503,24 @@ public class ElasticSearchIndexTask extends AbstractTask {
         for (Entry<String, String> entry : cmdLineFields.entrySet()) {
             builder.field(entry.getKey(), entry.getValue());
         }
+
+        return builder.endObject();
+    }
+
+    private XContentBuilder getJsonFragmentBuilder(IItem item, Reader textReader, String parentID,
+            String contentPersistentId) throws IOException {
+
+        XContentBuilder builder = XContentFactory.jsonBuilder();
+
+        // maps the content to its parent metadata
+        HashMap<String, String> document_content = new HashMap<>();
+        document_content.put("name", "content");
+        document_content.put("parent", parentID);
+
+        builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
+                .field(BasicProps.ID, item.getId()).field("document_content", document_content)
+                .field("contentPersistentId", contentPersistentId)
+                .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();
     }

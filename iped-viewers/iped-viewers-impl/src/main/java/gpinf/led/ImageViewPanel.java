@@ -1,6 +1,7 @@
 package gpinf.led;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -19,6 +20,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JViewport;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.UIManager;
+
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 
 /**
  * Painel especializado em exibição de uma imagem. Já inclui rolagem e zoom da
@@ -91,9 +95,19 @@ public class ImageViewPanel extends JPanel {
                 if (image != null) {
                     int w = (int) Math.ceil(image.getWidth() * zoomFactor);
                     int h = (int) Math.ceil(image.getHeight() * zoomFactor);
+                    if (image.getColorModel().hasAlpha()) {
+                        g2.setColor(Color.white);
+                        g2.clearRect((getWidth() - w) / 2, (getHeight() - h) / 2, w, h);
+                    }
                     g2.drawImage(image, (getWidth() - w) / 2, (getHeight() - h) / 2, w, h, null);
                 }
             }
+            
+            @Override
+            public void updateUI() {
+                super.updateUI();
+                setBackground(UIManager.getColor("Viewer.background"));
+            }            
         };
         scrollPane = new JScrollPane(imgPanel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                 ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -290,8 +304,18 @@ public class ImageViewPanel extends JPanel {
     public void adjustBrightness(float factor) {
         if (image != null) {
             if (factor > 0 && factor <= 100) {
-                RescaleOp op = new RescaleOp(1 + factor * factor / 2000f, factor / 1.5f, null);
-                image = op.filter(orgImage, null);
+                RescaleOp op = null;
+                float scale = 1 + factor * factor / 2000f;
+                float offset = factor / 1.5f;
+                BufferedImage src = orgImage;
+                if (orgImage.getType() == BufferedImage.TYPE_BYTE_INDEXED)
+                    src = ImageUtil.getOpaqueImage(orgImage);
+                if (src.getColorModel().hasAlpha())
+                    op = new RescaleOp(new float[] { scale, scale, scale, 1 },
+                            new float[] { offset, offset, offset, 0 }, null);
+                else
+                    op = new RescaleOp(scale, offset, null);
+                image = op.filter(src, null);
                 imgPanel.repaint();
             } else {
                 if (!image.equals(orgImage)) {

@@ -23,6 +23,7 @@ import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
 import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
@@ -37,7 +38,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MsgViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.NoJavaFXViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
@@ -45,7 +45,6 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
-import dpf.sp.gpinf.indexer.util.JarLoader;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
 
@@ -82,25 +81,23 @@ public class ViewerController {
             public boolean isFixed() {
                 return isFixed;
             }
+
+            @Override
+            public boolean isNumeric(String field) {
+                return IndexItem.isNumeric(field);
+            }
         });
         viewers.add(viewersRepository = new ViewersRepository());
-
-        boolean javaFX = new JarLoader().loadJavaFX();
 
         // These are content-specific viewers (inside a single ViewersRepository)
         viewersRepository.addViewer(new ImageViewer());
         viewersRepository.addViewer(new CADViewer());
-        if (javaFX) {
-            viewersRepository.addViewer(new HtmlViewer());
-            viewersRepository.addViewer(new EmailViewer());
-            viewersRepository.addViewer(new MsgViewer());
-            linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
-            viewersRepository.addViewer(linkViewer);
-            viewersRepository.addViewer(new TikaHtmlViewer());
-        } else {
-            viewersRepository.addViewer(new NoJavaFXViewer());
-            linkViewer = null;
-        }
+        viewersRepository.addViewer(new HtmlViewer());
+        viewersRepository.addViewer(new EmailViewer());
+        viewersRepository.addViewer(new MsgViewer());
+        linkViewer = new HtmlLinkViewer(new AttachmentSearcherImpl());
+        viewersRepository.addViewer(linkViewer);
+        viewersRepository.addViewer(new TikaHtmlViewer());
         viewersRepository.addViewer(new IcePDFViewer());
         viewersRepository.addViewer(new TiffViewer());
         viewersRepository.addViewer(new ReferencedFileViewer(viewersRepository, new AttachmentSearcherImpl()));
@@ -111,7 +108,6 @@ public class ViewerController {
                     for (Viewer viewer : viewers) {
                         viewer.init();
                     }
-                    tika = new Tika();
 
                     // LibreOffice viewer initialization
                     LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(params.codePath).getParentFile());
@@ -132,6 +128,7 @@ public class ViewerController {
                     viewersRepository.removeViewer(officeViewer);
                 } catch (Throwable e) {
                     // catches NoClassDefFoundError on Linux if libreoffice-java is not installed
+                    // and if debugging UI: custom class loader is not used to load libreoffice jars
                     e.printStackTrace();
                 } finally {
                     synchronized (lock) {
@@ -218,6 +215,13 @@ public class ViewerController {
         synchronized (lock) {
             return init;
         }
+    }
+
+    public void reload() {
+        boolean currFixed = isFixed;
+        isFixed = true;
+        loadFile(this.file, this.viewFile, this.contentType, this.highlightTerms);
+        isFixed = currFixed; 
     }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
@@ -342,6 +346,9 @@ public class ViewerController {
             return;
         if (!file.equals(viewFile)) {
             try {
+                if (tika == null) {
+                    tika = new Tika();
+                }
                 viewType = tika.detect(viewFile.getFile());
                 return;
             } catch (IOException e) {

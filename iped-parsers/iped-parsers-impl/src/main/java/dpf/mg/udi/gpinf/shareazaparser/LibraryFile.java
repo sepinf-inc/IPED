@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
@@ -208,10 +209,15 @@ class LibraryFile extends ShareazaEntity {
 
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(md5));
         hashSetHits.addAll(ChildPornHashLookup.lookupHash(sha1));
+
+        AttributesImpl attributes = new AttributesImpl();
+        if (md5 != null && !md5.isEmpty()) {
+            attributes.addAttribute("", "name", "name", "CDATA", md5.toUpperCase());
+        }
         if (!hashSetHits.isEmpty()) {
-            html.startElement("tr", "class", "r"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        } else
-            html.startElement("tr"); //$NON-NLS-1$
+            attributes.addAttribute("", "class", "class", "CDATA", "r");
+        }
+        html.startElement("tr", attributes);
 
         printTd(html, searcher, path, name, index, size, time, getInheritedShared(), virtualSize, virtualBase, sha1,
                 tiger, md5, ed2k, bth, verify, uri, metadataAuto, metadataTime, metadataModified, rating, comments,

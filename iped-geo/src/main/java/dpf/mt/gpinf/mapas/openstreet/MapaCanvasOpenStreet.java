@@ -10,6 +10,7 @@ import java.util.HashMap;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -104,7 +105,7 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
                         }
                     }
                 });
-
+                webEngine.loadContent(UiUtil.getUIEmptyHtml());
             }
         });
     }

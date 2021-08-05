@@ -6,9 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
-import java.util.HashSet;
-import java.util.Properties;
-import java.util.Set;
+import java.util.Arrays;
+import java.util.List;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -22,8 +21,9 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.MakePreviewConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.io.TimeoutException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
@@ -34,11 +34,11 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlLinkViewer;
 import dpf.sp.gpinf.indexer.util.EmptyEmbeddedDocumentExtractor;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
-import dpf.sp.gpinf.indexer.util.Log;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import macee.core.Configurable;
 
 public class MakePreviewTask extends AbstractTask {
 
@@ -46,48 +46,23 @@ public class MakePreviewTask extends AbstractTask {
 
     public static final String viewFolder = "view"; //$NON-NLS-1$
 
-    private static final String CONFIG_FILE_NAME = "MakePreviewConfig.txt";
+    private MakePreviewConfig previewConfig;
 
-    private static final String SUPPORTED_KEY = "supportedMimes";
-
-    private static final String SUPPORTED_LINKS_KEY = "supportedMimesWithLinks";
-
-    private static boolean enableFileParsing = true;
-
-    private Set<String> supportedMimes = new HashSet<>();
-
-    private Set<String> supportedMimesWithLinks = new HashSet<>();
-
-    private IndexerDefaultParser parser = new IndexerDefaultParser();
+    private IndexerDefaultParser parser;
 
     private volatile Throwable exception;
 
-    public MakePreviewTask() {
-        parser.setPrintMetadata(false);
-        parser.setIgnoreStyle(false);
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new MakePreviewConfig());
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        String value = confParams.getProperty(ParsingTask.ENABLE_PARSING);
-        if (value != null & !value.trim().isEmpty()) {
-            enableFileParsing = Boolean.valueOf(value.trim());
-        }
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        previewConfig = configurationManager.findObject(MakePreviewConfig.class);
 
-        File config = new File(confDir, CONFIG_FILE_NAME);
-        String content = Util.readUTF8Content(config);
-        for (String line : content.split("\n")) { //$NON-NLS-1$
-            if (line.trim().startsWith("#") || line.trim().isEmpty()) { //$NON-NLS-1$
-                continue;
-            }
-            if (line.startsWith(SUPPORTED_KEY) || line.startsWith(SUPPORTED_LINKS_KEY))
-                for (String mime : line.substring(line.indexOf('=') + 1).split(";")) {
-                    if (line.startsWith(SUPPORTED_LINKS_KEY))
-                        supportedMimesWithLinks.add(mime.trim());
-                    else if (line.startsWith(SUPPORTED_KEY))
-                        supportedMimes.add(mime.trim());
-                }
-        }
+        parser = new IndexerDefaultParser();
+        parser.setPrintMetadata(false);
+        parser.setIgnoreStyle(false);
     }
 
     @Override
@@ -95,11 +70,12 @@ public class MakePreviewTask extends AbstractTask {
     }
 
     public boolean isSupportedType(String contentType) {
-        return supportedMimes.contains(contentType) || mayContainLinks(contentType) || isSupportedTypeCSV(contentType);
+        return previewConfig.getSupportedMimes().contains(contentType) || mayContainLinks(contentType)
+                || isSupportedTypeCSV(contentType);
     }
 
     private boolean mayContainLinks(String contentType) {
-        return supportedMimesWithLinks.contains(contentType);
+        return previewConfig.getSupportedMimesWithLinks().contains(contentType);
     }
 
     private boolean isSupportedTypeCSV(String contentType) {
@@ -108,15 +84,11 @@ public class MakePreviewTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enableFileParsing;
+        return previewConfig.isEnabled();
     }
 
     @Override
     protected void process(IItem evidence) throws Exception {
-
-        if (!enableFileParsing) {
-            return;
-        }
 
         String mediaType = evidence.getMediaType().toString();
         if (evidence.getLength() == Long.valueOf(0) || evidence.getHash() == null || evidence.getHash().isEmpty()
@@ -146,8 +118,9 @@ public class MakePreviewTask extends AbstractTask {
             evidence.setViewFile(viewFile);
 
         } catch (Throwable e) {
-            Log.warning(this.getClass().getSimpleName(), "Error processing " + evidence.getPath() + " " + e.toString()); //$NON-NLS-1$//$NON-NLS-2$
-
+            LOGGER.warn("Error generating preview of {} ({} bytes) {}", evidence.getPath(), evidence.getLength(), //$NON-NLS-1$
+                    e.toString());
+            LOGGER.debug("", e);
         }
 
     }
@@ -168,13 +141,12 @@ public class MakePreviewTask extends AbstractTask {
             context.set(ItemInfo.class, ItemInfoFactory.getItemInfo(evidence));
             context.set(EmbeddedDocumentExtractor.class, new EmptyEmbeddedDocumentExtractor());
 
-            AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
+            ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
 
             // ForkServer timeout
             if (evidence.getLength() != null) {
-                int timeOutBySize = (int) (evidence.getLength() / 1000000) * advancedConfig.getTimeOutPerMB();
-                int totalTimeout = (advancedConfig.getTimeOut() + timeOutBySize) * 1000;
+                int timeOutBySize = (int) (evidence.getLength() / 1000000) * parsingConfig.getTimeOutPerMB();
+                int totalTimeout = (parsingConfig.getTimeOut() + timeOutBySize) * 1000;
                 context.set(ParsingTimeout.class, new ParsingTimeout(totalTimeout));
             }
 
@@ -220,7 +192,7 @@ public class MakePreviewTask extends AbstractTask {
                 if (pch.getProgress())
                     start = System.currentTimeMillis();
 
-                if ((System.currentTimeMillis() - start) / 1000 >= advancedConfig.getTimeOut()) {
+                if ((System.currentTimeMillis() - start) / 1000 >= parsingConfig.getTimeOut()) {
                     t.interrupt();
                     stats.incTimeouts();
                     throw new TimeoutException();

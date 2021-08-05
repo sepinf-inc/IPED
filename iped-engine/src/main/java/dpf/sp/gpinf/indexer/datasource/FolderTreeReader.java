@@ -39,20 +39,20 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 
 public class FolderTreeReader extends DataSourceReader {
 
     private static Logger LOGGER = LoggerFactory.getLogger(FolderTreeReader.class);
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
-
-    private static final String EXCLUDE_KEY = "skipFolderRegex"; //$NON-NLS-1$
 
     private Pattern excludePattern;
 
@@ -95,9 +95,9 @@ public class FolderTreeReader extends DataSourceReader {
             evidenceName = file.getAbsolutePath().substring(0, 2);
         }
 
-        String arg;
-        if ((arg = Configuration.getInstance().properties.getProperty(EXCLUDE_KEY)) != null) {
-            excludePattern = Pattern.compile(arg, Pattern.CASE_INSENSITIVE);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (!fsConfig.getSkipFolderRegex().isEmpty()) {
+            excludePattern = Pattern.compile(fsConfig.getSkipFolderRegex(), Pattern.CASE_INSENSITIVE);
         }
 
         rootFile = file;
@@ -186,7 +186,7 @@ public class FolderTreeReader extends DataSourceReader {
                     item.addParentIds(parentIds);
 
                     if (parentIds.size() == 2) {
-                        item.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+                        item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
                     }
                 } else {
                     item.setRoot(true);

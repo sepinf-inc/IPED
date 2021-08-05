@@ -1,0 +1,5 @@
+# Add and process unallocated areas of images.
+addUnallocated = true
+
+# Add and process file slacks.
+addFileSlacks = true

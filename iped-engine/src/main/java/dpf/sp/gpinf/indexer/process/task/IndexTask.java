@@ -7,12 +7,16 @@ import java.io.ObjectInputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Properties;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
+import org.apache.lucene.document.Field;
+import org.apache.lucene.document.SortedSetDocValuesField;
+import org.apache.lucene.document.TextField;
+import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -21,6 +25,8 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.IndexItem;
@@ -32,9 +38,9 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
-import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a
@@ -50,18 +56,12 @@ public class IndexTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
-
-    public static boolean indexFileContents = true;
-    public static boolean indexUnallocated = false;
-
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private IndexerDefaultParser autoParser;
     private List<IdLenPair> textSizes;
 
-    public IndexTask() {
-        this.autoParser = new IndexerDefaultParser();
-    }
+    private IndexTaskConfig indexConfig;
 
     public static class IdLenPair {
 
@@ -117,8 +117,8 @@ public class IndexTask extends AbstractTask {
         stats.updateLastId(evidence.getId());
 
         if (textReader == null) {
-            if (indexFileContents
-                    && (indexUnallocated || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
+            if (indexConfig.isIndexFileContents() && (indexConfig.isIndexUnallocated()
+                    || !BaseCarveTask.UNALLOCATED_MIMETYPE.equals(evidence.getMediaType()))) {
                 textReader = evidence.getTextReader();
                 if (textReader == null) {
                     LOGGER.warn("Null Text reader, creating a new one for {}", evidence.getPath()); //$NON-NLS-1$
@@ -140,7 +140,8 @@ public class IndexTask extends AbstractTask {
         if (textReader == null)
             textReader = new StringReader(""); //$NON-NLS-1$
 
-        FragmentingReader fragReader = new FragmentingReader(textReader);
+        FragmentingReader fragReader = new FragmentingReader(textReader, indexConfig.getTextSplitSize(),
+                indexConfig.getTextOverlapSize());
         CloseFilterReader noCloseReader = new CloseFilterReader(fragReader);
 
         int fragments = fragReader.estimateNumberOfFrags();
@@ -168,7 +169,7 @@ public class IndexTask extends AbstractTask {
                 }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
-                worker.writer.addDocument(doc);
+                addDocumentSafe(doc, evidence);
 
                 while (worker.state != STATE.RUNNING) {
                     try {
@@ -196,6 +197,34 @@ public class IndexTask extends AbstractTask {
 
     }
 
+    private void addDocumentSafe(Document doc, IItem evidence) throws IOException {
+        // loop to handle possible corrupted metadata, see #571
+        while (true) {
+            try {
+                worker.writer.addDocument(doc);
+                break;
+            } catch (IllegalArgumentException e) {
+                String msg = e.toString();
+                if (msg.contains("cannot change DocValues type from")) {
+                    String badField = msg.substring(msg.indexOf('\"') + 1, msg.length() - 1);
+                    String badValue = doc.get(badField);
+                    LOGGER.warn("Possible corrupted metadata value '{}' in field '{}' in item '{}' ({} bytes)",
+                            badValue, badField, evidence.getPath(), evidence.getLength());
+                    // removes default field
+                    doc.removeField(badField);
+                    // removes docValues field
+                    doc.removeField(badField);
+                    // add the value in other similar field as a generic string
+                    badField += ":string";
+                    doc.add(new TextField(badField, badValue, Field.Store.YES));
+                    doc.add(new SortedSetDocValuesField(badField, new BytesRef(IndexItem.normalize(badValue, true))));
+                } else {
+                    throw e;
+                }
+            }
+        }
+    }
+
     private Metadata getMetadata(IItem evidence) {
         // new metadata to prevent ConcurrentModificationException while indexing
         Metadata metadata = new Metadata();
@@ -206,6 +235,7 @@ public class IndexTask extends AbstractTask {
     private ParseContext getTikaContext(IItem evidence) {
         ParsingTask pt = new ParsingTask(evidence, this.autoParser);
         pt.setWorker(worker);
+        pt.init(ConfigurationManager.get());
         ParseContext context = pt.getTikaContext();
         // this is to not create new items while indexing
         pt.setExtractEmbedded(false);
@@ -213,23 +243,14 @@ public class IndexTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties properties, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new IndexTaskConfig());
+    }
 
-        String value = properties.getProperty("indexFileContents"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexFileContents = Boolean.valueOf(value);
-        }
-
-        value = properties.getProperty("indexUnallocated"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            indexUnallocated = Boolean.valueOf(value);
-        }
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        
+        indexConfig = configurationManager.findObject(IndexTaskConfig.class);
 
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.isAppendIndex() || args.isContinue() || args.isRestart()) {
@@ -271,6 +292,8 @@ public class IndexTask extends AbstractTask {
 
         IndexItem.loadMetadataTypes(new File(output, "conf")); //$NON-NLS-1$
         loadExtraAttributes();
+
+        this.autoParser = new IndexerDefaultParser();
 
     }
 

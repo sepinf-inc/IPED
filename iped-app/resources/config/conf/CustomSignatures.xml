@@ -116,14 +116,6 @@
         </magic>
         <sub-class-of type="text/html"/>
     </mime-type>
-    
-    <mime-type type="application/x-plist">
-        <_comment>Apple Binary Property List File </_comment>
-        <magic priority="60">
-            <match value="0x62706C697374" type="string" offset="0"/>
-        </magic>
-        <glob pattern="*.plist"/>
-    </mime-type>
    
     <mime-type type="application/x-windows-registry-report">
         <sub-class-of type="text/html"/>
@@ -215,7 +207,7 @@
     </mime-type>
     
     <mime-type type="application/x-safari-plist">     
-        <sub-class-of type="application/x-plist"/>
+        <sub-class-of type="application/x-bplist"/>
         <glob pattern="History.plist"/>
         <glob pattern="Downloads.plist"/>
         <glob pattern="Bookmarks.plist"/>
@@ -443,6 +435,21 @@
         <sub-class-of type="text/plain"/>
         <glob pattern="*.mbox"/>
     </mime-type>
+    
+    <mime-type type="application/vnd.lotus-notes">
+        <magic priority="60">
+            <match value="0x1A00" type="string" offset="0">
+                <match value="0x10000000" type="string" offset="6"/>
+                <match value="0x11000000" type="string" offset="6"/>
+                <match value="0x14000000" type="string" offset="6"/>
+                <match value="0x29000000" type="string" offset="6"/>
+                <match value="0x2B000000" type="string" offset="6"/>
+                <match value="0x30000000" type="string" offset="6"/>
+                <match value="0x33000000" type="string" offset="6"/>
+            </match>    
+        </magic>  
+        <glob pattern="*.nsf"/>      	
+    </mime-type>
 
 	<mime-type type="application/x-mssql">
         <magic priority="50">
@@ -510,6 +517,34 @@
     <mime-type type="application/x-incredimail">
         <sub-class-of type="message/rfc822"/>
         <glob pattern="*.imm"/>
+    </mime-type>
+    
+    <mime-type type="message/x-rfc822-mac">
+      <magic priority="50">
+        <match value="0xD00D0000010101000200000003000000" type="string" offset="0"/>
+        <match minShouldMatch="3">
+          <match value="\rDate:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rDelivered-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rFrom:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMIME-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReceived:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rRelay-Version:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rReturn-Path:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rStatus:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rSubject:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rTo:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rUser-Agent:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rMessage-ID:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Mailer:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Originating-IP:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-Original-To:" type="stringignorecase" offset="0:4096"/>
+          <match value="\rX-DKIM:" type="stringignorecase" offset="0:4096"/>
+        </match>
+      </magic>
+      <sub-class-of type="message/rfc822"/>
+      <glob pattern="*.olk15MsgSource"/>
+      <glob pattern="*.olk15MsgAttachment"/>
     </mime-type>
     
     <mime-type type="application/x-unallocated">
@@ -639,6 +674,15 @@
         <glob pattern="known*.met"/>
     </mime-type>
     
+    <mime-type type="application/x-emule-searches">
+        <sub-class-of type="text/plain"/>
+        <glob pattern="AC_SearchStrings.dat"/>
+    </mime-type>  
+	
+     <mime-type type="application/x-emule-preferences-ini">
+        <sub-class-of type="text/plain"/>
+    </mime-type>
+    
     <mime-type type="application/x-preview-with-links">
         <sub-class-of type="text/html"/>
         <magic priority="50">
@@ -698,6 +742,23 @@
         </magic>
         <glob pattern="*.MTS"/>
 		<glob pattern="*.m2ts"/>
+    </mime-type>
+    
+    <mime-type type="video/ts">
+    	<magic priority="50">
+            <match value="G" type="string" offset="0">
+	            <match value="G" type="string" offset="188">
+		            <match value="G" type="string" offset="376">
+			            <match value="G" type="string" offset="564">
+				            <match value="G" type="string" offset="752">
+					            <match value="G" type="string" offset="940"/>
+				            </match>
+			            </match>
+		            </match>
+	            </match>
+            </match>
+        </magic>
+        <glob pattern="*.ts"/>
     </mime-type>
     
     <mime-type type="application/x-lnk">
@@ -1067,7 +1128,7 @@
     </mime-type>
     
     <mime-type type="application/x-whatsapp-user-plist">
-        <sub-class-of type="application/x-plist"/>
+        <sub-class-of type="application/x-bplist"/>
         <glob pattern="group.net.whatsapp.WhatsApp.shared.plist"/>
     </mime-type>
     

@@ -21,41 +21,28 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.logging.LogFactory;
 import org.apache.commons.logging.impl.NoOpLog;
-import org.apache.tika.fork.ForkParser2;
-import org.apache.tika.mime.MimeTypesFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationDirectory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.config.OCRConfig;
-import dpf.sp.gpinf.indexer.config.PDFToImageConfig;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
-import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
-import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
-import dpf.sp.gpinf.indexer.parsers.EDBParser;
-import dpf.sp.gpinf.indexer.parsers.IndexDatParser;
-import dpf.sp.gpinf.indexer.parsers.LibpffPSTParser;
-import dpf.sp.gpinf.indexer.parsers.OCRParser;
-import dpf.sp.gpinf.indexer.parsers.RegistryParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParser;
-import dpf.sp.gpinf.indexer.parsers.external.ExternalParsersFactory;
-import dpf.sp.gpinf.indexer.process.task.VideoThumbTask;
+import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
+import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.IConfigurationDirectory;
+import macee.core.Configurable;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.
@@ -64,20 +51,17 @@ public class Configuration {
 
     public static final String CONFIG_FILE = "IPEDConfig.txt"; //$NON-NLS-1$
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-    public static final String EXTRA_CONFIG_FILE = "AdvancedConfig.txt"; //$NON-NLS-1$
-    public static final String PARSER_CONFIG = "ParserConfig.xml"; //$NON-NLS-1$
-    public static final String EXTERNAL_PARSERS = "ExternalParsers.xml"; //$NON-NLS-1$
-    public static final String CUSTOM_MIMES_CONFIG = "CustomSignatures.xml"; //$NON-NLS-1$
+    public static final String CONF_DIR = "conf"; //$NON-NLS-1$
+    public static final String PROFILES_DIR = "profiles"; //$NON-NLS-1$
+    public static final String CASE_PROFILE_DIR = "profile"; //$NON-NLS-1$
 
     private static Configuration singleton;
     private static AtomicBoolean loaded = new AtomicBoolean();
 
-    ConfigurationDirectory configDirectory;
+    private ConfigurationDirectory configDirectory;
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    public File optionalJarDir;
-    public File tskJarFile;
     public String loaddbPathWin;
 
     public static Configuration getInstance() {
@@ -95,8 +79,8 @@ public class Configuration {
 
     private String getAppRoot(String configPath) {
         String appRoot = new File(configPath).getAbsolutePath();
-        if (appRoot.contains("profiles")) //$NON-NLS-1$
-            appRoot = new File(appRoot).getParentFile().getParentFile().getParent();
+        if (appRoot.contains(PROFILES_DIR))
+            appRoot = new File(appRoot).getParentFile().getParent();
         return appRoot;
     }
 
@@ -124,33 +108,14 @@ public class Configuration {
 
         configureLogger(configPath);
 
-        System.setProperty("iped.root", appRoot);
-        System.setProperty(ExternalParser.EXTERNAL_PARSERS_ROOT, appRoot);
-        System.setProperty("tika.config", configPath + "/conf/" + PARSER_CONFIG); //$NON-NLS-1$ //$NON-NLS-2$
-        System.setProperty(ExternalParsersFactory.EXTERNAL_PARSER_PROP, configPath + "/conf/" + EXTERNAL_PARSERS); //$NON-NLS-1$
-        System.setProperty(MimeTypesFactory.CUSTOM_MIMES_SYS_PROP,
-                appRoot + "/conf/" + Configuration.CUSTOM_MIMES_CONFIG); //$NON-NLS-1$
+        System.setProperty(IConfigurationDirectory.IPED_ROOT, appRoot);
+        System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
-        System.setProperty("iped.configPath", configPath);
-
-        properties.load(new File(appRoot + "/" + LOCAL_CONFIG)); //$NON-NLS-1$
-        properties.load(new File(configPath + "/" + CONFIG_FILE)); //$NON-NLS-1$
-        properties.load(new File(configPath + "/conf/" + EXTRA_CONFIG_FILE)); //$NON-NLS-1$
-
-        String optional_jars = properties.getProperty("optional_jars"); //$NON-NLS-1$
-        if (optional_jars != null) {
-            optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-            ForkParser2.plugin_dir = optionalJarDir.getCanonicalPath();
-        }
-
-        String regripperFolder = properties.getProperty("regripperFolder"); //$NON-NLS-1$
-        if (regripperFolder != null)
-            System.setProperty(RegistryParser.TOOL_PATH_PROP, appRoot + "/" + regripperFolder.trim()); //$NON-NLS-1$
-
-        properties.put(IPEDConfig.CONFDIR, configPath + "/conf");
+        properties.load(new File(appRoot, LOCAL_CONFIG));
+        properties.load(new File(configPath, CONFIG_FILE));
     }
 
-    public void loadLibsAndToolPaths() throws IOException {
+    public void loadNativeLibs() throws IOException {
         if (System.getProperty("os.name").toLowerCase().startsWith("windows")) { //$NON-NLS-1$ //$NON-NLS-2$
 
             String arch = "x86"; //$NON-NLS-1$
@@ -167,30 +132,16 @@ public class Configuration {
                 System.setProperty("ipedNativeLibsLoaded", "true"); //$NON-NLS-1$ //$NON-NLS-2$
             }
 
-            System.setProperty(OCRParser.TOOL_PATH_PROP, appRoot + "/tools/tesseract"); //$NON-NLS-1$
-            System.setProperty(EDBParser.TOOL_PATH_PROP, appRoot + "/tools/esedbexport/"); //$NON-NLS-1$
-            System.setProperty(LibpffPSTParser.TOOL_PATH_PROP, appRoot + "/tools/pffexport/"); //$NON-NLS-1$
-            System.setProperty(IndexDatParser.TOOL_PATH_PROP, appRoot + "/tools/msiecfexport/"); //$NON-NLS-1$
-
-            String mplayerPath = properties.getProperty("mplayerPath"); //$NON-NLS-1$
-            if (mplayerPath != null)
-                VideoThumbTask.mplayerWin = mplayerPath.trim();
-
-        } else {
-            String tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
-            if (tskJarPath != null && !tskJarPath.isEmpty())
-                tskJarPath = tskJarPath.trim();
-            else
-                throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
-
-            tskJarFile = new File(tskJarPath);
-            if (!tskJarFile.exists())
-                throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
 
     public void loadConfigurables(String configPathStr) throws IOException {
         loadConfigurables(configPathStr, false);
+    }
+
+    private void addProfileToConfigDirectory(ConfigurationDirectory configDirectory, File profile) {
+        configDirectory.addPath(new File(profile, CONFIG_FILE).toPath());
+        configDirectory.addPath(new File(profile, CONF_DIR).toPath());
     }
 
     public void loadConfigurables(String configPathStr, boolean loadAll) throws IOException {
@@ -200,19 +151,27 @@ public class Configuration {
 
         getConfiguration(configPathStr);
 
-        configDirectory = new ConfigurationDirectory(Paths.get(properties.getProperty(IPEDConfig.CONFDIR)));
-        configDirectory.addPath(Paths.get(configPath + "/" + CONFIG_FILE));
-        configDirectory.addPath(Paths.get(appRoot + "/" + LOCAL_CONFIG));
+        configDirectory = new ConfigurationDirectory(Paths.get(appRoot, LOCAL_CONFIG));
 
-        ConfigurationManager configManager = new ConfigurationManager(configDirectory);
+        File defaultProfile = new File(appRoot);
+        File currentProfile = new File(configPathStr);
+        File caseProfile = new File(appRoot, CASE_PROFILE_DIR);
+        addProfileToConfigDirectory(configDirectory, defaultProfile);
+        if (!currentProfile.equals(defaultProfile)) {
+            addProfileToConfigDirectory(configDirectory, currentProfile);
+        } else if (caseProfile.exists()) {
+            addProfileToConfigDirectory(configDirectory, caseProfile);
+        }
 
-        LocaleConfig localeConfig = new LocaleConfig();
-        configManager.addObject(localeConfig);
+        ConfigurationManager configManager = ConfigurationManager.createInstance(configDirectory);
+        configManager.addObject(new LocaleConfig());
 
         PluginConfig pluginConfig = new PluginConfig();
         configManager.addObject(pluginConfig);
+        configManager.loadConfig(pluginConfig);
+        addPluginJarsToConfigurationLookup(configDirectory, pluginConfig);
 
-        loadLibsAndToolPaths();
+        loadNativeLibs();
 
         if (!loadAll && !Configuration.class.getClassLoader().getClass().getName()
                 .equals(CustomURLClassLoader.class.getName())) {
@@ -222,49 +181,42 @@ public class Configuration {
             return;
         }
 
-        LocalConfig localConfig = new LocalConfig();
-        configManager.addObject(localConfig);
+        configManager.addObject(new LocalConfig());
+        configManager.addObject(new OCRConfig());
+        configManager.addObject(new FileSystemConfig());
+        configManager.addObject(new AnalysisConfig());
 
-        IPEDConfig ipedConfig = new IPEDConfig();
-        configManager.addObject(ipedConfig);
+        TaskInstallerConfig taskConfig = new TaskInstallerConfig();
+        configManager.addObject(taskConfig);
 
-        OCRConfig ocrConfig = new OCRConfig();
-        configManager.addObject(ocrConfig);
+        // must load taskConfig before using it
+        configManager.loadConfig(taskConfig);
 
-        AdvancedIPEDConfig advancedConfig = new AdvancedIPEDConfig();
-        configManager.addObject(advancedConfig);
-
-        PDFToImageConfig pdfToImageConfig = new PDFToImageConfig();
-        configManager.addObject(pdfToImageConfig);
-
-        SleuthKitConfig sleuthKitConfig = new SleuthKitConfig();
-        configManager.addObject(sleuthKitConfig);
-
-        UFEDReaderConfig urConfig = new UFEDReaderConfig();
-        configManager.addObject(urConfig);
-
-        // adiciona os jars dos plugins como fonte para busca de arquivos de
-        // configuração
-        if (optionalJarDir != null) {
-            File[] jars = optionalJarDir.listFiles();
-            if (jars != null) {
-                for (File jar : jars) {
-                    if (jar.getName().endsWith(".jar")) {
-                        try {
-                            configDirectory.addZip(jar.toPath());
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    if (jar.isDirectory()) {
-                        configDirectory.addPath(jar.toPath());
-                    }
-                }
+        for (AbstractTask task : taskConfig.getNewTaskInstances()) {
+            for (Configurable<?> configurable : task.getConfigurables()) {
+                configManager.addObject(configurable);
             }
         }
 
         configManager.loadConfigs();
+    }
+
+    // add plugin jars to the configuration resource look up engine
+    private void addPluginJarsToConfigurationLookup(ConfigurationDirectory configDirectory, PluginConfig pluginConfig) {
+        File[] jars = pluginConfig.getPluginJars();
+        for (File jar : jars) {
+            if (jar.getName().endsWith(".jar")) {
+                try {
+                    configDirectory.addZip(jar.toPath());
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+
+            if (jar.isDirectory()) {
+                configDirectory.addPath(jar.toPath());
+            }
+        }
     }
 
 }

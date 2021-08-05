@@ -1,6 +1,13 @@
 # List of known Metadata types
 # For metadata not listed below, will be done a best effort to guess its type (used for sorting and range queries)
 
+id = java.lang.Integer
+parentId = java.lang.Integer
+subitemId = java.lang.Integer
+sleuthId = java.lang.Integer
+ftkId = java.lang.Integer
+size = java.lang.Long
+textSize = java.lang.Long
 metaAddress = java.lang.String
 MFTSequence = java.lang.String
 fileSystemId = java.lang.String
@@ -2427,10 +2434,9 @@ image:tRNS tRNS_Grayscale = java.lang.Integer
 image:tRNS tRNS_Palette tRNS_PaletteEntry = java.lang.String
 image:tRNS tRNS_RGB = java.lang.String
 image:tiff:BitsPerSample = java.lang.String
-image:tiff:ImageLength = java.lang.Integer
-image:tiff:ImageWidth = java.lang.Integer
-image:tiff:Make = java.lang.String
-image:tiff:Model = java.lang.String
+image:Height = java.lang.Integer
+image:Width = java.lang.Integer
+image:tiff:NumPages = java.lang.Integer
 image:tiff:Orientation = java.lang.Integer
 image:tiff:ResolutionUnit = java.lang.String
 image:tiff:SamplesPerPixel = java.lang.Integer

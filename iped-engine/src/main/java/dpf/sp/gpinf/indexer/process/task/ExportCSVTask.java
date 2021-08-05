@@ -28,31 +28,39 @@ import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Properties;
+import java.util.List;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.
  */
 public class ExportCSVTask extends AbstractTask {
 
-    private static int MIN_FLUSH_SIZE = 1 << 23;
-    private static String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
+    private static final String ENABLE_PARAM = "exportFileProps"; //$NON-NLS-1$
 
-    public static boolean exportFileProps = false;
+    private static final String CSV_NAME = Messages.getString("ExportCSVTask.CsvName"); //$NON-NLS-1$
+    private static final String HEADER = Messages.getString("ExportCSVTask.CsvColNames"); //$NON-NLS-1$
+    private static final String SEPARATOR = Messages.getString("ExportCSVTask.CsvSeparator"); //$NON-NLS-1$
+    private static final String LINK_FUNCTION = Messages.getString("ExportCSVTask.LinkFunction"); //$NON-NLS-1$
+    private static final String LINK_NAME = Messages.getString("ExportCSVTask.LinkName"); //$NON-NLS-1$
+    private static final int MIN_FLUSH_SIZE = 1 << 23;
 
+    private static boolean exportFileProps = false;
     private static StringBuilder staticList = new StringBuilder();
 
     private CmdLineArgs args;
-
     private File tmp;
 
     /**
@@ -84,15 +92,17 @@ public class ExportCSVTask extends AbstractTask {
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = evidence.getFileToIndex();
         if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
-            value = "=HIPERLINK(\"\"" + value + Messages.getString("ExportCSVTask.Open"); //$NON-NLS-1$ //$NON-NLS-2$
+            value = "=" + LINK_FUNCTION + "(\"" + value + "\"" + SEPARATOR + "\"" + LINK_NAME + "\")";
         } else {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         Long length = evidence.getLength();
         if (length == null) {
@@ -100,37 +110,44 @@ public class ExportCSVTask extends AbstractTask {
         } else {
             value = length.toString();
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = evidence.getExt();
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = Util.concatStrings(evidence.getLabels());
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = evidence.getCategories().replace("" + CategoryTokenizer.SEPARATOR, " | "); //$NON-NLS-1$ //$NON-NLS-2$
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = evidence.getHash();
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = Boolean.toString(evidence.isDeleted());
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = Boolean.toString(evidence.isCarved());
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         Date date = evidence.getAccessDate();
         if (date == null) {
@@ -138,7 +155,8 @@ public class ExportCSVTask extends AbstractTask {
         } else {
             value = date.toString();
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         date = evidence.getModDate();
         if (date == null) {
@@ -146,7 +164,8 @@ public class ExportCSVTask extends AbstractTask {
         } else {
             value = date.toString();
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         date = evidence.getCreationDate();
         if (date == null) {
@@ -154,13 +173,15 @@ public class ExportCSVTask extends AbstractTask {
         } else {
             value = date.toString();
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         value = evidence.getPath();
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
-        list.append("\"" + escape(value) + "\";"); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
 
         String persistentId = Util.getPersistentId(evidence);
         list.append("\"").append(persistentId).append("\"");
@@ -188,8 +209,8 @@ public class ExportCSVTask extends AbstractTask {
         if (!output.exists()) {
             writeHeader(output);
         }
-        try (BufferedWriter writer = Files.newBufferedWriter(output.toPath(), StandardOpenOption.APPEND)) {
-            writer.write(staticList.toString());
+        try (OutputStream os = Files.newOutputStream(output.toPath(), StandardOpenOption.APPEND)) {
+            os.write(staticList.toString().getBytes(StandardCharsets.UTF_8));
         }
         staticList = new StringBuilder();
     }
@@ -199,7 +220,7 @@ public class ExportCSVTask extends AbstractTask {
                 Writer writer = new OutputStreamWriter(os, StandardCharsets.UTF_8)) {
             byte[] utf8bom = { (byte) 0xEF, (byte) 0xBB, (byte) 0xBF };
             os.write(utf8bom);
-            writer.write(Messages.getString("ExportCSVTask.CsvColNames")); //$NON-NLS-1$
+            writer.write(HEADER);
         }
     }
 
@@ -244,7 +265,12 @@ public class ExportCSVTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         this.output = new File(output.getParentFile(), CSV_NAME);
 
@@ -258,13 +284,7 @@ public class ExportCSVTask extends AbstractTask {
             Files.delete(tmp.toPath());
         }
 
-        String value = confProps.getProperty("exportFileProps"); //$NON-NLS-1$
-        if (value != null) {
-            value = value.trim();
-        }
-        if (value != null && !value.isEmpty()) {
-            exportFileProps = Boolean.valueOf(value);
-        }
+        exportFileProps = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
     }
 

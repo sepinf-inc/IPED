@@ -19,19 +19,17 @@
 package dpf.sp.gpinf.indexer;
 
 import java.io.File;
-import java.io.IOException;
 import java.io.PrintStream;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.tika.fork.ForkParser2;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
@@ -44,8 +42,6 @@ import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import gpinf.hashdb.HashDBTool;
 
 /**
  * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
@@ -58,7 +54,6 @@ public class IndexFiles {
     private static Logger LOGGER = null;
 
     String rootPath, configPath;
-    String profile, locale;
     File palavrasChave;
     List<File> dataSource;
     File output;
@@ -132,8 +127,6 @@ public class IndexFiles {
     private void setConfigPath() throws Exception {
         URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
 
-        boolean isReportFromCaseFolder = false;
-
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
         } else {
@@ -141,34 +134,18 @@ public class IndexFiles {
             // test for report generation from case folder
             if (rootPath.endsWith("indexador" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
-                isReportFromCaseFolder = true;
             }
         }
 
         configPath = rootPath;
-        locale = getProfileLocale();
 
-        profile = null;
-
-        if (cmdLineParams.getProfile() != null) {
-            profile = cmdLineParams.getProfile();
-        } else if (!isReportFromCaseFolder) {
-            profile = "default"; //$NON-NLS-1$
+        String profile = cmdLineParams.getProfile();
+        if (profile != null) {
+            configPath = new File(configPath, Configuration.PROFILES_DIR + "/" + profile).getAbsolutePath(); //$NON-NLS-1$
         }
-        if (profile != null)
-            configPath = new File(configPath, "profiles/" + locale + "/" + profile).getAbsolutePath(); //$NON-NLS-1$ //$NON-NLS-2$
-
         if (!new File(configPath).exists())
             throw new IPEDException("Profile not found " + configPath); //$NON-NLS-1$
     }
-
-    public String getProfileLocale() throws IOException {
-        UTF8Properties props = new UTF8Properties();
-        props.load(new File(rootPath, Configuration.LOCAL_CONFIG));
-        String locale = props.getProperty("locale").trim(); //$NON-NLS-1$
-        return locale;
-    }
-
 
     protected void startManager() {
         try {
@@ -187,10 +164,9 @@ public class IndexFiles {
             else
                 LOGGER.error("Processing Error: ", e); //$NON-NLS-1$
 
-            if (!ForkParser2.enabled && (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError)))
-                LOGGER.error(
-                        "It is highly recommended to turn on 'enableExternalParsing' option in AdvancedConfig.txt to " //$NON-NLS-1$
-                                + "enable protection against OutOfMemoryErrors."); //$NON-NLS-1$
+            if (e instanceof OutOfMemoryError || (e.getCause() instanceof OutOfMemoryError))
+                LOGGER.error("Processing aborted because of OutOfMemoryError. See the possible workarounds at " //$NON-NLS-1$
+                        + "https://github.com/sepinf-inc/IPED/wiki/Troubleshooting"); //$NON-NLS-1$
 
         } finally {
             if (manager != null)
@@ -276,10 +252,9 @@ public class IndexFiles {
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance()
-                        .findObjects(PluginConfig.class).iterator().next();
-                jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
-                jars.add(Configuration.getInstance().tskJarFile);
+                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
+                jars.add(pluginConfig.getTskJarFile());
 
                 // currently with --nogui, user can not open analysis app, so no need to load
                 // libreoffice jars

@@ -49,15 +49,16 @@ import org.apache.lucene.store.Directory;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
+import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
@@ -130,7 +131,8 @@ public class Manager {
     private boolean isProcessingFinished = false;
 
     private LocalConfig localConfig;
-    private AdvancedIPEDConfig advancedConfig;
+    private AnalysisConfig analysisConfig;
+    private IndexTaskConfig indexConfig;
     private CmdLineArgs args;
 
     private Thread commitThread = null;
@@ -148,10 +150,9 @@ public class Manager {
 
     public Manager(List<File> sources, File output, File palavras) {
 
-        this.localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class).iterator()
-                .next();
-        this.advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
+        this.localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
+        this.analysisConfig = ConfigurationManager.get().findObject(AnalysisConfig.class);
+        this.indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
 
         this.indexDir = localConfig.getIndexTemp();
         this.sources = sources;
@@ -172,7 +173,7 @@ public class Manager {
 
         instance = this;
 
-        commitIntervalMillis = advancedConfig.getCommitIntervalSeconds() * 1000;
+        commitIntervalMillis = indexConfig.getCommitIntervalSeconds() * 1000;
     }
 
     public File getIndexTemp() {
@@ -235,6 +236,7 @@ public class Manager {
             finalizarIndexacao();
 
         } catch (Exception e) {
+            e.printStackTrace();
             interromperIndexacao();
             throw e;
 
@@ -578,7 +580,7 @@ public class Manager {
             workers[k].finish();
         }
 
-        if (advancedConfig.isForceMerge()) {
+        if (indexConfig.isForceMerge()) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.Optimizing")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("Optimizing Index..."); //$NON-NLS-1$
             try {
@@ -747,24 +749,30 @@ public class Manager {
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
+                    new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
-            if (!advancedConfig.isEmbutirLibreOffice()) {
+            if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
-            // copy default conf folder
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "conf"), new File(output, "conf"));
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().configPath, "conf"), new File(output, "conf"), //$NON-NLS-1$ //$NON-NLS-2$
-                    true);
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().configPath, Configuration.CONFIG_FILE),
-                    new File(output, Configuration.CONFIG_FILE));
-            IOUtil.copiaArquivo(new File(Configuration.getInstance().appRoot, Configuration.LOCAL_CONFIG),
-                    new File(output, Configuration.LOCAL_CONFIG));
+
+            // copy default configs
+            File defaultProfile = new File(Configuration.getInstance().appRoot);
+            IOUtil.copiaDiretorio(new File(defaultProfile, "conf"), new File(output, "conf"));
+            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+
+            // copy non default profile
+            File currentProfile = new File(Configuration.getInstance().configPath);
+            if (!currentProfile.equals(defaultProfile)) {
+                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+            }
+
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
                 IOUtil.copiaDiretorio(binDir, output.getParentFile()); // $NON-NLS-1$

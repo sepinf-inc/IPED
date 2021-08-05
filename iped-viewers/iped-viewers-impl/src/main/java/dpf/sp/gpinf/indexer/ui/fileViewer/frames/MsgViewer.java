@@ -10,15 +10,19 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.poi.hmef.attribute.MAPIRtfAttribute;
 import org.apache.poi.hsmf.MAPIMessage;
 import org.apache.poi.hsmf.datatypes.AttachmentChunks;
@@ -27,6 +31,7 @@ import org.apache.poi.hsmf.datatypes.MAPIProperty;
 import org.apache.poi.hsmf.datatypes.StringChunk;
 import org.apache.poi.hsmf.datatypes.Types;
 import org.apache.poi.hsmf.exceptions.ChunkNotFoundException;
+import org.apache.tika.Tika;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.html.HtmlEncodingDetector;
@@ -61,7 +66,7 @@ public class MsgViewer extends HtmlViewer {
     private Pattern emaillPattern = Pattern.compile("<?([0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[a-zA-Z0-9.-]+)>?");
     private TreeSet<String> imageExts = new TreeSet<>(Arrays.asList(".jpg", ".jpeg", ".png", ".bmp", ".gif"));
 
-    private ArrayList<Object[]> attachs = new ArrayList<>();
+    private ArrayList<Pair<File, String>> attachs = new ArrayList<>();
     private final DateFormat dateFormat = new SimpleDateFormat(Messages.getString("EmailViewer.DateFormat"));
     private File tmpFile = null;
 
@@ -105,9 +110,8 @@ public class MsgViewer extends HtmlViewer {
     }
 
     private void deletePreviousTempFiles() {
-        for (Object[] obj : attachs) {
-            File file = (File) obj[0];
-            file.delete();
+        for (Pair<File, String> pair : attachs) {
+            pair.getLeft().delete();
         }
         attachs.clear();
         if (tmpFile != null) {
@@ -129,16 +133,27 @@ public class MsgViewer extends HtmlViewer {
         preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />");
         preview.append("</head>");
         preview.append(
-                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">");
+                "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">");
 
         Index index = new Index();
+        boolean started = false;
         try {
             MAPIMessage msg = new MAPIMessage(msgFile);
+            started = true;
             parseMsg(msg, preview, attachs, index);
 
         } catch (Exception e) {
             LOGGER.warn("Failed to parse msg e-mail file. Error:{}", e.toString());
             e.printStackTrace();
+            if (!started) {
+                String bodyStart = "<body ";
+                int pos = preview.indexOf(bodyStart);
+                if (pos > 0)
+                    preview.insert(pos + bodyStart.length(), "class=\"ipedtheme\" ");
+            }
+            preview.append("<br><center>");
+            preview.append(Messages.getString("MsgViewer.OpenError"));
+            preview.append("</center>");
         }
 
         preview.append("</body>");
@@ -148,8 +163,8 @@ public class MsgViewer extends HtmlViewer {
 
     }
 
-    public void parseMsg(org.apache.poi.hsmf.MAPIMessage msg, StringBuilder preview, ArrayList<Object[]> attachs,
-            Index index) throws IOException {
+    public void parseMsg(org.apache.poi.hsmf.MAPIMessage msg, StringBuilder preview,
+            ArrayList<Pair<File, String>> attachs, Index index) throws IOException {
 
         Date date = null;
         String separator = ", ";
@@ -162,6 +177,8 @@ public class MsgViewer extends HtmlViewer {
         String cc[] = null;
         String bcc[] = null;
 
+        preview.append("<div class=\"ipedtheme\">");
+        
         ArrayList<Object[]> RecipientList = new ArrayList<Object[]>();
 
         try {
@@ -337,20 +354,14 @@ public class MsgViewer extends HtmlViewer {
         StringBuilder attachmentList = new StringBuilder();
 
         AttachmentChunks[] atts = msg.getAttachmentFiles();
-        Map<String, String> cids = new HashMap<String, String>();
+        Map<String, Pair<File, String>> cids = new HashMap<>();
 
         int count = 0;
         for (AttachmentChunks att : atts) {
 
             if (!att.isEmbeddedMessage()) {
 
-                StringChunk attachChunk = att.getAttachLongFileName();
-                if (attachChunk == null || attachChunk.getValue().isEmpty()) {
-                    attachChunk = att.getAttachFileName();
-                }
-                String attachName = ((attachChunk == null || attachChunk.getValue().isEmpty())
-                        ? Messages.getString("EmailViewer.UnNamed")
-                        : attachChunk.getValue());
+                String attachName = getAttachName(att);
 
                 if (attachmentList.length() > 0) {
                     attachmentList.append(separator);
@@ -358,26 +369,26 @@ public class MsgViewer extends HtmlViewer {
                 attachmentList.append("<a href=\"\" onclick=\"app.open(" + index.index + ")\">"
                         + SimpleHTMLEncoder.htmlEncode(attachName) + "</a>");
 
-                String fileExt = "";
-                if (attachName != null && attachName.lastIndexOf(".") > -1)
-                    fileExt = attachName.substring(attachName.lastIndexOf("."));
-
                 ByteChunk byteChunk = att.getAttachData();
                 if (byteChunk != null) {
-                    File attach = File.createTempFile("attach", fileExt);
-                    FileUtils.writeByteArrayToFile(attach, byteChunk.getValue());
-                    attach.deleteOnExit();
+                    String fileExt = "";
+                    if (attachName != null && attachName.lastIndexOf(".") > -1)
+                        fileExt = attachName.substring(attachName.lastIndexOf("."));
 
-                    Object[] obj = { attach, attachName };
+                    File file = File.createTempFile("attach", fileExt);
+                    FileUtils.writeByteArrayToFile(file, byteChunk.getValue());
+                    file.deleteOnExit();
 
-                    attachs.add(obj);
+                    Pair<File, String> pair = Pair.of(file, attachName);
+                    attachs.add(pair);
 
                     index.index++;
 
-                    if ((att.getAttachMimeTag() != null && att.getAttachMimeTag().getValue().startsWith("image"))
-                            || (att.getAttachExtension() != null
-                                    && imageExts.contains(att.getAttachExtension().getValue()))) {
-                        cids.put(attachName, attach.getName());
+                    if (isImageMimeType(att)) {
+                        StringChunk cidChunk = att.getAttachContentId();
+                        String cid = cidChunk != null && !cidChunk.getValue().isEmpty() ? cidChunk.getValue()
+                                : UUID.randomUUID().toString();
+                        cids.put(cid, pair);
                     }
                 }
             } else {
@@ -404,13 +415,15 @@ public class MsgViewer extends HtmlViewer {
         }
 
         preview.append("<hr>");
+        preview.append("</div>");        
 
+        Set<String> inlined = new HashSet<>();
         boolean noHtml = false;
         String corpo = "";
         try {
             corpo = msg.getHtmlBody().trim();
             corpo = fixUTF8AsWin1252(corpo);
-            corpo = adjustBody(corpo, cids);
+            corpo = inlineImages(corpo, cids, inlined);
             preview.append(corpo);
         } catch (ChunkNotFoundException cnfe) {
             noHtml = true;
@@ -419,14 +432,16 @@ public class MsgViewer extends HtmlViewer {
         boolean noRtf = false;
         if (noHtml) {
             try {
-                RTF2HTMLConverter converter = RTF2HTMLConverterRFCCompliant.INSTANCE;
-                corpo = msg.getRtfBody().trim();
-                corpo = converter.rtf2html(corpo);
-                if (!corpo.toLowerCase().contains("<br>")) {
-                    corpo = "<pre>" + corpo + "</pre>";
-                    // corpo = getTikaRTFToHTML(msg);
+                corpo = getTikaRTFToHTML(msg).trim();
+                if (corpo.isEmpty() || hasOnlyBasicChars(corpo)) {
+                    RTF2HTMLConverter converter = RTF2HTMLConverterRFCCompliant.INSTANCE;
+                    String rtfString = msg.getRtfBody().trim();
+                    corpo = converter.rtf2html(rtfString);
                 }
-                corpo = adjustBody(corpo, cids);
+                if (!corpo.matches(".*<(br|BR)/?>.*")) {
+                    corpo = "<pre>" + corpo + "</pre>";
+                }
+                corpo = inlineImages(corpo, cids, inlined);
                 preview.append(corpo);
             } catch (ChunkNotFoundException cnfe) {
                 noRtf = true;
@@ -445,9 +460,11 @@ public class MsgViewer extends HtmlViewer {
             }
         }
 
-        // append image attachments at the end
+        // append image attachments not inlined at the end
+        inlined.stream().forEach(image -> cids.remove(image));
         for (String cid : cids.keySet()) {
-            preview.append("<hr>" + cid + ":<br><img src=\"" + cids.get(cid) + "\">");
+            Pair<File, String> pair = cids.get(cid);
+            preview.append("<hr>" + pair.getRight() + ":<br><img src=\"" + pair.getLeft().toURI().toString() + "\">");
         }
         cids.clear();
 
@@ -474,11 +491,39 @@ public class MsgViewer extends HtmlViewer {
 
     }
 
-    private String adjustBody(String corpo, Map<String, String> cids) {
-        corpo = corpo.replaceAll("(src=\"[^@]+)@([^\"]+)", "$1");
-        corpo = corpo.replaceAll("(background=\"[^@]+)@([^\"]+)", "$1");
+    private String getAttachName(AttachmentChunks att) {
+        StringChunk attachChunk = att.getAttachLongFileName();
+        if (attachChunk == null || attachChunk.getValue().isEmpty()) {
+            attachChunk = att.getAttachFileName();
+        }
+        return ((attachChunk == null || attachChunk.getValue().isEmpty()) ? Messages.getString("EmailViewer.UnNamed")
+                : attachChunk.getValue());
+    }
+
+    private boolean isImageMimeType(AttachmentChunks att) {
+        if (att.getAttachMimeTag() != null && att.getAttachMimeTag().getValue().startsWith("image")) {
+            return true;
+        }
+        String name = getAttachName(att);
+        for (String imgExt : imageExts) {
+            if (name.toLowerCase().endsWith(imgExt)) {
+                return true;
+            }
+        }
+        if (att.getAttachData() != null) {
+            Tika tika = new Tika();
+            return tika.detect(att.getAttachData().getValue()).startsWith("image");
+        }
+        return false;
+    }
+
+    private String inlineImages(String corpo, Map<String, Pair<File, String>> cids, Set<String> inlined) {
         for (String cid : cids.keySet()) {
-            corpo = corpo.replace("cid:" + cid, "file:" + cids.get(cid));
+            int prevLen = corpo.length();
+            corpo = corpo.replace("cid:" + cid, cids.get(cid).getLeft().toURI().toString());
+            if (corpo.length() != prevLen) {
+                inlined.add(cid);
+            }
         }
         return corpo;
     }
@@ -500,6 +545,15 @@ public class MsgViewer extends HtmlViewer {
         MAPIRtfAttribute rtf = new MAPIRtfAttribute(MAPIProperty.RTF_COMPRESSED, Types.BINARY.getId(),
                 chunk.getValue());
         return rtf.getData();
+    }
+
+    private boolean hasOnlyBasicChars(String text) {
+        for (char c : text.toCharArray()) {
+            if (c > 255 && (c < 0x2000 || c > 0x202F)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     private String getTikaRTFToHTML(MAPIMessage msg) {
@@ -535,9 +589,9 @@ public class MsgViewer extends HtmlViewer {
     public class AttachmentOpen extends FileHandler {
 
         public void open(int attNum) {
-            Object[] att = attachs.get(attNum);
-            File file = (File) att[0];
-            String attachName = (String) att[1];
+            Pair<File, String> pair = attachs.get(attNum);
+            File file = pair.getLeft();
+            String attachName = pair.getRight();
             if (IOUtil.isToOpenExternally(attachName, IOUtil.getExtension(file))) {
                 this.openFile(file);
             }

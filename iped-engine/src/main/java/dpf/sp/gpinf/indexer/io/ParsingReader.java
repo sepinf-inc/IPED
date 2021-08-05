@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -41,14 +40,12 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.CorruptedCarvedException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.process.MimeTypesProcessingOrder;
-import dpf.sp.gpinf.indexer.util.FragmentingReader;
 
 /**
  * Reader for the text content from a given binary stream. This class uses a
@@ -144,11 +141,10 @@ public class ParsingReader extends Reader {
                 length = Long.parseLong(lengthStr);
             }
         }
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        timeOutBySize = (int) (length / 1000000) * advancedConfig.getTimeOutPerMB();
+        ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
+        timeOutBySize = (int) (length / 1000000) * parsingConfig.getTimeOutPerMB();
 
-        pipedReader = new FastPipedReader(128 * 1024, timeOutBySize);
+        pipedReader = new FastPipedReader(128 * 1024, parsingConfig.getTimeOut(), timeOutBySize);
         this.reader = new BufferedReader(pipedReader);
         this.writer = new FastPipedWriter(pipedReader);
 

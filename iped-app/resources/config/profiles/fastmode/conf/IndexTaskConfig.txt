@@ -1,0 +1,3 @@
+# Store term vectors into index, needed to search for similar documents.
+# Increases index size up to 30%.
+storeTermVectors = false

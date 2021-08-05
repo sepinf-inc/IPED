@@ -1,17 +1,29 @@
 package dpf.sp.gpinf.indexer.process.task.regex;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Reader;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
+
+import org.apache.commons.codec.digest.DigestUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dk.brics.automaton.Automaton;
 import dk.brics.automaton.AutomatonMatcher;
@@ -19,49 +31,44 @@ import dk.brics.automaton.BasicOperations;
 import dk.brics.automaton.DatatypesAutomatonProvider;
 import dk.brics.automaton.RegExp;
 import dk.brics.automaton.RunAutomaton;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
+import dpf.sp.gpinf.indexer.config.RegexTaskConfig;
+import dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
-import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class RegexTask extends AbstractTask {
 
     public static final String REGEX_PREFIX = "Regex:"; //$NON-NLS-1$
 
-    private static final String REGEX_CONFIG = "RegexConfig.txt"; //$NON-NLS-1$
-
-    private static final String KEYWORDS_CONFIG = "KeywordsToExport.txt"; //$NON-NLS-1$
-
     private static final String KEYWORDS_NAME = "KEYWORDS"; //$NON-NLS-1$
 
-    private static final String ENABLE_PARAM = "enableRegexSearch"; //$NON-NLS-1$
-
-    private static final String FORMAT_MATCHES = "formatRegexMatches"; //$NON-NLS-1$
-
     private static final int MAX_RESULTS = 50000; // OOME protection for files with tons of hits
+
+    private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
+
+    private static final File cacheFile = new File(System.getProperty("user.home"), ".indexador/regexAutomata.cache");
 
     private static List<Regex> regexList;
 
     private static Regex regexFull;
 
-    private static volatile boolean extractByKeywords = false;
-
-    private static boolean formatRegexMatches = false;
-
-    private boolean enabled = true;
-
     private char[] cbuf = new char[1 << 20];
 
     private static RegexValidator regexValidator;
 
-    public static boolean isExtractByKeywordsOn() {
-        return extractByKeywords;
-    }
+    private RegexTaskConfig regexConfig;
 
-    class Regex {
+    static class Regex implements Serializable {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
         String name;
         int prefix, sufix;
@@ -80,10 +87,12 @@ public class RegexTask extends AbstractTask {
         }
 
         public Regex(String name, Automaton aut, boolean ignoreCases, boolean ignoreDiacritics) {
-            if (ignoreCases)
+            if (ignoreCases) {
                 aut = ignoreCases(aut);
-            if (ignoreDiacritics)
+            }
+            if (ignoreDiacritics) {
                 aut = ignoreDiacritics(aut);
+            }
             this.ignoreCases = ignoreCases;
             this.name = name;
             this.automaton = aut;
@@ -107,11 +116,14 @@ public class RegexTask extends AbstractTask {
     private static Automaton ignoreDiacritics(Automaton a) {
         Map<Character, Set<Character>> map = new HashMap<Character, Set<Character>>();
         for (char c1 = 'a'; c1 <= 'ÿ'; c1++) {
-            Set<Character> ws = new HashSet<Character>();
             char[] input = { c1 };
             char[] output = new char[4];
             FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
             char c2 = output[0];
+            Set<Character> ws = map.get(c2);
+            if (ws == null) {
+                ws = new HashSet<Character>();
+            }
             ws.add(c1);
             ws.add(c2);
             map.put(c1, ws);
@@ -122,68 +134,97 @@ public class RegexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return enabled;
+        return regexConfig.isEnabled();
+    }
+
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new RegexTaskConfig());
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-        String value = confParams.getProperty(ENABLE_PARAM);
-        if (value != null && !value.trim().isEmpty())
-            enabled = Boolean.valueOf(value.trim());
+        regexConfig = configurationManager.findObject(RegexTaskConfig.class);
+        logger.info("Loaded {} regexes from configuration.", regexConfig.getRegexList().size());
 
-        if (enabled && regexList == null) {
-            regexList = new ArrayList<Regex>();
+        ExportByKeywordsConfig exportConfig = configurationManager.findObject(ExportByKeywordsConfig.class);
 
-            File confFile = new File(confDir, REGEX_CONFIG);
-            String content = Util.readUTF8Content(confFile);
-            for (String line : content.split("\n")) { //$NON-NLS-1$
-                line = line.trim();
-                if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
-                    continue;
-                else {
-                    String[] values = line.split("=", 2); //$NON-NLS-1$
-                    if (values.length < 2)
-                        throw new IPEDException(Messages.getString("RegexTask.SeparatorNotFound.1") + REGEX_CONFIG //$NON-NLS-1$
-                                + Messages.getString("RegexTask.SeparatorNotFound.2") + line); //$NON-NLS-1$
-                    String name = values[0].trim();
-                    if (name.equals(FORMAT_MATCHES)) {
-                        formatRegexMatches = Boolean.valueOf(values[1].trim());
-                        continue;
+        if (regexConfig.isEnabled() && regexList == null) {
+
+            if (loadCache(regexConfig, exportConfig)) {
+                logger.info("Regex cache loaded from {}", cacheFile.getAbsolutePath());
+            } else {
+                regexList = new ArrayList<Regex>();
+                for (RegexEntry e : regexConfig.getRegexList()) {
+                    regexList.add(new Regex(e.getRegexName(), e.getPrefix(), e.getSuffix(), e.isIgnoreCase(), false,
+                            e.getRegex()));
+                }
+                int num = regexList.size();
+                logger.info("Created {} automata for each regex configured.", num);
+
+                if (exportConfig.isEnabled()) {
+                    for (String keyword : exportConfig.getKeywords()) {
+                        String regex = RegexTaskConfig.replace(keyword);
+                        regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
                     }
-                    String[] params = name.split(","); //$NON-NLS-1$
-                    String regexName = params[0].trim();
-                    int prefix = params.length > 1 ? Integer.valueOf(params[1].trim()) : 0;
-                    int sufix = params.length > 2 ? Integer.valueOf(params[2].trim()) : 0;
-                    boolean ignoreCase = params.length > 3 ? Boolean.valueOf(params[3].trim()) : true;
-                    String regex = replace(values[1].trim());
-                    regexList.add(new Regex(regexName, prefix, sufix, ignoreCase, false, regex));
                 }
+                logger.info("Created {} automata for each keyword to export configured.", regexList.size() - num);
+
+                ArrayList<Automaton> automatonList = new ArrayList<Automaton>();
+                for (Regex regex : regexList) {
+                    automatonList.add(regex.automaton);
+                }
+                Automaton automata = BasicOperations.union(automatonList);
+                regexFull = new Regex("FULL", automata); //$NON-NLS-1$
+                logger.info("Created the unique automaton for all regexes.");
+
+                writeCache(regexConfig, exportConfig);
+                logger.info("Regex cache saved to {}", cacheFile.getAbsolutePath());
             }
 
-            confFile = new File(confDir, KEYWORDS_CONFIG);
-            content = Util.readUTF8Content(confFile);
-            for (String line : content.split("\n")) { //$NON-NLS-1$
-                line = line.trim();
-                if (line.startsWith("#") || line.isEmpty()) //$NON-NLS-1$
-                    continue;
-                else {
-                    String regex = replace(line);
-                    regexList.add(new Regex(KEYWORDS_NAME, 0, 0, true, true, regex));
-                    extractByKeywords = true;
-                    caseData.setContainsReport(true);
-                }
-            }
-
-            ArrayList<Automaton> automatonList = new ArrayList<Automaton>();
-            for (Regex regex : regexList)
-                automatonList.add(regex.automaton);
-            Automaton automata = BasicOperations.union(automatonList);
-            regexFull = new Regex("FULL", automata); //$NON-NLS-1$
-
-            initValidators(confDir);
+            initValidators(new File(output, "conf"));
         }
 
+    }
+
+    private void writeCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig) throws IOException {
+        cacheFile.getParentFile().mkdirs();
+        try (BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(cacheFile));
+                ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+            oos.write(md5);
+            oos.writeObject(regexList);
+            oos.writeObject(regexFull);
+        }
+    }
+
+    private boolean loadCache(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig)
+            throws IOException, ClassNotFoundException {
+        if (!cacheFile.exists()) {
+            return false;
+        }
+        try (BufferedInputStream bis = new BufferedInputStream(new FileInputStream(cacheFile));
+                ObjectInputStream ois = new ObjectInputStream(bis)) {
+            byte[] md5 = getMd5FromConfigs(regexConfig, exportConfig);
+            byte[] cacheMd5 = new byte[16];
+            ois.readFully(cacheMd5);
+            if (!new String(md5).equals(new String(cacheMd5))) {
+                return false;
+            }
+            regexList = (List<Regex>) ois.readObject();
+            regexFull = (Regex) ois.readObject();
+            return true;
+        }
+    }
+
+    private byte[] getMd5FromConfigs(RegexTaskConfig regexConfig, ExportByKeywordsConfig exportConfig)
+            throws IOException {
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        try (ObjectOutputStream oos = new ObjectOutputStream(baos)) {
+            oos.writeObject(regexConfig);
+            oos.writeObject(exportConfig);
+        }
+        return DigestUtils.md5(baos.toByteArray());
     }
 
     private synchronized void initValidators(File confDir) {
@@ -191,14 +232,6 @@ public class RegexTask extends AbstractTask {
             regexValidator = new RegexValidator();
             regexValidator.init(confDir);
         }
-    }
-
-    private static final String replace(String s) {
-        return s.replace("\\t", "\t") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\r", "\r") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\n", "\n") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\f", "\f") //$NON-NLS-1$ //$NON-NLS-2$
-                .replace("\\s", "[ \t\r\n\f]"); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     @Override
@@ -211,7 +244,7 @@ public class RegexTask extends AbstractTask {
 
         Item evidence = (Item) item;
 
-        if (!enabled || evidence.getTextCache() == null || !evidence.isToAddToCase())
+        if (evidence.getTextCache() == null || !evidence.isToAddToCase())
             return;
 
         try (Reader reader = evidence.getTextReader()) {
@@ -250,7 +283,7 @@ public class RegexTask extends AbstractTask {
                         if (regex.ignoreCases)
                             hit = hit.toLowerCase();
                         if (regexValidator.validate(regex, hit)) {
-                            if (formatRegexMatches) {
+                            if (regexConfig.isFormatRegexMatches()) {
                                 hit = regexValidator.format(regex, hit);
                             }
                             Map<String, RegexHits> hitMap = hitList.get(i);

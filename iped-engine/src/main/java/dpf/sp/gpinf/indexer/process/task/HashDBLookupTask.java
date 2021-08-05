@@ -7,7 +7,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -18,15 +17,19 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.HashDBLookupConfig;
+import dpf.sp.gpinf.indexer.config.HashTaskConfig;
+import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.hashdb.HashDB;
 import gpinf.hashdb.HashDBDataSource;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class HashDBLookupTask extends AbstractTask {
-    private static final String ENABLE_PARAM = "enableHashDBLookup";
+
     public static final String ATTRIBUTES_PREFIX = "hashDb:";
     private static final String STATUS_PROPERTY = "status";
     public static final String STATUS_ATTRIBUTE = ATTRIBUTES_PREFIX + STATUS_PROPERTY;
@@ -55,82 +58,67 @@ public class HashDBLookupTask extends AbstractTask {
     private byte[][] hashes;
     private final Map<String, String> properties = new HashMap<String, String>();
 
-    private static final String NSRL_CONFIG_FILE = "NSRLConfig.json";
     private static String nsrlDefaultStatus;
     private static boolean nsrlDefaultMerge;
     private static final Map<String, String> nsrlStatusByProdName = new HashMap<String, String>();
     private static final Map<String, Boolean> nsrlMergeByProdName = new HashMap<String, Boolean>();
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new HashDBLookupConfig());
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
         synchronized (init) {
             if (!init.get()) {
-                String enableParam = confParams.getProperty(ENABLE_PARAM);
-                if (enableParam != null) {
-                    taskEnabled = Boolean.valueOf(enableParam.trim());
-                }
-                String hashes = null;
+                HashDBLookupConfig hashDBConfig = configurationManager.findObject(HashDBLookupConfig.class);
+                taskEnabled = hashDBConfig.isEnabled();
                 if (taskEnabled) {
-                    hashes = confParams.getProperty("hash");
-                    if (hashes == null) {
+                    HashTaskConfig hashConfig = configurationManager.findObject(HashTaskConfig.class);
+                    if (!hashConfig.isEnabled()) {
+                        logger.warn("No hash enabled.");
                         taskEnabled = false;
-                        logger.info("No hash enabled. Task disabled.");
-                        init.set(true);
-                        return;
+                    } else {
+                        hashesAttributes = new String[HashDB.hashTypes.length];
+                        for (String hashType : hashConfig.getAlgorithms()) {
+                            hashType = hashType.trim();
+                            int idx = HashDB.hashType(hashType);
+                            if (idx >= 0) {
+                                hashesAttributes[idx] = hashType;
+                            }
+                        }
+                        LocalConfig localConfig = configurationManager.findObject(LocalConfig.class);
+                        if (localConfig.getHashDbFile() == null) {
+                            logger.error("Hashes database path (hashesDB) must be configured in {}", Configuration.LOCAL_CONFIG);
+                            taskEnabled = false;
+                        } else {
+                            hashDBFile = localConfig.getHashDbFile();
+                            if (!hashDBFile.exists() || !hashDBFile.canRead() || !hashDBFile.isFile()) {
+                                String msg = (!hashDBFile.exists() ? "Missing": "Invalid") + " hashes database file: " + hashDBFile.getAbsolutePath();
+                                if (hasIpedDatasource()) {
+                                    logger.warn(msg);
+                                } else {
+                                    logger.error(msg);
+                                }
+                                taskEnabled = false;
+                            } else {
+                                excludeKnown = hashDBConfig.isExcludeKnown();
+                                hashDBDataSource = new HashDBDataSource(hashDBFile);
+                                addLookupProvider(hashDBDataSource);
+                                if (hashDBConfig.getNsrlConfig() != null) {
+                                    loadNsrlConfig(hashDBConfig.getNsrlConfig());
+                                    if (!nsrlStatusByProdName.isEmpty()) {
+                                        logger.info("NSRL product configurations loaded: {}", nsrlStatusByProdName.size());
+                                    }
+                                }
+                                logger.info("HashDB: {}", hashDBFile.getAbsolutePath());
+                                logger.info("Exclude Known: {}", excludeKnown);
+                            }
+                        }
                     }
                 }
-                if (!taskEnabled) {
-                    logger.info("Task disabled.");
-                    init.set(true);
-                    return;
-                }
-
-                hashesAttributes = new String[HashDB.hashTypes.length];
-                String[] hashTypes = hashes.split(";");
-                for (String hashType : hashTypes) {
-                    hashType = hashType.trim();
-                    int idx = HashDB.hashType(hashType);
-                    if (idx >= 0) {
-                        hashesAttributes[idx] = hashType;
-                    }
-                }
-
-                String hashDBPath = confParams.getProperty("hashesDB");
-                if (hashDBPath == null) {
-                    throw new IPEDException("Configure hash database path (hashesDB) on " + Configuration.LOCAL_CONFIG);
-                }
-                hashDBFile = new File(hashDBPath.trim());
-                if (!hashDBFile.exists() || !hashDBFile.canRead()) {
-                    String msg = "Invalid hash database file: " + hashDBFile.getAbsolutePath();
-                    if (hasIpedDatasource()) {
-                        logger.warn(msg);
-                        init.set(true);
-                        taskEnabled = false;
-                        return;
-                    }
-                    throw new IPEDException(msg);
-                }
-                String s = confParams.getProperty("excludeKnown");
-                if (s != null) {
-                    excludeKnown = Boolean.valueOf(s.trim());
-                }
-
-                hashDBDataSource = new HashDBDataSource(hashDBFile);
-
-                addLookupProvider(hashDBDataSource);
-                
-                logger.info("Task enabled.");
-
-                File nsrlConfigFile = new File(confDir, NSRL_CONFIG_FILE);
-                if (nsrlConfigFile.exists()) {
-                    loadNsrlConfig(nsrlConfigFile);
-                    if (!nsrlStatusByProdName.isEmpty()) {
-                        logger.info("NSRL product configurations loaded: {}", nsrlStatusByProdName.size());
-                    }
-                }
-
-                logger.info("HashDB: {}", hashDBFile.getAbsolutePath());
-                logger.info("Exclude Known: {}", excludeKnown);
+                logger.info("Task {}.", taskEnabled ? "enabled" : "disabled");
                 init.set(true);
             }
         }
@@ -298,10 +286,10 @@ public class HashDBLookupTask extends AbstractTask {
         if (found) totFound.incrementAndGet();
     }
 
-    private void loadNsrlConfig(File file) {
+    private void loadNsrlConfig(String nsrlConfig) {
         try {
             ObjectMapper mapper = new ObjectMapper();
-            JsonNode root = mapper.readTree(file);
+            JsonNode root = mapper.readTree(nsrlConfig);
             JsonNode node = root.get("defaultStatus");
             if (node != null) {
                 nsrlDefaultStatus = node.asText();
@@ -327,7 +315,7 @@ public class HashDBLookupTask extends AbstractTask {
                 }
             }
         } catch (Exception e) {
-            logger.error("Error reading NSRL configuration file: " + file.getPath(), e);
+            logger.error("Error reading NSRL configuration file: " + HashDBLookupConfig.NSRL_CONFIG_FILE, e);
         }
     }
 }

@@ -9,8 +9,9 @@ import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 
 public class ProgressConsole implements PropertyChangeListener {
@@ -28,7 +29,7 @@ public class ProgressConsole implements PropertyChangeListener {
     private Date indexStart;
     private Worker[] workers;
     private long lastTime = 0;
-    private NumberFormat sizeFormat = NumberFormat.getNumberInstance();
+    private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
 
     @Override
     public void propertyChange(PropertyChangeEvent evt) {

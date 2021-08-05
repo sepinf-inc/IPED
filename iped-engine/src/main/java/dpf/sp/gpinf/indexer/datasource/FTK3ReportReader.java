@@ -24,19 +24,18 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.carver.CarverTask;
-import dpf.sp.gpinf.indexer.Messages;
-import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.config.CategoryToExpandConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.datasource.ftk.FTKDatabase;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
@@ -58,7 +57,9 @@ public class FTK3ReportReader extends DataSourceReader {
     public int read(File report) throws Exception {
 
         // Configuração para não expandir containers
-        ParsingTask.setExpandContainers(false);
+        CategoryToExpandConfig expandConfig = ConfigurationManager.get().findObject(CategoryToExpandConfig.class);
+        expandConfig.setEnabled(false);
+
         CarverTask.setEnabled(false);
 
         caseData.setContainsReport(true);

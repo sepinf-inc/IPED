@@ -13,6 +13,8 @@ public class ExtraProperties {
 
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
+    public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$
+
     public static final String EMBEDDED_FOLDER = "IpedEmbeddeFolder"; //$NON-NLS-1$
 
     public static final Property ACCESSED = Property.internalDate("IpedLastAccessedDate"); //$NON-NLS-1$
@@ -112,6 +114,10 @@ public class ExtraProperties {
     public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
 
     public static final String CONFIDENCE_ATTR = AUDIO_META_PREFIX + "transcriptConfidence";
+
+    public static final String TIME_EVENT_ORDS = "timeEventOrds";
+
+    public static final String TIME_EVENT_GROUPS = "timeEventGroups";
 
     public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(), MESSAGE_BODY,
             Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, PST_ATTACH,

@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
@@ -83,7 +84,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
                         }
                     }
                 });
-
+                webEngine.loadContent(UiUtil.getUIEmptyHtml());
             }
         });
     }

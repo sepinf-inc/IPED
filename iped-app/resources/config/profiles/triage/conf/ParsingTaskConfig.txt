@@ -1,0 +1,11 @@
+# Parse files with no specific decoder, like binaries, unknown, pagefile, unallocated, etc.
+# Printable windows-1252, UTF-8 and UTF-16 strings are extracted from the files to be processed.
+parseUnknownFiles = false
+
+# Parse corrupted files extracting printable windows-1252, UTF-8 and UTF-16 strings.
+# For example, deleted and partially overwritten images could have searchable plain text into them.
+parseCorruptedFiles = false
+
+# Cache parsed text of files in temp folder, if it is bigger than 10M chars,
+# so it can be reused in regex search and indexing, instead of parsing file content again. 
+storeTextCacheOnDisk = false

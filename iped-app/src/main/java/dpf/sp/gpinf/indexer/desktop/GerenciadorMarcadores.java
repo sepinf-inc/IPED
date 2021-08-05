@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
-    JDialog dialog = new JDialog();
+    JDialog dialog = new JDialog(App.get());
     JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
     JRadioButton highlighted = new JRadioButton();
     JRadioButton checked = new JRadioButton();
@@ -88,7 +89,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     JList<BookmarkAndKey> list = new JList<>(listModel);
     JScrollPane scrollList = new JScrollPane(list);
 
-    HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
+    private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
     private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         String bookmark;
@@ -143,7 +144,6 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
-        dialog.setAlwaysOnTop(true);
 
         group.add(highlighted);
         group.add(checked);
@@ -544,4 +544,16 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
+    
+    public boolean hasSingleKeyShortcut() {
+       for (KeyStroke k : keystrokeToBookmark.keySet()) {
+           if ((k.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) == 0) {
+               int c = k.getKeyCode();
+               if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
+                   return true;
+               }
+           }
+       }
+       return false; 
+    }
 }

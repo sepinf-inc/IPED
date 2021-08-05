@@ -109,8 +109,11 @@ public class ReportGenerator {
         String lastDate = null;
         while (currentMsg < c.getMessages().size()) {
             Message m = c.getMessages().get(currentMsg++);
-            String thisDate = dateFormat.format(m.getTimeStamp());
-            if (lastDate == null || !lastDate.equals(thisDate)) {
+            String thisDate = null;
+            if (m.getTimeStamp() != null) {
+                thisDate = dateFormat.format(m.getTimeStamp());
+            }
+            if (thisDate != null && (lastDate == null || !lastDate.equals(thisDate))) {
                 out.println("<div class=\"linha\"><div class=\"date\">" //$NON-NLS-1$
                         + thisDate + "</div></div>"); //$NON-NLS-1$
                 lastDate = thisDate;
@@ -145,7 +148,7 @@ public class ReportGenerator {
         TagHtml img;
         if (thumb != null) {
             img = new TagHtml("img");
-            img.setAtribute("class", "thumb iped-show");
+            img.setAtribute("class", "thumb");
             img.setAtribute("src",
                     "data:image/jpg;base64," + dpf.mg.udi.gpinf.whatsappextractor.Util.encodeBase64(thumb));
         } else {
@@ -170,31 +173,28 @@ public class ReportGenerator {
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
-            TagHtml img = getThumbTag(message, "videoImg iped-show");
+            TagHtml img = getThumbTag(message, "videoImg");
+
+            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
+                    message.getMediaExtension());
+            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
+                    .getSourceFileIfExists(message.getMediaFile());
 
             img.setAtribute("title", "Video");
+            img.setAtribute("data-src1", reportSource);
+            img.setAtribute("data-src2", originalSource);
+            img.setAtribute("class", img.getAtribute("class") + " iped-video");
+
             link.getInner().add(img);
 
             div.getInner().add(link);
 
-            TagHtml video = new TagHtml("video");
-            video.setAtribute("class", "thumb iped-hide");
-            video.setAtribute("controls", null);
-            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
-                    message.getMediaExtension());
-            video.getInner().add("<source src=\"" + reportSource + "\"/>");
-            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
-                    .getSourceFileIfExists(message.getMediaFile());
-            if (originalSource != null) {
-                video.getInner().add("<source src=\"" + originalSource + "\"/>");
-            }
-            div.getInner().add(video);
 
             out.println(div.toString());
             out.println("<br/>");
 
         } else {
-            out.println(getThumbTag(message, "videoImg iped-show").toString()); //$NON-NLS-1$
+            out.println(getThumbTag(message, "videoImg").toString()); //$NON-NLS-1$
         }
 
     }
@@ -202,7 +202,6 @@ public class ReportGenerator {
     private void printAudio(PrintWriter out, Message message) {
 
         TagHtml img = new TagHtml("div");
-        img.setAtribute("class", "audioImg");
         img.setAtribute("title", "Audio");
 
         if (message.getMediaHash() != null) {
@@ -218,26 +217,25 @@ public class ReportGenerator {
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
 
-            img.setAtribute("class", "audioImg iped-show");
+            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
+                    message.getMediaExtension());
+            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
+                    .getSourceFileIfExists(message.getMediaFile());
+
+            if (reportSource != null) {
+                img.setAtribute("data-src1", reportSource);
+            }
+            if (originalSource != null) {
+                img.setAtribute("data-src2", originalSource);
+            }
+            img.setAtribute("class", "audioImg iped-audio");
 
             link.getInner().add(img);
             div.getInner().add(link);
-
-            TagHtml audio = new TagHtml("audio");
-            audio.setAtribute("class", "iped-hide");
-            audio.setAtribute("controls", null);
-            String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
-                    message.getMediaExtension());
-            audio.getInner().add("<source src=\"" + reportSource + "\"/>");
-            String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
-                    .getSourceFileIfExists(message.getMediaFile());
-            if (originalSource != null) {
-                audio.getInner().add("<source src=\"" + originalSource + "\"/>");
-            }
-            div.getInner().add(audio);
             out.println(div.toString());
 
         } else {
+            img.setAtribute("class", "audioImg");
             out.println(img.toString());
         }
 
@@ -324,7 +322,7 @@ public class ReportGenerator {
     }
 
     private void printCheckbox(PrintWriter out, String hash) {
-        out.println("<input class=\"check iped-show\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
+        out.println("<input class=\"check\" type=\"checkbox\" onclick=\"app.check('hash:" + hash
                 + "', this.checked)\" name=\"" + hash + "\" />");
     }
 
@@ -376,7 +374,9 @@ public class ReportGenerator {
         }
 
         out.println("<span class=\"time\">"); //$NON-NLS-1$
-        out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        if (message.getTimeStamp() != null) {
+            out.println(timeFormat.format(message.getTimeStamp()) + " &nbsp;"); //$NON-NLS-1$
+        }
         out.println("</span>"); //$NON-NLS-1$
 
         out.println("</div></div>"); //$NON-NLS-1$
@@ -394,24 +394,8 @@ public class ReportGenerator {
                 + "	<link rel=\"shortcut icon\" href=\"" //$NON-NLS-1$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/favicon.ico") + "\" />\n" //$NON-NLS-1$ //$NON-NLS-2$
                 + "<style>\n" + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("css/whatsapp.css") //$NON-NLS-2$
-                + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>\n" //$NON-NLS-3$
-                + "var css = document.createElement(\"style\");\n" //$NON-NLS-1$
-                + "css.type = \"text/css\";\n" //$NON-NLS-1$
-                + "var inHtml = \"\";\n" //$NON-NLS-1$
-                + "if (navigator.userAgent.search(\"JavaFX\") >= 0) {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: none; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: inline-block; }\";\n" //$NON-NLS-1$
-                + "} else {\n" //$NON-NLS-1$
-                + "  inHtml = \".iped-hide { display: inline-block; }\";\n" //$NON-NLS-1$
-                + "  inHtml += \".iped-show { display: none; }\";\n" //$NON-NLS-1$
-                + "}\n" //$NON-NLS-1$
-                + "css.innerHTML = inHtml;\n" //$NON-NLS-1$
-                + "document.head.appendChild(css);\n" //$NON-NLS-1$
-                + "function openIfExists(url2, url1){\r\n"
-                + "    if (navigator.userAgent.search(\"JavaFX\") >= 0) return;\r\n" + "    var img1 = new Image();\r\n"
-                + "    img1.onload = () => window.location = url1;\r\n"
-                + "    img1.onerror = () => window.location = url2;\r\n" + "    img1.src = url1;\r\n" + "}\r\n"
-                + "</script>\n" //$NON-NLS-1$
+                + Util.readResourceAsString("css/tooltip.css") + "\n</style>\n" + "<script>"
+                + dpf.mg.udi.gpinf.whatsappextractor.Util.readResourceAsString("js/whatsapp.js") + "</script>"
                 + dpf.mg.udi.gpinf.vcardparser.VCardParser.HTML_STYLE + "</head>\n" //$NON-NLS-1$
                 + "<style>.check {vertical-align: top;}</style>" + "<body style='background-image:url(" //$NON-NLS-2$
                 + dpf.mg.udi.gpinf.whatsappextractor.Util.getImageResourceAsEmbedded("img/telegramwallpaper.jpg")

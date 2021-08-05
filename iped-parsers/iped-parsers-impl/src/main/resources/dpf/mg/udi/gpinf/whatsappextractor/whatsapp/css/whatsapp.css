@@ -146,7 +146,6 @@ div.viewed {
 	display: block;
 	padding: 6px 6px;
 	position: relative;
-	vertical-align: top;
 }
 
 #chatlist .contact:hover
@@ -203,7 +202,6 @@ div.viewed {
 	box-shadow: 0 0 6px #b8b7b7;
 	display: block;
 	padding: 10px 18px;
-	vertical-align: top;
 	position: relative;
 }
 
@@ -278,11 +276,7 @@ div.viewed {
 	height: 16px;
 	position: absolute;
 	top: 11px;
-	transform:         rotate(29deg) skew(-35deg);
-	-moz-transform:    rotate(29deg) skew(-35deg);
-	-ms-transform:     rotate(29deg) skew(-35deg);
-        -o-transform:      rotate(29deg) skew(-35deg);
-        -webkit-transform: rotate(29deg) skew(-35deg);
+	transform: rotate(29deg) skewX(-35deg);
 	width:  20px;
 }
 
@@ -310,11 +304,7 @@ div.viewed {
 	height: 16px;
 	position: absolute;
 	top: 11px;
-	transform:         rotate(29deg) skew(-35deg);
-	-moz-transform:    rotate(29deg) skew(-35deg);
-	-ms-transform:     rotate(29deg) skew(-35deg);
-        -o-transform:      rotate(29deg) skew(-35deg);
-        -webkit-transform: rotate(29deg) skew(-35deg);
+	transform: rotate(29deg) skewX(-35deg);
 	width:  20px;
 }
 
@@ -341,11 +331,7 @@ div.viewed {
 	height: 16px;
 	position: absolute;
 	top: 11px;
-	transform:         rotate(29deg) skew(-35deg);
-        -moz-transform:    rotate(29deg) skew(-35deg);
-        -ms-transform:     rotate(29deg) skew(-35deg);
-        -o-transform:      rotate(29deg) skew(-35deg);
-        -webkit-transform: rotate(29deg) skew(-35deg);
+	transform: rotate(29deg) skewX(-35deg);
 	width:  20px;
 }
 

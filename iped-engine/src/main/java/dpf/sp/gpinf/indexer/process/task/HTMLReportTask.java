@@ -42,6 +42,7 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -49,7 +50,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -62,20 +62,24 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
+import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.util.GraphicsMagicConverter;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
@@ -131,11 +135,6 @@ public class HTMLReportTask extends AbstractTask {
     private static final AtomicBoolean init = new AtomicBoolean(false);
 
     /**
-     * Objeto com informações que serão incluídas no relatório.
-     */
-    private ReportInfo info;
-
-    /**
      * Nome da pasta com miniatutas de imagem.
      */
     public static String thumbsFolderName = "thumbs"; //$NON-NLS-1$
@@ -153,68 +152,11 @@ public class HTMLReportTask extends AbstractTask {
     private static File reportSubFolder;
 
     /**
-     * Indica se a tarefa está habilitada ou não.
-     */
-    private static boolean taskEnabled = false;
-
-    /**
-     * Flag de controle se a geração de miniaturas de imagem está habilitada.
-     */
-    private static boolean imageThumbsEnabled = false;
-
-    /**
-     * Flag de controle se a inclusão de miniaturas de cenas de vídeos (que devem
-     * estar disponíveis) está habilitada.
-     */
-    private static boolean videoThumbsEnabled = false;
-
-    /**
      * Map com miniaturas de imagem organizadas por marcador, utilizado para geração
      * de galeria de imagens.
      */
     private static final SortedMap<String, List<String>> imageThumbsByLabel = new TreeMap<String, List<String>>(
             collator);
-
-    /**
-     * Flag de controle que indica que uma lista de categorias deve se mostrada na
-     * página de conteúdo, além da lista de marcadores, que é incluída como padrão.
-     */
-    private static boolean categoriesListEnabled = false;
-
-    /**
-     * Tamanho da miniatura (utilizado no HTML).
-     */
-    private static int thumbSize = 112;
-
-    /**
-     * Quantidade de frames utilizado na "faixa" de cenas de vídeo.
-     */
-    private static int framesPerStripe = 8;
-
-    /**
-     * Largura (em pixels) da "faixa" de cenas de vídeo.
-     */
-    private static int videoStripeWidth = 800;
-
-    /**
-     * Itens por página HTML.
-     */
-    private static int itemsPerPage = 100;
-
-    /**
-     * Flag de controle se página com galeria de miniaturas de imagem é criada.
-     */
-    private static boolean thumbsPageEnabled = false;
-
-    /**
-     * Miniaturas de imagem na página de galeria.
-     */
-    private static int thumbsPerPage = 500;
-
-    /**
-     * Constante com o nome utilizado para o arquivo de propriedades.
-     */
-    private static final String configFileName = "HTMLReportConfig.txt"; //$NON-NLS-1$
 
     /**
      * Set com arquivos em processamento, estático e sincronizado para evitar que
@@ -223,16 +165,24 @@ public class HTMLReportTask extends AbstractTask {
      */
     private static final Set<String> currentFiles = new HashSet<String>();
 
-    private static GraphicsMagicConverter graphicsMagicConverter = new GraphicsMagicConverter();
+    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
 
     /**
      * Armazena modelo de formatação no nome/mat/classe do(s) perito(s).
      */
     private StringBuilder modeloPerito;
 
+    /**
+     * Objeto com informações que serão incluídas no relatório.
+     */
+    private ReportInfo info;
+
+    private HtmlReportTaskConfig htmlReportConfig;
+
+    private boolean extractThumb;
+
     private static Collator getCollator() {
-        LocaleConfig localeConfig = (LocaleConfig) ConfigurationManager.getInstance().findObjects(LocaleConfig.class)
-                .iterator().next();
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
 
         Collator c = Collator.getInstance(localeConfig.getLocale());
         c.setStrength(Collator.TERTIARY);
@@ -241,7 +191,11 @@ public class HTMLReportTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return taskEnabled;
+        return htmlReportConfig.isEnabled();
+    }
+
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new HtmlReportTaskConfig());
     }
 
     /**
@@ -249,125 +203,56 @@ public class HTMLReportTask extends AbstractTask {
      * principal.
      */
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
-        synchronized (init) {
-            if (!init.get()) {
-                // Verifica se tarefa está habilitada
-                String value = confParams.getProperty("enableHTMLReport"); //$NON-NLS-1$
-                if (value != null && value.trim().equalsIgnoreCase("true")) { //$NON-NLS-1$
-                    taskEnabled = true;
-                    logger.info("Task enabled."); //$NON-NLS-1$
-                } else {
-                    logger.info("Task disabled."); //$NON-NLS-1$
-                    init.set(true);
-                    return;
-                }
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
-                info = new ReportInfo();
-                reportSubFolder = new File(this.output.getParentFile(), reportSubFolderName);
+        htmlReportConfig = configurationManager.findObject(HtmlReportTaskConfig.class);
 
-                // Lê parâmetros do arquivo de configuração
-                UTF8Properties properties = new UTF8Properties();
-                File confFile = new File(confDir, configFileName);
-                try {
-                    properties.load(confFile);
-
-                    value = properties.getProperty("ItemsPerPage"); //$NON-NLS-1$
-                    if (value != null) {
-                        itemsPerPage = Integer.parseInt(value.trim());
-                    }
-
-                    value = properties.getProperty("ThumbsPerPage"); //$NON-NLS-1$
-                    if (value != null) {
-                        thumbsPerPage = Integer.parseInt(value.trim());
-                    }
-
-                    value = properties.getProperty("ThumbSize"); //$NON-NLS-1$
-                    if (value != null) {
-                        thumbSize = Integer.parseInt(value.trim());
-                    }
-
-                    value = properties.getProperty("EnableImageThumbs"); //$NON-NLS-1$
-                    if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
-                        imageThumbsEnabled = true;
-                    }
-
-                    value = properties.getProperty("EnableVideoThumbs"); //$NON-NLS-1$
-                    if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
-                        videoThumbsEnabled = true;
-                    }
-
-                    value = properties.getProperty("FramesPerStripe"); //$NON-NLS-1$
-                    if (value != null) {
-                        framesPerStripe = Integer.parseInt(value.trim());
-                    }
-
-                    value = properties.getProperty("VideoStripeWidth"); //$NON-NLS-1$
-                    if (value != null) {
-                        videoStripeWidth = Integer.parseInt(value.trim());
-                    }
-
-                    value = properties.getProperty("EnableCategoriesList"); //$NON-NLS-1$
-                    if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
-                        categoriesListEnabled = true;
-                    }
-
-                    value = properties.getProperty("EnableThumbsGallery"); //$NON-NLS-1$
-                    if (value != null && value.equalsIgnoreCase("true")) { //$NON-NLS-1$
-                        thumbsPageEnabled = true;
-                    }
-
-                    info.reportHeader = properties.getProperty("Header"); //$NON-NLS-1$
-                    // info.classe.add(properties.getProperty("Classe"));
-                    info.reportDate = properties.getProperty("ReportDate"); //$NON-NLS-1$
-                    info.requestDate = properties.getProperty("RequestDate"); //$NON-NLS-1$
-                    info.labCaseDate = properties.getProperty("RecordDate"); //$NON-NLS-1$
-                    info.requestForm = properties.getProperty("RequestDoc"); //$NON-NLS-1$
-                    info.caseNumber = properties.getProperty("Investigation"); //$NON-NLS-1$
-                    info.reportNumber = properties.getProperty("Report"); //$NON-NLS-1$
-                    info.fillEvidenceFromText(properties.getProperty("Material")); //$NON-NLS-1$
-                    info.examinersID.add(properties.getProperty("ExaminerID")); //$NON-NLS-1$
-                    info.examiners.add(properties.getProperty("Examiner")); //$NON-NLS-1$
-                    info.labCaseNumber = properties.getProperty("Record"); //$NON-NLS-1$
-                    info.requester = properties.getProperty("Requester"); //$NON-NLS-1$
-                    info.reportTitle = properties.getProperty("Title"); //$NON-NLS-1$
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    init.set(true);
-                    throw new RuntimeException("Error loading conf file: " + confFile.getAbsolutePath()); //$NON-NLS-1$
-                }
-
-                // Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido
-                // especificado
-                CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-                if (args != null) {
-                    File infoFile = args.getAsap();
-                    if (infoFile != null) {
-                        logger.info("Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
-                        if (!infoFile.exists()) {
-                            throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
-                        }
-                        try {
-                            if (infoFile.getName().endsWith(".asap")) //$NON-NLS-1$
-                                info.readAsapInfoFile(infoFile);
-                            else if (infoFile.getName().endsWith(".json")) //$NON-NLS-1$
-                                info.readJsonInfoFile(infoFile);
-                            else if (infoFile.getName().endsWith(".report")) { //$NON-NLS-1$
-                                ReportInfo ri = ReportInfo.readReportInfoFile(infoFile);
-                                ri.reportHeader = info.reportHeader;
-                                info = ri;
-                            }
-
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            init.set(true);
-                            throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
-                        }
-                    }
-                }
+        if (!init.get()) {
+            if (htmlReportConfig.isEnabled()) {
+                logger.info("Task enabled."); //$NON-NLS-1$
+            } else {
+                logger.info("Task disabled."); //$NON-NLS-1$
                 init.set(true);
+                return;
             }
+
+            reportSubFolder = new File(this.output.getParentFile(), reportSubFolderName);
+
+            info = htmlReportConfig.getReportInfo();
+
+            // Obtém parâmetro ASAP, com arquivo contendo informações do caso, se tiver sido
+            // especificado
+            CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
+            if (args != null) {
+                File infoFile = args.getAsap();
+                if (infoFile != null) {
+                    logger.info("Processing case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
+                    if (!infoFile.exists()) {
+                        throw new RuntimeException("File not found: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
+                    }
+                    try {
+                        if (infoFile.getName().endsWith(".asap")) //$NON-NLS-1$
+                            info.readAsapInfoFile(infoFile);
+                        else if (infoFile.getName().endsWith(".json")) //$NON-NLS-1$
+                            info.readJsonInfoFile(infoFile);
+                        else if (infoFile.getName().endsWith(".report")) { //$NON-NLS-1$
+                            ReportInfo ri = ReportInfo.readReportInfoFile(infoFile);
+                            ri.reportHeader = info.reportHeader;
+                            info = ri;
+                        }
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        init.set(true);
+                        throw new RuntimeException("Error loading case info file: " + infoFile.getAbsolutePath()); //$NON-NLS-1$
+                    }
+                }
+            }
+            init.set(true);
         }
+
+        ImageThumbTaskConfig imgThumbConfig = configurationManager.findObject(ImageThumbTaskConfig.class);
+        extractThumb = imgThumbConfig.isExtractThumb();
     }
 
     /**
@@ -377,7 +262,7 @@ public class HTMLReportTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
 
-        if (taskEnabled && caseData.containsReport() && info != null) {
+        if (isEnabled() && caseData.containsReport() && info != null) {
 
             String reportRoot = Messages.getString("HTMLReportTask.ReportFileName"); //$NON-NLS-1$
             if (new File(reportSubFolder.getParentFile(), reportRoot).exists()) {
@@ -393,8 +278,7 @@ public class HTMLReportTask extends AbstractTask {
             String reportRootModel = "relatorio.htm"; //$NON-NLS-1$
             File templatesFolder = new File(new File(codePath), "htmlreport"); //$NON-NLS-1$
             if (!new File(templatesFolder, reportRootModel).exists()) {
-                LocaleConfig localeConf = (LocaleConfig) ConfigurationManager.getInstance()
-                        .findObjects(LocaleConfig.class).iterator().next();
+                LocaleConfig localeConf = ConfigurationManager.get().findObject(LocaleConfig.class);
                 templatesFolder = new File(new File(codePath), "htmlreport/" + localeConf.getLocale().toLanguageTag()); //$NON-NLS-1$
             }
 
@@ -425,7 +309,7 @@ public class HTMLReportTask extends AbstractTask {
 
             modeloPerito = EncodedFile.readFile(new File(templateSubFolder, "perito.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
             processBookmarks(templateSubFolder);
-            if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
+            if (htmlReportConfig.isThumbsPageEnabled() && !imageThumbsByLabel.isEmpty()) {
                 createThumbsPage();
             }
             processCaseInfo(new File(templatesFolder, "caseinformation.htm"), //$NON-NLS-1$
@@ -446,7 +330,7 @@ public class HTMLReportTask extends AbstractTask {
             t = (System.currentTimeMillis() - t + 500) / 1000;
             logger.info("Report creation time (seconds): " + t); //$NON-NLS-1$
 
-            graphicsMagicConverter.close();
+            externalImageConverter.close();
         }
     }
 
@@ -456,7 +340,7 @@ public class HTMLReportTask extends AbstractTask {
      */
     @Override
     protected void process(IItem evidence) throws Exception {
-        if (!taskEnabled || !caseData.containsReport() || !evidence.isToAddToCase()) {
+        if (!isEnabled() || !caseData.containsReport() || !evidence.isToAddToCase()) {
             return;
         }
 
@@ -502,7 +386,8 @@ public class HTMLReportTask extends AbstractTask {
             }
         }
 
-        if (((imageThumbsEnabled && reg.isImage) || (videoThumbsEnabled && reg.isVideo)) && reg.hash != null) {
+        if (((htmlReportConfig.isImageThumbsEnabled() && reg.isImage)
+                || (htmlReportConfig.isVideoThumbsEnabled() && reg.isVideo)) && reg.hash != null) {
             // Verifica se há outro arquivo igual em processamento, senão inclui
             synchronized (currentFiles) {
                 if (currentFiles.contains(evidence.getHash())) {
@@ -616,7 +501,7 @@ public class HTMLReportTask extends AbstractTask {
             sb.append("</p>\n"); //$NON-NLS-1$
         }
 
-        if (categoriesListEnabled && !entriesByCategory.isEmpty()) {
+        if (htmlReportConfig.isCategoriesListEnabled() && !entriesByCategory.isEmpty()) {
             sb.append("<p>\n"); //$NON-NLS-1$
             sb.append("\t<span class=\"SmallText1\">" + Messages.getString("HTMLReportTask.Categories") + "</span>\n"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             for (String categoria : entriesByCategory.keySet()) {
@@ -630,7 +515,7 @@ public class HTMLReportTask extends AbstractTask {
             sb.append("</p>"); //$NON-NLS-1$
         }
 
-        if (thumbsPageEnabled && !imageThumbsByLabel.isEmpty()) {
+        if (htmlReportConfig.isThumbsPageEnabled() && !imageThumbsByLabel.isEmpty()) {
             sb.append("<p>\n"); //$NON-NLS-1$
             sb.append("<b><a href=\"thumbs_001.htm\" class=\"SmallText2\" target=\"ReportPage\">"); //$NON-NLS-1$
             sb.append(Messages.getString("HTMLReportTask.GalleryLink") + "</a></b></p>\n"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -646,7 +531,7 @@ public class HTMLReportTask extends AbstractTask {
     private void processBookmarks(File templatesFolder) throws Exception {
         sortRegs();
         StringBuilder modelo = EncodedFile.readFile(new File(templatesFolder, "arq.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
-        replace(modelo, "%THUMBSIZE%", String.valueOf(thumbSize)); //$NON-NLS-1$
+        replace(modelo, "%THUMBSIZE%", String.valueOf(htmlReportConfig.getThumbSize())); //$NON-NLS-1$
         StringBuilder item = EncodedFile.readFile(new File(templatesFolder, "item.html"), StandardCharsets.UTF_8).content; //$NON-NLS-1$//$NON-NLS-2$
         int idx = 1;
         for (String marcador : entriesByLabel.keySet()) {
@@ -662,7 +547,7 @@ public class HTMLReportTask extends AbstractTask {
             if (!l.isEmpty())
                 imageThumbsByLabel.put(marcador, l);
         }
-        if (categoriesListEnabled) {
+        if (htmlReportConfig.isCategoriesListEnabled()) {
             for (String categoria : entriesByCategory.keySet()) {
                 String id = String.format("arq%06d", idx); //$NON-NLS-1$
                 List<ReportEntry> regs = entriesByCategory.get(categoria);
@@ -683,8 +568,9 @@ public class HTMLReportTask extends AbstractTask {
 
     private void sortRegs() {
         final List<List<ReportEntry>> l = new ArrayList<List<ReportEntry>>(entriesByLabel.values());
-        if (categoriesListEnabled)
+        if (htmlReportConfig.isCategoriesListEnabled()) {
             l.addAll(entriesByCategory.values());
+        }
         Collections.sort(l, new Comparator<List<ReportEntry>>() {
             public int compare(List<ReportEntry> a, List<ReportEntry> b) {
                 return Integer.compare(b.size(), a.size());
@@ -692,8 +578,7 @@ public class HTMLReportTask extends AbstractTask {
         });
         final CustomComparator comparator = new CustomComparator();
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];
@@ -723,10 +608,9 @@ public class HTMLReportTask extends AbstractTask {
     private void processaBookmark(final String name, final String id, final StringBuilder model,
             final StringBuilder item, final boolean isLabel, final List<ReportEntry> regs) throws Exception {
         final int tot = regs.size();
-        final int numPages = (tot + itemsPerPage - 1) / itemsPerPage;
+        final int numPages = (tot + htmlReportConfig.getItemsPerPage() - 1) / htmlReportConfig.getItemsPerPage();
 
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         final int numThreads = localConfig.getNumThreads();
 
         Thread[] threads = new Thread[numThreads];
@@ -735,12 +619,12 @@ public class HTMLReportTask extends AbstractTask {
             (threads[i] = new Thread() {
                 public void run() {
                     DateFormat dateFormat = new SimpleDateFormat(Messages.getString("HTMLReportTask.Dateformat")); //$NON-NLS-1$
-                    NumberFormat longFormat = new DecimalFormat("#,##0"); //$NON-NLS-1$
+                    NumberFormat longFormat = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
                     for (int page = 1; page <= numPages; page++) {
                         if (page % numThreads != idx)
                             continue;
-                        int start = (page - 1) * itemsPerPage;
-                        int end = Math.min(tot, start + itemsPerPage);
+                        int start = (page - 1) * htmlReportConfig.getItemsPerPage();
+                        int end = Math.min(tot, start + htmlReportConfig.getItemsPerPage());
                         try {
                             createBookmarkPage(dateFormat, longFormat, name, id, model, item, page, numPages, tot,
                                     regs.subList(start, end), isLabel);
@@ -779,7 +663,7 @@ public class HTMLReportTask extends AbstractTask {
             it.delete(0, it.length());
             it.append(item);
 
-            if (reg.isImage && imageThumbsEnabled && reg.hash != null) {
+            if (reg.isImage && htmlReportConfig.isImageThumbsEnabled() && reg.hash != null) {
                 File thumbFile = getImageThumbFile(reg.hash);
                 if (thumbFile.exists() && thumbFile.length() > 0) {
                     it.append("<table width=\"100%\"><tr><td>"); //$NON-NLS-1$
@@ -802,7 +686,7 @@ public class HTMLReportTask extends AbstractTask {
                         reg.img = img.toString();
                     }
                 }
-            } else if (reg.isVideo && videoThumbsEnabled && reg.hash != null) {
+            } else if (reg.isVideo && htmlReportConfig.isVideoThumbsEnabled() && reg.hash != null) {
                 File videoThumbsFile = getVideoThumbsFile(reg.hash);
                 File stripeFile = getVideoStripeFile(reg.hash);
                 if (stripeFile.exists()) {
@@ -932,14 +816,15 @@ public class HTMLReportTask extends AbstractTask {
                 return;
             }
             BufferedImage img = null;
-            if (ImageThumbTask.extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
+            if (extractThumb && ImageThumbTask.isJpeg(evidence)) { // $NON-NLS-1$
                 BufferedInputStream stream = evidence.getBufferedStream();
                 try {
-                    img = ImageUtil.getThumb(stream);
+                    img = ImageMetadataUtil.getThumb(stream);
                 } finally {
                     IOUtil.closeQuietly(stream);
                 }
             }
+            int thumbSize = htmlReportConfig.getThumbSize();
             if (img == null) {
                 final int sampleFactor = 3;
                 BufferedInputStream stream = evidence.getBufferedStream();
@@ -951,7 +836,7 @@ public class HTMLReportTask extends AbstractTask {
                 if (img == null) {
                     stream = evidence.getBufferedStream();
                     try {
-                        img = graphicsMagicConverter.getImage(stream, thumbSize * sampleFactor, evidence.getLength());
+                        img = externalImageConverter.getImage(stream, thumbSize, false, evidence.getLength());
                     } finally {
                         IOUtil.closeQuietly(stream);
                     }
@@ -1002,7 +887,8 @@ public class HTMLReportTask extends AbstractTask {
             int frameWidth = (imgWidth - 2 * border - border * nCols) / nCols;
             int frameHeight = (imgHeight - 2 * border - border * nRows) / nRows;
 
-            int w = videoStripeWidth / framesPerStripe;
+            int framesPerStripe = htmlReportConfig.getFramesPerStripe();
+            int w = htmlReportConfig.getVideoStripeWidth() / framesPerStripe;
             double rate = (nRows * nCols) * 0.999 / framesPerStripe;
             int h = frameHeight * w / frameWidth;
 
@@ -1035,6 +921,7 @@ public class HTMLReportTask extends AbstractTask {
     private BufferedImage resizeThumb(BufferedImage img) {
         int width = img.getWidth();
         int height = img.getHeight();
+        int thumbSize = htmlReportConfig.getThumbSize();
         if (width > height) {
             height = height * thumbSize / width;
             width = thumbSize;
@@ -1075,6 +962,7 @@ public class HTMLReportTask extends AbstractTask {
             List<String> l = imageThumbsByLabel.get(label);
             tot += l.size();
         }
+        int thumbsPerPage = htmlReportConfig.getThumbsPerPage();
         int np = (tot + thumbsPerPage - 1) / thumbsPerPage;
 
         for (String bookmark : imageThumbsByLabel.keySet()) {

@@ -1,7 +1,10 @@
 package dpf.sp.gpinf.indexer.search;
 
 import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -19,20 +22,31 @@ import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BoostQuery;
+import org.apache.lucene.search.ConstantScoreQuery;
+import org.apache.lucene.search.FuzzyQuery;
 import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.MultiTermQuery;
 import org.apache.lucene.search.PhraseQuery;
+import org.apache.lucene.search.PointRangeQuery;
+import org.apache.lucene.search.PrefixQuery;
+import org.apache.lucene.search.PublicPointRangeQuery;
 import org.apache.lucene.search.Query;
+import org.apache.lucene.search.RegexpQuery;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.TermRangeQuery;
+import org.apache.lucene.search.WildcardQuery;
 
-import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IIPEDSource;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.IQueryBuilder;
+import iped3.util.BasicProps;
 
 public class QueryBuilder implements IQueryBuilder {
 
@@ -83,6 +97,122 @@ public class QueryBuilder implements IQueryBuilder {
 
     }
 
+    private Term getNonLocalizedTerm(Term term) {
+        String field = getNonLocalizedField(term.field());
+        String value = term.text();
+        if (BasicProps.CATEGORY.equals(field)) {
+            value = getNonLocalizedCategory(value).toLowerCase();
+        }
+        return new Term(field, value);
+    }
+
+    private String getNonLocalizedCategory(String category) {
+        return CategoryLocalization.getInstance().getNonLocalizedCategory(category);
+    }
+
+    private String getNonLocalizedField(String field) {
+        return LocalizedProperties.getNonLocalizedField(field);
+    }
+
+    public Query getNonLocalizedQuery(Query query) {
+        if (query == null) {
+            return null;
+        }
+        if (query instanceof MatchAllDocsQuery) {
+            return query;
+
+        } else if (query instanceof BooleanQuery) {
+            BooleanQuery.Builder builder = new BooleanQuery.Builder();
+            for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
+                builder.add(getNonLocalizedQuery(clause.getQuery()), clause.getOccur());
+            }
+            return builder.build();
+
+        } else if (query instanceof BoostQuery) {
+            BoostQuery bq = (BoostQuery) query;
+            return new BoostQuery(getNonLocalizedQuery(bq.getQuery()), bq.getBoost());
+
+        } else if (query instanceof TermQuery) {
+            Term term = ((TermQuery) query).getTerm();
+            return new TermQuery(getNonLocalizedTerm(term));
+
+        } else if (query instanceof PhraseQuery) {
+            PhraseQuery pq = (PhraseQuery) query;
+            PhraseQuery.Builder builder = new PhraseQuery.Builder();
+            builder.setSlop(pq.getSlop());
+            int i = 0;
+
+            if (BasicProps.CATEGORY.equals(getNonLocalizedField(pq.getTerms()[0].field()))) {
+                List<TermAndPos> terms = new ArrayList<>();
+                for (Term term : pq.getTerms()) {
+                    terms.add(new TermAndPos(term, pq.getPositions()[i++]));
+                }
+                Collections.sort(terms);
+                String category = terms.stream().map(t -> t.term.text()).collect(Collectors.joining(" "));
+                category = getNonLocalizedCategory(category).toLowerCase();
+                i = 0;
+                for (String term : category.split(" ")) {
+                    builder.add(new Term(BasicProps.CATEGORY, term), i++);
+                }
+            }else {
+                for (Term term : pq.getTerms()) {
+                    builder.add(getNonLocalizedTerm(term), pq.getPositions()[i++]);
+                }
+            }
+            return builder.build();
+
+        } else if (query instanceof PrefixQuery) {
+            PrefixQuery pq = (PrefixQuery) query;
+            return new PrefixQuery(getNonLocalizedTerm(pq.getPrefix()));
+
+        } else if (query instanceof WildcardQuery) {
+            WildcardQuery q = (WildcardQuery) query;
+            return new WildcardQuery(getNonLocalizedTerm(q.getTerm()));
+
+        } else if (query instanceof FuzzyQuery) {
+            FuzzyQuery q = (FuzzyQuery) query;
+            return new FuzzyQuery(getNonLocalizedTerm(q.getTerm()), q.getMaxEdits(), q.getPrefixLength(),
+                    FuzzyQuery.defaultMaxExpansions, q.getTranspositions());
+
+        } else if (query instanceof RegexpQuery) {
+            RegexpQuery q = (RegexpQuery) query;
+            return new RegexpQuery(getNonLocalizedTerm(q.getRegexp()));
+
+        } else if (query instanceof TermRangeQuery) {
+            TermRangeQuery q = (TermRangeQuery) query;
+            return new TermRangeQuery(getNonLocalizedField(q.getField()), q.getLowerTerm(), q.getUpperTerm(),
+                    q.includesLower(), q.includesUpper());
+
+        } else if (query instanceof PointRangeQuery) {
+            PointRangeQuery q = (PointRangeQuery) query;
+            return new PublicPointRangeQuery(getNonLocalizedField(q.getField()), q);
+
+        } else if (query instanceof ConstantScoreQuery) {
+            ConstantScoreQuery q = (ConstantScoreQuery) query;
+            return new ConstantScoreQuery(getNonLocalizedQuery(q.getQuery()));
+
+        } else {
+            // TODO: handle MultiPhraseQuery and DisjunctionMaxQuery
+            throw new RuntimeException(query.getClass().getSimpleName() + " not handled currently");
+        }
+
+    }
+
+    private class TermAndPos implements Comparable<TermAndPos> {
+        Term term;
+        int position;
+
+        TermAndPos(Term term, int position) {
+            this.term = term;
+            this.position = position;
+        }
+
+        @Override
+        public int compareTo(TermAndPos o) {
+            return Integer.compare(this.position, o.position);
+        }
+    }
+
     public Set<String> getQueryStrings(String queryText) {
         Query query = null;
         if (queryText != null)
@@ -113,7 +243,7 @@ public class QueryBuilder implements IQueryBuilder {
     }
 
     public Query getQuery(String texto, Analyzer analyzer) throws ParseException, QueryNodeException {
-        
+
         if(texto.trim().startsWith("* "))
             texto = texto.trim().replaceFirst("\\* ", "*:* ");
 
@@ -132,28 +262,32 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
             parser.setPointsConfigMap(getPointsConfigMap());
 
-            // remove acentos, pois StandardQueryParser nÃ£o normaliza wildcardQueries
-            AdvancedIPEDConfig advConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                    .findObjects(AdvancedIPEDConfig.class).iterator().next();
-            if (analyzer != spaceAnalyzer && advConfig.isConvertCharsToAscii()) {
-                char[] input = texto.toCharArray();
-                char[] output = new char[input.length * 4];
-                int len = FastASCIIFoldingFilter.foldToASCII(input, 0, output, 0, input.length);
-                texto = (new String(output, 0, len)).trim();
+            IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+            // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
+            if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
+                texto = IndexItem.normalize(texto, false);
+            }
+            // see #678
+            if (!indexConfig.isConvertCharsToLowerCase()) {
+                parser.setLowercaseExpandedTerms(false);
             }
 
             try {
-                Query q = parser.parse(texto, null);
+                Query q;
+                synchronized (lock) {
+                    q = parser.parse(texto, null);
+                }
                 q = handleNegativeQueries(q, analyzer);
+                q = getNonLocalizedQuery(q);
                 return q;
-                
+
             } catch (org.apache.lucene.queryparser.flexible.core.QueryNodeException e) {
                 throw new QueryNodeException(e);
             }
         }
 
     }
-    
+
     private Query handleNegativeQueries(Query q, Analyzer analyzer) {
         if(q instanceof BoostQuery) {
             float boost = ((BoostQuery) q).getBoost();
@@ -188,23 +322,17 @@ public class QueryBuilder implements IQueryBuilder {
 
         HashMap<String, PointsConfig> pointsConfigMap = new HashMap<>();
 
-        DecimalFormat nf = new DecimalFormat();
+        NumberFormat nf = LocalizedFormat.getNumberInstance();
         PointsConfig configLong = new PointsConfig(nf, Long.class);
         PointsConfig configInt = new PointsConfig(nf, Integer.class);
         PointsConfig configFloat = new PointsConfig(nf, Float.class);
         PointsConfig configDouble = new PointsConfig(nf, Double.class);
 
-        pointsConfigMap.put(IndexItem.LENGTH, configLong);
-        pointsConfigMap.put(IndexItem.ID, configInt);
-        pointsConfigMap.put(IndexItem.SLEUTHID, configInt);
-        pointsConfigMap.put(IndexItem.PARENTID, configInt);
-        pointsConfigMap.put(IndexItem.FTKID, configInt);
-
         for (String field : LoadIndexFields.getFields(Arrays.asList(ipedCase))) {
             Class<?> type = IndexItem.getMetadataTypes().get(field);
             if (type == null)
                 continue;
-            if (type.equals(Integer.class) || type.equals(Byte.class))
+            if (type.equals(Integer.class) || type.equals(Short.class) || type.equals(Byte.class))
                 pointsConfigMap.put(field, configInt);
             else if (type.equals(Long.class))
                 pointsConfigMap.put(field, configLong);
@@ -212,6 +340,11 @@ public class QueryBuilder implements IQueryBuilder {
                 pointsConfigMap.put(field, configFloat);
             else if (type.equals(Double.class))
                 pointsConfigMap.put(field, configDouble);
+        }
+
+        for (String field : pointsConfigMap.keySet().toArray(new String[0])) {
+            String localizedField = LocalizedProperties.getLocalizedField(field);
+            pointsConfigMap.put(localizedField, pointsConfigMap.get(field));
         }
 
         synchronized (lock) {

@@ -39,7 +39,7 @@
         <dependency>
             <groupId>com.github.filipesimoes</groupId>
             <artifactId>kharon</artifactId>
-            <version>0.1.5</version>
+            <version>0.1.6</version>
         </dependency>
         
     </dependencies>
@@ -148,7 +148,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>libagdb</artifactId>
-                                    <version>20181111</version>
+                                    <version>20181111.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -167,7 +167,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>evtexport</artifactId>
-                                    <version>20180317</version>
+                                    <version>20180317.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -186,7 +186,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>evtxexport</artifactId>
-                                    <version>20170122</version>
+                                    <version>20170122.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -205,7 +205,7 @@
                                 <artifactItem>
                                     <groupId>libyal</groupId>
                                     <artifactId>sccainfo</artifactId>
-                                    <version>20170205</version>
+                                    <version>20170205.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -281,7 +281,7 @@
                                 <artifactItem>
                                     <groupId>tesseract</groupId>
                                     <artifactId>tesseract-zip</artifactId>
-                                    <version>4.0.0</version>
+                                    <version>5.0.0-alpha</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -419,7 +419,7 @@
   									<version>3.8.0</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -435,10 +435,10 @@
                                 <artifactItem>
                                     <groupId>net.sf</groupId>
     								<artifactId>java-dbx</artifactId>
-    								<version>1.1-p4</version>
+    								<version>1.1-p5</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -454,10 +454,10 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.4-SNAPSHOT</version>
+    								<version>1.0.5-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
-                                    <outputDirectory>${optional.dir}</outputDirectory>
+                                    <outputDirectory>${plugin.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
                         </configuration>
@@ -492,7 +492,7 @@
                                 <artifactItem>
                                     <groupId>led</groupId>
                                     <artifactId>die</artifactId>
-                                    <version>20200916</version>
+                                    <version>20210505</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}/models</outputDirectory>
@@ -704,6 +704,22 @@
                             </resources>
                         </configuration>
                     </execution>
+                    <!-- COPY LOCALIZATION FOLDER -->
+                    <execution>
+                        <id>copy-localization</id>
+                        <phase>validate</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${release.dir}/localization</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${resources.dir}/localization</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
                     <!-- COPY THIRD LICENSES FOLDER -->
                     <execution>
                         <id>copy-licenses</id>
@@ -737,19 +753,19 @@
                             </resources>
                         </configuration>
                     </execution>
-                    <!-- COPY OPTIONAL -->
+                    <!-- COPY PLUGIN RESOURCES -->
                     <execution>
-                        <id>copy-optional</id>
+                        <id>copy-plugin-resources</id>
                         <phase>validate</phase>
                         <goals>
                             <goal>copy-resources</goal>
                         </goals>
                         <configuration>
-                            <outputDirectory>${optional.dir}</outputDirectory>
+                            <outputDirectory>${plugin.dir}</outputDirectory>
                             <resources>
                                 <resource>
                                     <filtering>false</filtering>
-                                    <directory>${resources.dir}/optional_jars</directory>
+                                    <directory>${plugin.rsc}</directory>
                                 </resource>
                             </resources>
                         </configuration>

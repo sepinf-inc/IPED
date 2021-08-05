@@ -6,10 +6,15 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.Signature.SignatureType;
 
+import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 
-public class CarverType {
+public class CarverType implements Serializable {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     String name;
     String carverClass = null;
     String carverScript = null;
@@ -21,10 +26,6 @@ public class CarverType {
     private Long minLength = null, maxLength = null;
     boolean hasFooter = false;
     boolean hasLengthRef = false;
-
-    public CarverType() {
-
-    }
 
     @Override
     public boolean equals(Object o) {

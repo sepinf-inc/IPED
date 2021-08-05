@@ -18,8 +18,9 @@
  */
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
@@ -29,14 +30,13 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.SignatureTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import iped3.IIPEDSource;
 
 public class InicializarBusca extends SwingWorker<Void, Integer> {
 
@@ -102,13 +102,9 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
                 App.get().resultsModel.initCols();
                 App.get().resultsTable.setRowSorter(new ResultTableRowSorter());
 
+                SignatureTask.installCustomSignatures();
+                ParsingTask.setupParsingOptions(ConfigurationManager.get());
                 IndexerDefaultParser autoParser = new IndexerDefaultParser();
-
-                AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                        .findObjects(AdvancedIPEDConfig.class).iterator().next();
-                autoParser.setFallback(new RawStringParser(advancedConfig.isEntropyTest()));
-                autoParser.setErrorParser(new RawStringParser(advancedConfig.isEntropyTest()));
-
                 App.get().setAutoParser(autoParser);
 
                 FileProcessor exibirAjuda = new FileProcessor(-1, false);
@@ -130,12 +126,24 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
         return null;
     }
 
-    private void checkIfProcessingFinished(IIPEDSource source) {
+    private void checkIfProcessingFinished(IPEDMultiSource multiSource) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
-                    JOptionPane.showMessageDialog(App.get(), Messages.getString("ProcessingNotFinished.message"),
+                List<String> casesWithError = new ArrayList<>();
+                for (IPEDSource source : multiSource.getAtomicSources()) {
+                    if (manager == null && !Manager.isProcessingFinishedOK(source.getModuleDir())) {
+                        casesWithError.add(source.getCaseDir().getAbsolutePath());
+                    }
+                }
+                if (!casesWithError.isEmpty()) {
+                    String casesList = "";
+                    if (multiSource.getAtomicSources().size() > 1) {
+                        casesList = Messages.getString("ProcessingNotFinished.cases");
+                        casesList += casesWithError.stream().collect(Collectors.joining("\n"));
+                    }
+                    JOptionPane.showMessageDialog(App.get(),
+                            Messages.getString("ProcessingNotFinished.message") + casesList,
                             Messages.getString("ProcessingNotFinished.title"), JOptionPane.WARNING_MESSAGE);
                 }
             }

@@ -1,13 +1,12 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,6 +22,7 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 
 /**
  * Task to ignore already commited files into index. Commited containers without
@@ -70,7 +71,12 @@ public class SkipCommitedTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         if (inited.getAndSet(true)) {
             return;

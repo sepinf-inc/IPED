@@ -18,16 +18,17 @@
  */
 package dpf.sp.gpinf.indexer.analysis;
 
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.core.KeywordAnalyzer;
-import org.apache.lucene.analysis.miscellaneous.PerFieldAnalyzerWrapper;
 
-import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.PhotoDNATask;
@@ -40,17 +41,24 @@ public class AppAnalyzer {
     public static Analyzer get() {
         Map<String, Analyzer> analyzerPerField = new HashMap<String, Analyzer>();
         analyzerPerField.put(IndexItem.CATEGORY, new StandardASCIIAnalyzer(true));
+        analyzerPerField.put(LocalizedProperties.getLocalizedField(IndexItem.CATEGORY),
+                new StandardASCIIAnalyzer(true));
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.CREATED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.MODIFIED, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.ACCESSED, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());
 
+        analyzerPerField.put(IndexItem.CREATED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.MODIFIED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.ACCESSED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.CHANGED, new KeywordLowerCaseAnalyzer());
+        analyzerPerField.put(IndexItem.TIMESTAMP, new KeywordLowerCaseAnalyzer());
+
+        IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
         StandardASCIIAnalyzer hashAnalyzer = new StandardASCIIAnalyzer(false);
         hashAnalyzer.setMaxTokenLength(Integer.MAX_VALUE);
+        hashAnalyzer.setConvertCharsToLower(true);
         analyzerPerField.put(HashTask.HASH.MD5.toString(), hashAnalyzer);
         analyzerPerField.put(HashTask.HASH.EDONKEY.toString(), hashAnalyzer);
         analyzerPerField.put(HashTask.HASH.SHA1.toString(), hashAnalyzer);
@@ -59,12 +67,20 @@ public class AppAnalyzer {
         analyzerPerField.put(PhotoDNATask.PHOTO_DNA, hashAnalyzer);
 
         StandardASCIIAnalyzer defaultAnalyzer = new StandardASCIIAnalyzer(false);
-        AdvancedIPEDConfig advancedConfig = (AdvancedIPEDConfig) ConfigurationManager.getInstance()
-                .findObjects(AdvancedIPEDConfig.class).iterator().next();
-        defaultAnalyzer.setMaxTokenLength(advancedConfig.getMaxTokenLength());
-        defaultAnalyzer.setFilterNonLatinChars(advancedConfig.isFilterNonLatinChars());
-        defaultAnalyzer.setConvertCharsToAscii(advancedConfig.isConvertCharsToAscii());
-        return new PerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField);
+        defaultAnalyzer.setMaxTokenLength(indexConfig.getMaxTokenLength());
+        defaultAnalyzer.setFilterNonLatinChars(indexConfig.isFilterNonLatinChars());
+        defaultAnalyzer.setConvertCharsToAscii(indexConfig.isConvertCharsToAscii());
+        defaultAnalyzer.setConvertCharsToLower(indexConfig.isConvertCharsToLowerCase());
+        defaultAnalyzer.setExtraCharsToIndex(indexConfig.getExtraCharsToIndex());
+
+        return new NonFinalPerFieldAnalyzerWrapper(defaultAnalyzer, analyzerPerField) {
+            protected Analyzer getWrappedAnalyzer(String fieldName) {
+                if (Date.class.equals(IndexItem.getMetadataTypes().get(fieldName))) {
+                    return new KeywordLowerCaseAnalyzer();
+                }
+                return super.getWrappedAnalyzer(fieldName);
+            }
+        };
     }
 
 }

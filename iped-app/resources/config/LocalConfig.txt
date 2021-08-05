@@ -21,25 +21,22 @@ outputOnSSD = false
 # If you have memory usage problems, you can decrease it or increase java heap memory (-Xms).
 numThreads = default
 
-# Full path for IPED hash database. It is highly recommended to store it on a fast disk (preferably SSD).
+# Full path for IPED hash database. It is highly recommended to store it on a fast disk, 
+# preferably SSD, and not the same used as "indexTemp", if other disk is available.
 #hashesDB = C:/IPED/iped-hashes.db
-
-# File with child porn detection trained model from LED software (from Brazilian Federal Police. If you are LEA, ask sepinf.inc@dpf.gov.br).
-# It is supported models from LED version 1.21 or higher.
-ledDie = models/rfdie.dat
 
 # Full path for sleuthkit-4.x.x.jar built on Linux OS.
 # It is distributed a Windows only version with some optimization patches.
 # It is recommended to apply the patch (in source folder) before building sleuthkit on Linux.
 #tskJarPath = /home/user/tsk-4.6.5-src-folder/bindings/java/dist/sleuthkit-4.6.5.jar
 
-# Full Path for mplayer on Windows.
+# Relative path for mplayer on Windows.
 # For Linux OS, mplayer must be on PATH. Do not comment out the param below.
 mplayerPath = ../mplayer/mplayer.exe
 
 # Plugin folder for optional libs not embedded because of license restrictions.
 # They will be dynamically loaded at runtime.
-optional_jars = ../optional_jars/
+pluginFolder = ../plugins/
 
 # Path for RegRipper folder.
 regripperFolder = ../regripper/

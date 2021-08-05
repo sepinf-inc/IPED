@@ -7,7 +7,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.IPEDConfig;
+import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 
@@ -22,9 +22,9 @@ public abstract class ThumbTask extends AbstractTask {
     protected File getThumbFile(IItem evidence) throws Exception {
         File thumbFile = null;
 
-        IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
-                .next();
-        boolean storeThumbsInDb = !caseData.containsReport() || !ipedConfig.isHtmlReportEnabled();
+        HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
+                .findObject(HtmlReportTaskConfig.class);
+        boolean storeThumbsInDb = !caseData.containsReport() || !htmlReportConfig.isEnabled();
         if (storeThumbsInDb) {
             return null;
         }
@@ -103,13 +103,15 @@ public abstract class ThumbTask extends AbstractTask {
                 }
             } catch (Exception e) {
             }
-
-            if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
-                evidence.setExtraAttribute(HAS_THUMB, true);
-            } else {
-                evidence.setExtraAttribute(HAS_THUMB, false);
-            }
         }
     }
 
+    protected boolean updateHasThumb(IItem evidence) {
+        if (evidence.getThumb() != null && evidence.getThumb().length > 0) {
+            evidence.setExtraAttribute(HAS_THUMB, true);
+            return true;
+        } 
+        evidence.setExtraAttribute(HAS_THUMB, false);
+        return false;
+    }
 }

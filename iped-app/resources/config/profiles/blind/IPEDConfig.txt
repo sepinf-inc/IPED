@@ -1,0 +1,7 @@
+﻿########################################################################
+# Processing Settings
+########################################################################
+
+enableHashDBLookup = true
+enableAutomaticExportFiles = true
+enableCarving = true

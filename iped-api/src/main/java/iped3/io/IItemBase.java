@@ -155,7 +155,7 @@ public interface IItemBase extends IStreamSource {
 
     public Date getAccessDate();
 
-    public Date getRecordDate();
+    public Date getChangeDate();
 
     public Object getExtraAttribute(String key);
 

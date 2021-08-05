@@ -9,17 +9,17 @@ public class BasicProps {
     public static final String PARENTID = "parentId"; //$NON-NLS-1$
     public static final String PARENTIDs = "parentIds"; //$NON-NLS-1$
     public static final String EVIDENCE_UUID = "evidenceUUID"; //$NON-NLS-1$
-    public static final String NAME = Messages.getString("BasicProps.name"); //$NON-NLS-1$
-    public static final String TYPE = Messages.getString("BasicProps.type"); //$NON-NLS-1$
-    public static final String LENGTH = Messages.getString("BasicProps.size"); //$NON-NLS-1$
-    public static final String CREATED = Messages.getString("BasicProps.created"); //$NON-NLS-1$
-    public static final String ACCESSED = Messages.getString("BasicProps.accessed"); //$NON-NLS-1$
-    public static final String MODIFIED = Messages.getString("BasicProps.modified"); //$NON-NLS-1$
-    public static final String RECORDDATE = Messages.getString("BasicProps.recordDate"); //$NON-NLS-1$
-    public static final String PATH = Messages.getString("BasicProps.path"); //$NON-NLS-1$
-    public static final String CATEGORY = Messages.getString("BasicProps.category"); //$NON-NLS-1$
-    public static final String DELETED = Messages.getString("BasicProps.deleted"); //$NON-NLS-1$
-    public static final String CONTENT = Messages.getString("BasicProps.content"); //$NON-NLS-1$
+    public static final String NAME = "name"; //$NON-NLS-1$
+    public static final String TYPE = "type"; //$NON-NLS-1$
+    public static final String LENGTH = "size"; //$NON-NLS-1$
+    public static final String CREATED = "created"; //$NON-NLS-1$
+    public static final String ACCESSED = "accessed"; //$NON-NLS-1$
+    public static final String MODIFIED = "modified"; //$NON-NLS-1$
+    public static final String CHANGED = "changed"; //$NON-NLS-1$
+    public static final String PATH = "path"; //$NON-NLS-1$
+    public static final String CATEGORY = "category"; //$NON-NLS-1$
+    public static final String DELETED = "deleted"; //$NON-NLS-1$
+    public static final String CONTENT = "content"; //$NON-NLS-1$
     public static final String EXPORT = "export"; //$NON-NLS-1$
     public static final String HASH = "hash"; //$NON-NLS-1$
     public static final String ISDIR = "isDir"; //$NON-NLS-1$
@@ -38,6 +38,8 @@ public class BasicProps {
     public static final String META_ADDRESS = "metaAddress";
     public static final String MFT_SEQUENCE = "MFTSequence";
     public static final String FILESYSTEM_ID = "fileSystemId";
+    public static final String TIMESTAMP = "timeStamp";
+    public static final String TIME_EVENT = "timeEvent";
 
     public static final Set<String> SET = getBasicProps();
 
@@ -53,7 +55,7 @@ public class BasicProps {
         basicProps.add(CREATED);
         basicProps.add(ACCESSED);
         basicProps.add(MODIFIED);
-        basicProps.add(RECORDDATE);
+        basicProps.add(CHANGED);
         basicProps.add(PATH);
         basicProps.add(CATEGORY);
         basicProps.add(DELETED);
@@ -73,6 +75,8 @@ public class BasicProps {
         basicProps.add(TREENODE);
         basicProps.add(THUMB);
         basicProps.add(SIMILARITY_FEATURES);
+        basicProps.add(TIMESTAMP);
+        basicProps.add(TIME_EVENT);
         return basicProps;
     }
 

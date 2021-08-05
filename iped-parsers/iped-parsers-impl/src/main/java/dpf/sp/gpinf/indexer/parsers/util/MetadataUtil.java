@@ -7,21 +7,22 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.tika.config.TikaConfig;
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.Property;
+import org.apache.tika.metadata.TIFF;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.parsers.TiffPageParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
+import iped3.util.MediaTypes;
 
 public class MetadataUtil {
 
@@ -31,11 +32,63 @@ public class MetadataUtil {
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
 
-    private static MediaTypeRegistry registry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
-
-    private static Map<String, String> metaCaseMap = new HashMap<String, String>();
-
     public static Set<String> ignorePreviewMetas = getIgnorePreviewMetas();
+
+    private static final Map<String, String> renameMap = getRenameMap();
+
+    private static final Set<String> singleValueKeys = getSingleValKeys();
+
+    private static Map<String, String> metaCaseMap = getMetaCaseMap();
+
+    private static Map<String, String> getMetaCaseMap() {
+        Map<String, String> metaCaseMap = new HashMap<String, String>();
+        for(String key : renameMap.values()) {
+            key = removePrefix(key);
+            metaCaseMap.put(key.toLowerCase(), key);
+        }
+        return metaCaseMap; 
+    }
+    
+    private static String removePrefix(String key) {
+        if (key.startsWith(ExtraProperties.IMAGE_META_PREFIX))
+            return key.substring(ExtraProperties.IMAGE_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.VIDEO_META_PREFIX))
+            return key.substring(ExtraProperties.VIDEO_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.AUDIO_META_PREFIX))
+            return key.substring(ExtraProperties.AUDIO_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.PDF_META_PREFIX))
+            return key.substring(ExtraProperties.PDF_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.HTML_META_PREFIX))
+            return key.substring(ExtraProperties.HTML_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.OFFICE_META_PREFIX))
+            return key.substring(ExtraProperties.OFFICE_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.GENERIC_META_PREFIX))
+            return key.substring(ExtraProperties.GENERIC_META_PREFIX.length());
+        return key;
+    }
+    
+    private static Set<String> getSingleValKeys() {
+        Set<String> singleValueKeys = new HashSet<>();
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Make");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Model");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.IMAGE_META_PREFIX + "Height");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Width");
+        singleValueKeys.add(ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return singleValueKeys;
+    }
+
+    // if this map is updated, new prefixes should be put in removePrefix(key) see #522
+    private static Map<String, String> getRenameMap() {
+        Map<String, String> rename = new HashMap<String, String>();
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MAKE.getName(), ExtraProperties.IMAGE_META_PREFIX + "Make");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.EQUIPMENT_MODEL.getName(), ExtraProperties.IMAGE_META_PREFIX + "Model");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Width");
+        rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
+        rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        return rename;
+    }
 
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
@@ -167,6 +220,8 @@ public class MetadataUtil {
         prefixDocMetadata(metadata);
         prefixBasicMetadata(metadata);
         removeDuplicateValues(metadata);
+        renameKeys(metadata);
+        removeExtraValsFromSingleValueKeys(metadata);
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {
@@ -176,6 +231,9 @@ public class MetadataUtil {
                 for (Property p : prop.getSecondaryExtractProperties())
                     metadata.remove(p.getName());
             }
+        }
+        if (metadata.get(TiffPageParser.propNumPages) != null) {
+            metadata.remove(TiffPageParser.propExifPageCount);
         }
     }
 
@@ -400,7 +458,7 @@ public class MetadataUtil {
                 includePrefix(metadata, ExtraProperties.OFFICE_META_PREFIX);
                 break;
             }
-            mediaType = registry.getSupertype(mediaType);
+            mediaType = MediaTypes.getParentType(mediaType);
         }
     }
 
@@ -430,7 +488,7 @@ public class MetadataUtil {
     public static final boolean isHtmlSubType(MediaType mediaType) {
         do {
             boolean hasParam = mediaType != null && mediaType.hasParameters();
-            mediaType = registry.getSupertype(mediaType);
+            mediaType = MediaTypes.getParentType(mediaType);
             if (!hasParam && isHtmlMediaType(mediaType))
                 return true;
 
@@ -449,6 +507,29 @@ public class MetadataUtil {
             }
         }
         return clone;
+    }
+    
+    private static void renameKeys(Metadata metadata) {
+        for (String oldName : renameMap.keySet()) {
+            String[] values = metadata.getValues(oldName);
+            if (values != null) {
+                metadata.remove(oldName);
+                String newName = renameMap.get(oldName);
+                for (String val : values) {
+                    metadata.add(newName, val);
+                }
+            }
+        }
+    }
+
+    // currently keeps just last value, how to choose?
+    private static void removeExtraValsFromSingleValueKeys(Metadata metadata) {
+        for (String key : singleValueKeys) {
+            String[] values = metadata.getValues(key);
+            if (values != null && values.length > 1) {
+                metadata.set(key, values[values.length - 1]);
+            }
+        }
     }
 
 }
