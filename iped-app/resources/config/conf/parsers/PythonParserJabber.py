@@ -162,10 +162,6 @@ class PythonParserJabber:
                 idict={}
                 curr_tag = html_message.name
 
-                # Few messages with value None. Ignore them.
-                # if not html_message:
-                #     continue
-
                 # If the format "dd/mm/aaaa" is not present, then this means that the message content is itself
                 # a span sibling. So it is necessary to recover the previous span tag, as it contains the metadata
                 # for the message 
@@ -193,8 +189,6 @@ class PythonParserJabber:
                 if curr_msg == ' ':
                     curr_msg = curr_msg.next_sibling
 
-
-
                 # Some messages are html formated (check line 5 of previous html code)
                 if isinstance(curr_msg, Tag):
                     curr_msg_text = curr_msg.text
@@ -212,11 +206,7 @@ class PythonParserJabber:
                         else:
                             block_msg +=curr_msg.text
                         curr_msg = curr_msg.next_sibling
-                        # if isinstance(curr_msg, NavigableString):
-                        #     print("parou")
                     curr_msg_text = block_msg
-                # assert curr_msg_text not in ["", " ", None]
-
 
                 assert isinstance(curr_metadata, Tag)
                 assert isinstance(curr_msg_text, str)
@@ -236,7 +226,6 @@ class PythonParserJabber:
                     else:
                         raise "host_system_message not registered: There are not any strings from %s in %s"%(curr_msg, host_system_messages)
 
-
                 message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
                 dateobj = datetime.strptime("%sT%s"%(message_day,message_time),"%d/%m/%YT%H:%M:%S")
                 idict["message_date"] = dateobj.replace(tzinfo = filedate_tz).isoformat()
@@ -252,8 +241,6 @@ class PythonParserJabber:
             sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
             for m in sorted_msgs_list:
                 iped_date = m["message_date"]
-                if "message_sender" not in m.keys():
-                    print("parou")
                 iped_sender = m["message_sender"]
                 if iped_sender == host_system:
                     iped_receiver = client
@@ -316,18 +303,6 @@ class PythonParserJabber:
             '''
 
         except Exception as exc:
-                # except Exception as exc:
-            _info = sys.exc_info()
-            exc_type, exc_obj, exc_tb = _info[0], _info[1], _info[2]
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            error_line = exc_tb.tb_lineno
-            error_function = os.path.split(exc_tb.tb_frame.f_code.co_name)[1]
-            error_raised = """ERROR: %s LINE: %s FUNCTION: %s File %s, """\
-                        % (exc_obj, error_line, error_function, fname)
-
-            print("Error during parsing of file %s"%tmpFilePath,error_raised)
-            #<class 'TypeError'>: exceptions must derive from BaseException
-            # raise TikaException(error_msg)
             raise exc
 
 
