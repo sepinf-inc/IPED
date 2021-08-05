@@ -133,138 +133,140 @@ class PythonParserJabber:
             message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
             filedate = os.path.basename(origFileName).replace(".html","").replace("BRT","")
             filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
-
+            host_system_messages = ["arquivo","envio"]
             messages_list=[]
-            all_lines = body.find_all('br')
 
-            # There are at least two possible formats for the messages.
-            # 1: <span style="color: #16569E"><span style="font-size: smaller">(18:02:46)</span> <b>msn.do.thor1@jabber.ru/7433774929690452792:</b></span> man acho q peguei algo aqui nesse js, q baixa la no pc<br>
-            # 2: <font color="#A82F2F"><font size="2">(12:05:01)</font> <b>Coyote.:</b></font> <body>N viajei esse ano n</body><br/>
-            # Find out which format
+            '''
+            files from jabber 2017 look like:
+            <html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Conversation with alice@xmpp.al at 20/03/2017 08:50:25 on bob@xmpp.bo (jabber)</title></head><body><h3>Conversation with alice@xmpp.al at 20/03/2017 08:50:25 on bob@xmpp.bo (jabber)</h3>
+            <font color="#16569E"><font size="2">(08:50:30)</font> <b>bob@xmpp.bo/333327081514908999591234:</b></font> hello<br/>
+            <font color="#A82F2F"><font size="2">(08:50:48)</font> <b>remote_nickname:</b></font> world 	  	
+            ''' 
+
+            # There are at least two possible formats for the messages
             possible_tags = ["span","font"]
-            curr_tag = None
+            title_rep = body.next_element
+            assert title_rep.name in ["h1", "h2", "h3"]
+            new_line = title_rep.next_sibling
+            # assert new_line == "\n" or new_line.name == "p"
+            if new_line.name == "p":
+                first_msg = new_line.next_element.next_element
+            elif new_line == "\n":
+                first_msg = new_line.next_sibling
+            else:
+                raise "Tag not found exception"
+            assert first_msg.name in possible_tags
+            all_messages = [first_msg] + [x for x in first_msg.find_next_siblings(first_msg.name)] 
 
-            # This code catches the rare exceptions for unkown tags, but increases the processing time.
-            # Leaving the original code then
-
-            # for tag in possible_tags:
-            #     for i in range(0,len(all_lines)):
-            #         test_syntax = all_lines[i].find_previous_sibling(tag)
-            #         if test_syntax:
-            #             curr_tag = tag
-            #             break
-            # if not curr_tag:
-            #     print("STOP: %s"%all_lines)
-                
-            for tag in possible_tags:
-                test_syntax = all_lines[0].find_previous_sibling(tag)
-                if test_syntax:
-                    curr_tag = tag
-
-
-
-            html_messages = [x.find_previous_sibling(curr_tag) for x in all_lines]
-            # Older versions (curr_tag = "font"), text messages with multiple <br> are not structured using html tags. Remove duplicated
-            if curr_tag == "font":
-                html_messages = list(set(html_messages))
-
-            for idx, html_message in enumerate(html_messages):
+            for idx, html_message in enumerate(all_messages):
+                idict={}
+                curr_tag = html_message.name
 
                 # Few messages with value None. Ignore them.
-                if not html_message:
-                    continue
+                # if not html_message:
+                #     continue
 
-                # If the format "dd/mm/aaaa" is not present, then this is a formatted message. 
-                # In that case, date and nickname data are stored in the previous tag.
+                # If the format "dd/mm/aaaa" is not present, then this means that the message content is itself
+                # a span sibling. So it is necessary to recover the previous span tag, as it contains the metadata
+                # for the message 
+
+                '''
+                <span style="color: #A82F2F"><span style="font-size: smaller">(17:58:02)</span> <b>alice@jabber.at:</b></span> sim com certeza<br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:02:46)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> man acho q peguei algo aqui nesse js, q baixa la no pc<br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:02:50)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> vi um dominio aqui <br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:02:56)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> rastreei ele é aqui q ta hospedado<br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:02:57)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> <span style='color: #5A5A5A;'><span style='font-family: Lato, Helvetica, sans-serif;'><a href="http://www.dominio1.com">www.dominio1.com</a></span></span><br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:03:25)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> <a href="http://prntscr.com/aaaaaaaa">http://prntscr.com/aaaaaaaa</a><br>
+                <span style="color: #16569E"><span style="font-size: smaller">(18:03:29)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> resto ta no raiodenuvem<br>
+                '''
                 if not html_message.find(text=re.compile("\d{2}:\d{2}:\d{2}")):
-                    curr_content = html_message
-                    curr_metadata = html_message.find_previous_sibling(curr_tag)
+                    curr_msg = html_message
+                    curr_metadata = html_message.find_previous_sibling("span")
                 else:
-
-                    # If the date format is found, then there are two possibilities: a simple text message, or a system message.
-                    # In the first case, there are 2 span tags, the first one comprising color and font, and the second one comprising date and nickname.
-                    # curr_content = self.get_content_until_tag(html_message, curr_tag)
-                    res = []
-                    nextNode = html_message
-                    while True:
-                        nextNode = nextNode.nextSibling
-                        try:
-                            tag_name = nextNode.name
-                        except AttributeError:
-                            tag_name = ""
-
-                        if nextNode and tag_name != curr_tag:
-                            if isinstance(nextNode, NavigableString):
-                                res.append(nextNode.string)
-                            elif isinstance(nextNode, Tag):
-                                res.append(nextNode.text)
-                        else:
-                            break
-                    curr_content = " ".join([x for x in res if x not in [" ", "", "\n",None]])
+                    curr_msg = html_message.next_sibling
                     curr_metadata = html_message
 
-                        
+                '''
+                Found some cases in which the message is contained within further tags
+                <font color="#A82F2F"><font size="2">(16:10:56)</font> <b>FIDEL:</b></font> <body>Já tá promto</body><br/>
+                '''
+                if curr_msg == ' ':
+                    curr_msg = curr_msg.next_sibling
 
-                idict={}
-                if curr_tag == "span":
-                    if curr_metadata.find(curr_tag,style=True):                
-                        # Skipping the suffix (it will capture  alice@jabber.br if the user is alice@jabber.br/7433774929690452792)
-                        idict["message_sender"] = curr_metadata.find("b").text.rsplit("/",1)[0]
 
+
+                # Some messages are html formated (check line 5 of previous html code)
+                if isinstance(curr_msg, Tag):
+                    curr_msg_text = curr_msg.text
+                elif isinstance(curr_msg, NavigableString):
+                    curr_msg_text = curr_msg.string
+                elif isinstance(curr_msg, str):
+                    curr_msg_text = curr_msg
+
+                if curr_msg_text in ["", " "]:
+                    block_msg = ""
+                    while curr_msg.name not in [curr_tag]:
+                    # while curr_msg.next_sibling.name != curr_tag and not isinstance(curr_msg.next_sibling, NavigableString):
+                        if isinstance(curr_msg, NavigableString):
+                            block_msg +=curr_msg.string
+                        else:
+                            block_msg +=curr_msg.text
+                        curr_msg = curr_msg.next_sibling
+                        # if isinstance(curr_msg, NavigableString):
+                        #     print("parou")
+                    curr_msg_text = block_msg
+                # assert curr_msg_text not in ["", " ", None]
+
+
+                assert isinstance(curr_metadata, Tag)
+                assert isinstance(curr_msg_text, str)
+
+                message_sender = curr_metadata.find("b")
+                if message_sender:
+                    message_sender = message_sender.text.rsplit("/",1)[0].strip(":")
+                else:
+                    '''
+                    it could be a system message, such as:
+                    <html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Conversation with alice@dukgo.com at 05/02/2017 16:32:47 on bob@xmpp.cm/ (jabber)</title></head><body><h3>Conversation with alice@dukgo.com at 05/02/2017 16:32:47 on bob@xmpp.cm/ (jabber)</h3>
+                    <font size="2">(16:32:51)</font><b> Tentando iniciar uma conversa privada com alice@dukgo.com...</b><br/>
+                    <font size="2">(16:32:52)</font><b> alice@dukgo.com ainda não foi autenticado.  Você deve <a href="https://otr-help.cypherpunks.ca/4.0.2/authenticate.php?lang=pt_BR">autenticar</a> este amigo.</b><br/>
+                    '''
+                    if any(x for x in participants if x in curr_msg_text) or any(x for x in host_system_messages for x in curr_msg_text):
+                        message_sender = host_system
                     else:
-                        idict["message_sender"] =  host_system
-                elif curr_tag == "font":
-                    if curr_metadata.find("b"):
-                        idict["message_sender"] = curr_metadata.find("b").text.rsplit("/",1)[0]
-                    else:
-                        idict["message_sender"] =  host_system
+                        raise "host_system_message not registered: There are not any strings from %s in %s"%(curr_msg, host_system_messages)
+
 
                 message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
                 dateobj = datetime.strptime("%sT%s"%(message_day,message_time),"%d/%m/%YT%H:%M:%S")
                 idict["message_date"] = dateobj.replace(tzinfo = filedate_tz).isoformat()
-
-                idict["message_text"] = curr_content
+                idict["message_sender"] = message_sender
+                idict["message_text"] = curr_msg_text
+                
+                assert " "  not in  idict.values()
                 messages_list.append(idict)
 
-
-
-            # This validation is based in at least one username being a substring of the nickname, normally the client app in which the chat data was captured.
-            #eg: username: alice@jabber.br nickname: alice@jabber.br/7433774929690452792
-            # nicknames = list(set([x["message_sender"] for x in messages_list]))
-
-            # participant_nickname_dict = {}
-            # for curr_nick in nicknames:
-            #     if client in curr_nick or curr_nick == host_system:
-            #         participant_nickname_dict[curr_nick] = curr_nick
-            #     # Normally there is only one nickame (eg bob2020) which is remote. The other ones follow the format alice@jabber.br/0123456789
-            #     # Host_system is not a participant, it is create by the parser to be the sender from the system messages.
-            #     else:
-            #         participant_nickname_dict[curr_nick] = [x for x in participants if client not in x][-1]
-
-            # # make sure there is a receiver in chat files comprising only one user and the host_system
-            # if len(nicknames) == 1 or (len(nicknames) == 2 and host_system in nicknames):
-            #     other_participant = [x for x in participants if x not in [y.split("/",1)[0] for y in participant_nickname_dict.values()]][-1]
-            #     participant_nickname_dict[other_participant] = other_participant
-            
             new_messages_list = []
             msg_num = 0
             msg_name_prefix = "Jabber chat message "
             sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
             for m in sorted_msgs_list:
                 iped_date = m["message_date"]
+                if "message_sender" not in m.keys():
+                    print("parou")
                 iped_sender = m["message_sender"]
                 if iped_sender == host_system:
                     iped_receiver = client
                 else:
                     # remote participant sent the message
                     iped_receiver = [x for x in participants if x not in [iped_sender,host_system]][-1]
-
                 iped_text = m["message_text"]
+                
                 if client in iped_sender:
                     iped_direction = "outgoing to"
                 else:
                     iped_direction = "incoming from"
-
+                
                 meta = Metadata()
                 meta.set(BasicProps.LENGTH, "")
                 meta.set(Metadata.RESOURCE_NAME_KEY, msg_name_prefix + str(msg_num))
@@ -275,9 +277,7 @@ class PythonParserJabber:
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, self.instant_message_mime)
                 extractor.parseEmbedded(EmptyInputStream(), handler, meta, False)
 
-                # xhtml.characters(" - ".join([iped_date, iped_sender, iped_text]))
                 new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
-                
                 msg_num += 1
 
             # Code below generates html in whatsapp format. For now we are giving
@@ -316,6 +316,18 @@ class PythonParserJabber:
             '''
 
         except Exception as exc:
+                # except Exception as exc:
+            _info = sys.exc_info()
+            exc_type, exc_obj, exc_tb = _info[0], _info[1], _info[2]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            error_line = exc_tb.tb_lineno
+            error_function = os.path.split(exc_tb.tb_frame.f_code.co_name)[1]
+            error_raised = """ERROR: %s LINE: %s FUNCTION: %s File %s, """\
+                        % (exc_obj, error_line, error_function, fname)
+
+            print("Error during parsing of file %s"%tmpFilePath,error_raised)
+            #<class 'TypeError'>: exceptions must derive from BaseException
+            # raise TikaException(error_msg)
             raise exc
 
 
