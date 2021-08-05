@@ -140,7 +140,7 @@ public class JMapOptionsPane extends JOptionPane {
 
         JComboBox cbTileSrcs = new JComboBox();
 
-        MapaPanelConfig mpc = (MapaPanelConfig) ConfigurationManager.getInstance().findObjects(MapaPanelConfig.class).toArray()[0];
+        MapaPanelConfig mpc = (MapaPanelConfig) ConfigurationManager.get().findObjects(MapaPanelConfig.class).toArray()[0];
         defaultTilesSources = mpc.getDefaultTilesSources();
 
         Set<String> ms=defaultTilesSources.keySet();

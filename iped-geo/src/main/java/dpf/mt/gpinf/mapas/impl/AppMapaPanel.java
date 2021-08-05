@@ -16,7 +16,6 @@ import javax.swing.SwingUtilities;
 
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-import dpf.sp.gpinf.carver.AppCarverTaskConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItemId;
 import iped3.desktop.GUIProvider;
@@ -82,8 +81,8 @@ public class AppMapaPanel extends JPanel {
 		mpConfig = new MapaPanelConfig();
 
 		try {
-			ConfigurationManager.getInstance().addObject(mpConfig);
-			ConfigurationManager.getInstance().loadConfigs();
+            ConfigurationManager.get().addObject(mpConfig);
+            ConfigurationManager.get().loadConfigs();
 		}catch(Exception e) {
 			tilesSourceURL=null;
 		}

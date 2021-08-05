@@ -12,7 +12,12 @@ import java.util.Set;
 
 import macee.core.Configurable;
 
-public class MapaPanelConfig implements Configurable<UTF8Properties, UTF8Properties> {
+public class MapaPanelConfig implements Configurable<UTF8Properties> {
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+
     public static final String GEO_CONFIG_FILE = "GEOConfig.txt"; //$NON-NLS-1$
 
     UTF8Properties properties = new UTF8Properties();
@@ -46,7 +51,7 @@ public class MapaPanelConfig implements Configurable<UTF8Properties, UTF8Propert
         }
 	}
 
-	private void processConfig(Path resource) throws IOException {
+    public void processConfig(Path resource) throws IOException {
         if (resource.endsWith(GEO_CONFIG_FILE)) {
             properties.load(resource.toFile());
             String value;
@@ -70,37 +75,18 @@ public class MapaPanelConfig implements Configurable<UTF8Properties, UTF8Propert
         }
 	}
 
-	@Override
-	public UTF8Properties getApplicationConfiguration() {
-		return null;
-	}
-
-	@Override
-	public void setApplicationConfiguration(UTF8Properties config) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public Set<String> getApplicationPropertyNames() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public UTF8Properties getUserConfiguration() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setUserConfiguration(UTF8Properties config) {
-		// TODO Auto-generated method stub
-		
-	}
-
 	public HashMap<String, String> getDefaultTilesSources() {
 		return defaultTilesSources;
 	}
+
+    @Override
+    public UTF8Properties getConfiguration() {
+        return properties;
+    }
+
+    @Override
+    public void setConfiguration(UTF8Properties config) {
+        this.properties = config;
+    }
 
 }
