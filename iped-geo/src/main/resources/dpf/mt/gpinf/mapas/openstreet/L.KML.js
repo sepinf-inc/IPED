@@ -1,4 +1,12 @@
 
+/*
+	Copyright (c) 2021, Patrick Dalla Bernardina - MIT licence
+	
+	This work was almost all based on code downloaded in 30/07/2021 from https://github.com/windycom/leaflet-kml/blob/master/L.KML.js 
+	which has the Copyright (c) 2011-2015, Pavel Shramov, Bruno Bergot - MIT licence
+	 
+*/
+
 
 L.TileLayer = L.TileLayer.include({
 	getTileUrl: function(xy) {
