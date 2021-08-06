@@ -45,6 +45,8 @@ public class JMapOptionsPane extends JOptionPane {
     static final String BING_URL = "http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1";
     static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
 
+    static File userHome = new File(System.getProperty("user.home"), ".indexador");
+
     static File tileServerUrlFile = null;
     static File googleApiKeyFile = null;
     static String googleApiKey = null;
@@ -303,13 +305,10 @@ public class JMapOptionsPane extends JOptionPane {
         dialog.dispose();
     }
 
-    public static File getTempTileSourceURLFile() {
+    public static File getLastTileSourceURLFile() {
         try {
             if (tileServerUrlFile == null) {
-                String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
-                if (tempdir == null)
-                    tempdir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
-                tileServerUrlFile = new File(tempdir, "iped_tileserver" + ".tmp"); //$NON-NLS-1$
+                tileServerUrlFile = new File(userHome, "last_tileserver" + ".txt"); //$NON-NLS-1$
             }
             tileServerUrlFile.createNewFile();
         } catch (Exception e) {
@@ -318,13 +317,10 @@ public class JMapOptionsPane extends JOptionPane {
         return tileServerUrlFile;
     }
 
-    public static File getTempGoogleAPIKey() {
+    public static File getLastGoogleAPIKey() {
         try {
             if (googleApiKeyFile == null) {
-                String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
-                if (tempdir == null)
-                    tempdir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
-                googleApiKeyFile = new File(tempdir, "iped_googleapikey" + ".tmp"); //$NON-NLS-1$
+                googleApiKeyFile = new File(userHome, "googleApi.key"); //$NON-NLS-1$
             }
             googleApiKeyFile.createNewFile();
         } catch (Exception e) {
@@ -335,7 +331,7 @@ public class JMapOptionsPane extends JOptionPane {
 
     public static String getGoogleAPIKey() {
         if (googleApiKey == null) {
-            File f = getTempGoogleAPIKey();
+            File f = getLastGoogleAPIKey();
             try {
                 if (f != null) {
                     DataInputStream dis;
@@ -355,7 +351,7 @@ public class JMapOptionsPane extends JOptionPane {
     }
 
     public static String getSavedTilesSourceURL() {
-        File f = getTempTileSourceURLFile();
+        File f = getLastTileSourceURLFile();
         String tileSourceURL = null;
         try {
             if (f != null) {
@@ -402,7 +398,7 @@ public class JMapOptionsPane extends JOptionPane {
         // salva temporariamente a chave API do google utilizada
         if (singleton.btnGoogleMaps.isSelected()) {
             try {
-                getTempGoogleAPIKey();
+                getLastGoogleAPIKey();
                 FileWriter fw = new FileWriter(googleApiKeyFile);
                 fw.write(singleton.txGoogleApiKey.getText() + "\n");
                 fw.flush();
