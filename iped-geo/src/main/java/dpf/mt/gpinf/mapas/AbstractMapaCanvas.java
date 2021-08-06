@@ -12,7 +12,6 @@ import java.util.Set;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.util.Messages;
-import javafx.application.Platform;
 
 abstract public class AbstractMapaCanvas extends Canvas {
     MapSelectionListener mapSelectionListener = null;

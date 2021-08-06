@@ -1,7 +1,6 @@
 package dpf.mt.gpinf.mapas.webkit;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-import dpf.mt.gpinf.mapas.openstreet.MapaCanvasOpenStreet;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;

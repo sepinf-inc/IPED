@@ -1,15 +1,15 @@
 package dpf.mt.gpinf.mapas.impl;
 
-import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import java.io.IOException;
-import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.DirectoryStream;
+import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import macee.core.Configurable;
 
 public class MapaPanelConfig implements Configurable<UTF8Properties> {

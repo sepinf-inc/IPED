@@ -5,18 +5,15 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Base64;
 import java.util.HashMap;
-
-import javax.swing.JOptionPane;
 
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.impl.JMapOptionsPane;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -24,11 +21,11 @@ import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
+import javafx.scene.CacheHint;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
-import javafx.scene.CacheHint;
 import netscape.javascript.JSObject;
 
 public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
