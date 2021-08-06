@@ -60,11 +60,13 @@
     			zoomOffset: -1,
 				}).addTo(map);
 		
+		/*
 		var img = L.DomUtil.create('img');
 		img.src = '{{layers_img}}';
 		L.DomEvent.on(img, 'click', changeTileServer);
 
 		L.control.tilesSrcSelect(img, { position: 'topleft' }).addTo(map);
+		*/
 
          const parser = new DOMParser();
          const kml = parser.parseFromString('{{kml}}', 'text/xml');
@@ -78,12 +80,6 @@
 		map.fitBounds(bounds);
     }
     
-    function changeTileServer(e){
-    	if(e.isTrusted){
-    		window.app.getMap().fireChangeTileServer();
-   		}
-	}
-
 	mpos=0;
     function navega(pos){
     	if(pos<0){

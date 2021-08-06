@@ -14,6 +14,7 @@ import javax.swing.JOptionPane;
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.mt.gpinf.mapas.impl.JMapOptionsPane;
 import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import dpf.sp.gpinf.network.util.ProxySever;
@@ -153,6 +154,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
             html = html.replace("{{icone_base64}}", b64_normal); //$NON-NLS-1$
             html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m); //$NON-NLS-1$
             html = html.replace("{{icone_m_base64}}", b64_marcado); //$NON-NLS-1$
+            html = html.replace("{{toolbar}}", getToolBarHtml());
             html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
             setText(html);
@@ -162,24 +164,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
     }
 
     private String replaceApiKey(String html) {
-        if (googleApiKey.isEmpty()) {
-            if (keyStore.exists())
-                try {
-                    googleApiKey = new String(Files.readAllBytes(keyStore.toPath()), "UTF-8");
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            String key = JOptionPane.showInputDialog(jfxPanel,
-                    "Please insert Google Maps Javascript API key to use the map feature:", googleApiKey);
-            if (key != null) {
-                googleApiKey = key;
-                try {
-                    Files.write(keyStore.toPath(), googleApiKey.getBytes("UTF-8"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+       	googleApiKey = JMapOptionsPane.getGoogleAPIKey();
         html = html.replace("{{GOOGLE_API_KEY}}", googleApiKey); //$NON-NLS-1$
         return html;
     }

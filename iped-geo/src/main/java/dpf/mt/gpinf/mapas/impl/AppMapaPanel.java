@@ -95,7 +95,10 @@ public class AppMapaPanel extends JPanel {
 					SwingUtilities.invokeAndWait(new Runnable() {
 						@Override
 						public void run() {
-							url.append(JMapOptionsPane.showOptionsDialog(self));
+							String result = JMapOptionsPane.showOptionsDialog(self);
+							if(result!=null) {
+								url.append(result);
+							}
 						}
 					});
 				} catch (InvocationTargetException | InterruptedException e1) {
@@ -105,7 +108,7 @@ public class AppMapaPanel extends JPanel {
 				SwingUtilities.invokeLater(new Runnable() {
 					@Override
 					public void run() {
-						if(url!=null) {
+						if(url.length()>0) {
 							tilesSourceURL=url.toString();
 				        	config(tilesSourceURL);
 				        	mapaDesatualizado=true;

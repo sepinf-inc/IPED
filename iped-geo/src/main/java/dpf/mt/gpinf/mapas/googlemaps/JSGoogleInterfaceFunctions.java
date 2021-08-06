@@ -7,6 +7,7 @@ import java.util.StringTokenizer;
 import dpf.mt.gpinf.mapas.MapSelectionListener;
 import dpf.mt.gpinf.mapas.MarkerCheckBoxListener;
 import dpf.mt.gpinf.mapas.MarkerEventListener;
+import dpf.mt.gpinf.mapas.openstreet.MapaCanvasOpenStreet;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import netscape.javascript.JSObject;
 
@@ -17,6 +18,10 @@ public class JSGoogleInterfaceFunctions implements JSInterfaceFunctions {
     public JSGoogleInterfaceFunctions(MapaCanvasWebkit map) {
         this.map = map;
     }
+    
+    public MapaCanvasWebkit getMap() {
+		return map;
+	}
 
     @Override
 	public void selecionaMarcadorBF(JSObject markers) {

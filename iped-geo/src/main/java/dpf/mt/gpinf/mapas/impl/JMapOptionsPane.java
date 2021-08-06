@@ -47,6 +47,8 @@ public class JMapOptionsPane extends JOptionPane {
 	static final String OSM_URL = "https://tile.openstreetmap.org/${z}/${x}/${y}.png";
 
 	static File tileServerUrlFile=null;
+	static File googleApiKeyFile=null;
+	static String googleApiKey=null;
 
 	JDialog dialog = null;
 	static JMapOptionsPane singleton = null;
@@ -55,6 +57,7 @@ public class JMapOptionsPane extends JOptionPane {
 	JRadioButton btnGoogleMaps;
 	String rbOutraCache="";
 	boolean canceled=true;
+	JTextField txGoogleApiKey=new JTextField();
 	HashMap<String,String> defaultTilesSources;
 
 	
@@ -75,9 +78,9 @@ public class JMapOptionsPane extends JOptionPane {
         JPanel paneGoogle = new JPanel();
         paneGoogle.setLayout(new BorderLayout());
         JPanel paneGoogleKey = new JPanel();
-        JTextField txGoogleApiKey = new JTextField();
         JLabel lbGoogleApiKey = new JLabel(Messages.getString("JMapOptionsPane.GoogleApiKeyLabel"));
 		
+        txGoogleApiKey.setText(getGoogleAPIKey());
         txGoogleApiKey.getDocument().addDocumentListener(new DocumentListener() {		 
 			 @Override 
 			 public void removeUpdate(DocumentEvent e) {
@@ -265,7 +268,11 @@ public class JMapOptionsPane extends JOptionPane {
 						txTileLayerURl.setEnabled(false);
 						txTileLayerURl.setText("");
 						txGoogleApiKey.setEnabled(true);
-						btOk.setEnabled(false);
+						if("".equals(txGoogleApiKey.getText().trim())) {
+							btOk.setEnabled(false);
+						}else {
+							btOk.setEnabled(true);
+						}
 						txTileLayerURl.repaint();
 					}
 				}
@@ -306,6 +313,41 @@ public class JMapOptionsPane extends JOptionPane {
 		return tileServerUrlFile;
 	}
 
+	public static File getTempGoogleAPIKey() {
+    	try {
+    		if(googleApiKeyFile==null) {
+    	    	String tempdir = System.getProperty("java.io.basetmpdir"); //$NON-NLS-1$
+    	        if (tempdir == null)
+    	            tempdir = System.getProperty("java.io.tmpdir"); //$NON-NLS-1$
+    	        googleApiKeyFile = new File(tempdir, "iped_googleapikey" + ".tmp"); //$NON-NLS-1$
+    		}
+    		googleApiKeyFile.createNewFile();
+		} catch (Exception e) {
+			googleApiKeyFile=null;
+		}
+		return googleApiKeyFile;
+	}
+
+	public static String getGoogleAPIKey() {
+		if(googleApiKey==null) {
+			File f = getTempGoogleAPIKey();
+			try {
+				if(f!=null) {
+					DataInputStream dis;
+					dis = new DataInputStream(new FileInputStream(f));
+					googleApiKey = dis.readLine();
+					if(googleApiKey==null) return "";
+					return googleApiKey;
+				}
+			} catch (FileNotFoundException e) {
+			} catch (IOException e) {
+			}
+			return "";
+		}else {
+			return googleApiKey;
+		}
+	}
+	
 	public static String getSavedTilesSourceURL() {
 		File f = getTempTileSourceURLFile();
 		String tileSourceURL=null;
@@ -352,6 +394,19 @@ public class JMapOptionsPane extends JOptionPane {
 			}
     	}
 
+    	//salva temporariamente a chave API do google utilizada
+    	if(singleton.btnGoogleMaps.isSelected()) {
+        	try {
+        		getTempGoogleAPIKey();
+	            FileWriter fw = new FileWriter(googleApiKeyFile);
+	            fw.write(singleton.txGoogleApiKey.getText()+"\n");
+	            fw.flush();
+	            fw.close();
+			} catch (IOException e) {
+				//skip temp cache
+			}
+    	}
+    	
     	return singleton.getUrl();
     }
     

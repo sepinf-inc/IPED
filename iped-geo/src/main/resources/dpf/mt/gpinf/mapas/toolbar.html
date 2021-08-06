@@ -1,3 +1,9 @@
+<script>
+    function exportarKml(){
+    	window.app.exportarKmlBF();
+    }
+</script>
+
    <div id="barra_lateral" style="height:100%;width:100%;">
    		<a href="#" onclick="toogleVisibility();" id="toogleVisibilityButton">-</a>
    		<div id="barra_content" style="width:100%; border:0px;">
@@ -15,6 +21,7 @@
    	 		<br/><br/>
    			<input type="button" name="zoomout" value="{{toolbar.DisplayAll}}" onclick="track.viewAll();" style="width:100%"/>
    			<input type="button" name="export" value="{{toolbar.ExportKML}}" onclick="exportarKml();" style="width:100%"/>
+   			<input type="button" name="export" value="{{toolbar.ChangeTileServer}}" onclick="window.app.getMap().fireChangeTileServer()" style="width:100%"/>
 
 
 			<div style="position:absolute; bottom:20px; border:1px;" id="distancia_calc"></div>
