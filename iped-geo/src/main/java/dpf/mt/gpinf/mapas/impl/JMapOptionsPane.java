@@ -3,6 +3,7 @@ package dpf.mt.gpinf.mapas.impl;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Container;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.HeadlessException;
@@ -63,8 +64,13 @@ public class JMapOptionsPane extends JOptionPane {
 	
 	private JMapOptionsPane(Component parentComponent){
     	Window window = SwingUtilities.windowForComponent(parentComponent);
-
-    	dialog = new JDialog((Frame)window, Messages.getString("JMapOptionsPane.title") , true);
+        String title = Messages.getString("JMapOptionsPane.title");
+        if (window instanceof Frame)
+            dialog = new JDialog((Frame) window, title, true);
+        else if (window instanceof Dialog)
+            dialog = new JDialog((Dialog) window, title, true);
+        else
+            dialog = new JDialog((Frame) null, title, true);
 
         int style = JRootPane.PLAIN_DIALOG;
 
@@ -288,8 +294,9 @@ public class JMapOptionsPane extends JOptionPane {
 		btnLeaflet.addItemListener(ilMapImpl);
 	}
 
-	public void show() {
-        dialog.show();
+    public void show(Component parent) {
+        dialog.setLocationRelativeTo(parent);
+        dialog.setVisible(true);
         if(btnGoogleMaps.isSelected()) {
         	url="http://www.googlemaps.com.br";
         }else {
@@ -377,7 +384,7 @@ public class JMapOptionsPane extends JOptionPane {
     		singleton = new JMapOptionsPane(parentComponent);
     	}
 
-    	singleton.show();
+        singleton.show(parentComponent);
     	
     	if(singleton.canceled) {
     		return null;
