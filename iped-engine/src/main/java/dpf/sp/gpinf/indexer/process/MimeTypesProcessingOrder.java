@@ -15,6 +15,7 @@ import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
+import dpf.sp.gpinf.discord.DiscordParser;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
@@ -54,6 +55,7 @@ public class MimeTypesProcessingOrder {
         mediaTypes.put(TelegramParser.TELEGRAM_DB, 2);
         mediaTypes.put(TelegramParser.TELEGRAM_DB_IOS, 2);
 
+        mediaTypes.put(MediaType.parse(DiscordParser.INDEX_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(KnownMetParser.EMULE_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(AresParser.ARES_MIME_TYPE), 1);
         mediaTypes.put(MediaType.parse(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE), 1);

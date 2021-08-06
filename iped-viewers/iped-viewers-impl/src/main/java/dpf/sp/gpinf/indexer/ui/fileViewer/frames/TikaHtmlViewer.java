@@ -37,6 +37,7 @@ public class TikaHtmlViewer extends HtmlViewer {
                 || contentType.equals("application/x-sqlite3") //$NON-NLS-1$
                 || contentType.equals("application/sqlite-skype") //$NON-NLS-1$
                 || contentType.equals("application/x-emule") //$NON-NLS-1$
+                || contentType.equals("application/x-discord-chat") //$NON-NLS-1$
                 || contentType.equals("application/x-ares-galaxy") //$NON-NLS-1$
                 || contentType.equals("application/x-shareaza-library-dat"); //$NON-NLS-1$
     }
