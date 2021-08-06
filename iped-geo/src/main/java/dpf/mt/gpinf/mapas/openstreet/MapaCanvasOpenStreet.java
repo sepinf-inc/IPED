@@ -32,12 +32,12 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
     final JFXPanel jfxPanel;
     JSInterfaceFunctionsOpenStreet jsInterface = new JSInterfaceFunctionsOpenStreet(this);
 
-    boolean dragging=false;
+    boolean dragging = false;
     double dragStartX, dragStartY;
-    
+
     String url;
 
-   public MapaCanvasOpenStreet() {
+    public MapaCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
         this.jfxPanel.addMouseMotionListener(this);
 
@@ -46,44 +46,47 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
                 browser = new WebView();
                 jfxPanel.setScene(new Scene(browser));
 
-                browser.setOnMouseReleased(e->{
-                   	dragging=false;
+                browser.setOnMouseReleased(e -> {
+                    dragging = false;
                 });
 
-                browser.setOnMouseDragged(e->{
-               		String shift="false";
-               		if(e.isShiftDown()) {
-               			shift="true";
-               		}
+                browser.setOnMouseDragged(e -> {
+                    String shift = "false";
+                    if (e.isShiftDown()) {
+                        shift = "true";
+                    }
 
-                   	if(!dragging) {
-                       	dragging=true;
-                       	dragStartX=e.getX();
-                       	dragStartY=e.getY();
-                   	}else {
-                   		final int x = (int) Math.ceil(dragStartX-e.getX());
-                   		final int y = (int) Math.ceil(dragStartY-e.getY());
-                    		
-                   		Platform.runLater(new Runnable() {
-                               public void run() {
-                           		try {
-                           			webEngine.executeScript("map.panBy({x:"+x+", y:"+y+"},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: true})");
-                           		}catch (Exception e) {                           			
-									e.printStackTrace();
-								}
-                               }
-                   		});
+                    if (!dragging) {
+                        dragging = true;
+                        dragStartX = e.getX();
+                        dragStartY = e.getY();
+                    } else {
+                        final int x = (int) Math.ceil(dragStartX - e.getX());
+                        final int y = (int) Math.ceil(dragStartY - e.getY());
+
+                        Platform.runLater(new Runnable() {
+                            public void run() {
+                                try {
+                                    webEngine.executeScript("map.panBy({x:" + x + ", y:" + y
+                                            + "},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: true})");
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        });
                     }
                 });
-                
+
                 webEngine = browser.getEngine();
                 webEngine.setJavaScriptEnabled(true);
-                com.sun.javafx.webkit.WebConsoleListener.setDefaultListener(new com.sun.javafx.webkit.WebConsoleListener() {
-                    @Override
-                    public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
-                        System.out.println("From webview: " + message + " [" + sourceId + " - " + lineNumber + "]");
-                    }
-                });
+                com.sun.javafx.webkit.WebConsoleListener
+                        .setDefaultListener(new com.sun.javafx.webkit.WebConsoleListener() {
+                            @Override
+                            public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
+                                System.out.println(
+                                        "From webview: " + message + " [" + sourceId + " - " + lineNumber + "]");
+                            }
+                        });
                 webEngine.setOnError(new EventHandler<WebErrorEvent>() {
                     public void handle(WebErrorEvent event) {
                         System.out.println("Error:" + event.getMessage()); //$NON-NLS-1$
@@ -139,9 +142,9 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
             }
         });
     }
-    
+
     public void setUrl(String url) {
-    	this.url=url;
+        this.url = url;
     }
 
     @Override
@@ -149,42 +152,49 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
         try {
             String html = IOUtils.toString(getClass().getResourceAsStream("main.html"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
             String js = IOUtils.toString(getClass().getResourceAsStream("L.KML.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
-            String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), "UTF-8"); //$NON-NLS-1$ //$NON-NLS-2$
+            String markerclusterjs = IOUtils.toString(getClass().getResourceAsStream("leaflet.markercluster.js"), //$NON-NLS-1$
+                    "UTF-8"); //$NON-NLS-1$
 
             String layers_img = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-        	.encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
-            
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("layers.png"))); //$NON-NLS-1$
+
             html = html.replace("{{layers_img}}", layers_img);
             html = html.replace("{{markerclusterjs}}", markerclusterjs);
             html = html.replace("{{tileServerUrl}}", url);
             html = html.replace("{{toolbar}}", getToolBarHtml());
 
-            
             String b64_selecionado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-        	.encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado.png"))); //$NON-NLS-1$
             String b64_selecionado_m = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-            	.encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_selecionado_m.png"))); //$NON-NLS-1$
             String b64_normal = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-            	.encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_normal.png"))); //$NON-NLS-1$
             String b64_marcado = "data:image/png;base64," + Base64.getEncoder() //$NON-NLS-1$
-            	.encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
-            
-            //html = replaceApiKey(html);
+                    .encodeToString(IOUtils.toByteArray(getClass().getResourceAsStream("marcador_marcado.png"))); //$NON-NLS-1$
+
+            // html = replaceApiKey(html);
 
             html = html.replace("{{L.KML}}", js); //$NON-NLS-1$
-            //html = html.replace("{{load_keydragzoom}}", js2); //$NON-NLS-1$
-            //html = html.replace("{{load_extensions}}", js3); //$NON-NLS-1$
-            //html = html.replace("{{load_geoxml3_ext}}", js4); //$NON-NLS-1$
-            //html = html.replace("{{icone_selecionado_base64}}", b64_selecionado); //$NON-NLS-1$
-            //html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m); //$NON-NLS-1$
-            //html = html.replace("{{icone_m_base64}}", b64_marcado); //$NON-NLS-1$
-            //html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+            // html = html.replace("{{load_keydragzoom}}", js2); //$NON-NLS-1$
+            // html = html.replace("{{load_extensions}}", js3); //$NON-NLS-1$
+            // html = html.replace("{{load_geoxml3_ext}}", js4); //$NON-NLS-1$
+            // html = html.replace("{{icone_selecionado_base64}}", b64_selecionado);
+            // //$NON-NLS-1$
+            // html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m);
+            // //$NON-NLS-1$
+            // html = html.replace("{{icone_m_base64}}", b64_marcado); //$NON-NLS-1$
+            // html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", ""));
+            // //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
             kml = kml.replace("\n", "").replace("\r", "");
-            kml = kml.replace("<Document>", "<Document><Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>", "<Document><Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>", "<Document><Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>");
-            kml = kml.replace("<Document>", "<Document><Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>",
+                    "<Document><Style id=\"item\"><IconStyle><Icon><href>{{icone_base64}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>",
+                    "<Document><Style id=\"itemSelecionado\"><IconStyle><Icon><href>{{b64_selecionado}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>",
+                    "<Document><Style id=\"itemSelecionadoMarcado\"><IconStyle><Icon><href>{{b64_selecionado_m}}</href></Icon></IconStyle></Style>");
+            kml = kml.replace("<Document>",
+                    "<Document><Style id=\"itemMarcado\"><IconStyle><Icon><href>{{b64_marcado}}</href></Icon></IconStyle></Style>");
             kml = kml.replace("{{icone_base64}}", b64_normal);
             kml = kml.replace("{{b64_selecionado}}", b64_selecionado);
             kml = kml.replace("{{b64_selecionado_m}}", b64_selecionado_m);
@@ -238,7 +248,7 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
                     }
                     if (marcadorselecionado) {
                         try {
-                        	webEngine.executeScript("track.centralizaSelecao();");
+                            webEngine.executeScript("track.centralizaSelecao();");
                         } catch (Exception e) {
                             e.printStackTrace();
                         }

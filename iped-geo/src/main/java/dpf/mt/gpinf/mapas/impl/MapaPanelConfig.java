@@ -22,12 +22,12 @@ public class MapaPanelConfig implements Configurable<UTF8Properties> {
 
     UTF8Properties properties = new UTF8Properties();
     String tileServerUrlPattern;
-    
-    HashMap<String, String> defaultTilesSources = new HashMap<String, String>(); 
 
-	public String getTileServerUrlPattern() {
-		return tileServerUrlPattern;
-	}
+    HashMap<String, String> defaultTilesSources = new HashMap<String, String>();
+
+    public String getTileServerUrlPattern() {
+        return tileServerUrlPattern;
+    }
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -36,20 +36,18 @@ public class MapaPanelConfig implements Configurable<UTF8Properties> {
         }
     };
 
-	
-	
-	@Override
-	public Filter<Path> getResourceLookupFilter() {
-		return filter;
-	}
+    @Override
+    public Filter<Path> getResourceLookupFilter() {
+        return filter;
+    }
 
-	@Override
-	public void processConfigs(List<Path> resources) throws IOException {
+    @Override
+    public void processConfigs(List<Path> resources) throws IOException {
         for (Iterator<Path> iterator = resources.iterator(); iterator.hasNext();) {
             Path path = iterator.next();
             processConfig(path);
         }
-	}
+    }
 
     public void processConfig(Path resource) throws IOException {
         if (resource.endsWith(GEO_CONFIG_FILE)) {
@@ -61,23 +59,23 @@ public class MapaPanelConfig implements Configurable<UTF8Properties> {
                 value = value.trim();
             }
             if (value != null && !value.isEmpty()) {
-            	tileServerUrlPattern = value;
+                tileServerUrlPattern = value;
             }
 
             Set<Object> keys = properties.keySet();
             for (Iterator iterator = keys.iterator(); iterator.hasNext();) {
-				Object object = (Object) iterator.next();
-				if(!"tileServerUrlPattern".equals(object.toString())){
-					defaultTilesSources.put(object.toString(), properties.getProperty(object.toString()));
-				}
-			}
+                Object object = (Object) iterator.next();
+                if (!"tileServerUrlPattern".equals(object.toString())) {
+                    defaultTilesSources.put(object.toString(), properties.getProperty(object.toString()));
+                }
+            }
 
         }
-	}
+    }
 
-	public HashMap<String, String> getDefaultTilesSources() {
-		return defaultTilesSources;
-	}
+    public HashMap<String, String> getDefaultTilesSources() {
+        return defaultTilesSources;
+    }
 
     @Override
     public UTF8Properties getConfiguration() {

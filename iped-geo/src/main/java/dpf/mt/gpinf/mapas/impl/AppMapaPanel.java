@@ -27,7 +27,7 @@ import iped3.search.IMultiSearchResultProvider;
 
 public class AppMapaPanel extends JPanel {
 
-	IMultiSearchResultProvider resultsProvider;
+    IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
     MapaCanvasFactory mcf;
 
@@ -36,11 +36,11 @@ public class AppMapaPanel extends JPanel {
                                       // renderização
     KMLResult kmlResult;
     JTable resultsTable;
-    boolean mapSrcSelected=false;
+    boolean mapSrcSelected = false;
     ActionListener changeTileServer = null;
-    
+
     String tilesSourceURL = null, savedTilesSourceURL = null;
-	private MapaPanelConfig mpConfig;
+    private MapaPanelConfig mpConfig;
 
     public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -51,107 +51,107 @@ public class AppMapaPanel extends JPanel {
     }
 
     public void init() {
-    	mcf = new MapaCanvasFactory(this);
-    	
-        this.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseReleased(MouseEvent e) {
-			}
-			
-			@Override
-			public void mousePressed(MouseEvent e) {
-			}
-			
-			@Override
-			public void mouseExited(MouseEvent e) {
-			}
-			
-			@Override
-			public void mouseEntered(MouseEvent e) {
-			}
-			
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				redesenhaMapa();
-			}
-		});
-        
-        savedTilesSourceURL = JMapOptionsPane.getSavedTilesSourceURL();
-        
-		mpConfig = new MapaPanelConfig();
+        mcf = new MapaCanvasFactory(this);
 
-		try {
+        this.addMouseListener(new MouseListener() {
+            @Override
+            public void mouseReleased(MouseEvent e) {
+            }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseEntered(MouseEvent e) {
+            }
+
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                redesenhaMapa();
+            }
+        });
+
+        savedTilesSourceURL = JMapOptionsPane.getSavedTilesSourceURL();
+
+        mpConfig = new MapaPanelConfig();
+
+        try {
             ConfigurationManager.get().addObject(mpConfig);
             ConfigurationManager.get().loadConfigs();
-		}catch(Exception e) {
-			tilesSourceURL=null;
-		}
-        
+        } catch (Exception e) {
+            tilesSourceURL = null;
+        }
+
         final Component self = this;
-        changeTileServer= new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				StringBuffer url = new StringBuffer("");
-				try {
-					SwingUtilities.invokeAndWait(new Runnable() {
-						@Override
-						public void run() {
-							String result = JMapOptionsPane.showOptionsDialog(self);
-							if(result!=null) {
-								url.append(result);
-							}
-						}
-					});
-				} catch (InvocationTargetException | InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-				SwingUtilities.invokeLater(new Runnable() {
-					@Override
-					public void run() {
-						if(url.length()>0) {
-							tilesSourceURL=url.toString();
-				        	config(tilesSourceURL);
-				        	mapaDesatualizado=true;
-				        	redesenhaMapa();
-						}
-					}
-				});
-			}
+        changeTileServer = new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                StringBuffer url = new StringBuffer("");
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {
+                        @Override
+                        public void run() {
+                            String result = JMapOptionsPane.showOptionsDialog(self);
+                            if (result != null) {
+                                url.append(result);
+                            }
+                        }
+                    });
+                } catch (InvocationTargetException | InterruptedException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace();
+                }
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (url.length() > 0) {
+                            tilesSourceURL = url.toString();
+                            config(tilesSourceURL);
+                            mapaDesatualizado = true;
+                            redesenhaMapa();
+                        }
+                    }
+                });
+            }
         };
     }
-    
-    public void config(String url) {
-    	if(url==null) {
-    	}else {
-    		//remove o antigo browsercanvas, caso haja algum configurado
-    		if(browserCanvas!=null) {
-            	this.remove(browserCanvas.getContainer());
-            	this.repaint();
-        	}
 
-    		browserCanvas = mcf.createMapCanvas(url);
+    public void config(String url) {
+        if (url == null) {
+        } else {
+            // remove o antigo browsercanvas, caso haja algum configurado
+            if (browserCanvas != null) {
+                this.remove(browserCanvas.getContainer());
+                this.repaint();
+            }
+
+            browserCanvas = mcf.createMapCanvas(url);
 
             this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
-    	}
+        }
     }
 
-    public void redesenhaMapa() {    	
-    	if(tilesSourceURL==null) {
-    		if(savedTilesSourceURL!=null) {
-    			tilesSourceURL=savedTilesSourceURL;
-    		}else {
-        		try {
-        			tilesSourceURL=mpConfig.getTileServerUrlPattern();
-        		}catch(Exception e) {
-        			tilesSourceURL=null;
-        		}
-    		}
+    public void redesenhaMapa() {
+        if (tilesSourceURL == null) {
+            if (savedTilesSourceURL != null) {
+                tilesSourceURL = savedTilesSourceURL;
+            } else {
+                try {
+                    tilesSourceURL = mpConfig.getTileServerUrlPattern();
+                } catch (Exception e) {
+                    tilesSourceURL = null;
+                }
+            }
 
-        	if(tilesSourceURL==null) {
-        		tilesSourceURL = JMapOptionsPane.showOptionsDialog(this);
-        	}
-        	config(tilesSourceURL);
-    	}
+            if (tilesSourceURL == null) {
+                tilesSourceURL = JMapOptionsPane.showOptionsDialog(this);
+            }
+            config(tilesSourceURL);
+        }
 
         if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
             String kml = ""; //$NON-NLS-1$

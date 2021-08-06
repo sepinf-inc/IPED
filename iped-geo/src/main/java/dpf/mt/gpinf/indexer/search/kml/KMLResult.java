@@ -45,7 +45,7 @@ public class KMLResult {
             fDialog = guiProvider.createFileDialog(Messages.getString("KMLResult.Save"), FileDialog.SAVE); //$NON-NLS-1$
 
         fDialog.setVisible(true);
-        if(fDialog.getFile()!=null) {
+        if (fDialog.getFile() != null) {
             String path = fDialog.getDirectory() + fDialog.getFile();
             File f = new File(path);
 

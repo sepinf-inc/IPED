@@ -25,7 +25,7 @@ public class Messages {
             Locale locale = localeProp != null ? Locale.forLanguageTag(localeProp) : Locale.getDefault();
             RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
             String finalLocale = RESOURCE_BUNDLE.getLocale().toLanguageTag();
-            
+
             if (finalLocale.equals("und")) //$NON-NLS-1$
                 finalLocale = "en"; //$NON-NLS-1$
             if (!locale.toLanguageTag().equals(finalLocale))
@@ -42,6 +42,6 @@ public class Messages {
     }
 
     public static Set<String> getKeys() {
-    	return RESOURCE_BUNDLE.keySet();
+        return RESOURCE_BUNDLE.keySet();
     }
 }

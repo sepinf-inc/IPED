@@ -29,11 +29,11 @@ import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
 public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
-    
-    private static final boolean USE_GOOGLE = true; 
-    
+
+    private static final boolean USE_GOOGLE = true;
+
     static {
-        if(!USE_GOOGLE) {
+        if (!USE_GOOGLE) {
             File file = new File(System.getProperty("java.io.tmpdir") + "/mapcache");
             file.mkdirs();
         }
@@ -56,13 +56,13 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
                 browser = new WebView();
                 browser.setCache(true);
                 browser.setCacheHint(CacheHint.SPEED);
-                
+
                 jfxPanel.setScene(new Scene(browser));
                 webEngine = browser.getEngine();
-                
+
                 String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36 OPR/63.0.3368.94";
                 webEngine.setUserAgent(USER_AGENT);
-                
+
                 webEngine.setJavaScriptEnabled(true);
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     public void handle(WebEvent<String> event) {
@@ -78,7 +78,8 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
                             window.setMember("javalog", new LogBridge());
-                            //webEngine.executeScript("console.log = function(message) { window.javalog.log(message); }");
+                            // webEngine.executeScript("console.log = function(message) {
+                            // window.javalog.log(message); }");
                         }
                     }
                 });
@@ -86,7 +87,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
             }
         });
     }
-    
+
     public class LogBridge {
         public void log(String text) {
             System.out.println(text);
@@ -161,7 +162,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
     }
 
     private String replaceApiKey(String html) {
-       	googleApiKey = JMapOptionsPane.getGoogleAPIKey();
+        googleApiKey = JMapOptionsPane.getGoogleAPIKey();
         html = html.replace("{{GOOGLE_API_KEY}}", googleApiKey); //$NON-NLS-1$
         return html;
     }
