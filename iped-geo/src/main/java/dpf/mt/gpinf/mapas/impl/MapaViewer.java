@@ -75,7 +75,7 @@ public class MapaViewer implements ResultSetViewer, TableModelListener, ListSele
 
             Boolean b = (Boolean) resultsTable.getModel().getValueAt(e.getFirstRow(), e.getColumn());
 
-            mapaPanel.selecionaMarcador(item, !b.booleanValue());
+            mapaPanel.selecionaMarcador(item, b.booleanValue());
         }
 
         /* Se a alteração foi feita no próprio mapa, ela não precisa ser refeita. */

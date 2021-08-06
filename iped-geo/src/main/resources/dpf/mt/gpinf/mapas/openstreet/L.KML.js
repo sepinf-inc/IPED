@@ -312,6 +312,14 @@ L.KML = L.MarkerClusterGroup.extend({
 			this.markers[id[i]].atualizaIcone();
 		}
 	},
+	marca: function (id, b){
+		if(b=='true'){
+			this.markers[id].checked='true';
+		}else{
+			this.markers[id].checked='false';
+		}
+		this.markers[id].atualizaIcone();
+	},
     viewAll: function(){
     	ms=[];
     	for (var ind in this.markers){

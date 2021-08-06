@@ -254,7 +254,7 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
         Platform.runLater(new Runnable() {
             public void run() {
                 try {
-                    webEngine.executeScript("selecionaMarcador(\"" + mid + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                    webEngine.executeScript("track.marca(\"" + mid + "\",'" + b + "');"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
