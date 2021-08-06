@@ -30,15 +30,6 @@ import netscape.javascript.JSObject;
 
 public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
 
-    private static final boolean USE_GOOGLE = true;
-
-    static {
-        if (!USE_GOOGLE) {
-            File file = new File(System.getProperty("java.io.tmpdir") + "/mapcache");
-            file.mkdirs();
-        }
-    }
-
     WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
