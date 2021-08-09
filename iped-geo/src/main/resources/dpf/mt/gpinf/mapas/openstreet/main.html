@@ -52,21 +52,14 @@
     function initialize() {
         var kmlUrl = '';
         
-        map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true , inertia:true });
+        map = new L.IPEDMap('map_canvas', { center: new L.LatLng(58.4, 43.0), zoom: 11, boxZoom:true });
 
 		L.tileLayer('{{tileServerUrl}}', {
     			maxZoom: 18,
+    			minZoom: 2,
     			tileSize: 512,
     			zoomOffset: -1,
 				}).addTo(map);
-		
-		/*
-		var img = L.DomUtil.create('img');
-		img.src = '{{layers_img}}';
-		L.DomEvent.on(img, 'click', changeTileServer);
-
-		L.control.tilesSrcSelect(img, { position: 'topleft' }).addTo(map);
-		*/
 
          const parser = new DOMParser();
          const kml = parser.parseFromString('{{kml}}', 'text/xml');
@@ -79,7 +72,7 @@
 		const bounds = track.getBounds();
 		map.fitBounds(bounds);
     }
-    
+
 	mpos=0;
     function navega(pos){
     	if(pos<0){

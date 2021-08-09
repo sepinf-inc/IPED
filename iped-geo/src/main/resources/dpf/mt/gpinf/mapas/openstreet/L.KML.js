@@ -315,8 +315,10 @@ L.KML = L.MarkerClusterGroup.extend({
 	marca: function (id, b){
 		if(b=='true'){
 			this.markers[id].checked='true';
+			document.getElementById('marker_checkbox').checked=true;
 		}else{
 			this.markers[id].checked='false';
+			document.getElementById('marker_checkbox').checked=false;
 		}
 		this.markers[id].atualizaIcone();
 	},
@@ -617,6 +619,7 @@ L.KML = L.MarkerClusterGroup.extend({
     el = place.getElementsByTagName('name');
     if (el.length && el[0].childNodes.length) {
       name = el[0].childNodes[0].nodeValue;
+	  layer.name=name;
     }
     el = place.getElementsByTagName('description');
     for (i = 0; i < el.length; i++) {
@@ -624,9 +627,10 @@ L.KML = L.MarkerClusterGroup.extend({
         descr = descr + el[i].childNodes[j].nodeValue;
       }
     }
+    layer.descr=descr;
 
     if (name) {
-      layer.bindPopup('<h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
+      layer.bindPopup('<input type="checkbox" id="marker_checkbox" value=""/><h2>' + name + '</h2>' + descr, { className: 'kml-popup'});
     }
   },
 
@@ -803,6 +807,22 @@ L.KMLIcon = L.Icon.extend({
 });
 
 
+L.checkMarker = function(id){
+		var marker=null;
+       	for (var ind in track.markers){
+			if(ind==id)
+				marker=track.markers[ind];
+		}
+
+		if(marker.checked=='true'){
+			marker.checked='false';
+		}else{
+			marker.checked='true';
+		}
+		marker.atualizaIcone();
+		window.app.marcaMarcadorBF(marker.id, marker.checked=='true');
+};
+
 L.KMLMarker = L.Marker.extend({
 	options: {
 		icon: new L.KMLIcon.Default()
@@ -837,10 +857,6 @@ L.KMLMarker = L.Marker.extend({
 		if(!e.originalEvent.isTrusted) {
 			return;
 		}
-		
-		if(!this.isPopupOpen()){
-			this.togglePopup();
-		}
 
 		if(e.originalEvent.shiftKey){
 			if(this.selected=='true'){
@@ -853,10 +869,20 @@ L.KMLMarker = L.Marker.extend({
 		if(e.originalEvent.ctrlKey){
 			if(this.checked=='true'){
 				this.checked='false';
+				document.getElementById('marker_checkbox').checked=false;
 			}else{
 				this.checked='true';
+				document.getElementById('marker_checkbox').checked=true;
 			}
 			this.atualizaIcone();
+		}
+		if(!this.isPopupOpen()){
+			if(this.checked=='true'){
+				this.bindPopup('<input type="checkbox" id="marker_checkbox" checked onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
+			}else{
+				this.bindPopup('<input type="checkbox" id="marker_checkbox" onclick="L.checkMarker(\''+this.id+'\')"/><h2>' + this.name + '</h2>' + this.descr, { className: 'kml-popup'});
+			}
+			this.togglePopup();
 		}
 		if(e.originalEvent.shiftKey){
 			var button = (typeof e.originalEvent.which != "undefined") ? e.originalEvent.which : e.originalEvent.button;
