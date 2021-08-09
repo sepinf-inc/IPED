@@ -19,12 +19,12 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import org.apache.lucene.analysis.TokenStream;
+import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
 import org.apache.lucene.search.highlight.Encoder;
 import org.apache.lucene.search.highlight.Fragmenter;
 import org.apache.lucene.search.highlight.Highlighter;
 import org.apache.lucene.search.highlight.NullFragmenter;
 import org.apache.lucene.search.highlight.QueryScorer;
-import org.apache.lucene.search.highlight.SimpleFragmenter;
 import org.apache.lucene.search.highlight.SimpleHTMLFormatter;
 import org.apache.lucene.search.highlight.TextFragment;
 import org.apache.lucene.search.highlight.TokenSources;
@@ -40,7 +40,6 @@ public class TextHighlighter {
         if (text == null) {
             return new TextFragment[0];
         }
-        // App.get().analyzer = new StandardASCIIAnalyzer(Versao.current);
         TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().appCase.getAnalyzer());
         QueryScorer scorer = new QueryScorer(App.get().getQuery(), fieldName);
         Fragmenter fragmenter;
@@ -48,7 +47,8 @@ public class TextHighlighter {
                 App.get().getParams().HIGHLIGHT_END_TAG);
         int fragmentNumber = 1;
         if (fragmentSize != 0) {
-            fragmenter = new SimpleFragmenter(fragmentSize);
+            fragmenter = new TextFragmenter(fragmentSize);
+            // fragmenter = new SimpleSpanFragmenter(scorer, fragmentSize);
             fragmentNumber += text.length() / fragmentSize;
         } else {
             fragmenter = new NullFragmenter();
@@ -59,6 +59,35 @@ public class TextHighlighter {
         highlighter.setTextFragmenter(fragmenter);
         highlighter.setMaxDocCharsToAnalyze(Integer.MAX_VALUE);
         return highlighter.getBestTextFragments(stream, text, false, fragmentNumber);
+    }
+
+    private static class TextFragmenter implements Fragmenter {
+
+        private int fragmentSize;
+        private OffsetAttribute offsetAtt;
+        private int lastFragEnd = 0;
+        private int prevTokenEnd = 0;
+
+        public TextFragmenter(int fragmentSize) {
+            this.fragmentSize = fragmentSize;
+        }
+
+        @Override
+        public void start(String originalText, TokenStream stream) {
+            offsetAtt = stream.addAttribute(OffsetAttribute.class);
+        }
+
+        @Override
+        public boolean isNewFragment() {
+            int currTokenEnd = offsetAtt.endOffset();
+            boolean isNewFrag = currTokenEnd - lastFragEnd > fragmentSize;
+            if (isNewFrag) {
+                lastFragEnd = prevTokenEnd;
+            }
+            prevTokenEnd = currTokenEnd;
+            return isNewFrag;
+        }
+
     }
 
 }
