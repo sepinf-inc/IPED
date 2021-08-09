@@ -39,6 +39,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
+import org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.fork.EmbeddedDocumentParser;
 import org.apache.tika.fork.EmbeddedDocumentParser.NameTitle;
@@ -661,6 +662,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             throw e;
 
         } catch (Exception e) {
+            // see https://github.com/sepinf-inc/IPED/issues/655
+            if (e instanceof UnsupportedZipFeatureException) {
+                throw (UnsupportedZipFeatureException) e;
+            }
             LOGGER.warn("{} Error while extracting subitem {}\t\t{}", Thread.currentThread().getName(), subitemPath, //$NON-NLS-1$
                     e.toString());
             LOGGER.debug("Error extracting subitem " + subitemPath, (Throwable) e);
