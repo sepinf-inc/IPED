@@ -44,8 +44,6 @@ import java.util.Properties;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException;
-import org.apache.commons.compress.archivers.zip.UnsupportedZipFeatureException.Feature;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
@@ -53,7 +51,6 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
-import org.apache.tika.io.TaggedIOException;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
@@ -543,11 +540,6 @@ public class ExportFileTask extends AbstractTask {
                     // must catch generic Exception because of Runtime exceptions while extracting
                     // corrupted subitems
                 } catch (Exception e) {
-                    // see https://github.com/sepinf-inc/IPED/issues/655
-                    if (e instanceof TaggedIOException && e.getCause() instanceof UnsupportedZipFeatureException &&
-                            ((UnsupportedZipFeatureException) e.getCause()).getFeature() == Feature.DATA_DESCRIPTOR) {
-                        throw (UnsupportedZipFeatureException) e.getCause();
-                    }
                     if (e instanceof IOException && IOUtil.isDiskFull((IOException) e))
                         LOGGER.error("Error exporting {}\t{}", evidence.getPath(), "No space left on output disk!"); //$NON-NLS-1$ //$NON-NLS-2$
                     else

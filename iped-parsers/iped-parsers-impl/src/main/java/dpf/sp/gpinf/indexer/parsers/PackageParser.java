@@ -25,6 +25,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.zip.ZipEntry;
 
 import org.apache.commons.compress.PasswordRequiredException;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -324,6 +325,13 @@ public class PackageParser extends AbstractParser {
             if (!archive.canReadEntryData(entry)) {
                 if (zae.getGeneralPurposeBit().usesEncryption())
                     entryEncrypted.bool = true;
+                
+                // do not write to the handler if UnsupportedZipFeatureException.Feature.DATA_DESCRIPTOR
+                // is met, we will catch this exception and read the zip archive once again
+                boolean usesDataDescriptor = zae.getGeneralPurposeBit().usesDataDescriptor();
+                if (usesDataDescriptor && zae.getMethod() == ZipEntry.STORED) {
+                    throw new UnsupportedZipFeatureException(UnsupportedZipFeatureException.Feature.DATA_DESCRIPTOR, zae);
+                }
             }
             for (ZipExtraField zef : zae.getExtraFields()) {
                 if (zef instanceof X000A_NTFS) {
