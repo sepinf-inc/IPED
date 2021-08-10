@@ -54,7 +54,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
     protected void setUp() throws Exception {
         super.setUp();
-        stream = getStream("test-files/whatsapp/msgstore.db");
+        stream = getStream("test-files/test_whatsAppMsgStore.db");
         iitem = new IItem(){
             
             @Override

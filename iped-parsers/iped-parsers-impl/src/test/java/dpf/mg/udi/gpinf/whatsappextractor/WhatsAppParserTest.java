@@ -26,7 +26,7 @@ public class WhatsAppParserTest extends AbstractPkgTest{
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
         metadata.add(Metadata.RESOURCE_NAME_KEY, "msgstore-d4");
         ContentHandler handler = new BodyContentHandler(1<<20);
-        InputStream stream = getStream("test-files/whatsapp/msgstore.db");
+        InputStream stream = getStream("test-files/test_whatsAppMsgStore.db");
         parser.setExtractMessages(true);
         parser.setMergeDbs(false);
         parser.getSupportedTypes(whatsappContext);
@@ -95,7 +95,7 @@ public class WhatsAppParserTest extends AbstractPkgTest{
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
         metadata.add(Metadata.RESOURCE_NAME_KEY, "msgstore-d4");
-        InputStream stream = getStream("test-files/whatsapp/msgstore.db");
+        InputStream stream = getStream("test-files/test_whatsAppMsgStore.db");
         parser.setExtractMessages(true);
         parser.setMergeDbs(true);
         parser.getSupportedTypes(whatsappContext);
@@ -110,7 +110,7 @@ public class WhatsAppParserTest extends AbstractPkgTest{
       Metadata metadata = new Metadata();
       metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-wadb");
       ContentHandler handler = new BodyContentHandler(1<<20);
-      InputStream stream = getStream("test-files/whatsapp/wa.db");
+      InputStream stream = getStream("test-files/test_whatsApp.db");
       parser.setExtractMessages(true);
       parser.setMergeDbs(false);
       parser.getSupportedTypes(whatsappContext);
@@ -176,7 +176,7 @@ public class WhatsAppParserTest extends AbstractPkgTest{
       Metadata metadata = new Metadata();
       metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-user-xml");
       ContentHandler handler = new BodyContentHandler(1<<20);
-      InputStream stream = getStream("test-files/whatsapp/com.whatsapp_preferences.xml");
+      InputStream stream = getStream("test-files/test_whatsAppPreferences.xml");
       parser.setExtractMessages(true);
       parser.setMergeDbs(false);
       parser.getSupportedTypes(whatsappContext);
