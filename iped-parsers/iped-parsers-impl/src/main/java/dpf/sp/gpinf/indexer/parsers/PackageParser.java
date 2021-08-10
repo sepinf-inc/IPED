@@ -25,6 +25,8 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.zip.ZipEntry;
 
 import org.apache.commons.compress.PasswordRequiredException;
 import org.apache.commons.compress.archivers.ArchiveEntry;
@@ -135,8 +137,10 @@ public class PackageParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         ArchiveInputStream ais = null;
+        String encoding = null;
         try {
             ArchiveStreamFactory factory = context.get(ArchiveStreamFactory.class, new ArchiveStreamFactory());
+            encoding = factory.getEntryEncoding();
             // At the end we want to close the archive stream to release
             // any associated resources, but the underlying document stream
             // should not be closed
@@ -176,14 +180,49 @@ public class PackageParser extends AbstractParser {
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
         xhtml.startDocument();
+        
+        AtomicInteger entryCnt = new AtomicInteger();
+        HashSet<String> parentMap = new HashSet<>();
+        try {
+            parseEntries(false, entryCnt, parentMap, ais, metadata, extractor, xhtml, context);
+        } catch (UnsupportedZipFeatureException zfe) {
+            // If this is a zip archive which requires a data descriptor, parse it again
+            if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
+                // Close archive input stream and create a new one that could handle data descriptor
+                IOUtils.closeQuietly(ais);
+                try (InputStream is = getResetedOrNewInputStream(stream, context)) {
+                    ais = new ZipArchiveInputStream(is, encoding, true, true);
+                    parseEntries(true, entryCnt, parentMap, ais, metadata, extractor, xhtml, context);
+                }
+            }
+        } finally {
+            xhtml.endDocument();
+            IOUtils.closeQuietly(ais);
+            tmp.close();
+        }
+    }
+
+    private void parseEntries(boolean shouldUseDataDescriptor, AtomicInteger entryCnt, HashSet<String> parentMap,
+            ArchiveInputStream ais, Metadata metadata, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml,
+            ParseContext context)
+            throws TikaException, IOException, SAXException {
 
         String nameKey = metadata.get(Metadata.RESOURCE_NAME_KEY);
         boolean isCarved = nameKey != null ? nameKey.startsWith("Carved") : false; //$NON-NLS-1$
         BooleanWrapper encrypted = new BooleanWrapper();
         try {
             ArchiveEntry entry = ais.getNextEntry();
-            HashSet<String> parentMap = new HashSet<>();
             while (entry != null) {
+                if (shouldUseDataDescriptor && entryCnt.get() > 0) {
+                    // With shouldUseDataDescriptor being true, we are reading
+                    // the zip once again. The number of entryCnt entries have
+                    // already been parsed in the last time, so we can just
+                    // skip these entries.
+                    entryCnt.decrementAndGet();
+                    entry = ais.getNextEntry();
+                    continue;
+                }
+
                 String name = getEntryName(entry, isCarved);
                 String parent = getParent(name, parentMap, extractor, context, xhtml);
                 if (!entry.isDirectory())
@@ -194,6 +233,14 @@ public class PackageParser extends AbstractParser {
                         parentMap.add(name);
                     }
                 }
+
+                if (!shouldUseDataDescriptor) {
+                    // Record the number of entries we have read, this is used
+                    // for zip archives using Data Descriptor. It's used for
+                    // skipping the entries we have already read
+                    entryCnt.incrementAndGet();
+                }
+
                 entry = ais.getNextEntry();
 
                 if (Thread.currentThread().isInterrupted())
@@ -205,7 +252,7 @@ public class PackageParser extends AbstractParser {
                 throw new EncryptedDocumentException(zfe);
             }
             if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
-                alternativeParse(stream, handler, metadata, context);
+                throw zfe;
             } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
 
@@ -219,38 +266,23 @@ public class PackageParser extends AbstractParser {
                 throw e;
 
         } finally {
-            IOUtils.closeQuietly(ais);
-            tmp.close();
-            xhtml.endDocument();
-
             if (encrypted.bool)
                 throw new EncryptedDocumentException();
         }
     }
 
-    private void alternativeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-            throws IOException, SAXException, TikaException {
-        InputStream is = null;
-        IStreamSource streamFactory = null;
+    private InputStream getResetedOrNewInputStream(InputStream stream, ParseContext context) throws IOException {
         try {
             stream.reset();
-            is = stream;
+            return new CloseShieldInputStream(stream);
         } catch (IOException e) {
-            streamFactory = context.get(IStreamSource.class);
+            IStreamSource streamFactory = context.get(IStreamSource.class);
             if (streamFactory != null) {
-                is = streamFactory.getStream();
+                return streamFactory.getStream();
+            } else {
+                throw new IOException("Failed to reset or get a new InputStream");
             }
         }
-        if (is != null) {
-            try {
-                new SevenZipParser().parse(is, handler, metadata, context);
-            } finally {
-                if (streamFactory != null) {
-                    is.close();
-                }
-            }
-        }
-
     }
 
     private String getEntryName(ArchiveEntry entry) throws TikaException, UnsupportedEncodingException {
@@ -324,6 +356,13 @@ public class PackageParser extends AbstractParser {
             if (!archive.canReadEntryData(entry)) {
                 if (zae.getGeneralPurposeBit().usesEncryption())
                     entryEncrypted.bool = true;
+                
+                // do not write to the handler if UnsupportedZipFeatureException.Feature.DATA_DESCRIPTOR
+                // is met, we will catch this exception and read the zip archive once again
+                boolean usesDataDescriptor = zae.getGeneralPurposeBit().usesDataDescriptor();
+                if (usesDataDescriptor && zae.getMethod() == ZipEntry.STORED) {
+                    throw new UnsupportedZipFeatureException(UnsupportedZipFeatureException.Feature.DATA_DESCRIPTOR, zae);
+                }
             }
             for (ZipExtraField zef : zae.getExtraFields()) {
                 if (zef instanceof X000A_NTFS) {
