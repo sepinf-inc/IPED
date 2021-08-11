@@ -13,46 +13,46 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public class DiscordCall {
 
-	@JsonProperty("participants")
-	private List<String> participants;
+    @JsonProperty("participants")
+    private List<String> participants;
 
-	@JsonProperty("ended_timestamp")
-	private Date endedTimestamp;
+    @JsonProperty("ended_timestamp")
+    private Date endedTimestamp;
 
-	public List<String> getParticipants() {
-		return participants;
-	}
+    public List<String> getParticipants() {
+        return participants;
+    }
 
-	public void setParticipants(List<String> participants) {
-		this.participants = participants;
-	}
+    public void setParticipants(List<String> participants) {
+        this.participants = participants;
+    }
 
-	public String getParticipantsNames(List<DiscordRoot> drl) {
+    public String getParticipantsNames(List<DiscordRoot> drl) {
 
-		List<String> participantsNames = new ArrayList<String>();
+        List<String> participantsNames = new ArrayList<String>();
 
-		for (DiscordRoot dr : drl) {
-			for (String name : participants) {
-				if (name.equals(dr.getAuthor().getId())) {
-					participantsNames.add(dr.getAuthor().getFullUsername());
-				}
-			}
-		}
+        for (DiscordRoot dr : drl) {
+            for (String name : participants) {
+                if (name.equals(dr.getAuthor().getId())) {
+                    participantsNames.add(dr.getAuthor().getFullUsername());
+                }
+            }
+        }
 
-		return String.join(", ", participantsNames);
-	}
+        return String.join(", ", participantsNames);
+    }
 
-	public Date getEndedTimestamp() {
-		return endedTimestamp;
-	}
+    public Date getEndedTimestamp() {
+        return endedTimestamp;
+    }
 
-	public void setEnded_timestamp(Date endedTimestamp) {
-		this.endedTimestamp = endedTimestamp;
-	}
+    public void setEnded_timestamp(Date endedTimestamp) {
+        this.endedTimestamp = endedTimestamp;
+    }
 
-	@Override
-	public String toString() {
-		return "DiscordCall [participants=" + participants + ", endedTimestamp=" + endedTimestamp + "]";
-	}
+    @Override
+    public String toString() {
+        return "DiscordCall [participants=" + participants + ", endedTimestamp=" + endedTimestamp + "]";
+    }
 
 }

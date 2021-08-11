@@ -37,72 +37,75 @@ import iped3.search.IItemSearcher;
  */
 public class DiscordParser extends AbstractParser {
 
-	private static final long serialVersionUID = 1L;
-	public static final String INDEX_MIME_TYPE = "application/x-discord-chat";
-	public static final String DATA_MIME_TYPE_V2_0 = "data-v20/x-discord-chat";
-	public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
+    private static final long serialVersionUID = 1L;
+    public static final String INDEX_MIME_TYPE = "application/x-discord-chat";
+    public static final String DATA_MIME_TYPE_V2_0 = "data-v20/x-discord-chat";
+    public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
 
-	private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(INDEX_MIME_TYPE));
+    private static final Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.parse(INDEX_MIME_TYPE));
 
-	@Override
-	public Set<MediaType> getSupportedTypes(ParseContext context) {
-		return SUPPORTED_TYPES;
-	}
+    @Override
+    public Set<MediaType> getSupportedTypes(ParseContext context) {
+        return SUPPORTED_TYPES;
+    }
 
-	@Override
-	public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
-			throws IOException, SAXException, TikaException {
+    @Override
+    public void parse(InputStream indexFile, ContentHandler handler, Metadata metadata, ParseContext context)
+            throws IOException, SAXException, TikaException {
 
-		EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-				new ParsingEmbeddedDocumentExtractor(context));
+        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                new ParsingEmbeddedDocumentExtractor(context));
 
-		try {
+        try {
 
-			IItemSearcher searcher = context.get(IItemSearcher.class);
+            IItemSearcher searcher = context.get(IItemSearcher.class);
 
-			if (searcher != null) {
+            if (searcher != null) {
 
-				// List<IItemBase> todos =
-				// searcher.search("path:\"AppData/Roaming/discord/cache\" AND carved:false");
-				List<IItemBase> externalFiles = searcher.search(
-						"path:\"AppData/Roaming/discord/cache\" AND carved:false AND name:\"f_*\" AND NOT type:fileslack");
-				List<IItemBase> dataFiles = searcher.search(
-						"path:\"AppData/Roaming/discord/cache\" AND carved:false AND (name:\"data_0\"  OR name:\"data_1\"  OR name:\"data_2\" OR name:\"data_3\")  AND NOT type:fileslack");
+                // List<IItemBase> todos =
+                // searcher.search("path:\"AppData/Roaming/discord/cache\" AND carved:false");
+                List<IItemBase> externalFiles = searcher.search(
+                        "path:\"AppData/Roaming/discord/cache\" AND carved:false AND name:\"f_*\" AND NOT type:fileslack");
+                List<IItemBase> dataFiles = searcher.search(
+                        "path:\"AppData/Roaming/discord/cache\" AND carved:false AND (name:\"data_0\"  OR name:\"data_1\"  OR name:\"data_2\" OR name:\"data_3\")  AND NOT type:fileslack");
 
-				Index index = new Index(indexFile, dataFiles, externalFiles);
+                Index index = new Index(indexFile, dataFiles, externalFiles);
 
-				// Used to identify JSON files containing Discord chats
-				CharSequence seq = "messages?limit=50";
+                // Used to identify JSON files containing Discord chats
+                CharSequence seq = "messages?limit=50";
 
-				for (CacheEntry ce : index.getLst()) {
-					if (ce.getKey() != null && ce.getKey().contains(seq)) {
-						
-						InputStream is = ce.getResponseDataStream();
-						
-						try {
-	
-							if (is != null) {
-								List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is, new TypeReference<List<DiscordRoot>>() {});
+                for (CacheEntry ce : index.getLst()) {
+                    if (ce.getKey() != null && ce.getKey().contains(seq)) {
 
-								metadata.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
-								metadata.set(HttpHeaders.CONTENT_TYPE, "text/html");
+                        InputStream is = ce.getResponseDataStream();
 
-								XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-								byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
+                        try {
 
-								InputStream targetStream = new ByteArrayInputStream(relatorio);
-								extractor.parseEmbedded(targetStream, handler, metadata, true);
-							} 
-						} catch (Exception ex) {
-							ex.printStackTrace();
-						}
-					}
-				}
-			}
+                            if (is != null) {
+                                List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
+                                        new TypeReference<List<DiscordRoot>>() {
+                                        });
 
-		} catch (Exception e1) {
-			e1.printStackTrace();
-		}
+                                metadata.set(TikaCoreProperties.TITLE,
+                                        discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                                metadata.set(HttpHeaders.CONTENT_TYPE, "text/html");
 
-	}
+                                XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+                                byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
+
+                                InputStream targetStream = new ByteArrayInputStream(relatorio);
+                                extractor.parseEmbedded(targetStream, handler, metadata, true);
+                            }
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
+
+    }
 }
