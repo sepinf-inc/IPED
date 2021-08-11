@@ -30,7 +30,6 @@ import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.swing.BorderFactory;
@@ -299,7 +298,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         totalTime = totalTime / (1000000 * workers.length);
         if (totalTime == 0)
             totalTime = 1;
-        for (Entry<String, AtomicLong> e : new TreeMap<>(ParsingTask.times).entrySet()) {
+        for (Entry<String, AtomicLong> e : (Entry<String, AtomicLong>[]) ParsingTask.times.entrySet().toArray()) {
             msg.append("<tr><td>"); //$NON-NLS-1$
             msg.append(e.getKey());
             msg.append("</td><td>"); //$NON-NLS-1$
