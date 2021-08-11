@@ -31,7 +31,7 @@ import dpf.sp.gpinf.indexer.ITextParser;
 
 public abstract class ATextViewer extends Viewer implements KeyListener, MouseListener {
 
-    public static Font font = new Font("Courier New", Font.PLAIN, 11); //$NON-NLS-1$
+    public static Font font = new Font(Font.MONOSPACED, Font.PLAIN, 11);
 
     public static final String TEXT_ENCODING = "UTF-32BE"; //$NON-NLS-1$
     public static final int CHAR_BYTE_COUNT = 4;
