@@ -194,9 +194,10 @@ public class Index {
         List<CacheEntry> entries = new ArrayList<>();
 
         for (CacheAddr ea : table) {
-            InputStream eaIS = ea.getInputStream(dataFiles, externalFiles);
-            if (eaIS != null) {
-                entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+            try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles)) {
+                if (eaIS != null) {
+                    entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+                }
             }
         }
 

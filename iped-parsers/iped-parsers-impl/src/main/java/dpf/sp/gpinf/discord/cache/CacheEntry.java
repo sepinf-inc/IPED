@@ -27,8 +27,8 @@ public class CacheEntry {
     private int[] paddings;
     private long selfHash;
     private byte[] keyData;
-    private InputStream responseRawDataStream;
-    private InputStream responseInfo;
+    private List<IItemBase> dataFiles;
+    private List<IItemBase> externalFiles;
 
     public long getHash() {
         return hash;
@@ -86,8 +86,12 @@ public class CacheEntry {
         return keyData;
     }
 
-    public InputStream getResponseRawDataStream() {
-        return responseRawDataStream;
+    public InputStream getResponseRawDataStream() throws IOException {
+        return dataStreamAdresses[1].getInputStream(dataFiles, externalFiles);
+    }
+
+    public InputStream getResponseInfo() throws IOException {
+        return dataStreamAdresses[0].getInputStream(dataFiles, externalFiles);
     }
 
     /**
@@ -100,7 +104,8 @@ public class CacheEntry {
      * @throws IOException
      */
     public CacheEntry(InputStream is, List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
-
+        this.dataFiles = dataFiles;
+        this.externalFiles = externalFiles;
         hash = read4bytes(is);
         nextEntry = new CacheAddr(read4bytes(is));
         rankingsNode = new CacheAddr(read4bytes(is));
@@ -121,9 +126,6 @@ public class CacheEntry {
         dataStreamAdresses[1] = new CacheAddr(read4bytes(is));
         dataStreamAdresses[2] = new CacheAddr(read4bytes(is));
         dataStreamAdresses[3] = new CacheAddr(read4bytes(is));
-
-        responseInfo = dataStreamAdresses[0].getInputStream(dataFiles, externalFiles);
-        responseRawDataStream = dataStreamAdresses[1].getInputStream(dataFiles, externalFiles);
 
         flags = read4bytes(is);
 
@@ -171,7 +173,7 @@ public class CacheEntry {
 
     public InputStream getResponseDataStream() throws IOException {
         try {
-            return new GZIPInputStream(responseRawDataStream);
+            return new GZIPInputStream(getResponseRawDataStream());
         } catch (Exception ex) {
             // Non-Gzip files are not used in Discord Parser
             return null;

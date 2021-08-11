@@ -77,9 +77,7 @@ public class DiscordParser extends AbstractParser {
                 for (CacheEntry ce : index.getLst()) {
                     if (ce.getKey() != null && ce.getKey().contains(seq)) {
 
-                        InputStream is = ce.getResponseDataStream();
-
-                        try {
+                        try (InputStream is = ce.getResponseDataStream()) {
 
                             if (is != null) {
                                 List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
