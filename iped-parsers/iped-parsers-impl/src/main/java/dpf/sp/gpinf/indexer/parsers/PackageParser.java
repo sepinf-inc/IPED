@@ -23,6 +23,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.zip.ZipEntry;
@@ -181,15 +182,20 @@ public class PackageParser extends AbstractParser {
         String nameKey = metadata.get(Metadata.RESOURCE_NAME_KEY);
         boolean isCarved = nameKey != null ? nameKey.startsWith("Carved") : false; //$NON-NLS-1$
         BooleanWrapper encrypted = new BooleanWrapper();
+        HashSet<String> parentMap = new HashSet<>();
+        ArrayList<String> zipSubitemMap = new ArrayList<>();
         try {
             ArchiveEntry entry = ais.getNextEntry();
-            HashSet<String> parentMap = new HashSet<>();
             while (entry != null) {
                 String name = getEntryName(entry, isCarved);
                 String parent = getParent(name, parentMap, extractor, context, xhtml);
-                if (!entry.isDirectory())
+                if (!entry.isDirectory()) {
                     parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
-                else {
+                    // just remember subitems if it is a zip file
+                    if (ais instanceof ZipArchiveInputStream) {
+                        zipSubitemMap.add(name);
+                    }
+                } else {
                     if (!parentMap.contains(name)) {
                         parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
                         parentMap.add(name);
@@ -206,7 +212,10 @@ public class PackageParser extends AbstractParser {
                 throw new EncryptedDocumentException(zfe);
             }
             if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
-                alternativeParse(stream, handler, metadata, context);
+                // parse again filtering already parsed files
+                HashSet<String> pathsToFilterOut = new HashSet<>(parentMap);
+                pathsToFilterOut.addAll(zipSubitemMap);
+                alternativeParse(stream, handler, metadata, context, pathsToFilterOut);
             } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
 
@@ -229,7 +238,31 @@ public class PackageParser extends AbstractParser {
         }
     }
 
-    private void alternativeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
+    private static class FilterEmbeddedExtractor implements EmbeddedDocumentExtractor {
+
+        private EmbeddedDocumentExtractor extractor;
+        private Set<String> pathsToFilterOut;
+
+        private FilterEmbeddedExtractor(EmbeddedDocumentExtractor extractor, Set<String> pathsToFilterOut) {
+            this.extractor = extractor;
+            this.pathsToFilterOut = pathsToFilterOut;
+        }
+
+        @Override
+        public boolean shouldParseEmbedded(Metadata metadata) {
+            return this.extractor.shouldParseEmbedded(metadata)
+                    && !pathsToFilterOut.contains(metadata.get(Metadata.RESOURCE_NAME_KEY));
+        }
+
+        @Override
+        public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
+                throws SAXException, IOException {
+            this.extractor.parseEmbedded(stream, handler, metadata, outputHtml);
+        }
+
+    }
+
+    private void alternativeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, Set<String> parsedPaths)
             throws IOException, SAXException, TikaException {
         InputStream is = null;
         IStreamSource streamFactory = null;
@@ -243,9 +276,12 @@ public class PackageParser extends AbstractParser {
             }
         }
         if (is != null) {
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
             try {
+                context.set(EmbeddedDocumentExtractor.class, new FilterEmbeddedExtractor(extractor, parsedPaths));
                 new SevenZipParser().parse(is, handler, metadata, context);
             } finally {
+                context.set(EmbeddedDocumentExtractor.class, extractor);
                 if (streamFactory != null) {
                     is.close();
                 }
