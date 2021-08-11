@@ -28,6 +28,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.AbstractMap;
 import java.util.Date;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicLong;
@@ -298,7 +299,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         totalTime = totalTime / (1000000 * workers.length);
         if (totalTime == 0)
             totalTime = 1;
-        for (Entry<String, AtomicLong> e : (Entry<String, AtomicLong>[]) ParsingTask.times.entrySet().toArray()) {
+        for (Object o : ParsingTask.times.entrySet().toArray()) {
+            Entry<String, AtomicLong> e = (Entry<String, AtomicLong>) o;
             msg.append("<tr><td>"); //$NON-NLS-1$
             msg.append(e.getKey());
             msg.append("</td><td>"); //$NON-NLS-1$
