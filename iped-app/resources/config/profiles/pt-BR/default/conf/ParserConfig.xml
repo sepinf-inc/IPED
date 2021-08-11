@@ -142,7 +142,6 @@
             <mime>application/java-archive</mime>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RawStringParser">
-            <mime>text/plain</mime>
             <mime>application/skype</mime>
             <mime>application/irpf</mime>
             <mime>application/x-nls</mime>

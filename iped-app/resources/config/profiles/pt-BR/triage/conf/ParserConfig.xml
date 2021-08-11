@@ -137,7 +137,6 @@
 			<mime>application/x-cpio</mime> <!-- Será ignorado pelo "EmptyParser" e não processado pelo dpf.sp.gpinf.indexer.parsers.PackageParser -->
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RawStringParser">
-            <mime>text/plain</mime>
             <mime>application/skype</mime>
             <mime>application/irpf</mime>
             <mime>application/x-tika-msoffice</mime>
