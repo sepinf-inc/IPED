@@ -195,9 +195,9 @@ public class Index {
 
         for (CacheAddr ea : table) {
             try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles)) {
-                if (eaIS != null) {
-                    entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
-                }
+                entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+            } catch (IOException e) {
+                // ignore
             }
         }
 

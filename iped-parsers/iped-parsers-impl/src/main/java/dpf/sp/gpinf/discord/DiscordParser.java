@@ -79,21 +79,20 @@ public class DiscordParser extends AbstractParser {
 
                         try (InputStream is = ce.getResponseDataStream()) {
 
-                            if (is != null) {
-                                List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
-                                        new TypeReference<List<DiscordRoot>>() {
-                                        });
+                            List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
+                                    new TypeReference<List<DiscordRoot>>() {
+                                    });
 
-                                metadata.set(TikaCoreProperties.TITLE,
-                                        discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
-                                metadata.set(HttpHeaders.CONTENT_TYPE, "text/html");
+                            metadata.set(TikaCoreProperties.TITLE,
+                                    discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                            metadata.set(HttpHeaders.CONTENT_TYPE, "text/html");
 
-                                XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-                                byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
+                            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+                            byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
 
-                                InputStream targetStream = new ByteArrayInputStream(relatorio);
-                                extractor.parseEmbedded(targetStream, handler, metadata, true);
-                            }
+                            InputStream targetStream = new ByteArrayInputStream(relatorio);
+                            extractor.parseEmbedded(targetStream, handler, metadata, true);
+
                         } catch (Exception ex) {
                             ex.printStackTrace();
                         }

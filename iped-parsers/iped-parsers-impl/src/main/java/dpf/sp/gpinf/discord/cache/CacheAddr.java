@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -68,7 +67,7 @@ public class CacheAddr {
 
     public InputStream getInputStream(List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
         if (!initialized) {
-            return null;
+            throw new IOException("Cannot open InputStream: CacheAddr not initialized.");
         }
         switch (fileType) {
             case 0:
@@ -78,21 +77,20 @@ public class CacheAddr {
                         : fileNameStr;
                 for (IItemBase extFile : externalFiles)
                     if (extFile.getName().contains("f_" + fileNameStr))
-                        return FileUtils.openInputStream(extFile.getFile());
-                return null;
+                        return extFile.getBufferedStream();
             case 2:
             case 3:
             case 4:
                 for (int i = 0; i < 4; i++) {
                     if (dataFiles.get(i).getName().equals(("data_" + fileSelector))) {
-                        InputStream targetStream = FileUtils.openInputStream(dataFiles.get(i).getFile());
+                        InputStream targetStream = dataFiles.get(i).getBufferedStream();
                         targetStream.skip(DataBlockFileHeader.getBlockHeaderSize()
                                 + startBlock * (fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096)));
                         return targetStream;
                     }
                 }
         }
-        return null;
+        throw new IOException("Cannot open InputStream for this CacheAddr.");
     }
 
 }

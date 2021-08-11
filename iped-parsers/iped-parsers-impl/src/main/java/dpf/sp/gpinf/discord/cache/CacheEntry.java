@@ -172,12 +172,7 @@ public class CacheEntry {
     }
 
     public InputStream getResponseDataStream() throws IOException {
-        try {
-            return new GZIPInputStream(getResponseRawDataStream());
-        } catch (Exception ex) {
-            // Non-Gzip files are not used in Discord Parser
-            return null;
-        }
+        return new GZIPInputStream(getResponseRawDataStream());
     }
 
     public static int read2bytes(InputStream is) throws IOException {
