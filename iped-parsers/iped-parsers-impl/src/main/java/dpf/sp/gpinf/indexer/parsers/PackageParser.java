@@ -140,8 +140,10 @@ public class PackageParser extends AbstractParser {
 
         TemporaryResources tmp = new TemporaryResources();
         ArchiveInputStream ais = null;
+        String encoding = null;
         try {
             ArchiveStreamFactory factory = context.get(ArchiveStreamFactory.class, new ArchiveStreamFactory());
+            encoding = factory.getEntryEncoding();
             // At the end we want to close the archive stream to release
             // any associated resources, but the underlying document stream
             // should not be closed
@@ -200,7 +202,7 @@ public class PackageParser extends AbstractParser {
                 throw new EncryptedDocumentException(zfe);
             }
             if (ais instanceof ZipArchiveInputStream && zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
-                parseZipFile(stream, xhtml, context, tmp, parentMap, zipSubitemList, isCarved, encrypted);
+                parseZipFile(stream, xhtml, context, tmp, parentMap, zipSubitemList, isCarved, encrypted, encoding);
             } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
 
@@ -250,10 +252,10 @@ public class PackageParser extends AbstractParser {
 
     private void parseZipFile(InputStream stream, XHTMLContentHandler xhtml, ParseContext context,
             TemporaryResources tmp, HashSet<String> parentMap, List<String> zipSubitemList, boolean isCarved,
-            BooleanWrapper encrypted) throws IOException, SAXException, TikaException {
+            BooleanWrapper encrypted, String encoding) throws IOException, SAXException, TikaException {
 
         try (InputStream is = getNewInputStream(new CloseShieldInputStream(stream), context);
-                ZipFile zipFile = new ZipFile(TikaInputStream.get(is, tmp).getFile())) {
+                ZipFile zipFile = new ZipFile(TikaInputStream.get(is, tmp).getFile(), encoding)) {
 
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
             Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
