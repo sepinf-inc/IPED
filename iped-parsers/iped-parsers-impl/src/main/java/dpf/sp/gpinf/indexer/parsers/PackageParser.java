@@ -24,7 +24,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.zip.ZipEntry;
 
@@ -48,6 +50,7 @@ import org.apache.commons.compress.archivers.zip.X5455_ExtendedTimestamp;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipExtraField;
+import org.apache.commons.compress.archivers.zip.ZipFile;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.tika.exception.EncryptedDocumentException;
 import org.apache.tika.exception.TikaException;
@@ -183,39 +186,21 @@ public class PackageParser extends AbstractParser {
         boolean isCarved = nameKey != null ? nameKey.startsWith("Carved") : false; //$NON-NLS-1$
         BooleanWrapper encrypted = new BooleanWrapper();
         HashSet<String> parentMap = new HashSet<>();
-        ArrayList<String> zipSubitemMap = new ArrayList<>();
+        ArrayList<String> zipSubitemList = new ArrayList<>();
         try {
             ArchiveEntry entry = ais.getNextEntry();
             while (entry != null) {
-                String name = getEntryName(entry, isCarved);
-                String parent = getParent(name, parentMap, extractor, context, xhtml);
-                if (!entry.isDirectory()) {
-                    parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
-                    // just remember subitems if it is a zip file
-                    if (ais instanceof ZipArchiveInputStream) {
-                        zipSubitemMap.add(name);
-                    }
-                } else {
-                    if (!parentMap.contains(name)) {
-                        parseEntry(parent, context, ais, entry, encrypted, extractor, xhtml);
-                        parentMap.add(name);
-                    }
-                }
+                EntryInputStreamFactory factory = getEISFactory(ais, entry);
+                handleEntry(factory, entry, isCarved, encrypted, parentMap, zipSubitemList, context, extractor, xhtml);
                 entry = ais.getNextEntry();
-
-                if (Thread.currentThread().isInterrupted())
-                    throw new TikaException("Parsing Interrupted"); //$NON-NLS-1$
             }
         } catch (UnsupportedZipFeatureException zfe) {
             // If it's an encrypted document of unknown password, report as such
             if (zfe.getFeature() == Feature.ENCRYPTION) {
                 throw new EncryptedDocumentException(zfe);
             }
-            if (zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
-                // parse again filtering already parsed files
-                HashSet<String> pathsToFilterOut = new HashSet<>(parentMap);
-                pathsToFilterOut.addAll(zipSubitemMap);
-                alternativeParse(stream, handler, metadata, context, pathsToFilterOut);
+            if (ais instanceof ZipArchiveInputStream && zfe.getFeature() == Feature.DATA_DESCRIPTOR) {
+                parseZipFile(stream, xhtml, context, tmp, parentMap, zipSubitemList, isCarved, encrypted);
             } else
                 throw new TikaException("UnsupportedZipFeature", zfe); //$NON-NLS-1$
 
@@ -238,56 +223,108 @@ public class PackageParser extends AbstractParser {
         }
     }
 
-    private static class FilterEmbeddedExtractor implements EmbeddedDocumentExtractor {
+    private void handleEntry(EntryInputStreamFactory factory, ArchiveEntry entry, boolean isCarved,
+            BooleanWrapper encrypted, HashSet<String> parentMap, List<String> zipSubitemList, ParseContext context,
+            EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml)
+            throws TikaException, SAXException, IOException {
 
-        private EmbeddedDocumentExtractor extractor;
-        private Set<String> pathsToFilterOut;
-
-        private FilterEmbeddedExtractor(EmbeddedDocumentExtractor extractor, Set<String> pathsToFilterOut) {
-            this.extractor = extractor;
-            this.pathsToFilterOut = pathsToFilterOut;
+        String name = getEntryName(entry, isCarved);
+        String parent = getParent(name, parentMap, extractor, context, xhtml);
+        if (!entry.isDirectory()) {
+            if (!(factory.getSource() instanceof ZipFile) || !zipSubitemList.contains(name)) {
+                parseEntry(parent, context, factory, entry, encrypted, extractor, xhtml);
+            }
+            // remember subitems if it's a zip stream to skip them in a possible 2nd parse
+            if (factory.getSource() instanceof ZipArchiveInputStream) {
+                zipSubitemList.add(name);
+            }
+        } else {
+            if (!parentMap.contains(name)) {
+                parseEntry(parent, context, factory, entry, encrypted, extractor, xhtml);
+                parentMap.add(name);
+            }
         }
+        if (Thread.currentThread().isInterrupted())
+            throw new TikaException("Parsing Interrupted"); //$NON-NLS-1$
+    }
 
-        @Override
-        public boolean shouldParseEmbedded(Metadata metadata) {
-            return this.extractor.shouldParseEmbedded(metadata)
-                    && !pathsToFilterOut.contains(metadata.get(Metadata.RESOURCE_NAME_KEY));
-        }
+    private void parseZipFile(InputStream stream, XHTMLContentHandler xhtml, ParseContext context,
+            TemporaryResources tmp, HashSet<String> parentMap, List<String> zipSubitemList, boolean isCarved,
+            BooleanWrapper encrypted) throws IOException, SAXException, TikaException {
 
-        @Override
-        public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
-                throws SAXException, IOException {
-            this.extractor.parseEmbedded(stream, handler, metadata, outputHtml);
+        try (InputStream is = getNewInputStream(new CloseShieldInputStream(stream), context);
+                ZipFile zipFile = new ZipFile(TikaInputStream.get(is, tmp).getFile())) {
+
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
+            Enumeration<ZipArchiveEntry> entries = zipFile.getEntries();
+            while (entries.hasMoreElements()) {
+                ZipArchiveEntry zipEntry = entries.nextElement();
+                EntryInputStreamFactory factory = getEISFactory(zipFile, zipEntry);
+                handleEntry(factory, zipEntry, isCarved, encrypted, parentMap, zipSubitemList, context, extractor, xhtml);
+            }
         }
+    }
+
+    private InputStream getNewInputStream(InputStream stream, ParseContext context) throws IOException {
+        try {
+            stream.reset();
+            return stream;
+
+        } catch (IOException e) {
+            IStreamSource streamFactory = context.get(IStreamSource.class);
+            if (streamFactory != null) {
+                return streamFactory.getStream();
+            }
+            throw new IOException("Fail to create a new InputStream: no IStreamSource in context");
+        }
+    }
+
+    private interface EntryInputStreamFactory {
+
+        boolean canReadEntryData();
+
+        InputStream getInputStream() throws IOException;
+
+        Object getSource();
 
     }
 
-    private void alternativeParse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context, Set<String> parsedPaths)
-            throws IOException, SAXException, TikaException {
-        InputStream is = null;
-        IStreamSource streamFactory = null;
-        try {
-            stream.reset();
-            is = stream;
-        } catch (IOException e) {
-            streamFactory = context.get(IStreamSource.class);
-            if (streamFactory != null) {
-                is = streamFactory.getStream();
+    private EntryInputStreamFactory getEISFactory(ArchiveInputStream ais, ArchiveEntry entry) {
+        return new EntryInputStreamFactory() {
+            @Override
+            public boolean canReadEntryData() {
+                return ais.canReadEntryData(entry);
             }
-        }
-        if (is != null) {
-            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class);
-            try {
-                context.set(EmbeddedDocumentExtractor.class, new FilterEmbeddedExtractor(extractor, parsedPaths));
-                new SevenZipParser().parse(is, handler, metadata, context);
-            } finally {
-                context.set(EmbeddedDocumentExtractor.class, extractor);
-                if (streamFactory != null) {
-                    is.close();
-                }
-            }
-        }
 
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return new CloseShieldInputStream(ais);
+            }
+
+            @Override
+            public Object getSource() {
+                return ais;
+            }
+        };
+    }
+
+    private EntryInputStreamFactory getEISFactory(ZipFile zipFile, ZipArchiveEntry zipEntry) {
+        return new EntryInputStreamFactory() {
+            @Override
+            public boolean canReadEntryData() {
+                return zipFile.canReadEntryData(zipEntry);
+            }
+
+            @Override
+            public InputStream getInputStream() throws IOException {
+                return zipFile.getInputStream(zipEntry);
+            }
+
+            @Override
+            public Object getSource() {
+                return zipFile;
+            }
+        };
     }
 
     private String getEntryName(ArchiveEntry entry) throws TikaException, UnsupportedEncodingException {
@@ -342,7 +379,7 @@ public class PackageParser extends AbstractParser {
         boolean bool = false;
     }
 
-    private void parseEntry(String parent, ParseContext context, ArchiveInputStream archive, ArchiveEntry entry,
+    private void parseEntry(String parent, ParseContext context, EntryInputStreamFactory factory, ArchiveEntry entry,
             BooleanWrapper entryEncrypted, EmbeddedDocumentExtractor extractor, XHTMLContentHandler xhtml)
             throws SAXException, IOException, TikaException {
         String name = getEntryName(entry);
@@ -358,7 +395,7 @@ public class PackageParser extends AbstractParser {
         }
         if (entry instanceof ZipArchiveEntry) {
             ZipArchiveEntry zae = (ZipArchiveEntry) entry;
-            if (!archive.canReadEntryData(entry)) {
+            if (!factory.canReadEntryData()) {
                 if (zae.getGeneralPurposeBit().usesEncryption())
                     entryEncrypted.bool = true;
                 
@@ -385,10 +422,10 @@ public class PackageParser extends AbstractParser {
             entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
         if (extractor.shouldParseEmbedded(entrydata)) {
             // For detectors to work, we need a mark/reset supporting
-            // InputStream, which ArchiveInputStream isn't, so wrap
+            // InputStream, so wrap with a TikaInputStream
             TemporaryResources tmp = new TemporaryResources();
-            try {
-                TikaInputStream tis = TikaInputStream.get(archive, tmp);
+            try (InputStream is = factory.getInputStream()) {
+                TikaInputStream tis = TikaInputStream.get(is, tmp);
                 extractor.parseEmbedded(tis, xhtml, entrydata, true);
             } finally {
                 tmp.dispose();
