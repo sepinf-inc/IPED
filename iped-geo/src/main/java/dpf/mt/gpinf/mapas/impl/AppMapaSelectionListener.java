@@ -2,6 +2,7 @@ package dpf.mt.gpinf.mapas.impl;
 
 import java.util.Arrays;
 import java.util.HashSet;
+
 import javax.swing.JTable;
 
 import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
