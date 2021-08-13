@@ -46,6 +46,7 @@
 		</script>
 
     <script>
+    var mapImpl = "OSM";
     var map;
     var track;
     
@@ -93,18 +94,6 @@
        		i++;
        	}
     	return false;
-    }
-    
-    function toogleVisibility(){
-    	if(document.getElementById("barra_content").style.display == "none"){
-        	document.getElementById("td_barra").style.width="50px";
-        	document.getElementById("barra_content").style.display = "block";
-        	document.getElementById("toogleVisibilityButton").innerHTML = "-";
-    	}else{
-        	document.getElementById("td_barra").style.width="10px";
-        	document.getElementById("barra_content").style.display = "none";
-        	document.getElementById("toogleVisibilityButton").innerHTML = "+";
-    	}
     }
     
 	</script>

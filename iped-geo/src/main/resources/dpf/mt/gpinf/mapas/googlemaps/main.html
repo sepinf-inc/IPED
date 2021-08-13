@@ -27,7 +27,8 @@
 		<script type="text/javascript">
 		{{load_extensions}}
 		</script>
-        <script>
+    <script>
+    var mapImpl = "GOOGLE";
     var map;
 	var gxml;
 	var proxy = "/cgi-bin/proxy.php?"
@@ -92,20 +93,6 @@
     	map.fitBounds(bounds);
     }
 
-    function exportarKml(){
-    	window.app.exportarKmlBF();
-    }
-    function toogleVisibility(){
-    	if(document.getElementById("barra_content").style.display == "none"){
-        	document.getElementById("td_barra").style.width="50px";
-        	document.getElementById("barra_content").style.display = "block";
-        	document.getElementById("toogleVisibilityButton").innerHTML = "-";
-    	}else{
-        	document.getElementById("td_barra").style.width="10px";
-        	document.getElementById("barra_content").style.display = "none";
-        	document.getElementById("toogleVisibilityButton").innerHTML = "+";
-    	}
-    }
 	</script>
     </head>
     <body onload="initialize();">
