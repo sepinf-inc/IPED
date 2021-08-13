@@ -51,30 +51,23 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
                 });
 
                 browser.setOnMouseDragged(e -> {
-                    String shift = "false";
-                    if (e.isShiftDown()) {
-                        shift = "true";
-                    }
 
-                    if (!dragging) {
-                        dragging = true;
-                        dragStartX = e.getX();
-                        dragStartY = e.getY();
-                    } else {
+                    if (dragging) {
                         final int x = (int) Math.ceil(dragStartX - e.getX());
                         final int y = (int) Math.ceil(dragStartY - e.getY());
 
-                        Platform.runLater(new Runnable() {
-                            public void run() {
-                                try {
-                                    webEngine.executeScript("map.panBy({x:" + x + ", y:" + y
-                                            + "},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: true})");
-                                } catch (Exception e) {
-                                    e.printStackTrace();
-                                }
-                            }
-                        });
+                        try {
+                            webEngine.executeScript("map.panBy({x:" + x + ", y:" + y
+                                    + "},{duration: 1,easeLinearity: 1,noMoveStart: true,animate: false})");
+                        } catch (Exception e1) {
+                            e1.printStackTrace();
+                        }
                     }
+
+                    dragging = true;
+                    dragStartX = e.getX();
+                    dragStartY = e.getY();
+
                 });
 
                 webEngine = browser.getEngine();
