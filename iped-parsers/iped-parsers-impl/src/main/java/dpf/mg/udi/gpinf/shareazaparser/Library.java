@@ -19,7 +19,9 @@
 package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
@@ -34,12 +36,17 @@ class Library extends ShareazaEntity {
     /* private String time; */
     private int version;
     private final LibraryDictionary dictionary = new LibraryDictionary();
-    private final LibraryMaps maps = new LibraryMaps();
-    private final LibraryFolders folders = new LibraryFolders();
-    private final LibraryHistory history = new LibraryHistory();
+    private final LibraryMaps maps;
+    private final Map<Integer, LibraryFile> indexToFile;
+    private final LibraryFolders folders;
+    private final LibraryHistory history;
 
     public Library() {
         super("LIBRARY"); //$NON-NLS-1$
+        indexToFile = new HashMap<>();
+        maps = new LibraryMaps();
+        folders = new LibraryFolders(indexToFile);
+        history = new LibraryHistory();
     }
 
     @Override
@@ -50,7 +57,7 @@ class Library extends ShareazaEntity {
         maps.read(ar, version);
         folders.read(ar, version);
         history.read(ar, version);
-        maps.readExtra(ar, version);
+        maps.readExtra(ar, version, indexToFile);
     }
 
     @Override
