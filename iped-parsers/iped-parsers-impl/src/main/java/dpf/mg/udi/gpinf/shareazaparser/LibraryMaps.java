@@ -21,6 +21,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -47,13 +48,14 @@ class LibraryMaps extends ShareazaEntity {
         }
     }
 
-    public void readExtra(MFCParser ar, int version) throws IOException {
+    public void readExtra(MFCParser ar, int version, Map<Integer, LibraryFile> indexToFile) throws IOException {
         if (version >= 18) {
             int n = ar.readCount();
             for (int i = 0; i < n; i++) {
                 LibraryFile file = new LibraryFile(null);
                 file.read(ar, version);
                 libraryFiles.add(file);
+                indexToFile.put(file.getIndex(), file);
             }
         }
     }

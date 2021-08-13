@@ -21,6 +21,12 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.tika.sax.XHTMLContentHandler;
+import org.xml.sax.SAXException;
+
+import iped3.search.IItemSearcher;
 
 /**
  * @author Fabio Melo Pfeifer <pfeifer.fmp@dpf.gov.br>
@@ -29,7 +35,7 @@ class AlbumFolder extends ShareazaEntity {
 
     private final XMLElement xml = new XMLElement();
     private final List<AlbumFolder> albumFolders = new ArrayList<>();
-    private final List<Integer> albumFiles = new ArrayList<>();
+    private final List<Integer> albumFileIndexes = new ArrayList<>();
     private String schemaUri;
     private String collSha1;
     private String guid;
@@ -69,7 +75,24 @@ class AlbumFolder extends ShareazaEntity {
         n = ar.readCount();
         for (int i = 0; i < n; i++) {
             int idx = ar.readInt();
-            albumFiles.add(idx);
+            albumFileIndexes.add(idx);
+        }
+    }
+
+    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, LibraryFile> fileByIndex, String path) throws SAXException {
+        if (path == null) {
+            path = "[ALBUM]/" + name; //$NON-NLS-1$
+        } else {
+            path = path + "/" + name; //$NON-NLS-1$
+        }
+        for (AlbumFolder folder : albumFolders) {
+            folder.printTable(html, searcher, fileByIndex, path);
+        }
+        for (int idx : albumFileIndexes) {
+            LibraryFile file = fileByIndex.get(idx);
+            if (file != null) {
+                file.printTableRow(html, path, searcher);
+            }
         }
     }
 
@@ -83,7 +106,7 @@ class AlbumFolder extends ShareazaEntity {
         f.out("Auto delete: " + autoDelete); //$NON-NLS-1$
         f.out("Best View: " + bestView); //$NON-NLS-1$
         xml.write(f);
-        f.out("Files Indexes: " + albumFiles.toString()); //$NON-NLS-1$
+        f.out("Files Indexes: " + albumFileIndexes.toString()); //$NON-NLS-1$
         for (AlbumFolder folder : albumFolders) {
             folder.write(f);
         }

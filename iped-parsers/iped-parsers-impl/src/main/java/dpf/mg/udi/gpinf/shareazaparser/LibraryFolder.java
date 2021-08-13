@@ -21,6 +21,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.SAXException;
@@ -40,10 +41,12 @@ class LibraryFolder extends ShareazaEntity {
     private String shared;
     private boolean expanded;
     private final LibraryFolder parentFolder;
+    private Map<Integer, LibraryFile> indexToFile;
 
-    public LibraryFolder(LibraryFolder parentFolder) {
+    public LibraryFolder(LibraryFolder parentFolder, Map<Integer, LibraryFile> indexToFile) {
         super("LIBRARY FOLDER"); //$NON-NLS-1$
         this.parentFolder = parentFolder;
+        this.indexToFile = indexToFile;
     }
 
     public String getInheritedShared() {
@@ -71,7 +74,7 @@ class LibraryFolder extends ShareazaEntity {
         }
         int n = ar.readCount();
         for (int i = 0; i < n; i++) {
-            LibraryFolder folder = new LibraryFolder(this);
+            LibraryFolder folder = new LibraryFolder(this, indexToFile);
             folder.read(ar, version);
             folders.add(folder);
             nFiles += folder.nFiles;
@@ -84,6 +87,9 @@ class LibraryFolder extends ShareazaEntity {
             files.add(file);
             nFiles++;
             nVolume += file.getSize();
+            if (indexToFile != null) {
+                indexToFile.put(file.getIndex(), file);
+            }
         }
     }
 
@@ -118,5 +124,4 @@ class LibraryFolder extends ShareazaEntity {
     public List<LibraryFile> getLibraryFiles() {
         return files;
     }
-
 }
