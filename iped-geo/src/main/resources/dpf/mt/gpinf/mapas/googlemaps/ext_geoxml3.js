@@ -209,7 +209,7 @@ GeoXmlIped.prototype.marca = function(mid, marcado) {
 	for (i = 0; i <this.overlayman.markers.length; i++) {
 		var m = this.overlayman.markers[i];
 		if(m.extendedData.id == mid){
-			if(marcado == 'true'){
+			if(marcado == 'false'){
 				m.extendedData.checked = 'false';
 				ckbox = document.getElementById("ck_marcador_"+mid);
 				if(ckbox != null){
