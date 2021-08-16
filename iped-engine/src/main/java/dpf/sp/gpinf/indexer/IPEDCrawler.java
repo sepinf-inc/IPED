@@ -44,10 +44,10 @@ public class IPEDCrawler {
                 MediaType.application("x-sas-data"),
                 MediaType.application("vnd.adobe.indesign-idml-package") };
 
-        final String query = "contentType:\"application vnd.lotus-notes\"";
+        final String query = "path:\"AppData/Roaming/discord/cache\" OR caminho:\"AppData/Roaming/discord/cache\"";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\NSF-crawling");
+        File exportFolder = new File("F:\\teste-files\\discord");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
@@ -72,7 +72,8 @@ public class IPEDCrawler {
                         List<Integer> itemIds = searcher.search().getIds();
                         System.out.println("Found " + itemIds.size() + " files.");
                         if (!itemIds.isEmpty()) {
-                            System.out.println("Exporting...");
+                            System.out.println("Found discord folder in case: " + file.getAbsolutePath());
+                            return;
                         }
                         for (Integer id : itemIds) {
                             IItem item = ipedCase.getItemByID(id);
