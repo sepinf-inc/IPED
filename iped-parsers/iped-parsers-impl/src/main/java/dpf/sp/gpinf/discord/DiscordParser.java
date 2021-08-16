@@ -29,6 +29,7 @@ import dpf.sp.gpinf.discord.json.DiscordRoot;
 
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
+import iped3.util.BasicProps;
 
 /***
  * 
@@ -62,12 +63,9 @@ public class DiscordParser extends AbstractParser {
 
             if (searcher != null) {
 
-                // List<IItemBase> todos =
-                // searcher.search("path:\"AppData/Roaming/discord/cache\" AND carved:false");
-                List<IItemBase> externalFiles = searcher.search(
-                        "path:\"AppData/Roaming/discord/cache\" AND carved:false AND name:\"f_*\" AND NOT type:fileslack");
-                List<IItemBase> dataFiles = searcher.search(
-                        "path:\"AppData/Roaming/discord/cache\" AND carved:false AND (name:\"data_0\"  OR name:\"data_1\"  OR name:\"data_2\" OR name:\"data_3\")  AND NOT type:fileslack");
+                String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE + ":fileslack";
+                List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
+                List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
                 Index index = new Index(indexFile, dataFiles, externalFiles);
 
