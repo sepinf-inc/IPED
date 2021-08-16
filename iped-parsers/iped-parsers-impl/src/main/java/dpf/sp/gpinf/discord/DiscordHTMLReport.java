@@ -17,6 +17,7 @@ import dpf.sp.gpinf.discord.json.DiscordAttachment;
 import dpf.sp.gpinf.discord.json.DiscordMention;
 import dpf.sp.gpinf.discord.json.DiscordReaction;
 import dpf.sp.gpinf.discord.json.DiscordRoot;
+import dpf.sp.gpinf.indexer.parsers.util.Messages;
 
 /***
  * 
@@ -35,7 +36,7 @@ public class DiscordHTMLReport {
 
         PrintWriter out = new PrintWriter(new OutputStreamWriter(bout, StandardCharsets.UTF_8));
 
-        SimpleDateFormat dateFormat = new SimpleDateFormat("(hh:mm:ss MM/dd/yyyy)");
+        SimpleDateFormat dateFormat = new SimpleDateFormat(Messages.getString("DiscordParser.DateFormat0"));
 
         out.println("<!DOCTYPE html>");
         out.println("<HTML>");
@@ -108,7 +109,9 @@ public class DiscordHTMLReport {
                 out.println("	<TD class='td-timestamp'>");
                 out.println("<P>" + (dr.getTimestamp() == null ? "" : formatDate(dr.getTimestamp())) + "</P>");
                 out.println("<P>" + (dr.getEditedTimestamp() == null ? ""
-                        : "(Edit time:" + dateFormat.format(dr.getEditedTimestamp()) + ")") + "</P>");
+                        : "(" + Messages.getString("DiscordParser.EditTime")
+                                + dateFormat.format(dr.getEditedTimestamp()) + ")")
+                        + "</P>");
                 out.println("	</TD>");
 
                 // Corpo da mensagem
@@ -124,17 +127,17 @@ public class DiscordHTMLReport {
                     out.println("		<TD colspan='2'>Call</TD>");
                     out.println("	</TR>");
                     out.println("	<TR>");
-                    out.println("		<TD>Start</TD>)");
+                    out.println("		<TD>" + Messages.getString("DiscordParser.Start") + "</TD>)");
                     out.println("		<TD>" + (dr.getTimestamp() == null ? "" : dateFormat.format(dr.getTimestamp()))
                             + "</TD>");
                     out.println("	</TR>");
                     out.println("	<TR>");
-                    out.println("		<TD>End</TD>");
+                    out.println("		<TD>" + Messages.getString("DiscordParser.End") + "</TD>");
                     out.println("		<TD>" + (dr.getCall().getEndedTimestamp() == null ? ""
                             : dateFormat.format(dr.getCall().getEndedTimestamp())) + "</TD>");
                     out.println("	</TR>");
                     out.println("	<TR>");
-                    out.println("		<TD>Partcipants</TD>");
+                    out.println("		<TD>" + Messages.getString("DiscordParser.Participants") + "</TD>");
                     out.println("		<TD>" + dr.getCall().getParticipantsNames(drl) + "</TD>");
                     out.println("	</TR>");
                     out.println("</TABLE>");
@@ -151,7 +154,8 @@ public class DiscordHTMLReport {
 
                     out.println("<TABLE>");
                     out.println("	<TR>");
-                    out.println("		<TD>Reactions:" + String.join(", ", reactions) + "</TD>");
+                    out.println("		<TD>" + Messages.getString("DiscordParser.Reactions")
+                            + String.join(", ", reactions) + "</TD>");
                     out.println("	</TR>");
                     out.println("</TABLE>");
                 }
@@ -161,7 +165,7 @@ public class DiscordHTMLReport {
 
                     out.println("<TABLE>");
                     out.println("	<TR>");
-                    out.println("		<TD colspan='2'>Attachments:</TD>");
+                    out.println("		<TD colspan='2'>" + Messages.getString("DiscordParser.Attachments") + "</TD>");
                     out.println("	</TR>");
 
                     for (DiscordAttachment attachments : dr.getAttachments()) {
@@ -206,7 +210,7 @@ public class DiscordHTMLReport {
     public String formatDate(Date date) {
 
         SimpleDateFormat df1 = new SimpleDateFormat("hh:mm:ss");
-        SimpleDateFormat df2 = new SimpleDateFormat("MM/dd/yy");
+        SimpleDateFormat df2 = new SimpleDateFormat(Messages.getString("DiscordParser.DateFormat2"));
 
         return "<P>" + df1.format(date) + "<BR/>(" + df2.format(date) + ")</P>";
 
