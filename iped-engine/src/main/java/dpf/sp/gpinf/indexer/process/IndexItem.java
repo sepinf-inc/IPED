@@ -74,6 +74,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
@@ -650,7 +651,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static IItem getItem(Document doc, File outputBase, SleuthkitCase sleuthCase, boolean viewItem) {
+    public static IItem getItem(Document doc, IPEDSource iCase, boolean viewItem) {
 
         try {
             Item evidence = new Item() {
@@ -734,6 +735,7 @@ public class IndexItem extends BasicProps {
             }
 
             boolean hasFile = false;
+            File outputBase = iCase.getModuleDir();
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
                 File localFile = Util.getResolvedFile(outputBase.getParent(), value);
@@ -745,8 +747,8 @@ public class IndexItem extends BasicProps {
                 value = doc.get(IndexItem.SLEUTHID);
                 if (value != null && !value.isEmpty()) {
                     evidence.setSleuthId(Integer.valueOf(value));
-                    if (sleuthCase != null) {
-                        evidence.setSleuthFile(sleuthCase.getContentById(Long.valueOf(value)));
+                    if (iCase.getSleuthCase() != null) {
+                        evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
                     }
                 }
 
@@ -763,7 +765,7 @@ public class IndexItem extends BasicProps {
                         Class<?> clazz = Class.forName(className);
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                         sisf = c.newInstance(absPath);
-                        if (sisf.checkIfDataSourceExists()) {
+                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
                             checkIfExistsAndAsk(sisf, outputBase);
                         }
                         inputStreamFactories.put(absPath, sisf);

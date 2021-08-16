@@ -379,7 +379,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     public IItem getItemByLuceneID(int docID) {
         try {
             Document doc = searcher.doc(docID);
-            IItem item = IndexItem.getItem(doc, moduleDir, sleuthCase, false);
+            IItem item = IndexItem.getItem(doc, this, false);
             return item;
 
         } catch (IOException e) {
@@ -636,6 +636,10 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public boolean isFTKReport() {
         return isFTKReport;
+    }
+
+    public boolean isReport() {
+        return isReport;
     }
 
 }
