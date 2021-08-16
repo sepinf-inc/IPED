@@ -40,7 +40,7 @@ class LibraryFile extends ShareazaEntity {
     private final XMLElement metadata = new XMLElement();
     private final List<SharedSource> sharedSources = new ArrayList<>();
     private String name;
-    private long index;
+    private int index;
     private long size;
     private String time;
     private String shared;
@@ -82,7 +82,7 @@ class LibraryFile extends ShareazaEntity {
     @Override
     public void read(MFCParser ar, int version) throws IOException {
         name = ar.readString();
-        index = ar.readUInt();
+        index = (int) ar.readUInt();
 
         if (version >= 17) {
             size = ar.readLong();
@@ -271,6 +271,10 @@ class LibraryFile extends ShareazaEntity {
 
     public String getSha1() {
         return sha1;
+    }
+    
+    public int getIndex() {
+        return index;
     }
 
 }
