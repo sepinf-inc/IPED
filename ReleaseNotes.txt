@@ -1,6 +1,8 @@
 08/XX/2021: IPED-3.18.8
 News:
 #470: Change default plain text parser to support chars outside Latin1 charset (Luis Nassif)
+#416: Integrate a MSGViewer for MSG emails (Guilherme Dutra & Luis Nassif)
+#415: Improve EMLViewer to render inline images inline (Luis Nassif)
 #651: Partially parse emails and attachments from Outlook for Mac (Luis Nassif)
 Fixes:
 #698: Shareaza parser output missing files from albums (Fábio Pfeifer)
