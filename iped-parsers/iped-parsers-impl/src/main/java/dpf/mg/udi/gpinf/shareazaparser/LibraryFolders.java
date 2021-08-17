@@ -73,4 +73,12 @@ class LibraryFolders extends ShareazaEntity {
     public List<LibraryFolder> getLibraryFolders() {
         return folders;
     }
+
+    public AlbumFolder getAlbumRoot() {
+        return albumRoot;
+    }
+
+    public Map<Integer, LibraryFile> getIndexToFile() {
+        return indexToFile;
+    }
 }

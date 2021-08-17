@@ -74,8 +74,7 @@ class Library extends ShareazaEntity {
         folders.printTable(html, searcher);
     }
 
-    public List<LibraryFolder> getLibraryFolders() {
-        return folders.getLibraryFolders();
+    public LibraryFolders getLibraryFolders() {
+        return folders;
     }
-
 }

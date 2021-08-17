@@ -112,4 +112,12 @@ class AlbumFolder extends ShareazaEntity {
         }
     }
 
+    public List<AlbumFolder> getAlbumFolders() {
+        return albumFolders;
+    }
+
+    public List<Integer> getAlbumFileIndexes() {
+        return albumFileIndexes;
+    }
+
 }
