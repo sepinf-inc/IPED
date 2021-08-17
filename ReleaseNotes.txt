@@ -1,3 +1,24 @@
+08/XX/2021: IPED-3.18.8
+News:
+#470: Change default plain text parser to support chars outside Latin1 charset (Luis Nassif)
+#651: Partially parse emails and attachments from Outlook for Mac (Luis Nassif)
+Fixes:
+#698: Shareaza parser output missing files from albums (Fábio Pfeifer)
+#669: NTFS USN Journal parsing fails when processing disk images if indexTempOnSSD = false or journal size > 1GB (Luis Nassif)
+#655: TaggedIOException: unsupported feature (data descriptor + stored flags) could cause internal ZIP structure to be lost (Luis Nassif & Wladimir Leite)
+#689: Google Maps item selection by rectangle or radius is not working (Luis Nassif)
+#638: Processing rarely aborts with MalformedInputException because of invalid unicode strings being created (Luis Nassif, João Hauck & Wladimir Leite)
+#635: Scroll to media position instead of keyword search hit when using the References tab (Luis Nassif)
+#645: Exact searches on recordDate and extended date fields are not working (Luis Nassif)
+#682: Sometimes HitsTab shows too short fragments and TextViewer has undesired breaklines (Luis Nassif)
+#639: CSV exporting should use separator and hyperlink formula depending on locale (Luis Nassif)
+#685: Korean chars rendered as squares in TextViewer (Luis Nassif & Wladimir Leite)
+#700: Don't ask for new datasource path if the case is a report (Luis Nassif)
+#678: Wildcard queries with uppercase chars and case sensitive indexing doesn't work (Luis Nassif)
+#664: WhatsApp media links to folder datasource not working when opening the chat externally (Luis Nassif)
+#690: Rare aborting ConcurrentModificationException while processing (Luis Nassif)
+#686: "CTRL+" text zoom doesn't work for some keyboard layouts (Luis Nassif)
+
 06/28/2021: IPED-3.18.7
 News:
 #49:  From a selected media file, go to related conversations / p2p histories (Luis Nassif)
