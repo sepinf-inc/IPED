@@ -4,6 +4,7 @@ News:
 #416: Integrate a MSGViewer for MSG emails (Guilherme Dutra & Luis Nassif)
 #415: Improve EMLViewer to render inline images inline (Luis Nassif)
 #651: Partially parse emails and attachments from Outlook for Mac (Luis Nassif)
+#707: Warning message about LED >= 1.29 incompatibility (Luis Nassif)
 Fixes:
 #698: Shareaza parser output missing files from albums (Fábio Pfeifer)
 #669: NTFS USN Journal parsing fails when processing disk images if indexTempOnSSD = false or journal size > 1GB (Luis Nassif)

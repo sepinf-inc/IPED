@@ -89,6 +89,10 @@ public class LedKFFTask extends AbstractTask {
                 return;
 
             File wkffDir = new File(ledWkffPath.trim());
+            if (wkffDir.getName().equals("hashes") || new File(wkffDir, "hashes").exists() || new File(wkffDir.getParent(), "hashes").exists()) {
+                throw new IPEDException(
+                        "LED changed its database format in v1.29.00 and it is not compatible anymore."); //$NON-NLS-1$
+            }
             if (!wkffDir.exists()) {
                 String msg = "Invalid LED database path: " + wkffDir.getAbsolutePath(); //$NON-NLS-1$
                 logger.error(msg);
