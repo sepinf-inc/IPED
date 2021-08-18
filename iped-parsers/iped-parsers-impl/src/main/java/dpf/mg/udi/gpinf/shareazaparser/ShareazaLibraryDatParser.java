@@ -21,6 +21,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.tika.exception.TikaException;
@@ -65,8 +66,10 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         Library library = new Library();
         library.read(parser);
         // ShareazaOutputGenerator out = new ShareazaOutputGenerator();
-        for (LibraryFolder folder : library.getLibraryFolders())
+        LibraryFolders folders = library.getLibraryFolders();
+        for (LibraryFolder folder : folders.getLibraryFolders())
             storeSharedHashes(folder, metadata);
+        storeSharedHashes(folders.getAlbumRoot(), folders.getIndexToFile(), metadata);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
@@ -116,13 +119,16 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         xhtml.endDocument();
 
         int numRegistros = 0;
-        for (LibraryFolder folder : library.getLibraryFolders())
+        for (LibraryFolder folder : library.getLibraryFolders().getLibraryFolders())
             numRegistros += countLibraryFiles(folder);
+        numRegistros += countLibraryFiles(library.getLibraryFolders().getAlbumRoot(), library.getLibraryFolders().getIndexToFile());
         metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(numRegistros));
 
         int hashDBHits = 0;
-        for (LibraryFolder folder : library.getLibraryFolders())
+        for (LibraryFolder folder : library.getLibraryFolders().getLibraryFolders())
             hashDBHits += countHashDBHits(folder);
+
+        hashDBHits += countHashDBHits(library.getLibraryFolders().getAlbumRoot(), library.getLibraryFolders().getIndexToFile());
 
         if (hashDBHits > 0)
             metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
@@ -133,12 +139,30 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         for (LibraryFolder f : folder.getLibraryFolders())
             storeSharedHashes(f, metadata);
 
-        for (LibraryFile file : folder.getLibraryFiles())
-            if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32)
-                metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
+        for (LibraryFile file : folder.getLibraryFiles()) {
+            storeSharedHashes(file, metadata);
+        }
+    }
 
-            else if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40)
-                metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+    private void storeSharedHashes(LibraryFile file, Metadata metadata) {
+        if (file.isShared() && file.getMd5() != null && file.getMd5().length() == 32) {
+            metadata.add(ExtraProperties.SHARED_HASHES, file.getMd5());
+        } else if (file.isShared() && file.getSha1() != null && file.getSha1().length() == 40) {
+            metadata.add(ExtraProperties.SHARED_HASHES, file.getSha1());
+        }
+    }
+
+    private void storeSharedHashes(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile, Metadata metadata) {
+        for (AlbumFolder f : folder.getAlbumFolders()) {
+            storeSharedHashes(f, indexToFile, metadata);
+        }
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            LibraryFile file = indexToFile.get(idx);
+            if (file != null) {
+                storeSharedHashes(file, metadata);
+            }
+        }
     }
 
     private int countHashDBHits(LibraryFolder folder) {
@@ -153,10 +177,37 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         return result;
     }
 
+    private int countHashDBHits(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile) {
+        int result = 0;
+        for (AlbumFolder f : folder.getAlbumFolders())
+            result += countHashDBHits(f, indexToFile);
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            LibraryFile file = indexToFile.get(idx);
+            if (file != null) {
+                if (file.isHashDBHit())
+                    result++;
+            }
+        }
+        return result;
+    }
+
     private int countLibraryFiles(LibraryFolder folder) {
         int result = folder.getLibraryFiles().size();
         for (LibraryFolder f : folder.getLibraryFolders())
             result += countLibraryFiles(f);
+        return result;
+    }
+
+    private int countLibraryFiles(AlbumFolder folder, Map<Integer, LibraryFile> indexToFile) {
+        int result = 0;
+        for (AlbumFolder f : folder.getAlbumFolders())
+            result += countLibraryFiles(f, indexToFile);
+
+        for (int idx : folder.getAlbumFileIndexes()) {
+            if (indexToFile.containsKey(idx))
+                result++;
+        }
         return result;
     }
 
