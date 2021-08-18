@@ -127,11 +127,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        if (!sha256Checked.getAndSet(true)) {
-            if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) {
-                logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!");
-            }
-        }
         return SUPPORTED_TYPES;
     }
 
@@ -143,6 +138,12 @@ public class WhatsAppParser extends SQLite3DBParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
+
+        if (!sha256Checked.getAndSet(true)) {
+            if (!Boolean.valueOf(System.getProperty(SHA256_ENABLED_SYSPROP, "false"))) {
+                logger.error("SHA-256 is disabled. WhatsAppParser needs it to link attachments to chats!");
+            }
+        }
 
         IItemBase item = context.get(IItemBase.class);
         if (PhoneParsingConfig.isExternalPhoneParsersOnly() && PhoneParsingConfig.isFromUfdrDatasourceReader(item)) {
