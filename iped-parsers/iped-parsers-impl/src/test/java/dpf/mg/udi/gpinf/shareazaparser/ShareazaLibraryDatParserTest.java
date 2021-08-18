@@ -47,8 +47,8 @@ public class ShareazaLibraryDatParserTest extends TestCase{
         assertTrue(hts.contains("Michael Jackson - Bad.mp3"));
         
         assertEquals("application/x-shareaza-library-dat", contenttype[0]);
-        assertEquals("127", p2pregistrycount[0]);
-        assertEquals(52, sharedhashes.length);
+        assertEquals("228", p2pregistrycount[0]);
+        assertEquals(153, sharedhashes.length);
         assertEquals("5ff811cbb56fa306f01aca1890f1a70a", sharedhashes[0]);
         assertEquals("07dec8692e10ccfcf765e0807f3d94ce", sharedhashes[1]);
         assertEquals("8182ebb4ea93ae9dafaa7cf5b7374bce", sharedhashes[2]);
@@ -80,8 +80,8 @@ public class ShareazaLibraryDatParserTest extends TestCase{
         assertTrue(hts.contains("Big Buck Bunny.torrent"));
         
         assertEquals("application/x-shareaza-library-dat", contenttype[0]);
-        assertEquals("127", p2pregistrycount[0]);
-        assertEquals(47, sharedhashes.length);
+        assertEquals("218", p2pregistrycount[0]);
+        assertEquals(138, sharedhashes.length);
         assertEquals("5ff811cbb56fa306f01aca1890f1a70a", sharedhashes[0]);
         assertEquals("07dec8692e10ccfcf765e0807f3d94ce", sharedhashes[1]);
         assertEquals("025cfa06883c33bcca9b7000e7196718", sharedhashes[2]);
