@@ -35,8 +35,10 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.led.ImageViewPanel;
+import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
+import iped3.util.MediaTypes;
 
 public class ImageViewer extends Viewer implements ActionListener {
 
@@ -55,6 +57,8 @@ public class ImageViewer extends Viewer implements ActionListener {
     private static final String actionFitWidth = "fit-width";
     private static final String actionFitWindow = "fit-window";
     private static final String actionCopyImage = "copy-image";
+
+    private static final int maxDim = 2400;
 
     volatile protected BufferedImage image;
     volatile protected int rotation;
@@ -97,7 +101,11 @@ public class ImageViewer extends Viewer implements ActionListener {
             InputStream in = null;
             try {
                 in = new BufferedInputStream(content.getStream());
-                image = ImageUtil.getSubSampledImage(in, 2000, 2000);
+                // needed for embedded jbig2
+                String mimeType = content instanceof IItemBase
+                        ? MediaTypes.getMimeTypeIfJBIG2((IItemBase) content)
+                        : null;
+                image = ImageUtil.getSubSampledImage(in, maxDim, maxDim, mimeType);
 
                 if (image == null) {
                     IOUtil.closeQuietly(in);

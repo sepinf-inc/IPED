@@ -4,6 +4,8 @@ import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 
+import iped3.io.IItemBase;
+
 public class MediaTypes {
 
     public static final MediaType METADATA_ENTRY = MediaType.application("x-metadata-entry"); //$NON-NLS-1$
@@ -16,6 +18,7 @@ public class MediaTypes {
     public static final MediaType UFED_MMS_MIME = MediaType.application("x-ufed-mms"); //$NON-NLS-1$
     public static final MediaType UFED_DEVICE_INFO = MediaType.application("x-ufed-deviceinfo"); //$NON-NLS-1$
     public static final MediaType UNALLOCATED = MediaType.application("x-unallocated"); //$NON-NLS-1$
+    public static final MediaType JBIG2 = MediaType.image("x-jbig2");
 
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
 
@@ -53,6 +56,13 @@ public class MediaTypes {
             type = getParentType(type);
         }
         return false;
+    }
+
+    public static String getMimeTypeIfJBIG2(IItemBase item) {
+        if (item.getMediaType() != null && item.getMediaType().equals(JBIG2)) {
+            return JBIG2.toString();
+        }
+        return null;
     }
 
 }
