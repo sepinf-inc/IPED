@@ -17,7 +17,6 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 
-import org.apache.james.mime4j.field.datetime.parser.ParseException;
 import org.apache.tika.io.TemporaryResources;
 import org.w3c.dom.Document;
 import org.xml.sax.SAXException;

@@ -1,19 +1,18 @@
-package dpf.mt.gpinf.mapas.webkit;
+package dpf.mt.gpinf.mapas.googlemaps;
 
 import java.awt.Component;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Base64;
 import java.util.HashMap;
-
-import javax.swing.JOptionPane;
 
 import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.mt.gpinf.mapas.impl.JMapOptionsPane;
+import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
@@ -22,6 +21,7 @@ import javafx.beans.value.ObservableValue;
 import javafx.concurrent.Worker.State;
 import javafx.embed.swing.JFXPanel;
 import javafx.event.EventHandler;
+import javafx.scene.CacheHint;
 import javafx.scene.Scene;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebEvent;
@@ -33,7 +33,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
     WebView browser;
     WebEngine webEngine = null;
     final JFXPanel jfxPanel;
-    JSInterfaceFunctions jsInterface = new JSInterfaceFunctions(this);
+    JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);
     String googleApiKey = "";
     File keyStore = new File(System.getProperty("user.home") + "/.indexador/googleApi.key");
 
@@ -45,8 +45,15 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
         Platform.runLater(new Runnable() {
             public void run() {
                 browser = new WebView();
+                browser.setCache(true);
+                browser.setCacheHint(CacheHint.SPEED);
+
                 jfxPanel.setScene(new Scene(browser));
                 webEngine = browser.getEngine();
+
+                String USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.90 Safari/537.36 OPR/63.0.3368.94";
+                webEngine.setUserAgent(USER_AGENT);
+
                 webEngine.setJavaScriptEnabled(true);
                 webEngine.setOnAlert(new EventHandler<WebEvent<String>>() {
                     public void handle(WebEvent<String> event) {
@@ -61,12 +68,21 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
                         if (newState == State.SUCCEEDED) {
                             JSObject window = (JSObject) webEngine.executeScript("window"); //$NON-NLS-1$
                             window.setMember("app", jsInterface); //$NON-NLS-1$
+                            window.setMember("javalog", new LogBridge());
+                            // webEngine.executeScript("console.log = function(message) {
+                            // window.javalog.log(message); }");
                         }
                     }
                 });
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
             }
         });
+    }
+
+    public class LogBridge {
+        public void log(String text) {
+            System.out.println(text);
+        }
     }
 
     @Override
@@ -127,6 +143,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
             html = html.replace("{{icone_base64}}", b64_normal); //$NON-NLS-1$
             html = html.replace("{{icone_selecionado_m_base64}}", b64_selecionado_m); //$NON-NLS-1$
             html = html.replace("{{icone_m_base64}}", b64_marcado); //$NON-NLS-1$
+            html = html.replace("{{toolbar}}", getToolBarHtml());
             html = html.replace("{{kml}}", kml.replace("\n", "").replace("\r", "")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
 
             setText(html);
@@ -136,24 +153,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
     }
 
     private String replaceApiKey(String html) {
-        if (googleApiKey.isEmpty()) {
-            if (keyStore.exists())
-                try {
-                    googleApiKey = new String(Files.readAllBytes(keyStore.toPath()), "UTF-8");
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            String key = JOptionPane.showInputDialog(jfxPanel,
-                    "Please insert Google Maps Javascript API key to use the map feature:", googleApiKey);
-            if (key != null) {
-                googleApiKey = key;
-                try {
-                    Files.write(keyStore.toPath(), googleApiKey.getBytes("UTF-8"));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        googleApiKey = JMapOptionsPane.getGoogleAPIKey();
         html = html.replace("{{GOOGLE_API_KEY}}", googleApiKey); //$NON-NLS-1$
         return html;
     }

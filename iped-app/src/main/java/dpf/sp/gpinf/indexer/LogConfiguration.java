@@ -51,7 +51,7 @@ public class LogConfiguration {
             err = System.err;
             FileOutputStream fos = new FileOutputStream(logFile, true);
             log = new PrintStream(new FilterOutputStream(fos, out, "IPED")); //$NON-NLS-1$
-            System.setOut(log);
+            //System.setOut(log);
             System.setErr(log);
 
             return true;
@@ -72,7 +72,7 @@ public class LogConfiguration {
             log.close();
         }
         if (out != null) {
-            System.setOut(out);
+            //System.setOut(out);
         }
         if (err != null) {
             System.setErr(err);
