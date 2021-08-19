@@ -26,7 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import dpf.sp.gpinf.discord.cache.CacheEntry;
 import dpf.sp.gpinf.discord.cache.Index;
 import dpf.sp.gpinf.discord.json.DiscordRoot;
-
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -39,7 +39,9 @@ import iped3.util.BasicProps;
 public class DiscordParser extends AbstractParser {
 
     private static final long serialVersionUID = 1L;
-    public static final String INDEX_MIME_TYPE = "application/x-discord-chat";
+    public static final String INDEX_MIME_TYPE = "application/x-discord-index";
+    public static final String CHAT_MIME_TYPE = "application/x-discord-chat";
+
     public static final String DATA_MIME_TYPE_V2_0 = "data-v20/x-discord-chat";
     public static final String DATA_MIME_TYPE_V2_1 = "data-v21/x-discord-chat";
 
@@ -81,9 +83,8 @@ public class DiscordParser extends AbstractParser {
                                     new TypeReference<List<DiscordRoot>>() {
                                     });
 
-                            metadata.set(TikaCoreProperties.TITLE,
-                                    discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
-                            metadata.set(HttpHeaders.CONTENT_TYPE, "text/html");
+                            metadata.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                            metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
 
                             XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
                             byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
