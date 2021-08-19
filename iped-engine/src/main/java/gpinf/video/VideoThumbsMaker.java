@@ -84,7 +84,7 @@ public class VideoThumbsMaker {
         VideoProcessResult result = new VideoProcessResult();
 
         File in = inOrg;
-        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$
+        List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer, "-demuxer", "lavf", "-nosound", "-noautosub", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
                 "-noconsolecontrols", "-vo", "null", "-ao", "null", "-frames", "0", "-identify", in.getPath() })); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$ //$NON-NLS-6$ //$NON-NLS-7$ //$NON-NLS-8$
 
         File subTmp = new File(tmp, prefix + Thread.currentThread().getId() + "_" + System.currentTimeMillis()); //$NON-NLS-1$
@@ -96,8 +96,12 @@ public class VideoThumbsMaker {
         String videoStream = null;
         for (int step = 0; step <= 1; step++) {
             if (step == 1) {
-                cmds.add("-demuxer"); //$NON-NLS-1$
-                cmds.add("lavf"); //$NON-NLS-1$
+                int pos = cmds.indexOf("-demuxer"); //$NON-NLS-1$
+                if (pos < 0) {
+                    continue;
+                }
+                cmds.remove(pos + 1);
+                cmds.remove(pos);
             }
             ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
             if (firstCall) {
@@ -175,6 +179,8 @@ public class VideoThumbsMaker {
 
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
+        cmds.add("-demuxer"); //$NON-NLS-1$
+        cmds.add("lavf"); //$NON-NLS-1$
         cmds.add("-speed"); //$NON-NLS-1$
         cmds.add("100"); //$NON-NLS-1$
         cmds.add("-dr"); //$NON-NLS-1$
@@ -254,10 +260,16 @@ public class VideoThumbsMaker {
                 cmds.remove(pos);
 
             } else if (step == 3) {
-                cmds.add("-demuxer"); //$NON-NLS-1$
-                cmds.add("lavf"); //$NON-NLS-1$
+                int pos = cmds.indexOf("-demuxer"); //$NON-NLS-1$
+                if (pos < 0) {
+                    continue;
+                }
+                cmds.remove(pos + 1);
+                cmds.remove(pos);
+                cmds.add(pos, "-forceidx"); //$NON-NLS-1$
+
                 frameStepStr = null;
-                int pos = cmds.indexOf("-vf");
+                pos = cmds.indexOf("-vf");
                 if (pos > 0) {
                     cmds.remove(pos + 1);
                     cmds.remove(pos);
