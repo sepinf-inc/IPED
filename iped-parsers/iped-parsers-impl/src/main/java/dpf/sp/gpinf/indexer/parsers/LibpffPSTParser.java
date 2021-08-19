@@ -322,8 +322,8 @@ public class LibpffPSTParser extends AbstractParser {
         preview.append("<hr>"); //$NON-NLS-1$
 
         writeBody(file, metadata, preview);
-
-        writeInternetHeaders(file, preview);
+        /* Issue #65 - add internet headers as metadata */
+        writeInternetHeaders(file, preview, metadata);
 
         preview.append("</body>"); //$NON-NLS-1$
         preview.append("</html>"); //$NON-NLS-1$
@@ -543,7 +543,7 @@ public class LibpffPSTParser extends AbstractParser {
         }
     }
 
-    private void writeInternetHeaders(File file, StringBuilder preview) {
+    private void writeInternetHeaders(File file, StringBuilder preview, Metadata metadata) {
         File internetHeaders = new File(file, "InternetHeaders.txt"); //$NON-NLS-1$
         if (internetHeaders.exists()) {
             preview.append("<hr>"); //$NON-NLS-1$
@@ -552,8 +552,17 @@ public class LibpffPSTParser extends AbstractParser {
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
             List<String> lines = readAllLines(internetHeaders);
             for (String line : lines) {
-                if (!line.trim().isEmpty())
+                if (!line.trim().isEmpty()) {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
+                    String[] l = line.split(": ", 2); //$NON-NLS-1$
+                    if (l.length > 1) {
+                        String value = l[1].trim();
+                        if (!value.isEmpty()) {
+                            /* Issue #65 - add internet headers as metadata */
+                            metadata.add (l[0], value);
+                        }
+                    }
+                }
             }
             preview.append("</div>"); //$NON-NLS-1$
         }
