@@ -181,11 +181,11 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     }
 
     @Override
-    public void keyPressed(KeyEvent evt) {
+    public void keyReleased(KeyEvent evt) {
     }
 
     @Override
-    public void keyReleased(KeyEvent evt) {
+    public void keyPressed(KeyEvent evt) {
         if (App.get().resultsTable.getSelectedRow() == -1) {
             return;
         }
@@ -218,7 +218,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                                                                                                         // Window
             GerenciadorMarcadores.setVisible();
         else
-            GerenciadorMarcadores.get().keyReleased(evt);
+            GerenciadorMarcadores.get().keyPressed(evt);
 
     }
 
