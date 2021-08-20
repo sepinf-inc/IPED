@@ -92,15 +92,14 @@ public class GalleryListener implements ListSelectionListener, MouseListener, Ke
 
     @Override
     public void keyPressed(KeyEvent evt) {
-
+        for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class)) {
+            kl.keyPressed(evt);
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent evt) {
         cellEditor.stopCellEditing();
-        for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class)) {
-            kl.keyReleased(evt);
-        }
     }
 
     @Override
