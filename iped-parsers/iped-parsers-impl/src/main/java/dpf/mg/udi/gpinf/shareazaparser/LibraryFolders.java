@@ -20,6 +20,7 @@ package dpf.mg.udi.gpinf.shareazaparser;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -64,10 +65,13 @@ class LibraryFolders extends ShareazaEntity {
     }
 
     public void printTable(XHTMLContentHandler html, IItemSearcher searcher) throws SAXException {
+        Map<Integer, List<String>> albunsForFiles = new HashMap<>();
+        albumRoot.collectAlbunsForFiles(albunsForFiles, null);
+
         for (LibraryFolder folder : folders) {
-            folder.printTable(html, searcher);
+            folder.printTable(html, searcher, albunsForFiles);
         }
-        albumRoot.printTable(html, searcher, indexToFile, null);
+        albumRoot.printTable(html, searcher, indexToFile, albunsForFiles);
     }
 
     public List<LibraryFolder> getLibraryFolders() {
