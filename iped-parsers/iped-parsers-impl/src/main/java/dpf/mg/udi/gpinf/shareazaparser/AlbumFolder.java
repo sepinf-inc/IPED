@@ -79,19 +79,20 @@ class AlbumFolder extends ShareazaEntity {
         }
     }
 
-    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, LibraryFile> fileByIndex, String path) throws SAXException {
-        if (path == null) {
-            path = "[ALBUM]/" + name; //$NON-NLS-1$
-        } else {
-            path = path + "/" + name; //$NON-NLS-1$
-        }
+    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, 
+            LibraryFile> fileByIndex, Map<Integer, List<String>> albunsForFiles) throws SAXException {
         for (AlbumFolder folder : albumFolders) {
-            folder.printTable(html, searcher, fileByIndex, path);
+            folder.printTable(html, searcher, fileByIndex, albunsForFiles);
         }
         for (int idx : albumFileIndexes) {
-            LibraryFile file = fileByIndex.get(idx);
-            if (file != null) {
-                file.printTableRow(html, path, searcher);
+            if (albunsForFiles.containsKey(idx)) {
+                // only print files that are only in Albuns (not in library folders)
+                // other files already printed
+                LibraryFile file = fileByIndex.get(idx);
+                if (file != null) {
+                    file.printTableRow(html, "", searcher, albunsForFiles);
+                    albunsForFiles.remove(file.getIndex());
+                }
             }
         }
     }
@@ -118,6 +119,26 @@ class AlbumFolder extends ShareazaEntity {
 
     public List<Integer> getAlbumFileIndexes() {
         return albumFileIndexes;
+    }
+    
+    public void collectAlbunsForFiles(Map<Integer, List<String>> albunsForFiles, String path) {
+        if (path == null) {
+            path = name;
+        } else {
+            path = path + "/" + name;
+        }
+        for (int idx : albumFileIndexes) {
+            List<String> albuns = albunsForFiles.get(idx);
+            if (albuns == null) {
+                albuns = new ArrayList<>();
+                albunsForFiles.put(idx, albuns);
+            }
+            albuns.add(path);
+        }
+        for (AlbumFolder folder : albumFolders) {
+            folder.collectAlbunsForFiles(albunsForFiles, path);
+        }
+        
     }
 
 }
