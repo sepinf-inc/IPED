@@ -480,19 +480,14 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
+    }
 
+    @Override
+    public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
