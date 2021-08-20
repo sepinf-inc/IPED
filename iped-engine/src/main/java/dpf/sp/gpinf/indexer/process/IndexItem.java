@@ -1058,9 +1058,7 @@ public class IndexItem extends BasicProps {
                         evidence.setExtraAttribute(f.name(), getCastedValue(c, f));
                 } else {
                     if (Date.class.equals(c) && f.stringValue() != null) {
-                        // it was stored lowercase because query parser converts range queries to
-                        // lowercase
-                        String val = f.stringValue().toUpperCase();
+                        String val = f.stringValue();
                         evidence.getMetadata().add(f.name(), val);
                     } else {
                         Object casted = getCastedValue(c, f);
