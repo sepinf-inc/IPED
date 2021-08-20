@@ -1166,10 +1166,21 @@ public class IndexItem extends BasicProps {
             }
         } else if (f.numericValue() != null) {
             Number num = f.numericValue();
-            if (num.doubleValue() == num.longValue())
+            if (Byte.class.equals(c)) {
+                return num.byteValue();
+            } else if (Short.class.equals(c)) {
+                return num.shortValue();
+            } else if (Integer.class.equals(c)) {
+                return num.intValue();
+            } else if (Long.class.equals(c)) {
                 return num.longValue();
-            else
+            } else if (Float.class.equals(c)) {
+                return num.floatValue();
+            } else if (Double.class.equals(c)) {
+                return num.doubleValue();
+            } else {
                 return num;
+            }
         } else if (f.binaryValue() != null) {
             return f.binaryValue().bytes;
         } else {
