@@ -23,7 +23,6 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.localization.Messages;
 import iped3.IItem;
 import iped3.util.BasicProps;
 import macee.core.Configurable;
@@ -35,8 +34,8 @@ import macee.core.Configurable;
  */
 public class SetCategoryTask extends AbstractTask {
 
-    private static String FOLDER_CATEGORY = Messages.getString("SetCategoryTask.Folders"); //$NON-NLS-1$
-    public static String SCANNED_CATEGORY = Messages.getString("SetCategoryTask.ScannedDocs"); //$NON-NLS-1$
+    private static String FOLDER_CATEGORY = "Folders"; //$NON-NLS-1$
+    public static String SCANNED_CATEGORY = "Scanned Documents"; //$NON-NLS-1$
 
     private CategoryConfig categoryConfig;
 

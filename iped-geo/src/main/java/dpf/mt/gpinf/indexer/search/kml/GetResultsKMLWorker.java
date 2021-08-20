@@ -90,7 +90,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
         String longKey = Metadata.LONGITUDE.getName().replace(":", "\\:");
         String range1 = ":[-90 TO 90]";
         String range2 = ":[-180 TO 180]";
-        
+
         StringBuilder sb = new StringBuilder();
         sb.append("(" + latKey + range1 + " && " + longKey + range2 + ") ");
         sb.append("(" + imagePrefix + latKey + range1 + " && " + imagePrefix + longKey + range2 + ") ");

@@ -3,6 +3,7 @@ package dpf.mt.gpinf.mapas.util;
 import java.util.Locale;
 import java.util.MissingResourceException;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,6 +25,7 @@ public class Messages {
             Locale locale = localeProp != null ? Locale.forLanguageTag(localeProp) : Locale.getDefault();
             RESOURCE_BUNDLE = iped3.util.Messages.getExternalBundle(BUNDLE_NAME, locale);
             String finalLocale = RESOURCE_BUNDLE.getLocale().toLanguageTag();
+
             if (finalLocale.equals("und")) //$NON-NLS-1$
                 finalLocale = "en"; //$NON-NLS-1$
             if (!locale.toLanguageTag().equals(finalLocale))
@@ -37,5 +39,9 @@ public class Messages {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    public static Set<String> getKeys() {
+        return RESOURCE_BUNDLE.keySet();
     }
 }

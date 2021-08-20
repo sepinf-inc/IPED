@@ -1,0 +1,9 @@
+#default selected tile server URL pattern
+tileServerUrlPattern=http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1
+
+#Optional tile server URL patterns 
+# syntax:
+# displayName=URL
+Bing=http://r{s}.ortho.tiles.virtualearth.net/tiles/r{quad}.png?g=1
+Open Street Maps=https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png
+Esri_WorldImagery=https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}

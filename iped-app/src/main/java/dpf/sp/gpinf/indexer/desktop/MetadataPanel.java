@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
+import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.StringUtil;
@@ -99,11 +100,11 @@ public class MetadataPanel extends JPanel
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
     JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
-    JButton update = new JButton();
+    private final HoverButton update = new HoverButton();
     HintTextField listFilter = new HintTextField(
             "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char) 0x2193);
-    JButton copyResultToClipboard = new JButton();
-    private final JButton reset = new JButton();
+    private final HoverButton copyResultToClipboard = new HoverButton();
+    private final HoverButton reset = new HoverButton();
     private final HintTextField propsFilter = new HintTextField(
             "[" + Messages.getString("MetadataPanel.FilterProps") + "] " + (char) 0x2191);
     
@@ -153,20 +154,16 @@ public class MetadataPanel extends JPanel
         update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
         update.setPreferredSize(new Dimension(20, 20));
-        update.setContentAreaFilled(false);
-        update.addMouseListener(new ButtonMouseListener(update));
+        update.addActionListener(this);
 
         copyResultToClipboard.setIcon(IconUtil.getIcon("copy", RES_PATH, 16));
         copyResultToClipboard.setToolTipText(Messages.getString("MetadataPanel.CopyClipboard"));
         copyResultToClipboard.setPreferredSize(new Dimension(20, 20));
-        copyResultToClipboard.setContentAreaFilled(false);
-        copyResultToClipboard.addMouseListener(new ButtonMouseListener(copyResultToClipboard));
+        copyResultToClipboard.addActionListener(this);
         
         reset.setIcon(IconUtil.getIcon("clear", RES_PATH, 16));
         reset.setToolTipText(Messages.getString("MetadataPanel.Clear"));
         reset.setPreferredSize(new Dimension(20, 20));
-        reset.setContentAreaFilled(false);
-        reset.addMouseListener(new ButtonMouseListener(reset));
         reset.addActionListener(this);
 
         list.setFixedCellHeight(18);
@@ -222,8 +219,6 @@ public class MetadataPanel extends JPanel
         l4.add(reset);
 
         listFilter.addActionListener(this);
-        copyResultToClipboard.addActionListener(this);
-        update.addActionListener(this);
 
         JPanel top = new JPanel();
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
@@ -1073,34 +1068,6 @@ public class MetadataPanel extends JPanel
 
     }
 
-    private class ButtonMouseListener extends MouseAdapter {
-        
-        private JButton button;
-        
-        private ButtonMouseListener(JButton button) {
-            this.button = button;
-        }
-        
-        @Override
-        public void mouseEntered(MouseEvent e){
-            button.setBorder(BorderFactory.createLineBorder(Color.GRAY, 1, true));
-        }
-        @Override
-        public void mouseExited(MouseEvent e){
-            button.setBorder(null);
-        }
-
-        @Override
-        public void mousePressed(MouseEvent e) {
-            button.setContentAreaFilled(true);
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            button.setContentAreaFilled(false);
-        }
-    }
-    
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();

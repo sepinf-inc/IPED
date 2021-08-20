@@ -262,10 +262,14 @@ public class QueryBuilder implements IQueryBuilder {
             parser.setMultiTermRewriteMethod(MultiTermQuery.SCORING_BOOLEAN_REWRITE);
             parser.setPointsConfigMap(getPointsConfigMap());
 
-            // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             IndexTaskConfig indexConfig = ConfigurationManager.get().findObject(IndexTaskConfig.class);
+            // removes diacritics, StandardQueryParser doesn't remove them from WildcardQueries
             if (analyzer != spaceAnalyzer && indexConfig.isConvertCharsToAscii()) {
                 texto = IndexItem.normalize(texto, false);
+            }
+            // see #678
+            if (!indexConfig.isConvertCharsToLowerCase()) {
+                parser.setLowercaseExpandedTerms(false);
             }
 
             try {

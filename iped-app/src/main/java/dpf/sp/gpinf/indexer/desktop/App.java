@@ -743,7 +743,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             public boolean dispatchKeyEvent(KeyEvent e) {
                 if (e.getID() == KeyEvent.KEY_RELEASED) {
                     if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-                        if (e.getKeyCode() == KeyEvent.VK_EQUALS) {
+                        if (e.getKeyCode() == KeyEvent.VK_EQUALS || e.getKeyCode() == KeyEvent.VK_PLUS) {
                             synchronized (App.this) {
                                 if (zoomLevel < 8) {
                                     zoomLevel++;
