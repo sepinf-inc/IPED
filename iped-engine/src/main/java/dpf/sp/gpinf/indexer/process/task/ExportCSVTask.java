@@ -245,7 +245,7 @@ public class ExportCSVTask extends AbstractTask {
                 while ((line = reader.readLine()) != null) {
                     HashValue globalId = null;
                     if (!header) {
-                        int idx = line.lastIndexOf(";\"");
+                        int idx = line.lastIndexOf(SEPARATOR + "\"");
                         globalId = new HashValue(line.substring(idx + 2, line.length() - 1));
                     }
                     if (header || added.add(globalId)) {
