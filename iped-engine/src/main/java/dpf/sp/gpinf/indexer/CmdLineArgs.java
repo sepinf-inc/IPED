@@ -24,8 +24,6 @@ public interface CmdLineArgs {
 
     List<String> getNocontent();
 
-    File getImportkff();
-
     String getTimezone();
 
     int getBlocksize();

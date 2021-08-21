@@ -35,8 +35,8 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.ITextParser;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -195,7 +195,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
 
     private ParseContext getTikaContext(IItem item) throws Exception {
         ParsingTask expander = new ParsingTask(item, (IndexerDefaultParser) App.get().getAutoParser());
-        expander.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+        expander.init(ConfigurationManager.get());
         ParseContext context = expander.getTikaContext((IPEDSource) appSearchParams.lastSelectedSource);
         expander.setExtractEmbedded(false);
         return context;

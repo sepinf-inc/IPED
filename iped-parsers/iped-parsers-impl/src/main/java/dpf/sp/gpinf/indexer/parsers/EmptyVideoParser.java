@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -29,9 +30,12 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MediaTypeRegistry;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
+import org.apache.tika.parser.mp4.MP4Parser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 
 /**
  * Extrai conteúdo vazio para vídeos sem parser específico, enquanto nao é
@@ -44,23 +48,17 @@ public class EmptyVideoParser extends AbstractParser {
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
     private static Set<MediaType> getTypes() {
-        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+        Set<MediaType> supportedTypes = new TreeSet<MediaType>();
+
+        Set<MediaType> videosWithParser = new TreeSet<>();
+        videosWithParser.addAll(new MP4Parser().getSupportedTypes(null));
+        videosWithParser.add(MediaType.video("x-flv"));
+
         for (MediaType type : MediaTypeRegistry.getDefaultRegistry().getTypes()) {
             type = type.getBaseType();
-            String typeStr = type.toString();
-            if (typeStr.equals("application/vnd.rn-realmedia") //$NON-NLS-1$
-                    || (typeStr.startsWith("video") //$NON-NLS-1$
-                            && !type.equals(MediaType.video("x-flv"))) //$NON-NLS-1$
-            /*
-             * && !type.equals(MediaType.video("3gpp")) &&
-             * !type.equals(MediaType.video("3gpp2")) &&
-             * !type.equals(MediaType.video("mp4")) &&
-             * !type.equals(MediaType.video("x-m4v")) &&
-             * !type.equals(MediaType.video("quicktime"))
-             */)
-
+            if (MetadataUtil.isVideoType(type) && !videosWithParser.contains(type)) {
                 supportedTypes.add(type);
-
+            }
         }
         return supportedTypes;
     }

@@ -187,6 +187,16 @@ public class SQLite3DBParser extends AbstractDBParser {
         return false;
     }
 
+    public static boolean containsTable(String table, Connection connection) {
+        SQLite3DBParser parser = new SQLite3DBParser();
+        try {
+            return parser.getTableNames(connection, null, null).contains(table);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
     public static String getStringIfExists(ResultSet rs, String col) throws SQLException {
         int colIdx;
         try {

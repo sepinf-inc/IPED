@@ -11,6 +11,7 @@ import org.apache.tika.mime.MediaTypeRegistry;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.inc.sepinf.UsnJrnl.UsnJrnlParser;
+import dpf.inc.sepinf.python.PythonParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
@@ -77,6 +78,9 @@ public class MimeTypesProcessingOrder {
         if (mediaRegistry == null) {
             mediaRegistry = TikaConfig.getDefaultConfig().getMediaTypeRegistry();
         }
+
+        // also install python parsers mediaType queue order
+        mediaTypes.putAll(PythonParser.getMediaTypesToQueueOrder());
     }
 
     /** Obtém a prioridade de processamento do mimeType */

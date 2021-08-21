@@ -94,6 +94,8 @@ public interface IMarcadores extends Serializable {
 
     String getLabelComment(int labelId);
 
+    int getLabelCount(int labelId);
+    
     void setInReport(int labelId, boolean inReport);
 
     boolean isInReport(int labelId);

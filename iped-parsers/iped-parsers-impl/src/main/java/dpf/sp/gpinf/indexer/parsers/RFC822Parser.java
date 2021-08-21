@@ -46,6 +46,7 @@ import org.apache.james.mime4j.stream.BodyDescriptor;
 import org.apache.james.mime4j.stream.Field;
 import org.apache.james.mime4j.stream.MimeConfig;
 import org.apache.james.mime4j.util.CharsetUtil;
+import org.apache.poi.util.ReplacingInputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
@@ -58,7 +59,6 @@ import org.apache.tika.metadata.TikaMetadataKeys;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.html.HtmlParser;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -84,8 +84,7 @@ public class RFC822Parser extends AbstractParser {
 
     private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
 
-    private HtmlParser htmlParser = new HtmlParser();
-    private RawStringParser txtParser = new RawStringParser();
+    public static final MediaType RFC822_MAC_MIME = MediaType.parse("message/x-rfc822-mac");
 
     private static Set<MediaType> getTypes() {
         HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
@@ -113,6 +112,10 @@ public class RFC822Parser extends AbstractParser {
 
         parser.setContentHandler(mch);
         parser.setContentDecoding(true);
+        
+        if (RFC822_MAC_MIME.toString().equals(metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE))) {
+            stream = new ReplacingInputStream(new ReplacingInputStream(stream, "\r\n", "\n"), "\r", "\n");
+        }
 
         TaggedInputStream tagged = TaggedInputStream.get(stream);
         try {

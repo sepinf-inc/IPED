@@ -47,6 +47,7 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.neo4j.graphdb.Label;
 import org.neo4j.graphdb.RelationshipType;
 
+import dpf.sp.gpinf.indexer.util.StringUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 
 public class GraphFileWriter implements Closeable, Flushable {
@@ -498,16 +499,6 @@ public class GraphFileWriter implements Closeable, Flushable {
         }
     }
 
-    private static class IgnoreCaseComparator implements Comparator<String> {
-
-        static IgnoreCaseComparator INSTANCE = new IgnoreCaseComparator();
-
-        @Override
-        public int compare(String o1, String o2) {
-            return o1.trim().compareToIgnoreCase(o2.trim());
-        }
-    }
-
     private static class CSVWriter implements Closeable, Flushable {
 
         static final String SEPARATOR = "_";
@@ -684,7 +675,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                             for (int i = 0; i < vals.length; i++) {
                                 Set<String> vs = map.get(i);
                                 if (vs == null) {
-                                    vs = new TreeSet<>(IgnoreCaseComparator.INSTANCE);
+                                    vs = new TreeSet<>(StringUtil.getIgnoreCaseComparator());
                                     map.put(i, vs);
                                 }
                                 if (i == 0)

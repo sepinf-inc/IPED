@@ -211,23 +211,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
 
                 }
 
-                Set<IItemId> itemsWithValuesSelected = App.get().metadataPanel.getFilteredItemIds();
-                if (itemsWithValuesSelected != null) {
-                    numFilters++;
-                    ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
-                    ArrayList<Float> scores = new ArrayList<Float>();
-                    int i = 0;
-                    for (IItemId item : result.getIterator()) {
-                        if (itemsWithValuesSelected.contains(item)) {
-                            filteredItems.add(item);
-                            scores.add(result.getScore(i));
-                        }
-                        i++;
-                    }
-                    result = new MultiSearchResult(filteredItems.toArray(new ItemId[0]),
-                            ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
-                }
-
                 Set<IItemId> selectedEdges = FilterSelectedEdges.getInstance().getItemIdsOfSelectedEdges();
                 if (selectedEdges != null && !selectedEdges.isEmpty()) {
                     numFilters++;
@@ -245,20 +228,34 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                             ArrayUtils.toPrimitive(scores.toArray(new Float[0])));
                 }
 
-                if (App.get().similarImagesQueryRefItem != null) {
-                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
-                    result = ImageSimilarityLowScoreFilter.filter(result);
-                }
-
                 if (App.get().filterDuplicates.isSelected()) {
                     DynamicDuplicateFilter duplicateFilter = new DynamicDuplicateFilter(App.get().appCase);
                     result = duplicateFilter.filter(result);
                     numFilters++;
                 }
 
+                if (App.get().similarImagesQueryRefItem != null) {
+                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
+                    result = ImageSimilarityLowScoreFilter.filter(result);
+                }
+
                 if (App.get().similarFacesRefItem != null) {
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
+                }
+
+                if (App.get().timelineListener.isTimelineViewEnabled()) {
+                    long t = System.currentTimeMillis();
+                    result = new TimelineResults().expandTimestamps(result);
+                    numFilters++;
+                    LOGGER.info("Toggle table timeline took {}ms", (System.currentTimeMillis() - t));
+                }
+
+                if (App.get().metadataPanel.isFiltering()) {
+                    long t = System.currentTimeMillis();
+                    result = App.get().metadataPanel.getFilteredItemIds(result);
+                    numFilters++;
+                    LOGGER.info("Metadata panel filtering took {}ms", (System.currentTimeMillis() - t));
                 }
 
                 saveHighlightTerms();

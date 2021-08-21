@@ -1,16 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.IItem;
-
-import java.io.File;
-import java.util.Properties;
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.mime.MimeTypeException;
 
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import gpinf.dev.filetypes.GenericFileType;
+import iped3.IItem;
+import macee.core.Configurable;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType
@@ -19,11 +19,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetTypeTask extends AbstractTask {
 
-    TikaConfig tikaConfig;
-
-    public SetTypeTask() {
-        tikaConfig = TikaConfig.getDefaultConfig();
-    }
+    private TikaConfig tikaConfig;
 
     @Override
     public void process(IItem evidence) throws Exception {
@@ -77,9 +73,13 @@ public class SetTypeTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File confDir) throws Exception {
-        // TODO Auto-generated method stub
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
 
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+        tikaConfig = TikaConfig.getDefaultConfig();
     }
 
     @Override

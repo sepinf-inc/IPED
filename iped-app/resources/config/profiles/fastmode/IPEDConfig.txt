@@ -1,0 +1,34 @@
+﻿########################################################################
+# Minimal configuration for fastest processing on triage scenarios.
+# Do not change the options, or the processing will became slower.
+########################################################################
+
+enableHash = false
+enablePhotoDNA = false
+enableHashDBLookup = false
+enablePhotoDNALookup = false
+enableLedDie = false
+enableYahooNSFWDetection = false
+ignoreDuplicates = false
+exportFileProps = false
+processFileSignatures = false
+enableFileParsing = false
+expandContainers = false
+enableRegexSearch = false
+enableAutomaticExportFiles = false
+enableLanguageDetect = false
+enableNamedEntityRecogniton = false
+enableGraphGeneration = false
+entropyTest = false
+enableSplitLargeBinary = false
+indexFileContents = false
+enableAudioTranscription = false
+enableCarving = false
+enableLedCarving = false
+enableKnownMetCarving = false
+enableImageThumbs = false
+enableImageSimilarity = false
+enableFaceRecognition = false
+enableVideoThumbs = false
+enableDocThumbs = false
+enableHTMLReport = false

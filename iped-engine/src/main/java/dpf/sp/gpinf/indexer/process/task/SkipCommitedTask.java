@@ -1,13 +1,12 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,6 +22,7 @@ import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.HashValue;
@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 
 /**
  * Task to ignore already commited files into index. Commited containers without
@@ -70,7 +71,12 @@ public class SkipCommitedTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         if (inited.getAndSet(true)) {
             return;
@@ -117,20 +123,18 @@ public class SkipCommitedTask extends AbstractTask {
             NumericDocValues prevParentIds = aReader.getNumericDocValues(IndexItem.PARENTID);
             NumericDocValues prevIds = aReader.getNumericDocValues(IndexItem.ID);
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-                String hashVal = persistentParents.get(doc).utf8ToString();
-                if (!hashVal.isEmpty()) {
+                String hashVal = persistentParents == null ? null : persistentParents.get(doc).utf8ToString();
+                if (hashVal != null && !hashVal.isEmpty()) {
                     HashValue persistParent = new HashValue(hashVal);
-                    if (Arrays.binarySearch(commitedPersistentIds, persistParent) < 0) {
+                    if (prevParentIds != null && Arrays.binarySearch(commitedPersistentIds, persistParent) < 0) {
                         persistentToIdMap.put(persistParent, (int) prevParentIds.get(doc));
                     }
                 }
-                boolean hasChild = Boolean.valueOf(hasChildValues.get(doc).utf8ToString());
-                boolean isDir = Boolean.valueOf(isDirValues.get(doc).utf8ToString());
-                boolean isRoot = Boolean.valueOf(isRootValues.get(doc).utf8ToString());
-                boolean isTexSplitted = hasSplittedText != null
-                        ? Boolean.valueOf(hasSplittedText.get(doc).utf8ToString())
-                        : false;
-                if (hasChild || isDir || isRoot || isTexSplitted) {
+                boolean hasChild = hasChildValues != null && Boolean.valueOf(hasChildValues.get(doc).utf8ToString());
+                boolean isDir = isDirValues != null && Boolean.valueOf(isDirValues.get(doc).utf8ToString());
+                boolean isRoot = isRootValues != null && Boolean.valueOf(isRootValues.get(doc).utf8ToString());
+                boolean isTexSplitted = hasSplittedText != null && Boolean.valueOf(hasSplittedText.get(doc).utf8ToString());
+                if (prevIds != null && persistIds != null && (hasChild || isDir || isRoot || isTexSplitted)) {
                     HashValue persistentId = new HashValue(persistIds.get(doc).utf8ToString());
                     persistentToIdMap.put(persistentId, (int) prevIds.get(doc));
                 }
@@ -154,7 +158,7 @@ public class SkipCommitedTask extends AbstractTask {
     private void collectParentsWithoutAllSubitems(LeafReader aReader, SortedDocValues persistIds, NumericDocValues ids,
             String parentIdField, String subitemCountField) throws IOException {
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
-        if (parentContainers == null) {
+        if (parentContainers == null || persistIds == null || ids == null) {
             return;
         }
         NumericDocValues numSubitems = aReader.getNumericDocValues(subitemCountField);

@@ -28,16 +28,6 @@ public class StandardASCIIAnalyzer extends Analyzer {
     private final boolean pipeTokenizer;
 
     /**
-     * Builds an analyzer with the default stop words.
-     *
-     * @param matchVersion
-     *            Lucene version to match
-     */
-    public StandardASCIIAnalyzer(boolean pipeTokenizer) {
-        this.pipeTokenizer = pipeTokenizer;
-    }
-
-    /**
      * Default maximum allowed token length
      */
     public static final int DEFAULT_MAX_TOKEN_LENGTH = 255;
@@ -48,12 +38,34 @@ public class StandardASCIIAnalyzer extends Analyzer {
 
     private boolean convertCharsToAscii = true;
 
+    private boolean convertCharsToLowerCase = true;
+
+    private int[] extraChars;
+
+    /**
+     * Builds an analyzer with the default stop words.
+     *
+     * @param matchVersion
+     *            Lucene version to match
+     */
+    public StandardASCIIAnalyzer(boolean pipeTokenizer) {
+        this.pipeTokenizer = pipeTokenizer;
+    }
+
     public void setFilterNonLatinChars(boolean filterNonLatinChars) {
         this.filterNonLatinChars = filterNonLatinChars;
     }
 
+    public void setConvertCharsToLower(boolean convertToLower) {
+        this.convertCharsToLowerCase = convertToLower;
+    }
+
     public void setConvertCharsToAscii(boolean convertCharsToAscii) {
         this.convertCharsToAscii = convertCharsToAscii;
+    }
+
+    public void setExtraCharsToIndex(int[] extraChars) {
+        this.extraChars = extraChars;
     }
 
     /**
@@ -79,7 +91,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
         if (pipeTokenizer) {
             tokenizer = new CategoryTokenizer();
         } else {
-            tokenizer = new LetterDigitTokenizer();
+            tokenizer = new LetterDigitTokenizer(convertCharsToLowerCase, extraChars);
         }
 
         // src.setMaxTokenLength(maxTokenLength);

@@ -33,7 +33,9 @@ public class AppMain {
     private static final String appLogFileName = "IPED-SearchApp.log"; //$NON-NLS-1$
 
     File casePath;
-    File testPath;// = new File("E:\\teste\\noteAcer-forensic-3.15-2");
+
+    // configure to debug the analysis UI with some case
+    File testPath;// = new File("E:\\teste\\case-to-debug");
 
     boolean isMultiCase = false;
     boolean nolog = false;
@@ -83,11 +85,7 @@ public class AppMain {
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
             casePath = testPath;
-            return;
-        }
-
-        if ("true".equals(System.getProperty("Debugging"))) {
-            casePath = new File(System.getProperty("user.dir"));
+            libDir = new File(casePath + "/indexador/lib");
             return;
         }
 
@@ -176,10 +174,9 @@ public class AppMain {
 
             if (!finalLoader && processingManager == null) {
                 List<File> jars = new ArrayList<File>();
-                PluginConfig pluginConfig = (PluginConfig) ConfigurationManager.getInstance()
-                        .findObjects(PluginConfig.class).iterator().next();
-                jars.addAll(Arrays.asList(pluginConfig.getOptionalJars(Configuration.getInstance().appRoot)));
-                jars.add(Configuration.getInstance().tskJarFile);
+                PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
+                jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
+                jars.add(pluginConfig.getTskJarFile());
 
                 System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
                         new File(libDir, "nativeview").getAbsolutePath());

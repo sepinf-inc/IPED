@@ -177,7 +177,7 @@ public interface IItem extends IItemBase {
 
     Reader getTextReader() throws IOException;
 
-    Date getRecordDate();
+    Date getChangeDate();
 
     @Override
     SeekableByteChannel getSeekableByteChannel() throws IOException;
@@ -465,7 +465,7 @@ public interface IItem extends IItemBase {
      */
     void setQueueEnd(boolean isQueueEnd);
 
-    void setRecordDate(Date recordDate);
+    void setChangeDate(Date changeDate);
 
     /**
      * @param isRoot

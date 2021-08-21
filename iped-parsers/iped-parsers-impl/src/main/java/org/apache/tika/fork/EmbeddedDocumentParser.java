@@ -99,7 +99,12 @@ public class EmbeddedDocumentParser implements EmbeddedDocumentExtractor, Serial
         }
 
         if (name.length() > NAME_MAX_LEN) {
-            name = name.substring(0, NAME_MAX_LEN);
+            int maxSize = NAME_MAX_LEN;
+            if (Character.isHighSurrogate(name.charAt(maxSize - 1))) {
+                // avoid creating invalid strings ending with high surrogate char, see #638
+                maxSize--;
+            }
+            name = name.substring(0, maxSize);
         }
         return new NameTitle(name, hasTitle);
     }

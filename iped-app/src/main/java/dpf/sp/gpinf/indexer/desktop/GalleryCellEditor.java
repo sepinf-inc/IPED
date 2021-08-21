@@ -32,6 +32,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellEditor;
 
@@ -47,7 +48,10 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     // JLayeredPane panel = new JLayeredPane();
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
-    Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
+    Border selBorder;
+    Color selColor;
+    Color background;
+    Color warningColor;
 
     public GalleryCellEditor() {
         super();
@@ -60,6 +64,27 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         label.setHorizontalAlignment(JLabel.CENTER);
         check.addActionListener(this);
+        
+        updateUI();
+    }
+    
+    public void updateUI() {
+        selColor = UIManager.getColor("Gallery.cellSelected");
+        if (selColor == null)
+            selColor = new Color(180, 200, 230);
+        
+        background = UIManager.getColor("Gallery.background");
+        if (background == null)
+            background = new Color(240, 240, 242);
+        
+        Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
+        if (selBorderColor == null)
+            selBorderColor = new Color(20, 50, 80);
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);    
+
+        warningColor = UIManager.getColor("Gallery.warning");
+        if (warningColor == null)
+            warningColor = Color.red;
     }
 
     @Override
@@ -74,14 +99,21 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue.id == null) {
-            return new JPanel();
+            JPanel panel = new JPanel();
+            panel.setBackground(background);
+            return panel;
         }
 
         check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {
+            label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
+            label.setForeground(warningColor);
+            label.setText(GalleryCellRenderer.unsupportedIconText);
             label.setIcon(null);
         } else {
             label.setText(null);
@@ -99,8 +131,8 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
             }
         }
 
-        panel.setBackground(new Color(180, 200, 230));
-        top.setBackground(new Color(180, 200, 230));
+        panel.setBackground(selColor);
+        top.setBackground(selColor);
         panel.setBorder(selBorder);
         this.row = row;
         this.col = col;

@@ -54,7 +54,7 @@ import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.rtf.RTFParser2;
+import org.apache.tika.parser.rtf.RTFParser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
@@ -62,6 +62,7 @@ import org.slf4j.LoggerFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import com.pff.AutoCharsetDetector;
 import com.pff.PSTAttachment;
 import com.pff.PSTContact;
 import com.pff.PSTException;
@@ -152,7 +153,14 @@ public class OutlookPSTParser extends AbstractParser {
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
+
             pstFile = new PSTFile(tmpFile);
+            pstFile.setAutoCharsetDetector(new TikaAutoCharsetDetector());
+
+            if (useLibpffParser && pstFile.getPSTFileType() == PSTFile.PST_TYPE_2013_UNICODE) {
+                throw new TikaException("current java-libpst support for OST 2013 format is broken,"
+                        + " see https://github.com/rjohnsondev/java-libpst/issues/60");
+            }
 
             if (extractor.shouldParseEmbedded(metadata))
                 walkFolder(pstFile.getRootFolder(), "", -1); //$NON-NLS-1$
@@ -196,6 +204,15 @@ public class OutlookPSTParser extends AbstractParser {
         }
 
         xhtml.endDocument();
+
+    }
+
+    public static class TikaAutoCharsetDetector implements AutoCharsetDetector {
+
+        @Override
+        public String decodeString(byte[] data) {
+            return Util.decodeUnknownCharsetSimpleThenTika(data);
+        }
 
     }
 
@@ -434,8 +451,9 @@ public class OutlookPSTParser extends AbstractParser {
             preview.append("<meta http-equiv=\"content-type\" content=\"text/html; charset=" + charset + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
             preview.append("</head>"); //$NON-NLS-1$
             preview.append(
-                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:5px;\">"); //$NON-NLS-1$
+                    "<body style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:14px;margin:0px;\">"); //$NON-NLS-1$
 
+            preview.append("<div class=\"ipedtheme\">"); //$NON-NLS-1$
             preview.append("<b>" + Messages.getString("OutlookPSTParser.Subject") + ": " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     + SimpleHTMLEncoder.htmlEncode(subject) + "</b><br>"); //$NON-NLS-1$
 
@@ -487,6 +505,7 @@ public class OutlookPSTParser extends AbstractParser {
             }
 
             preview.append("<hr>"); //$NON-NLS-1$
+            preview.append("</div>\n"); //$NON-NLS-1$
 
             String bodyHtml = email.getBodyHTML();
             if (bodyHtml != null && !bodyHtml.trim().isEmpty()) {
@@ -499,7 +518,7 @@ public class OutlookPSTParser extends AbstractParser {
                     text = email.getRTFBody();
                     if (text != null) {
                         try {
-                            RTFParser2 parser = new RTFParser2();
+                            RTFParser parser = new RTFParser();
                             BodyContentHandler handler = new BodyContentHandler();
                             parser.parse(new ByteArrayInputStream(text.getBytes("UTF-8")), handler, new Metadata(),
                                     context);
@@ -563,9 +582,9 @@ public class OutlookPSTParser extends AbstractParser {
 
     private void writeInternetHeaders(String headers, StringBuilder preview) {
         if (!headers.isEmpty()) {
-            preview.append("<hr>"); //$NON-NLS-1$
             preview.append(
-                    "<div style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:5px;\">"); //$NON-NLS-1$
+                    "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:0px;\">"); //$NON-NLS-1$
+            preview.append("<hr>"); //$NON-NLS-1$
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
             String[] lines = headers.split("\n"); //$NON-NLS-1$
             for (String line : lines) {

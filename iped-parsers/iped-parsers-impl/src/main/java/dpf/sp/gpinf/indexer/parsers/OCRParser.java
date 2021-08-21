@@ -22,9 +22,7 @@ import java.awt.Graphics2D;
 import java.awt.GraphicsConfiguration;
 import java.awt.GraphicsEnvironment;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -35,6 +33,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -61,16 +60,18 @@ import org.apache.tika.sax.XHTMLContentHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteConfig;
-import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.OCROutputFolder;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToImage;
-import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
+import iped3.util.MediaTypes;
 
 /**
  * Parser OCR para imagens e PDFs via Tesseract. No caso de PDFs, é gerada uma
@@ -108,6 +109,8 @@ public class OCRParser extends AbstractParser {
 
     private static final String SELECT_ALL = "SELECT id, text FROM ocr WHERE id LIKE ?;"; //$NON-NLS-1$
 
+    private static final String TESSERACT_ERROR_MSG = "tesseract returned error code ";
+
     public static final String ENABLE_PROP = TOOL_NAME + ".enabled"; //$NON-NLS-1$
     public static final String TOOL_PATH_PROP = TOOL_NAME + ".path"; //$NON-NLS-1$
     public static final String LANGUAGE_PROP = "ocr.language"; //$NON-NLS-1$
@@ -117,6 +120,8 @@ public class OCRParser extends AbstractParser {
     public static final String SUBSET_TO_OCR = "subsetToOcr"; //$NON-NLS-1$
     public static final String SUBSET_SEPARATOR = "_#_"; //$NON-NLS-1$
     public static final String TEXT_DIR = "text"; //$NON-NLS-1$
+    public static final String PROCESS_NON_STANDARD_FORMATS_PROP = "ocr.processNonStandard"; //$NON-NLS-1$
+    public static final String MAX_CONV_IMAGE_SIZE_PROP = "ocr.maxConvImageSize"; //$NON-NLS-1$
 
     private boolean ENABLED = Boolean.valueOf(System.getProperty(ENABLE_PROP, "false")); //$NON-NLS-1$
     private String TOOL_PATH = System.getProperty(TOOL_PATH_PROP, ""); //$NON-NLS-1$
@@ -126,6 +131,8 @@ public class OCRParser extends AbstractParser {
     private long MAX_SIZE = Integer.valueOf(System.getProperty(MAX_SIZE_PROP, "100000000")); //$NON-NLS-1$
     private List<String> bookmarksToOCR = Arrays
             .asList(System.getProperty(SUBSET_TO_OCR, SUBSET_SEPARATOR).split(SUBSET_SEPARATOR)); // $NON-NLS-1$;
+    private boolean PROCESS_NON_STANDARD_FORMATS = Boolean.valueOf(System.getProperty(PROCESS_NON_STANDARD_FORMATS_PROP, "true")); //$NON-NLS-1$
+    private int MAX_CONV_IMAGE_SIZE = Integer.valueOf(System.getProperty(MAX_CONV_IMAGE_SIZE_PROP, "3000")); //$NON-NLS-1$
 
     private static AtomicBoolean checked = new AtomicBoolean();
     private static String tessVersion = "";
@@ -135,27 +142,95 @@ public class OCRParser extends AbstractParser {
     // Root folder to store ocr results
     private File outputBase;
 
-    private static final Set<MediaType> SUPPORTED_TYPES = getTypes();
+    private static final Set<MediaType> directSupportedTypes = getDirectSupportedTypes();
+    private static final Set<MediaType> nonStandardSupportedTypes = getNonStandardSupportedTypes();
+    private static final Set<MediaType> nonImageSupportedTypes = getNonImageSupportedTypes();
 
-    private static Set<MediaType> getTypes() {
-        HashSet<MediaType> supportedTypes = new HashSet<MediaType>();
+    private static final Map<String,Set<MediaType>> librarySupportedTypes = getLibrarySupportedTypes();
+    
+    private static final Set<MediaType> imageSupportedTypes = new HashSet<MediaType>();
+    private static final Set<MediaType> allSupportedTypes = new HashSet<MediaType>();
+    
+    static {
+        imageSupportedTypes.addAll(directSupportedTypes);
+        imageSupportedTypes.addAll(nonStandardSupportedTypes);
+        
+        allSupportedTypes.addAll(imageSupportedTypes);
+        allSupportedTypes.addAll(nonImageSupportedTypes);
+    }
 
-        supportedTypes.add(MediaType.image("png")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpeg")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("tiff")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.application("pdf")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("bmp")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("gif")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jp2")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("jpx")); //$NON-NLS-1$
-        supportedTypes.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
+    public static Set<MediaType> getImageSupportedTypes() {
+        return imageSupportedTypes;
+    }
 
-        return supportedTypes;
+    private static Set<MediaType> getDirectSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        
+        types.add(MediaType.image("png")); //$NON-NLS-1$
+        types.add(MediaType.image("jpeg")); //$NON-NLS-1$
+        types.add(MediaType.image("tiff")); //$NON-NLS-1$
+        types.add(MediaType.image("bmp")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-bitmap")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-graymap")); //$NON-NLS-1$
+        types.add(MediaType.image("x-portable-pixmap")); //$NON-NLS-1$
+
+        return types;
+    }
+    
+    private static Set<MediaType> getNonImageSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        types.add(MediaType.application("pdf")); //$NON-NLS-1$
+        return types;
+    }
+    
+    private static Set<MediaType> getNonStandardSupportedTypes() {
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        
+        types.add(MediaType.image("gif")); //$NON-NLS-1$
+        types.add(MediaType.image("jp2")); //$NON-NLS-1$
+        types.add(MediaType.image("jpx")); //$NON-NLS-1$
+        types.add(MediaType.image("webp")); //$NON-NLS-1$
+        
+        types.add(MediaType.image("aces")); //$NON-NLS-1$
+        types.add(MediaType.image("emf")); //$NON-NLS-1$
+        types.add(MediaType.image("heic")); //$NON-NLS-1$
+        types.add(MediaType.image("svg+xml")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.adobe.photoshop")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.wap.wbmp")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.zbrush.dcx")); //$NON-NLS-1$
+        types.add(MediaType.image("vnd.zbrush.pcx")); //$NON-NLS-1$
+        types.add(MediaType.image("wmf")); //$NON-NLS-1$
+        types.add(MediaType.image("x-cmu-raster")); //$NON-NLS-1$
+        types.add(MediaType.image("x-jp2-codestream")); //$NON-NLS-1$
+        types.add(MediaType.image("x-rgb")); //$NON-NLS-1$
+        types.add(MediaType.image("x-xbitmap")); //$NON-NLS-1$
+        types.add(MediaTypes.JBIG2);
+        
+        return types;
+    }
+
+    private static Map<String, Set<MediaType>> getLibrarySupportedTypes() {
+        Map<String, Set<MediaType>> libraryToTypes = new HashMap<String, Set<MediaType>>();
+        
+        HashSet<MediaType> types = new HashSet<MediaType>();
+        types.add(MediaType.image("gif")); //$NON-NLS-1$
+        libraryToTypes.put("libgif", types); //$NON-NLS-1$
+
+        types = new HashSet<MediaType>();
+        types.add(MediaType.image("jp2")); //$NON-NLS-1$
+        types.add(MediaType.image("jpx")); //$NON-NLS-1$
+        libraryToTypes.put("libopenjp2", types); //$NON-NLS-1$
+
+        types = new HashSet<MediaType>();
+        types.add(MediaType.image("webp")); //$NON-NLS-1$
+        libraryToTypes.put("libwebp", types); //$NON-NLS-1$
+        
+        return libraryToTypes;
     }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
-        return SUPPORTED_TYPES;
+        return PROCESS_NON_STANDARD_FORMATS ? allSupportedTypes : directSupportedTypes;
     }
 
     public boolean isEnabled() {
@@ -173,9 +248,23 @@ public class OCRParser extends AbstractParser {
         try {
             synchronized (checked) {
                 if (ENABLED && !checked.getAndSet(true)) {
-                    tessVersion = checkVersion(cmd[0], "-v"); //$NON-NLS-1$
+                    List<String> info = checkVersionInfo(cmd[0], "-v"); //$NON-NLS-1$
+                    if (!info.isEmpty()) 
+                        tessVersion = info.get(0);
                     LOGGER = LoggerFactory.getLogger(OCRParser.class);
                     LOGGER.info("Detected Tesseract " + tessVersion); //$NON-NLS-1$
+                    if (info.size() <= 1) {
+                        LOGGER.info("No Tesseract optional image libraries detected."); //$NON-NLS-1$
+                    } else {
+                        LOGGER.info("Tesseract optional image libraries: " + info.subList(1, info.size())); //$NON-NLS-1$
+                        for (int i = 1; i < info.size(); i++) {
+                            Set<MediaType> types = librarySupportedTypes.get(info.get(i));
+                            directSupportedTypes.addAll(types);
+                            nonStandardSupportedTypes.removeAll(types);
+                        }
+                    }
+                    LOGGER.info("Process non-standard image formats {}.", //$NON-NLS-1$
+                            PROCESS_NON_STANDARD_FORMATS ? "enabled" : "disabled");
                 }
             }
             if (ENABLED && Integer.valueOf(tessVersion.charAt(0)) >= 4) { // $NON-NLS-1$
@@ -263,7 +352,8 @@ public class OCRParser extends AbstractParser {
         if (!ENABLED)
             return;
 
-        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+        CharCountContentHandler countHandler = new CharCountContentHandler(handler);
+        XHTMLContentHandler xhtml = new XHTMLContentHandler(countHandler, metadata);
         xhtml.startDocument();
 
         TemporaryResources tmp = new TemporaryResources();
@@ -292,7 +382,7 @@ public class OCRParser extends AbstractParser {
 
                     String ocrText = getOcrTextFromDb(outFileName, outputBase);
                     if (ocrText != null) {
-                        extractOutput(new ByteArrayInputStream(ocrText.getBytes("UTF-8")), xhtml); //$NON-NLS-1$
+                        extractOutput(ocrText, xhtml); //$NON-NLS-1$
                         return;
                     }
 
@@ -305,15 +395,32 @@ public class OCRParser extends AbstractParser {
                     tmpOutput = new File(outputBase, "ocr-" + random.nextLong() + ".txt"); //$NON-NLS-1$ //$NON-NLS-2$
 
                     String mediaType = metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
-                    if (mediaType.equals("application/pdf")) //$NON-NLS-1$
+                    if (mediaType.equals("application/pdf")) { //$NON-NLS-1$
                         parsePDF(xhtml, tmp, input, tmpOutput);
 
-                    else if (mediaType.equals("image/tiff")) //$NON-NLS-1$
-                        parseTiff(xhtml, tmp, input, tmpOutput);
+                    } else if (nonStandardSupportedTypes.contains(MediaType.parse(mediaType))
+                            || (mediaType.equals("image/bmp") && ImageUtil.isCompressedBMP(input))) {
+                        parseNonStandard(xhtml, input, tmpOutput, mediaType);
+                    
+                    } else {
+                        try {
+                            if (mediaType.equals("image/tiff")) {
+                                // tiff needs to be OCRed per page to avoid timeouts
+                                parseTiff(xhtml, tmp, input, tmpOutput);
+                            } else {
+                                parse(xhtml, input, tmpOutput);
+                            }
 
-                    else
-                        parse(xhtml, input, tmpOutput);
-
+                        } catch (TikaException e) {
+                            if (e.toString().contains(TESSERACT_ERROR_MSG)) {
+                                // retry possible corrupted images converting them before OCR
+                                parseNonStandard(xhtml, input, tmpOutput, mediaType);
+                            } else {
+                                throw e;
+                            }
+                        }
+                    }
+                    
                     byte[] bytes;
                     if (tmpOutput.exists()) {
                         bytes = Files.readAllBytes(tmpOutput.toPath());
@@ -324,15 +431,17 @@ public class OCRParser extends AbstractParser {
                     String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
                     storeOcrTextInDb(outFileName, ocrText, outputBase);
 
-                } else
-                    extractOutput(new FileInputStream(output), xhtml);
-
+                } else {
+                    extractOutput(output, xhtml);
+                }
             }
 
         } finally {
             xhtml.endDocument();
-            if (tmpOutput != null)
+            metadata.set(OCRParser.OCR_CHAR_COUNT, Integer.toString(countHandler.getCharCount()));
+            if (tmpOutput != null) {
                 tmpOutput.delete();
+            }
             tmp.dispose();
         }
     }
@@ -414,39 +523,47 @@ public class OCRParser extends AbstractParser {
             reader = ImageIO.getImageReaders(iis).next();
             reader.setInput(iis, false, true);
             int numPages = reader.getNumImages(true);
-            if (numPages > 3) {
-                for (int page = 0; page < numPages; page++) {
-                    File imageFile = null;
+            // OCR tiff per page to avoid timeouts
+            for (int page = 0; page < numPages; page++) {
+                File imageFile = null;
+                try {
+                    ImageReadParam params = reader.getDefaultReadParam();
+                    int w0 = reader.getWidth(page);
+                    int h0 = reader.getHeight(page);
+                    
+                    int sampling = ImageUtil.getSamplingFactor(w0, h0, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2);
+                    int w1 = (int) Math.ceil((float) w0 / sampling);
+                    int h1 = (int) Math.ceil((float) h0 / sampling);
+                    
+                    BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w1, h1);
+                    params.setDestination(image);
+                    params.setSourceSubsampling(sampling, sampling, 0, 0);
                     try {
-                        ImageReadParam params = reader.getDefaultReadParam();
-                        int w0 = reader.getWidth(page);
-                        int h0 = reader.getHeight(page);
-                        BufferedImage image = reader.getImageTypes(page).next().createBufferedImage(w0, h0);
-                        params.setDestination(image);
-                        try {
-                            reader.read(page, params);
-                        } catch (IOException e) {
-                        }
-
-                        image = getCompatibleImage(image);
-                        imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
-                        ImageIO.write(image, PDFToImage.EXT, imageFile);
-                        File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
-                        parse(xhtml, imageFile, imageText);
-                        if (imageText.exists()) {
-                            if (outputBase != null)
-                                IOUtil.copiaArquivo(imageText, output, true);
-                            imageText.delete();
-                        }
+                        reader.read(page, params);
                     } catch (IOException e) {
-                        // ignore and try next page
-                    } finally {
-                        if (imageFile != null)
-                            imageFile.delete();
                     }
+
+                    image = getCompatibleImage(image);
+
+                    if (image.getWidth() > MAX_CONV_IMAGE_SIZE || image.getHeight() > MAX_CONV_IMAGE_SIZE)
+                        image = ImageUtil.resizeImage(image, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
+                    
+                    imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
+                    ImageIO.write(image, PDFToImage.EXT, imageFile);
+                    File imageText = new File(imageFile.getAbsolutePath() + ".txt"); //$NON-NLS-1$
+                    parse(xhtml, imageFile, imageText);
+                    if (imageText.exists()) {
+                        if (outputBase != null)
+                            IOUtil.copiaArquivo(imageText, output, true);
+                        imageText.delete();
+                    }
+                } catch (IOException e) {
+                    // ignore and try next page
+                } finally {
+                    if (imageFile != null)
+                        imageFile.delete();
                 }
-            } else
-                parse(xhtml, input, output);
+            }
 
         } finally {
             if (reader != null)
@@ -454,6 +571,38 @@ public class OCRParser extends AbstractParser {
         }
     }
 
+    private void parseNonStandard(XHTMLContentHandler xhtml, File input, File output, String mediaType)
+            throws IOException, SAXException, TikaException {
+        File imageFile = null;
+        try {
+            if (!MediaTypes.JBIG2.toString().equals(mediaType)) {
+                mediaType = null; // just use mediaType for jbig2
+            }
+            BufferedImage img = ImageUtil.getSubSampledImage(input, MAX_CONV_IMAGE_SIZE * 2, MAX_CONV_IMAGE_SIZE * 2,
+                    mediaType);
+            if (img == null) {
+                try (ExternalImageConverter converter = new ExternalImageConverter()) {
+                    img = converter.getImage(input, MAX_CONV_IMAGE_SIZE, true, input.length());
+                }
+            }
+            if (img != null) {
+                img = getCompatibleImage(img);
+
+                if (img.getWidth() > MAX_CONV_IMAGE_SIZE || img.getHeight() > MAX_CONV_IMAGE_SIZE)
+                    img = ImageUtil.resizeImage(img, MAX_CONV_IMAGE_SIZE, MAX_CONV_IMAGE_SIZE, BufferedImage.TYPE_3BYTE_BGR);
+                
+                imageFile = File.createTempFile("iped-ocr", "." + PDFToImage.EXT); //$NON-NLS-1$ //$NON-NLS-2$
+                ImageIO.write(img, PDFToImage.EXT, imageFile);
+
+                if (imageFile.exists()) 
+                    parse(xhtml, imageFile, output);
+            }
+        } finally {
+            if (imageFile != null)
+                imageFile.delete();
+        }
+    }
+    
     private void parsePDF(XHTMLContentHandler xhtml, TemporaryResources tmp, File input, File output)
             throws IOException, SAXException, TikaException {
 
@@ -483,39 +632,6 @@ public class OCRParser extends AbstractParser {
             pdfConverter.close();
         }
     }
-
-    /*
-     * private ITesseract tesseract;
-     * 
-     * private void parse(XHTMLContentHandler xhtml, File input, File output) throws
-     * IOException, SAXException, TikaException {
-     * 
-     * if(tesseract == null){ synchronized(OCRParser.class) { if(tesseract == null)
-     * try{ ITesseract tess = new Tesseract1(); // JNA //tesseract = new
-     * Tesseract(); // JNA direct if(!TOOL_PATH.isEmpty()) tess.setDatapath(new
-     * File(TOOL_PATH, "tessdata").getAbsolutePath()); tess.setLanguage(LANGUAGE);
-     * tess.setPageSegMode(Integer.valueOf(PAGESEGMODE)); tesseract = tess;
-     * 
-     * }catch(Exception e){ e.printStackTrace(); } }
-     * 
-     * }
-     * 
-     * //synchronized(OCRParser.class) {
-     * 
-     * try { String result = tesseract.doOCR(ImageIO.read(input));
-     * 
-     * if(result == null) result = ""; byte[] bytes = result.getBytes("UTF-8");
-     * 
-     * if(!result.isEmpty()) extractOutput(new ByteArrayInputStream(bytes), xhtml);
-     * 
-     * if(OUTPUT_BASE != null){ Files.write(output.toPath(), bytes,
-     * StandardOpenOption.CREATE); }
-     * 
-     * } catch (TesseractException e) { e.printStackTrace(); throw new
-     * TikaException(e.toString()); }
-     * 
-     * //} }
-     */
 
     private void parse(XHTMLContentHandler xhtml, File input, File output)
             throws IOException, SAXException, TikaException {
@@ -551,7 +667,7 @@ public class OCRParser extends AbstractParser {
         try {
             int status = process.waitFor();
             if (status != 0) {
-                throw new TikaException("tesseract returned error code " + status);
+                throw new TikaException(TESSERACT_ERROR_MSG + status);
             }
         } catch (InterruptedException e) {
             // System.out.println(new Date() + "\t[AVISO]\t" +
@@ -562,39 +678,19 @@ public class OCRParser extends AbstractParser {
 
         }
         if (output.exists())
-            extractOutput(new FileInputStream(output), xhtml);
+            extractOutput(output, xhtml);
 
     }
 
-    /**
-     * Starts a thread that extracts the contents of the standard output stream of
-     * the given process to the given XHTML content handler. The standard output
-     * stream is closed once fully processed.
-     * 
-     * @param process
-     *            process
-     * @param xhtml
-     *            XHTML content handler
-     * @throws SAXException
-     *             if the XHTML SAX events could not be handled
-     * @throws IOException
-     *             if an input error occurred
-     */
-    private void extractOutput(InputStream stream, XHTMLContentHandler xhtml) throws SAXException, IOException {
-        Reader reader = new InputStreamReader(stream, "UTF-8"); //$NON-NLS-1$
-        try {
-            // xhtml.startElement("p");
-            char[] buffer = new char[1024];
-            for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
-                xhtml.characters(buffer, 0, n);
-            }
-            // xhtml.endElement("p");
-        } finally {
-            reader.close();
-        }
+    private void extractOutput(File output, XHTMLContentHandler xhtml) throws SAXException, IOException {
+        byte[] bytes = Files.readAllBytes(output.toPath());
+        String ocrText = new String(bytes, "UTF-8").trim(); //$NON-NLS-1$
+        extractOutput(ocrText, xhtml);
     }
 
-    // Object msgLock = new Object();
+    private void extractOutput(String ocrText, XHTMLContentHandler xhtml) throws SAXException, IOException {
+        xhtml.characters(ocrText);
+    }
 
     /**
      * 
@@ -628,7 +724,7 @@ public class OCRParser extends AbstractParser {
         }.start();
     }
 
-    public static String checkVersion(String... checkCmd) throws IOException, InterruptedException {
+    public static List<String> checkVersionInfo(String... checkCmd) throws IOException, InterruptedException {
         Process process = Runtime.getRuntime().exec(checkCmd);
         int result = process.waitFor();
 
@@ -642,12 +738,23 @@ public class OCRParser extends AbstractParser {
         }
     }
 
-    private static String extractVersion(InputStream is) throws IOException {
-        String version = IOUtils.readLines(is).get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
+    private static List<String> extractVersion(InputStream is) throws IOException {
+        List<String> lines = IOUtils.readLines(is);
+        String version = lines.get(0).replace("tesseract", "").trim(); //$NON-NLS-1$ //$NON-NLS-2$
         if (version.startsWith("v")) {
             version = version.substring(1);
         }
-        return version;
+        List<String> info = new ArrayList<String>();
+        info.add(version);
+        for (String libName : librarySupportedTypes.keySet()) {
+            for (String l : lines) {
+                if (l.contains(libName)) {
+                    info.add(libName);
+                    break;
+                }
+            }
+        }
+        return info;
     }
 
 }

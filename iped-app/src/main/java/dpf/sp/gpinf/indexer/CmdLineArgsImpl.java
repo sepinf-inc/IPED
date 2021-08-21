@@ -73,9 +73,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "-nocontent", description = "do not export to report file contents of a specific category/bookmark, only thumbs and properties")
     private List<String> nocontent;
 
-    @Parameter(names = "-importkff", validateWith = FileExistsValidator.class, description = "import and index hash database in NIST NSRL format")
-    private File importkff;
-
     @Parameter(names = { "-tz", "-timezone" }, description = "original timezone of FAT devices: GMT-3, GMT-4... "
             + "If unspecified, local system timezone is used.")
     private String timezone;
@@ -171,11 +168,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public List<String> getNocontent() {
         return nocontent;
-    }
-
-    @Override
-    public File getImportkff() {
-        return importkff;
     }
 
     @Override
@@ -383,11 +375,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         IndexFiles.getInstance().dataSource = new ArrayList<File>();
 
-        if (this.importkff != null) {
-            IndexFiles.getInstance().importKFF(this.importkff);
-            System.exit(0);
-        }
-
         if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
@@ -441,6 +428,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 }
             }
             file = file.getParentFile();
+        }
+
+        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "indexador").exists())) {
+            throw new IPEDException(
+                    "You cannot use --append, --continue or --restart with an inexistent or invalid case folder.");
         }
 
         System.setProperty(LocalConfig.SYS_PROP_APPEND, Boolean.toString(this.appendIndex));

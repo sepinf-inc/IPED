@@ -1,16 +1,16 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.Statement;
 import java.util.ArrayList;
-import java.util.Properties;
+import java.util.Collections;
+import java.util.List;
 
-import dpf.sp.gpinf.indexer.process.Worker;
-import gpinf.dev.data.Item;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
+import macee.core.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 
@@ -22,7 +22,12 @@ public class DatabaseTask extends AbstractTask {
     private ArrayList<IItem> itemList = new ArrayList<IItem>();
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Collections.emptyList();
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         Class.forName("org.sqlite.JDBC"); //$NON-NLS-1$
         con = DriverManager.getConnection("jdbc:sqlite:" + this.output.getCanonicalPath() + "/" + databaseName); //$NON-NLS-1$ //$NON-NLS-2$

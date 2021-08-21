@@ -20,6 +20,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,10 +52,11 @@ import org.xml.sax.XMLReader;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.UFEDReaderConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -90,8 +92,9 @@ public class UfedXmlReader extends DataSourceReader {
     public static final String MSISDN_PROP = "MSISDN";
 
     private static final String ESCAPED_UFED_ID = QueryParserUtil.escape(UFED_ID);
+    private static final String EMPTY_EXTRACTION_STR = "-";
 
-    private static final Set<String> SUPPORTED_APPS = new HashSet<String>(
+    private final Set<String> supportedApps = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
 
     File root, ufdrFile;
@@ -102,7 +105,8 @@ public class UfedXmlReader extends DataSourceReader {
     HashMap<String, IItem> pathToParent = new HashMap<>();
     boolean ignoreSupportedChats = false;
     HashMap<String, String> ufdrPathToUfedId = new HashMap<>();
-
+    private final List<String[]> deviceInfoData = new ArrayList<String[]>();
+    
     public UfedXmlReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
     }
@@ -203,23 +207,29 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     private void configureParsers() {
+        configureParsers(false);
+    }
 
-        UFEDReaderConfig ufedReaderConfig = (UFEDReaderConfig) ConfigurationManager.getInstance()
-                .findObjects(UFEDReaderConfig.class).iterator().next();
+    private void configureParsers(boolean isIOS) {
 
-        // TODO enable TelegramParser for UFDR in next major release
+        ParsingTaskConfig parsingConfig = ConfigurationManager.get().findObject(ParsingTaskConfig.class);
+
+        PhoneParsingConfig.setUfdrReaderName(UfedXmlReader.class.getSimpleName());
+
         if (!TelegramParser.isEnabledForUfdr()) {
-            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
-            SUPPORTED_APPS.remove(TelegramParser.TELEGRAM);
+            supportedApps.remove(TelegramParser.TELEGRAM);
         }
 
-        if (ufedReaderConfig.getPhoneParsersToUse().equals("internal")) { //$NON-NLS-1$
+        if (isIOS && !TelegramParser.isEnabledForIOSUfdr()) {
+            supportedApps.remove(TelegramParser.TELEGRAM);
+        }
+
+        if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("internal")) { //$NON-NLS-1$
             UFEDChatParser.setSupportedTypes(Collections.singleton(UFEDChatParser.UFED_CHAT_MIME));
             ignoreSupportedChats = true;
 
-        } else if (ufedReaderConfig.getPhoneParsersToUse().equals("external")) { //$NON-NLS-1$
-            WhatsAppParser.setSupportedTypes(Collections.EMPTY_SET);
-            TelegramParser.setSupportedTypes(Collections.EMPTY_SET);
+        } else if (parsingConfig.getPhoneParsersToUse().equalsIgnoreCase("external")) { //$NON-NLS-1$
+            PhoneParsingConfig.enableExternalPhoneParsersOnly();
         }
     }
 
@@ -251,7 +261,7 @@ public class UfedXmlReader extends DataSourceReader {
             rootItem.setRoot(true);
             rootItem.setName(evidenceName);
         }
-        rootItem.setExtraAttribute("X-Reader", this.getClass().getSimpleName());
+        rootItem.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
 
         pathToParent.put(rootItem.getPath(), rootItem);
 
@@ -271,6 +281,7 @@ public class UfedXmlReader extends DataSourceReader {
         decodedFolder.setIsDir(true);
         decodedFolder.setHasChildren(true);
         decodedFolder.setHash(""); //$NON-NLS-1$
+        decodedFolder.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
 
         pathToParent.put(decodedFolder.getPath(), decodedFolder);
 
@@ -441,6 +452,7 @@ public class UfedXmlReader extends DataSourceReader {
             // parent.setLength(0L);
             parent.setHash(""); //$NON-NLS-1$
             parent.setParent(getParent(parentPath));
+            parent.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
 
             pathToParent.put(parentPath, parent);
 
@@ -482,7 +494,7 @@ public class UfedXmlReader extends DataSourceReader {
                 }
 
                 Item item = new Item();
-
+                item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                 item.setLength(size);
 
                 String fs = "/" + atts.getValue("fs"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -509,7 +521,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
 
                     Item item = new Item();
-
+                    item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                     String type = atts.getValue("type"); //$NON-NLS-1$
                     if (type.equals("Chat"))
                         inChat = true;
@@ -541,6 +553,7 @@ public class UfedXmlReader extends DataSourceReader {
                     }
 
                     Item item = new Item();
+                    item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
                     IItem parent = itemSeq.get(itemSeq.size() - 1);
 
                     String name = type + "_" + atts.getValue("id"); //$NON-NLS-1$ //$NON-NLS-2$
@@ -614,6 +627,14 @@ public class UfedXmlReader extends DataSourceReader {
             XmlNode parentNode = null;
             if (nodeSeq.size() > 0)
                 parentNode = nodeSeq.get(nodeSeq.size() - 1);
+
+            String metadataSection = parentNode != null ? parentNode.atts.get("section") : null;
+            if ("Extraction Data".equals(metadataSection) || "Device Info".equals(metadataSection)) {
+                String val = chars.toString().toLowerCase();
+                if (val.contains("apple") || val.contains("iphone")) {
+                    configureParsers(true);
+                }
+            }
 
             if (("MSISDN".equals(nameAttr) || "LastUsedMSISDN".equals(nameAttr)) && parentNode != null
                     && "Device Info".equals(parentNode.atts.get("section"))) {
@@ -689,7 +710,7 @@ public class UfedXmlReader extends DataSourceReader {
                         else if (item != null && !value.isEmpty()) {
                             item.getMetadata().add(meta, value);
                             if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
-                                    && SUPPORTED_APPS.contains(value)) {
+                                    && supportedApps.contains(value)) {
                                 ignoreItems = true;
                             }
                         }
@@ -890,7 +911,35 @@ public class UfedXmlReader extends DataSourceReader {
                 }
 
             }
-
+            if ("Device Info".equals(currentNode.atts.get("section"))) {
+                if (!deviceInfoData.isEmpty()) {
+                    item = new Item();
+                    item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
+                    String name = Messages.getString("UfedXmlReader.DeviceInfo");
+                    item.setName(name);
+                    item.setParent(rootItem);
+                    item.setPath(rootItem.getPath() + "/" + name);
+                    item.setMediaType(MediaTypes.UFED_DEVICE_INFO);
+                    createDeviceInfoPreview(item);
+                    try {
+                        caseData.incDiscoveredVolume(item.getLength());
+                        caseData.incDiscoveredEvidences(1);
+                        caseData.addItem(item);
+                    } catch (Exception e) {
+                        throw new SAXException(e);
+                    }
+                }
+            } else if (parentNode != null && parentNode.atts != null && "Device Info".equals(parentNode.atts.get("section"))) {
+                String value = chars.toString().trim();
+                if (!value.isEmpty()) {
+                    String extractiontName = extractionInfoMap.get(currentNode.atts.get("sourceExtraction"));
+                    if (extractiontName == null || extractiontName.trim().isEmpty()) {
+                        extractiontName = EMPTY_EXTRACTION_STR;
+                    }
+                    deviceInfoData.add(new String[] { nameAttr, value, extractiontName });
+                }
+            }
+            
             chars = new StringBuilder();
             nameAttr = null;
 
@@ -1230,6 +1279,72 @@ public class UfedXmlReader extends DataSourceReader {
             return file;
         }
 
+        private File createDeviceInfoPreview(Item deviceInfo) {
+            Collections.sort(deviceInfoData, new Comparator<String[]>() {
+                public int compare(String[] a, String[] b) {
+                    int cmp = a[0].compareToIgnoreCase(b[0]);
+                    if (cmp != 0) return cmp;
+                    if ((cmp = a[1].compareToIgnoreCase(b[1])) != 0) return cmp;
+                    return a[2].compareToIgnoreCase(b[2]);
+                }
+            });
+            // removes duplicate rows, depends on sorting above
+            List<String[]> uniqueDeviceInfo = new ArrayList<>();
+            for (int i = 0; i < deviceInfoData.size() - 1; i++) {
+                String[] a = deviceInfoData.get(i);
+                String[] b = deviceInfoData.get(i + 1);
+                if (!a[0].equalsIgnoreCase(b[0]) || !a[1].equalsIgnoreCase(b[1])
+                        || !(a[2].equalsIgnoreCase(b[2]) || a[2].equals(EMPTY_EXTRACTION_STR))) {
+                    uniqueDeviceInfo.add(a);
+                }
+            }
+            uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
+
+            File file = new File(output, "view/deviceInfo/view-" + deviceInfo.getId() + ".html");
+            file.getParentFile().mkdirs();
+            try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
+                bw.write("<!DOCTYPE html>\n"
+                        + "<html>\n"
+                        + "<head>\n"
+                        + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\" />\n"
+                        + "<style>\n"
+                        + ".t { border-collapse: collapse; font-family: Arial, sans-serif }\n"
+                        + ".h { border: solid; border-width: thin; font-weight: bold; text-align: center; padding: 4px; background-color:#AAAAAA; vertical-align: middle; }\n"
+                        + ".a { border: solid; border-width: thin; background-color:#EEEEEE; padding: 4px; text-align: left; vertical-align: middle; }\n"
+                        + ".b { border: solid; border-width: thin; padding: 4px; text-align: left; vertical-align: middle; }\n"
+                        + ".c { border: solid; border-width: thin; padding: 4px; font-size: small; text-align: left; vertical-align: middle; }\n"
+                        + "</style>\n"
+                        + "</head>\n"
+                        + "<body>\n");
+                bw.write("<table class=\"t\"><tr>\n");
+                bw.write("<th class=\"h\" colspan=\"2\">" + Messages.getString("UfedXmlReader.DeviceInfo") + "</th>");
+                bw.write("<th class=\"h\">" + Messages.getString("UfedXmlReader.Extraction") + "</th>");
+                bw.write("</tr>\n");
+                String[] prev = null;
+                for (String[] s : uniqueDeviceInfo) {
+                    if (!Arrays.equals(s, prev)) {
+                        bw.write("<tr>");
+                        bw.write("<td class=\"a\">" + SimpleHTMLEncoder.htmlEncode(s[0]) + "</td>");
+                        bw.write("<td class=\"b\">" + SimpleHTMLEncoder.htmlEncode(s[1]) + "</td>");
+                        bw.write("<td class=\"c\">" + SimpleHTMLEncoder.htmlEncode(s[2]) + "</td>");
+                        bw.write("</tr>\n");
+                        prev = s;
+                    }
+                }
+                bw.write("</table></body></html>");
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            String relativePath = Util.getRelativePath(output, file);
+            deviceInfo.setExportedFile(relativePath);
+            deviceInfo.setFile(file);
+            deviceInfo.setLength(file.length());
+            deviceInfo.setInputStreamFactory(null);
+            deviceInfo.setHash(null);
+            return file;
+        }
+        
         @Override
         public void characters(char[] ch, int start, int length) throws SAXException {
             if (listOnly)

@@ -21,14 +21,15 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
-import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
-import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -223,8 +224,7 @@ public class Statistics {
                 totalTime += worker.tasks.get(i).getTaskTime();
             }
         }
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         totalTime = totalTime / (1000000 * localConfig.getNumThreads());
         for (int i = 0; i < taskTimes.length; i++) {
             long sec = taskTimes[i] / (1000000 * localConfig.getNumThreads());
@@ -251,9 +251,7 @@ public class Statistics {
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
         reader.close();
 
-        if (indexed != processed && (ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
-            LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
-        }
+        LOGGER.info("Total Indexed: {}", indexed); //$NON-NLS-1$
 
         long processedVolume = getVolume() / (1024 * 1024);
 
@@ -269,7 +267,11 @@ public class Statistics {
             LOGGER.error("Alert: Processed " + processed + " items of " + discovered); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        if (!(ExportFileTask.hasCategoryToExtract() || RegexTask.isExtractByKeywordsOn())) {
+        ExportByCategoriesConfig exportByCategories = ConfigurationManager.get()
+                .findObject(ExportByCategoriesConfig.class);
+        ExportByKeywordsConfig exportByKeywords = ConfigurationManager.get().findObject(ExportByKeywordsConfig.class);
+
+        if (!(exportByCategories.hasCategoryToExport() || exportByKeywords.isEnabled())) {
             if (indexed != discovered - carvedIgnored - ignored) {
                 LOGGER.error("Alert: Indexed " + indexed + " items of " + (discovered - carvedIgnored - ignored)); //$NON-NLS-1$ //$NON-NLS-2$
             }
@@ -284,8 +286,7 @@ public class Statistics {
     }
 
     public void printSystemInfo() throws Exception {
-        LocalConfig localConfig = (LocalConfig) ConfigurationManager.getInstance().findObjects(LocalConfig.class)
-                .iterator().next();
+        LocalConfig localConfig = ConfigurationManager.get().findObject(LocalConfig.class);
         LOGGER.info("Operating System: {}", System.getProperty("os.name")); //$NON-NLS-1$ //$NON-NLS-2$
         LOGGER.info("Java Version: {}", System.getProperty("java.version")); //$NON-NLS-1$ //$NON-NLS-2$
         String warn = Util.getJavaVersionWarn();

@@ -139,11 +139,13 @@ public class Marcadores implements Serializable, IMarcadores {
 
     public List<String> getLabelList(int itemId) {
         ArrayList<Integer> labelIds = getLabelIds(itemId);
-        ArrayList<String> result = new ArrayList<>();
+        TreeSet<String> result = new TreeSet<>();
         for (Integer labelId : labelIds) {
             result.add(labelNames.get(labelId));
         }
-        return result;
+        ArrayList<String> list = new ArrayList<>(result.size());
+        list.addAll(result);
+        return list;
     }
 
     public ArrayList<Integer> getLabelIds(int id) {
@@ -160,13 +162,31 @@ public class Marcadores implements Serializable, IMarcadores {
     public void addLabel(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
+        int labelMask = 1 << labelMod;
+        byte[] labelBytes = labels.get(labelOrder);
         for (int i = 0; i < ids.size(); i++) {
             int id = ids.get(i);
-            labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] | (1 << labelMod));
+            labelBytes[id] |= labelMask;
         }
 
     }
 
+    public int getLabelCount(int label) {
+        if (labels.isEmpty()) {
+            return 0;
+        }
+        int labelOrder = label / labelBits;
+        int labelMask = 1 << (label % labelBits);
+        byte[] labelBytes = labels.get(labelOrder); 
+        int ret = 0;
+        for (byte b : labelBytes) {
+            if ((b & labelMask) != 0) {
+                ret++;
+            }
+        }
+        return ret;
+    }
+    
     public final boolean hasLabel(int id) {
         boolean hasLabel = false;
         for (byte[] b : labels) {
@@ -180,7 +200,7 @@ public class Marcadores implements Serializable, IMarcadores {
     public final byte[] getLabelBits(int[] labelids) {
         byte[] bits = new byte[labels.size()];
         for (int label : labelids)
-            bits[label / labelBits] |= (int) Math.pow(2, label % labelBits);
+            bits[label / labelBits] |= 1 << (label % labelBits);
 
         return bits;
     }
@@ -196,7 +216,7 @@ public class Marcadores implements Serializable, IMarcadores {
     }
 
     public final boolean hasLabel(int id, int label) {
-        int p = (int) Math.pow(2, label % labelBits);
+        int p = 1 << (label % labelBits);
         int bit = labels.get(label / labelBits)[id] & p;
         return bit != 0;
 
@@ -205,9 +225,10 @@ public class Marcadores implements Serializable, IMarcadores {
     public void removeLabel(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
+        int labelMask = ~(1 << labelMod);
+        byte[] labelBytes = labels.get(labelOrder);
         for (int i = 0; i < ids.size(); i++) {
-            int id = ids.get(i);
-            labels.get(labelOrder)[id] = (byte) (labels.get(labelOrder)[id] & (~(1 << labelMod)));
+            labelBytes[ids.get(i)] &= labelMask;
         }
 
     }
@@ -247,8 +268,10 @@ public class Marcadores implements Serializable, IMarcadores {
 
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
-        for (int i = 0; i < labels.get(labelOrder).length; i++) {
-            labels.get(labelOrder)[i] = (byte) (labels.get(labelOrder)[i] & (~(1 << labelMod)));
+        int labelMask = ~(1 << labelMod);
+        byte[] labelBytes = labels.get(labelOrder);
+        for (int i = 0; i < labelBytes.length; i++) {
+            labelBytes[i] &= labelMask;
         }
     }
 

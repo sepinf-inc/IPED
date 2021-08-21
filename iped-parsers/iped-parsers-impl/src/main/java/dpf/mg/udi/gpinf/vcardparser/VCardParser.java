@@ -152,9 +152,13 @@ public class VCardParser extends AbstractParser {
         if (vcard.getUrls() != null) {
             vcard.getUrls().stream().forEach(n -> metadata.add(ExtraProperties.USER_URLS, n.getValue()));
         }
-        if (vcard.getPhotos() != null && vcard.getPhotos().size() > 0) {
-            metadata.set(ExtraProperties.USER_THUMB,
-                    Base64.getEncoder().encodeToString(vcard.getPhotos().get(0).getData()));
+        if (vcard.getPhotos() != null) {
+            for (Photo p : vcard.getPhotos()) {
+                if (p.getData() != null) {
+                    metadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(p.getData()));
+                    break;
+                }
+            }
         }
     }
 

@@ -40,9 +40,11 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
+import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import gpinf.ares.AresEntry;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -65,7 +67,7 @@ public class AresParser extends AbstractParser {
             Messages.getString("AresParser.Corrupted"), Messages.getString("AresParser.Artist"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.Album"), Messages.getString("AresParser.Category"), //$NON-NLS-1$ //$NON-NLS-2$
             Messages.getString("AresParser.URL"), Messages.getString("AresParser.Comments"), //$NON-NLS-1$ //$NON-NLS-2$
-            Messages.getString("AresParser.FoundInAlertDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
+            Messages.getString("AresParser.FoundInPedoHashDB"), Messages.getString("AresParser.FoundInCase")}; //$NON-NLS-1$ //$NON-NLS-2$
 
     private static final String strYes = Messages.getString("AresParser.Yes"); //$NON-NLS-1$
     private static final String strNo = Messages.getString("AresParser.No"); //$NON-NLS-1$
@@ -78,7 +80,7 @@ public class AresParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        final DecimalFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
+        final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("AresParser.DateFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
@@ -114,7 +116,7 @@ public class AresParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("p");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
 
@@ -154,7 +156,7 @@ public class AresParser extends AbstractParser {
                 present[i] = true;
         }
 
-        int hashAlertHit = 0;
+        int hashAlertHits = 0;
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$        
         colClass[0] = "s"; //$NON-NLS-1$
@@ -182,7 +184,7 @@ public class AresParser extends AbstractParser {
                     metadata.add(ExtraProperties.SHARED_HASHES, hash);
                 List<String> hashSets = ChildPornHashLookup.lookupHash("sha-1", hash);
                 if (!hashSets.isEmpty()) {
-                    hashAlertHit++;
+                    hashAlertHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
@@ -204,7 +206,12 @@ public class AresParser extends AbstractParser {
                 Arrays.fill(colClass, 8, 13, "z");
             }
 
-            xhtml.startElement("tr", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
+            AttributesImpl attributes = new AttributesImpl();
+            attributes.addAttribute("", "class", "class", "CDATA", trClass);
+            if (e != null && e.getHash() != null && !e.getHash().isEmpty()) {
+                attributes.addAttribute("", "name", "name", "CDATA", e.getHash().toUpperCase());
+            }
+            xhtml.startElement("tr", attributes);
             for (int j = 0; j < cells.size(); j++) {
                 if (present[j]) {
                     xhtml.startElement("td", "class", colClass[j]); //$NON-NLS-1$ //$NON-NLS-2$
@@ -234,8 +241,8 @@ public class AresParser extends AbstractParser {
             xhtml.newline();
         }
 
-        if (hashAlertHit > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashAlertHit));
+        if (hashAlertHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashAlertHits));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();

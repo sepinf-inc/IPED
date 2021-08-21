@@ -16,8 +16,11 @@ public class LoadIndexFields {
         for (IIPEDSource source : sources) {
             IndexReader leafReader = source.getReader();
             leafReader.leaves().forEach(ctx -> ctx.reader().getFieldInfos().forEach(info -> {
-                if (!IndexItem.CONTENT.equals(info.name))
+                if (!IndexItem.CONTENT.equals(info.name)
+                        && !info.name.startsWith(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX)
+                        && !info.name.startsWith(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX)) {
                     names.add(info.name);
+                }
             }));
         }
 

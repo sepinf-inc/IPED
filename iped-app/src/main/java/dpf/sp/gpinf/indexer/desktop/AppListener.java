@@ -64,6 +64,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().subitemDock.setTitleText(Messages.getString("SubitemTableModel.Subitens")); //$NON-NLS-1$
         App.get().duplicateDock.setTitleText(Messages.getString("DuplicatesTableModel.Duplicates")); //$NON-NLS-1$
         App.get().parentDock.setTitleText(Messages.getString("ParentTableModel.ParentCount")); //$NON-NLS-1$
+        App.get().referencesDock.setTitleText(Messages.getString("ReferencesTab.Title")); //$NON-NLS-1$
         App.get().status.setText(" "); //$NON-NLS-1$
 
         App.get().getViewerController().clear();
@@ -74,6 +75,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().duplicatesModel.fireTableDataChanged();
         App.get().parentItemModel.results = new LuceneSearchResult(0);
         App.get().parentItemModel.fireTableDataChanged();
+        App.get().referencesModel.clear();
 
         try {
             PesquisarIndice task;

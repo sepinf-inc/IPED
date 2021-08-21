@@ -184,7 +184,6 @@ public class PDFOCRTextParser extends PDFParser {
                 } finally {
                     tis.close();
                 }
-                metadata.set(OCRParser.OCR_CHAR_COUNT, (countHandler.getCharCount() - charCount) + ""); //$NON-NLS-1$
             }
 
         } finally {

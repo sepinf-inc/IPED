@@ -41,7 +41,6 @@ import org.xml.sax.SAXException;
 
 import com.github.junrar.Archive;
 import com.github.junrar.exception.RarException;
-import com.github.junrar.impl.FileVolumeManager;
 import com.github.junrar.rarfile.FileHeader;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
@@ -82,7 +81,7 @@ public class RARParser extends AbstractParser {
         try {
             TreeMap<String, FileHeader> folderMap = new TreeMap<String, FileHeader>();
             TikaInputStream tis = TikaInputStream.get(stream, tmp);
-            rar = new Archive(new FileVolumeManager(tis.getFile()));
+            rar = new Archive(tis.getFile());
             if (rar.isEncrypted())
                 throw new EncryptedDocumentException();
 
@@ -109,7 +108,7 @@ public class RARParser extends AbstractParser {
             folderMap.clear();
             rar.close();
             // processa os arquivos
-            rar = new Archive(new FileVolumeManager(tis.getFile()));
+            rar = new Archive(tis.getFile());
             do {
                 header = rar.nextFileHeader();
                 if (header != null && !header.isDirectory()) {

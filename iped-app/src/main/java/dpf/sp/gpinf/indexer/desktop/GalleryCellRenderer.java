@@ -29,6 +29,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.table.TableCellRenderer;
 
@@ -41,9 +42,14 @@ public class GalleryCellRenderer implements TableCellRenderer {
     // JLayeredPane panel = new JLayeredPane();
     JLabel label = new JLabel(), cLabel = new JLabel();
     JCheckBox check = new JCheckBox();
-    Border selBorder = BorderFactory.createLineBorder(new Color(50, 50, 100), 1, false);
-    Border border = BorderFactory.createLineBorder(new Color(200, 200, 200), 1, false);
+    Border selBorder;
+    Border border;
+    Color selColor;
+    Color color;
+    Color background;
+    Color warningColor;
     public static int labelH;
+    static final String unsupportedIconText = "<html><center>" + Messages.getString("UnsupportedIcon.Unavailable") + "</center></html>";
 
     public GalleryCellRenderer() {
         super();
@@ -60,6 +66,36 @@ public class GalleryCellRenderer implements TableCellRenderer {
          * label.setBounds(0,0, 100,100); check.setBounds(0, 0, 20, 20);
          */
         label.setHorizontalAlignment(JLabel.CENTER);
+
+        updateUI();
+    }
+    
+    public void updateUI() {
+        selColor = UIManager.getColor("Gallery.cellSelected");
+        if (selColor == null)
+            selColor = new Color(180, 200, 230);
+        
+        color = UIManager.getColor("Gallery.cellBackground");
+        if (color == null)
+            color = Color.white;
+        
+        background = UIManager.getColor("Gallery.background");
+        if (background == null)
+            background = new Color(240, 240, 242);
+        
+        Color borderColor = UIManager.getColor("Gallery.cellBorder");
+        if (borderColor == null)
+            borderColor = new Color(200, 200, 202);
+        border = BorderFactory.createLineBorder(borderColor, 1);
+        
+        Color selBorderColor = UIManager.getColor("Gallery.cellSelectBorder");
+        if (selBorderColor == null)
+            selBorderColor = new Color(20, 50, 80);
+        selBorder = BorderFactory.createLineBorder(selBorderColor, 1);
+        
+        warningColor = UIManager.getColor("Gallery.warning");
+        if (warningColor == null)
+            warningColor = Color.red;        
     }
 
     @Override
@@ -68,14 +104,21 @@ public class GalleryCellRenderer implements TableCellRenderer {
 
         GalleryValue cellValue = (GalleryValue) value;
         if (cellValue == null || cellValue.id == null) {
-            return new JPanel();
+            JPanel panel = new JPanel();
+            panel.setBackground(background);
+            return panel;
         }
 
         check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {
+            label.setForeground(null);
             label.setText("..."); //$NON-NLS-1$
+            label.setIcon(null);
+        } else if (cellValue.icon != null && cellValue.icon == GalleryModel.unsupportedIcon) {
+            label.setForeground(warningColor);
+            label.setText(unsupportedIconText);
             label.setIcon(null);
         } else {
             label.setText(null);
@@ -93,15 +136,16 @@ public class GalleryCellRenderer implements TableCellRenderer {
             }
         }
 
+        Color c = null;
         if (isSelected) {
-            panel.setBackground(new Color(180, 200, 230));
+            c = selColor;
             panel.setBorder(selBorder);
-            top.setBackground(new Color(180, 200, 230));
         } else {
-            panel.setBackground(Color.WHITE);
+            c = color;
             panel.setBorder(border);
-            top.setBackground(Color.WHITE);
         }
+        panel.setBackground(c);
+        top.setBackground(c);
 
         return panel;
     }

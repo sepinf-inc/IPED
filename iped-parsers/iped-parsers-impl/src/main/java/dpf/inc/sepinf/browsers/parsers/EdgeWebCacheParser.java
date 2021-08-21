@@ -103,7 +103,8 @@ public class EdgeWebCacheParser extends AbstractParser {
 
             } catch (Throwable e) {
                 LOGGER.error("Libesedb JNA not loaded properly. " + EdgeWebCacheParser.class.getSimpleName()
-                        + " will be disabled.", e);
+                        + " will be disabled.");
+                e.printStackTrace();
                 SUPPORTED_TYPES = Collections.EMPTY_SET;
             }
     }
@@ -182,7 +183,7 @@ public class EdgeWebCacheParser extends AbstractParser {
                         metadataHistory.set(ExtraProperties.VISIT_DATE, ev.getAccessedDate());
                         metadataHistory.add(ExtraProperties.URL, ev.getUrl());
                         metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(virtualId));
-                        metadataHistory.add((BasicProps.HASH), "");
+                        metadataHistory.add((BasicProps.LENGTH), "");
 
                         extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                     }

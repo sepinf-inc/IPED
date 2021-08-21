@@ -61,11 +61,11 @@ public class UsnJrnlParser extends AbstractParser {
         this.extractEntries = extractEntries;
     }
 
-    public boolean findNextEntry(InputStream in) throws IOException {
+    public boolean findNextEntry(SeekableInputStream in) throws IOException {
         byte[] b = new byte[8];
         int rb = 0;
         do {
-            in.mark(8);
+            long pos = in.position();
             rb = IOUtils.read(in, b, 0, 8);
 
             // if all zeros read next 8 bytes
@@ -73,7 +73,7 @@ public class UsnJrnlParser extends AbstractParser {
                 continue;
             }
 
-            in.reset();
+            in.seek(pos);
             // usn entry version 2.0
             if (b[4] == 2 && (b[5] | b[6] | b[7]) == 0) {
                 return true;
@@ -167,6 +167,7 @@ public class UsnJrnlParser extends AbstractParser {
                 Metadata metadataItem = new Metadata();
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
+                metadataItem.set(BasicProps.LENGTH, "");
 
                 String[] props = ReportGenerator.cols;
 
@@ -268,11 +269,15 @@ public class UsnJrnlParser extends AbstractParser {
             parentRefs.add(entry.getParentMftRefAsLong());
         }
         for (Long parentRef : parentRefs) {
-            query.append("(");
-            query.append(BasicProps.META_ADDRESS + ":" + (parentRef.longValue() & 0xFFFFFFFFFFFFl));
-            query.append(" && ");
-            query.append(BasicProps.MFT_SEQUENCE + ":" + (parentRef.longValue() >> 48));
-            query.append(") ");
+            long metaAddr = parentRef.longValue() & 0xFFFFFFFFFFFFl;
+            long metaSeq = parentRef.longValue() >> 48;
+            if (metaAddr >= 0 && metaSeq >= 0) {
+                query.append("(");
+                query.append(BasicProps.META_ADDRESS + ":" + metaAddr);
+                query.append(" && ");
+                query.append(BasicProps.MFT_SEQUENCE + ":" + metaSeq);
+                query.append(") ");
+            }
         }
         query.append(")");
         List<IItemBase> parents = searcher.search(query.toString());
@@ -289,6 +294,7 @@ public class UsnJrnlParser extends AbstractParser {
                 entry.setFullPath(parent.getPath() + "/" + entry.getFileName());
             }
         }
+
     }
 
 }

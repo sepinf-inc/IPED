@@ -58,6 +58,8 @@ public class Extractor {
     private HashMap<Long, Contact> contacts = new HashMap<>();
     private HashMap<String, byte[]> mediakey = new HashMap<>();
 
+    private DecoderTelegramInterface android_decoder = null;
+
     private Contact userAccount = null;
 
     public Extractor() {
@@ -65,6 +67,11 @@ public class Extractor {
 
     public Extractor(Connection conn) {
         this.conn = conn;
+    }
+
+    public Extractor(Connection conn, DecoderTelegramInterface d) {
+        this.conn = conn;
+        this.android_decoder = d;
     }
 
     public Extractor(File databaseFile) throws SQLException {
@@ -120,7 +127,6 @@ public class Extractor {
         ArrayList<Chat> l = new ArrayList<>();
         logger.debug("Extracting chat list Android");
         try (PreparedStatement stmt = conn.prepareStatement(CHATS_SQL)) {
-            DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 long chatId = rs.getLong("chatId");
@@ -131,10 +137,10 @@ public class Extractor {
                     dados = rs.getBytes("chatData");
                     Contact cont = getContact(chatId);
                     if (cont.getName() == null) {
-                        d.setDecoderData(dados, DecoderTelegramInterface.USER);
-                        d.getUserData(cont);
-                        if (cont.getAvatar() == null && !d.getPhotoData().isEmpty()) {
-                            searchAvatarFileName(cont, d.getPhotoData());
+                        android_decoder.setDecoderData(dados, DecoderTelegramInterface.USER);
+                        android_decoder.getUserData(cont);
+                        if (cont.getAvatar() == null && !android_decoder.getPhotoData().isEmpty()) {
+                            searchAvatarFileName(cont, android_decoder.getPhotoData());
                         }
                     }
                     cg = new Chat(chatId, cont, cont.getFullname());
@@ -142,11 +148,11 @@ public class Extractor {
                 } else if ((chatName = rs.getString("groupName")) != null) {
                     dados = rs.getBytes("groupData");
 
-                    d.setDecoderData(dados, DecoderTelegramInterface.CHAT);
+                    android_decoder.setDecoderData(dados, DecoderTelegramInterface.CHAT);
                     Contact cont = getContact(chatId);
-                    d.getChatData(cont);
+                    android_decoder.getChatData(cont);
 
-                    searchAvatarFileName(cont, d.getPhotoData());
+                    searchAvatarFileName(cont, android_decoder.getPhotoData());
 
                     ChatGroup group = new ChatGroup(chatId, cont, chatName);
                     cg = group;
@@ -216,7 +222,6 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        DecoderTelegramInterface d = (DecoderTelegramInterface) Class.forName(DECODER_CLASS).newInstance();
         try (PreparedStatement stmt = conn.prepareStatement(EXTRACT_MESSAGES_SQL)) {
             stmt.setLong(1, chat.getId());
             ResultSet rs = stmt.executeQuery();
@@ -229,9 +234,9 @@ public class Extractor {
                     byte[] data = rs.getBytes("data");
                     long mid = rs.getLong("mid");
                     Message message = new Message(mid, chat);
-                    d.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
-                    d.getMessageData(message);
-                    long fromid = d.getRemetenteId();
+                    android_decoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
+                    android_decoder.getMessageData(message);
+                    long fromid = android_decoder.getRemetenteId();
                     if (fromid != 0) {
                         message.setFrom(getContact(fromid));
                     }
@@ -243,12 +248,12 @@ public class Extractor {
 
                     if (message.getMediaMime() != null) {
                         if (message.getMediaMime().startsWith("image")) {
-                            List<PhotoData> list = d.getPhotoData();
+                            List<PhotoData> list = android_decoder.getPhotoData();
                             loadImage(message, list);
                         } else if (message.getMediaMime().startsWith("link")) {
-                            loadLink(message, d.getPhotoData());
+                            loadLink(message, android_decoder.getPhotoData());
                         } else if (message.getMediaMime().length() > 0) {
-                            loadDocument(message, d.getDocumentNames(), d.getDocumentSize());
+                            loadDocument(message, android_decoder.getDocumentNames(), android_decoder.getDocumentSize());
                         }
 
                     }
@@ -445,7 +450,7 @@ public class Extractor {
                     return;
                 int nphones = 0;
                 while (rs.next()) {
-                    Contact c = Contact.getContactFromBytes(rs.getBytes("data"));
+                    Contact c = Contact.getContactFromBytes(rs.getBytes("data"), android_decoder);
                     /*
                      * d.setDecoderData(rs.getBytes("data"), DecoderTelegramInterface.USER); Contact
                      * c = new Contact(0); d.getUserData(c);
@@ -559,9 +564,17 @@ public class Extractor {
 
     private static final Comparator<Message> MSG_TIME_COMPARATOR = new Comparator<Message>() {
         public int compare(Message o1, Message o2) {
-            if (o1 == null || o2 == null)
+            boolean o1Empty = o1 == null || o1.getTimeStamp() == null;
+            boolean o2Empty = o2 == null || o2.getTimeStamp() == null;
+            if (o1Empty && o2Empty) {
                 return 0;
-            return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+            } else if (o1Empty && !o2Empty) {
+                return -1;
+            } else if (!o1Empty && o2Empty) {
+                return 1;
+            } else {
+                return o1.getTimeStamp().compareTo(o2.getTimeStamp());
+            }
         }
     };
 

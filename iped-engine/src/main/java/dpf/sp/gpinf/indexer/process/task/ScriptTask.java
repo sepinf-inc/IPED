@@ -23,7 +23,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
-import java.util.Properties;
+import java.util.Collections;
+import java.util.List;
 
 import javax.script.Invocable;
 import javax.script.ScriptContext;
@@ -31,9 +32,11 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class ScriptTask extends AbstractTask {
 
@@ -69,14 +72,25 @@ public class ScriptTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confProps, File configPath) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        try {
+            List<Configurable<?>> configs = (List<Configurable<?>>) inv.invokeFunction("getConfigurables");
+            return configs != null ? configs : Collections.emptyList();
+
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
 
         engine.put("caseData", this.caseData); //$NON-NLS-1$
         engine.put("moduleDir", this.output); //$NON-NLS-1$
         engine.put("worker", this.worker); //$NON-NLS-1$
         engine.put("stats", this.stats); //$NON-NLS-1$
 
-        inv.invokeFunction("init", confProps, configPath); //$NON-NLS-1$
+        inv.invokeFunction("init", configurationManager); //$NON-NLS-1$
 
         numInstances++;
     }

@@ -26,9 +26,9 @@ import org.apache.lucene.index.IndexWriter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
@@ -110,7 +110,7 @@ public class Worker extends Thread {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
-            task.init(Configuration.getInstance().properties, new File(output, "conf")); //$NON-NLS-1$
+            task.init(ConfigurationManager.get());
         }
 
     }
@@ -286,6 +286,9 @@ public class Worker extends Thread {
         if (evidence == null) {
             LOGGER.info("{} finished.", getName()); //$NON-NLS-1$
         } else {
+            AbstractTask task = runningTask;
+            if (task != null)
+                task.interrupted();
             LOGGER.info("{} interrupted on {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
         }
     }

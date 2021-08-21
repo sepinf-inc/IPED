@@ -63,11 +63,12 @@ def log_stderr(proc):
     proc.stderr.close()
 
 # Start external process, check if it is alive and ping to test communication
-def createExternalProcess(configDir):
+def createExternalProcess():
     proc = None
     for i in range(3):
         if proc is None or proc.poll() is not None:
-            proc = subprocess.Popen([bin, os.path.join(configDir, 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
+            from java.lang import System
+            proc = subprocess.Popen([bin, os.path.join(System.getProperty('iped.root'), 'conf', 'scripts', processScript), str(max_size), detection_model, str(up_sampling)], 
                                     stdout=subprocess.PIPE, stdin=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
         
         if pingExternalProcess(proc):
@@ -95,21 +96,26 @@ def pingExternalProcess(proc):
 class FaceRecognitionTask:
 
     enabled = False
-    configDir = None
     
     def isEnabled(self):
         return self.enabled
     
+    def getConfigurables(self):
+        from dpf.sp.gpinf.indexer.config import DefaultTaskPropertiesConfig
+        return [DefaultTaskPropertiesConfig(enableProp, configFile)]
+    
     # This method is executed before starting the processing of items.
-    def init(self, mainProps, configFolder):
-        self.enabled = mainProps.getProperty(enableProp).lower() == 'true'
-        self.configDir = configFolder.getAbsolutePath()
+    def init(self, configuration):
+        taskConfig = configuration.getTaskConfigurable(configFile)
+        self.enabled = taskConfig.isEnabled()
         if not self.enabled:
             return
         
         # check if was called from gui the first time
         global maxProcesses, firstInstance
-        numProcs = mainProps.getProperty(numFaceRecognitionProcessesProp)
+        # load configuration properties
+        extraProps = taskConfig.getConfiguration()
+        numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if firstInstance and numProcs is not None:
             maxProcesses = int(numProcs)
             # hides the terminal on windows gui
@@ -118,11 +124,6 @@ class FaceRecognitionTask:
                 bin = 'pythonw'
         firstInstance = False
         
-        #load configs
-        from java.io import File
-        from dpf.sp.gpinf.indexer.util import UTF8Properties
-        extraProps = UTF8Properties()
-        extraProps.load(File(configFolder, configFile))
         numProcs = extraProps.getProperty(numFaceRecognitionProcessesProp)
         if maxProcesses is None and numProcs is not None:
             maxProcesses = int(numProcs)
@@ -216,7 +217,7 @@ class FaceRecognitionTask:
         if numCreatedProcs < maxProcesses:
             numCreatedProcs += 1
             numCreatedProcsLock.release()
-            proc = createExternalProcess(self.configDir)
+            proc = createExternalProcess()
             processQueue.put(proc, block=True)
         else:
             numCreatedProcsLock.release()
@@ -226,7 +227,7 @@ class FaceRecognitionTask:
             proc = processQueue.get(block=True)
             if not pingExternalProcess(proc):
                 proc.kill()
-                proc = createExternalProcess(self.configDir)
+                proc = createExternalProcess()
             
             print(img_path, file=proc.stdin, flush=True)
             if not isVideo:

@@ -9,10 +9,10 @@ import dpf.sp.gpinf.indexer.util.TextCache.KnownSizeReader;
 public class FragmentingReader extends Reader {
 
     // Tamanho mínimo dos fragmentos de divisão do texto de arquivos grandes
-    private static long textSplitSize = 10485760;
+    private long textSplitSize;
 
     // Tamanho de sobreposição de texto nas bordas dos fragmentos
-    private static int textOverlapSize = 10000;
+    private int textOverlapSize;
 
     private Reader reader;
 
@@ -23,15 +23,10 @@ public class FragmentingReader extends Reader {
 
     private long knownSize = -1;
 
-    public static void setTextSplitSize(long textSplitSize) {
-        FragmentingReader.textSplitSize = textSplitSize;
-    }
+    public FragmentingReader(Reader reader, long textSplitSize, int textOverlapSize) {
+        this.textSplitSize = textSplitSize;
+        this.textOverlapSize = textOverlapSize;
 
-    public static void setTextOverlapSize(int textOverlapSize) {
-        FragmentingReader.textOverlapSize = textOverlapSize;
-    }
-
-    public FragmentingReader(Reader reader) {
         if (reader instanceof KnownSizeReader) {
             knownSize = ((KnownSizeReader) reader).getSize();
         }

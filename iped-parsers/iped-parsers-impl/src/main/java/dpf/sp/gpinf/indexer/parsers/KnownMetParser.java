@@ -48,6 +48,7 @@ import org.xml.sax.helpers.AttributesImpl;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import gpinf.emule.KnownMetEntry;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -79,7 +80,7 @@ public class KnownMetParser extends AbstractParser {
             Messages.getString("KnownMetParser.AcceptedRequests"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.BytesSent"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.TempFile"), //$NON-NLS-1$
-            Messages.getString("KnownMetParser.FoundInKff"), //$NON-NLS-1$
+            Messages.getString("KnownMetParser.FoundInPedoHashDB"), //$NON-NLS-1$
             Messages.getString("KnownMetParser.FoundInCase")}; //$NON-NLS-1$
 
     private static final String strYes = Messages.getString("KnownMetParser.Yes"); //$NON-NLS-1$
@@ -92,7 +93,7 @@ public class KnownMetParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        final DecimalFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
+        final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat")); //$NON-NLS-1$
         df.setTimeZone(TimeZone.getTimeZone("GMT+0")); //$NON-NLS-1$
 
@@ -127,7 +128,7 @@ public class KnownMetParser extends AbstractParser {
         xhtml.newline();
 
         xhtml.startElement("p");
-        xhtml.characters(Messages.getString("P2P.PedoHashHit"));
+        xhtml.characters(Messages.getString("P2P.FoundInPedoHashDB"));
         xhtml.endElement("p");
         xhtml.newline();
         
@@ -137,7 +138,7 @@ public class KnownMetParser extends AbstractParser {
         long totReq = 0;
         long accReq = 0;
         long bytTrf = 0;
-        int kffHit = 0;
+        int hashDBHits = 0;
         String[] colClass = new String[header.length];
         Arrays.fill(colClass, "a"); //$NON-NLS-1$
         colClass[0] = "s"; //$NON-NLS-1$
@@ -186,7 +187,7 @@ public class KnownMetParser extends AbstractParser {
                     hashSets.addAll(ChildPornHashLookup.lookupHash(item.getHash()));
                 }
                 if (!hashSets.isEmpty()) {
-                    kffHit++;
+                    hashDBHits++;
                     trClass = "rr"; //$NON-NLS-1$
                 }
                 cells.add(hash.substring(0, hash.length() / 2) + " " + hash.substring(hash.length() / 2)); //$NON-NLS-1$
@@ -205,7 +206,12 @@ public class KnownMetParser extends AbstractParser {
                 bytTrf += toSum(e.getBytesTransfered());
             }
 
-            xhtml.startElement("tr", "class", trClass); //$NON-NLS-1$ //$NON-NLS-2$
+            AttributesImpl attributes = new AttributesImpl();
+            attributes.addAttribute("", "class", "class", "CDATA", trClass);
+            if (e != null && e.getHash() != null && !e.getHash().isEmpty()) {
+                attributes.addAttribute("", "name", "name", "CDATA", e.getHash().toUpperCase());    
+            }
+            xhtml.startElement("tr", attributes);
             for (int j = 0; j < cells.size(); j++) {
                 xhtml.startElement("td", "class", colClass[j]); //$NON-NLS-1$ //$NON-NLS-2$
                 if (i < 0 || i >= l.size())
@@ -228,8 +234,8 @@ public class KnownMetParser extends AbstractParser {
             xhtml.newline();
         }
 
-        if (kffHit > 0)
-            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(kffHit));
+        if (hashDBHits > 0)
+            metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
 
         xhtml.endElement("table"); //$NON-NLS-1$
         xhtml.endDocument();

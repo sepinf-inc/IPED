@@ -1,7 +1,6 @@
 package dpf.mt.gpinf.mapas.parsers.kmlstore;
 
 import java.io.File;
-import java.io.IOError;
 import java.io.IOException;
 import java.util.List;
 

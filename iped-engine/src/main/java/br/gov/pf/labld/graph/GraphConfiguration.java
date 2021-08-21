@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.io.Serializable;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
@@ -19,7 +20,12 @@ import com.fasterxml.jackson.databind.ObjectReader;
 
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 
-public class GraphConfiguration {
+public class GraphConfiguration implements Serializable {
+
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
 
     public static final String PERSON_LABEL = "PERSON";
     public static final String ORGANIZATION_LABEL = "ORGANIZATION";
@@ -140,15 +146,19 @@ public class GraphConfiguration {
     }
 
     public String getPhoneRegion() {
+        return phoneRegion;
+    }
+
+    private void decodePhoneRegion(File file) {
         if (phoneRegion.equals("auto")) {
             String country = LocaleConfig.getHostCountry();
-            if (country.length() == 2)
-                return country;
-            else
-                throw new IllegalArgumentException("phone-region=\"auto\" did not work in " + GraphTask.CONFIG_PATH
+            if (country.length() == 2) {
+                phoneRegion = country;
+            } else {
+                throw new IllegalArgumentException("phone-region=\"auto\" did not work in " + file
                         + " config file. Please specify an explicity 2-letter region code.");
+            }
         }
-        return phoneRegion;
     }
 
     public String getComment() {
@@ -209,12 +219,18 @@ public class GraphConfiguration {
         try (Reader in = new InputStreamReader(new BufferedInputStream(new FileInputStream(file)),
                 Charset.forName("utf-8"))) {
             GraphConfiguration value = reader.readValue(in);
+            value.decodePhoneRegion(file);
             value.index();
             return value;
         }
     }
 
-    public static class GraphEntity {
+    public static class GraphEntity implements Serializable {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
         private String label;
 
@@ -256,7 +272,12 @@ public class GraphConfiguration {
 
     }
 
-    public static class GraphEntityMetadata {
+    public static class GraphEntityMetadata implements Serializable {
+
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
 
         /**
          * equal to regex name by default

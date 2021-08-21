@@ -21,14 +21,14 @@ import net.lingala.zip4j.model.FileHeader;
 
 public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements Closeable {
 
-    private static final int MAX_BYTES_CACHED = 1 << 28;
-    
+    private static final int MAX_BYTES_CACHED = 1 << 27;
+
     private static final int MAX_FILES_CACHED = 1 << 9;
-    
+
     private ZipFile4j zip;
 
     private int bytesCached = 0;
-    
+
     private Map<String, byte[]> bytesCache = new LinkedHashMap<String, byte[]>(128, 0.75f, true);
 
     private void removeEldestBytes() {
@@ -87,7 +87,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         if (tmp != null) {
             return new SeekableFileInputStream(tmp.toFile());
         }
-        
+
         FileHeader zae;
         try {
             if (zip == null)
@@ -96,7 +96,7 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
         } catch (ZipException e1) {
             throw new IOException(e1);
         }
-        if(zae == null) {
+        if (zae == null) {
             return new SeekableFileInputStream(new SeekableInMemoryByteChannel(new byte[0]));
         }
         try (InputStream is = zip.getInputStream(zae)) {
@@ -131,12 +131,32 @@ public class ZIPInputStreamFactory extends SeekableInputStreamFactory implements
 
     @Override
     public void close() throws IOException {
-        // if(zip != null) zip.close();
-        for (Path path : filesCache.values()) {
-            Files.deleteIfExists(path);
+        if (zip != null) {
+            // is not closeable...
+            // zip.close();
         }
-        filesCache.clear();
-        bytesCache.clear();
+        synchronized (bytesCache) {
+            bytesCache.clear();
+        }
+        Path[] paths;
+        synchronized (filesCache) {
+            paths = filesCache.values().toArray(new Path[0]);
+            filesCache.clear();
+        }
+        IOException exception = null;
+        for (Path path : paths) {
+            try {
+                Files.deleteIfExists(path);
+            } catch (IOException e) {
+                if (exception == null) {
+                    exception = new IOException("Fail to delete file(s)");
+                }
+                exception.addSuppressed(e);
+            }
+        }
+        if (exception != null) {
+            throw exception;
+        }
     }
 
 }

@@ -69,7 +69,7 @@ public class IndexerDefaultParser extends CompositeParser {
 
     private static final long serialVersionUID = 1L;
 
-    private static TikaConfig tikaConfig = TikaConfig.getDefaultConfig();
+    private static TikaConfig tikaConfig;
 
     public static int parsingErrors = 0;
 
@@ -94,10 +94,21 @@ public class IndexerDefaultParser extends CompositeParser {
     private boolean printMetadata = true;
     private boolean ignoreStyle = true;
     private boolean canUseForkParser = false;
+    
+    private static TikaConfig getTikaConfig() {
+        if(tikaConfig == null) {
+            synchronized(IndexerDefaultParser.class) {
+                if(tikaConfig == null) {
+                    tikaConfig = TikaConfig.getDefaultConfig();
+                }
+            }
+        }
+        return tikaConfig;
+    }
 
     public IndexerDefaultParser() {
-        super(tikaConfig.getMediaTypeRegistry(), ((CompositeParser) tikaConfig.getParser()).getAllComponentParsers());
-        detector = tikaConfig.getDetector();
+        super(getTikaConfig().getMediaTypeRegistry(), ((CompositeParser) getTikaConfig().getParser()).getAllComponentParsers());
+        detector = getTikaConfig().getDetector();
         if (fallbackParserEnabled) {
             this.setFallback(new RawStringParser(entropyTestEnabled));
         }

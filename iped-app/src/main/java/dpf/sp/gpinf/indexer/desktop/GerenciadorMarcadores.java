@@ -23,6 +23,7 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
@@ -69,7 +70,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private static GerenciadorMarcadores instance = new GerenciadorMarcadores();
 
-    JDialog dialog = new JDialog();
+    JDialog dialog = new JDialog(App.get());
     JLabel msg = new JLabel(Messages.getString("BookmarksManager.Dataset")); //$NON-NLS-1$
     JRadioButton highlighted = new JRadioButton();
     JRadioButton checked = new JRadioButton();
@@ -88,7 +89,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
     JList<BookmarkAndKey> list = new JList<>(listModel);
     JScrollPane scrollList = new JScrollPane(list);
 
-    HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
+    private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
     private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         String bookmark;
@@ -100,9 +101,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         public boolean equals(Object obj) {
             if (obj instanceof BookmarkAndKey) {
-                return ((BookmarkAndKey) obj).bookmark.equals(bookmark);
+                return ((BookmarkAndKey) obj).bookmark.equalsIgnoreCase(bookmark);
             } else if (obj instanceof String) {
-                return obj.equals(bookmark);
+                return ((String) obj).equalsIgnoreCase(bookmark);
             }
             return false;
         }
@@ -127,6 +128,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     public static void setVisible() {
         instance.dialog.setVisible(true);
+        instance.list.clearSelection();
+        instance.newLabel.setText("");
+        instance.comments.setText("");
     }
 
     public static void updateCounters() {
@@ -140,7 +144,6 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
-        dialog.setAlwaysOnTop(true);
 
         group.add(highlighted);
         group.add(checked);
@@ -236,9 +239,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (!listModel.isEmpty()) {
             for (int i = 0; i < listModel.size(); i++) {
                 BookmarkAndKey bk = listModel.get(i);
-                bookmarks.add(bk);
-                if (bk.bookmark.equals(oldLabel)) {
+                if (bk.bookmark.equalsIgnoreCase(oldLabel)) {
                     prevStroke = bk.key;
+                } else {
+                    bookmarks.add(bk);
                 }
             }
         }
@@ -252,7 +256,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {
             BookmarkAndKey bk = iterator.next();
-            if (prevStroke != null && bk.bookmark.equals(newLabel)) {
+            if (prevStroke != null && bk.bookmark.equalsIgnoreCase(newLabel)) {
                 bk.key = prevStroke;
             }
             if (!labels.contains(bk.bookmark)) {
@@ -353,8 +357,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                 App.get().appCase.getMultiMarcadores().setLabelComment(texto, comment);
                 updateList();
             }
+            list.clearSelection();
             for (int i = 0; i < listModel.size(); i++) {
-                if (listModel.get(i).bookmark.equals(texto)) {
+                if (listModel.get(i).bookmark.equalsIgnoreCase(texto)) {
                     list.setSelectedIndex(i);
                 }
             }
@@ -397,13 +402,17 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         } else if (evt.getSource() == rename) {
             String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("BookmarksManager.NewName"), //$NON-NLS-1$
                     list.getSelectedValue().bookmark);
-            if (newLabel != null && !newLabel.trim().isEmpty()
-                    && !listModel.contains(new BookmarkAndKey(newLabel.trim()))) {
+            if (newLabel != null && !newLabel.trim().isEmpty()) {
+                newLabel = newLabel.trim();
                 int selIdx = list.getSelectedIndex();
                 if (selIdx != -1) {
                     String label = list.getModel().getElementAt(selIdx).bookmark;
-                    App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel.trim());
-                    updateList(label, newLabel.trim());
+                    if (!label.equalsIgnoreCase(newLabel) && listModel.contains(new BookmarkAndKey(newLabel))) {
+                        JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
+                        return;
+                    }
+                    App.get().appCase.getMultiMarcadores().changeLabel(label, newLabel);
+                    updateList(label, newLabel);
                     App.get().appCase.getMultiMarcadores().saveState();
                     MarcadoresController.get().atualizarGUI();
                 }
@@ -471,19 +480,14 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
+    }
 
+    @Override
+    public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
@@ -512,7 +516,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             Iterator<KeyStroke> iterator = keystrokeToBookmark.keySet().iterator();
             while (iterator.hasNext()) {
                 String bookmark = keystrokeToBookmark.get(iterator.next());
-                if (bookmark.equals(label)) {
+                if (bookmark.equalsIgnoreCase(label)) {
                     iterator.remove();
                 }
             }
@@ -535,4 +539,16 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
+    
+    public boolean hasSingleKeyShortcut() {
+       for (KeyStroke k : keystrokeToBookmark.keySet()) {
+           if ((k.getModifiers() & (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK)) == 0) {
+               int c = k.getKeyCode();
+               if ((c >= KeyEvent.VK_0 && c <= KeyEvent.VK_9) || (c >= KeyEvent.VK_A && c <= KeyEvent.VK_Z)) {
+                   return true;
+               }
+           }
+       }
+       return false; 
+    }
 }

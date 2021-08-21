@@ -18,7 +18,10 @@
  */
 package dpf.sp.gpinf.indexer.ui.hitsViewer;
 
+import java.awt.Color;
+
 import javax.swing.JTable;
+import javax.swing.UIManager;
 import javax.swing.table.AbstractTableModel;
 
 public class HitsTable extends JTable {
@@ -30,6 +33,14 @@ public class HitsTable extends JTable {
 
     public HitsTable(AbstractTableModel tableModel) {
         super(tableModel);
+    }
+    
+    @Override
+    public void updateUI() {
+        Color c = UIManager.getColor("text");
+        if (c != null)
+            setForeground(new Color(c.getRGB()));
+        super.updateUI();
     }
 
     @Override

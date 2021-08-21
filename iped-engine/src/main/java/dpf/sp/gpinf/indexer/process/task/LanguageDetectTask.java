@@ -1,11 +1,10 @@
 package dpf.sp.gpinf.indexer.process.task;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Properties;
 
 import org.apache.tika.mime.MediaType;
 import org.slf4j.Logger;
@@ -18,9 +17,12 @@ import com.optimaize.langdetect.ngram.NgramExtractors;
 import com.optimaize.langdetect.profiles.LanguageProfile;
 import com.optimaize.langdetect.profiles.LanguageProfileReader;
 
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import macee.core.Configurable;
 
 public class LanguageDetectTask extends AbstractTask {
 
@@ -48,11 +50,14 @@ public class LanguageDetectTask extends AbstractTask {
     }
 
     @Override
-    public void init(Properties confParams, File confDir) throws Exception {
+    public List<Configurable<?>> getConfigurables() {
+        return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
+    }
 
-        String enabled = confParams.getProperty(ENABLE_PARAM);
-        if (enabled != null && !enabled.trim().isEmpty())
-            isEnabled = Boolean.valueOf(enabled.trim());
+    @Override
+    public void init(ConfigurationManager configurationManager) throws Exception {
+
+        isEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
 
         if (isEnabled && detector == null)
             detector = loadModels();

@@ -46,7 +46,6 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.HtmlViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.util.SpinnerDialog;
 import iped3.IIPEDSource;
@@ -108,7 +107,10 @@ public class MenuListener implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         LOGGER.debug("MenuListener Aktion Event Performed " + e.toString() + " " + e.getSource());
-        if (e.getSource() == menu.disposicao) {
+        if (e.getSource() == menu.toggleTimelineView) {
+            App.get().timelineListener.toggleTimelineTableView();
+
+        } else if (e.getSource() == menu.disposicao) {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
@@ -140,13 +142,13 @@ public class MenuListener implements ActionListener {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyReleased(keyCTRL_R_Pressed);
+                kl.keyPressed(keyCTRL_R_Pressed);
 
         } else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyReleased(keyCTRL_R_Pressed);
+                kl.keyPressed(keyCTRL_R_Pressed);
         }
         if (e.getSource() == menu.lerSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
@@ -404,7 +406,7 @@ public class MenuListener implements ActionListener {
             if (chatId != -1) {
                 String position = item.getMetadata().get(ExtraProperties.PARENT_VIEW_POSITION);
                 // TODO change viewer api to pass this
-                HtmlViewer.setPositionToScroll(position);
+                App.get().getViewerController().getHtmlLinkViewer().setElementIDToScroll(position);
                 ItemId chatItemId = new ItemId(itemId.getSourceId(), chatId);
                 int luceneId = App.get().appCase.getLuceneId(chatItemId);
                 new FileProcessor(luceneId, false).execute();

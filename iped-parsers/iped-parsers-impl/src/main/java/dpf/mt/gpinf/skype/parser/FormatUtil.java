@@ -1,12 +1,12 @@
 package dpf.mt.gpinf.skype.parser;
 
 import java.text.DateFormat;
-import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 
 /**
@@ -18,14 +18,14 @@ public class FormatUtil {
     /** Formatador de números que utiliza separador de milhares. */
     private static final ThreadLocal<NumberFormat> numberFormat = new ThreadLocal<NumberFormat>() {
         protected NumberFormat initialValue() {
-            return new DecimalFormat("#,##0"); //$NON-NLS-1$
+            return LocalizedFormat.getDecimalInstance("#,##0"); //$NON-NLS-1$
         }
     };
 
-    /** Formatador de números decimais com até duas casas decimais. */
+    /** Formatador de números decimais com até três casas decimais. */
     private static final ThreadLocal<NumberFormat> decimalFormat = new ThreadLocal<NumberFormat>() {
         protected NumberFormat initialValue() {
-            return new DecimalFormat("0.###"); //$NON-NLS-1$
+            return LocalizedFormat.getDecimalInstance("0.###"); //$NON-NLS-1$
         }
     };
 

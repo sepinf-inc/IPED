@@ -38,12 +38,13 @@ import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.xml.sax.SAXException;
 
-import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.AbstractTaskPropertiesConfig;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.PythonTask;
-import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.dev.data.CaseData;
@@ -190,7 +191,8 @@ public class SimilarFacesFilterActions {
 
     private abstract static class FaceFeatureExtractor implements Callable<byte[]> {
 
-        private static final String SCRIPT_PATH = TaskInstaller.SCRIPT_BASE + "/FaceRecognitionTask.py";
+        private static final String SCRIPT_PATH = TaskInstallerConfig.SCRIPT_BASE + "/FaceRecognitionTask.py";
+        private static final String CONF_FILE = "FaceRecognitionConfig.txt";
         private static final String NUM_PROCESSES = "numFaceRecognitionProcesses";
 
         private static volatile PythonTask task;
@@ -231,8 +233,10 @@ public class SimilarFacesFilterActions {
                     File script = new File(moduleDir, SCRIPT_PATH);
                     task = new PythonTask(script);
                     task.setCaseData(new CaseData(0));
-                    Configuration.getInstance().properties.setProperty(NUM_PROCESSES, "1");
-                    task.init(Configuration.getInstance().properties, new File(moduleDir, "conf"));
+                    AbstractTaskPropertiesConfig taskConfig = (AbstractTaskPropertiesConfig) ConfigurationManager.get()
+                            .getTaskConfigurable(CONF_FILE);
+                    taskConfig.getConfiguration().setProperty(NUM_PROCESSES, "1");
+                    task.init(ConfigurationManager.get());
                     Runtime.getRuntime().addShutdownHook(new Thread() {
                         public void run() {
                             dispose();

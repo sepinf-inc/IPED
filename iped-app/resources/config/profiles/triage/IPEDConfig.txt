@@ -1,0 +1,33 @@
+﻿########################################################################
+# Processing Settings
+########################################################################
+
+enableHash = false
+enablePhotoDNA = false
+enableHashDBLookup = false
+enablePhotoDNALookup = false
+enableLedDie = false
+enableYahooNSFWDetection = false
+ignoreDuplicates = false
+exportFileProps = true
+processFileSignatures = false
+enableFileParsing = true
+expandContainers = false
+enableRegexSearch = true
+enableAutomaticExportFiles = false
+enableLanguageDetect = false
+enableNamedEntityRecogniton = false
+enableGraphGeneration = false
+entropyTest = false
+enableSplitLargeBinary = false
+indexFileContents = true
+enableAudioTranscription = false
+enableCarving = false
+enableLedCarving = false
+enableKnownMetCarving = false
+enableImageThumbs = false
+enableImageSimilarity = false
+enableFaceRecognition = falsee
+enableVideoThumbs = false
+enableDocThumbs = false
+enableHTMLReport = false

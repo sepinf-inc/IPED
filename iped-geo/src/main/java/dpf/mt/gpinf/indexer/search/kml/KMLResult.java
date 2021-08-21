@@ -45,20 +45,22 @@ public class KMLResult {
             fDialog = guiProvider.createFileDialog(Messages.getString("KMLResult.Save"), FileDialog.SAVE); //$NON-NLS-1$
 
         fDialog.setVisible(true);
-        String path = fDialog.getDirectory() + fDialog.getFile();
-        File f = new File(path);
+        if (fDialog.getFile() != null) {
+            String path = fDialog.getDirectory() + fDialog.getFile();
+            File f = new File(path);
 
-        FileWriter w;
-        try {
-            w = new FileWriter(f);
-            String[] cols = guiProvider.getColumnsManager().getLoadedCols();
-            cols = (String[]) ArrayUtils.subarray(cols, 2, cols.length);
-            w.write(getResultsKML(cols, false));
-            w.close();
-            f = null;
-        } catch (IOException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            FileWriter w;
+            try {
+                w = new FileWriter(f);
+                String[] cols = guiProvider.getColumnsManager().getLoadedCols();
+                cols = (String[]) ArrayUtils.subarray(cols, 2, cols.length);
+                w.write(getResultsKML(cols, false));
+                w.close();
+                f = null;
+            } catch (IOException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
         }
     }
 

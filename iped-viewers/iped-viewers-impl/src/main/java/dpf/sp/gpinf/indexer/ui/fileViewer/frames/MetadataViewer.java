@@ -1,22 +1,30 @@
 package dpf.sp.gpinf.indexer.ui.fileViewer.frames;
 
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.text.Collator;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
+
+import javax.swing.UIManager;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
 import iped3.util.BasicProps;
@@ -32,13 +40,25 @@ import javafx.scene.control.TabPane.TabClosingPolicy;
 import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
-public class MetadataViewer extends Viewer {
+@SuppressWarnings("restriction")
+public abstract class MetadataViewer extends Viewer {
+
+    private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 
     private TabPane tabPane;
     private JFXPanel jfxPanel;
-    private List<HtmlViewer> htmlViewers = new ArrayList<>();;
+    private List<HtmlViewer> htmlViewers = new ArrayList<>();
 
-    private Collator collator;
+    public static class FieldComparator implements Comparator<String> {
+        @Override
+        public int compare(String a, String b) {
+            a = LocalizedProperties.getLocalizedField(a);
+            b = LocalizedProperties.getLocalizedField(b);
+            return a.compareToIgnoreCase(b);
+        }
+    };
+
+    private FieldComparator comparator = new FieldComparator();
 
     public MetadataViewer() {
         super(new GridLayout());
@@ -80,6 +100,8 @@ public class MetadataViewer extends Viewer {
 
     }
 
+    public abstract boolean isNumeric(String field);
+
     @Override
     public String getName() {
         return Messages.getString("MetadataViewer.TabTitle"); //$NON-NLS-1$
@@ -96,12 +118,8 @@ public class MetadataViewer extends Viewer {
 
     @Override
     public void init() {
-
         for (HtmlViewer viewer : htmlViewers)
             viewer.init();
-
-        collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
     }
 
     @SuppressWarnings("restriction")
@@ -115,14 +133,7 @@ public class MetadataViewer extends Viewer {
     }
 
     public boolean isMetadataEntry(String contentType) {
-        MediaType type = MediaType.parse(contentType);
-        while (type != null && !type.equals(MediaType.OCTET_STREAM)) {
-            if (MediaTypes.METADATA_ENTRY.equals(type)) {
-                return true;
-            }
-            type = this.getParentType(type);
-        }
-        return false;
+        return MediaTypes.isMetadataEntryType(MediaType.parse(contentType));
     }
 
     @Override
@@ -139,7 +150,7 @@ public class MetadataViewer extends Viewer {
 
                 for (HtmlViewer viewer : htmlViewers) {
                     WebEngine webEngine = viewer.webEngine;
-                    webEngine.load(null);
+                    webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
                     if (content instanceof IItemBase) {
                         viewer.highlightTerms = terms;
@@ -168,15 +179,41 @@ public class MetadataViewer extends Viewer {
     }
 
     private String generatePreview(IItemBase item, int tabIndex) {
+        Color color1 = new Color(0xD7D7D7); 
+        Color color2 = new Color(0xF2F2F2);
+        Color color3 = new Color(0xF2F2F2);
+        Color background = UIManager.getColor("Viewer.background"); //$NON-NLS-1$
+        if (background != null) {
+            color3 = UiUtil.mix(background, Color.gray, 0.9);
+            color2 = UiUtil.mix(background, Color.gray, 0.7);
+            color1 = UiUtil.mix(background, Color.gray, 0.5);
+        }
+        String borderColor = "black"; //$NON-NLS-1$
+        Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
+        if (foreground != null && background != null)
+            borderColor = UiUtil.getHexRGB(UiUtil.mix(background, foreground, 0.5));
+        
         StringBuilder sb = new StringBuilder();
-        sb.append("<!DOCTYPE html>\n" //$NON-NLS-1$
-                + "<html>\n" //$NON-NLS-1$
-                + "<head>\n" //$NON-NLS-1$
-                + "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n" //$NON-NLS-1$
-                + "<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {background-color:#D7D7D7; border: 1px solid black; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; background-color:#F2F2F2; width:170px; border: 1px solid black; text-align:left;} td.s2 {font-size:10pt; background-color:#F2F2F2; border: 1px solid black; word-break: break-all; word-wrap: break-word; text-align:left;}" //$NON-NLS-1$
-                + "textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}" //$NON-NLS-1$
-                + "</style></head>\n" //$NON-NLS-1$
-                + "<body>\n"); //$NON-NLS-1$
+        sb.append("<!DOCTYPE html>\n"); //$NON-NLS-1$
+        sb.append("<html>\n"); //$NON-NLS-1$
+        sb.append("<head>\n"); //$NON-NLS-1$
+        sb.append("<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />\n"); //$NON-NLS-1$
+        sb.append("<style>table {border-collapse: collapse; font-size:11pt; font-family: arial, verdana, sans-serif; width:100%; align:center; } table.t {margin-bottom:20px;} td { padding: 2px; } th {");
+        sb.append("background-color:").append(UiUtil.getHexRGB(color1)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("border: 1px solid ").append(borderColor).append("; padding: 3px; text-align: left; font-weight: normal;} td.s1 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(color2)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("width:170px; border: 1px solid ").append(borderColor).append("; text-align:left;} td.s2 {font-size:10pt; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("background-color:").append(UiUtil.getHexRGB(color3)).append("; "); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("border: 1px solid ").append(borderColor).append("; word-break: break-all; word-wrap: break-word; text-align:left;}\n"); //$NON-NLS-1$ //$NON-NLS-2$
+        sb.append("textarea {readonly: readonly; height: 60px; width: 100%; resize: none;}\n"); //$NON-NLS-1$
+        sb.append("</style></head>\n"); //$NON-NLS-1$
+        sb.append("<body style=\"");//$NON-NLS-1$
+
+        if (background != null)  
+            sb.append("background-color:").append(UiUtil.getHexRGB(background)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+        if (foreground != null)  
+            sb.append("color:").append(UiUtil.getHexRGB(foreground)).append(";"); //$NON-NLS-1$  //$NON-NLS-2$
+        sb.append("\">\n"); //$NON-NLS-1$
 
         if (tabIndex == 0)
             fillBasicProps(sb, item);
@@ -198,17 +235,28 @@ public class MetadataViewer extends Viewer {
             return;
         sb.append("<table class=\"t\">"); //$NON-NLS-1$
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.Metadata") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        Arrays.sort(metas, collator);
+        Arrays.sort(metas, comparator);
         for (String meta : metas) {
             if (MetadataUtil.ignorePreviewMetas.contains(meta))
                 continue;
             sb.append("<tr><td class=\"s1\">"); //$NON-NLS-1$
-            sb.append(meta);
+            sb.append(LocalizedProperties.getLocalizedField(meta));
             sb.append("</td><td class=\"s2\">"); //$NON-NLS-1$
-            if (!metadata.isMultiValued(meta))
-                sb.append(SimpleHTMLEncoder.htmlEncode(metadata.get(meta)));
-            else
-                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(metadata.getValues(meta)).toString()));
+            if (!metadata.isMultiValued(meta)) {
+                String val = metadata.get(meta);
+                if (isNumeric(meta)) {
+                    val = df.format(Double.valueOf(val));
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(val));
+            } else {
+                String[] vals = metadata.getValues(meta);
+                if (isNumeric(meta)) {
+                    for (int i = 0; i < vals.length; i++) {
+                        vals[i] = df.format(Double.valueOf(vals[i]));
+                    }
+                }
+                sb.append(SimpleHTMLEncoder.htmlEncode(Arrays.asList(vals).toString()));
+            }
             sb.append("</td></tr>"); //$NON-NLS-1$
         }
         sb.append("</table>"); //$NON-NLS-1$
@@ -225,7 +273,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());
         fillProp(sb, BasicProps.MODIFIED, item.getModDate());
         fillProp(sb, BasicProps.ACCESSED, item.getAccessDate());
-        fillProp(sb, BasicProps.RECORDDATE, item.getRecordDate());
+        fillProp(sb, BasicProps.CHANGED, item.getChangeDate());
         fillProp(sb, BasicProps.HASH, item.getHash());
         fillProp(sb, BasicProps.PATH, item.getPath());
         sb.append("</table>"); //$NON-NLS-1$
@@ -247,7 +295,7 @@ public class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
-        Arrays.sort(keys, collator);
+        Arrays.sort(keys, comparator);
         for (String key : keys) {
             fillProp(sb, key, item.getExtraAttributeMap().get(key));
         }
@@ -257,7 +305,21 @@ public class MetadataViewer extends Viewer {
 
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
-            sb.append("<tr><td class=\"s1\">" + key + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
+            if (isNumeric(key)) {
+                if (value instanceof Number) {
+                    value = df.format(Double.valueOf(((Number) value).doubleValue()));
+                } else if (value instanceof Collection) {
+                    ArrayList<Object> formattedVals = new ArrayList<>();
+                    for (Object v : (Collection) value) {
+                        if (v instanceof Number) {
+                            v = df.format(Double.valueOf(((Number) v).doubleValue()));
+                        }
+                        formattedVals.add(v);
+                    }
+                    value = formattedVals;
+                }
+            }
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
     }

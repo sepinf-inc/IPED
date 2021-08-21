@@ -4,31 +4,25 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Path;
+
+import org.apache.commons.lang.SystemUtils;
+
 import java.nio.file.DirectoryStream.Filter;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
 
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
-import macee.core.Configurable;
+import iped3.configuration.IConfigurationDirectory;
 
-public class PluginConfig implements Configurable<UTF8Properties, UTF8Properties> {
+public class PluginConfig extends AbstractPropertiesConfigurable {
 
-    UTF8Properties properties = new UTF8Properties();
-    String optional_jars;
-    File optionalJarDir;
+    /**
+     * 
+     */
+    private static final long serialVersionUID = 1L;
+    private String relativePluginFolder;
+    private String tskJarPath;
 
-    public static final String OPTIONAL_JARS = "optional_jars";
     public static final String LOCAL_CONFIG = "LocalConfig.txt"; //$NON-NLS-1$
-
-    static Set<String> propNames = new HashSet<String>();
-    static {
-        propNames.add(IPEDConfig.CONFDIR);
-        propNames.add(IPEDConfig.TOADDUNALLOCATED);
-        propNames.add(IPEDConfig.TOADDFILESLACKS);
-        propNames.add(IPEDConfig.CONFIG_FILE);
-    }
 
     public static final DirectoryStream.Filter<Path> filter = new Filter<Path>() {
         @Override
@@ -37,60 +31,56 @@ public class PluginConfig implements Configurable<UTF8Properties, UTF8Properties
         }
     };
 
-    public PluginConfig() {
-    }
-
-    @Override
-    public UTF8Properties getApplicationConfiguration() {
-        return properties;
-    }
-
-    @Override
-    public void setApplicationConfiguration(UTF8Properties config) {
-        properties = config;
-    }
-
-    @Override
-    public UTF8Properties getUserConfiguration() {
-        return null;
-    }
-
-    @Override
-    public void setUserConfiguration(UTF8Properties config) {
-    }
-
-    @Override
-    public Set<String> getApplicationPropertyNames() {
-        return propNames;
-    }
-
     @Override
     public Filter<Path> getResourceLookupFilter() {
         return filter;
     }
 
-    public File[] getOptionalJars(String appRoot) {
-        if (optionalJarDir == null && optional_jars != null) {
-            optionalJarDir = new File(appRoot + "/" + optional_jars.trim()); //$NON-NLS-1$
-        }
+    public File[] getPluginJars() {
         File[] jars = null;
-        if (optionalJarDir != null) {
-            jars = optionalJarDir.listFiles();
+        if (getPluginFolder() != null) {
+            jars = getPluginFolder().listFiles();
         }
         return jars != null ? jars : new File[0];
     }
 
-    @Override
-    public void processConfigs(List<Path> resources) throws IOException {
-        for (Iterator iterator = resources.iterator(); iterator.hasNext();) {
-            Path path = (Path) iterator.next();
-            processConfig(path);
+    public File getPluginFolder() {
+        String appRoot = System.getProperty(IConfigurationDirectory.IPED_ROOT);
+        try {
+            return new File(appRoot, relativePluginFolder).getCanonicalFile();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    public void processConfig(Path resource) throws IOException {
-        properties.load(resource.toFile());
-        optional_jars = properties.getProperty(OPTIONAL_JARS);
+    public File getTskJarFile() {
+        if (tskJarPath == null || SystemUtils.IS_OS_WINDOWS) {
+            return null;
+        } else {
+            return new File(tskJarPath);
+        }
+    }
+
+    @Override
+    public void processProperties(UTF8Properties properties) {
+
+        String value = properties.getProperty("pluginFolder"); //$NON-NLS-1$
+        if (value == null) {
+            value = properties.getProperty("optional_jars"); //$NON-NLS-1$
+        }
+        if (value != null) {
+            relativePluginFolder = value.trim();
+        }
+
+        tskJarPath = properties.getProperty("tskJarPath"); //$NON-NLS-1$
+        if (tskJarPath != null && !tskJarPath.isEmpty())
+            tskJarPath = tskJarPath.trim();
+        else if (!SystemUtils.IS_OS_WINDOWS) {
+            throw new IPEDException("You must set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$
+        }
+        if (!SystemUtils.IS_OS_WINDOWS && !new File(tskJarPath).exists()) {
+            throw new IPEDException("File not found " + tskJarPath + ". Set tskJarPath on LocalConfig.txt!"); //$NON-NLS-1$ //$NON-NLS-2$
+        }
     }
 
 }

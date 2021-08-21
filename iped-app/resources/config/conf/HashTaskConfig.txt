@@ -1,0 +1,3 @@
+# To calculate multiple hashes use ; as separator
+# Possible values: md5, sha-1, sha-256, sha-512 and edonkey
+hashes = md5; sha-256

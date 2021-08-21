@@ -70,9 +70,15 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             try {
                 doc = App.get().appCase.getSearcher().doc(docId);
 
-                String status = doc.get(IndexItem.PATH);
-                if (status.length() > STATUS_LENGTH) {
-                    status = "..." + status.substring(status.length() - STATUS_LENGTH); //$NON-NLS-1$
+                String path = doc.get(IndexItem.PATH);
+                if (path.length() > STATUS_LENGTH) {
+                    path = "..." + path.substring(path.length() - STATUS_LENGTH); //$NON-NLS-1$
+                }
+                String status = path;
+                if (App.get().appCase.getAtomicSources().size() > 1) {
+                    String casePath = App.get().appCase.getAtomicSource(docId).getCaseDir().getCanonicalPath();
+                    String separator = !path.startsWith("/") && !path.startsWith("\\") ? "/" : "";
+                    status = (casePath + separator + path).replace("\\", "/");
                 }
                 App.get().status.setText(status);
 
@@ -117,7 +123,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         // TODO usar nova API e contornar exibição da Ajuda
         IPEDSource iCase = (IPEDSource) App.get().appCase.getAtomicSource(docId);
         App.get().getSearchParams().lastSelectedSource = iCase;
-        IItem item = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), false);
+        IItem item = IndexItem.getItem(doc, iCase, false);
 
         long textSize = iCase.getTextSize(item.getId());
         item.setExtraAttribute(TextParser.TEXT_SIZE, textSize);
@@ -132,7 +138,7 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         IItem viewItem = item;
 
         if (item.getViewFile() != null) {
-            viewItem = IndexItem.getItem(doc, iCase.getModuleDir(), iCase.getSleuthCase(), true);
+            viewItem = IndexItem.getItem(doc, iCase, true);
         }
 
         waitSleuthkitInit(item);
@@ -150,7 +156,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
         App.get().getViewerController().loadFile(item, viewItem, contentType, highlights);
 
         if (listRelated) {
-            // listRelatedItens();
             App.get().subItemModel.listSubItens(doc);
             if (Thread.currentThread().isInterrupted()) {
                 return;
@@ -158,6 +163,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
             App.get().parentItemModel.listParents(doc);
 
             App.get().duplicatesModel.listDuplicates(doc);
+
+            App.get().referencesModel.listReferencingItems(doc);
         }
     }
 
@@ -210,33 +217,6 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 }
             }.start();
         }
-    }
-
-    private Thread listTask;
-
-    private void listRelatedItens() {
-        if (listTask != null) {
-            listTask.interrupt();
-        }
-
-        listTask = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                synchronized (lock2) {
-                    App.get().subItemModel.listSubItens(doc);
-                    if (Thread.currentThread().isInterrupted()) {
-                        return;
-                    }
-                    App.get().parentItemModel.listParents(doc);
-                    App.get().duplicatesModel.listDuplicates(doc);
-                }
-
-            }
-        });
-        synchronized (lock2) {
-            listTask.start();
-        }
-
     }
 
 }

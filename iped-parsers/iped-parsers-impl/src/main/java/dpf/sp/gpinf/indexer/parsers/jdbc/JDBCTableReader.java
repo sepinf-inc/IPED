@@ -78,6 +78,10 @@ class JDBCTableReader {
         this.ex = AbstractDBParser.getEmbeddedDocumentExtractor(context);
     }
 
+    public boolean hasDateGuessed() {
+        return false;
+    }
+
     public boolean nextRow(ContentHandler handler, ParseContext context) throws IOException, SAXException {
         // lazy initialization
         if (results == null) {
@@ -109,39 +113,49 @@ class JDBCTableReader {
         return true;
     }
 
-    private void handleCell(ResultSetMetaData rsmd, int i, ContentHandler handler, ParseContext context)
+    private String handleCell(ResultSetMetaData rsmd, int i, ContentHandler handler, ParseContext context)
             throws SQLException, IOException, SAXException {
+        String text = handleCell(results, rsmd, i, handler, context, rows);
+        addAllCharacters(text, handler);
+        return text;
+    }
+
+    public String handleCell(ResultSet results, ResultSetMetaData rsmd, int i, ContentHandler handler,
+            ParseContext context, int rows)
+            throws SQLException, IOException, SAXException {
+        String text = null;
         switch (rsmd.getColumnType(i)) {
             case Types.BLOB:
-                handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
+                text = handleBlob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
             case Types.CLOB:
-                handleClob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
+                text = handleClob(tableName, rsmd.getColumnName(i), rows, results, i, handler, context);
                 break;
             case Types.BOOLEAN:
-                handleBoolean(results.getBoolean(i), handler);
+                text = handleBoolean(results.getBoolean(i), handler);
                 break;
             case Types.DATE:
-                handleDate(results, i, handler);
+                text = handleDate(results, i, handler);
                 break;
             case Types.TIMESTAMP:
-                handleTimeStamp(results, i, handler);
+                text = handleTimeStamp(results, i, handler);
                 break;
             case Types.INTEGER:
-                handleInteger(rsmd, results, i, handler);
+                text = handleInteger(rsmd, results, i, handler);
                 break;
             case Types.FLOAT:
                 // this is necessary to handle rounding issues in presentation
                 // Should we just use getString(i)?
-                addAllCharacters(Float.toString(results.getFloat(i)), handler);
+                text = Float.toString(results.getFloat(i));
                 break;
             case Types.DOUBLE:
-                addAllCharacters(Double.toString(results.getDouble(i)), handler);
+                text = Double.toString(results.getDouble(i));
                 break;
             default:
-                addAllCharacters(results.getString(i), handler);
+                text = results.getString(i);
                 break;
         }
+        return text;
     }
 
     public List<String> getHeaders() throws IOException {
@@ -162,16 +176,16 @@ class JDBCTableReader {
         return headers;
     }
 
-    protected void handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler)
+    protected String handleInteger(ResultSetMetaData rsmd, ResultSet rs, int columnIndex, ContentHandler handler)
             throws SQLException, SAXException {
-        addAllCharacters(Integer.toString(rs.getInt(columnIndex)), handler);
+        return Integer.toString(rs.getInt(columnIndex));
     }
 
-    private void handleBoolean(boolean aBoolean, ContentHandler handler) throws SAXException {
-        addAllCharacters(Boolean.toString(aBoolean), handler);
+    private String handleBoolean(boolean aBoolean, ContentHandler handler) throws SAXException {
+        return Boolean.toString(aBoolean);
     }
 
-    protected void handleClob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
+    protected String handleClob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
             ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
         Clob clob = resultSet.getClob(columnIndex);
         boolean truncated = clob.length() > Integer.MAX_VALUE || clob.length() > maxClobLength;
@@ -189,17 +203,18 @@ class JDBCTableReader {
         // just in case something screwy is going on with the column name
         String name = FilenameUtils.normalize(FilenameUtils.getName(columnName + "_" + rowNum + ".txt")); //$NON-NLS-1$ //$NON-NLS-2$
         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
-        addAllCharacters(name, handler);
-
         // is there a more efficient way to go from a Reader to an InputStream?
         String s = clob.getSubString(0, readSize);
         // EmbeddedDocumentExtractor ex =
         // AbstractDBParser.getEmbeddedDocumentExtractor(context);
         ex.parseEmbedded(new ByteArrayInputStream(s.getBytes("UTF-8")), handler, m, false); //$NON-NLS-1$
+        
+        return name;
     }
 
-    protected void handleBlob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
-            ContentHandler handler, ParseContext context) throws SQLException, IOException, SAXException {
+    protected String handleBlob(String tableName, String columnName, int rowNum, ResultSet resultSet, int columnIndex,
+            ContentHandler handler, ParseContext context)
+            throws SQLException, IOException, SAXException {
         Blob blob = null;
         Metadata m = new Metadata();
         /*
@@ -228,16 +243,17 @@ class JDBCTableReader {
 
                 int MIN_SIZE = 32;
                 if (is.getLength() > MIN_SIZE) {
-                    String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     if (context.get(Parser.class) != null || !(ex instanceof ParsingEmbeddedDocumentExtractor)) {
+                        String name = tableName + "_" + columnName + "_" + rowNum + ".data"; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         m.set(TikaMetadataKeys.RESOURCE_NAME_KEY, name);
                         ex.parseEmbedded(is, handler, m, false);
-                    } else
-                        addAllCharacters(name, handler);
+                    }
+                    return "[BLOB]";
+
                 } else {
                     byte[] bytes = new byte[(int) is.getLength()];
                     is.read(bytes);
-                    addAllCharacters("0x" + Hex.encodeHexString(bytes), handler); //$NON-NLS-1$
+                    return "0x" + Hex.encodeHexString(bytes);
                 }
 
             } finally {
@@ -250,7 +266,7 @@ class JDBCTableReader {
                 }
                 IOUtils.closeQuietly(is);
             }
-        // handler.endElement("", "span", "span");
+        return null;
     }
 
     protected TikaInputStream getInputStreamFromBlob(ResultSet resultSet, int columnIndex, Blob blob, Metadata metadata)
@@ -258,14 +274,14 @@ class JDBCTableReader {
         return TikaInputStream.get(blob, metadata);
     }
 
-    protected void handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler)
+    protected String handleDate(ResultSet resultSet, int columnIndex, ContentHandler handler)
             throws SAXException, SQLException {
-        addAllCharacters(resultSet.getString(columnIndex), handler);
+        return resultSet.getString(columnIndex);
     }
 
-    protected void handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler)
+    protected String handleTimeStamp(ResultSet resultSet, int columnIndex, ContentHandler handler)
             throws SAXException, SQLException {
-        addAllCharacters(resultSet.getString(columnIndex), handler);
+        return resultSet.getString(columnIndex);
     }
 
     protected void addAllCharacters(String s, ContentHandler handler) throws SAXException {

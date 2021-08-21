@@ -14,7 +14,7 @@ import dpf.inc.sepinf.gdrive.parsers.GDriveSnapshotParser;
 import dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.mt.gpinf.skype.parser.SkypeParser;
-import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;

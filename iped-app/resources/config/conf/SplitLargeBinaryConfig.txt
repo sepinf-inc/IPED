@@ -1,0 +1,8 @@
+# Minimum binary or unknown file size in bytes to be split in smaller fragments. 
+minItemSizeToFragment = 104857600
+
+# Fragment split size in bytes.
+itemFragmentSize = 10485760
+
+# Overlap in bytes between split fragments.
+fragmentOverlapSize = 1024
