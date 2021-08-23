@@ -168,7 +168,7 @@ public class ShareazaLibraryDatParser extends AbstractParser {
         Set<Integer> indexesCounted = new HashSet<>();
         for (LibraryFolder f : folders.getLibraryFolders())
             result += countHashDBHits(f, indexesCounted);
-        countHashDBHits(folders.getAlbumRoot(), indexToFile, indexesCounted);
+        result += countHashDBHits(folders.getAlbumRoot(), indexToFile, indexesCounted);
 
         return result;
     }
