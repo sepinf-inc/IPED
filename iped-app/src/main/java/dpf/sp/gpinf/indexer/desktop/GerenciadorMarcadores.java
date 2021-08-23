@@ -508,6 +508,15 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             return;
         }
 
+        //Avoid conflict with keys that are used for item selection (space) and
+        //recursive item selection (R).
+        if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
+            if (e.getSource() == list) {
+                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            }
+            return;
+        }
+        
         KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
 
         if (e.getSource() == list) {
