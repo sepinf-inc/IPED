@@ -512,7 +512,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         //recursive item selection (R).
         if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
             if (e.getSource() == list) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
             }
             return;
         }
@@ -521,15 +521,15 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert1"));
                 return;
             }
             if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
                 return;
             }
             if (keystrokeToBookmark.containsKey(stroke)) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
                 return;
             }
             int index = list.getSelectedIndex();
@@ -563,6 +563,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
+    private void showMessage(String msg) {
+        JOptionPane.showMessageDialog(dialog, msg, dialog.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+    }
     
     public boolean hasSingleKeyShortcut() {
        for (KeyStroke k : keystrokeToBookmark.keySet()) {
