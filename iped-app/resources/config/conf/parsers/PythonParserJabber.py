@@ -120,9 +120,9 @@ class PythonParserJabber:
             # extract text from html chat to be indexed, searched for regexes and so on...
             HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
 
-            soup = BeautifulSoup(open(tmpFilePath,'rb'), "html.parser")
-            body = soup.find("body")
-            title =soup.find('title').text
+            soup_list = [BeautifulSoup(x,"html.parser") for x in open(tmpFilePath,'r').readlines()]
+            body = soup_list[0].find("body")
+            title =soup_list[0].find('title').text
             temp_to_date = title.split(" on ",1)[0]
             temp_client_app = title.split(" on ",1)[1].split()
             app = temp_client_app[1].strip("(").strip(")")
@@ -142,45 +142,22 @@ class PythonParserJabber:
             <font color="#16569E"><font size="2">(08:50:30)</font> <b>bob@xmpp.bo/333327081514908999591234:</b></font> hello<br/>
             <font color="#A82F2F"><font size="2">(08:50:48)</font> <b>remote_nickname:</b></font> world 	  	
             ''' 
-
             # There are at least two possible formats for the messages
-            possible_tags = ["span","font"]
+            possible_tags = ["span", "font"]
+            curr_tag = None
+            for tag in possible_tags:
+                temp = soup_list[1].find(tag)
+                if temp:
+                    curr_tag = tag
+            assert curr_tag is not None
             title_rep = body.next_element
             assert title_rep.name in ["h1", "h2", "h3"]
-            new_line = title_rep.next_sibling
-            # assert new_line == "\n" or new_line.name == "p"
-            if new_line.name == "p":
-                first_msg = new_line.next_element.next_element
-            elif new_line == "\n":
-                first_msg = new_line.next_sibling
-            else:
-                raise "Tag not found exception"
-            assert first_msg.name in possible_tags
-            all_messages = [first_msg] + [x for x in first_msg.find_next_siblings(first_msg.name)] 
-
-            for idx, html_message in enumerate(all_messages):
+            soup_messages = [x.find(curr_tag) for x in soup_list if x.find(curr_tag)]
+    
+            for idx, html_message in enumerate(soup_messages):
                 idict={}
-                curr_tag = html_message.name
-
-                # If the format "dd/mm/aaaa" is not present, then this means that the message content is itself
-                # a span sibling. So it is necessary to recover the previous span tag, as it contains the metadata
-                # for the message 
-
-                '''
-                <span style="color: #A82F2F"><span style="font-size: smaller">(17:58:02)</span> <b>alice@jabber.at:</b></span> sim com certeza<br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:02:46)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> man acho q peguei algo aqui nesse js, q baixa la no pc<br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:02:50)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> vi um dominio aqui <br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:02:56)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> rastreei ele é aqui q ta hospedado<br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:02:57)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> <span style='color: #5A5A5A;'><span style='font-family: Lato, Helvetica, sans-serif;'><a href="http://www.dominio1.com">www.dominio1.com</a></span></span><br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:03:25)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> <a href="http://prntscr.com/aaaaaaaa">http://prntscr.com/aaaaaaaa</a><br>
-                <span style="color: #16569E"><span style="font-size: smaller">(18:03:29)</span> <b>bob1@jabber.ru/7433774929690123456:</b></span> resto ta no raiodenuvem<br>
-                '''
-                if not html_message.find(text=re.compile("\d{2}:\d{2}:\d{2}")):
-                    curr_msg = html_message
-                    curr_metadata = html_message.find_previous_sibling("span")
-                else:
-                    curr_msg = html_message.next_sibling
-                    curr_metadata = html_message
+                curr_msg = html_message.next_sibling
+                curr_metadata = html_message
 
                 '''
                 Found some cases in which the message is contained within further tags
@@ -192,21 +169,21 @@ class PythonParserJabber:
                 # Some messages are html formated (check line 5 of previous html code)
                 if isinstance(curr_msg, Tag):
                     curr_msg_text = curr_msg.text
-                elif isinstance(curr_msg, NavigableString):
-                    curr_msg_text = curr_msg.string
-                elif isinstance(curr_msg, str):
-                    curr_msg_text = curr_msg
 
-                if curr_msg_text in ["", " "]:
+                elif isinstance(curr_msg, NavigableString):
                     block_msg = ""
                     while curr_msg.name not in [curr_tag]:
-                    # while curr_msg.next_sibling.name != curr_tag and not isinstance(curr_msg.next_sibling, NavigableString):
                         if isinstance(curr_msg, NavigableString):
-                            block_msg +=curr_msg.string
+                            block_msg+=curr_msg.string
                         else:
-                            block_msg +=curr_msg.text
+                            block_msg+=curr_msg.text
                         curr_msg = curr_msg.next_sibling
+                        if not curr_msg:
+                            break
                     curr_msg_text = block_msg
+    
+                elif isinstance(curr_msg, str):
+                    curr_msg_text = curr_msg
 
                 assert isinstance(curr_metadata, Tag)
                 assert isinstance(curr_msg_text, str)
