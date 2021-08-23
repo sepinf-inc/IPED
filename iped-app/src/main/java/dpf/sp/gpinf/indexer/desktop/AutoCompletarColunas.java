@@ -26,6 +26,8 @@ import java.util.List;
 
 import javax.swing.text.JTextComponent;
 
+import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
+
 public class AutoCompletarColunas {
     public AutoCompletarColunas(final JTextComponent editor) {
         editor.setFocusTraversalKeysEnabled(false);
@@ -51,15 +53,23 @@ public class AutoCompletarColunas {
                                 List<String> l = new ArrayList<String>();
                                 for (int step = 0; step <= 1; step++) {
                                     for (int i = 0; i < cols.length; i++) {
-                                        NEXT: for (int j = 0; j < cols[i].length; j++) {
-                                            String col = cols[i][j];
-                                            if ((step == 0 && col.toLowerCase().startsWith(base))
-                                                    || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
-                                                for (int k = 0; k < l.size(); k++) {
-                                                    if (l.get(k).equals(col))
-                                                        continue NEXT;
+                                        for (int j = 0; j < cols[i].length; j++) {
+                                            String orgCol = cols[i][j];
+                                            NEXT: for (int m = 0; m <= 1; m++) {
+                                                String col = orgCol;
+                                                if (m == 0) {
+                                                    col = LocalizedProperties.getLocalizedField(col);
+                                                    if (col == null) 
+                                                        continue;
                                                 }
-                                                l.add(col);
+                                                if ((step == 0 && col.toLowerCase().startsWith(base))
+                                                        || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
+                                                    for (int k = 0; k < l.size(); k++) {
+                                                        if (l.get(k).equals(col))
+                                                            continue NEXT;
+                                                    }
+                                                    l.add(col);
+                                                }
                                             }
                                         }
                                     }
