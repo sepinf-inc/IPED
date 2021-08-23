@@ -493,6 +493,21 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             return;
         }
 
+        //Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager window)
+        //and CTRL+C (copy selected table cell content).
+        if (e.isControlDown() && (e.getKeyCode() == 'A' || e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
+            return;
+        }
+        
+        //Avoid conflict with keys used for navigation in the bookmark list,
+        //items table or items gallery.
+        if (e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT
+                || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN
+                || e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END
+                || e.getKeyCode() == KeyEvent.VK_PAGE_UP || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+            return;
+        }
+
         KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
 
         if (e.getSource() == list) {
