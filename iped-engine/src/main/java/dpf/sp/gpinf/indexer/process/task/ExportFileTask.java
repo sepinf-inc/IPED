@@ -521,8 +521,13 @@ public class ExportFileTask extends AbstractTask {
                                 if (!outputFile.getParentFile().exists()) {
                                     outputFile.getParentFile().mkdirs();
                                 }
-                                fileExists = outputFile.createNewFile();
-                                bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                                // a read-only file using id as name may exist, could be a subitem left behind
+                                // by a previous interrupted processing, see #721
+                                if (outputFile.exists()) {
+                                    outputFile.setWritable(true);
+                                }
+                                bos = new BufferedOutputStream(Files.newOutputStream(outputFile.toPath()));
+                                fileExists = true;
                             }
                             bos.write(baos.toByteArray());
                             total += baos.size();
