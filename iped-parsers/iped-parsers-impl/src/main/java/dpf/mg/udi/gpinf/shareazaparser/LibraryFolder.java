@@ -108,12 +108,13 @@ class LibraryFolder extends ShareazaEntity {
         }
     }
 
-    public void printTable(XHTMLContentHandler html, IItemSearcher searcher) throws SAXException {
+    public void printTable(XHTMLContentHandler html, IItemSearcher searcher, Map<Integer, List<String>> albunsForFiles) throws SAXException {
         for (LibraryFolder folder : folders) {
-            folder.printTable(html, searcher);
+            folder.printTable(html, searcher, albunsForFiles);
         }
         for (LibraryFile file : files) {
-            file.printTableRow(html, path, searcher);
+            file.printTableRow(html, path, searcher, albunsForFiles);
+            albunsForFiles.remove(file.getIndex());
         }
     }
 
