@@ -300,7 +300,7 @@ public class MetadataPanel extends JPanel
         }
     }
 
-    private class RangeCount extends ValueCount {
+    private static class RangeCount extends ValueCount {
         double start, end;
 
         RangeCount(double start, double end, int ord, int count) {
@@ -326,6 +326,30 @@ public class MetadataPanel extends JPanel
             return sb.toString();
         }
     }
+    
+    private static class SingleValueCount extends ValueCount implements Comparable<SingleValueCount> {
+        double value;
+
+        SingleValueCount(double value) {
+            super(null, 0, 0);
+            this.value = value;
+        }
+
+        @Override
+        public String toString() {
+            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+            StringBuilder sb = new StringBuilder();
+            sb.append(nf.format(value));
+            sb.append(" ("); //$NON-NLS-1$
+            sb.append(count);
+            sb.append(')');
+            return sb.toString();
+        }
+
+        public int compareTo(SingleValueCount o) {
+            return Double.compare(value, o.value);
+        }
+    }    
 
     private static class MoneyCount extends ValueCount implements Comparable<MoneyCount> {
 
