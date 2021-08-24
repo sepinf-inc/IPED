@@ -252,6 +252,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             if (!bookmarks.contains(bk)) {
                 bookmarks.add(bk);
             }
+            bk.key = App.get().appCase.getMultiMarcadores().getLabelKeyStroke(label);
         }
         Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {
@@ -549,6 +550,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
             keystrokeToBookmark.put(stroke, label);
             keystrokeToBookmark.put(getRemoveKey(stroke), label);
+
+            App.get().appCase.getMultiMarcadores().setLabelKeyStroke(label, stroke);
+            App.get().appCase.getMultiMarcadores().saveState();
+
         } else {
             String label = keystrokeToBookmark.get(stroke);
             if (label == null) {
