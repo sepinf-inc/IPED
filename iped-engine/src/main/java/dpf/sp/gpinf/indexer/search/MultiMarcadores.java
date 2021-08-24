@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.KeyStroke;
+
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.sp.gpinf.indexer.util.Util;
@@ -183,6 +185,20 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
         return null;
     }
 
+    public void setLabelKeyStroke(String labelName, KeyStroke key) {
+        for (IMarcadores m : map.values())
+            m.setLabelKeyStroke(m.getLabelId(labelName), key);
+    }
+
+    public KeyStroke getLabelKeyStroke(String labelName) {
+        for (IMarcadores m : map.values()) {
+            KeyStroke key = m.getLabelKeyStroke(m.getLabelId(labelName));
+            if (key != null)
+                return key;
+        }
+        return null;
+    }
+    
     public int getLabelCount(String labelName) {
         int ret = 0;
         for (IMarcadores m : map.values()) {

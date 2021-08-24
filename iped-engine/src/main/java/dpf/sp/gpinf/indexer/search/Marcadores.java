@@ -29,6 +29,8 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import javax.swing.KeyStroke;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +59,7 @@ public class Marcadores implements Serializable, IMarcadores {
     private ArrayList<byte[]> labels;
     private TreeMap<Integer, String> labelNames = new TreeMap<Integer, String>();
     private TreeMap<Integer, String> labelComments = new TreeMap<Integer, String>();
+    private TreeMap<Integer, KeyStroke> labelKeyStrokes = new TreeMap<Integer, KeyStroke>();
     private Set<Integer> reportLabels = new TreeSet<Integer>();
 
     private int selectedItens = 0, totalItems, lastId;
@@ -255,6 +258,7 @@ public class Marcadores implements Serializable, IMarcadores {
 
         labelNames.put(labelId, labelName);
         labelComments.put(labelId, null);
+        labelKeyStrokes.put(labelId, null);
 
         return labelId;
     }
@@ -264,6 +268,7 @@ public class Marcadores implements Serializable, IMarcadores {
             return;
         labelNames.remove(label);
         labelComments.remove(label);
+        labelKeyStrokes.remove(label);
         reportLabels.remove(label);
 
         int labelOrder = label / labelBits;
@@ -298,6 +303,14 @@ public class Marcadores implements Serializable, IMarcadores {
 
     public String getLabelComment(int labelId) {
         return labelComments.get(labelId);
+    }
+
+    public void setLabelKeyStroke(int labelId, KeyStroke key) {
+        labelKeyStrokes.put(labelId, key);
+    }
+
+    public KeyStroke getLabelKeyStroke(int labelId) {
+        return labelKeyStrokes.get(labelId);
     }
 
     public void setInReport(int labelId, boolean inReport) {
@@ -449,6 +462,7 @@ public class Marcadores implements Serializable, IMarcadores {
         this.selectedItens = state.selectedItens;
         this.labelNames = state.labelNames;
         this.labelComments = state.labelComments;
+        this.labelKeyStrokes = state.labelKeyStrokes;
         this.reportLabels = state.reportLabels;
     }
 
