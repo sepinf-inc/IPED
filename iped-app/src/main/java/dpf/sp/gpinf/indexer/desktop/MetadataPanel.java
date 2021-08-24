@@ -1038,12 +1038,12 @@ public class MetadataPanel extends JPanel
                         }
                     }
                 }
-        } else if (docValues != null) {
+        } else if (docValues != null && (!isNumeric || !noRanges)) {
             LookupOrd lo = new LookupOrdSDV(docValues);
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0)
                     list.add(new ValueCount(lo, ord, valueCount[ord]));
-        } else if (docValuesSet != null) {
+        } else if (docValuesSet != null && (!isNumeric || !noRanges)) {
             LookupOrd lo = new LookupOrdSSDV(docValuesSet);
             lo.isCategory = BasicProps.CATEGORY.equals(field);
             boolean isMoney = field.equals(MONEY_FIELD);
