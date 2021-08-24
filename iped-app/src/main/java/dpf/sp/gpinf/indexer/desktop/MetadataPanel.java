@@ -8,9 +8,6 @@ import java.awt.Toolkit;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.text.NumberFormat;
 import java.util.ArrayList;
@@ -143,12 +140,10 @@ public class MetadataPanel extends JPanel
         scale.setPreferredSize(new Dimension(30, 15));
         scale.setEnabled(false);
         scale.addChangeListener(this);
-        scale.addMouseListener(new SliderMouseListener(scale));
 
         sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
         sort.setPreferredSize(new Dimension(30, 15));
         sort.addChangeListener(this);
-        sort.addMouseListener(new SliderMouseListener(sort));
 
         update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
         update.setToolTipText(Messages.getString("MetadataPanel.Update"));
@@ -1098,43 +1093,16 @@ public class MetadataPanel extends JPanel
     public void stateChanged(ChangeEvent e) {
 
         if (e.getSource() == sort) {
-            setStateChanged(sort);
-            sortAndUpdateList(filteredArray);
+            if (!sort.getValueIsAdjusting())
+                sortAndUpdateList(filteredArray);
 
         } else if (e.getSource() == scale) {
-            setStateChanged(scale);
-            populateList();
+            if (!scale.getValueIsAdjusting())
+                populateList();
         }
 
     }
     
-    private void setStateChanged(JSlider slider) {
-        for (MouseListener l : slider.getMouseListeners()) {
-            if (l instanceof SliderMouseListener) {
-                ((SliderMouseListener) l).stateChanged = true;
-            }
-        }
-    }
-
-    private class SliderMouseListener extends MouseAdapter {
-
-        private boolean stateChanged = false;
-        private JSlider slider;
-
-        private SliderMouseListener(JSlider slider) {
-            this.slider = slider;
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-            if (!stateChanged) {
-                slider.setValue(1 - slider.getValue());
-            }
-            stateChanged = false;
-        }
-
-    }
-
     private void resetPanel() {
         if (groups.getSelectedItem() != null) {
             boolean empty = list.isSelectionEmpty();
