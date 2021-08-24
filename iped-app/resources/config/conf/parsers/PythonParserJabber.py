@@ -120,7 +120,7 @@ class PythonParserJabber:
             # extract text from html chat to be indexed, searched for regexes and so on...
             HtmlParser().parse(tis, EmbeddedContentHandler(xhtml), metadata, context)
 
-            soup_list = [BeautifulSoup(x,"html.parser") for x in open(tmpFilePath,'r').readlines()]
+            soup_list = [BeautifulSoup(x,"html.parser") for x in open(tmpFilePath,'rb').readlines()]
             body = soup_list[0].find("body")
             title =soup_list[0].find('title').text
             temp_to_date = title.split(" on ",1)[0]
