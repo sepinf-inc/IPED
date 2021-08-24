@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -91,6 +92,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
+    private final Collator collator;
+    
     private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         String bookmark;
         KeyStroke key;
@@ -113,8 +116,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
 
         @Override
-        public int compareTo(BookmarkAndKey obj) {
-            return bookmark.compareToIgnoreCase(((BookmarkAndKey) obj).bookmark);
+        public int compareTo(BookmarkAndKey other) {
+            return collator.compare(bookmark, other.bookmark);
         }
     }
 
@@ -142,6 +145,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private GerenciadorMarcadores() {
 
+        collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
 
