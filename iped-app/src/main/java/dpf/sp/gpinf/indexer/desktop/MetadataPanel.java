@@ -296,7 +296,8 @@ public class MetadataPanel extends JPanel
 
         @Override
         public String toString() {
-            return getVal() + " (" + count + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+            NumberFormat nf = LocalizedFormat.getNumberInstance(); 
+            return getVal() + " (" + nf.format(count) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
         }
     }
 
@@ -321,7 +322,7 @@ public class MetadataPanel extends JPanel
                 sb.append(nf.format(end));
             }
             sb.append(" ("); //$NON-NLS-1$
-            sb.append(count);
+            sb.append(nf.format(count));
             sb.append(')');            
             return sb.toString();
         }
@@ -341,7 +342,7 @@ public class MetadataPanel extends JPanel
             StringBuilder sb = new StringBuilder();
             sb.append(nf.format(value));
             sb.append(" ("); //$NON-NLS-1$
-            sb.append(count);
+            sb.append(nf.format(count));
             sb.append(')');
             return sb.toString();
         }
