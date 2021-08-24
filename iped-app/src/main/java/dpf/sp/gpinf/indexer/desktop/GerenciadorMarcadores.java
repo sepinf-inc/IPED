@@ -497,6 +497,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         //Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager window)
         //and CTRL+C (copy selected table cell content).
         if (e.isControlDown() && (e.getKeyCode() == 'A' || e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
+            showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
             return;
         }
         
