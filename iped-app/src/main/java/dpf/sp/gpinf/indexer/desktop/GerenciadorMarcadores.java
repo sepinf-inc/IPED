@@ -493,19 +493,45 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             return;
         }
 
+        //Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager window)
+        //and CTRL+C (copy selected table cell content).
+        if (e.isControlDown() && (e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
+            showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            return;
+        }
+        
+        //Avoid conflict with keys used for selection/navigation in the bookmark list,
+        //items table or items gallery.
+        if ((e.isControlDown() && e.getKeyCode() == 'A')
+                || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT
+                || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN
+                || e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END
+                || e.getKeyCode() == KeyEvent.VK_PAGE_UP || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+            return;
+        }
+
+        //Avoid conflict with keys that are used for item selection (space) and
+        //recursive item selection (R).
+        if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
+            if (e.getSource() == list) {
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            }
+            return;
+        }
+        
         KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
 
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert1"));
                 return;
             }
             if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
                 return;
             }
             if (keystrokeToBookmark.containsKey(stroke)) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
                 return;
             }
             int index = list.getSelectedIndex();
@@ -539,6 +565,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
+    private void showMessage(String msg) {
+        JOptionPane.showMessageDialog(dialog, msg, dialog.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+    }
     
     public boolean hasSingleKeyShortcut() {
        for (KeyStroke k : keystrokeToBookmark.keySet()) {
