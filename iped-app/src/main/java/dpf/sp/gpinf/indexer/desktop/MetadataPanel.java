@@ -138,13 +138,13 @@ public class MetadataPanel extends JPanel
         props.setMaximumRowCount(30);
         props.addActionListener(this);
 
-        scale.setToolTipText(LINEAR_SCALE + " / " + LOG_SCALE);
-        scale.setPreferredSize(new Dimension(30, 15));
+        scale.setToolTipText(NO_RANGES + " / " + LINEAR_SCALE + " / " + LOG_SCALE);
+        scale.setPreferredSize(new Dimension(42, 15));
         scale.setEnabled(false);
         scale.addChangeListener(this);
 
-        sort.setToolTipText(NO_RANGES + " / " + SORT_COUNT + " / " + SORT_ALFANUM);
-        sort.setPreferredSize(new Dimension(42, 15));
+        sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
+        sort.setPreferredSize(new Dimension(30, 15));
         sort.addChangeListener(this);
 
         update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
