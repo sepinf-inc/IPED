@@ -95,6 +95,7 @@ public class MetadataPanel extends JPanel
     JList<ValueCount> list = new JList<ValueCount>();
     JScrollPane scrollList = new JScrollPane(list);
     JSlider sort = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
+    private final JLabel labelScale = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$    
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
     JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
@@ -209,7 +210,7 @@ public class MetadataPanel extends JPanel
         l4.add(new JLabel(Messages.getString("MetadataPanel.Sort")));
         l4.add(sort);
         l4.add(Box.createRigidArea(new Dimension(10, 0)));
-        l4.add(new JLabel(Messages.getString("MetadataPanel.Scale")));
+        l4.add(labelScale);
         l4.add(scale);
         l4.add(Box.createRigidArea(new Dimension(10, 0)));
         l4.add(copyResultToClipboard);
@@ -632,10 +633,8 @@ public class MetadataPanel extends JPanel
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                if (isNumeric)
-                    scale.setEnabled(true);
-                else
-                    scale.setEnabled(false);
+                scale.setEnabled(isNumeric);
+                labelScale.setEnabled(isNumeric);
             }
         });
 
