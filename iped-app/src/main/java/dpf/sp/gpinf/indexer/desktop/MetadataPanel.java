@@ -83,6 +83,7 @@ public class MetadataPanel extends JPanel
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
+    private static final String NO_RANGES = Messages.getString("MetadataPanel.NoRanges"); //$NON-NLS-1$
     private static final String RANGE_SEPARATOR = Messages.getString("MetadataPanel.RangeSeparator"); //$NON-NLS-1$    
     private static final String EVENT_SEPARATOR = Pattern.quote(IndexItem.EVENT_SEPARATOR);
     private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
@@ -95,7 +96,7 @@ public class MetadataPanel extends JPanel
     private final JLabel labelScale = new JLabel(Messages.getString("MetadataPanel.Scale")); //$NON-NLS-1$    
     JComboBox<String> groups;
     JComboBox<String> props = new JComboBox<String>();
-    JSlider scale = new JSlider(JSlider.HORIZONTAL, 0, 1, 0);
+    JSlider scale = new JSlider(JSlider.HORIZONTAL, -1, 1, 0);
     private final HoverButton update = new HoverButton();
     HintTextField listFilter = new HintTextField(
             "[" + Messages.getString("MetadataPanel.FilterValues") + "] " + (char) 0x2193);
@@ -121,6 +122,7 @@ public class MetadataPanel extends JPanel
     volatile boolean updatingResult = false;
 
     volatile boolean logScale = false;
+    volatile boolean noRanges = false;
     volatile double min, max, interval;
 
     private static final long serialVersionUID = 1L;
@@ -141,8 +143,8 @@ public class MetadataPanel extends JPanel
         scale.setEnabled(false);
         scale.addChangeListener(this);
 
-        sort.setToolTipText(SORT_COUNT + " / " + SORT_ALFANUM);
-        sort.setPreferredSize(new Dimension(30, 15));
+        sort.setToolTipText(NO_RANGES + " / " + SORT_COUNT + " / " + SORT_ALFANUM);
+        sort.setPreferredSize(new Dimension(42, 15));
         sort.addChangeListener(this);
 
         update.setIcon(IconUtil.getIcon("refresh", RES_PATH, 16));
@@ -431,6 +433,7 @@ public class MetadataPanel extends JPanel
         ipedResult = App.get().ipedResult;
 
         logScale = scale.getValue() == 1;
+        noRanges = scale.getValue() == -1;
         if (props.getSelectedItem() != null)
             lastPropSel = props.getSelectedItem();
 
