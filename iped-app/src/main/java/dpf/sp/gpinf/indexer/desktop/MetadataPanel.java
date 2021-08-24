@@ -520,7 +520,7 @@ public class MetadataPanel extends JPanel
         ArrayList<IItemId> items = new ArrayList<>();
         ArrayList<Float> scores = new ArrayList<>();
         int k = 0;
-        if (isNumeric && numValues != null) {
+        if (isNumeric && numValues != null && !noRanges) {
             Bits docsWithField = null;
             try {
                 docsWithField = reader.getDocsWithField(field);
@@ -556,7 +556,7 @@ public class MetadataPanel extends JPanel
                 }
                 k++;
             }
-        } else if (isNumeric && numValuesSet != null) {
+        } else if (isNumeric && numValuesSet != null && !noRanges) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
                 numValuesSet.setDocument(doc);
@@ -588,6 +588,89 @@ public class MetadataPanel extends JPanel
                 }
                 k++;
             }
+        } else if (isNumeric && numValuesSet != null && noRanges) {
+            Set<Double> set = new HashSet<Double>();
+            for (IItemId item : result.getIterator()) {
+                int doc = App.get().appCase.getLuceneId(item);
+                numValuesSet.setDocument(doc);
+                for (int i = 0; i < numValuesSet.count(); i++) {
+                    double val = numValuesSet.valueAt(i);
+                    if (isFloat)
+                        val = NumericUtils.sortableIntToFloat((int) val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long) val);
+                    set.add(val);
+                }
+            }
+            ArrayList<Double> l = new ArrayList<Double>(set);
+            Collections.sort(l);
+            set.clear();
+            for (int ord : ordsToGet) {
+                if (ord >= 0 && ord < l.size())
+                    set.add(l.get(ord));
+            }
+            if (!set.isEmpty()) {
+                for (IItemId item : result.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    numValuesSet.setDocument(doc);
+                    for (int i = 0; i < numValuesSet.count(); i++) {
+                        double val = numValuesSet.valueAt(i);
+                        if (isFloat)
+                            val = NumericUtils.sortableIntToFloat((int) val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long) val);
+                        if (set.contains(val)) {
+                            items.add(item);
+                            scores.add(result.getScore(k));
+                            break;
+                        }
+                    }
+                    k++;
+                }
+            }
+        } else if (isNumeric && numValues != null && noRanges) {
+            Bits docsWithField = null;
+            try {
+                docsWithField = reader.getDocsWithField(field);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            Set<Double> set = new HashSet<Double>();
+            for (IItemId item : ipedResult.getIterator()) {
+                int doc = App.get().appCase.getLuceneId(item);
+                if (docsWithField.get(doc)) {
+                    double val = numValues.get(doc);
+                    if (isFloat)
+                        val = NumericUtils.sortableIntToFloat((int) val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long) val);
+                    set.add(val);
+                }
+            }
+            ArrayList<Double> l = new ArrayList<Double>(set);
+            Collections.sort(l);
+            set.clear();
+            for (int ord : ordsToGet) {
+                if (ord >= 0 && ord < l.size())
+                    set.add(l.get(ord));
+            }
+            if (!set.isEmpty()) {
+                for (IItemId item : ipedResult.getIterator()) {
+                    int doc = App.get().appCase.getLuceneId(item);
+                    if (docsWithField.get(doc)) {
+                        double val = numValues.get(doc);
+                        if (isFloat)
+                            val = NumericUtils.sortableIntToFloat((int) val);
+                        else if (isDouble)
+                            val = NumericUtils.sortableLongToDouble((long) val);
+                        if (set.contains(val)) {
+                            items.add(item);
+                            scores.add(result.getScore(k));
+                        }
+                        k++;
+                    }
+                }
+            }            
         } else if (docValues != null) {
             for (IItemId item : result.getIterator()) {
                 int doc = App.get().appCase.getLuceneId(item);
@@ -679,8 +762,9 @@ public class MetadataPanel extends JPanel
 
         long[] actualMin = null;
         long[] actualMax = null;
+        ArrayList<ValueCount> list = new ArrayList<ValueCount>();
         
-        if (isNumeric && numValues != null) {
+        if (isNumeric && numValues != null && !noRanges) {
             Bits docsWithField = reader.getDocsWithField(field);
             if (logScale) {
                 // 0 to 19: count negative numbers. 20 to 39: count positive numbers
@@ -763,7 +847,7 @@ public class MetadataPanel extends JPanel
                     }
                 }
             }
-        } else if (isNumeric && numValuesSet != null) {
+        } else if (isNumeric && numValuesSet != null && !noRanges) {
             if (logScale) {
                 // 0 to 19: count negative numbers. 20 to 39: count positive numbers
                 valueCount = new int[40];
@@ -854,6 +938,52 @@ public class MetadataPanel extends JPanel
                     }
                 }
             }
+        } else if (isNumeric && numValuesSet != null && noRanges) {
+            HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
+            for (IItemId item : ipedResult.getIterator()) {
+                int doc = App.get().appCase.getLuceneId(item);
+                numValuesSet.setDocument(doc);
+                for (int i = 0; i < numValuesSet.count(); i++) {
+                    double val = numValuesSet.valueAt(i);
+                    if (isFloat)
+                        val = NumericUtils.sortableIntToFloat((int) val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long) val);
+                    SingleValueCount v = map.get(val);
+                    if (v == null)
+                        map.put(val, v = new SingleValueCount(val));
+                    v.count++;
+                }
+            }
+            ArrayList<SingleValueCount> l = new ArrayList<SingleValueCount>(map.values());
+            Collections.sort(l);
+            for (int i = 0; i < l.size(); i++) {
+                l.get(i).ord = i;
+            }
+            list.addAll(l);
+        } else if (isNumeric && numValues != null && noRanges) {
+            Bits docsWithField = reader.getDocsWithField(field);
+            HashMap<Double,SingleValueCount> map = new HashMap<Double,SingleValueCount>();
+            for (IItemId item : ipedResult.getIterator()) {
+                int doc = App.get().appCase.getLuceneId(item);
+                if (docsWithField.get(doc)) {
+                    double val = numValues.get(doc);
+                    if (isFloat)
+                        val = NumericUtils.sortableIntToFloat((int) val);
+                    else if (isDouble)
+                        val = NumericUtils.sortableLongToDouble((long) val);
+                    SingleValueCount v = map.get(val);
+                    if (v == null)
+                        map.put(val, v = new SingleValueCount(val));
+                    v.count++;
+                }
+            }
+            ArrayList<SingleValueCount> l = new ArrayList<SingleValueCount>(map.values());
+            Collections.sort(l);
+            for (int i = 0; i < l.size(); i++) {
+                l.get(i).ord = i;
+            }
+            list.addAll(l);            
         } else if (docValues != null) {
             valueCount = new int[docValues.getValueCount()];
             for (IItemId item : ipedResult.getIterator()) {
@@ -884,9 +1014,7 @@ public class MetadataPanel extends JPanel
                 }
             }
         }
-        // System.out.println("new");
-        ArrayList<ValueCount> list = new ArrayList<ValueCount>();
-        if (isNumeric) {
+        if (isNumeric && !noRanges) {
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0) {
                     if (logScale) {
@@ -909,12 +1037,12 @@ public class MetadataPanel extends JPanel
                         }
                     }
                 }
-        } else if (docValues != null) {
+        } else if (docValues != null && !noRanges) {
             LookupOrd lo = new LookupOrdSDV(docValues);
             for (int ord = 0; ord < valueCount.length; ord++)
                 if (valueCount[ord] > 0)
                     list.add(new ValueCount(lo, ord, valueCount[ord]));
-        } else if (docValuesSet != null) {
+        } else if (docValuesSet != null && !noRanges) {
             LookupOrd lo = new LookupOrdSSDV(docValuesSet);
             lo.isCategory = BasicProps.CATEGORY.equals(field);
             boolean isMoney = field.equals(MONEY_FIELD);
