@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
+import javax.swing.KeyStroke;
+
 import iped3.IItemId;
 
 /**
@@ -72,6 +74,10 @@ public interface IMultiMarcadores extends Serializable {
 
     void saveState(File file) throws IOException;
 
+    void setLabelKeyStroke(String labelName, KeyStroke key);
+
+    KeyStroke getLabelKeyStroke(String labelName);
+    
     void selectAll();
 
     void setSelected(boolean value, IItemId item);
