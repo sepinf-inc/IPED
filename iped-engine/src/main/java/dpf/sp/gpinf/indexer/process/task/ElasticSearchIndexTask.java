@@ -114,13 +114,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         count.incrementAndGet();
 
-        if (client != null) {
-            return;
-        }
-
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         if (!elasticConfig.isEnabled()) {
+            return;
+        }
+
+        if (client != null) {
             return;
         }
 
