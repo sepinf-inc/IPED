@@ -786,6 +786,10 @@ public class MetadataPanel extends JPanel
                                 ord = ord - (int) Math.log10(val);
                         } else if (val > 1)
                             ord = (int) Math.log10(val) + ord;
+                        if (ord < 0)
+                            ord = 0;
+                        else if (ord >= valueCount.length)
+                            ord = valueCount.length - 1;
                         valueCount[ord]++;
                     }
                 }
@@ -844,6 +848,10 @@ public class MetadataPanel extends JPanel
                             if (lval > actualMax[ord])
                                 actualMax[ord] = lval;
                         }                        
+                        if (ord < 0)
+                            ord = 0;
+                        else if (ord >= valueCount.length)
+                            ord = valueCount.length - 1;
                         valueCount[ord]++;
                     }
                 }
@@ -870,6 +878,10 @@ public class MetadataPanel extends JPanel
                                 ord = ord - (int) Math.log10(val);
                         } else if (val > 1)
                             ord = (int) Math.log10(val) + ord;
+                        if (ord < 0)
+                            ord = 0;
+                        else if (ord >= valueCount.length)
+                            ord = valueCount.length - 1;
                         if (ord != prevOrd)
                             valueCount[ord]++;
                         prevOrd = ord;
@@ -933,6 +945,10 @@ public class MetadataPanel extends JPanel
                             if (lval > actualMax[ord])
                                 actualMax[ord] = lval;
                         }                        
+                        if (ord < 0)
+                            ord = 0;
+                        else if (ord >= valueCount.length)
+                            ord = valueCount.length - 1;
                         if (ord != prevOrd)
                             valueCount[ord]++;
                         prevOrd = ord;
