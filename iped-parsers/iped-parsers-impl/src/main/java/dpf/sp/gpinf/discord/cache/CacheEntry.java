@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipException;
 
+import org.apache.commons.io.IOUtils;
+
 /**
  * @author PCF Campanini
  *
@@ -139,11 +141,7 @@ public class CacheEntry {
         paddings[3] = read4bytes(is);
 
         selfHash = read4bytes(is);
-        keyData = new byte[256 - 24 * 4];
-
-        if (is.read(keyData) != keyData.length) {
-            throw new IOException();
-        }
+        keyData = IOUtils.readFully(is, 256 - 24 * 4);
 
     }
 

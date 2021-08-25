@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -95,7 +96,7 @@ public class CacheAddr {
                 for (int i = 0; i < 4; i++) {
                     if (dataFiles.get(i).getName().equals(("data_" + fileSelector))) {
                         InputStream targetStream = dataFiles.get(i).getBufferedStream();
-                        targetStream.skip(DataBlockFileHeader.getBlockHeaderSize()
+                        IOUtils.skipFully(targetStream, DataBlockFileHeader.getBlockHeaderSize()
                                 + startBlock * (fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096)));
                         return targetStream;
                     }
