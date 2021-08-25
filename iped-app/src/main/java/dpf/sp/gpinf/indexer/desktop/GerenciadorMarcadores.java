@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -91,6 +92,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
+    private final Collator collator;
+    
     private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         String bookmark;
         KeyStroke key;
@@ -113,8 +116,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
 
         @Override
-        public int compareTo(BookmarkAndKey obj) {
-            return bookmark.compareToIgnoreCase(((BookmarkAndKey) obj).bookmark);
+        public int compareTo(BookmarkAndKey other) {
+            return collator.compare(bookmark, other.bookmark);
         }
     }
 
@@ -142,6 +145,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private GerenciadorMarcadores() {
 
+        collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
 
@@ -252,6 +258,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             if (!bookmarks.contains(bk)) {
                 bookmarks.add(bk);
             }
+            bk.key = App.get().appCase.getMultiMarcadores().getLabelKeyStroke(label);
         }
         Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {
@@ -480,37 +487,58 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyTyped(KeyEvent e) {
-        // TODO Auto-generated method stub
-
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        // TODO Auto-generated method stub
-
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
+    }
 
+    @Override
+    public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
         }
 
+        //Avoid conflict with CTRL+A (select all), CTRL+B (Open bookmarks manager window)
+        //and CTRL+C (copy selected table cell content).
+        if (e.isControlDown() && (e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
+            showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            return;
+        }
+        
+        //Avoid conflict with keys used for selection/navigation in the bookmark list,
+        //items table or items gallery.
+        if ((e.isControlDown() && e.getKeyCode() == 'A')
+                || e.getKeyCode() == KeyEvent.VK_LEFT || e.getKeyCode() == KeyEvent.VK_RIGHT
+                || e.getKeyCode() == KeyEvent.VK_UP || e.getKeyCode() == KeyEvent.VK_DOWN
+                || e.getKeyCode() == KeyEvent.VK_HOME || e.getKeyCode() == KeyEvent.VK_END
+                || e.getKeyCode() == KeyEvent.VK_PAGE_UP || e.getKeyCode() == KeyEvent.VK_PAGE_DOWN) {
+            return;
+        }
+
+        //Avoid conflict with keys that are used for item selection (space) and
+        //recursive item selection (R).
+        if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
+            if (e.getSource() == list) {
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            }
+            return;
+        }
+        
         KeyStroke stroke = KeyStroke.getKeyStroke(e.getKeyCode(), e.getModifiers(), true);
 
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert1"));
                 return;
             }
             if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
                 return;
             }
             if (keystrokeToBookmark.containsKey(stroke)) {
-                JOptionPane.showMessageDialog(instance.dialog, Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
                 return;
             }
             int index = list.getSelectedIndex();
@@ -528,6 +556,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
             keystrokeToBookmark.put(stroke, label);
             keystrokeToBookmark.put(getRemoveKey(stroke), label);
+
+            App.get().appCase.getMultiMarcadores().setLabelKeyStroke(label, stroke);
+            App.get().appCase.getMultiMarcadores().saveState();
+
         } else {
             String label = keystrokeToBookmark.get(stroke);
             if (label == null) {
@@ -544,6 +576,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         return KeyStroke.getKeyStroke(k.getKeyCode(), KeyEvent.ALT_MASK, true);
     }
 
+    private void showMessage(String msg) {
+        JOptionPane.showMessageDialog(dialog, msg, dialog.getTitle(), JOptionPane.INFORMATION_MESSAGE);
+    }
     
     public boolean hasSingleKeyShortcut() {
        for (KeyStroke k : keystrokeToBookmark.keySet()) {

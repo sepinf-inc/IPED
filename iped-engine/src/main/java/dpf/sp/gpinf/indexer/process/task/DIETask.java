@@ -57,12 +57,12 @@ public class DIETask extends AbstractTask {
     /**
      * Field name used to store the detection result (a score from 1 to 1000, inclusive).
      */
-    public static String DIE_SCORE = "scoreNudez"; //$NON-NLS-1$
+    public static String DIE_SCORE = "nudityScore"; //$NON-NLS-1$
 
     /**
      * Field name used to store a detection "class" (a value from 1 to 5, derived from the score).
      */
-    public static String DIE_CLASS = "classeNudez"; //$NON-NLS-1$
+    public static String DIE_CLASS = "nudityClass"; //$NON-NLS-1$
 
     /**
      * Path to model file relative to application folder.

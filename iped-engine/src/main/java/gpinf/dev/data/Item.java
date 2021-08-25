@@ -297,17 +297,21 @@ public class Item implements ISleuthKitItem {
         }
         if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
             try {
-                if (file != null && file.exists() && !file.delete()) {
+                if (file != null && file.exists() && isNotHashId(file.getName()) && !file.delete()) {
                     // in some scenarios file.delete() works but Files.delete() throws ioexception
                     throw new IOException("Fail to delete file " + file.getAbsolutePath());
                 }
-                if (inputStreamFactory != null && idInDataSource != null) {
+                if (inputStreamFactory != null && idInDataSource != null && isNotHashId(idInDataSource)) {
                     inputStreamFactory.deleteItemInDataSource(idInDataSource);
                 }
             } catch (IOException e) {
                 LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
             }
         }
+    }
+
+    private boolean isNotHashId(String id) {
+        return id == null || (id.length() != 32 && id.length() != 40 && id.length() != 64);
     }
 
     /**

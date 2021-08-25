@@ -142,13 +142,13 @@ public class MenuListener implements ActionListener {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyReleased(keyCTRL_R_Pressed);
+                kl.keyPressed(keyCTRL_R_Pressed);
 
         } else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
-                kl.keyReleased(keyCTRL_R_Pressed);
+                kl.keyPressed(keyCTRL_R_Pressed);
         }
         if (e.getSource() == menu.lerSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
