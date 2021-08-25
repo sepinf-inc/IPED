@@ -44,6 +44,17 @@ public class CacheAddr {
         return fileName;
     }
 
+    public static class InputStreamNotAvailable extends IOException {
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
+        private InputStreamNotAvailable() {
+            super("Cannot open InputStream for this CacheAddr.");
+        }
+    }
+
     /**
      * Creation of Cache Address as defined in:
      * https://forensicswiki.xyz/wiki/index.php?title=Chrome_Disk_Cache_Format
@@ -67,7 +78,7 @@ public class CacheAddr {
 
     public InputStream getInputStream(List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
         if (!initialized) {
-            throw new IOException("Cannot open InputStream: CacheAddr not initialized.");
+            throw new InputStreamNotAvailable();
         }
         switch (fileType) {
             case 0:
@@ -90,7 +101,7 @@ public class CacheAddr {
                     }
                 }
         }
-        throw new IOException("Cannot open InputStream for this CacheAddr.");
+        throw new InputStreamNotAvailable();
     }
 
 }

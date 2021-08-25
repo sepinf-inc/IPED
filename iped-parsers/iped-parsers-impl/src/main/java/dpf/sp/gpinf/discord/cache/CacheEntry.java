@@ -1,10 +1,13 @@
 package dpf.sp.gpinf.discord.cache;
 
 import iped3.io.IItemBase;
+
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipException;
 
 /**
  * @author PCF Campanini
@@ -172,7 +175,18 @@ public class CacheEntry {
     }
 
     public InputStream getResponseDataStream() throws IOException {
-        return new GZIPInputStream(getResponseRawDataStream());
+        BufferedInputStream bis = new BufferedInputStream(getResponseRawDataStream());
+        bis.mark(1 << 14);
+        try {
+            return new GZIPInputStream(bis);
+        } catch (ZipException e) {
+            if (e.getMessage().contains("Not in GZIP format")) {
+                bis.reset();
+                return bis;
+            }
+            throw e;
+        }
+
     }
 
     public static int read2bytes(InputStream is) throws IOException {

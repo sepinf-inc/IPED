@@ -10,7 +10,6 @@ import java.util.Set;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.extractor.ParsingEmbeddedDocumentExtractor;
-import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
@@ -59,48 +58,51 @@ public class DiscordParser extends AbstractParser {
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
 
-        try {
+        IItemSearcher searcher = context.get(IItemSearcher.class);
 
-            IItemSearcher searcher = context.get(IItemSearcher.class);
+        if (searcher != null) {
 
-            if (searcher != null) {
+            String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE + ":fileslack";
+            List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
+            List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
-                String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE + ":fileslack";
-                List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
-                List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
+            Index index = new Index(indexFile, dataFiles, externalFiles);
 
-                Index index = new Index(indexFile, dataFiles, externalFiles);
+            // Used to identify JSON files containing Discord chats
+            CharSequence seq = "messages?limit=50";
 
-                // Used to identify JSON files containing Discord chats
-                CharSequence seq = "messages?limit=50";
+            TikaException exception = null;
 
-                for (CacheEntry ce : index.getLst()) {
-                    if (ce.getKey() != null && ce.getKey().contains(seq)) {
+            for (CacheEntry ce : index.getLst()) {
+                if (ce.getKey() != null && ce.getKey().contains(seq)) {
 
-                        try (InputStream is = ce.getResponseDataStream()) {
+                    try (InputStream is = ce.getResponseDataStream()) {
 
-                            List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
-                                    new TypeReference<List<DiscordRoot>>() {
-                                    });
+                        List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
+                                new TypeReference<List<DiscordRoot>>() {
+                                });
 
-                            metadata.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
-                            metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+                        metadata.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
 
-                            XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
-                            byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
+                        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+                        byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
 
-                            InputStream targetStream = new ByteArrayInputStream(relatorio);
-                            extractor.parseEmbedded(targetStream, handler, metadata, true);
+                        InputStream targetStream = new ByteArrayInputStream(relatorio);
+                        extractor.parseEmbedded(targetStream, handler, metadata, true);
 
-                        } catch (Exception ex) {
-                            ex.printStackTrace();
+                    } catch (Exception ex) {
+                        if (exception == null) {
+                            exception = new TikaException("DiscordParser parsing error.");
                         }
+                        exception.addSuppressed(ex);
                     }
                 }
             }
 
-        } catch (Exception e1) {
-            e1.printStackTrace();
+            if (exception != null) {
+                throw exception;
+            }
         }
 
     }

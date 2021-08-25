@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+
+import dpf.sp.gpinf.discord.cache.CacheAddr.InputStreamNotAvailable;
 import iped3.io.IItemBase;
 
 /**
@@ -196,8 +198,10 @@ public class Index {
         for (CacheAddr ea : table) {
             try (InputStream eaIS = ea.getInputStream(dataFiles, externalFiles)) {
                 entries.add(new CacheEntry(eaIS, dataFiles, externalFiles));
+            } catch (InputStreamNotAvailable e) {
+                continue;
             } catch (IOException e) {
-                // ignore
+                e.printStackTrace();
             }
         }
 
