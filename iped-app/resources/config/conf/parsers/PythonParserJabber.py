@@ -122,29 +122,21 @@ class PythonParserJabber:
 
             soup_list = [BeautifulSoup(x,"html.parser") for x in open(tmpFilePath,'rb').readlines()]
             body = soup_list[0].find("body")
-            title =soup_list[0].find('title').text
+            title = soup_list[0].find('title').text
             temp_to_date = title.split(" on ",1)[0]
             temp_client_app = title.split(" on ",1)[1].split()
             app = temp_client_app[1].strip("(").strip(")")
             client = temp_client_app[0].strip("/")
             host_system = "sistema_%s_%s"%(app,client)
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
-            # message_day = temp_to_date.split(" at ",1)[1].split(" ",1)[0]
             message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
             filedate = os.path.basename(origFileName).replace(".html","").replace("BRT","")
             filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
-            host_system_messages = ["arquivo","envio"]
+            # host_system_messages = ["arquivo","envio"]
             messages_list=[]
 
-            '''
-            files from jabber 2017 look like:
-            <html><head><meta http-equiv="content-type" content="text/html; charset=UTF-8"><title>Conversation with alice@xmpp.al at 20/03/2017 08:50:25 on bob@xmpp.bo (jabber)</title></head><body><h3>Conversation with alice@xmpp.al at 20/03/2017 08:50:25 on bob@xmpp.bo (jabber)</h3>
-            <font color="#16569E"><font size="2">(08:50:30)</font> <b>bob@xmpp.bo/333327081514908999591234:</b></font> hello<br/>
-            <font color="#A82F2F"><font size="2">(08:50:48)</font> <b>remote_nickname:</b></font> world 	  	
-            ''' 
-            # There are at least two possible formats for the messages
-            possible_tags = ["span", "font"]
             curr_tag = None
+            possible_tags = ["span", "font"]
             for tag in possible_tags:
                 temp = soup_list[1].find(tag)
                 if temp:
@@ -153,9 +145,10 @@ class PythonParserJabber:
             title_rep = body.next_element
             assert title_rep.name in ["h1", "h2", "h3"]
             soup_messages = [x.find(curr_tag) for x in soup_list if x.find(curr_tag)]
-    
+            nicknames_set = set()
             for idx, html_message in enumerate(soup_messages):
                 idict={}
+                curr_tag = html_message.name
                 curr_msg = html_message.next_sibling
                 curr_metadata = html_message
 
@@ -169,28 +162,32 @@ class PythonParserJabber:
                 # Some messages are html formated (check line 5 of previous html code)
                 if isinstance(curr_msg, Tag):
                     curr_msg_text = curr_msg.text
-
                 elif isinstance(curr_msg, NavigableString):
+                    curr_msg_text = curr_msg.string
                     block_msg = ""
                     while curr_msg.name not in [curr_tag]:
-                        if isinstance(curr_msg, NavigableString):
-                            block_msg+=curr_msg.string
+                        if curr_msg.name == "br":
+                            block_msg+="\n"
                         else:
-                            block_msg+=curr_msg.text
+                            if isinstance(curr_msg, NavigableString):
+                                text_to_add = curr_msg.string
+                            else:
+                                text_to_add = curr_msg.text
+                            block_msg+=text_to_add
                         curr_msg = curr_msg.next_sibling
                         if not curr_msg:
                             break
                     curr_msg_text = block_msg
-    
                 elif isinstance(curr_msg, str):
                     curr_msg_text = curr_msg
 
                 assert isinstance(curr_metadata, Tag)
                 assert isinstance(curr_msg_text, str)
-
+                message_sender = None
                 message_sender = curr_metadata.find("b")
                 if message_sender:
                     message_sender = message_sender.text.rsplit("/",1)[0].strip(":")
+                    nicknames_set.add(message_sender)
                 else:
                     '''
                     it could be a system message, such as:
@@ -198,32 +195,42 @@ class PythonParserJabber:
                     <font size="2">(16:32:51)</font><b> Tentando iniciar uma conversa privada com alice@dukgo.com...</b><br/>
                     <font size="2">(16:32:52)</font><b> alice@dukgo.com ainda não foi autenticado.  Você deve <a href="https://otr-help.cypherpunks.ca/4.0.2/authenticate.php?lang=pt_BR">autenticar</a> este amigo.</b><br/>
                     '''
-                    if any(x for x in participants if x in curr_msg_text) or any(x for x in host_system_messages for x in curr_msg_text):
-                        message_sender = host_system
+                    # if any(x for x in host_system_messages for x in curr_msg_text):
+                    nick_mentions = [x for x in nicknames_set if x in curr_msg_text]
+                    if nick_mentions:
+                        message_sender = nick_mentions[-1]
                     else:
-                        raise "host_system_message not registered: There are not any strings from %s in %s"%(curr_msg, host_system_messages)
+                        # Skipping system messages with no nickname mention or which were
+                        # produced before any chat message
+                        # !Transferência do arquivo Emitidas-86586.zip completa!
+                        # or "alice chamou sua atenção!"" when these are the first messages of the file
+                        continue
 
+                assert message_sender
                 message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
                 dateobj = datetime.strptime("%sT%s"%(message_day,message_time),"%d/%m/%YT%H:%M:%S")
                 idict["message_date"] = dateobj.replace(tzinfo = filedate_tz).isoformat()
                 idict["message_sender"] = message_sender
                 idict["message_text"] = curr_msg_text
                 
-                assert " "  not in  idict.values()
+                assert " " not in idict.values()
                 messages_list.append(idict)
 
             new_messages_list = []
             msg_num = 0
             msg_name_prefix = "Jabber chat message "
             sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
+            # nicknames = list(set([x["message_sender"] for x in sorted_msgs_list]))
+            # only one message was sent
+            nicknames = list(nicknames_set)
+            if len(nicknames) == 1: 
+                other_participant = [x for x in participants if x not in nicknames]
+                nicknames.extend(other_participant)
+                
             for m in sorted_msgs_list:
                 iped_date = m["message_date"]
                 iped_sender = m["message_sender"]
-                if iped_sender == host_system:
-                    iped_receiver = client
-                else:
-                    # remote participant sent the message
-                    iped_receiver = [x for x in participants if x not in [iped_sender,host_system]][-1]
+                iped_receiver = [x for x in nicknames if x !=iped_sender][-1]
                 iped_text = m["message_text"]
                 
                 if client in iped_sender:
