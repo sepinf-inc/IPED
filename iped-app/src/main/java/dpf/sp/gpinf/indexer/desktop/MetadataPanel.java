@@ -126,6 +126,18 @@ public class MetadataPanel extends JPanel
     volatile double min, max, interval;
 
     private static final long serialVersionUID = 1L;
+    
+    /* LOG SCALE: Up to 40 bins:
+     *            0 -> negative infinite,
+     *      1 to 19 -> count negative numbers, 
+     *     20 to 38 -> count positive numbers,
+     *           39 -> positive infinite.
+     */
+    private static final int logScaleBins = 40;
+    private static final int logScaleHalf = 20;
+
+    //LINEAR SCALE: Up to 10 bins 
+    private static final int linearScaleBins = 10;
 
     public MetadataPanel() {
         super(new BorderLayout());
@@ -536,15 +548,24 @@ public class MetadataPanel extends JPanel
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
                         val = NumericUtils.sortableLongToDouble((long) val);
-                    int ord = 20;
+                    int ord = logScaleHalf;
                     if (logScale) {
-                        if (val < 0) {
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 1;
+                        } else if (val < 0) {
                             ord -= 1;
                             val *= -1;
                             if (val > 1)
                                 ord = ord - (int) Math.log10(val);
-                        } else if (val > 1)
+                            if (ord < 1)
+                                ord = 1;
+                        } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
+                            if (ord >= logScaleBins - 1)
+                                ord = logScaleBins - 2;
+                        }
                     } else {
                         ord = (int) ((val - min) / interval);
                         if (val == max && min != max)
@@ -567,19 +588,34 @@ public class MetadataPanel extends JPanel
                         val = NumericUtils.sortableIntToFloat((int) val);
                     else if (isDouble)
                         val = NumericUtils.sortableLongToDouble((long) val);
-                    int ord = 20;
+                    int ord = logScaleHalf;
                     if (logScale) {
-                        if (val < 0) {
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 1;
+                        } else if (val < 0) {
                             ord -= 1;
                             val *= -1;
                             if (val > 1)
                                 ord = ord - (int) Math.log10(val);
-                        } else if (val > 1)
+                            if (ord < 1)
+                                ord = 1;
+                        } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
+                            if (ord >= logScaleBins - 1)
+                                ord = logScaleBins - 2;
+                        }
                     } else {
-                        ord = (int) ((val - min) / interval);
-                        if (val == max && min != max)
-                            ord--;
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = linearScaleBins - 1;
+                        } else {
+                            ord = (int) ((val - min) / interval);
+                            if (val == max && min != max)
+                                ord--;
+                        }
                     }
                     if (ordsToGet.contains(ord)) {
                         items.add(item);
@@ -764,12 +800,15 @@ public class MetadataPanel extends JPanel
         long[] actualMin = null;
         long[] actualMax = null;
         ArrayList<ValueCount> list = new ArrayList<ValueCount>();
+
+        // Used for linearScale
+        boolean hasNegativeInfinite = false;
+        boolean hasPositiveInfinite = false;
         
         if (isNumeric && numValues != null && !noRanges) {
             Bits docsWithField = reader.getDocsWithField(field);
             if (logScale) {
-                // 0 to 19: count negative numbers. 20 to 39: count positive numbers
-                valueCount = new int[40];
+                valueCount = new int[logScaleBins];
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
                     if (docsWithField.get(doc)) {
@@ -778,18 +817,23 @@ public class MetadataPanel extends JPanel
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        int ord = 20;
-                        if (val < 0) {
+                        int ord = logScaleHalf;
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 1;
+                        } else if (val < 0) {
                             ord -= 1;
                             val *= -1;
                             if (val > 1)
                                 ord = ord - (int) Math.log10(val);
-                        } else if (val > 1)
+                            if (ord < 1)
+                                ord = 1;
+                        } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                        if (ord < 0)
-                            ord = 0;
-                        else if (ord >= valueCount.length)
-                            ord = valueCount.length - 1;
+                            if (ord >= logScaleBins - 1)
+                                ord = logScaleBins - 2;
+                        }
                         valueCount[ord]++;
                     }
                 }
@@ -802,14 +846,16 @@ public class MetadataPanel extends JPanel
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        if (val < min)
-                            min = val;
-                        if (val > max)
-                            max = val;
+                        if (Double.isFinite(val)) {
+                            if (val < min)
+                                min = val;
+                            if (val > max)
+                                max = val;
+                        }
                     }
                 }
-                valueCount = new int[10];
-                interval = (max - min) / valueCount.length;
+                valueCount = new int[linearScaleBins];
+                interval = min >= max ? 1 : (max - min) / linearScaleBins;
                 long[] rangeMin = null;
                 long[] rangeMax = null;
                 if (!isFloat && !isDouble) {
@@ -833,8 +879,14 @@ public class MetadataPanel extends JPanel
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
                         int ord = (int) ((val - min) / interval);
-                        if (ord == valueCount.length)
-                            ord = valueCount.length - 1;
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            hasNegativeInfinite = true;
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            hasPositiveInfinite = true;
+                            ord = linearScaleBins - 1;
+                        } else if (ord >= linearScaleBins)
+                            ord = linearScaleBins - 1;
                         if (!isFloat && !isDouble) {
                             long lval = (long) val;
                             for (int i = Math.max(0, ord - 1); i <= ord + 1 && i < valueCount.length; i++) {
@@ -850,16 +902,15 @@ public class MetadataPanel extends JPanel
                         }                        
                         if (ord < 0)
                             ord = 0;
-                        else if (ord >= valueCount.length)
-                            ord = valueCount.length - 1;
+                        else if (ord >= linearScaleBins)
+                            ord = linearScaleBins - 1;
                         valueCount[ord]++;
                     }
                 }
             }
         } else if (isNumeric && numValuesSet != null && !noRanges) {
             if (logScale) {
-                // 0 to 19: count negative numbers. 20 to 39: count positive numbers
-                valueCount = new int[40];
+                valueCount = new int[logScaleBins];
                 for (IItemId item : ipedResult.getIterator()) {
                     int doc = App.get().appCase.getLuceneId(item);
                     numValuesSet.setDocument(doc);
@@ -870,18 +921,23 @@ public class MetadataPanel extends JPanel
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        int ord = 20;
-                        if (val < 0) {
+                        int ord = logScaleHalf;
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 1;
+                        } else if (val < 0) {
                             ord -= 1;
                             val *= -1;
                             if (val > 1)
                                 ord = ord - (int) Math.log10(val);
-                        } else if (val > 1)
+                            if (ord < 1)
+                                ord = 1;
+                        } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                        if (ord < 0)
-                            ord = 0;
-                        else if (ord >= valueCount.length)
-                            ord = valueCount.length - 1;
+                            if (ord >= logScaleBins - 1)
+                                ord = logScaleBins - 2;
+                        }
                         if (ord != prevOrd)
                             valueCount[ord]++;
                         prevOrd = ord;
@@ -897,14 +953,16 @@ public class MetadataPanel extends JPanel
                             val = NumericUtils.sortableIntToFloat((int) val);
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
-                        if (val < min)
-                            min = val;
-                        if (val > max)
-                            max = val;
+                        if (Double.isFinite(val)) {
+                            if (val < min)
+                                min = val;
+                            if (val > max)
+                                max = val;
+                        }
                     }
                 }
-                valueCount = new int[10];
-                interval = (max - min) / valueCount.length;
+                valueCount = new int[linearScaleBins];
+                interval = min >= max ? 1 :(max - min) / linearScaleBins;
                 long[] rangeMin = null;
                 long[] rangeMax = null;
                 if (!isFloat && !isDouble) {
@@ -930,8 +988,14 @@ public class MetadataPanel extends JPanel
                         else if (isDouble)
                             val = NumericUtils.sortableLongToDouble((long) val);
                         int ord = (int) ((val - min) / interval);
-                        if (ord == valueCount.length)
-                            ord = valueCount.length - 1;
+                        if (val == Double.NEGATIVE_INFINITY) {
+                            hasNegativeInfinite = true;
+                            ord = 0;
+                        } else if (val == Double.POSITIVE_INFINITY) {
+                            hasPositiveInfinite = true;
+                            ord = linearScaleBins - 1;
+                        } else if (ord >= linearScaleBins)
+                            ord = linearScaleBins - 1;
                         if (!isFloat && !isDouble) {
                             long lval = (long) val;
                             for (int j = Math.max(0, ord - 1); j <= ord + 1 && j < valueCount.length; j++) {
@@ -947,8 +1011,8 @@ public class MetadataPanel extends JPanel
                         }                        
                         if (ord < 0)
                             ord = 0;
-                        else if (ord >= valueCount.length)
-                            ord = valueCount.length - 1;
+                        else if (ord >= linearScaleBins)
+                            ord = linearScaleBins - 1;
                         if (ord != prevOrd)
                             valueCount[ord]++;
                         prevOrd = ord;
@@ -1032,28 +1096,43 @@ public class MetadataPanel extends JPanel
             }
         }
         if (isNumeric && !noRanges) {
-            for (int ord = 0; ord < valueCount.length; ord++)
+            for (int ord = 0; ord < valueCount.length; ord++) {
                 if (valueCount[ord] > 0) {
+                    double start = 0;
+                    double end = 0;
                     if (logScale) {
-                        if (ord < 20) {
-                            long end = ord == 19 ? 0 : -(long) Math.pow(10, 19 - ord);
-                            long start = -((long) Math.pow(10, 19 - ord + 1) - 1);
-                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                        if (ord == 0)
+                            start = end = Double.NEGATIVE_INFINITY;
+                        else if (ord == logScaleBins - 1) 
+                            start = end = Double.POSITIVE_INFINITY;
+                        else if (ord < logScaleHalf) {
+                            end = ord == logScaleHalf - 1 ? 0 : -(long) Math.pow(10, logScaleHalf - 1 - ord);
+                            start = -((long) Math.pow(10, logScaleHalf - ord) - 1);
                         } else {
-                            long start = ord == 20 ? 0 : (long) Math.pow(10, ord - 20);
-                            long end = (long) Math.pow(10, ord - 20 + 1) - 1;
-                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                            start = ord == logScaleHalf ? 0 : (long) Math.pow(10, ord - logScaleHalf);
+                            end = (long) Math.pow(10, ord - logScaleHalf + 1) - 1;
                         }
                     } else {
                         if (actualMin != null) {
-                            list.add(new RangeCount(actualMin[ord], actualMax[ord], ord, valueCount[ord]));
+                            start = actualMin[ord];
+                            end = actualMax[ord];
                         } else {
-                            double start = min + ord * interval;
-                            double end = min + (ord + 1) * interval;
-                            list.add(new RangeCount(start, end, ord, valueCount[ord]));
+                            start = min + ord * interval;
+                            end = min + (ord + 1) * interval;
+                            if (ord == 0 && hasNegativeInfinite) {
+                                start = Double.NEGATIVE_INFINITY;
+                                if (min >= max)
+                                    end = start;
+                            } else if (ord == linearScaleBins - 1 && hasPositiveInfinite) {
+                                end = Double.POSITIVE_INFINITY;
+                                if (min >= max)
+                                    start = end;
+                            }
                         }
                     }
+                    list.add(new RangeCount(start, end, ord, valueCount[ord]));
                 }
+            }
         } else if (docValues != null && (!isNumeric || !noRanges)) {
             LookupOrd lo = new LookupOrdSDV(docValues);
             for (int ord = 0; ord < valueCount.length; ord++)
