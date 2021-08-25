@@ -62,7 +62,8 @@ public class DiscordParser extends AbstractParser {
 
         if (searcher != null) {
 
-            String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT " + BasicProps.TYPE + ":fileslack";
+            String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT "
+                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true";
             List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
             List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
@@ -82,14 +83,15 @@ public class DiscordParser extends AbstractParser {
                                 new TypeReference<List<DiscordRoot>>() {
                                 });
 
-                        metadata.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
-                        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
+                        Metadata chatMeta = new Metadata();
+                        chatMeta.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                        chatMeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
 
-                        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
+                        XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
                         byte[] relatorio = new DiscordHTMLReport().convertToHTML(discordRoot, xhtml);
 
                         InputStream targetStream = new ByteArrayInputStream(relatorio);
-                        extractor.parseEmbedded(targetStream, handler, metadata, true);
+                        extractor.parseEmbedded(targetStream, handler, chatMeta, true);
 
                     } catch (Exception ex) {
                         if (exception == null) {
