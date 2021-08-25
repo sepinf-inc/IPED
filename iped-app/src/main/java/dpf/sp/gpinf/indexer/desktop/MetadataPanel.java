@@ -130,8 +130,9 @@ public class MetadataPanel extends JPanel
     /* LOG SCALE: Up to 40 bins:
      *            0 -> negative infinite,
      *      1 to 19 -> count negative numbers, 
-     *     20 to 38 -> count positive numbers,
-     *           39 -> positive infinite.
+     *     20 to 37 -> count positive numbers,
+     *           38 -> positive infinite,
+     *           39 -> NaN.
      */
     private static final int logScaleBins = 40;
     private static final int logScaleHalf = 20;
@@ -327,7 +328,7 @@ public class MetadataPanel extends JPanel
             NumberFormat nf = LocalizedFormat.getNumberInstance();
             StringBuilder sb = new StringBuilder();
             sb.append(nf.format(start));
-            if (start != end) {
+            if (start != end && (!Double.isNaN(start) || !Double.isNaN(end))) {
                 sb.append(' ');
                 sb.append(RANGE_SEPARATOR);
                 sb.append(' ');
@@ -553,6 +554,8 @@ public class MetadataPanel extends JPanel
                         if (val == Double.NEGATIVE_INFINITY) {
                             ord = 0;
                         } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 2;
+                        } else if (Double.isNaN(val)) {
                             ord = logScaleBins - 1;
                         } else if (val < 0) {
                             ord -= 1;
@@ -563,8 +566,8 @@ public class MetadataPanel extends JPanel
                                 ord = 1;
                         } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                            if (ord >= logScaleBins - 1)
-                                ord = logScaleBins - 2;
+                            if (ord > logScaleBins - 3)
+                                ord = logScaleBins - 3;
                         }
                     } else {
                         ord = (int) ((val - min) / interval);
@@ -593,6 +596,8 @@ public class MetadataPanel extends JPanel
                         if (val == Double.NEGATIVE_INFINITY) {
                             ord = 0;
                         } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 2;
+                        } else if (Double.isNaN(val)) {
                             ord = logScaleBins - 1;
                         } else if (val < 0) {
                             ord -= 1;
@@ -603,13 +608,13 @@ public class MetadataPanel extends JPanel
                                 ord = 1;
                         } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                            if (ord >= logScaleBins - 1)
-                                ord = logScaleBins - 2;
+                            if (ord > logScaleBins - 3)
+                                ord = logScaleBins - 3;
                         }
                     } else {
                         if (val == Double.NEGATIVE_INFINITY) {
                             ord = 0;
-                        } else if (val == Double.POSITIVE_INFINITY) {
+                        } else if (val == Double.POSITIVE_INFINITY || Double.isNaN(val)) {
                             ord = linearScaleBins - 1;
                         } else {
                             ord = (int) ((val - min) / interval);
@@ -804,6 +809,7 @@ public class MetadataPanel extends JPanel
         // Used for linearScale
         boolean hasNegativeInfinite = false;
         boolean hasPositiveInfinite = false;
+        boolean hasNaN = false;
         
         if (isNumeric && numValues != null && !noRanges) {
             Bits docsWithField = reader.getDocsWithField(field);
@@ -821,6 +827,8 @@ public class MetadataPanel extends JPanel
                         if (val == Double.NEGATIVE_INFINITY) {
                             ord = 0;
                         } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 2;
+                        } else if (Double.isNaN(val)) {
                             ord = logScaleBins - 1;
                         } else if (val < 0) {
                             ord -= 1;
@@ -831,8 +839,8 @@ public class MetadataPanel extends JPanel
                                 ord = 1;
                         } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                            if (ord >= logScaleBins - 1)
-                                ord = logScaleBins - 2;
+                            if (ord > logScaleBins - 3)
+                                ord = logScaleBins - 3;
                         }
                         valueCount[ord]++;
                     }
@@ -885,6 +893,9 @@ public class MetadataPanel extends JPanel
                         } else if (val == Double.POSITIVE_INFINITY) {
                             hasPositiveInfinite = true;
                             ord = linearScaleBins - 1;
+                        } else if (Double.isNaN(val)) {
+                            hasNaN = true;
+                            ord = linearScaleBins - 1;
                         } else if (ord >= linearScaleBins)
                             ord = linearScaleBins - 1;
                         if (!isFloat && !isDouble) {
@@ -925,6 +936,8 @@ public class MetadataPanel extends JPanel
                         if (val == Double.NEGATIVE_INFINITY) {
                             ord = 0;
                         } else if (val == Double.POSITIVE_INFINITY) {
+                            ord = logScaleBins - 2;
+                        } else if (Double.isNaN(val)) {
                             ord = logScaleBins - 1;
                         } else if (val < 0) {
                             ord -= 1;
@@ -935,8 +948,8 @@ public class MetadataPanel extends JPanel
                                 ord = 1;
                         } else if (val > 1) {
                             ord = (int) Math.log10(val) + ord;
-                            if (ord >= logScaleBins - 1)
-                                ord = logScaleBins - 2;
+                            if (ord > logScaleBins - 3)
+                                ord = logScaleBins - 3;
                         }
                         if (ord != prevOrd)
                             valueCount[ord]++;
@@ -993,6 +1006,9 @@ public class MetadataPanel extends JPanel
                             ord = 0;
                         } else if (val == Double.POSITIVE_INFINITY) {
                             hasPositiveInfinite = true;
+                            ord = linearScaleBins - 1;
+                        } else if (Double.isNaN(val)) {
+                            hasNaN = true;
                             ord = linearScaleBins - 1;
                         } else if (ord >= linearScaleBins)
                             ord = linearScaleBins - 1;
@@ -1103,8 +1119,10 @@ public class MetadataPanel extends JPanel
                     if (logScale) {
                         if (ord == 0)
                             start = end = Double.NEGATIVE_INFINITY;
-                        else if (ord == logScaleBins - 1) 
+                        else if (ord == logScaleBins - 2) 
                             start = end = Double.POSITIVE_INFINITY;
+                        else if (ord == logScaleBins - 1) 
+                            start = end = Double.NaN;
                         else if (ord < logScaleHalf) {
                             end = ord == logScaleHalf - 1 ? 0 : -(long) Math.pow(10, logScaleHalf - 1 - ord);
                             start = -((long) Math.pow(10, logScaleHalf - ord) - 1);
@@ -1123,6 +1141,10 @@ public class MetadataPanel extends JPanel
                                 start = Double.NEGATIVE_INFINITY;
                                 if (min >= max)
                                     end = start;
+                            } else if (ord == linearScaleBins - 1 && hasNaN) {
+                                end = Double.NaN;
+                                if (min >= max)
+                                    start = end;
                             } else if (ord == linearScaleBins - 1 && hasPositiveInfinite) {
                                 end = Double.POSITIVE_INFINITY;
                                 if (min >= max)
