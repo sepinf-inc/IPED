@@ -127,13 +127,14 @@ class PythonParserJabber:
             temp_client_app = title.split(" on ",1)[1].split()
             app = temp_client_app[1].strip("(").strip(")")
             client = temp_client_app[0].strip("/")
-            host_system = "sistema_%s_%s"%(app,client)
+            #host_system = "sistema_%s_%s"%(app,client)
+            host_system = "System"
             participants = [client, temp_to_date.split(" at ",1)[0].split("with ",1)[1]]
             message_day = re.search("\d{2}/\d{2}/\d{4}",temp_to_date).group(0)
             filedate = os.path.basename(origFileName).replace(".html","").replace("BRT","")
             filedate_tz = datetime.strptime(filedate, '%Y-%m-%d.%f%z').tzinfo
             # host_system_messages = ["arquivo","envio"]
-            messages_list=[]
+            messages_list = []
 
             curr_tag = None
             possible_tags = ["span", "font"]
@@ -183,7 +184,7 @@ class PythonParserJabber:
 
                 assert isinstance(curr_metadata, Tag)
                 assert isinstance(curr_msg_text, str)
-                message_sender = None
+                
                 message_sender = curr_metadata.find("b")
                 if message_sender:
                     message_sender = message_sender.text.rsplit("/",1)[0].strip(":")
@@ -195,16 +196,7 @@ class PythonParserJabber:
                     <font size="2">(16:32:51)</font><b> Tentando iniciar uma conversa privada com alice@dukgo.com...</b><br/>
                     <font size="2">(16:32:52)</font><b> alice@dukgo.com ainda não foi autenticado.  Você deve <a href="https://otr-help.cypherpunks.ca/4.0.2/authenticate.php?lang=pt_BR">autenticar</a> este amigo.</b><br/>
                     '''
-                    # if any(x for x in host_system_messages for x in curr_msg_text):
-                    nick_mentions = [x for x in nicknames_set if x in curr_msg_text]
-                    if nick_mentions:
-                        message_sender = nick_mentions[-1]
-                    else:
-                        # Skipping system messages with no nickname mention or which were
-                        # produced before any chat message
-                        # !Transferência do arquivo Emitidas-86586.zip completa!
-                        # or "alice chamou sua atenção!"" when these are the first messages of the file
-                        continue
+                    message_sender = host_system
 
                 assert message_sender
                 message_time = re.search("\d{2}:\d{2}:\d{2}",curr_metadata.text).group(0)
@@ -216,28 +208,29 @@ class PythonParserJabber:
                 assert " " not in idict.values()
                 messages_list.append(idict)
 
-            new_messages_list = []
+            #new_messages_list = []
             msg_num = 0
             msg_name_prefix = "Jabber chat message "
             sorted_msgs_list = sorted(messages_list, key=lambda k: k['message_date'])
-            # nicknames = list(set([x["message_sender"] for x in sorted_msgs_list]))
+
             # only one message was sent
-            nicknames = list(nicknames_set)
-            if len(nicknames) == 1: 
-                other_participant = [x for x in participants if x not in nicknames]
-                nicknames.extend(other_participant)
+            if len(nicknames_set) == 1: 
+                other_participants = [x for x in participants if x not in nicknames_set]
+                nicknames_set.update(other_participants)
                 
             for m in sorted_msgs_list:
                 iped_date = m["message_date"]
                 iped_sender = m["message_sender"]
-                iped_receiver = [x for x in nicknames if x !=iped_sender][-1]
+                iped_receiver = None
+                if iped_sender != host_system:
+                    iped_receiver = [x for x in nicknames_set if x !=iped_sender][-1]
                 iped_text = m["message_text"]
-                
+                '''
                 if client in iped_sender:
                     iped_direction = "outgoing to"
                 else:
                     iped_direction = "incoming from"
-                
+                '''
                 meta = Metadata()
                 meta.set(BasicProps.LENGTH, "")
                 meta.set(Metadata.RESOURCE_NAME_KEY, msg_name_prefix + str(msg_num))
@@ -248,7 +241,7 @@ class PythonParserJabber:
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, self.instant_message_mime)
                 extractor.parseEmbedded(EmptyInputStream(), handler, meta, False)
 
-                new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
+                #new_messages_list.append({"sender":iped_sender, "receiver":iped_receiver, "date":iped_date, "msg":iped_text, "direction":iped_direction})
                 msg_num += 1
 
             # Code below generates html in whatsapp format. For now we are giving
