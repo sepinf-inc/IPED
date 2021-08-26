@@ -84,11 +84,11 @@ public class CacheAddr {
         switch (fileType) {
             case 0:
                 String fileNameStr = Long.toHexString(fileName);
-                fileNameStr = (fileNameStr.length() < 6)
-                        ? StringUtils.repeat((char) 0, fileNameStr.length() - 6) + fileNameStr
-                        : fileNameStr;
+                if (fileNameStr.length() < 6) {
+                    fileNameStr = StringUtils.repeat('0', 6 - fileNameStr.length()) + fileNameStr;
+                }
                 for (IItemBase extFile : externalFiles)
-                    if (extFile.getName().contains("f_" + fileNameStr))
+                    if (extFile.getName().equals("f_" + fileNameStr))
                         return extFile.getBufferedStream();
             case 2:
             case 3:
