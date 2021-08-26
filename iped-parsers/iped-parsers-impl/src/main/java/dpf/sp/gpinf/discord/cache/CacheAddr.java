@@ -93,9 +93,9 @@ public class CacheAddr {
             case 2:
             case 3:
             case 4:
-                for (int i = 0; i < 4; i++) {
-                    if (dataFiles.get(i).getName().equals(("data_" + fileSelector))) {
-                        InputStream targetStream = dataFiles.get(i).getBufferedStream();
+                for (IItemBase dataFile : dataFiles) {
+                    if (dataFile.getName().equals(("data_" + fileSelector))) {
+                        InputStream targetStream = dataFile.getBufferedStream();
                         IOUtils.skipFully(targetStream, DataBlockFileHeader.getBlockHeaderSize()
                                 + startBlock * (fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096)));
                         return targetStream;
