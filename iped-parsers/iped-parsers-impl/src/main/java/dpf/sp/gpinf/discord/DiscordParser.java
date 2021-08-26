@@ -3,6 +3,7 @@ package dpf.sp.gpinf.discord;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -20,7 +21,9 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
 import dpf.sp.gpinf.discord.cache.CacheEntry;
 import dpf.sp.gpinf.discord.cache.Index;
@@ -79,12 +82,20 @@ public class DiscordParser extends AbstractParser {
 
                     try (InputStream is = ce.getResponseDataStream()) {
 
-                        List<DiscordRoot> discordRoot = new ObjectMapper().readValue(is,
-                                new TypeReference<List<DiscordRoot>>() {
-                                });
+                        ObjectMapper mapper = new ObjectMapper();
+                        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+                        List<DiscordRoot> discordRoot = mapper.readValue(is, new TypeReference<List<DiscordRoot>>() {
+                        });
+
+                        if (discordRoot.isEmpty()) {
+                            continue;
+                        }
+
+                        String chatName = "Discord Chat id=" + discordRoot.get(0).getId() + " author="
+                                + discordRoot.get(0).getAuthor();
 
                         Metadata chatMeta = new Metadata();
-                        chatMeta.set(TikaCoreProperties.TITLE, discordRoot.get(0).getId() + ":" + discordRoot.get(0).getAuthor());
+                        chatMeta.set(TikaCoreProperties.TITLE, chatName);
                         chatMeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, CHAT_MIME_TYPE);
 
                         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, chatMeta);
