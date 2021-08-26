@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
 import java.util.Collections;
@@ -91,6 +92,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private HashMap<KeyStroke, String> keystrokeToBookmark = new HashMap<>();
 
+    private final Collator collator;
+    
     private class BookmarkAndKey implements Comparable<BookmarkAndKey> {
         String bookmark;
         KeyStroke key;
@@ -113,8 +116,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
 
         @Override
-        public int compareTo(BookmarkAndKey obj) {
-            return bookmark.compareToIgnoreCase(((BookmarkAndKey) obj).bookmark);
+        public int compareTo(BookmarkAndKey other) {
+            return collator.compare(bookmark, other.bookmark);
         }
     }
 
@@ -142,6 +145,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     private GerenciadorMarcadores() {
 
+        collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        
         dialog.setTitle(Messages.getString("BookmarksManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 500, 500);
 
@@ -252,6 +258,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             if (!bookmarks.contains(bk)) {
                 bookmarks.add(bk);
             }
+            bk.key = App.get().appCase.getMultiMarcadores().getLabelKeyStroke(label);
         }
         Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {
@@ -549,6 +556,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
             keystrokeToBookmark.put(stroke, label);
             keystrokeToBookmark.put(getRemoveKey(stroke), label);
+
+            App.get().appCase.getMultiMarcadores().setLabelKeyStroke(label, stroke);
+            App.get().appCase.getMultiMarcadores().saveState();
+
         } else {
             String label = keystrokeToBookmark.get(stroke);
             if (label == null) {

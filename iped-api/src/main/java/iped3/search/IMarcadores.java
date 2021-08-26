@@ -14,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.swing.KeyStroke;
+
 import iped3.IIPEDSource;
 
 /**
@@ -94,6 +96,10 @@ public interface IMarcadores extends Serializable {
 
     String getLabelComment(int labelId);
 
+    void setLabelKeyStroke(int labelId, KeyStroke key);
+
+    KeyStroke getLabelKeyStroke(int labelId);
+    
     int getLabelCount(int labelId);
     
     void setInReport(int labelId, boolean inReport);

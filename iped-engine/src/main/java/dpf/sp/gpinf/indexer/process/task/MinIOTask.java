@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -215,8 +216,8 @@ public class MinIOTask extends AbstractTask {
         // disable blocking proxy possibly enabled by HtmlViewer
         ProxySever.get().disable();
 
-        try (InputStream is = item.getBufferedStream()) {
-            String fullPath = insertItem(hash, is, item.getLength(), item.getMediaType().toString(), false);
+        try (SeekableInputStream is = item.getStream()) {
+            String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
             }
