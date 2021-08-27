@@ -159,8 +159,9 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (tar_length > 0)
+        if (tar_length > 0) {
             insertTar();
+        }
     }
 
 
@@ -228,7 +229,7 @@ public class MinIOTask extends AbstractTask {
                 .putObject(PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
                         .stream(fi, tarfile.length(), Math.max(tarfile.length(), tar_limit))
                 .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
-        System.out.println("teste " + tarfile.length() + " " + aux.toString());
+
         fi.close();
         tmp.close();
 
