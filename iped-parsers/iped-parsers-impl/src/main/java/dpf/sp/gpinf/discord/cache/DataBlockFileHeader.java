@@ -5,8 +5,9 @@ import java.io.InputStream;
 
 public class DataBlockFileHeader {
 
-    private static final int BLOCK_HEADER_SIZE = 8192;
-    private static final int MAX_BLOCKS = (BLOCK_HEADER_SIZE - 80) * 8;
+    public static final int BLOCK_HEADER_SIZE = 8192;
+    public static final int MAX_BLOCKS = (BLOCK_HEADER_SIZE - 80) * 8;
+
     private final long signature;
     private final long version;
     private final int fileNumber;
@@ -62,14 +63,6 @@ public class DataBlockFileHeader {
         for (int i = 0; i < allocMap.length; i++) {
             allocMap[i] = read4bytes(is);
         }
-    }
-
-    public static int getBlockHeaderSize() {
-        return BLOCK_HEADER_SIZE;
-    }
-
-    public static int getMaxBlocks() {
-        return MAX_BLOCKS;
     }
 
     public long getSignature() {

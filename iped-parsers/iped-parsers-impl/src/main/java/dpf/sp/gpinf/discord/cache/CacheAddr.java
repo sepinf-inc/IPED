@@ -1,12 +1,15 @@
 package dpf.sp.gpinf.discord.cache;
 
 import iped3.io.IItemBase;
+import iped3.io.SeekableInputStream;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+
+import dpf.sp.gpinf.indexer.util.LimitedInputStream;
 
 /**
  * @author PCF Campanini
@@ -71,10 +74,14 @@ public class CacheAddr {
         if (fileType == 0) {
             fileName = (int) (address & 0x0FFFFFFFL);
         } else {
-            numBlocks = (int) ((address & 0x03000000L) >> 24);
+            numBlocks = (int) ((address & 0x03000000L) >> 24) + 1;
             fileSelector = (int) ((address & 0x00ff0000L) >> 16);
             startBlock = (int) (address & 0x0000FFFFL);
         }
+    }
+
+    private int getBlockSize() {
+        return fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096);
     }
 
     public InputStream getInputStream(List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
@@ -87,18 +94,20 @@ public class CacheAddr {
                 if (fileNameStr.length() < 6) {
                     fileNameStr = StringUtils.repeat('0', 6 - fileNameStr.length()) + fileNameStr;
                 }
-                for (IItemBase extFile : externalFiles)
-                    if (extFile.getName().equals("f_" + fileNameStr))
+                for (IItemBase extFile : externalFiles) {
+                    if (extFile.getName().equals("f_" + fileNameStr)) {
                         return extFile.getBufferedStream();
+                    }
+                }
+                break;
             case 2:
             case 3:
             case 4:
                 for (IItemBase dataFile : dataFiles) {
                     if (dataFile.getName().equals(("data_" + fileSelector))) {
-                        InputStream targetStream = dataFile.getBufferedStream();
-                        IOUtils.skipFully(targetStream, DataBlockFileHeader.getBlockHeaderSize()
-                                + startBlock * (fileType == 2 ? 256 : (fileType == 3 ? 1024 : 4096)));
-                        return targetStream;
+                        SeekableInputStream targetStream = dataFile.getStream();
+                        targetStream.seek(DataBlockFileHeader.BLOCK_HEADER_SIZE + startBlock * getBlockSize());
+                        return new LimitedInputStream(targetStream, numBlocks * getBlockSize());
                     }
                 }
         }
