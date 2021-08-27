@@ -2,18 +2,25 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
 import org.apache.tika.Tika;
+import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,6 +35,7 @@ import io.minio.ErrorCode;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.ObjectStat;
+import io.minio.ObjectWriteResponse;
 import io.minio.PutObjectArgs;
 import io.minio.StatObjectArgs;
 import io.minio.errors.ErrorResponseException;
@@ -70,6 +78,12 @@ public class MinIOTask extends AbstractTask {
     private MinIOConfig minIOConfig;
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
+
+    private final static long tar_limit = 1024 * 1024 * 10;
+    private TemporaryResources tmp = null;
+    private TarArchiveOutputStream out = null;
+    private File tarfile = null;
+    private long tar_length = 0;
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
@@ -145,11 +159,89 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
+        if (tar_length > 0)
+            insertTar();
+    }
+
+
+
+
+
+
+    private String insertWithTar(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
+
+        if (out == null) {
+            tar_length = 0;
+            tmp = new TemporaryResources();
+            tarfile = tmp.createTemporaryFile();
+            out = new TarArchiveOutputStream(new FileOutputStream(tarfile));
+        }
+       
+
+
+
+
+        boolean async = true;
+        String bucketPath = buildPath(hash);
+        // if preview saves in a preview folder
+        if (preview) {
+            bucketPath = "preview/" + hash;
+        }
+        String fullPath = bucket + "/" + bucketPath;
+        if(length<=0) {
+            return fullPath;
+        }
+        
+
+        if (length > tar_limit * 0.5) {
+            insertItem(hash, is, length, mediatype, bucketPath);
+        }else {
+            
+        
+        
+            tar_length += length;
+            TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
+            entry.setSize(length);
+            out.putArchiveEntry(entry);
+            
+    
+            IOUtils.copy(is, out);
+            out.closeArchiveEntry();
+    
+            if (tar_length > tar_limit) {
+                insertTar();
+            }
+
+        }
+
+        return fullPath;
 
     }
 
-    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+
+    private void insertTar() throws Exception {
+        out.close();
+        
+        FileInputStream fi = new FileInputStream(tarfile);
+        ObjectWriteResponse aux = minioClient
+                .putObject(PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
+                        .stream(fi, tarfile.length(), Math.max(tarfile.length(), tar_limit))
+                .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
+        System.out.println("teste " + tarfile.length() + " " + aux.toString());
+        fi.close();
+        tmp.close();
+
+        tar_length = 0;
+        out = null;
+        tmp = null;
+        tarfile = null;
+    }
+
+
+    private void insertItem(String hash, InputStream is, long length, String mediatype, String bucketPath)
             throws Exception {
+        String fullPath = bucket + "/" + bucketPath;
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -162,16 +254,7 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
-        String bucketPath = buildPath(hash);
-        // if preview saves in a preview folder
-        if (preview) {
-            bucketPath = "preview/" + hash;
-        }
-        String fullPath = bucket + "/" + bucketPath;
-
-        if (exists) {
-            return fullPath;
-        }
+       
 
         // create directory structure
         if (FOLDER_LEVELS > 0) {
@@ -184,7 +267,7 @@ public class MinIOTask extends AbstractTask {
             minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
                     .contentType(mediatype).build());
 
-            return fullPath;
+
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
@@ -217,7 +300,9 @@ public class MinIOTask extends AbstractTask {
         ProxySever.get().disable();
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
+            String fullPath = insertWithTar(hash, new BufferedInputStream(item.getStream()), is.size(),
+                    item.getMediaType().toString(),
+                    false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
             }
@@ -227,7 +312,8 @@ public class MinIOTask extends AbstractTask {
         }
         if (item.getViewFile() != null) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
-                String fullPath = insertItem(hash, is, item.getViewFile().length(),
+                String fullPath = insertWithTar(hash, new FileInputStream(item.getViewFile()),
+                        item.getViewFile().length(),
                         getMimeType(item.getViewFile().getName()), true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
