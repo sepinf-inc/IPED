@@ -3,7 +3,7 @@ package dpf.sp.gpinf.discord;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -23,7 +23,6 @@ import org.xml.sax.SAXException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.MismatchedInputException;
 
 import dpf.sp.gpinf.discord.cache.CacheEntry;
 import dpf.sp.gpinf.discord.cache.Index;
@@ -62,11 +61,17 @@ public class DiscordParser extends AbstractParser {
                 new ParsingEmbeddedDocumentExtractor(context));
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
+        IItemBase item = context.get(IItemBase.class);
 
-        if (searcher != null) {
+        if (searcher != null && item != null) {
 
-            String commonQuery = BasicProps.PATH + ":\"AppData/Roaming/discord/cache\" AND " + BasicProps.CARVED + ":false AND NOT "
-                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR + ":true";
+            String parentPath = Paths.get(item.getPath()).getParent().toString().replace("\\", "\\\\");
+
+            String commonQuery = BasicProps.EVIDENCE_UUID + ":" + item.getDataSource().getUUID() + " AND "
+                    + BasicProps.PATH + ":\"" + parentPath + "\" AND " + BasicProps.CARVED + ":false AND NOT "
+                    + BasicProps.TYPE + ":slack AND NOT " + BasicProps.LENGTH + ":0 AND NOT " + BasicProps.ISDIR
+                    + ":true";
+
             List<IItemBase> externalFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":f");
             List<IItemBase> dataFiles = searcher.search(commonQuery + " AND " + BasicProps.NAME + ":(\"data_0\"  OR \"data_1\" OR \"data_2\" OR \"data_3\")");
 
