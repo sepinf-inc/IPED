@@ -137,43 +137,43 @@ public class Index {
 
     public Index(InputStream is, List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
 
-        magicNumber = read4bytes(is);
-        version = read4bytes(is);
+        magicNumber = readUnsignedInt(is);
+        version = readUnsignedInt(is);
         entriesCont = read4bytes(is);
         bytesCont = read4bytes(is);
         lastFile = read4bytes(is);
         id = read4bytes(is);
-        stats = new CacheAddr(read4bytes(is));
+        stats = new CacheAddr(readUnsignedInt(is));
         tableLength = read4bytes(is);
         crash = read4bytes(is);
         experiment = read4bytes(is);
         createTime = read8bytes(is);
 
         for (int i = 0; i < 52; i++) {
-            padding[i] = read4bytes(is);
+            padding[i] = (int) readUnsignedInt(is);
         }
 
         pad1 = new int[2];
-        pad1[0] = read4bytes(is);
-        pad1[1] = read4bytes(is);
+        pad1[0] = (int) readUnsignedInt(is);
+        pad1[1] = (int) readUnsignedInt(is);
         filled = read4bytes(is);
         sizes = new int[5];
         for (int i = 0; i < 5; i++) {
             sizes[i] = read4bytes(is);
         }
-        sizes = new int[5];
-        for (int i = 0; i < 5; i++) {
-            sizes[i] = read4bytes(is);
-        }
+        /*
+         * sizes = new int[5]; for (int i = 0; i < 5; i++) { sizes[i] = read4bytes(is);
+         * }
+         */
         heads = new CacheAddr[5];
         for (int i = 0; i < 5; i++) {
-            heads[i] = new CacheAddr(read4bytes(is));
+            heads[i] = new CacheAddr(readUnsignedInt(is));
         }
         tails = new CacheAddr[5];
         for (int i = 0; i < 5; i++) {
-            tails[i] = new CacheAddr(read4bytes(is));
+            tails[i] = new CacheAddr(readUnsignedInt(is));
         }
-        transaction = new CacheAddr(read4bytes(is));
+        transaction = new CacheAddr(readUnsignedInt(is));
         operation = read4bytes(is);
         operation_list = read4bytes(is);
         pad2 = new int[7];
@@ -190,7 +190,7 @@ public class Index {
         CacheAddr table[] = new CacheAddr[tsize];
 
         for (int i = 0; i < tsize; i++) {
-            table[i] = new CacheAddr(read4bytes(is));
+            table[i] = new CacheAddr(readUnsignedInt(is));
         }
 
         List<CacheEntry> entries = new ArrayList<>();
@@ -221,11 +221,15 @@ public class Index {
     }
 
     public static int read4bytes(InputStream is) throws IOException {
-        return (read2bytes(is) + (read2bytes(is) << 16)) & 0xffffffff;
+        return read2bytes(is) | (read2bytes(is) << 16);
+    }
+
+    public static long readUnsignedInt(InputStream is) throws IOException {
+        return (read2bytes(is) | (read2bytes(is) << 16)) & 0xffffffffL;
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        return read4bytes(is) + (read4bytes(is) << 32);
+        return read4bytes(is) | (readUnsignedInt(is) << 32);
     }
 
 }

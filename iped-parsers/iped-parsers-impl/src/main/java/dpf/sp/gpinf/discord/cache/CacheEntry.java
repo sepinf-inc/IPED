@@ -111,15 +111,15 @@ public class CacheEntry {
     public CacheEntry(InputStream is, List<IItemBase> dataFiles, List<IItemBase> externalFiles) throws IOException {
         this.dataFiles = dataFiles;
         this.externalFiles = externalFiles;
-        hash = read4bytes(is);
-        nextEntry = new CacheAddr(read4bytes(is));
-        rankingsNode = new CacheAddr(read4bytes(is));
+        hash = readUnsignedInt(is);
+        nextEntry = new CacheAddr(readUnsignedInt(is));
+        rankingsNode = new CacheAddr(readUnsignedInt(is));
         reuseCount = read4bytes(is);
         refetchCount = read4bytes(is);
         state = read4bytes(is);
         creationTime = read8bytes(is);
         keyDataSize = read4bytes(is);
-        longKeyAddress = new CacheAddr(read4bytes(is));
+        longKeyAddress = new CacheAddr(readUnsignedInt(is));
         dataStreamSize = new int[4];
         dataStreamSize[0] = read4bytes(is);
         dataStreamSize[1] = read4bytes(is);
@@ -127,12 +127,12 @@ public class CacheEntry {
         dataStreamSize[3] = read4bytes(is);
 
         dataStreamAdresses = new CacheAddr[4];
-        dataStreamAdresses[0] = new CacheAddr(read4bytes(is));
-        dataStreamAdresses[1] = new CacheAddr(read4bytes(is));
-        dataStreamAdresses[2] = new CacheAddr(read4bytes(is));
-        dataStreamAdresses[3] = new CacheAddr(read4bytes(is));
+        dataStreamAdresses[0] = new CacheAddr(readUnsignedInt(is));
+        dataStreamAdresses[1] = new CacheAddr(readUnsignedInt(is));
+        dataStreamAdresses[2] = new CacheAddr(readUnsignedInt(is));
+        dataStreamAdresses[3] = new CacheAddr(readUnsignedInt(is));
 
-        flags = read4bytes(is);
+        flags = readUnsignedInt(is);
 
         paddings = new int[4];
         paddings[0] = read4bytes(is);
@@ -140,7 +140,7 @@ public class CacheEntry {
         paddings[2] = read4bytes(is);
         paddings[3] = read4bytes(is);
 
-        selfHash = read4bytes(is);
+        selfHash = readUnsignedInt(is);
         keyData = IOUtils.readFully(is, 256 - 24 * 4);
 
     }
@@ -178,6 +178,7 @@ public class CacheEntry {
         try {
             return new GZIPInputStream(bis);
         } catch (ZipException e) {
+            // is it possible to find a non gzip stream? Or this exception should always be thrown?
             if (e.getMessage().contains("Not in GZIP format")) {
                 bis.reset();
                 return bis;
@@ -192,11 +193,15 @@ public class CacheEntry {
     }
 
     public static int read4bytes(InputStream is) throws IOException {
-        return (read2bytes(is) + (read2bytes(is) << 16)) & 0xffffffff;
+        return read2bytes(is) | (read2bytes(is) << 16);
+    }
+
+    public static long readUnsignedInt(InputStream is) throws IOException {
+        return (read2bytes(is) | (read2bytes(is) << 16)) & 0xffffffffL;
     }
 
     public static long read8bytes(InputStream is) throws IOException {
-        return read4bytes(is) + (read4bytes(is) << 32);
+        return read4bytes(is) | (readUnsignedInt(is) << 32);
     }
 
 }
