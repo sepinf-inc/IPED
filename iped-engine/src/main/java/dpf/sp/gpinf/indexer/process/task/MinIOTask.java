@@ -79,13 +79,13 @@ public class MinIOTask extends AbstractTask {
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
-    private static long tar_limit = 0;
-    private static long tar_item_limit = 0;
+    private static long tarMaxLength = 0;
+    private static long tarMaxFiles = 0;
     private TemporaryResources tmp = null;
     private TarArchiveOutputStream out = null;
     private File tarfile = null;
-    private long tar_length = 0;
-    private long tar_items = 0;
+    private long tarLength = 0;
+    private long tarFiles = 0;
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
@@ -98,8 +98,8 @@ public class MinIOTask extends AbstractTask {
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
-        tar_limit = minIOConfig.getTarMaxLength();
-        tar_item_limit = minIOConfig.getTarMaxFiles();
+        tarMaxLength = minIOConfig.getTarMaxLength();
+        tarMaxFiles = minIOConfig.getTarMaxFiles();
 
         // case name is default bucket name
         if (bucket == null) {
@@ -164,9 +164,9 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (tarfile != null && tar_items > 0) {
+        if (tarfile != null) {
 
-            logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tar_items); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tarFiles); //$NON-NLS-1$ //$NON-NLS-2$
             
             insertTar();
         }
@@ -181,7 +181,7 @@ public class MinIOTask extends AbstractTask {
             throws Exception {
 
         if (out == null) {
-            tar_length = 0;
+            tarLength = 0;
             tmp = new TemporaryResources();
             tarfile = tmp.createTemporaryFile();
             out = new TarArchiveOutputStream(new FileOutputStream(tarfile));
@@ -203,23 +203,19 @@ public class MinIOTask extends AbstractTask {
             return fullPath;
         }
         
-        
-        boolean exists=checkIfExists(bucketPath);
-        if (!exists) {
-            logger.info(bucketPath + " " + exists + " tam " + length);
-        }
-        if(exists) {
+       
+        if (checkIfExists(bucketPath)) {
             return fullPath;
         }
 
-
-        if (length > tar_limit * 0.5) {
+        // if files are greater than 1Mb send directly
+        if (length > (1024 * 1024)) {
             insertItem(hash, is, length, mediatype, bucketPath);
         }else {
             
         
-            tar_items++;
-            tar_length += length;
+            tarFiles++;
+            tarLength += length;
             TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
             entry.setSize(length);
             out.putArchiveEntry(entry);
@@ -228,7 +224,7 @@ public class MinIOTask extends AbstractTask {
             IOUtils.copy(is, out);
             out.closeArchiveEntry();
     
-            if (tar_length > tar_limit || tar_items >= tar_item_limit) {
+            if (tarLength > tarMaxLength || tarFiles >= tarMaxFiles) {
 
                 insertTar();
             }
@@ -243,16 +239,18 @@ public class MinIOTask extends AbstractTask {
     private void insertTar() throws Exception {
         out.close();
         // logger.info("nitems " + tar_items);
-        InputStream fi = new BufferedInputStream(new FileInputStream(tarfile));
-        ObjectWriteResponse aux = minioClient
-                .putObject(PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
-                        .stream(fi, tarfile.length(), Math.max(tarfile.length(), tar_limit))
-                .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
+        if (tarFiles > 0) {
+            try (InputStream fi = new BufferedInputStream(new FileInputStream(tarfile))) {
+                ObjectWriteResponse aux = minioClient.putObject(
+                        PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
+                                .stream(fi, tarfile.length(), Math.max(tarfile.length(), 1024 * 1024 * 6))
+                                .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
+            }
+        }
 
-        fi.close();
         tmp.close();
-        tar_items = 0;
-        tar_length = 0;
+        tarFiles = 0;
+        tarLength = 0;
         out = null;
         tmp = null;
         tarfile = null;
@@ -319,8 +317,6 @@ public class MinIOTask extends AbstractTask {
     protected void process(IItem item) throws Exception {
 
         if (item.isQueueEnd()) {
-            // System.out.println("olaa");
-            logger.info("Fim de fila MinIO");
             finish();
         }
 
@@ -336,8 +332,7 @@ public class MinIOTask extends AbstractTask {
 
         try (SeekableInputStream is = item.getStream()) {
             String fullPath = insertWithTar(hash, new BufferedInputStream(item.getStream()), is.size(),
-                    item.getMediaType().toString(),
-                    false);
+                    item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
             }
@@ -348,8 +343,7 @@ public class MinIOTask extends AbstractTask {
         if (item.getViewFile() != null) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
                 String fullPath = insertWithTar(hash, new FileInputStream(item.getViewFile()),
-                        item.getViewFile().length(),
-                        getMimeType(item.getViewFile().getName()), true);
+                        item.getViewFile().length(), getMimeType(item.getViewFile().getName()), true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
