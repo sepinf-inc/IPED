@@ -11,7 +11,6 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
@@ -84,9 +83,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static RestHighLevelClient client;
 
-    private static AtomicInteger count = new AtomicInteger();
-
     private static HashMap<String, String> cmdLineFields = new HashMap<>();
+
+    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
 
     private static String user, password, indexName;
 
@@ -112,8 +111,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
-        count.incrementAndGet();
-
+        taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         if (!elasticConfig.isEnabled()) {
@@ -278,28 +276,26 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
+    public static void commit() throws IOException, InterruptedException {
+        for (ElasticSearchIndexTask instance : taskInstances) {
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                    "Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
+            LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
+            instance.sendBulkRequest();
+        }
+        for (ElasticSearchIndexTask instance : taskInstances) {
+            synchronized (instance.lock) {
+                while (instance.numRequests > 0) {
+                    instance.lock.wait();
+                }
+            }
+        }
+    }
 
     @Override
     public void finish() throws Exception {
-
-        if (bulkRequest.numberOfActions() > 0) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                    "Finishing Worker-" + worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
-            LOGGER.info("Finishing Worker-" + worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
-            sendBulkRequest();
-        }
-
-        taskInstances.add(this);
-
-        if (count.decrementAndGet() == 0) {
-            for (ElasticSearchIndexTask instance : taskInstances) {
-                synchronized (instance.lock) {
-                    while (instance.numRequests > 0) {
-                        instance.lock.wait();
-                    }
-                }
-            }
+        if (!taskInstances.isEmpty()) {
+            commit();
             taskInstances.clear();
             IOUtil.closeQuietly(client);
         }
@@ -325,7 +321,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     @Override
-    protected void process(IItem item) throws Exception {
+    protected synchronized void process(IItem item) throws Exception {
 
         Reader textReader = null;
 
@@ -382,8 +378,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 if (bulkRequest.estimatedSizeInBytes() >= elasticConfig.getMin_bulk_size()
                         || bulkRequest.numberOfActions() >= elasticConfig.getMin_bulk_items()) {
                     sendBulkRequest();
-                    bulkRequest = new BulkRequest();
-                    idToPath = new HashMap<>();
                 }
 
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
@@ -395,7 +389,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
-    private void sendBulkRequest() throws IOException {
+    private synchronized void sendBulkRequest() throws IOException {
+        if (bulkRequest.numberOfActions() == 0) {
+            return;
+        }
         try {
             synchronized (lock) {
                 if (++numRequests > elasticConfig.getMax_async_requests()) {
@@ -404,6 +401,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             }
             Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT,
                     new BulkResponseListener(idToPath));
+
+            bulkRequest = new BulkRequest();
+            idToPath = new HashMap<>();
 
         } catch (Exception e) {
             LOGGER.error("Error indexing to ElasticSearch " + bulkRequest.getDescription(), e);
