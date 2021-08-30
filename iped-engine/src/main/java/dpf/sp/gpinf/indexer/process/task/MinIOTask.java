@@ -63,7 +63,7 @@ public class MinIOTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(MinIOTask.class);
 
-    private static final int FOLDER_LEVELS = 4;
+    private static final int FOLDER_LEVELS = 2;
     private static final String CMD_LINE_KEY = "MinioCredentials";
     private static final String ACCESS_KEY = "accesskey";
     private static final String SECRET_KEY = "secretkey";
@@ -79,11 +79,13 @@ public class MinIOTask extends AbstractTask {
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
-    private final static long tar_limit = 1024 * 1024 * 10;
+    private static long tar_limit = 0;
+    private static long tar_item_limit = 0;
     private TemporaryResources tmp = null;
     private TarArchiveOutputStream out = null;
     private File tarfile = null;
     private long tar_length = 0;
+    private long tar_items = 0;
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
@@ -95,6 +97,9 @@ public class MinIOTask extends AbstractTask {
         }
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
+
+        tar_limit = minIOConfig.getTarMaxLength();
+        tar_item_limit = minIOConfig.getTarMaxFiles();
 
         // case name is default bucket name
         if (bucket == null) {
@@ -159,7 +164,10 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (tar_length > 0) {
+        if (tarfile != null && tar_items > 0) {
+
+            logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tar_items); //$NON-NLS-1$ //$NON-NLS-2$
+            
             insertTar();
         }
     }
@@ -178,29 +186,39 @@ public class MinIOTask extends AbstractTask {
             tarfile = tmp.createTemporaryFile();
             out = new TarArchiveOutputStream(new FileOutputStream(tarfile));
         }
-       
 
-
-
-
-        boolean async = true;
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
             bucketPath = "preview/" + hash;
         }
         String fullPath = bucket + "/" + bucketPath;
-        if(length<=0) {
+        
+        
+        
+
+        // if empty or already exists do not continue
+        if (length <= 0) {
+
             return fullPath;
         }
         
+        
+        boolean exists=checkIfExists(bucketPath);
+        if (!exists) {
+            logger.info(bucketPath + " " + exists + " tam " + length);
+        }
+        if(exists) {
+            return fullPath;
+        }
+
 
         if (length > tar_limit * 0.5) {
             insertItem(hash, is, length, mediatype, bucketPath);
         }else {
             
         
-        
+            tar_items++;
             tar_length += length;
             TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
             entry.setSize(length);
@@ -210,7 +228,8 @@ public class MinIOTask extends AbstractTask {
             IOUtils.copy(is, out);
             out.closeArchiveEntry();
     
-            if (tar_length > tar_limit) {
+            if (tar_length > tar_limit || tar_items >= tar_item_limit) {
+
                 insertTar();
             }
 
@@ -223,8 +242,8 @@ public class MinIOTask extends AbstractTask {
 
     private void insertTar() throws Exception {
         out.close();
-        
-        FileInputStream fi = new FileInputStream(tarfile);
+        // logger.info("nitems " + tar_items);
+        InputStream fi = new BufferedInputStream(new FileInputStream(tarfile));
         ObjectWriteResponse aux = minioClient
                 .putObject(PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
                         .stream(fi, tarfile.length(), Math.max(tarfile.length(), tar_limit))
@@ -232,17 +251,14 @@ public class MinIOTask extends AbstractTask {
 
         fi.close();
         tmp.close();
-
+        tar_items = 0;
         tar_length = 0;
         out = null;
         tmp = null;
         tarfile = null;
     }
 
-
-    private void insertItem(String hash, InputStream is, long length, String mediatype, String bucketPath)
-            throws Exception {
-        String fullPath = bucket + "/" + bucketPath;
+    private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -254,9 +270,15 @@ public class MinIOTask extends AbstractTask {
                 throw e;
             }
         }
+        // System.out.println("hash " + hash + " " + exists);
 
+        return exists;
+    }
+
+
+    private void insertItem(String hash, InputStream is, long length, String mediatype, String bucketPath)
+            throws Exception {
        
-
         // create directory structure
         if (FOLDER_LEVELS > 0) {
             String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
@@ -288,7 +310,19 @@ public class MinIOTask extends AbstractTask {
     }
 
     @Override
+    protected boolean processQueueEnd() {
+        // TODO Auto-generated method stub
+        return true;
+    }
+
+    @Override
     protected void process(IItem item) throws Exception {
+
+        if (item.isQueueEnd()) {
+            // System.out.println("olaa");
+            logger.info("Fim de fila MinIO");
+            finish();
+        }
 
         if (caseData.isIpedReport() || !item.isToAddToCase())
             return;

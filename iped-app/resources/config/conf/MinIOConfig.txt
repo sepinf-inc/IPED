@@ -3,10 +3,16 @@
 #################################
 
 # Enable exporting files to MinIO object storage
-enableMinIO = false
+enableMinIO = true
 
 # Host name or ip address of MinIO
-host = http://127.0.0.1
+host = http://HPW14
 
 # Port where MinIO is listening
 port = 9000
+
+# max number of files in a tar for bulk requests
+tarMaxFiles = 1000
+
+# max length of the tar file in Mb
+tarMaxLength = 10

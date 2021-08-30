@@ -1,8 +1,5 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.IOException;
-import java.nio.file.Path;
-
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 
 public class MinIOConfig extends AbstractTaskPropertiesConfig {
@@ -16,9 +13,14 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
 
+    private static final String TAR_MAX_FILES = "tarMaxFiles";
+    private static final String TAR_MAX_LENGTH = "tarMaxLength";
+
     private boolean enabled;
     private String host;
     private String port;
+
+    private long tarMaxFiles, tarMaxLength;
 
     @Override
     public boolean isEnabled() {
@@ -38,12 +40,22 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         return port;
     }
 
+    public long getTarMaxFiles() {
+        return tarMaxFiles;
+    }
+
+    public long getTarMaxLength() {
+        return tarMaxLength;
+    }
+
     @Override
     public void processProperties(UTF8Properties properties) {
 
         enabled = Boolean.valueOf(properties.getProperty(ENABLE_KEY).trim());
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
+        tarMaxFiles = Long.parseLong(properties.getProperty(TAR_MAX_FILES));
+        tarMaxLength = (long) (1024 * 1024 * Double.parseDouble(properties.getProperty(TAR_MAX_LENGTH)));
 
     }
 
