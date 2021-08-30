@@ -294,7 +294,7 @@ public class ExportFileTask extends AbstractTask {
         for (String label : evidenceLabels) {
             boolean isNoContent = false;
             for (String noContentLabel : noContentLabels) {
-                if (label.equalsIgnoreCase(noContentLabel)) {
+                if (noContentLabel.equalsIgnoreCase("all") || label.equalsIgnoreCase(noContentLabel)) {
                     isNoContent = true;
                     break;
                 }
@@ -528,8 +528,13 @@ public class ExportFileTask extends AbstractTask {
                                 if (!outputFile.getParentFile().exists()) {
                                     outputFile.getParentFile().mkdirs();
                                 }
-                                fileExists = outputFile.createNewFile();
-                                bos = new BufferedOutputStream(new FileOutputStream(outputFile));
+                                // a read-only file using id as name may exist, could be a subitem left behind
+                                // by a previous interrupted processing, see #721
+                                if (outputFile.exists()) {
+                                    outputFile.setWritable(true);
+                                }
+                                bos = new BufferedOutputStream(Files.newOutputStream(outputFile.toPath()));
+                                fileExists = true;
                             }
                             bos.write(baos.toByteArray());
                             total += baos.size();
