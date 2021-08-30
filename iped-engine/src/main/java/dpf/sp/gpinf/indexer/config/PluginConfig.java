@@ -65,9 +65,6 @@ public class PluginConfig extends AbstractPropertiesConfigurable {
     public void processProperties(UTF8Properties properties) {
 
         String value = properties.getProperty("pluginFolder"); //$NON-NLS-1$
-        if (value == null) {
-            value = properties.getProperty("optional_jars"); //$NON-NLS-1$
-        }
         if (value != null) {
             relativePluginFolder = value.trim();
         }
