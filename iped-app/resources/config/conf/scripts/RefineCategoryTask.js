@@ -24,13 +24,19 @@ function process(e){
 	var categorias = e.getCategories();
 	var length = e.getLength();
 	var ext = e.getExt().toLowerCase();
+	var nome = e.getName().toLowerCase();
+	var mime = e.getMediaType().toString();
+	var path = e.getPath().toLowerCase().replace(/\\/g, "/");
+	
+	if(mime.equals("application/x-chrome-cache-index") && path.contains("/appdata/roaming/discord")){
+		e.setMediaTypeStr("application/x-discord-index");
+	}
 
 	if(e.getExt().toLowerCase().equals("mts")){
 		e.setMediaTypeStr("video/mp2t");
 		e.setCategory("Videos");
 	}
 	
-	var mime = e.getMediaType().toString();
 	if(mime.indexOf("x-ufed-") != -1 && categorias.indexOf("Other files") != -1){
 		var cat = mime.substring(mime.indexOf("x-ufed-") + 7);
 		cat = cat.substring(0, 1).toUpperCase() + cat.substring(1); 
@@ -121,11 +127,6 @@ function process(e){
 		else if(e.getName().equals("INFO2"))
 			e.setMediaTypeStr("application/x-info2");
 	}
-		
-		
-	var nome = e.getName().toLowerCase();
-	var ext = e.getExt().toLowerCase();
-	var path = e.getPath().toLowerCase();
 
 
 	//iPhone backup default folders

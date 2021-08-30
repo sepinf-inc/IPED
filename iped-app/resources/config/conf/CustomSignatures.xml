@@ -1148,8 +1148,8 @@
     	<sub-class-of type="text/html"/>
     </mime-type>
     
-    <mime-type type="application/x-discord-index">
-        <_comment>Discord Index cache file </_comment>
+    <mime-type type="application/x-chrome-cache-index">
+        <_comment>Chrome Cache Index file </_comment>
         <magic priority="50">
             <match value="0xC3CA03C1" type="string" offset="0"/>
         </magic>
