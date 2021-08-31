@@ -285,9 +285,8 @@ public class RFC822Parser extends AbstractParser {
                     DateTimeField dateField = (DateTimeField) parsedField;
                     if (metadata.get(ExtraProperties.MESSAGE_DATE) == null)
                         metadata.set(ExtraProperties.MESSAGE_DATE, dateField.getDate());
-                }
 
-                if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
                     ContentTypeField ctField = (ContentTypeField) parsedField;
                     attachName = ctField.getParameter("name"); //$NON-NLS-1$
 
@@ -313,13 +312,10 @@ public class RFC822Parser extends AbstractParser {
                             this.attachName = attachName;
 
                     }
-                } else {
+                } else if (!inPart) {
                     /* Issue #65 - Store all email headers as metadata */
-                    String headerValue = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + fieldname, headerValue);
-                    /* Issue #65 - End */
+                    metadata.add(Metadata.MESSAGE_RAW_HEADER_PREFIX + parsedField.getName(), field.getBody());
                 }
-
             } catch (RuntimeException me) {
                 if (strictParsing) {
                     throw me;
@@ -445,11 +441,12 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startBodyPart() throws MimeException {
+            inPart = true;
         }
 
         @Override
         public void endBodyPart() throws MimeException {
-
+            inPart = false;
         }
 
         @Override
@@ -479,7 +476,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void endMultipart() throws MimeException {
-            inPart = false;
         }
 
         @Override
@@ -495,7 +491,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
-            inPart = true;
         }
 
         private String stripOutFieldPrefix(Field field, String fieldname) {
