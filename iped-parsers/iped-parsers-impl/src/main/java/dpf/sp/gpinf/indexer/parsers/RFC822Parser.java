@@ -316,7 +316,7 @@ public class RFC822Parser extends AbstractParser {
                 } else {
                     /* Issue #65 - Store all email headers as metadata */
                     String headerValue = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    metadata.add(fieldname, headerValue);
+                    metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + fieldname, headerValue);
                     /* Issue #65 - End */
                 }
 

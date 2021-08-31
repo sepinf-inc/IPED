@@ -1,5 +1,8 @@
 package iped3.util;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
 
@@ -119,7 +122,7 @@ public class ExtraProperties {
 
     public static final String TIME_EVENT_GROUPS = "timeEventGroups";
 
-    public static final String[] EMAIL_PROPS = { MESSAGE_SUBJECT, MESSAGE_DATE.getName(), MESSAGE_BODY,
-            Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, PST_ATTACH,
-            PST_EMAIL_HAS_ATTACHS };
+    public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
+            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, PST_ATTACH,
+            PST_EMAIL_HAS_ATTACHS);
 }

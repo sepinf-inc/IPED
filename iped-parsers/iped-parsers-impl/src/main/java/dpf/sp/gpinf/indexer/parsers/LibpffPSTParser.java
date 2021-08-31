@@ -531,7 +531,7 @@ public class LibpffPSTParser extends AbstractParser {
                                 fromAddr = value;
                         } else {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            metadata.add(l[0], value);
+                            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
                         }
                     }
                 }
@@ -561,7 +561,7 @@ public class LibpffPSTParser extends AbstractParser {
                         String value = l[1].trim();
                         if (!value.isEmpty()) {
                             /* Issue #65 - add internet headers as metadata */
-                            metadata.add (l[0], value);
+                            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
                         }
                     }
                 }

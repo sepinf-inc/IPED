@@ -553,18 +553,19 @@ public class OutlookPSTParser extends AbstractParser {
             stream.close();
             
             /* Issue #65 - Store all email headers as metadata */
+            String importanceMeta = Message.MESSAGE_PREFIX + "Importance"; //$NON-NLS-1$
             switch (email.getImportance()) {
                 case PSTMessage.IMPORTANCE_NORMAL:
-                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
                     break;
                 case PSTMessage.IMPORTANCE_HIGH:
-                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceHigh"));
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceHigh"));
                     break;
                 case PSTMessage.IMPORTANCE_LOW:
-                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceLow"));
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceLow"));
                     break;
                 default:
-                    metadata.add(Messages.getString("OutlookPSTParser.Importance"), Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
                     break;
             }
             
@@ -620,7 +621,7 @@ public class OutlookPSTParser extends AbstractParser {
                     if (headersBlackList.contains(h[0]))
                         continue;
                     if (headerTmp != "")
-                        metadata.add(headerTmp, valueTmp);
+                        metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + headerTmp, valueTmp);
              
                     headerTmp = h[0];
                     valueTmp = h[1];
@@ -628,7 +629,7 @@ public class OutlookPSTParser extends AbstractParser {
                 
             }
             
-            metadata.add(headerTmp, valueTmp);
+            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + headerTmp, valueTmp);
         }
     }
 
