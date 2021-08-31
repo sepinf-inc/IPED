@@ -101,7 +101,7 @@ public class PDFOCRTextParser extends PDFParser {
             if (reader == null)
                 LOGGER.warn("Plugin JPEG2000 not found, JPX images will not be decoded from PDFs." //$NON-NLS-1$
                         + " You can download it from https://mvnrepository.com/artifact/com.github.jai-imageio/jai-imageio-jpeg2000/1.3.0" //$NON-NLS-1$
-                        + " and put it in optional_jars folder. Warn: that plugin is worse to decode JPX outside of PDFs!"); //$NON-NLS-1$
+                        + " and put it in plugins folder. Warn: that plugin is worse to decode JPX outside of PDFs!"); //$NON-NLS-1$
         }
     }
 

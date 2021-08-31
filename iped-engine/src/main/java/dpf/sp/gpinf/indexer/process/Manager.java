@@ -59,6 +59,7 @@ import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.IndexTask;
@@ -537,7 +538,10 @@ public class Manager {
 
                     ExportCSVTask.commit(output);
 
+                    ElasticSearchIndexTask.commit();
+
                     writer.commit();
+
                     long end = System.currentTimeMillis() / 1000;
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);

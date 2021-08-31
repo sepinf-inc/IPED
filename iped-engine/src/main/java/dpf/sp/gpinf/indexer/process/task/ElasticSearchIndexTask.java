@@ -11,7 +11,7 @@ import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
@@ -84,9 +84,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private static RestHighLevelClient client;
 
-    private static AtomicInteger count = new AtomicInteger();
-
     private static HashMap<String, String> cmdLineFields = new HashMap<>();
+
+    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
 
     private static String user, password, indexName;
 
@@ -96,7 +96,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     private int numRequests = 0;
 
-    private Object lock = new Object();
+    private AtomicBoolean onCommit = new AtomicBoolean();
 
     private char[] textBuf = new char[16 * 1024];
 
@@ -112,8 +112,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
 
-        count.incrementAndGet();
-
+        taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
         if (!elasticConfig.isEnabled()) {
@@ -278,28 +277,28 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
     }
 
-    private static List<ElasticSearchIndexTask> taskInstances = Collections.synchronizedList(new ArrayList<>());
+    public static void commit() throws IOException, InterruptedException {
+        for (ElasticSearchIndexTask instance : taskInstances) {
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                    "Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
+            LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
+            instance.onCommit.set(true);
+            instance.sendBulkRequest();
+        }
+        for (ElasticSearchIndexTask instance : taskInstances) {
+            synchronized (instance) {
+                while (instance.numRequests > 0) {
+                    instance.wait();
+                }
+            }
+            instance.onCommit.set(false);
+        }
+    }
 
     @Override
     public void finish() throws Exception {
-
-        if (bulkRequest.numberOfActions() > 0) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                    "Finishing Worker-" + worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
-            LOGGER.info("Finishing Worker-" + worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
-            sendBulkRequest();
-        }
-
-        taskInstances.add(this);
-
-        if (count.decrementAndGet() == 0) {
-            for (ElasticSearchIndexTask instance : taskInstances) {
-                synchronized (instance.lock) {
-                    while (instance.numRequests > 0) {
-                        instance.lock.wait();
-                    }
-                }
-            }
+        if (!taskInstances.isEmpty()) {
+            commit();
             taskInstances.clear();
             IOUtil.closeQuietly(client);
         }
@@ -325,7 +324,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     @Override
-    protected void process(IItem item) throws Exception {
+    protected synchronized void process(IItem item) throws Exception {
 
         Reader textReader = null;
 
@@ -381,9 +380,12 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
                 if (bulkRequest.estimatedSizeInBytes() >= elasticConfig.getMin_bulk_size()
                         || bulkRequest.numberOfActions() >= elasticConfig.getMin_bulk_items()) {
+
+                    // do not send more requests while commit is going on
+                    while (this.onCommit.get()) {
+                        this.wait();
+                    }
                     sendBulkRequest();
-                    bulkRequest = new BulkRequest();
-                    idToPath = new HashMap<>();
                 }
 
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
@@ -395,12 +397,20 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     }
 
-    private void sendBulkRequest() throws IOException {
+    private synchronized void sendBulkRequest() throws IOException {
+        BulkRequest bulkRequest = this.bulkRequest;
+        HashMap<String, String> idToPath = this.idToPath;
+
+        this.bulkRequest = new BulkRequest();
+        this.idToPath = new HashMap<>();
+
+        if (bulkRequest.numberOfActions() == 0) {
+            return;
+        }
         try {
-            synchronized (lock) {
-                if (++numRequests > elasticConfig.getMax_async_requests()) {
-                    lock.wait();
-                }
+            numRequests++;
+            while (numRequests > elasticConfig.getMax_async_requests()) {
+                this.wait();
             }
             Cancellable cancellable = client.bulkAsync(bulkRequest, RequestOptions.DEFAULT,
                     new BulkResponseListener(idToPath));
@@ -447,9 +457,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
         }
 
         private void notifyWaitingRequests() {
-            synchronized (lock) {
+            synchronized (ElasticSearchIndexTask.this) {
                 numRequests--;
-                lock.notify();
+                ElasticSearchIndexTask.this.notifyAll();
             }
         }
 

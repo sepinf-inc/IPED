@@ -294,7 +294,7 @@ public class ExportFileTask extends AbstractTask {
         for (String label : evidenceLabels) {
             boolean isNoContent = false;
             for (String noContentLabel : noContentLabels) {
-                if (label.equalsIgnoreCase(noContentLabel)) {
+                if (noContentLabel.equalsIgnoreCase("all") || label.equalsIgnoreCase(noContentLabel)) {
                     isNoContent = true;
                     break;
                 }
