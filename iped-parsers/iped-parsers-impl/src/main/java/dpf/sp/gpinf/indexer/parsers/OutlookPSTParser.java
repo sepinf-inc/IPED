@@ -25,10 +25,10 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
+import java.text.Collator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -93,6 +93,8 @@ public class OutlookPSTParser extends AbstractParser {
     public static final String OUTLOOK_MSG_MIME = "message/outlook-pst"; //$NON-NLS-1$
     public static final String OUTLOOK_CONTACT_MIME = "application/outlook-contact"; //$NON-NLS-1$
 
+    public static final Set<String> BASIC_HEADERS = getBasicHeaders();
+
     public static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("vnd.ms-outlook-pst")); //$NON-NLS-1$
 
     private ParseContext context;
@@ -106,6 +108,14 @@ public class OutlookPSTParser extends AbstractParser {
     private boolean useLibpffParser = true;
 
     private int numEmails = 0;
+
+    private static final Set<String> getBasicHeaders() {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Set<String> set = new TreeSet<>(collator);
+        set.addAll(Arrays.asList("From", "Subject", "To", "Bcc", "Cc", "Date"));
+        return set;
+    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -598,38 +608,24 @@ public class OutlookPSTParser extends AbstractParser {
     
     /* Issue #65 */
     private void populateMetadataWithEmailHeaders (PSTMessage email, Metadata metadata) {
-        /* From, Subject, To, Bcc, Cc fields already added as Metadata before, so ignore them here...
-         *  TODO: Values of this list needs to be reevaluated.
-         *  If you want to exclude a specific header from being printed out,
-         *  just put it on the list 'headersBlackList'
-         */
-        List<String> headersBlackList = Stream.of("From", "Subject", "To", "Bcc", "Cc").collect(Collectors.toList());
         String headers = email.getTransportMessageHeaders();
         if (!headers.isEmpty()) {
-            String headerTmp = "";
-            String valueTmp = "";
-            String[] lines = headers.split("\n");
-            for (String line : lines) {
-                line = line.trim();
-                if (!line.isEmpty()) {
-                    String[] h = line.split(": ", 2);
-                    if (h.length < 2) {
-                        // Didn't match, it's not a new header, it's maybe part of last header value...
-                        valueTmp += line;
-                        continue;
+            // unfold multiple line fields according to RFC822
+            headers = headers.replaceAll("\r\n[ \t]", " ");
+            String[] fields = headers.split("\r\n");
+            for (String field : fields) {
+                String[] h = field.split(":", 2);
+                if (h.length > 1) {
+                    String name = h[0];
+                    String value = h[1].trim();
+                    // ignore basic and empty fields
+                    if (!BASIC_HEADERS.contains(name) && !value.isEmpty()) {
+                        metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + name, value);
                     }
-                    if (headersBlackList.contains(h[0]))
-                        continue;
-                    if (headerTmp != "")
-                        metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + headerTmp, valueTmp);
-             
-                    headerTmp = h[0];
-                    valueTmp = h[1];
+                } else {
+                    LOGGER.warn("Unexpected header syntax: {}", field);
                 }
-                
             }
-            
-            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + headerTmp, valueTmp);
         }
     }
 

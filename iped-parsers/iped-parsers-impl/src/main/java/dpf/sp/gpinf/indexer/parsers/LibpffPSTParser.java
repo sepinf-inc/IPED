@@ -501,7 +501,7 @@ public class LibpffPSTParser extends AbstractParser {
     private void writeHeader(File file, Metadata metadata, StringBuilder preview) {
         File outlookHeader = new File(file, "OutlookHeaders.txt"); //$NON-NLS-1$
         if (outlookHeader.exists()) {
-            List<String> lines = readAllLines(outlookHeader);
+            List<String> lines = readAllHeaderLines(outlookHeader);
             String from = "", fromAddr = "", subject = Messages.getString("LibpffPSTParser.NoSubject"); //$NON-NLS-1$ //$NON-NLS-2$
             for (String line : lines) {
                 String[] l = line.split(":", 2); //$NON-NLS-1$
@@ -531,7 +531,9 @@ public class LibpffPSTParser extends AbstractParser {
                                 fromAddr = value;
                         } else {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
+                            if (!OutlookPSTParser.BASIC_HEADERS.contains(l[0])) {
+                                metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
+                            }
                         }
                     }
                 }
@@ -552,14 +554,14 @@ public class LibpffPSTParser extends AbstractParser {
                     "<div class=\"ipedtheme\" style=\"background-color:white;text-align:left;font-family:arial;color:black;font-size:12px;margin:0px;\">"); //$NON-NLS-1$
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("Internet Headers:<br>"); //$NON-NLS-1$
-            List<String> lines = readAllLines(internetHeaders);
+            List<String> lines = readAllHeaderLines(internetHeaders);
             for (String line : lines) {
                 if (!line.trim().isEmpty()) {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
-                    String[] l = line.split(": ", 2); //$NON-NLS-1$
+                    String[] l = line.split(":", 2); //$NON-NLS-1$
                     if (l.length > 1) {
                         String value = l[1].trim();
-                        if (!value.isEmpty()) {
+                        if (!OutlookPSTParser.BASIC_HEADERS.contains(l[0]) && !value.isEmpty()) {
                             /* Issue #65 - add internet headers as metadata */
                             metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
                         }
@@ -637,6 +639,19 @@ public class LibpffPSTParser extends AbstractParser {
                 if (lines.length > 1)
                     return Arrays.asList(lines);
             }
+        } catch (IOException e) {
+        }
+        return Collections.EMPTY_LIST;
+    }
+
+    private List<String> readAllHeaderLines(File file) {
+        try {
+            String content = Util.decodeUnknownCharsetSimpleThenTika(Files.readAllBytes(file.toPath()));
+            // unfold multiple line fields according to RFC822
+            content = content.replaceAll("\r\n[ \t]", " ");
+            String[] lines = content.split("\r\n|\n|\r");
+            return Arrays.asList(lines);
+
         } catch (IOException e) {
         }
         return Collections.EMPTY_LIST;
