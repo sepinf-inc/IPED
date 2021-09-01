@@ -165,6 +165,7 @@ public class MinIOTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         if (tarfile != null) {
+            
 
             logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tarFiles); //$NON-NLS-1$ //$NON-NLS-2$
             
@@ -208,22 +209,20 @@ public class MinIOTask extends AbstractTask {
             return fullPath;
         }
 
-        // if files are greater than 1Mb send directly
-        if (length > (1024 * 1024)) {
+        // if files are greater than 20% of tarMaxLength send directly
+        if (length > tarMaxLength * 0.2) {
             insertItem(hash, is, length, mediatype, bucketPath);
-        }else {
-            
-        
+        } else {
+
             tarFiles++;
             tarLength += length;
             TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
             entry.setSize(length);
             out.putArchiveEntry(entry);
-            
-    
+
             IOUtils.copy(is, out);
             out.closeArchiveEntry();
-    
+
             if (tarLength > tarMaxLength || tarFiles >= tarMaxFiles) {
 
                 insertTar();
@@ -241,10 +240,13 @@ public class MinIOTask extends AbstractTask {
         // logger.info("nitems " + tar_items);
         if (tarFiles > 0) {
             try (InputStream fi = new BufferedInputStream(new FileInputStream(tarfile))) {
+
+                System.out.println("envios de items " + tarFiles);
                 ObjectWriteResponse aux = minioClient.putObject(
                         PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
-                                .stream(fi, tarfile.length(), Math.max(tarfile.length(), 1024 * 1024 * 6))
+                                .stream(fi, tarfile.length(), Math.max(tarfile.length(), 1024 * 1024 * 5))
                                 .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
+
             }
         }
 
