@@ -99,7 +99,8 @@ public class DIETask extends AbstractTask {
 
     private static final String ENABLE_PARAM = "enableLedDie"; //$NON-NLS-1$
 
-    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
 
     private boolean extractThumb;
 
@@ -159,6 +160,9 @@ public class DIETask extends AbstractTask {
                 logger.info("Task enabled."); //$NON-NLS-1$
                 logger.info("Model version: " + predictor.getVersion()); //$NON-NLS-1$
                 logger.info("Trees loaded: " + predictor.size()); //$NON-NLS-1$
+
+                externalImageConverter = new ExternalImageConverter();
+
                 init.set(true);
             }
         }
@@ -172,7 +176,6 @@ public class DIETask extends AbstractTask {
      */
     public void finish() throws Exception {
         synchronized (finished) {
-            externalImageConverter.close();
             if (taskEnabled && !finished.get()) {
                 die = null;
                 predictor = null;
@@ -188,6 +191,7 @@ public class DIETask extends AbstractTask {
                     logger.info("Total videos not processed: " + totalVideosFailed); //$NON-NLS-1$
                     logger.info("Average video processing time (ms/video): " + (totalVideosTime.longValue() / totalVideos)); //$NON-NLS-1$
                 }
+                externalImageConverter.close();
                 finished.set(true);
             }
         }

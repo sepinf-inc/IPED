@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -48,9 +49,11 @@ public class ExternalImageConverter implements Closeable {
     private static final String DENSITY = "DENSITY"; //$NON-NLS-1$
     private static final String INPUT = "INPUT"; //$NON-NLS-1$
 
+    private static boolean commandAdjusted = false;
+
     private static final int sampleFactor = 2;
 
-    private String[] CMD = { "magick", "convert", "-limit", THREAD, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
+    private static String[] CMD = { "magick", "convert", "-limit", THREAD, NUM_THREADS, "-density", DENSITY, "-sample", //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$ //$NON-NLS-5$
             SAMPLE_GEOMETRY, "-resize", RESIZE_GEOMETRY, INPUT, "png:-" }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private final String winToolPathPrefix;
@@ -69,14 +72,26 @@ public class ExternalImageConverter implements Closeable {
     private ExecutorService executorService = null;
     private boolean ownsExecutor;
 
+    /**
+     * Must be instantiated lazily, so command line adjustment will use the configured system properties.
+     * 
+     */
     public ExternalImageConverter(ExecutorService executorService) {
         this(executorService, false);
     }
 
+    /**
+     * Must be instantiated lazily, so command line adjustment will use the configured system properties.
+     * 
+     */
     public ExternalImageConverter() {
         this(Executors.newCachedThreadPool(), true);
     }
 
+    /**
+     * Must be instantiated lazily, so command line adjustment will use the configured system properties.
+     * 
+     */
     private ExternalImageConverter(ExecutorService executorService, boolean ownsExecutor) {
         super();
         this.executorService = executorService;
@@ -94,6 +109,14 @@ public class ExternalImageConverter implements Closeable {
         toolPath = winToolPathPrefix.isEmpty() ? "" //$NON-NLS-1$
                 : winToolPathPrefix + File.separatorChar + "tools" //$NON-NLS-1$
                         + File.separatorChar + (useGM ? "graphicsmagick" : "imagemagick"); //$NON-NLS-1$ //$NON-NLS-2$
+
+        adjustCommand(toolPath, useGM);
+    }
+
+    private static synchronized void adjustCommand(String toolPath, boolean useGM) {
+        if (commandAdjusted) {
+            return;
+        }
         if (useGM) {
             CMD[0] = "gm";
             for (int i = 1; i < CMD.length; i++) {
@@ -102,9 +125,47 @@ public class ExternalImageConverter implements Closeable {
                     break;
                 }
             }
+        } else {
+            String[] cmd = { "magick", "-version" };
+            cmd = adjustToolPath(cmd, toolPath);
+            boolean ok = testCmd(cmd);
+            if (!ok) {
+                cmd[0] = "convert";
+                cmd = adjustToolPath(cmd, toolPath);
+                ok = testCmd(cmd);
+                if (ok) {
+                    // fallback to legacy imagemagick command
+                    CMD = Arrays.copyOfRange(CMD, 1, CMD.length);
+                } else {
+                    logger.error("Imagemagick command is not working!");
+                }
+            }
         }
-        if (!toolPath.isEmpty())
-            CMD[0] = toolPath + File.separatorChar + CMD[0];
+        CMD = adjustToolPath(CMD, toolPath);
+        commandAdjusted = true;
+    }
+
+    private static final String[] adjustToolPath(String[] cmd, String toolPath) {
+        if (!toolPath.isEmpty()) {
+            cmd[0] = toolPath + File.separatorChar + cmd[0];
+        }
+        return cmd;
+    }
+
+    private static boolean testCmd(String[] cmd) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder();
+            pb.command(cmd);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            byte[] buf = new byte[1024];
+            while (p.getInputStream().read(buf) != -1)
+                ;
+            return p.waitFor() == 0;
+
+        } catch (IOException | InterruptedException e) {
+            return false;
+        }
     }
 
     public void setNumThreads(int numThreads) {
@@ -192,7 +253,8 @@ public class ExternalImageConverter implements Closeable {
             p = pb.start();
         } catch (IOException e) {
             logger.error("Error executing " + (useGM ? "graphicsMagick" : "imageMagick") + ". " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                    + "Check if it is installed and if its path is configured!", e); //$NON-NLS-1$
+                    + "Check if it is installed and if its path is configured!"); //$NON-NLS-1$
+            logger.warn("", e);
         }
         BufferedImage result = null;
         if (p != null) {
