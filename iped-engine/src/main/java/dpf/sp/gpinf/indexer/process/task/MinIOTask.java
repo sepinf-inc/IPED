@@ -12,6 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -86,6 +87,8 @@ public class MinIOTask extends AbstractTask {
     private File tarfile = null;
     private long tarLength = 0;
     private long tarFiles = 0;
+    private HashSet<IItem> queue;
+    private boolean sendQueue = false;
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
@@ -95,7 +98,7 @@ public class MinIOTask extends AbstractTask {
         if (!minIOConfig.isEnabled()) {
             return;
         }
-
+        queue = new HashSet<>();
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
         tarMaxLength = minIOConfig.getTarMaxLength();
@@ -164,23 +167,20 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        if (tarfile != null) {
-            
+        flushTarFile();
+    }
 
+    private void flushTarFile() throws Exception {
+        if (tarfile != null) {
             logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tarFiles); //$NON-NLS-1$ //$NON-NLS-2$
-            
-            insertTar();
+            sendTarFile();
         }
     }
 
 
 
-
-
-
-    private String insertWithTar(String hash, InputStream is, long length, String mediatype, boolean preview)
+    private void insertInTarFile(String bucketPath, long length, InputStream is, IItem i, boolean preview)
             throws Exception {
-
         if (out == null) {
             tarLength = 0;
             tmp = new TemporaryResources();
@@ -188,22 +188,38 @@ public class MinIOTask extends AbstractTask {
             out = new TarArchiveOutputStream(new FileOutputStream(tarfile));
         }
 
+        // insert into the queue of files waiting to be sent
+        if (!preview) {
+            queue.add(i);
+        }
+
+        tarFiles++;
+        tarLength += length;
+        TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
+        entry.setSize(length);
+        out.putArchiveEntry(entry);
+
+        IOUtils.copy(is, out);
+        out.closeArchiveEntry();
+
+    }
+
+
+
+    private String insertWithTar(IItem i, String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
+
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
             bucketPath = "preview/" + hash;
         }
         String fullPath = bucket + "/" + bucketPath;
-        
-        
-        
-
         // if empty or already exists do not continue
         if (length <= 0) {
 
             return fullPath;
         }
-        
        
         if (checkIfExists(bucketPath)) {
             return fullPath;
@@ -214,19 +230,7 @@ public class MinIOTask extends AbstractTask {
             insertItem(hash, is, length, mediatype, bucketPath);
         } else {
 
-            tarFiles++;
-            tarLength += length;
-            TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
-            entry.setSize(length);
-            out.putArchiveEntry(entry);
-
-            IOUtils.copy(is, out);
-            out.closeArchiveEntry();
-
-            if (tarLength > tarMaxLength || tarFiles >= tarMaxFiles) {
-
-                insertTar();
-            }
+            insertInTarFile(bucketPath, length, is, i, preview);
 
         }
 
@@ -235,13 +239,13 @@ public class MinIOTask extends AbstractTask {
     }
 
 
-    private void insertTar() throws Exception {
+
+    private void sendTarFile() throws Exception {
         out.close();
-        // logger.info("nitems " + tar_items);
+
         if (tarFiles > 0) {
             try (InputStream fi = new BufferedInputStream(new FileInputStream(tarfile))) {
 
-                System.out.println("envios de items " + tarFiles);
                 ObjectWriteResponse aux = minioClient.putObject(
                         PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
                                 .stream(fi, tarfile.length(), Math.max(tarfile.length(), 1024 * 1024 * 5))
@@ -249,6 +253,8 @@ public class MinIOTask extends AbstractTask {
 
             }
         }
+        // mark to send items to next tasks
+        sendQueue = true;
 
         tmp.close();
         tarFiles = 0;
@@ -256,6 +262,14 @@ public class MinIOTask extends AbstractTask {
         out = null;
         tmp = null;
         tarfile = null;
+    }
+
+    private void sendTarItemsToNextTask() throws Exception {
+        for (IItem i : queue) {
+            super.sendToNextTask(i);
+        }
+        queue.clear();
+        sendQueue=false;
     }
 
     private boolean checkIfExists(String hash) throws Exception {
@@ -270,7 +284,7 @@ public class MinIOTask extends AbstractTask {
                 throw e;
             }
         }
-        // System.out.println("hash " + hash + " " + exists);
+
 
         return exists;
     }
@@ -316,10 +330,29 @@ public class MinIOTask extends AbstractTask {
     }
 
     @Override
+    protected void sendToNextTask(IItem item) throws Exception {
+        // if queue contains the item it will be sent when the tarfile is sent;
+        if (!queue.contains(item)) {
+            if (item.isQueueEnd() && !queue.isEmpty()) {
+                flushTarFile();
+            }
+
+            super.sendToNextTask(item);
+
+        }
+
+        if (sendQueue) {
+            sendTarItemsToNextTask();
+        }
+
+    }
+
+    @Override
     protected void process(IItem item) throws Exception {
 
         if (item.isQueueEnd()) {
-            finish();
+            flushTarFile();
+            return;
         }
 
         if (caseData.isIpedReport() || !item.isToAddToCase())
@@ -333,7 +366,7 @@ public class MinIOTask extends AbstractTask {
         ProxySever.get().disable();
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertWithTar(hash, new BufferedInputStream(item.getStream()), is.size(),
+            String fullPath = insertWithTar(item, hash, new BufferedInputStream(item.getStream()), is.size(),
                     item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
@@ -344,7 +377,7 @@ public class MinIOTask extends AbstractTask {
         }
         if (item.getViewFile() != null) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
-                String fullPath = insertWithTar(hash, new FileInputStream(item.getViewFile()),
+                String fullPath = insertWithTar(item, hash, new FileInputStream(item.getViewFile()),
                         item.getViewFile().length(), getMimeType(item.getViewFile().getName()), true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
@@ -357,6 +390,11 @@ public class MinIOTask extends AbstractTask {
                 logger.error(e.getMessage() + "Preview " + item.getViewFile().getPath() + " ("
                         + item.getViewFile().length() + " bytes)", e);
             }
+        }
+
+        if (tarLength > tarMaxLength || tarFiles >= tarMaxFiles) {
+
+            sendTarFile();
         }
 
     }
