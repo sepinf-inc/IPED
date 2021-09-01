@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Arrays;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -138,44 +139,66 @@ public class GraphicsMagicConverter implements Closeable {
         t.start();
     }
 
-    private static synchronized void configureImageMagick() {
-        if (imageMagickConfigured)
+    private static synchronized void configureImageMagick() throws IOException {
+        if (imageMagickConfigured) {
             return;
+        }
         String[] cmd = { "magick", "-version" };
-        if (!toolPath.isEmpty())
+        if (!toolPath.isEmpty()) {
             cmd[0] = toolPath + "/" + cmd[0];
-        try {
-            Process p = Runtime.getRuntime().exec(cmd);
-            while (p.getInputStream().read(new byte[1024]) != -1)
-                ;
-            int exit = p.waitFor();
-            if (exit == 0) {
-                CMD[0] = "magick";
-                for (int i = 1; i < CMD.length; i++) {
-                    if (CMD[i].equals(THREADS)) {
-                        CMD[i] = "thread";
-                    }
-                }
-            } else
-                throw new IOException("error");
-
-        } catch (IOException e) {
-            // can not run program
-            String[] newCmd = new String[CMD.length - 1];
-            System.arraycopy(CMD, 1, newCmd, 0, newCmd.length);
-            CMD = newCmd;
-
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+        }
+        boolean ok = testCmd(cmd);
+        if(ok) {
+            adjustIMCmdLine(false);
+        }else {
+            cmd[0] = "convert";
+            if (!toolPath.isEmpty()) {
+                cmd[0] = toolPath + "/" + cmd[0];
+            }
+            ok = testCmd(cmd);
+            if (ok) {
+                adjustIMCmdLine(true);
+            } else {
+                throw new IOException("Imagemagick command is not working!");
+            }
         }
         imageMagickConfigured = true;
+    }
+
+    private static boolean testCmd(String[] cmd) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder();
+            pb.command(cmd);
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            byte[] buf = new byte[1024];
+            while (p.getInputStream().read(buf) != -1)
+                ;
+            return p.waitFor() == 0;
+
+        } catch (IOException | InterruptedException e) {
+            return false;
+        }
+    }
+
+    private static void adjustIMCmdLine(boolean isLegacyVersion) {
+        if (isLegacyVersion) {
+            CMD = Arrays.copyOfRange(CMD, 1, CMD.length);
+        } else {
+            CMD[0] = "magick";
+        }
+        for (int i = 1; i < CMD.length; i++) {
+            if (CMD[i].equals(THREADS)) {
+                CMD[i] = "thread";
+            }
+        }
     }
 
     public void setNumThreads(int threads) {
         this.numThreads = threads;
     }
 
-    private String[] getCmd(int resolution) {
+    private String[] getCmd(int resolution) throws IOException {
 
         if (!useGM && !imageMagickConfigured) {
             configureImageMagick();
@@ -217,9 +240,9 @@ public class GraphicsMagicConverter implements Closeable {
         pb.environment().put(IM_TEMP_PATH, tmpDir.getAbsolutePath());
         pb.environment().put(MAGICK_MEMORY_LIMIT, MAGICK_MEMORY_LIMIT_VAL);
 
-        pb.command(getCmd(resolution));
         Process p = null;
         try {
+            pb.command(getCmd(resolution));
             p = pb.start();
         } catch (IOException e1) {
             Log.error("ImageMagickConverter", "Error executing imageMagick/graphicsMagick. " //$NON-NLS-1$ //$NON-NLS-2$
