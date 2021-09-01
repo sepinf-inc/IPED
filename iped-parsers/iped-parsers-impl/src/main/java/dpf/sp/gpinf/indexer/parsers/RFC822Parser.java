@@ -314,7 +314,13 @@ public class RFC822Parser extends AbstractParser {
                     }
                 } else if (!inPart) {
                     /* Issue #65 - Store all email headers as metadata */
-                    metadata.add(Metadata.MESSAGE_RAW_HEADER_PREFIX + parsedField.getName(), field.getBody());
+                    String value;
+                    if (parsedField instanceof UnstructuredField) {
+                        value = ((UnstructuredField) parsedField).getValue();
+                    } else {
+                        value = DecoderUtil.decodeEncodedWords(field.getBody(), DecodeMonitor.SILENT);
+                    }
+                    metadata.add(Metadata.MESSAGE_RAW_HEADER_PREFIX + parsedField.getName(), value);
                 }
             } catch (RuntimeException me) {
                 if (strictParsing) {
