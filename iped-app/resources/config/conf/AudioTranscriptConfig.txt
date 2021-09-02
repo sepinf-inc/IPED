@@ -5,7 +5,7 @@
 implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.MicrosoftTranscriptTask
 
 # If you want to use the Google Service implementation, comment above and uncomment below.
-# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugin/optional_jar folder.
+# You must include google-cloud-speech-1.22.5.jar AND ITS DEPENDENCIES in plugins folder.
 # You can download an all-in-one jar from https://gitlab.com/iped-project/iped-maven/-/blob/master/com/google/cloud/google-cloud-speech/1.22.5-shaded/google-cloud-speech-1.22.5-shaded.jar
 # Finally you must set environment variable GOOGLE_APPLICATION_CREDENTIALS pointing to your credential file
 #implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.GoogleTranscriptTask

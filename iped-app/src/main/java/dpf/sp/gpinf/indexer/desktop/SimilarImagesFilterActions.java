@@ -27,7 +27,9 @@ import iped3.IItemId;
 
 public class SimilarImagesFilterActions {
     private static final int sampleFactor = 3;
-    private static final ExternalImageConverter externalImageConverter = new ExternalImageConverter();
+
+    // do not instantiate here, makes external command adjustment fail, see #740
+    private static ExternalImageConverter externalImageConverter;
 
     public static void clear() {
         clear(true);
@@ -82,6 +84,9 @@ public class SimilarImagesFilterActions {
                 if (img == null) {
                     try {
                         is = new BufferedInputStream(new FileInputStream(file));
+                        if (externalImageConverter == null) {
+                            externalImageConverter = new ExternalImageConverter();
+                        }
                         img = externalImageConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
                     } catch (Exception e) {
                     } finally {
