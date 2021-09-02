@@ -1,11 +1,19 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 
 import org.apache.tika.metadata.IPTC;
 import org.apache.tika.metadata.Message;
@@ -39,6 +47,36 @@ public class MetadataUtil {
     private static final Set<String> singleValueKeys = getSingleValKeys();
 
     private static Map<String, String> metaCaseMap = getMetaCaseMap();
+
+    private static final Set<String> BASIC_MAIL_HEADERS = getBasicHeaders();
+
+    private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
+
+    private static final Set<String> getBasicHeaders() {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Set<String> set = new TreeSet<>(collator);
+        set.addAll(Arrays.asList("From", "Subject", "To", "Bcc", "Cc", "Date"));
+        return Collections.unmodifiableSet(set);
+    }
+
+    private static Set<String> getRawMailHeaders() {
+        Collator collator = Collator.getInstance();
+        collator.setStrength(Collator.PRIMARY);
+        Set<String> headers = new TreeSet<>(collator);
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(
+                MetadataUtil.class.getResourceAsStream("/AllowedRawMailHeaders.txt"), StandardCharsets.UTF_8))) {
+            headers.addAll(reader.lines().collect(Collectors.toList()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return Collections.unmodifiableSet(headers);
+    }
+
+    public static boolean isToAddRawMailHeader(String header) {
+        return !BASIC_MAIL_HEADERS.contains(header) && (RAW_MAIL_HEADERS.contains(header)
+                || (header.length() > 3 && header.toUpperCase().startsWith("X-")));
+    }
 
     private static Map<String, String> getMetaCaseMap() {
         Map<String, String> metaCaseMap = new HashMap<String, String>();
@@ -351,6 +389,13 @@ public class MetadataUtil {
                 && !value.toLowerCase().contains(metadata.get(Message.MESSAGE_FROM_EMAIL).toLowerCase()))
             value += " \"" + metadata.get(Message.MESSAGE_FROM_EMAIL) + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         metadata.set(Message.MESSAGE_FROM, value);
+
+        // deduplicate basic headers
+        metadata.remove("subject"); //$NON-NLS-1$
+        for (String meta : BASIC_MAIL_HEADERS) {
+            metadata.remove(Message.MESSAGE_RAW_HEADER_PREFIX + meta);
+        }
+
         // TODO remove metadata until that is consistent across email parsers
         metadata.remove(Message.MESSAGE_FROM_NAME.getName());
         metadata.remove(Message.MESSAGE_FROM_EMAIL.getName());
