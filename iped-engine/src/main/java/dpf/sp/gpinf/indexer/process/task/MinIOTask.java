@@ -172,7 +172,7 @@ public class MinIOTask extends AbstractTask {
 
     private void flushTarFile() throws Exception {
         if (tarfile != null) {
-            logger.info("Flushing working queue-" + worker.id + " MinIOTask..." + tarFiles); //$NON-NLS-1$ //$NON-NLS-2$
+            logger.info("Flushing MinIOTask " + worker.id + " Sending tar containing " + tarFiles + " files");
             sendTarFile();
         }
     }
