@@ -25,7 +25,6 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.charset.Charset;
-import java.text.Collator;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -39,7 +38,6 @@ import java.util.TreeSet;
 import java.util.Vector;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.tika.config.Field;
 import org.apache.tika.exception.EncryptedDocumentException;
@@ -74,6 +72,7 @@ import com.pff.PSTRecipient;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.util.ExtraProperties;
@@ -93,8 +92,6 @@ public class OutlookPSTParser extends AbstractParser {
     public static final String OUTLOOK_MSG_MIME = "message/outlook-pst"; //$NON-NLS-1$
     public static final String OUTLOOK_CONTACT_MIME = "application/outlook-contact"; //$NON-NLS-1$
 
-    public static final Set<String> BASIC_HEADERS = getBasicHeaders();
-
     public static Set<MediaType> SUPPORTED_TYPES = Collections.singleton(MediaType.application("vnd.ms-outlook-pst")); //$NON-NLS-1$
 
     private ParseContext context;
@@ -108,14 +105,6 @@ public class OutlookPSTParser extends AbstractParser {
     private boolean useLibpffParser = true;
 
     private int numEmails = 0;
-
-    private static final Set<String> getBasicHeaders() {
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        Set<String> set = new TreeSet<>(collator);
-        set.addAll(Arrays.asList("From", "Subject", "To", "Bcc", "Cc", "Date"));
-        return set;
-    }
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -618,8 +607,8 @@ public class OutlookPSTParser extends AbstractParser {
                 if (h.length > 1) {
                     String name = h[0];
                     String value = h[1].trim();
-                    // ignore basic and empty fields
-                    if (!BASIC_HEADERS.contains(name) && !value.isEmpty()) {
+                    // ignore basic and non registered raw headers
+                    if (!value.isEmpty() && MetadataUtil.isToAddRawMailHeader(name)) {
                         metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + name, value);
                     }
                 } else {

@@ -64,6 +64,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped3.util.ExtraProperties;
 
@@ -312,7 +313,7 @@ public class RFC822Parser extends AbstractParser {
                             this.attachName = attachName;
 
                     }
-                } else if (!inPart) {
+                } else if (!inPart && MetadataUtil.isToAddRawMailHeader(parsedField.getName())) {
                     /* Issue #65 - Store all email headers as metadata */
                     String value;
                     if (parsedField instanceof UnstructuredField) {

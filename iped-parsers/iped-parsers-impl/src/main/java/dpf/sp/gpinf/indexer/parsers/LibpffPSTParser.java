@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
@@ -531,7 +532,7 @@ public class LibpffPSTParser extends AbstractParser {
                                 fromAddr = value;
                         } else {
                             preview.append("<b>" + l[0] + ":</b> " + SimpleHTMLEncoder.htmlEncode(value) + "<br>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                            if (!OutlookPSTParser.BASIC_HEADERS.contains(l[0])) {
+                            if (MetadataUtil.isToAddRawMailHeader(l[0])) {
                                 metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
                             }
                         }
@@ -561,7 +562,7 @@ public class LibpffPSTParser extends AbstractParser {
                     String[] l = line.split(":", 2); //$NON-NLS-1$
                     if (l.length > 1) {
                         String value = l[1].trim();
-                        if (!OutlookPSTParser.BASIC_HEADERS.contains(l[0]) && !value.isEmpty()) {
+                        if (MetadataUtil.isToAddRawMailHeader(l[0]) && !value.isEmpty()) {
                             /* Issue #65 - add internet headers as metadata */
                             metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + l[0], value);
                         }
