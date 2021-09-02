@@ -173,7 +173,7 @@ public class MinIOTask extends AbstractTask {
         }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (checkIfExists(bucketPath)) {
+        if (length <= 0 || checkIfExists(bucketPath)) {
             return fullPath;
         }
 
@@ -216,7 +216,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
+        if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
             return;
 
         // disable blocking proxy possibly enabled by HtmlViewer
