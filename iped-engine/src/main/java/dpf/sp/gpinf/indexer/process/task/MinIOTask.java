@@ -148,8 +148,7 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
-            throws Exception {
+    private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -162,6 +161,11 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
+        return exists;
+    }
+
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
@@ -169,7 +173,7 @@ public class MinIOTask extends AbstractTask {
         }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (exists) {
+        if (checkIfExists(bucketPath)) {
             return fullPath;
         }
 
@@ -202,6 +206,8 @@ public class MinIOTask extends AbstractTask {
         }
         return tika.detect(name);
     }
+
+
 
     @Override
     protected void process(IItem item) throws Exception {
