@@ -3,10 +3,10 @@
 #################################
 
 # Enable exporting files to MinIO object storage
-enableMinIO = true
+enableMinIO = false
 
 # Host name or ip address of MinIO
-host = http://HPW14
+host = http://HPW06
 
 # Port where MinIO is listening
 port = 9000
