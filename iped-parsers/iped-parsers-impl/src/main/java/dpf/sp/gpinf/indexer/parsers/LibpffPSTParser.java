@@ -464,8 +464,10 @@ public class LibpffPSTParser extends AbstractParser {
                 if (l.length > 1 && !l[1].trim().isEmpty()) {
                     if (l[0].trim().equals("Display name")) //$NON-NLS-1$
                         name = l[1].trim();
-                    if (l[0].trim().equals("Email address")) //$NON-NLS-1$
+                    if (l[0].trim().equals("Email address")) { //$NON-NLS-1$
                         addr = l[1].trim();
+                        MetadataUtil.fillRecipientAddress(metadata, addr);
+                    }
                     if (l[0].trim().equals("Recipient type")) { //$NON-NLS-1$
                         String type = l[1].trim();
                         name = OutlookPSTParser.formatNameAndAddress(name, addr);

@@ -476,6 +476,7 @@ public class OutlookPSTParser extends AbstractParser {
                         if (!recipName.isEmpty()) {
                             recipients.add(recipName); // $NON-NLS-1$
                         }
+                        MetadataUtil.fillRecipientAddress(metadata, recip.getEmailAddress());
                     }
                 }
                 if (recipients.size() > 0) {

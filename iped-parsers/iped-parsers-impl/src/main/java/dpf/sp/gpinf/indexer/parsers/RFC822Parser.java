@@ -412,12 +412,16 @@ public class RFC822Parser extends AbstractParser {
             if (toField.isValidField()) {
                 AddressList addressList = toField.getAddressList();
                 for (int i = 0; i < addressList.size(); ++i) {
-                    metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
+                    String recipient = decodeIfUtf8(getDisplayString(addressList.get(i)));
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             } else {
                 String to = stripOutFieldPrefix(field, addressListType);
                 for (String eachTo : to.split(",")) { //$NON-NLS-1$
-                    metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
+                    String recipient = decodeIfUtf8(eachTo.trim());
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             }
         }

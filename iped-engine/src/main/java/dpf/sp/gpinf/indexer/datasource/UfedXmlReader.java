@@ -56,6 +56,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -1161,6 +1162,12 @@ public class UfedXmlReader extends DataSourceReader {
                         for (String value : values)
                             bw.write(" " + SimpleHTMLEncoder.htmlEncode(value)); //$NON-NLS-1$
                         bw.write("<br>"); //$NON-NLS-1$
+                    }
+                }
+
+                for (String prop : Arrays.asList(Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC)) {
+                    for (String val : email.getMetadata().getValues(prop)) {
+                        MetadataUtil.fillRecipientAddress(email.getMetadata(), val);
                     }
                 }
 

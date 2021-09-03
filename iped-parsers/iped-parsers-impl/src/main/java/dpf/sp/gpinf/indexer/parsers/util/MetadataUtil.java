@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.tika.metadata.IPTC;
@@ -52,6 +54,8 @@ public class MetadataUtil {
 
     private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
 
+    private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
+
     private static final Set<String> getBasicHeaders() {
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
@@ -76,6 +80,15 @@ public class MetadataUtil {
     public static boolean isToAddRawMailHeader(String header) {
         return !BASIC_MAIL_HEADERS.contains(header) && (RAW_MAIL_HEADERS.contains(header)
                 || (header.length() > 3 && header.toUpperCase().startsWith("X-")));
+    }
+
+    public static void fillRecipientAddress(Metadata metadata, String recipient) {
+        if (recipient != null) {
+            Matcher matcher = emailPattern.matcher(recipient);
+            while (matcher.find()) {
+                metadata.add(Message.MESSAGE_RECIPIENT_ADDRESS, matcher.group());
+            }
+        }
     }
 
     private static Map<String, String> getMetaCaseMap() {
