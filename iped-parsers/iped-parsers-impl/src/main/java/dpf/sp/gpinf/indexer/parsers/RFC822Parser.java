@@ -64,6 +64,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import iped3.util.ExtraProperties;
 
@@ -285,9 +286,8 @@ public class RFC822Parser extends AbstractParser {
                     DateTimeField dateField = (DateTimeField) parsedField;
                     if (metadata.get(ExtraProperties.MESSAGE_DATE) == null)
                         metadata.set(ExtraProperties.MESSAGE_DATE, dateField.getDate());
-                }
 
-                if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
+                } else if (fieldname.equalsIgnoreCase("Content-Type")) { //$NON-NLS-1$
                     ContentTypeField ctField = (ContentTypeField) parsedField;
                     attachName = ctField.getParameter("name"); //$NON-NLS-1$
 
@@ -313,8 +313,16 @@ public class RFC822Parser extends AbstractParser {
                             this.attachName = attachName;
 
                     }
+                } else if (!inPart && MetadataUtil.isToAddRawMailHeader(parsedField.getName())) {
+                    /* Issue #65 - Store all email headers as metadata */
+                    String value;
+                    if (parsedField instanceof UnstructuredField) {
+                        value = ((UnstructuredField) parsedField).getValue();
+                    } else {
+                        value = DecoderUtil.decodeEncodedWords(field.getBody(), DecodeMonitor.SILENT);
+                    }
+                    metadata.add(Metadata.MESSAGE_RAW_HEADER_PREFIX + parsedField.getName(), value);
                 }
-
             } catch (RuntimeException me) {
                 if (strictParsing) {
                     throw me;
@@ -440,11 +448,12 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startBodyPart() throws MimeException {
+            inPart = true;
         }
 
         @Override
         public void endBodyPart() throws MimeException {
-
+            inPart = false;
         }
 
         @Override
@@ -474,7 +483,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void endMultipart() throws MimeException {
-            inPart = false;
         }
 
         @Override
@@ -490,7 +498,6 @@ public class RFC822Parser extends AbstractParser {
 
         @Override
         public void startMultipart(BodyDescriptor descr) throws MimeException {
-            inPart = true;
         }
 
         private String stripOutFieldPrefix(Field field, String fieldname) {
