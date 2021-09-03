@@ -173,10 +173,10 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.SHARED_HASHES);
         generalKeys.add(ExtraProperties.SHARED_ITEMS);
         generalKeys.add(ExtraProperties.LINKED_ITEMS);
-        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
         generalKeys.add(ExtraProperties.CSAM_HASH_HITS);
-        generalKeys.add(ExtraProperties.PST_ATTACH);
-        generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
+        generalKeys.add(ExtraProperties.MESSAGE_IS_ATTACHMENT);
+        generalKeys.add(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
         generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.LOCATIONS);
@@ -381,7 +381,7 @@ public class MetadataUtil {
     }
 
     private static void normalizeMSGMetadata(Metadata metadata) {
-        if (!metadata.get(Metadata.CONTENT_TYPE).equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+        if (!metadata.get(Metadata.CONTENT_TYPE).equals(MediaTypes.OUTLOOK_MSG.toString()))
             return;
 
         String subject = metadata.get(TikaCoreProperties.TITLE);
@@ -500,7 +500,7 @@ public class MetadataUtil {
         MediaType mediaType = MediaType.parse(contentType);
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
-                contentType.equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+                MediaTypes.OUTLOOK_MSG.toString().equals(contentType))
             return;
 
         while (mediaType != null) {

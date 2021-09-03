@@ -136,6 +136,8 @@ public class RFC822Parser extends AbstractParser {
             } else {
                 throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
             }
+        } finally {
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(mch.attachmentCount));
         }
     }
 
@@ -155,6 +157,7 @@ public class RFC822Parser extends AbstractParser {
         private boolean inPart = false, textBody, htmlBody, isAttach;
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
+        private int attachmentCount = 0;
 
         MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context,
                 boolean strictParsing) {
@@ -209,8 +212,11 @@ public class RFC822Parser extends AbstractParser {
 
             try {
                 if (isAttach) {
-                    if (extractor.shouldParseEmbedded(submd))
+                    if (extractor.shouldParseEmbedded(submd)) {
+                        attachmentCount++;
+                        submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
                         extractor.parseEmbedded(is, handler, submd, true);
+                    }
                 } else {
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
                         BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);

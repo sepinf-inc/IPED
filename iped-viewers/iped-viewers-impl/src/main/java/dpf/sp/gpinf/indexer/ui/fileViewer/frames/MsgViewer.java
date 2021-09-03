@@ -10,7 +10,6 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -47,6 +46,7 @@ import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 /**
  *
@@ -77,7 +77,7 @@ public class MsgViewer extends HtmlViewer {
 
     @Override
     public boolean isSupportedType(String contentType) {
-        return contentType.equals("application/vnd.ms-outlook");
+        return MediaTypes.OUTLOOK_MSG.toString().equals(contentType);
     }
 
     @Override

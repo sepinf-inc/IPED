@@ -1179,6 +1179,7 @@ public class UfedXmlReader extends DataSourceReader {
                         bw.write(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                     }
                 }
+                email.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(attachNames.length));
 
                 bw.write("<hr>"); //$NON-NLS-1$
 

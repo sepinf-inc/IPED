@@ -251,7 +251,7 @@ public class GraphTask extends AbstractTask {
                 || MediaTypes.UFED_MESSAGE_MIME.equals(mediaType)) {
             return "message";
         }
-        if (mediaType.startsWith("message") || mediaType.equals("application/vnd.ms-outlook")) {
+        if (mediaType.startsWith("message") || MediaTypes.OUTLOOK_MSG.toString().equals(mediaType)) {
             return "email";
         }
         for (String contactMime : contactMimes) {
