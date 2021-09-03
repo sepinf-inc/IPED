@@ -290,8 +290,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 while (instance.numRequests > 0) {
                     instance.wait();
                 }
+                instance.onCommit.set(false);
+                instance.notifyAll();
             }
-            instance.onCommit.set(false);
         }
     }
 
