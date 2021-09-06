@@ -72,6 +72,7 @@ import com.pff.PSTRecipient;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.util.ExtraProperties;
@@ -548,6 +549,27 @@ public class OutlookPSTParser extends AbstractParser {
                 extractor.parseEmbedded(stream, xhtml, metadata, true);
 
             stream.close();
+            
+            /* Issue #65 - Store all email headers as metadata */
+            String importanceMeta = Message.MESSAGE_PREFIX + "Importance"; //$NON-NLS-1$
+            switch (email.getImportance()) {
+                case PSTMessage.IMPORTANCE_NORMAL:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+                case PSTMessage.IMPORTANCE_HIGH:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceHigh"));
+                    break;
+                case PSTMessage.IMPORTANCE_LOW:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceLow"));
+                    break;
+                default:
+                    metadata.add(importanceMeta, Messages.getString("OutlookPSTParser.ImportanceNormal"));
+                    break;
+            }
+            
+            populateMetadataWithEmailHeaders(email, metadata);
+            
+            /* Issue #65 - End */
 
         } catch (Exception e) {
             LOGGER.warn("Exception extracting email: {}>>{}\t{}", path, email.getSubject(), e.toString()); //$NON-NLS-1$
@@ -569,6 +591,29 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(line.trim()) + "<br>"); //$NON-NLS-1$
             }
             preview.append("</div>"); //$NON-NLS-1$
+        }
+    }
+    
+    /* Issue #65 */
+    private void populateMetadataWithEmailHeaders (PSTMessage email, Metadata metadata) {
+        String headers = email.getTransportMessageHeaders();
+        if (!headers.isEmpty()) {
+            // unfold multiple line fields according to RFC822
+            headers = headers.replaceAll("\r\n[ \t]", " ");
+            String[] fields = headers.split("\r\n");
+            for (String field : fields) {
+                String[] h = field.split(":", 2);
+                if (h.length > 1) {
+                    String name = h[0];
+                    String value = h[1].trim();
+                    // ignore basic and non registered raw headers
+                    if (!value.isEmpty() && MetadataUtil.isToAddRawMailHeader(name)) {
+                        metadata.add(Message.MESSAGE_RAW_HEADER_PREFIX + name, value);
+                    }
+                } else {
+                    LOGGER.warn("Unexpected header syntax: {}", field);
+                }
+            }
         }
     }
 

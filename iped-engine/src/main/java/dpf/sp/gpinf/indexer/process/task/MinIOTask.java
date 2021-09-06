@@ -148,8 +148,7 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
-            throws Exception {
+    private boolean checkIfExists(String hash) throws Exception {
         boolean exists = false;
         try {
             ObjectStat stat = minioClient.statObject(StatObjectArgs.builder().bucket(bucket).object(hash).build());
@@ -162,6 +161,11 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
+        return exists;
+    }
+
+    private String insertItem(String hash, InputStream is, long length, String mediatype, boolean preview)
+            throws Exception {
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
         if (preview) {
@@ -169,7 +173,7 @@ public class MinIOTask extends AbstractTask {
         }
         String fullPath = bucket + "/" + bucketPath;
 
-        if (exists) {
+        if (length <= 0 || checkIfExists(bucketPath)) {
             return fullPath;
         }
 
@@ -203,6 +207,8 @@ public class MinIOTask extends AbstractTask {
         return tika.detect(name);
     }
 
+
+
     @Override
     protected void process(IItem item) throws Exception {
 
@@ -210,7 +216,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         String hash = item.getHash();
-        if (hash == null || hash.isEmpty() || item.getLength() == null)
+        if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
             return;
 
         // disable blocking proxy possibly enabled by HtmlViewer

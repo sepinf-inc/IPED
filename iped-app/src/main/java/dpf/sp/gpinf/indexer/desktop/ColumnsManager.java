@@ -39,6 +39,7 @@ import javax.swing.table.TableColumn;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.Bits;
+import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,8 +109,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
             ExtraProperties.LINKED_ITEMS, ExtraProperties.TIKA_PARSER_USED, IndexItem.META_ADDRESS,
             IndexItem.MFT_SEQUENCE, IndexItem.FILESYSTEM_ID };
-
-    public static final String[] email = ExtraProperties.EMAIL_PROPS;
 
     private static ColumnsManager instance;
 
@@ -591,6 +590,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> nerFields = new ArrayList<String>();
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
+        ArrayList<String> emailFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
@@ -621,10 +621,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 nerFields.add(f);
             else if (f.startsWith(ExtraProperties.UFED_META_PREFIX))
                 ufedFields.add(f);
+            else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.EMAIL_BASIC_PROPS.contains(f))
+                emailFields.add(f);
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
-                extraAttrs.toArray(new String[0]), email,
+                extraAttrs.toArray(new String[0]), emailFields.toArray(new String[0]),
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),
