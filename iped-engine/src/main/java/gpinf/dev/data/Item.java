@@ -301,9 +301,6 @@ public class Item implements ISleuthKitItem {
                     // in some scenarios file.delete() works but Files.delete() throws ioexception
                     throw new IOException("Fail to delete file " + file.getAbsolutePath());
                 }
-                if (inputStreamFactory != null && idInDataSource != null && isNotHashId(idInDataSource)) {
-                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
-                }
             } catch (IOException e) {
                 LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
             }
