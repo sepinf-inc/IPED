@@ -565,15 +565,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)
             evidence.setExtraAttribute(HAS_SUBITEM, "true"); //$NON-NLS-1$
 
-            // #745: MSG parser isn't ours, so we do this here to not override it
-            if (MediaTypes.OUTLOOK_MSG.equals(evidence.getMediaType())) {
-                metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
-                String count = evidence.getMetadata().get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
-                if (count == null) count = Integer.toString(0);
-                evidence.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT,
-                        Integer.toString(Integer.parseInt(count) + 1));
-            }
-
             if (metadata.get(ExtraProperties.EMBEDDED_FOLDER) != null) {
                 metadata.remove(ExtraProperties.EMBEDDED_FOLDER);
                 subItem.setIsDir(true);
