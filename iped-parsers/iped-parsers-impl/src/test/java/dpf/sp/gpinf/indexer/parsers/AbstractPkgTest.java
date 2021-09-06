@@ -130,7 +130,9 @@ public abstract class AbstractPkgTest extends TestCase {
       protected List<String> messagesubject = new ArrayList<String>();
       protected List<String> messagebody = new ArrayList<String>();
       protected List<String> messagedate = new ArrayList<String>();
+      protected List<String> isattachment = new ArrayList<String>();
       protected List<String> attachmentname = new ArrayList<String>();
+      protected List<String> numberofattachments = new ArrayList<String>();
       protected List<String> useraccount = new ArrayList<String>();
       protected List<String> username = new ArrayList<String>();
       protected List<String> useremail = new ArrayList<String>();
@@ -174,8 +176,12 @@ public abstract class AbstractPkgTest extends TestCase {
           if(metadata.get(ExtraProperties.MESSAGE_DATE)!= null)
               messagedate.add(metadata.get(ExtraProperties.MESSAGE_DATE));
           //attachment
+          if(metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT) != null || false)
+              isattachment.add(metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
           if(metadata.get(Metadata.RESOURCE_NAME_KEY)!= null)
               attachmentname.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
+          if((metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT) != null))
+              numberofattachments.add(metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));;
           //contact
           if(metadata.get(ExtraProperties.USER_ACCOUNT)!= null)
               useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));

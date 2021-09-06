@@ -51,6 +51,8 @@ public class RFC822ParserTest extends TestCase {
         assertEquals("2021-04-12T08:25:34Z", metadata.get(ExtraProperties.MESSAGE_DATE));
         assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(Metadata.AUTHOR));
         assertEquals("test@test.pf.gov", metadata.get(Metadata.MESSAGE_TO));
+        assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
        
     }
 
@@ -74,7 +76,18 @@ public class RFC822ParserTest extends TestCase {
         
         //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
         String hts = handler.toString();
+        String mts = metadata.toString();
         assertTrue(hts.contains("logo.gif"));
+        assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(TikaCoreProperties.CREATOR));
+        assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(Metadata.AUTHOR));
+        assertEquals("This is a test for parsing multi-part mails. "
+                + "With some funky HTML code an a picture attached. "
+                + "Text specific to body 1. -- ** *(...)", metadata.get(ExtraProperties.MESSAGE_BODY));
+        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
+        assertEquals("lists.digitalpebble@gmail.com", metadata.get(Metadata.MESSAGE_TO));
+        assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+        assertEquals("Test Multi Part Message", metadata.get(Metadata.TITLE));
+       
 
     }
     
@@ -88,10 +101,14 @@ public class RFC822ParserTest extends TestCase {
         parser.parse(stream, handler, metadata, context);
         stream.close();
         //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
-        String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
-        assertTrue(mts.contains("Düsseldorf has non-ascii."));
-        assertTrue(mts.contains("Lines can be split like this."));
-        assertFalse(mts.contains("=")); //there should be no escape sequences
+        assertEquals("Another Person <another.person@another-example.com>", metadata.get(TikaCoreProperties.CREATOR));
+        assertEquals("Another Person <another.person@another-example.com>", metadata.get(Metadata.AUTHOR));
+        assertEquals("Düsseldorf has non-ascii. Lines can be split like this. Spaces at the end of a line \r\n"
+                + "must be encoded.", metadata.get(ExtraProperties.MESSAGE_BODY));
+        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
+        assertEquals("A. Person <a.person@example.com>", metadata.get(Metadata.MESSAGE_TO));
+        assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+        assertEquals("Sample with Quoted Printable Text", metadata.get(Metadata.TITLE));
 
     }
 
@@ -105,7 +122,7 @@ public class RFC822ParserTest extends TestCase {
         //tests correct decoding of base64 text, including ISO-8859-1 bytes into Unicode
         String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
         assertTrue(mts.contains("Here is some text, with international characters, voil\u00E0!"));
-
+        
     }
     
     @Test

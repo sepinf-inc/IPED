@@ -52,6 +52,8 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         assertEquals(4, psttracker.messagesubject.size());
         assertEquals(4, psttracker.messagebody.size());
         assertEquals(3, psttracker.messagedate.size());
+        assertEquals(1, psttracker.isattachment.size());
+        assertEquals(4, psttracker.numberofattachments.size());
         assertEquals(1, psttracker.attachmentname.size());
         assertEquals(0, psttracker.useraccount.size());
         assertEquals(1, psttracker.username.size());
@@ -121,6 +123,10 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
                 + "in this attachment. It is awesome.", psttracker.messagebody.get(3));
         assertEquals("2021-04-27", psttracker.messagedate.get(2).substring(0,10));
         assertEquals("lionel-animals-to-follow-on-instagram-1568319926.jpg", psttracker.attachmentname.get(0));
+        assertEquals("true", psttracker.isattachment.get(0));
+        assertEquals("1", psttracker.numberofattachments.get(3));
+        
+        
     }
     @Test
     public void testOutlookPSTParserMetadataUserInfo() throws IOException, SAXException, TikaException{
