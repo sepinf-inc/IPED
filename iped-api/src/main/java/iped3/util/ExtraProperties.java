@@ -44,9 +44,9 @@ public class ExtraProperties {
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
 
-    public static final String PST_ATTACH = "pst_attachment"; //$NON-NLS-1$
+    public static final String MESSAGE_IS_ATTACHMENT = Message.MESSAGE_PREFIX + "IsEmailAttachment"; //$NON-NLS-1$
 
-    public static final String PST_EMAIL_HAS_ATTACHS = "pst_email_has_attachs"; //$NON-NLS-1$
+    public static final String MESSAGE_ATTACHMENT_COUNT = Message.MESSAGE_PREFIX + "AttachmentCount"; //$NON-NLS-1$
 
     public static final String CSAM_HASH_HITS = "childPornHashHits"; //$NON-NLS-1$
 
@@ -123,6 +123,6 @@ public class ExtraProperties {
     public static final String TIME_EVENT_GROUPS = "timeEventGroups";
 
     public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
-            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC, PST_ATTACH,
-            PST_EMAIL_HAS_ATTACHS);
+            MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
+            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT);
 }

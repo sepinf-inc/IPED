@@ -19,6 +19,7 @@ public class MediaTypes {
     public static final MediaType UFED_DEVICE_INFO = MediaType.application("x-ufed-deviceinfo"); //$NON-NLS-1$
     public static final MediaType UNALLOCATED = MediaType.application("x-unallocated"); //$NON-NLS-1$
     public static final MediaType JBIG2 = MediaType.image("x-jbig2");
+    public static final MediaType OUTLOOK_MSG = MediaType.application("vnd.ms-outlook");
 
     public static final String UFED_MIME_PREFIX = "x-ufed-"; //$NON-NLS-1$
 

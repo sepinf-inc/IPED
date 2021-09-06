@@ -316,8 +316,8 @@ public class LibpffPSTParser extends AbstractParser {
             for (String attach : attachNames) {
                 preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
             }
-            metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
         }
+        metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(attachNames.size()));
 
         preview.append("<hr>"); //$NON-NLS-1$
         preview.append("</div>\n"); //$NON-NLS-1$
@@ -464,8 +464,10 @@ public class LibpffPSTParser extends AbstractParser {
                 if (l.length > 1 && !l[1].trim().isEmpty()) {
                     if (l[0].trim().equals("Display name")) //$NON-NLS-1$
                         name = l[1].trim();
-                    if (l[0].trim().equals("Email address")) //$NON-NLS-1$
+                    if (l[0].trim().equals("Email address")) { //$NON-NLS-1$
                         addr = l[1].trim();
+                        MetadataUtil.fillRecipientAddress(metadata, addr);
+                    }
                     if (l[0].trim().equals("Recipient type")) { //$NON-NLS-1$
                         String type = l[1].trim();
                         name = OutlookPSTParser.formatNameAndAddress(name, addr);
@@ -586,7 +588,7 @@ public class LibpffPSTParser extends AbstractParser {
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
             metadata.set(Metadata.RESOURCE_NAME_KEY, name);
-            metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
+            metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             if (deleted)
                 metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$
 
