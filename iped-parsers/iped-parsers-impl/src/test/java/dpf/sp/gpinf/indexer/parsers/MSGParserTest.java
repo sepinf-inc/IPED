@@ -35,7 +35,7 @@ public class MSGParserTest extends AbstractPkgTest{
         assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(Metadata.SUBJECT));
         assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
         assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
-        assertEquals("false", metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
+        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
         assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
     }
     
@@ -52,7 +52,7 @@ public class MSGParserTest extends AbstractPkgTest{
         assertEquals("[cic-bcc-l] Passe Estudantil - Atividades em Per?odo de F?rias", metadata.get(Metadata.SUBJECT));
         assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação", metadata.get(Metadata.MESSAGE_FROM));
         assertEquals("cic-bcc-l@listas.unb.br; cic-lic-l@listas.unb.br; cic-mec-l@listas.unb.br; cic-eng-l@listas.unb.br", metadata.get(Metadata.MESSAGE_TO));
-        assertEquals("true", metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
+        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
         assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
          
     }
