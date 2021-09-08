@@ -33,20 +33,20 @@ public class RegistryKeyParserManager {
     }
 
     private void loadConfigPath() {
-        File dir, dir2;
         try {
             String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
 
-            dir2 = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
-            dir = new File("C:\\Users\\guilh\\git\\IPED\\target\\release\\iped-4.0.0-snapshot\\conf\\ParsersCustomConfigs\\dpf.mt.gpinf.registro.RegistroParser");
+            File dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
             File[] files = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
                     return name.endsWith(".xml");
                 }
             });
-            for (int i = 0; i < files.length; i++) {
-                loadConfigFile(files[i]);
+            if (files != null) {
+                for (int i = 0; i < files.length; i++) {
+                    loadConfigFile(files[i]);
+                }
             }
 
             loadJSFiles(dir);
@@ -64,11 +64,13 @@ public class RegistryKeyParserManager {
         });
         ScriptEngineManager manager = new ScriptEngineManager();
         this.engine = manager.getEngineByExtension("js"); // $NON-NLS-1$
-        for (int i = 0; i < files.length; i++) {
-            try (InputStreamReader reader = new InputStreamReader(new FileInputStream(files[i]), "UTF-8")) {
-                engine.eval(reader);
-            } catch (IOException | ScriptException e) {
-                e.printStackTrace();
+        if (files != null) {
+            for (int i = 0; i < files.length; i++) {
+                try (InputStreamReader reader = new InputStreamReader(new FileInputStream(files[i]), "UTF-8")) {
+                    engine.eval(reader);
+                } catch (IOException | ScriptException e) {
+                    e.printStackTrace();
+                }
             }
         }
         this.inv = (Invocable) engine;
