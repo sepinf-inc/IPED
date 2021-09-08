@@ -70,8 +70,8 @@ public abstract class AbstractPkgTest extends TestCase {
       protected List<String> modifieddate = new ArrayList<String>();
       protected List<String> itensmd5 = new ArrayList<String>();
       protected List<String> isfolder = new ArrayList<String>();
-      
-
+      protected int subitemCount = 0;
+      protected int folderCount = 0;
       
       public Set<MediaType> getSupportedTypes(ParseContext context) {
          return (new AutoDetectParser()).getSupportedTypes(context);
@@ -81,15 +81,19 @@ public abstract class AbstractPkgTest extends TestCase {
             Metadata metadata, ParseContext context) throws IOException,
             SAXException, TikaException {
 
+         subitemCount++;
          String hdigest = new DigestUtils(MD5).digestAsHex(stream);
          if(metadata.get(Metadata.RESOURCE_NAME_KEY)!= null)
              filenames.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
          if(metadata.get(TikaCoreProperties.MODIFIED)!= null)
              modifieddate.add(metadata.get(TikaCoreProperties.MODIFIED));
-         itensmd5.add(hdigest.toUpperCase());
-         if(metadata.get(ExtraProperties.EMBEDDED_FOLDER)!= null)
-                 isfolder.add(metadata.get(ExtraProperties.EMBEDDED_FOLDER));
-         isfolder.add("false");
+         itensmd5.add(hdigest.toUpperCase()); 
+         if (Boolean.valueOf(metadata.get(ExtraProperties.EMBEDDED_FOLDER))) {
+             isfolder.add("true");
+             folderCount++;
+         } else {
+             isfolder.add("false");
+         }
 
       }
 

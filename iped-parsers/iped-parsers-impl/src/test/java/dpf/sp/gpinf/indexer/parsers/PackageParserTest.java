@@ -919,7 +919,7 @@ public class PackageParserTest extends AbstractPkgTest{
       assertEquals(17, tracker.filenames.size());
       assertEquals(12, tracker.modifieddate.size());
       assertEquals(17, tracker.itensmd5.size());
-      assertEquals(22, tracker.isfolder.size());
+      assertEquals(5, tracker.folderCount);
       
       int style = DateFormat.MEDIUM;
       DateFormat df;
