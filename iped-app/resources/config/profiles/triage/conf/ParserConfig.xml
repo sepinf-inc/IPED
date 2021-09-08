@@ -264,6 +264,7 @@
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.MSGParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IncrediMailParser"></parser>
