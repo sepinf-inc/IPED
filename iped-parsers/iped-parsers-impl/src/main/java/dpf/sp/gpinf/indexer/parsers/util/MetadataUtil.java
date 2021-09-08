@@ -13,6 +13,8 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import org.apache.tika.metadata.IPTC;
@@ -52,6 +54,8 @@ public class MetadataUtil {
 
     private static final Set<String> RAW_MAIL_HEADERS = getRawMailHeaders();
 
+    private static Pattern emailPattern = Pattern.compile("[0-9a-zA-Z\\+\\.\\_\\%\\-\\#\\!]+\\@[0-9a-zA-Z\\-\\.]+");
+
     private static final Set<String> getBasicHeaders() {
         Collator collator = Collator.getInstance();
         collator.setStrength(Collator.PRIMARY);
@@ -76,6 +80,15 @@ public class MetadataUtil {
     public static boolean isToAddRawMailHeader(String header) {
         return !BASIC_MAIL_HEADERS.contains(header) && (RAW_MAIL_HEADERS.contains(header)
                 || (header.length() > 3 && header.toUpperCase().startsWith("X-")));
+    }
+
+    public static void fillRecipientAddress(Metadata metadata, String recipient) {
+        if (recipient != null) {
+            Matcher matcher = emailPattern.matcher(recipient);
+            while (matcher.find()) {
+                metadata.add(Message.MESSAGE_RECIPIENT_ADDRESS, matcher.group());
+            }
+        }
     }
 
     private static Map<String, String> getMetaCaseMap() {
@@ -160,10 +173,10 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.SHARED_HASHES);
         generalKeys.add(ExtraProperties.SHARED_ITEMS);
         generalKeys.add(ExtraProperties.LINKED_ITEMS);
-        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
         generalKeys.add(ExtraProperties.CSAM_HASH_HITS);
-        generalKeys.add(ExtraProperties.PST_ATTACH);
-        generalKeys.add(ExtraProperties.PST_EMAIL_HAS_ATTACHS);
+        generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
+        generalKeys.add(ExtraProperties.MESSAGE_IS_ATTACHMENT);
+        generalKeys.add(ExtraProperties.MESSAGE_ATTACHMENT_COUNT.getName());
         generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.LOCATIONS);
@@ -368,7 +381,7 @@ public class MetadataUtil {
     }
 
     private static void normalizeMSGMetadata(Metadata metadata) {
-        if (!metadata.get(Metadata.CONTENT_TYPE).equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+        if (!metadata.get(Metadata.CONTENT_TYPE).equals(MediaTypes.OUTLOOK_MSG.toString()))
             return;
 
         String subject = metadata.get(TikaCoreProperties.TITLE);
@@ -487,7 +500,7 @@ public class MetadataUtil {
         MediaType mediaType = MediaType.parse(contentType);
 
         if (contentType.startsWith("message") || //$NON-NLS-1$
-                contentType.equals("application/vnd.ms-outlook")) //$NON-NLS-1$
+                MediaTypes.OUTLOOK_MSG.toString().equals(contentType))
             return;
 
         while (mediaType != null) {

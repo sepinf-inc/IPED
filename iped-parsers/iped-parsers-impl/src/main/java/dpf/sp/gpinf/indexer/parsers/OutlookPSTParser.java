@@ -439,9 +439,6 @@ public class OutlookPSTParser extends AbstractParser {
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
 
-            if (email.hasAttachments())
-                metadata.set(ExtraProperties.PST_EMAIL_HAS_ATTACHS, "true"); //$NON-NLS-1$
-
             Charset charset = Charset.forName("UTF-8"); //$NON-NLS-1$
             StringBuilder preview = new StringBuilder();
             preview.append("<html>"); //$NON-NLS-1$
@@ -476,6 +473,7 @@ public class OutlookPSTParser extends AbstractParser {
                         if (!recipName.isEmpty()) {
                             recipients.add(recipName); // $NON-NLS-1$
                         }
+                        MetadataUtil.fillRecipientAddress(metadata, recip.getEmailAddress());
                     }
                 }
                 if (recipients.size() > 0) {
@@ -502,6 +500,7 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                 }
             }
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNumberOfAttachments());
 
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("</div>\n"); //$NON-NLS-1$
@@ -665,7 +664,7 @@ public class OutlookPSTParser extends AbstractParser {
                     // attach.getLastModificationTime());
                     // metadata.set(ExtraProperties.EMBEDDED_PATH, path);
                     metadata.set(Metadata.CONTENT_TYPE, attach.getMimeTag());
-                    metadata.set(ExtraProperties.PST_ATTACH, "true"); //$NON-NLS-1$
+                    metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
 
                     metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, parent + "_attach" + x);
                     metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);

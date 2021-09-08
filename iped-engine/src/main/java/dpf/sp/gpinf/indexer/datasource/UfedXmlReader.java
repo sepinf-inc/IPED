@@ -56,6 +56,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -1164,6 +1165,12 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
 
+                for (String prop : Arrays.asList(Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC)) {
+                    for (String val : email.getMetadata().getValues(prop)) {
+                        MetadataUtil.fillRecipientAddress(email.getMetadata(), val);
+                    }
+                }
+
                 String[] attachNames = email.getMetadata().getValues(EMAIL_ATTACH_KEY);
                 if (attachNames != null && attachNames.length > 0) {
                     bw.write("<b>" + Messages.getString("UfedXmlReader.Attachments") + " (" + attachNames.length //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -1172,6 +1179,7 @@ public class UfedXmlReader extends DataSourceReader {
                         bw.write(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                     }
                 }
+                email.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, attachNames.length);
 
                 bw.write("<hr>"); //$NON-NLS-1$
 
