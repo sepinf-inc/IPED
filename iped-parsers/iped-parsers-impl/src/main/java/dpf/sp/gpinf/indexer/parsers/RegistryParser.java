@@ -1,18 +1,12 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InterruptedIOException;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.PrintStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.Collections;
@@ -72,9 +66,9 @@ public class RegistryParser extends AbstractParser {
                         cmd = new String[] { "perl", "-I", ".", TOOL_NAME + ".pl" }; //$NON-NLS-1$ //$NON-NLS-2$
 
                     ProcessBuilder pb = new ProcessBuilder(cmd);
-                    File dir = new File(TOOL_PATH);
-                    if (dir.exists())
-                        pb.directory(dir);
+                    if (!TOOL_PATH.isEmpty()) {
+                        pb.directory(new File(TOOL_PATH));
+                    }
                     Process p = pb.start();
                     p.waitFor();
                     if (p.exitValue() != 0)
@@ -138,7 +132,9 @@ public class RegistryParser extends AbstractParser {
 
             if (finalCmd != null) {
                 ProcessBuilder pb = new ProcessBuilder(finalCmd);
-                pb.directory(new File(TOOL_PATH));
+                if (!TOOL_PATH.isEmpty()) {
+                    pb.directory(new File(TOOL_PATH));
+                }
                 Process p = pb.start();
 
                 readStream(p.getErrorStream(), null, null);
