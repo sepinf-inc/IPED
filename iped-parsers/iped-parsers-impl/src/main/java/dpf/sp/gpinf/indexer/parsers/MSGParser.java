@@ -42,7 +42,7 @@ public class MSGParser extends OfficeParser {
 
         } finally {
             if (delegate != null) {
-                metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(delegate.attachCount));
+                metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, delegate.attachCount);
                 context.set(EmbeddedDocumentExtractor.class, extractor);
             }
         }

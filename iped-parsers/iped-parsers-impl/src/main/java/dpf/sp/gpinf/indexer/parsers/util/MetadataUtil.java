@@ -176,7 +176,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.CSAM_HASH_HITS);
         generalKeys.add(ExtraProperties.MESSAGE_SUBJECT);
         generalKeys.add(ExtraProperties.MESSAGE_IS_ATTACHMENT);
-        generalKeys.add(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
+        generalKeys.add(ExtraProperties.MESSAGE_ATTACHMENT_COUNT.getName());
         generalKeys.add(ExtraProperties.ITEM_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.PARENT_VIRTUAL_ID);
         generalKeys.add(ExtraProperties.LOCATIONS);

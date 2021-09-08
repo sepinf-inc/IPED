@@ -499,7 +499,7 @@ public class OutlookPSTParser extends AbstractParser {
                     preview.append(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                 }
             }
-            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(email.getNumberOfAttachments()));
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, email.getNumberOfAttachments());
 
             preview.append("<hr>"); //$NON-NLS-1$
             preview.append("</div>\n"); //$NON-NLS-1$

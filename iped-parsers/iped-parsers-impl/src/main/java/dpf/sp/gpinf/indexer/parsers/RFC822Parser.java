@@ -137,7 +137,7 @@ public class RFC822Parser extends AbstractParser {
                 throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
             }
         } finally {
-            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(mch.attachmentCount));
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, mch.attachmentCount);
         }
     }
 

@@ -558,8 +558,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
 
-            String attachCount = metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
-            if (attachCount != null && Integer.valueOf(attachCount) > 0)
+            Integer attachCount = metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
+            if (attachCount != null && attachCount > 0)
                 subItem.setHasChildren(true);
 
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)
