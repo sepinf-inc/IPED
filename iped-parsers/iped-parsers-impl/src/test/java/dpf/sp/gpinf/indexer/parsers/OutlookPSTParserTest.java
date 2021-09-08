@@ -11,15 +11,15 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
-public class OutlookPSTParserTest extends AbstractPkgTest{
-    
+
+public class OutlookPSTParserTest extends AbstractPkgTest {
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
 
     @Test
-    public void testOutlookPSTParser() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParser() throws IOException, SAXException, TikaException {
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
         parser.setUseLibpffParser(false);
@@ -30,12 +30,11 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         assertEquals("thisisatest", metadata.get(TikaCoreProperties.TITLE));
-         
+
     }
-    
-    
+
     @Test
-    public void testOutlookPSTParserMetadata() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParserMetadata() throws IOException, SAXException, TikaException {
 
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
@@ -44,7 +43,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         ContentHandler handler = new DefaultHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
         parser.parse(stream, handler, metadata, pstContext);
-        
+
         assertEquals(27, psttracker.foldertitle.size());
         assertEquals(1, psttracker.foldercreated.size());
         assertEquals(0, psttracker.foldermodified.size());
@@ -66,8 +65,9 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         assertEquals(1, psttracker.usernotes.size());
         assertEquals(32, psttracker.contentmd5.size());
     }
+
     @Test
-    public void testOutlookPSTParserMetadataSimpleMessage() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParserMetadataSimpleMessage() throws IOException, SAXException, TikaException {
 
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
@@ -77,15 +77,15 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         InputStream stream = getStream("test-files/test_sample.pst");
         parser.parse(stream, handler, metadata, pstContext);
 
-        
         assertEquals("Caixa de Entrada", psttracker.foldertitle.get(9));
         assertEquals("Pasta Caixa de Entrada", psttracker.foldercomment.get(4));
-        assertEquals("2021-04-27", psttracker.foldercreated.get(0).substring(0,10));
+        assertEquals("2021-04-27", psttracker.foldercreated.get(0).substring(0, 10));
         assertEquals("this is a test message", psttracker.messagesubject.get(0));
         assertEquals("Hello, this\nis a test message.\n\n\n  ", psttracker.messagebody.get(0));
     }
+
     @Test
-    public void testOutlookPSTParserMetadataRealMessages() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParserMetadataRealMessages() throws IOException, SAXException, TikaException {
 
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
@@ -96,19 +96,23 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         parser.parse(stream, handler, metadata, pstContext);
 
         assertEquals("Re: [sepinf-inc/IPED] WIP Parsers tests (#481)", psttracker.messagesubject.get(1));
-        assertEquals("Solved by using my abstrackpackage instead of "
-                + "hardcoding the parser. Sorry, my mistake. Thanks for the tip!! "
-                + "Good. I also confu(...)", psttracker.messagebody.get(1));
-        assertEquals("2021-04-26", psttracker.messagedate.get(0).substring(0,10));
-        
-        assertEquals("Re: Solicita documentação para contrato de estágio na DITEC/PF.", psttracker.messagesubject.get(2));
-        assertEquals("Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
-                + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta"
-                + " NAD/SELO/DITEC/(...)", psttracker.messagebody.get(2));
-        assertEquals("2021-03-29", psttracker.messagedate.get(1).substring(0,10));
+        assertEquals(
+                "Solved by using my abstrackpackage instead of "
+                        + "hardcoding the parser. Sorry, my mistake. Thanks for the tip!! " + "Good. I also confu(...)",
+                psttracker.messagebody.get(1));
+        assertEquals("2021-04-26", psttracker.messagedate.get(0).substring(0, 10));
+
+        assertEquals("Re: Solicita documentação para contrato de estágio na DITEC/PF.",
+                psttracker.messagesubject.get(2));
+        assertEquals(
+                "Bom dia, Guilherme! A UnB assinou o TCE/PA? At.te,"
+                        + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta" + " NAD/SELO/DITEC/(...)",
+                psttracker.messagebody.get(2));
+        assertEquals("2021-03-29", psttracker.messagedate.get(1).substring(0, 10));
     }
+
     @Test
-    public void testOutlookPSTParserMetadataMessageAttach() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParserMetadataMessageAttach() throws IOException, SAXException, TikaException {
 
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
@@ -116,20 +120,20 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_sample.pst");
-        parser.parse(stream, handler, metadata, pstContext); 
-        
+        parser.parse(stream, handler, metadata, pstContext);
+
         assertEquals("This is a test message with attachment!!! ", psttracker.messagesubject.get(3));
-        assertEquals("Hi there, it’s me again. Take a look\n"
-                + "in this attachment. It is awesome.", psttracker.messagebody.get(3));
-        assertEquals("2021-04-27", psttracker.messagedate.get(2).substring(0,10));
+        assertEquals("Hi there, it’s me again. Take a look\n" + "in this attachment. It is awesome.",
+                psttracker.messagebody.get(3));
+        assertEquals("2021-04-27", psttracker.messagedate.get(2).substring(0, 10));
         assertEquals("lionel-animals-to-follow-on-instagram-1568319926.jpg", psttracker.attachmentname.get(0));
         assertEquals("true", psttracker.isattachment.get(0));
         assertEquals("1", psttracker.numberofattachments.get(3));
-        
-        
+
     }
+
     @Test
-    public void testOutlookPSTParserMetadataUserInfo() throws IOException, SAXException, TikaException{
+    public void testOutlookPSTParserMetadataUserInfo() throws IOException, SAXException, TikaException {
 
         OutlookPSTParser parser = new OutlookPSTParser();
         parser.setRecoverDeleted(false);
@@ -145,9 +149,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest{
         assertEquals("Condomínio da imaginação ruas dos bobos número 0", psttracker.useraddress.get(0));
         assertEquals("Polícia Federal", psttracker.userorganization.get(0));
         assertEquals("github.com/streeg", psttracker.userurls.get(0));
-        
-    }
-    
 
+    }
 
 }

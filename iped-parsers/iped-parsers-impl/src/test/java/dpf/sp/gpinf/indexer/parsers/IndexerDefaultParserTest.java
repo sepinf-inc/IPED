@@ -11,16 +11,17 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class IndexerDefaultParserTest extends TestCase{
-    
-    //This class will test some files such as: Image, Video, Document, Text, Package, PDF and an Unknown file type.
-    
+public class IndexerDefaultParserTest extends TestCase {
+
+    // This class will test some files such as: Image, Video, Document, Text,
+    // Package, PDF and an Unknown file type.
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
+
     @Test
-    public void testIndexerDefaultParserParsing() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsing() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -34,11 +35,10 @@ public class IndexerDefaultParserTest extends TestCase{
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
 
-
-       }
+    }
 
     @Test
-    public void testIndexerDefaultParserParsingImage() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingImage() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -47,13 +47,14 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("Indexer-Content-Type: image/png"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.image.ImageParser"));
-        assertTrue(hts.contains("image:IHDR: width=512, height=512, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive"));
+        assertTrue(hts.contains(
+                "image:IHDR: width=512, height=512, bitDepth=8, colorType=RGB, compressionMethod=deflate, filterMethod=adaptive"));
         assertTrue(hts.contains("image:tiff:BitsPerSample: 8 8 8"));
         assertTrue(hts.contains("image:Height: 512"));
         assertTrue(hts.contains("image:Width: 512"));
@@ -63,10 +64,10 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(mts.contains("image:Width=512"));
         assertTrue(mts.contains("image:tiff:BitsPerSample=8 8 8"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingVideo() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingVideo() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -75,10 +76,10 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("Indexer-Content-Type: video/x-flv"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.video.FLVParser"));
         assertTrue(hts.contains("video:audiocodecid: 2.0"));
@@ -105,10 +106,10 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(mts.contains("video:Width=256.0"));
         assertTrue(mts.contains("video:framerate=29.97002997002997"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingDocument() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingDocument() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -117,15 +118,16 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("Mockdoc1:"));
         assertTrue(hts.contains("· Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
         assertTrue(hts.contains("· Suspendisse id erat maximus, iaculis turpis ut, dignissim nibh."));
-        
-        assertTrue(hts.contains("Indexer-Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+
+        assertTrue(hts.contains(
+                "Indexer-Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.microsoft.ooxml.OOXMLParser"));
         assertTrue(hts.contains("office:Application-Name: Microsoft Office Word"));
         assertTrue(hts.contains("office:Application-Version: 12.0000"));
@@ -153,15 +155,16 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("office:meta:paragraph-count: 6"));
         assertTrue(hts.contains("office:meta:word-count: 504"));
         assertTrue(hts.contains("office:xmpTPg:NPages: 1"));
-        
-        assertTrue(mts.contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
+
+        assertTrue(
+                mts.contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
         assertTrue(mts.contains("office:meta:character-count=2724"));
         assertTrue(mts.contains("office:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingText() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingText() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -170,26 +173,26 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("issO é OUTR4 stRin8888"));
         assertTrue(hts.contains("codificada em UTF8"));
         assertTrue(hts.contains("Essa part3 está em UTF8."));
-        
+
         assertTrue(hts.contains("Content-Encoding: UTF-8"));
         assertTrue(hts.contains("Indexer-Content-Type: text/plain"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.csv.TextAndCSVParser"));
-        
+
         assertTrue(mts.contains("Content-Type=text/plain"));
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
         assertTrue(mts.contains("charset=UTF-8"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingPackage() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingPackage() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -198,10 +201,9 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
 
         assertTrue(hts.contains("mocktext1.txt"));
         assertTrue(hts.contains("mocktext2.txt"));
@@ -221,18 +223,18 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("mockdoc3.docx"));
         assertTrue(hts.contains("mockdoc4.docx"));
         assertTrue(hts.contains("mockdoc5.docx"));
-        
+
         assertTrue(hts.contains("Indexer-Content-Type: application/x-rar-compressed; version=4"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.pkg.RarParser"));
-        
+
         assertTrue(mts.contains("Indexer-Content-Type=application/x-rar-compressed; version=4"));
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pkg.RarParser"));
         assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingPDF() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingPDF() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -241,14 +243,14 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("Freshman Resume"));
         assertTrue(hts.contains("Education Massachusetts Institute of Technology (MIT) Cambridge, MA"));
         assertTrue(hts.contains("UROP-Diabetes Management Project February 2016-Present"));
-        
+
         assertTrue(hts.contains("Indexer-Content-Type: application/pdf"));
         assertTrue(hts.contains("X-Parsed-By: org.apache.tika.parser.pdf.PDFParser"));
         assertTrue(hts.contains("pdf:PDFExtensionVersion: 1.7 Adobe Extension Level 8"));
@@ -261,9 +263,11 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(hts.contains("pdf:access_permission:extract_for_accessibility: true"));
         assertTrue(hts.contains("pdf:access_permission:fill_in_form: true"));
         assertTrue(hts.contains("pdf:access_permission:modify_annotations: true"));
-        assertTrue(hts.contains("pdf:charsPerPage: 2767 2772 2990 3056 3204 3614 3627 3796 3971 3988 4242 4462 4683 64"));
+        assertTrue(
+                hts.contains("pdf:charsPerPage: 2767 2772 2990 3056 3204 3614 3627 3796 3971 3988 4242 4462 4683 64"));
         assertTrue(hts.contains("pdf:created: 2017-08-29T19:12:20Z"));
-        assertTrue(hts.contains("pdf:dc:format: application/pdf; version=\"1.7 Adobe Extension Level 8\" application/pdf; version=1.7"));
+        assertTrue(hts.contains(
+                "pdf:dc:format: application/pdf; version=\"1.7 Adobe Extension Level 8\" application/pdf; version=1.7"));
         assertTrue(hts.contains("pdf:dc:language: en-US"));
         assertTrue(hts.contains("pdf:dcterms:created: 2017-08-29T19:12:20Z"));
         assertTrue(hts.contains("pdf:dcterms:modified: 2017-09-12T19:12:44Z"));
@@ -291,11 +295,11 @@ public class IndexerDefaultParserTest extends TestCase{
         assertTrue(mts.contains("Content-Type=application/pdf"));
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pdf.PDFParser"));
         assertTrue(mts.contains("pdf:PDFVersion=1.7"));
-        
-       }
-    
+
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingUnknownFileLua() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingUnknownFileLua() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -304,23 +308,23 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         String mts = metadata.toString();
-        
+
         assertTrue(hts.contains("function"));
         assertTrue(hts.contains("OnATTACK_OBJECT_CMD (id)"));
-        
+
         assertTrue(mts.contains("Content-Type=text/plain; charset=EUC-KR"));
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
         assertTrue(mts.contains("Content-Encoding=EUC-KR"));
 
-       }
-    
-    @Test
-    public void testIndexerDefaultParserParsingUnknownFile() throws IOException, SAXException, TikaException{
+    }
 
-        //When in doubt, tries to parse with RawStringParser.
+    @Test
+    public void testIndexerDefaultParserParsingUnknownFile() throws IOException, SAXException, TikaException {
+
+        // When in doubt, tries to parse with RawStringParser.
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
@@ -328,17 +332,17 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String mts = metadata.toString();
-        
+
         assertTrue(mts.contains("X-Parsed-By=dpf.sp.gpinf.indexer.parsers.RawStringParser"));
         assertTrue(mts.contains("compressRatioLZ4=0.5720935240387917"));
         assertTrue(mts.contains("Content-Type=application/octet-stream"));
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingEncryptedDoc() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingEncryptedDoc() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -347,18 +351,17 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String mts = metadata.toString();
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.microsoft.OfficeParser"));
         assertTrue(mts.contains("Indexer-Content-Type=application/x-tika-ooxml-protected"));
         assertTrue(mts.contains("encryptedDocument=true"));
         assertTrue(mts.contains("Content-Type=application/x-tika-ooxml-protected"));
-        
 
-       }
-    
+    }
+
     @Test
-    public void testIndexerDefaultParserParsingPython() throws IOException, SAXException, TikaException{
+    public void testIndexerDefaultParserParsingPython() throws IOException, SAXException, TikaException {
 
         IndexerDefaultParser parser = new IndexerDefaultParser();
         Metadata metadata = new Metadata();
@@ -367,11 +370,11 @@ public class IndexerDefaultParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String mts = metadata.toString();
         assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
         assertTrue(mts.contains("Indexer-Content-Type=application/x-sh"));
-        
-       }
+
+    }
 
 }

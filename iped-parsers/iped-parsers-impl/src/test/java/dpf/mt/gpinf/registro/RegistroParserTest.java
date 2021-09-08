@@ -1,7 +1,5 @@
 package dpf.mt.gpinf.registro;
 
-
-
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -22,14 +20,14 @@ import dpf.mt.gpinf.registro.model.RegistryFile;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import junit.framework.TestCase;
 
-public class RegistroParserTest extends TestCase{
+public class RegistroParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testRegistroParserSecurity() throws IOException, SAXException, TikaException{
+    public void testRegistroParserSecurity() throws IOException, SAXException, TikaException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
@@ -43,7 +41,7 @@ public class RegistroParserTest extends TestCase{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         RegistryFile rf = new RegistryFile(file);
         rf.load();
         HiveCell c = rf.getRootCell();
@@ -52,7 +50,7 @@ public class RegistroParserTest extends TestCase{
     }
 
     @Test
-    public void testRegistroParserSAM() throws IOException, SAXException, TikaException{
+    public void testRegistroParserSAM() throws IOException, SAXException, TikaException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
@@ -66,16 +64,16 @@ public class RegistroParserTest extends TestCase{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         RegistryFile rf = new RegistryFile(file);
         rf.load();
         HiveCell c = rf.getRootCell();
         KeyNode k = (KeyNode) c.getCellContent();
         assertEquals(k.getKeyName(), "ROOT");
     }
-    
+
     @Test
-    public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException{
+    public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException {
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SYSTEM");
@@ -88,20 +86,22 @@ public class RegistroParserTest extends TestCase{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         RegistryFile rf = new RegistryFile(file);
         rf.load();
         HiveCell c = rf.getRootCell();
         KeyNode k = (KeyNode) c.getCellContent();
         assertEquals(k.getKeyName(), "CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}");
         KeyNode kf = rf.findKeyNode("ControlSet001/Control/ComputerName/ComputerName");
-        assertEquals("Computer Name: " + kf.getValue("ComputerName").getValueDataAsString(), "Computer Name: WKS-WIN732BITA");
+        assertEquals("Computer Name: " + kf.getValue("ComputerName").getValueDataAsString(),
+                "Computer Name: WKS-WIN732BITA");
         kf = rf.findKeyNode("Setup");
-        assertEquals("Working directory: " + kf.getValue("WorkingDirectory").getValueDataAsString(), "Working directory: C:\\Windows\\Panther");
+        assertEquals("Working directory: " + kf.getValue("WorkingDirectory").getValueDataAsString(),
+                "Working directory: C:\\Windows\\Panther");
     }
-    
+
     @Test
-    public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException{
+    public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
@@ -115,7 +115,7 @@ public class RegistroParserTest extends TestCase{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         RegistryFile rf = new RegistryFile(file);
         rf.load();
         HiveCell c = rf.getRootCell();
@@ -124,11 +124,12 @@ public class RegistroParserTest extends TestCase{
         KeyNode kf = rf.findKeyNode("Adobe/Acrobat Reader/10.0/Installer");
         assertEquals("Install Date: " + kf.getValue("InstallDate").getValueDataAsString(), "Install Date: 8/28/2011");
         kf = rf.findKeyNode("Microsoft/Windows Defender/");
-        assertEquals("Disable Anti Spyware: " + kf.getValue("DisableAntiSpyware").getValueDataAsString(), "Disable Anti Spyware: 1");
+        assertEquals("Disable Anti Spyware: " + kf.getValue("DisableAntiSpyware").getValueDataAsString(),
+                "Disable Anti Spyware: 1");
     }
-    
+
     @Test
-    public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException{
+    public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
@@ -142,19 +143,22 @@ public class RegistroParserTest extends TestCase{
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         RegistryFile rf = new RegistryFile(file);
         rf.load();
         HiveCell c = rf.getRootCell();
         KeyNode k = (KeyNode) c.getCellContent();
         assertEquals(k.getKeyName(), "CMI-CreateHive{6A1C4018-979D-4291-A7DC-7AED1C75B67C}");
         KeyNode kf = rf.findKeyNode("/Control Panel/Desktop");
-        assertEquals("Wallpaper: " + kf.getValue("Wallpaper").getValueDataAsString(), "Wallpaper: C:\\Users\\vibranium\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\TranscodedWallpaper.jpg");
+        assertEquals("Wallpaper: " + kf.getValue("Wallpaper").getValueDataAsString(),
+                "Wallpaper: C:\\Users\\vibranium\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\TranscodedWallpaper.jpg");
         kf = rf.findKeyNode("/Identities");
         ArrayList<KeyNode> identities = kf.getSubKeys();
         for (int i = 0; i < identities.size(); i++) {
-            assertEquals("Username: " + identities.get(i).getValue("Username").getValueDataAsString(), "Username: Main Identity");
-            assertEquals("Username ID: " + identities.get(i).getValue("User ID").getValueDataAsString(), "Username ID: {EF208C86-65AC-4012-84A1-F1B2647B21FD}");   
+            assertEquals("Username: " + identities.get(i).getValue("Username").getValueDataAsString(),
+                    "Username: Main Identity");
+            assertEquals("Username ID: " + identities.get(i).getValue("User ID").getValueDataAsString(),
+                    "Username ID: {EF208C86-65AC-4012-84A1-F1B2647B21FD}");
         }
     }
 }

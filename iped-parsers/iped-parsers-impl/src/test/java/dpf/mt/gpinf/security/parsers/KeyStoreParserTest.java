@@ -1,6 +1,5 @@
 package dpf.mt.gpinf.security.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -17,38 +16,34 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import junit.framework.TestCase;
 
-public class KeyStoreParserTest extends TestCase{
-
+public class KeyStoreParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testCertificateJavaKeyStore() throws IOException, SAXException, TikaException{
+    public void testCertificateJavaKeyStore() throws IOException, SAXException, TikaException {
 
         KeystoreParser parser = new KeystoreParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                MediaType.application("x-java-keystore").toString());
+        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("x-java-keystore").toString());
         ContentHandler handler = new ToTextContentHandler();
         InputStream stream = getStream("test-files/test_serverMyRelease.keystore");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        assertEquals("application/x-java-keystore",metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
-        assertEquals("changeit",metadata.get(KeystoreParser.PASSWORD));
-        
+        assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
+        assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
+
     }
-    
-    
+
     @Test
-    public void testCertificateP12() throws IOException, SAXException, TikaException{
+    public void testCertificateP12() throws IOException, SAXException, TikaException {
 
         KeystoreParser parser = new KeystoreParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                MediaType.application("x-pkcs12").toString());
+        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("x-pkcs12").toString());
         ContentHandler handler = new ToTextContentHandler();
         InputStream stream = getStream("test-files/test_server.pfx");
         ParseContext context = new ParseContext();

@@ -12,7 +12,7 @@ import org.junit.Test;
 import org.xml.sax.SAXException;
 
 public class XBaseParserTest {
-    
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
@@ -23,12 +23,12 @@ public class XBaseParserTest {
         InputStream stream = getStream("test-files/test_dbf.dbf");
         XBaseParser parser = new XBaseParser();
         ParseContext context = new ParseContext();
-        BodyContentHandler handler = new BodyContentHandler(); 
+        BodyContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
         context.set(Parser.class, parser);
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         assertTrue(hts.contains("Kauai Dive"));
         assertTrue(hts.contains("4-976"));
@@ -53,15 +53,14 @@ public class XBaseParserTest {
         InputStream stream = getStream("test-files/test_dbf.dbf");
         XBaseParser parser = new XBaseParser();
         ParseContext context = new ParseContext();
-        BodyContentHandler handler = new BodyContentHandler(); 
+        BodyContentHandler handler = new BodyContentHandler();
         Metadata metadata = new Metadata();
         context.set(Parser.class, parser);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         assertTrue(hts.contains("Archimède et Lius à Châteauneu"));
 
-
     }
-    
+
 }

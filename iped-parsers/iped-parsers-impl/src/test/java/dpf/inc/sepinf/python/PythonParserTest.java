@@ -15,15 +15,15 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import junit.framework.TestCase;
 
-public class PythonParserTest extends TestCase{
+public class PythonParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testPythonParser() throws IOException, SAXException, TikaException{
-        
+    public void testPythonParser() throws IOException, SAXException, TikaException {
+
         File file = new File("/test-files/test_setup.py/");
         PythonParser parser = new PythonParser(file);
         Metadata metadata = new Metadata();
@@ -33,14 +33,14 @@ public class PythonParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         try {
-        parser.parse(stream, handler, metadata, context);
-        String hts = handler.toString();
-        String mts = metadata.toString();
-        System.out.println(hts + "\n" + mts);
+            parser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+            String mts = metadata.toString();
+            System.out.println(hts + "\n" + mts);
         } catch (Exception e) {
             System.out.println(e);
         }
-           
+
     }
 
 }

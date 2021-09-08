@@ -11,14 +11,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class FLVParserWrapperTest extends TestCase{
+public class FLVParserWrapperTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
+    }
 
     @Test
-    public void testFLVParserWrapperParsing() throws IOException, SAXException, TikaException{
+    public void testFLVParserWrapperParsing() throws IOException, SAXException, TikaException {
 
         FLVParserWrapper parser = new FLVParserWrapper();
         Metadata metadata = new Metadata();
@@ -29,10 +29,9 @@ public class FLVParserWrapperTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
 
     }
-    
-    
+
     @Test
-    public void testFLVParserWrapperEmbedded() throws IOException, SAXException, TikaException{
+    public void testFLVParserWrapperEmbedded() throws IOException, SAXException, TikaException {
 
         FLVParserWrapper parser = new FLVParserWrapper();
         Metadata metadata = new Metadata();
@@ -61,7 +60,7 @@ public class FLVParserWrapperTest extends TestCase{
         assertEquals("video:audiosamplerate=44100.0", mts.substring(381, 410));
         assertEquals("video:compatible_brands=isomiso2avc1iso6mp41", mts.substring(411, 455));
         assertEquals("video:audiosamplesize=16.0", mts.substring(456, 482));
-           
+
     }
 
 }

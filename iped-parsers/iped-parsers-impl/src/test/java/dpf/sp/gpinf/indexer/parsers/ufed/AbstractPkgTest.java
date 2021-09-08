@@ -36,6 +36,7 @@ public abstract class AbstractPkgTest extends TestCase {
     protected IItemSearcher itemSearcher;
     protected IItemBase itemBase;
     protected Metadata metadata;
+
     protected void setUp() throws Exception {
         super.setUp();
         Metadata metadata = new Metadata();
@@ -52,222 +53,220 @@ public abstract class AbstractPkgTest extends TestCase {
             public Iterable<IItemBase> searchIterable(String luceneQuery) {
                 // TODO Auto-generated method stub
                 return new Iterable<IItemBase>() {
-                    
+
                     @Override
                     public Iterator<IItemBase> iterator() {
                         // TODO Auto-generated method stub
                         return new Iterator<IItemBase>() {
-                            
+
                             @Override
                             public IItemBase next() {
                                 // TODO Auto-generated method stub
                                 return new IItemBase() {
-                                    
+
                                     @Override
                                     public SeekableInputStream getStream() throws IOException {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public SeekableByteChannel getSeekableByteChannel() throws IOException {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public boolean isTimedOut() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isSubItem() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isRoot() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isDuplicate() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isDir() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isDeleted() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean isCarved() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean hasFile() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public boolean hasChildren() {
                                         // TODO Auto-generated method stub
                                         return false;
                                     }
-                                    
+
                                     @Override
                                     public File getViewFile() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public String getTypeExt() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public byte[] getThumb() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public File getTempFile() throws IOException {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Integer getSubitemId() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
-                                    
-                                    
+
                                     @Override
                                     public String getPath() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Integer getParentId() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public String getName() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Date getModDate() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Metadata getMetadata() {
                                         return metadata;
                                     }
-                                    
+
                                     @Override
                                     public MediaType getMediaType() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Long getLength() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public byte[] getImageSimilarityFeatures() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public int getId() {
                                         // TODO Auto-generated method stub
                                         return 0;
                                     }
-                                    
+
                                     @Override
                                     public String getHash() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public File getFile() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Map<String, Object> getExtraAttributeMap() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Object getExtraAttribute(String key) {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public String getExt() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public IDataSource getDataSource() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Date getCreationDate() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public HashSet<String> getCategorySet() {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public BufferedInputStream getBufferedStream() throws IOException {
                                         // TODO Auto-generated method stub
                                         return null;
                                     }
-                                    
+
                                     @Override
                                     public Date getAccessDate() {
                                         // TODO Auto-generated method stub
@@ -281,7 +280,7 @@ public abstract class AbstractPkgTest extends TestCase {
                                     }
                                 };
                             }
-                            
+
                             @Override
                             public boolean hasNext() {
                                 // TODO Auto-generated method stub
@@ -487,7 +486,6 @@ public abstract class AbstractPkgTest extends TestCase {
                                 // TODO Auto-generated method stub
                                 return null;
                             }
-
 
                             @Override
                             public String getPath() {
@@ -759,7 +757,6 @@ public abstract class AbstractPkgTest extends TestCase {
                 // TODO Auto-generated method stub
                 return null;
             }
-
 
             @Override
             public String getPath() {

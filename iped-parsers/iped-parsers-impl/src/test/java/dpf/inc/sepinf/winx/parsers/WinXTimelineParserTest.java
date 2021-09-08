@@ -12,14 +12,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class WinXTimelineParserTest extends TestCase{
+public class WinXTimelineParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testWinXTimelineParser() throws IOException, SAXException, TikaException{
+    public void testWinXTimelineParser() throws IOException, SAXException, TikaException {
 
         WinXTimelineParser parser = new WinXTimelineParser();
         Metadata metadata = new Metadata();
@@ -30,7 +30,7 @@ public class WinXTimelineParserTest extends TestCase{
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
-        
+
         assertTrue(hts.contains("WinXTimeline"));
         assertTrue(hts.contains("Entry"));
         assertTrue(hts.contains("2052"));

@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -14,14 +13,14 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
 import junit.framework.TestCase;
 
-public class TiffPageParserTest extends TestCase{
+public class TiffPageParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
+
     @Test
-    public void testImageOCRMetadataParsingTIFF() throws IOException, SAXException, TikaException{
+    public void testImageOCRMetadataParsingTIFF() throws IOException, SAXException, TikaException {
 
         TiffPageParser parser = new TiffPageParser();
         Metadata metadata = new Metadata();
@@ -30,7 +29,7 @@ public class TiffPageParserTest extends TestCase{
         InputStream stream = getStream("test-files/test_lenaTiff.tiff");
         metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
         parser.parse(stream, handler, metadata, context);
-        
+
         assertEquals("tiff:NumPages=1", "tiff:NumPages=" + metadata.get(TiffPageParser.propNumPages));
 
         String hts = handler.toString();

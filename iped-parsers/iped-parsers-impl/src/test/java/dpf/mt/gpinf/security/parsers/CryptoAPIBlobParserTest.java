@@ -1,6 +1,5 @@
 package dpf.mt.gpinf.security.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -16,28 +15,26 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import junit.framework.TestCase;
 
-public class CryptoAPIBlobParserTest extends TestCase{
-
+public class CryptoAPIBlobParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testCertificateParsingCAPI() throws IOException, SAXException, TikaException{
+    public void testCertificateParsingCAPI() throws IOException, SAXException, TikaException {
 
         CryptoAPIBlobParser parser = new CryptoAPIBlobParser();
         Metadata metadata = new Metadata();
-        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
-                MediaType.application("crypto-api-file").toString());
+        metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("crypto-api-file").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_server.pfx");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        assertEquals("false",metadata.get(CryptoAPIBlobParser.HASPUBLICKEY));
-        assertEquals("",metadata.get(CryptoAPIBlobParser.ALIAS));
-        assertEquals("false",metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
+        assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPUBLICKEY));
+        assertEquals("", metadata.get(CryptoAPIBlobParser.ALIAS));
+        assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
     }
 
 }

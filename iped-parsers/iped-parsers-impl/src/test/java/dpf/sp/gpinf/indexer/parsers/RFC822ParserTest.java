@@ -24,14 +24,14 @@ import iped3.util.ExtraProperties;
 import org.junit.Test;
 
 public class RFC822ParserTest extends TestCase {
-    
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
+
     @SuppressWarnings("deprecation")
     @Test
-    public void testSimple() throws IOException, SAXException, TikaException{
+    public void testSimple() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
         Metadata metadata = spy(new Metadata());
         ContentHandler handler = spy(new DefaultHandler());
@@ -39,9 +39,10 @@ public class RFC822ParserTest extends TestCase {
         InputStream stream = getStream("test-files/test_rfc822");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         verify(handler).startDocument();
-        verify(handler, never()).startElement(eq(XHTMLContentHandler.XHTML), eq("div"), eq("div"), any(Attributes.class));
+        verify(handler, never()).startElement(eq(XHTMLContentHandler.XHTML), eq("div"), eq("div"),
+                any(Attributes.class));
         verify(handler, never()).endElement(XHTMLContentHandler.XHTML, "div", "div");
         verify(handler).endDocument();
         assertEquals("Guilherme Andreuce <guilhermeandreuce@gmail.com>", metadata.get(TikaCoreProperties.CREATOR));
@@ -53,7 +54,7 @@ public class RFC822ParserTest extends TestCase {
         assertEquals("test@test.pf.gov", metadata.get(Metadata.MESSAGE_TO));
         assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
         assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
-       
+
     }
 
     @Test
@@ -66,31 +67,30 @@ public class RFC822ParserTest extends TestCase {
         verify(handler).startDocument();
         verify(handler).endDocument();
 
-        
-        //repeat, this time looking at content
+        // repeat, this time looking at content
         parser = new RFC822Parser();
         metadata = new Metadata();
         stream = getStream("test-files/test_rfc822Multipart");
         handler = new BodyContentHandler();
         parser.parse(stream, handler, metadata, new ParseContext());
-        
-        //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
+
+        // tests correct decoding of quoted printable text, including UTF-8 bytes into
+        // Unicode
         String hts = handler.toString();
         String mts = metadata.toString();
         assertTrue(hts.contains("logo.gif"));
         assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(TikaCoreProperties.CREATOR));
         assertEquals("DigitalPebble <julien@digitalpebble.com>", metadata.get(Metadata.AUTHOR));
         assertEquals("This is a test for parsing multi-part mails. "
-                + "With some funky HTML code an a picture attached. "
-                + "Text specific to body 1. -- ** *(...)", metadata.get(ExtraProperties.MESSAGE_BODY));
+                + "With some funky HTML code an a picture attached. " + "Text specific to body 1. -- ** *(...)",
+                metadata.get(ExtraProperties.MESSAGE_BODY));
         assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
         assertEquals("lists.digitalpebble@gmail.com", metadata.get(Metadata.MESSAGE_TO));
         assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
         assertEquals("Test Multi Part Message", metadata.get(Metadata.TITLE));
-       
 
     }
-    
+
     @Test
     public void testQuotedPrintable() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -100,7 +100,8 @@ public class RFC822ParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         parser.parse(stream, handler, metadata, context);
         stream.close();
-        //tests correct decoding of quoted printable text, including UTF-8 bytes into Unicode
+        // tests correct decoding of quoted printable text, including UTF-8 bytes into
+        // Unicode
         assertEquals("Another Person <another.person@another-example.com>", metadata.get(TikaCoreProperties.CREATOR));
         assertEquals("Another Person <another.person@another-example.com>", metadata.get(Metadata.AUTHOR));
         assertEquals("Düsseldorf has non-ascii. Lines can be split like this. Spaces at the end of a line \r\n"
@@ -113,18 +114,19 @@ public class RFC822ParserTest extends TestCase {
     }
 
     @Test
-    public void testBase64() throws IOException, SAXException, TikaException{
+    public void testBase64() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
         Metadata metadata = new Metadata();
         InputStream stream = getStream("test-files/test_rfc822Base64");
         ContentHandler handler = new BodyContentHandler();
         parser.parse(stream, handler, metadata, new ParseContext());
-        //tests correct decoding of base64 text, including ISO-8859-1 bytes into Unicode
+        // tests correct decoding of base64 text, including ISO-8859-1 bytes into
+        // Unicode
         String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
         assertTrue(mts.contains("Here is some text, with international characters, voil\u00E0!"));
-        
+
     }
-    
+
     @Test
     public void testI18NHeaders() throws IOException, SAXException, TikaException {
         RFC822Parser parser = new RFC822Parser();
@@ -132,54 +134,43 @@ public class RFC822ParserTest extends TestCase {
         InputStream stream = getStream("test-files/test_rfc822I18NHeaders");
         ContentHandler handler = new BodyContentHandler();
 
-
-            parser.parse(stream, handler, metadata, new ParseContext());
-            assertEquals("Keld J\u00F8rn Simonsen <keld@dkuug.dk>", 
-                    metadata.get(TikaCoreProperties.CREATOR));
-            assertEquals("If you can read this you understand the example.", 
-                    metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+        parser.parse(stream, handler, metadata, new ParseContext());
+        assertEquals("Keld J\u00F8rn Simonsen <keld@dkuug.dk>", metadata.get(TikaCoreProperties.CREATOR));
+        assertEquals("If you can read this you understand the example.", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
     }
 
     @Test
     public void testUnusualFromAddress() throws Exception {
-       RFC822Parser parser = new RFC822Parser();
-       Metadata metadata = new Metadata();
-       InputStream stream = getStream("test-files/test_rfc822OddFrom");
-       ContentHandler handler = new BodyContentHandler();
+        RFC822Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/test_rfc822OddFrom");
+        ContentHandler handler = new BodyContentHandler();
 
-       parser.parse(stream, handler, metadata, new ParseContext());
-       assertEquals("Saved by Windows Internet Explorer 7", 
-               metadata.get(TikaCoreProperties.CREATOR));
-       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
-               metadata.get(TikaCoreProperties.TITLE));
-       assertEquals("Air Permit Programs | Air & Radiation | US EPA", 
-               metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+        parser.parse(stream, handler, metadata, new ParseContext());
+        assertEquals("Saved by Windows Internet Explorer 7", metadata.get(TikaCoreProperties.CREATOR));
+        assertEquals("Air Permit Programs | Air & Radiation | US EPA", metadata.get(TikaCoreProperties.TITLE));
+        assertEquals("Air Permit Programs | Air & Radiation | US EPA", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
     }
-
-
-
 
     @Test
     public void testSomeMissingHeaders() throws Exception {
-       RFC822Parser parser = new RFC822Parser();
-       Metadata metadata = new Metadata();
-       InputStream stream = getStream("test-files/test_rfc822LimitedHeaders");
-       ContentHandler handler = new BodyContentHandler();
+        RFC822Parser parser = new RFC822Parser();
+        Metadata metadata = new Metadata();
+        InputStream stream = getStream("test-files/test_rfc822LimitedHeaders");
+        ContentHandler handler = new BodyContentHandler();
 
-       parser.parse(stream, handler, metadata, new ParseContext());
-       assertEquals(true, metadata.isMultiValued(TikaCoreProperties.CREATOR));
-       assertEquals("xyz", metadata.getValues(TikaCoreProperties.CREATOR)[0]);
-       assertEquals("abc", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
-       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_FROM));
-       assertEquals("xyz", metadata.getValues(Metadata.MESSAGE_FROM)[0]);
-       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_FROM)[1]);
-       assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_TO));
-       assertEquals("abc", metadata.getValues(Metadata.MESSAGE_TO)[0]);
-       assertEquals("def", metadata.getValues(Metadata.MESSAGE_TO)[1]);
-       assertEquals("abcd", metadata.get(DublinCore.TITLE));
-       assertEquals("abcd", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
+        parser.parse(stream, handler, metadata, new ParseContext());
+        assertEquals(true, metadata.isMultiValued(TikaCoreProperties.CREATOR));
+        assertEquals("xyz", metadata.getValues(TikaCoreProperties.CREATOR)[0]);
+        assertEquals("abc", metadata.getValues(TikaCoreProperties.CREATOR)[1]);
+        assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_FROM));
+        assertEquals("xyz", metadata.getValues(Metadata.MESSAGE_FROM)[0]);
+        assertEquals("abc", metadata.getValues(Metadata.MESSAGE_FROM)[1]);
+        assertEquals(true, metadata.isMultiValued(Metadata.MESSAGE_TO));
+        assertEquals("abc", metadata.getValues(Metadata.MESSAGE_TO)[0]);
+        assertEquals("def", metadata.getValues(Metadata.MESSAGE_TO)[1]);
+        assertEquals("abcd", metadata.get(DublinCore.TITLE));
+        assertEquals("abcd", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
     }
-
-
 
 }

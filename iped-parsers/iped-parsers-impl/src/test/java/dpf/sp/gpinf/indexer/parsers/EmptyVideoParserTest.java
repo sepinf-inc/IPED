@@ -12,14 +12,14 @@ import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 import org.apache.tika.parser.mp4.ISO6709Converter;
 
-public class EmptyVideoParserTest extends TestCase{
+public class EmptyVideoParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-   
+    }
+
     @Test
-    public void testEmptyVideoParserParsing() throws IOException, SAXException, TikaException{
+    public void testEmptyVideoParserParsing() throws IOException, SAXException, TikaException {
 
         EmptyVideoParser parser = new EmptyVideoParser();
         Metadata metadata = new Metadata();
@@ -30,7 +30,7 @@ public class EmptyVideoParserTest extends TestCase{
         ISO6709Converter converter = new ISO6709Converter();
         converter.populateLocation(metadata, getName());
         parser.parse(stream, handler, metadata, context);
-           
+
     }
 
 }

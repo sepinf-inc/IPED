@@ -11,14 +11,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class ShareazaSearchesDatParserTests extends TestCase{
+public class ShareazaSearchesDatParserTests extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testShareazaSearchesDatParser() throws IOException, SAXException, TikaException{
+    public void testShareazaSearchesDatParser() throws IOException, SAXException, TikaException {
 
         ShareazaSearchesDatParser parser = new ShareazaSearchesDatParser();
         Metadata metadata = new Metadata();
@@ -27,9 +27,9 @@ public class ShareazaSearchesDatParserTests extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
-        
+
         assertTrue(hts.contains("http://www.limewire.com/schemas/audio.xsd"));
         assertTrue(hts.contains("Musique Classique Bethoven - Sonate Au Clair De Lune.mp3"));
         assertTrue(hts.contains("90401ec0241f9000edaf53da4ef1b542"));
@@ -37,7 +37,6 @@ public class ShareazaSearchesDatParserTests extends TestCase{
         assertTrue(hts.contains("ed2kftp://7191240@91.208.184.143:4232/4d29a8f82cfca1f5f987de6f16714a61/4753906/"));
         assertEquals("application/x-shareaza-searches-dat", metadata.get(Metadata.CONTENT_TYPE));
 
-        
     }
 
 }

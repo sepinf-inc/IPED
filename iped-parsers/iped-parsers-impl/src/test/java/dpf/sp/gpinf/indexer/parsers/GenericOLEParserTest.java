@@ -1,7 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -13,15 +11,14 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
+public class GenericOLEParserTest extends AbstractPkgTest {
 
-public class GenericOLEParserTest extends AbstractPkgTest{
-    
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
+    }
 
     @Test
-    public void testGenericOLEParserParsing() throws IOException, SAXException, TikaException{
+    public void testGenericOLEParserParsing() throws IOException, SAXException, TikaException {
 
         GenericOLEParser parser = new GenericOLEParser();
         Metadata metadata = new Metadata();
@@ -29,9 +26,9 @@ public class GenericOLEParserTest extends AbstractPkgTest{
         InputStream stream = getStream("test-files/test_mockDoc1.doc");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, oleContext);        
+        parser.parse(stream, handler, metadata, oleContext);
         String hts = handler.toString();
-        
+
         assertEquals(6, oletracker.documentfolder.size());
         assertEquals("WordDocument", oletracker.documentfolder.get(0));
         assertEquals("DocumentSummaryInformation", oletracker.documentfolder.get(1).substring(1));
@@ -39,7 +36,7 @@ public class GenericOLEParserTest extends AbstractPkgTest{
         assertEquals("1Table", oletracker.documentfolder.get(3));
         assertEquals("CompObj", oletracker.documentfolder.get(4).substring(1));
         assertEquals("Data", oletracker.documentfolder.get(5));
-        
+
         assertTrue(hts.contains("Mockdoc1"));
         assertTrue(hts.contains("Lorem ipsum dolor sit amet, consectetur adipiscing elit."));
         assertTrue(hts.contains("Tabela normal"));
@@ -49,7 +46,7 @@ public class GenericOLEParserTest extends AbstractPkgTest{
         assertTrue(hts.contains("Guilherme Andreúce Sobreira Monteiro"));
         assertTrue(hts.contains("Microsoft Office Word"));
         assertTrue(hts.contains("Documento do Microsoft Office Word 97-2003"));
-        
+
     }
 
 }

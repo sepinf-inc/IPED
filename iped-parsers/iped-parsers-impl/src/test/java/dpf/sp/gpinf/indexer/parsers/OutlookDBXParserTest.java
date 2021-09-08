@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -15,10 +14,10 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-   
+    }
+
     @Test
-    public void testOutlookDBXParser() throws IOException, SAXException, TikaException{
+    public void testOutlookDBXParser() throws IOException, SAXException, TikaException {
 
         OutlookDBXParser parser = new OutlookDBXParser();
         Metadata metadata = new Metadata();
@@ -31,5 +30,5 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
             // TODO: test embedded mails hash like done in MBoxParserTest
         }
     }
-    
+
 }

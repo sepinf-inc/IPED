@@ -11,14 +11,14 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class FirefoxSavedSessionParserTest extends TestCase{
+public class FirefoxSavedSessionParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testFirefoxSavedSessionParsing() throws IOException, SAXException, TikaException{
+    public void testFirefoxSavedSessionParsing() throws IOException, SAXException, TikaException {
 
         FirefoxSavedSessionParser parser = new FirefoxSavedSessionParser();
         Metadata metadata = new Metadata();
@@ -27,7 +27,7 @@ public class FirefoxSavedSessionParserTest extends TestCase{
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        
+
         String hts = handler.toString();
         assertTrue(hts.contains("https://github.com/streeg/"));
         assertTrue(hts.contains("https://www.wikipedia.org/"));
@@ -38,6 +38,6 @@ public class FirefoxSavedSessionParserTest extends TestCase{
         assertTrue(hts.contains("BR:DF:Bras__lia:-15.78:-47.93:v4"));
         assertTrue(hts.contains(".github.com"));
         assertTrue(hts.contains("America%2FSao_Paulo"));
-        
+
     }
 }

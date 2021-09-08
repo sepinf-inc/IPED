@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.parsers;
 
-
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,15 +10,14 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-
-public class IncrediMailParserTest  extends AbstractPkgTest{
+public class IncrediMailParserTest extends AbstractPkgTest {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-   
+    }
+
     @Test
-    public void testIncrediMailParser() throws IOException, SAXException, TikaException{
+    public void testIncrediMailParser() throws IOException, SAXException, TikaException {
 
         IncrediMailParser parser = new IncrediMailParser();
         Metadata metadata = new Metadata();
@@ -27,7 +25,7 @@ public class IncrediMailParserTest  extends AbstractPkgTest{
         InputStream stream = getStream("test-files/test_inBox.imm");
         parser.getSupportedTypes(oleContext);
         parser.parse(stream, handler, metadata, oleContext);
-        
+
         assertEquals(373, oletracker.documentfolder.size());
         assertEquals("Welcome to IncrediMail!", oletracker.documentfolder.get(0));
         assertEquals("Bem-vindo ao Outlook Express 6", oletracker.documentfolder.get(1));
@@ -36,8 +34,7 @@ public class IncrediMailParserTest  extends AbstractPkgTest{
         assertEquals("5 blogs que valem a pena seguir", oletracker.documentfolder.get(4));
         assertEquals("[cic-bcc-l] Fwd: [cic-secretaria-l] ESTÁGIO - SELEÇÃO", oletracker.documentfolder.get(371));
         assertEquals("Os 5 blogs do seu futuro", oletracker.documentfolder.get(372));
-        
-        
+
     }
-    
+
 }

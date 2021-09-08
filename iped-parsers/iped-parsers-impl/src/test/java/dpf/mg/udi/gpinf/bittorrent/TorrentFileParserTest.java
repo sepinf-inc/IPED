@@ -13,19 +13,18 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import junit.framework.TestCase;
 
-public class TorrentFileParserTest extends TestCase{
+public class TorrentFileParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-    
+    }
+
     @Test
-    public void testBitTorrentFileSimpleParsing() throws IOException, SAXException, TikaException{
+    public void testBitTorrentFileSimpleParsing() throws IOException, SAXException, TikaException {
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE,
-                MediaType.application("x-bittorrent").toString());
+        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_torrentSimple.torrent");
         ParseContext context = new ParseContext();
@@ -33,34 +32,32 @@ public class TorrentFileParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
 
         String hts = handler.toString();
-        
+
         assertTrue(hts.contains("NovaROFull_19112020.exe"));
         assertTrue(hts.contains("3259111196"));
-   
+
     }
-    
+
     @Test
-    public void testBitTorrentFileMultipleParsing() throws IOException, SAXException, TikaException{
+    public void testBitTorrentFileMultipleParsing() throws IOException, SAXException, TikaException {
 
         TorrentFileParser parser = new TorrentFileParser();
         Metadata metadata = new Metadata();
-        metadata.add(Metadata.CONTENT_TYPE,
-                MediaType.application("x-bittorrent").toString());
+        metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
         InputStream stream = getStream("test-files/test_torrentMultiple.torrent");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
 
-        String hts = handler.toString();       
-        
+        String hts = handler.toString();
+
         assertTrue(hts.contains("Big Buck Bunny"));
         assertTrue(hts.contains("Big Buck Bunny.mp4"));
         assertTrue(hts.contains("Big Buck Bunny.en.srt"));
         assertTrue(hts.contains("140"));
         assertTrue(hts.contains("276134947"));
-        assertTrue(hts.contains("310380"));        
-        
-   
+        assertTrue(hts.contains("310380"));
+
     }
 }

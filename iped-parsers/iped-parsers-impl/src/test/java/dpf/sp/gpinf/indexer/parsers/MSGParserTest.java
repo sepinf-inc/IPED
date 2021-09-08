@@ -16,21 +16,21 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import iped3.util.ExtraProperties;
 
-public class MSGParserTest extends AbstractPkgTest{
-    
+public class MSGParserTest extends AbstractPkgTest {
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
+
     private class EmbeddedDocumentMetadataTracker implements EmbeddedDocumentExtractor {
-        
+
         private List<Metadata> attachmentsMeta = new ArrayList<>();
-        
+
         @Override
         public boolean shouldParseEmbedded(Metadata metadata) {
             return true;
         }
-        
+
         @Override
         public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
                 throws SAXException, IOException {
@@ -40,7 +40,7 @@ public class MSGParserTest extends AbstractPkgTest{
 
     @SuppressWarnings("deprecation")
     @Test
-    public void testMSGParser() throws IOException, SAXException, TikaException{
+    public void testMSGParser() throws IOException, SAXException, TikaException {
         MSGParser parser = new MSGParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
@@ -50,17 +50,17 @@ public class MSGParserTest extends AbstractPkgTest{
         try (InputStream stream = getStream("test-files/test_msgSample.msg")) {
             parser.parse(stream, handler, metadata, msgContext);
         }
-        
+
         assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(Metadata.SUBJECT));
         assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
         assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
         assertEquals(0, embeddedTracker.attachmentsMeta.size());
         assertEquals(0, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
     }
-    
+
     @SuppressWarnings("deprecation")
     @Test
-    public void testMSGParserAttach() throws IOException, SAXException, TikaException{
+    public void testMSGParserAttach() throws IOException, SAXException, TikaException {
         MSGParser parser = new MSGParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
@@ -71,17 +71,19 @@ public class MSGParserTest extends AbstractPkgTest{
             parser.getSupportedTypes(msgContext);
             parser.parse(stream, handler, metadata, msgContext);
         }
-        
+
         assertEquals("[cic-bcc-l] Passe Estudantil - Atividades em Per?odo de F?rias", metadata.get(Metadata.SUBJECT));
-        assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação", metadata.get(Metadata.MESSAGE_FROM));
-        assertEquals("cic-bcc-l@listas.unb.br; cic-lic-l@listas.unb.br; cic-mec-l@listas.unb.br; cic-eng-l@listas.unb.br", metadata.get(Metadata.MESSAGE_TO));
+        assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação",
+                metadata.get(Metadata.MESSAGE_FROM));
+        assertEquals(
+                "cic-bcc-l@listas.unb.br; cic-lic-l@listas.unb.br; cic-mec-l@listas.unb.br; cic-eng-l@listas.unb.br",
+                metadata.get(Metadata.MESSAGE_TO));
         assertEquals(1, embeddedTracker.attachmentsMeta.size());
         for (Metadata attachMeta : embeddedTracker.attachmentsMeta) {
             assertEquals("true", attachMeta.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
         }
         assertEquals(1, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-         
+
     }
-    
-    
+
 }

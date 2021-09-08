@@ -13,14 +13,14 @@ import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 import junit.framework.TestCase;
 
-public class ImageParserTest extends TestCase{
-    
+public class ImageParserTest extends TestCase {
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
-    
+
     @Test
-    public void testImageParsingJPEG() throws IOException, SAXException, TikaException{
+    public void testImageParsingJPEG() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -30,14 +30,14 @@ public class ImageParserTest extends TestCase{
         metadata.set(Metadata.CONTENT_TYPE, "image/jpeg");
         parser.getSupportedTypes(context);
         parser.parse(stream, handler, metadata, context);
-        //tiff
+        // tiff
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
         assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
 
-        
     }
+
     @Test
-    public void testImageParsingPNG() throws IOException, SAXException, TikaException{
+    public void testImageParsingPNG() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -45,16 +45,16 @@ public class ImageParserTest extends TestCase{
         ParseContext context = new ParseContext();
         InputStream stream = getStream("test-files/test_lenaPng.png");
         metadata.set(Metadata.CONTENT_TYPE, "image/png");
-        //tiff
+        // tiff
         parser.parse(stream, handler, metadata, context);
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
         assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
         assertEquals("8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
-        
+
     }
-    
+
     @Test
-    public void testImageOCRMetadataParsingTIFF() throws IOException, SAXException, TikaException{
+    public void testImageOCRMetadataParsingTIFF() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -67,9 +67,9 @@ public class ImageParserTest extends TestCase{
         assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
 
     }
-    
+
     @Test
-    public void testImageParsingBMP() throws IOException, SAXException, TikaException{
+    public void testImageParsingBMP() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -80,12 +80,12 @@ public class ImageParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
         assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
-       // assertEquals("8 8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
+        // assertEquals("8 8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
 
-    }  
-    
+    }
+
     @Test
-    public void testImageParsingJP2() throws IOException, SAXException, TikaException{
+    public void testImageParsingJP2() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -94,11 +94,11 @@ public class ImageParserTest extends TestCase{
         InputStream stream = getStream("test-files/test_lenaJp2.jp2");
         metadata.set(Metadata.CONTENT_TYPE, "image/jp2");
         parser.parse(stream, handler, metadata, context);
-        
-    }  
-    
+
+    }
+
     @Test
-    public void testImageParsingGIF() throws IOException, SAXException, TikaException{
+    public void testImageParsingGIF() throws IOException, SAXException, TikaException {
 
         ImageParser parser = new ImageParser();
         Metadata metadata = new Metadata();
@@ -110,5 +110,5 @@ public class ImageParserTest extends TestCase{
         assertEquals("342", metadata.get(Metadata.IMAGE_LENGTH));
         assertEquals("500", metadata.get(Metadata.IMAGE_WIDTH));
 
-    }  
+    }
 }

@@ -12,14 +12,14 @@ import org.xml.sax.SAXException;
 
 import junit.framework.TestCase;
 
-public class PreferencesDatParserTest extends TestCase{
-    
+public class PreferencesDatParserTest extends TestCase {
+
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    } 
-   
+    }
+
     @Test
-    public void testKnownMetParsing() throws IOException, SAXException, TikaException{
+    public void testKnownMetParsing() throws IOException, SAXException, TikaException {
 
         PreferencesDatParser parser = new PreferencesDatParser();
         Metadata metadata = new Metadata();
@@ -32,13 +32,10 @@ public class PreferencesDatParserTest extends TestCase{
         assertTrue(hts.contains("20"));
         assertTrue(hts.contains("02237df8aa0e92ae78f7bfe1d79a6fb2"));
 
-        
-
-        
     }
 
     @Test
-    public void testKnownMetEmbedded() throws IOException, SAXException, TikaException{
+    public void testKnownMetEmbedded() throws IOException, SAXException, TikaException {
 
         PreferencesDatParser parser = new PreferencesDatParser();
         Metadata metadata = new Metadata();
@@ -48,7 +45,6 @@ public class PreferencesDatParserTest extends TestCase{
         parser.parse(stream, handler, metadata, context);
         String mts = metadata.toString();
         System.out.println(mts);
-        
 
     }
 }
