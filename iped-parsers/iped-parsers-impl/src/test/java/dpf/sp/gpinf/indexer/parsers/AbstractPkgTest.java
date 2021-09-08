@@ -9,6 +9,7 @@ import java.util.Set;
 import junit.framework.TestCase;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.extractor.EmbeddedDocumentExtractor;
 import org.apache.tika.metadata.HttpHeaders;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -29,6 +30,7 @@ public abstract class AbstractPkgTest extends TestCase {
    protected ParseContext mboxContext;
    protected ParseContext pstContext;
    protected ParseContext oleContext;
+   protected ParseContext msgContext;
    
    protected Parser autoDetectParser;
    protected EmbeddedTrackingParser tracker;
@@ -55,6 +57,21 @@ public abstract class AbstractPkgTest extends TestCase {
       tracker = new EmbeddedTrackingParser();
       trackingContext = new ParseContext();
       trackingContext.set(Parser.class, tracker);
+      
+      EmbeddedDocumentExtractor extractor = new EmbeddedDocumentExtractor() {
+          
+          @Override
+          public boolean shouldParseEmbedded(Metadata metadata) {
+              return true;
+          }
+          
+          @Override
+          public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
+                  throws SAXException, IOException {
+          }
+      };
+      msgContext = new ParseContext();
+      msgContext.set(EmbeddedDocumentExtractor.class, extractor);
       
       ItemInfo itemInfo = new ItemInfo(0, MD5, null, null, MD5, false);
       autoDetectParser = new AutoDetectParser();
@@ -227,4 +244,5 @@ public abstract class AbstractPkgTest extends TestCase {
       }
 
    }
+   
 }

@@ -42,6 +42,9 @@ public class MSGParser extends OfficeParser {
 
         } finally {
             if (delegate != null) {
+                metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.FALSE.toString());
+                if(delegate.attachCount > 0)
+                    metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
                 metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, Integer.toString(delegate.attachCount));
                 context.set(EmbeddedDocumentExtractor.class, extractor);
             }
@@ -67,7 +70,6 @@ public class MSGParser extends OfficeParser {
         public void parseEmbedded(InputStream stream, ContentHandler handler, Metadata metadata, boolean outputHtml)
                 throws SAXException, IOException {
 
-            metadata.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
             delegate.parseEmbedded(stream, handler, metadata, outputHtml);
             attachCount++;
         }
