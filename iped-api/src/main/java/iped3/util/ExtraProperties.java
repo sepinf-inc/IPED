@@ -46,7 +46,7 @@ public class ExtraProperties {
 
     public static final String MESSAGE_IS_ATTACHMENT = Message.MESSAGE_PREFIX + "IsEmailAttachment"; //$NON-NLS-1$
 
-    public static final String MESSAGE_ATTACHMENT_COUNT = Message.MESSAGE_PREFIX + "AttachmentCount"; //$NON-NLS-1$
+    public static final Property MESSAGE_ATTACHMENT_COUNT = Property.internalInteger(Message.MESSAGE_PREFIX + "AttachmentCount"); //$NON-NLS-1$
 
     public static final String CSAM_HASH_HITS = "childPornHashHits"; //$NON-NLS-1$
 
@@ -124,5 +124,5 @@ public class ExtraProperties {
 
     public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
-            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT);
+            Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
 }
