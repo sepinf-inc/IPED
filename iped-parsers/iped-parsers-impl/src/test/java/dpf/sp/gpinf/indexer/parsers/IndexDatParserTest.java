@@ -7,7 +7,7 @@ import java.io.InputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.sax.BodyContentHandler;
+import org.apache.tika.sax.ToTextContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
@@ -28,14 +28,12 @@ public class IndexDatParserTest  extends TestCase{
 
         IndexDatParser parser = new IndexDatParser();
         Metadata metadata = new Metadata();
-        ContentHandler handler = new BodyContentHandler();
+        ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_index.dat");
         parser.getSupportedTypes(context);
-        try {
+        try (InputStream stream = getStream("test-files/test_index.dat")) {
         parser.parse(stream, handler, metadata, context);
         String hts = handler.toString();
-        assertTrue(hts.contains("msiecfexport 20210506"));
         assertTrue(hts.contains("Record type"));
         assertTrue(hts.contains("URL"));
         assertTrue(hts.contains("Offset range"));
