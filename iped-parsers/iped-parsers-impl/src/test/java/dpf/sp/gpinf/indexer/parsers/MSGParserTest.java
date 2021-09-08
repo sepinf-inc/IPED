@@ -55,7 +55,7 @@ public class MSGParserTest extends AbstractPkgTest{
         assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
         assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
         assertEquals(0, embeddedTracker.attachmentsMeta.size());
-        assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+        assertEquals(0, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
     }
     
     @SuppressWarnings("deprecation")
@@ -79,7 +79,7 @@ public class MSGParserTest extends AbstractPkgTest{
         for (Metadata attachMeta : embeddedTracker.attachmentsMeta) {
             assertEquals("true", attachMeta.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
         }
-        assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+        assertEquals(1, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
          
     }
     
