@@ -3,6 +3,7 @@ package dpf.inc.sepinf.browsers.parsers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import junit.framework.TestCase;
@@ -209,9 +210,9 @@ public abstract class AbstractPkgTest extends TestCase {
     protected static class EmbeddedEdgeParser extends AbstractParser {
 
         protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkurl = new ArrayList<String>();
-        protected List<String> bookmarkcreated = new ArrayList<String>();
         protected List<String> bookmarkmodified = new ArrayList<String>();
+        protected List<String> visitUrl = new ArrayList<>();
+        protected List<Date> visitDate = new ArrayList<>();
 
         public Set<MediaType> getSupportedTypes(ParseContext context) {
             return (new AutoDetectParser()).getSupportedTypes(context);
@@ -223,14 +224,14 @@ public abstract class AbstractPkgTest extends TestCase {
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 bookmarktitle.add(metadata.get(TikaCoreProperties.TITLE));
 
-            if (metadata.get(ExtraProperties.URL) != null)
-                bookmarkurl.add(metadata.get(ExtraProperties.URL));
-
-            if (metadata.get(TikaCoreProperties.CREATED) != null)
-                bookmarkcreated.add(metadata.get(TikaCoreProperties.CREATED));
-
             if (metadata.get(TikaCoreProperties.MODIFIED) != null)
                 bookmarkmodified.add(metadata.get(TikaCoreProperties.MODIFIED));
+
+            if (metadata.get(ExtraProperties.URL) != null)
+                visitUrl.add(metadata.get(ExtraProperties.URL));
+
+            if (metadata.get(ExtraProperties.VISIT_DATE) != null)
+                visitDate.add(metadata.getDate(ExtraProperties.VISIT_DATE));
 
         }
     }
