@@ -465,8 +465,7 @@ public abstract class AbstractPkgTest extends TestCase {
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 title.add(metadata.get(TikaCoreProperties.TITLE));
             if (metadata.get(ExtraProperties.USER_NAME) != null && metadata.get(ExtraProperties.USER_NAME) != "")
-                ;
-            username.add(metadata.get(ExtraProperties.USER_NAME));
+                username.add(metadata.get(ExtraProperties.USER_NAME));
             if (metadata.get(ExtraProperties.USER_PHONE) != null)
                 userphone.add(metadata.get(ExtraProperties.USER_PHONE));
             if (metadata.get(ExtraProperties.USER_ACCOUNT) != null)
@@ -503,8 +502,7 @@ public abstract class AbstractPkgTest extends TestCase {
             if (metadata.get(TikaCoreProperties.TITLE) != null)
                 title.add(metadata.get(TikaCoreProperties.TITLE));
             if (metadata.get(ExtraProperties.USER_NAME) != null && metadata.get(ExtraProperties.USER_NAME) != "")
-                ;
-            username.add(metadata.get(ExtraProperties.USER_NAME));
+                username.add(metadata.get(ExtraProperties.USER_NAME));
             if (metadata.get(ExtraProperties.USER_PHONE) != null)
                 userphone.add(metadata.get(ExtraProperties.USER_PHONE));
             if (metadata.get(ExtraProperties.USER_ACCOUNT) != null)

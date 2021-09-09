@@ -34,7 +34,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         stream.close();
 
         assertEquals(63, whatsapptracker.title.size());
-        assertEquals(63, whatsapptracker.username.size());
+        assertEquals(0, whatsapptracker.username.size());
         assertEquals(0, whatsapptracker.userphone.size());
         assertEquals(0, whatsapptracker.useraccount.size());
         assertEquals(0, whatsapptracker.usernotes.size());

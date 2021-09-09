@@ -181,7 +181,6 @@ public abstract class AbstractPkgTest extends TestCase {
                 attachmentname.add(metadata.get(Metadata.RESOURCE_NAME_KEY));
             if ((metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT) != null))
                 numberofattachments.add(metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-            ;
             // contact
             if (metadata.get(ExtraProperties.USER_ACCOUNT) != null)
                 useraccount.add(metadata.get(ExtraProperties.USER_ACCOUNT));

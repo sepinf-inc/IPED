@@ -32,7 +32,7 @@ public class TelegramParserTest extends AbstractPkgTest {
         stream.close();
 
         assertEquals(509, telegramtracker.title.size());
-        assertEquals(513, telegramtracker.username.size());
+        assertEquals(257, telegramtracker.username.size());
         assertEquals(236, telegramtracker.userphone.size());
         assertEquals(261, telegramtracker.useraccount.size());
         assertEquals(118, telegramtracker.usernotes.size());
@@ -53,7 +53,7 @@ public class TelegramParserTest extends AbstractPkgTest {
 
         assertEquals("Tiago", telegramtracker.username.get(0));
         assertEquals("Karol Braz", telegramtracker.username.get(1));
-        assertEquals("Budi", telegramtracker.username.get(3));
+        assertEquals("Budi", telegramtracker.username.get(2));
 
         assertEquals("5561981124921", telegramtracker.userphone.get(0));
         assertEquals("5561992311125", telegramtracker.userphone.get(1));

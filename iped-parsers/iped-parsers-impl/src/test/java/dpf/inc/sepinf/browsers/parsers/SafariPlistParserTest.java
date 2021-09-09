@@ -27,7 +27,6 @@ public class SafariPlistParserTest extends AbstractPkgTest {
         parser.getSupportedTypes(safariContext);
         parser.setExtractEntries(true);
         parser.parse(stream, handler, metadata, safariContext);
-        ;
 
     }
 
@@ -126,7 +125,6 @@ public class SafariPlistParserTest extends AbstractPkgTest {
         assertEquals(
                 "https://download-installer.cdn.mozilla.net/pub/firefox/releases/52.9.0esr/win32-sha1/pt-BR/Firefox%20Setup%2052.9.0esr.exe",
                 safaritrackerdwl.downloadurl.get(2));
-        ;
 
         assertEquals("C:\\Documents and Settings\\guileb\\Meus documentos\\ChromeSetup.exe",
                 safaritrackerdwl.downloadlocalpath.get(0));
