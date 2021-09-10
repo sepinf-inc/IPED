@@ -3,6 +3,7 @@ package dpf.inc.sepinf.python;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -22,9 +23,10 @@ public class PythonParserTest extends TestCase {
     }
 
     @Test
-    public void testPythonParser() throws IOException, SAXException, TikaException {
+    public void testPythonParser() throws IOException, SAXException, TikaException, URISyntaxException {
 
-        File file = new File("/test-files/test_setup.py/");
+        ClassLoader classLoader = getClass().getClassLoader();
+        File file = new File(classLoader.getResource("test-files/test_setup.py").toURI());
         PythonParser parser = new PythonParser(file);
         Metadata metadata = new Metadata();
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-sh");

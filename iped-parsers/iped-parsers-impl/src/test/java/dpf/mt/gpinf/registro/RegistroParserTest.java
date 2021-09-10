@@ -3,6 +3,7 @@ package dpf.mt.gpinf.registro;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 
 import org.apache.tika.exception.TikaException;
@@ -27,14 +28,14 @@ public class RegistroParserTest extends TestCase {
     }
 
     @Test
-    public void testRegistroParserSecurity() throws IOException, SAXException, TikaException {
+    public void testRegistroParserSecurity() throws IOException, SAXException, TikaException, URISyntaxException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SECURITY");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_security").getFile());
+        File file = new File(classLoader.getResource("test-files/test_security").toURI());
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
@@ -54,14 +55,14 @@ public class RegistroParserTest extends TestCase {
     }
 
     @Test
-    public void testRegistroParserSAM() throws IOException, SAXException, TikaException {
+    public void testRegistroParserSAM() throws IOException, SAXException, TikaException, URISyntaxException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SAM");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_sam").getFile());
+        File file = new File(classLoader.getResource("test-files/test_sam").toURI());
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
@@ -81,13 +82,13 @@ public class RegistroParserTest extends TestCase {
     }
 
     @Test
-    public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException {
+    public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException, URISyntaxException {
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SYSTEM");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_system").getFile());
+        File file = new File(classLoader.getResource("test-files/test_system").toURI());
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
@@ -113,14 +114,14 @@ public class RegistroParserTest extends TestCase {
     }
 
     @Test
-    public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException {
+    public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException, URISyntaxException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SOFTWARE");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_software").getFile());
+        File file = new File(classLoader.getResource("test-files/test_software").toURI());
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
@@ -145,14 +146,14 @@ public class RegistroParserTest extends TestCase {
     }
 
     @Test
-    public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException {
+    public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException, URISyntaxException {
 
         RegistroParser parser = new RegistroParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "NTUSER.DAT");
         ContentHandler handler = new ToTextContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_ntuser.dat").getFile());
+        File file = new File(classLoader.getResource("test-files/test_ntuser.dat").toURI());
         ParseContext context = new ParseContext();
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);

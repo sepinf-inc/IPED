@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
-
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -197,12 +196,13 @@ public class VCardParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(
-                classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").getFile());
-        PrintWriter out = new PrintWriter(file);
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
         try(InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf")){
+	        File file = new File(
+	                classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").toURI());
+	        PrintWriter out = new PrintWriter(file);
+	        ParseContext context = new ParseContext();
+	        parser.getSupportedTypes(context);
+       
 	        parser.parse(stream, handler, metadata, context);
 	        VCardParser.printHtmlFromString(out, stream.toString());
 	        stream.close();
