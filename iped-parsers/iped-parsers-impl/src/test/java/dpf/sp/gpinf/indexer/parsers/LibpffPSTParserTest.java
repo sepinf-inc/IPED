@@ -38,7 +38,7 @@ public class LibpffPSTParserTest {
 	
 	        // TODO remove print below and test assertions
 	        System.out.println(hts + "\n" + mts);
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

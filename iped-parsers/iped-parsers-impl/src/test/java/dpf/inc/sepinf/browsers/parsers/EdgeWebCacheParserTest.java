@@ -76,7 +76,7 @@ public class EdgeWebCacheParserTest {
 	        assertEquals(":2015032520150326: informant@http://www.piriform.com/ccleaner/download",
 	                edgetracker.visitUrl.get(10199));
 	        assertEquals(1427294892000L, edgetracker.visitDate.get(10199).getTime());
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }

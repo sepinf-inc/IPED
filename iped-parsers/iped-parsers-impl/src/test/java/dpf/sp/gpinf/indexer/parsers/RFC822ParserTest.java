@@ -54,7 +54,6 @@ public class RFC822ParserTest extends TestCase {
 	        assertEquals("test@test.pf.gov", metadata.get(Metadata.MESSAGE_TO));
 	        assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
 	        assertEquals(null, metadata.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -71,7 +70,6 @@ public class RFC822ParserTest extends TestCase {
 	        parser.parse(stream, handler, metadata, new ParseContext());
 	        verify(handler).startDocument();
 	        verify(handler).endDocument();
-	        stream.close();
         }catch(Exception e) {
         	System.out.println(e);
         	}
@@ -96,7 +94,6 @@ public class RFC822ParserTest extends TestCase {
 	        assertEquals("lists.digitalpebble@gmail.com", metadata.get(Metadata.MESSAGE_TO));
 	        assertEquals("1", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
 	        assertEquals("Test Multi Part Message", metadata.get(Metadata.TITLE));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -123,7 +120,6 @@ public class RFC822ParserTest extends TestCase {
 	        assertEquals("A. Person <a.person@example.com>", metadata.get(Metadata.MESSAGE_TO));
 	        assertEquals("0", metadata.get(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
 	        assertEquals("Sample with Quoted Printable Text", metadata.get(Metadata.TITLE));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -141,7 +137,6 @@ public class RFC822ParserTest extends TestCase {
 	        // Unicode
 	        String mts = metadata.get(ExtraProperties.MESSAGE_BODY).toString();
 	        assertTrue(mts.contains("Here is some text, with international characters, voil\u00E0!"));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -157,7 +152,6 @@ public class RFC822ParserTest extends TestCase {
 	        parser.parse(stream, handler, metadata, new ParseContext());
 	        assertEquals("Keld J\u00F8rn Simonsen <keld@dkuug.dk>", metadata.get(TikaCoreProperties.CREATOR));
 	        assertEquals("If you can read this you understand the example.", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -173,7 +167,6 @@ public class RFC822ParserTest extends TestCase {
 	        assertEquals("Saved by Windows Internet Explorer 7", metadata.get(TikaCoreProperties.CREATOR));
 	        assertEquals("Air Permit Programs | Air & Radiation | US EPA", metadata.get(TikaCoreProperties.TITLE));
 	        assertEquals("Air Permit Programs | Air & Radiation | US EPA", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -197,7 +190,6 @@ public class RFC822ParserTest extends TestCase {
 	        assertEquals("def", metadata.getValues(Metadata.MESSAGE_TO)[1]);
 	        assertEquals("abcd", metadata.get(DublinCore.TITLE));
 	        assertEquals("abcd", metadata.get(ExtraProperties.MESSAGE_SUBJECT));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }

@@ -61,7 +61,7 @@ public class FirefoxSqliteParserTest extends AbstractPkgTest {
 	        assertEquals("2020-10-19T18:54:02Z", firefoxtracker.bookmarkmodified.get(2));
 	        assertEquals("2020-10-19T18:54:02Z", firefoxtracker.bookmarkmodified.get(3));
 	        assertEquals("2020-10-19T18:54:02Z", firefoxtracker.bookmarkmodified.get(4));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

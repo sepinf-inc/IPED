@@ -31,7 +31,7 @@ public class MSAccessParserTest extends TestCase {
         parser.getSupportedTypes(context);
         try(InputStream stream = getStream("test-files/test_mdb.mdb")){
         	parser.parse(stream, handler, metadata, context);
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -56,7 +56,7 @@ public class MSAccessParserTest extends TestCase {
 	        assertEquals("Arial Software", metadata.get(metadata.AUTHOR));
 	        assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
 	        assertEquals("Campaign_Template", metadata.get(StringUtils.capitalize(metadata.TITLE)));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -110,7 +110,7 @@ public class MSAccessParserTest extends TestCase {
 	        assertTrue(hts.contains("brazil"));
 	        assertTrue(hts.contains("uniao dos estados do brazil"));
 	        assertTrue(hts.contains("federação brasileira"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

@@ -35,7 +35,7 @@ public class TorrentFileParserTest extends TestCase {
 	
 	        assertTrue(hts.contains("NovaROFull_19112020.exe"));
 	        assertTrue(hts.contains("3259111196"));
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -62,7 +62,7 @@ public class TorrentFileParserTest extends TestCase {
 	        assertTrue(hts.contains("140"));
 	        assertTrue(hts.contains("276134947"));
 	        assertTrue(hts.contains("310380"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

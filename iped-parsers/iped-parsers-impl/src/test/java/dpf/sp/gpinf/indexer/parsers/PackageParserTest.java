@@ -52,7 +52,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	                + "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Aenean nunc augue, tincidunt eget mi a, euismod ultricies augue."));
 	        assertTrue(hts.contains("mocksheets1.xlsx\nPlan1"));
 	        assertTrue(hts.contains("mocksheets2.xlsx\nPlan1"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -185,7 +185,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	            assertEquals("9 de abr. de 2021 12:26:00", df.format(date));
 	        assertEquals("6212E7FBA5A8FE2FFF5EEA267D4009BE", tracker.itensmd5.get(9));
 	        assertEquals("false", tracker.isfolder.get(9));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -208,7 +208,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mockdoc2.docx\nMockdoc2:"));
 	        assertTrue(hts.contains("mockfolder\n\nmockfolder/mockdoc5.docx"));
 	        assertTrue(hts.contains("mockfolder/mocksheets5.xlsx\nPlan1\n"));
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -340,7 +340,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	            assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
 	        assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(9));
 	        assertEquals("false", tracker.isfolder.get(9));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -362,7 +362,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mockdoc2.docx\nMockdoc2:"));
 	        assertTrue(hts.contains("mockfolder/mockdoc5.docx\nMockdoc5/folder"));
 	        assertTrue(hts.contains("mockfolder/mocksheets5.xlsx\nPlan1\n"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -505,7 +505,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	            assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
 	        assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(10));
 	        assertEquals("false", tracker.isfolder.get(10));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -531,7 +531,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("public void testJar();"));
 	        assertTrue(hts.contains("static void insereMoeda(char, int[]);"));
 	        assertTrue(hts.contains("static void trocaAB(int[]);"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -587,7 +587,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	            assertEquals("30 de abr. de 2021 18:24:42", df.format(date));
 	        assertEquals("B402684EEDD7BAA0E6D61CCF51498BE4", tracker.itensmd5.get(2));
 	        assertEquals("false", tracker.isfolder.get(2));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -611,7 +611,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mocksheets2.xlsx"));
 	        assertTrue(hts.contains("mocktext1.txt"));
 	        assertTrue(hts.contains("mocktext2.txt"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -694,7 +694,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        if (getVersion() >= 12)
 	            assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
 	        assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -718,7 +718,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mocksheets2.xlsx"));
 	        assertTrue(hts.contains("mocktext1.txt"));
 	        assertTrue(hts.contains("mocktext2.txt"));
-	        stream.close();
+	        
         } catch(Exception e) {
         	System.out.println(e);
         }
@@ -801,7 +801,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        if (getVersion() >= 12)
 	            assertEquals("9 de abr. de 2021 12:22:54", df.format(date));
 	        assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -825,7 +825,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mocksheets2.xlsx"));
 	        assertTrue(hts.contains("mocktext1.txt"));
 	        assertTrue(hts.contains("mocktext2.txt"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -928,7 +928,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        if (getVersion() >= 12)
 	            assertEquals("4 de mai. de 2021 17:08:20", df.format(date));
 	        assertEquals("BA61B70D7C45946AC670D39080C1DD42", tracker.itensmd5.get(7));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -946,7 +946,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	        parser.parse(stream, handler, metadata, recursingContext);
 	        String hts = handler.toString();
 	        assertTrue(hts.contains("Mockdoc1:"));
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -992,7 +992,7 @@ public class PackageParserTest extends AbstractPkgTest {
 	            assertEquals("1 de jan. de 1980 03:00:00", df.format(date));
 	        assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
 	        assertEquals("true", tracker.isfolder.get(1));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

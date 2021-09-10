@@ -30,7 +30,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
         try(InputStream stream = getStream("test-files/test_sample.pst")){
 	        parser.parse(stream, handler, metadata, context);
 	        assertEquals("thisisatest", metadata.get(TikaCoreProperties.TITLE));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -67,7 +67,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 	        assertEquals(1, psttracker.userurls.size());
 	        assertEquals(1, psttracker.usernotes.size());
 	        assertEquals(32, psttracker.contentmd5.size());
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -89,7 +89,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 	        assertEquals("2021-04-27", psttracker.foldercreated.get(0).substring(0, 10));
 	        assertEquals("this is a test message", psttracker.messagesubject.get(0));
 	        assertEquals("Hello, this\nis a test message.\n\n\n  ", psttracker.messagebody.get(0));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -120,7 +120,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 	                        + " ELIZÃ‚NGELA RIBEIRO DE ANDRADE Fiscal do Contrato substituta" + " NAD/SELO/DITEC/(...)",
 	                psttracker.messagebody.get(2));
 	        assertEquals("2021-03-29", psttracker.messagedate.get(1).substring(0, 10));
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -144,7 +144,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 	        assertEquals("lionel-animals-to-follow-on-instagram-1568319926.jpg", psttracker.attachmentname.get(0));
 	        assertEquals("true", psttracker.isattachment.get(0));
 	        assertEquals("1", psttracker.numberofattachments.get(3));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -168,7 +168,7 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
 	        assertEquals("Condomínio da imaginação ruas dos bobos número 0", psttracker.useraddress.get(0));
 	        assertEquals("Polícia Federal", psttracker.userorganization.get(0));
 	        assertEquals("github.com/streeg", psttracker.userurls.get(0));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

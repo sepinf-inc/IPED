@@ -38,7 +38,6 @@ public class KnownMetParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("Michael Jackson - Bad.mp3"));
 	        assertTrue(hts.contains("2b871d30675d0815"));
 	        assertTrue(hts.contains("d2a4dfb995ad7220"));
-	        stream.close();
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -61,7 +60,6 @@ public class KnownMetParserTest extends AbstractPkgTest {
 	        assertEquals("77481ddd95730681cba7686a8fa7e613", sharedhashes[0]);
 	        assertEquals("2b871d30675d0815d2a4dfb995ad7220", sharedhashes[1]);
 	        assertEquals("2", p2pregistrycount[0]);
-	        stream.close();
         }catch(Exception e) {
         	System.out.println(e);
         }

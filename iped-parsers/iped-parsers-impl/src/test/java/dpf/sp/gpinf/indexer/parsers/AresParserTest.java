@@ -56,7 +56,7 @@ public class AresParserTest extends TestCase {
 	
 	        assertEquals("4", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
 	        assertEquals("3caf8ead5f326604bfbc7eae5274a15fb7840d08", metadata.get(ExtraProperties.SHARED_HASHES));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -75,7 +75,7 @@ public class AresParserTest extends TestCase {
 	        String hts = handler.toString();
 	        assertTrue(hts.contains("Undisclosed Desires"));
 	        assertTrue(hts.contains("8a199330e3882ff26a4b"));
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -94,7 +94,7 @@ public class AresParserTest extends TestCase {
 	
 	        assertEquals("1", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
 	        assertEquals("8a199330e3882ff26a4b02e8285f5a9dc20d1ef1", metadata.get(ExtraProperties.SHARED_HASHES));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

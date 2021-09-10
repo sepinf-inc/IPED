@@ -93,7 +93,6 @@ public class RARParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("mockfolder/mocksheets5.xlsx"));
 	        assertTrue(hts.contains("Mocksheets5/Folder"));
 	        
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -381,7 +380,6 @@ public class RARParserTest extends AbstractPkgTest {
 	        // assertEquals("12:26:16", tracker.modifieddate.get(18).substring(11,19));
 	        assertEquals("0E3FD8870A4F85F0975DEBD0C8E24ECF", tracker.itensmd5.get(18));
 	        assertEquals("false", tracker.isfolder.get(18));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }

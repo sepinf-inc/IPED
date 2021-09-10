@@ -42,7 +42,7 @@ public class GDriveMainParserTest extends TestCase {
 	        assertTrue(hts.contains("Md5Checker.exe"));
 	
 	        assertEquals("application/x-gdrive-cloud-graph", metadata.get(Metadata.CONTENT_TYPE));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
 		}
@@ -70,7 +70,7 @@ public class GDriveMainParserTest extends TestCase {
 	        assertTrue(hts.contains("a4tosticker9.png"));
 	
 	        assertEquals("application/x-gdrive-snapshot", metadata.get(Metadata.CONTENT_TYPE));
-	        stream.close();
+	        
         }catch (Exception e) {
 			 System.out.println(e);
 		}
@@ -100,7 +100,7 @@ public class GDriveMainParserTest extends TestCase {
 	        assertTrue(hts.contains("3"));
 	        assertTrue(mts.contains("database:table_name=username_mapping database:table_name=global_preferences"));
 	        assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
-	        stream.close();
+	        
         }catch (Exception e) {
 			 System.out.println(e);
 		}
@@ -127,7 +127,7 @@ public class GDriveMainParserTest extends TestCase {
 	        assertTrue(hts.contains("41"));
 	        assertTrue(mts.contains("database:table_name=data"));
 	        assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
-	        stream.close();
+	        
         }catch (Exception e) {
 			System.out.println();
 		}

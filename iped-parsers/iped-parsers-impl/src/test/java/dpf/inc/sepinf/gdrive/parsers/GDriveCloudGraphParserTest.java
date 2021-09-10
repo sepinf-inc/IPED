@@ -37,7 +37,7 @@ public class GDriveCloudGraphParserTest extends TestCase {
 	        assertTrue(hts.contains("testRFC822_quoted"));
 	        assertTrue(hts.contains("testRFC822-multipart"));
 	        assertTrue(hts.contains("Md5Checker.exe"));
-	        stream.close();
+	        
         }catch (Exception e) {
 			System.out.println(e);
 		}

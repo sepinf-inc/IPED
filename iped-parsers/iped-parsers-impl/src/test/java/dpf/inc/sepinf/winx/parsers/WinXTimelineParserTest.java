@@ -42,7 +42,7 @@ public class WinXTimelineParserTest extends TestCase {
 	        assertTrue(hts.contains("Valve.Steam.Client"));
 	        assertTrue(hts.contains("C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe"));
 	        assertTrue(hts.contains("System\\cmd.exe"));
-	        stream.close();
+	        
         } catch (Exception e) {
 			System.out.println(e);
 		}

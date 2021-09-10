@@ -85,7 +85,7 @@ public class TelegramParserTest extends AbstractPkgTest {
 	        assertEquals("2021-06-09T18:56:52Z", telegramtracker.messagedate.get(0));
 	        assertEquals("2021-06-09T01:34:33Z", telegramtracker.messagedate.get(1));
 	        assertEquals("2019-04-23T18:40:10Z", telegramtracker.messagedate.get(150));
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -114,7 +114,7 @@ public class TelegramParserTest extends AbstractPkgTest {
 	        assertEquals("Guilherme", telegramusertracker.username.get(0));
 	        assertEquals("5561986143035", telegramusertracker.userphone.get(0));
 	        assertEquals("guileb", telegramusertracker.useraccount.get(0));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
 		}

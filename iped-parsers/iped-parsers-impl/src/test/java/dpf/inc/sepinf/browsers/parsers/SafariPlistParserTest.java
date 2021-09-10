@@ -73,7 +73,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 	        assertEquals("http://edition.cnn.com/", safaritrackerhst.historyurl.get(2));
 	        assertEquals("http://www.google.com.br/", safaritrackerhst.historyurl.get(17));
 	        assertEquals("https://www.apple.com/br/", safaritrackerhst.historyurl.get(18));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -105,7 +105,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 	                safaritrackerbkm.bookmarkurl.get(28));
 	        assertEquals("http://www.microsoft.com/isapi/redir.dll?prd=ie&pver=6&ar=IStart",
 	                safaritrackerbkm.bookmarkurl.get(29));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
 		}
@@ -151,7 +151,7 @@ public class SafariPlistParserTest extends AbstractPkgTest {
 	        assertEquals("1321688", safaritrackerdwl.downloadreceivedbytes.get(0));
 	        assertEquals("37689480", safaritrackerdwl.downloadreceivedbytes.get(1));
 	        assertEquals("45531008", safaritrackerdwl.downloadreceivedbytes.get(2));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

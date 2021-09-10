@@ -41,7 +41,6 @@ public class XMLParserTest extends TestCase {
 	        assertTrue(hts.contains("<dc:format>application/msword</dc:format>"));
 	        assertTrue(hts.contains("<dc:language>Fr</dc:language>"));
 	        assertTrue(hts.contains("<dc:rights>Archimède et Lius à Châteauneuf testing chars en été</dc:rights>"));
-	        stream.close();
         }catch( Exception e ) {
         	System.out.println(e);
         }
@@ -58,7 +57,6 @@ public class XMLParserTest extends TestCase {
 	        final String expected = "Archim\u00E8de et Lius \u00E0 Ch\u00E2teauneuf testing chars en \u00E9t\u00E9";
 	        String hts = handler.toString();
 	        assertTrue(hts.contains(expected));
-	        stream.close();
         }catch(Exception e) {
         	System.out.println(e);
         }

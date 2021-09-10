@@ -31,7 +31,6 @@ public class PreferencesDatParserTest extends TestCase {
 	        String hts = handler.toString();
 	        assertTrue(hts.contains("20"));
 	        assertTrue(hts.contains("02237df8aa0e92ae78f7bfe1d79a6fb2"));
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -49,7 +48,6 @@ public class PreferencesDatParserTest extends TestCase {
 	        parser.parse(stream, handler, metadata, context);
 	        String mts = metadata.toString();
 	        System.out.println(mts);
-	        stream.close();
         }catch (Exception e) {
         	System.out.println(e);
         }

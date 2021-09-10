@@ -30,7 +30,7 @@ public class EmptyVideoParserTest extends TestCase {
         converter.populateLocation(metadata, getName());
         try(InputStream stream = getStream("test-files/test_videoMp4.mp4")){
         	parser.parse(stream, handler, metadata, context);
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }

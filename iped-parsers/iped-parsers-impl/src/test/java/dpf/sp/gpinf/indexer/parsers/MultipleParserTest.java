@@ -52,7 +52,7 @@ public class MultipleParserTest extends TestCase {
 	        assertTrue(mts.contains("machine:platform=Windows"));
 	        assertTrue(mts.contains("machine:architectureBits=32"));
 	        assertTrue(mts.contains("Content-Type=application/x-msdownload"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

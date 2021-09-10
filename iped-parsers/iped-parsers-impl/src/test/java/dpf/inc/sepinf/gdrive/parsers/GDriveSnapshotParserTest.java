@@ -38,7 +38,7 @@ public class GDriveSnapshotParserTest extends TestCase {
 	        assertTrue(hts.contains("testRFC822_quoted"));
 	        assertTrue(hts.contains("mockrar5.rar"));
 	        assertTrue(hts.contains("a4tosticker9.png"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

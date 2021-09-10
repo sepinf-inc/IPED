@@ -27,7 +27,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/x-gdrive-account-info");
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -42,7 +42,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/x-win10-timeline");
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -58,7 +58,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/sqlite-skype");
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -74,7 +74,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/sqlite-skype-v12");
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -89,7 +89,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/x-gdrive-cloud-graph");
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -104,7 +104,7 @@ public class SQLiteContainerDetectorTest extends TestCase {
 	        TikaInputStream tis = TikaInputStream.get(stream);
 	        MediaType assertion = detector.detect(tis, metadata);
 	        assertEquals(assertion.toString(), "application/x-chrome-sqlite");
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

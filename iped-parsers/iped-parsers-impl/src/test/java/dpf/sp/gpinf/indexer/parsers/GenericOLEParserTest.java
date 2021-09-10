@@ -46,7 +46,7 @@ public class GenericOLEParserTest extends AbstractPkgTest {
 	        assertTrue(hts.contains("Guilherme Andreúce Sobreira Monteiro"));
 	        assertTrue(hts.contains("Microsoft Office Word"));
 	        assertTrue(hts.contains("Documento do Microsoft Office Word 97-2003"));
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }

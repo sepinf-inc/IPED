@@ -34,7 +34,7 @@ public class IndexerDefaultParserTest extends TestCase {
         parser.getSupportedTypes(context);
         try(InputStream stream = getStream("test-files/test_utf8")){
         	parser.parse(stream, handler, metadata, context);
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -67,7 +67,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("image:Height=512"));
 	        assertTrue(mts.contains("image:Width=512"));
 	        assertTrue(mts.contains("image:tiff:BitsPerSample=8 8 8"));
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -112,7 +112,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("video:Height=144.0"));
 	        assertTrue(mts.contains("video:Width=256.0"));
 	        assertTrue(mts.contains("video:framerate=29.97002997002997"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -170,7 +170,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	                mts.contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
 	        assertTrue(mts.contains("office:meta:character-count=2724"));
 	        assertTrue(mts.contains("office:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -201,7 +201,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("Content-Type=text/plain"));
 	        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
 	        assertTrue(mts.contains("charset=UTF-8"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -247,7 +247,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("Indexer-Content-Type=application/x-rar-compressed; version=4"));
 	        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pkg.RarParser"));
 	        assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -315,7 +315,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("Content-Type=application/pdf"));
 	        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pdf.PDFParser"));
 	        assertTrue(mts.contains("pdf:PDFVersion=1.7"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -342,7 +342,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("Content-Type=text/plain; charset=EUC-KR"));
 	        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
 	        assertTrue(mts.contains("Content-Encoding=EUC-KR"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -366,7 +366,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("X-Parsed-By=dpf.sp.gpinf.indexer.parsers.RawStringParser"));
 	        assertTrue(mts.contains("compressRatioLZ4=0.5720935240387917"));
 	        assertTrue(mts.contains("Content-Type=application/octet-stream"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -388,7 +388,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        assertTrue(mts.contains("Indexer-Content-Type=application/x-tika-ooxml-protected"));
 	        assertTrue(mts.contains("encryptedDocument=true"));
 	        assertTrue(mts.contains("Content-Type=application/x-tika-ooxml-protected"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -408,7 +408,7 @@ public class IndexerDefaultParserTest extends TestCase {
 	        String mts = metadata.toString();
 	        assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
 	        assertTrue(mts.contains("Indexer-Content-Type=application/x-sh"));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

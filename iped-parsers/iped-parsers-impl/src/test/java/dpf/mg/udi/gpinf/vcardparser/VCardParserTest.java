@@ -52,7 +52,7 @@ public class VCardParserTest extends TestCase {
 	
 	        assertEquals("guilhermeandreuce@gmail.com", metadata.get(ExtraProperties.USER_EMAIL));
 	        
-	        stream.close();
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }
@@ -88,7 +88,7 @@ public class VCardParserTest extends TestCase {
 	        assertEquals("Taxi Lago Norte", usernames[0]);
 	        assertEquals("Sushi Loko Flamingo", usernames[1]);
 	        assertEquals("Smart Assistência Técnica", usernames[2]);
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -131,7 +131,7 @@ public class VCardParserTest extends TestCase {
 		            assertEquals("021 (61)3468-2000", phonenumbers[0]);
 		            assertEquals("021 (61)3011-7666", phonenumbers[1]);
 		            assertEquals("[nicolecity, dança]", userorganizations[0]);
-		            stream.close();
+		            
 	        	}catch (Exception e) {
 	        		System.out.println(e);
 	        	}
@@ -182,7 +182,7 @@ public class VCardParserTest extends TestCase {
 	        assertEquals("[nicolecity, dança]", userorganizations[0]);
 	        assertEquals("gosta muito de dançar para-para", usernotes[0].substring(0, 31));
 	        assertEquals("Magnanimo Test@paraparaparapara el raton para el", usernames[0]);
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -204,8 +204,8 @@ public class VCardParserTest extends TestCase {
 	        parser.getSupportedTypes(context);
        
 	        parser.parse(stream, handler, metadata, context);
-	        VCardParser.printHtmlFromString(out, stream.toString());
-	        stream.close();
+	        VCardParser.printHtmlFromString(out, handler.toString());
+	        
         }catch(Exception e) {
         	System.out.println(e);
         }

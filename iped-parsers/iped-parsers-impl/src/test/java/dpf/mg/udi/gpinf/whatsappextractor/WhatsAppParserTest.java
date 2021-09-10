@@ -83,7 +83,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 	        assertEquals("2021-06-16T17:01:34Z", whatsapptracker.messagedate.get(4));
 	        assertEquals("2016-04-29T21:15:08Z", whatsapptracker.messagedate.get(42));
 	        assertEquals("2021-06-14T18:52:46Z", whatsapptracker.messagedate.get(43));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -102,7 +102,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.getSupportedTypes(whatsappContext);
         try(InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")){
         	// parser.parse(stream, handler, metadata, whatsappContext);
-        	stream.close();
+        	
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -171,7 +171,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 	        assertEquals("\"Nobility is about being superior than your former self\"", whatsapptracker.usernotes.get(4));
 	        assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(163));
 	        assertEquals("Disponível", whatsapptracker.usernotes.get(164));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }
@@ -207,7 +207,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 	        assertEquals("", whatsapptracker.username.get(0));
 	        assertEquals("@s.whatsapp.net", whatsapptracker.useraccount.get(0));
 	        assertEquals("", whatsapptracker.usernotes.get(0));
-	        stream.close();
+	        
         }catch (Exception e) {
         	System.out.println(e);
         }

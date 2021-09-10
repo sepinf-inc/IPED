@@ -38,7 +38,7 @@ public class PythonParserTest extends TestCase {
             String hts = handler.toString();
             String mts = metadata.toString();
             System.out.println(hts + "\n" + mts);
-            stream.close();
+            
         } catch (Exception e) {
             System.out.println(e);
         }
