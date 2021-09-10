@@ -18,7 +18,6 @@ public class GDriveSnapshotParserTest extends TestCase {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
-    // Main Parser Method - Google Drive Cloud Graph - SNAPSHOT.db
     @Test
     public void testGDriveSnapshotParsing() throws IOException, SAXException, TikaException {
 
@@ -26,19 +25,23 @@ public class GDriveSnapshotParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-snapshot").toString());
         ContentHandler handler = new BodyContentHandler(100000000);
-        InputStream stream = getStream("test-files/test_snapshot.db");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.setExtractEntries(true);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-
-        assertTrue(hts.contains("Segurança Computacional CIC"));
-        assertTrue(hts.contains("Cheat Engine.lnk"));
-        assertTrue(hts.contains("testRFC822_quoted"));
-        assertTrue(hts.contains("mockrar5.rar"));
-        assertTrue(hts.contains("a4tosticker9.png"));
+        try(InputStream stream = getStream("test-files/test_snapshot.db")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	
+	        assertTrue(hts.contains("Segurança Computacional CIC"));
+	        assertTrue(hts.contains("Cheat Engine.lnk"));
+	        assertTrue(hts.contains("testRFC822_quoted"));
+	        assertTrue(hts.contains("mockrar5.rar"));
+	        assertTrue(hts.contains("a4tosticker9.png"));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 

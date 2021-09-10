@@ -29,12 +29,16 @@ public class KeyStoreParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("x-java-keystore").toString());
         ContentHandler handler = new ToTextContentHandler();
-        InputStream stream = getStream("test-files/test_serverMyRelease.keystore");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-        assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
-        assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
+        try(InputStream stream = getStream("test-files/test_serverMyRelease.keystore")){
+	        parser.parse(stream, handler, metadata, context);
+	        assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
+	        assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
+	        stream.close();
+	        }catch (Exception e) {
+	        	System.out.println(e);
+	        }
 
     }
 
@@ -45,13 +49,17 @@ public class KeyStoreParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("x-pkcs12").toString());
         ContentHandler handler = new ToTextContentHandler();
-        InputStream stream = getStream("test-files/test_server.pfx");
         ParseContext context = new ParseContext();
         String alias = "server certificate";
         parser.getSupportedTypes(context);
-        parser.parseCertificate(alias, stream, handler, metadata, context);
-        assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
-        assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
+        try(InputStream stream = getStream("test-files/test_server.pfx")){
+	        parser.parseCertificate(alias, stream, handler, metadata, context);
+	        assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
+	        assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
 }

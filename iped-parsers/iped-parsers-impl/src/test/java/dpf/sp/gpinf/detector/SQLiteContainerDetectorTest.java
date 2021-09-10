@@ -23,10 +23,14 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_global.db");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/x-gdrive-account-info");
+        try(InputStream stream = getStream("test-files/test_global.db")){
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/x-gdrive-account-info");
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -34,10 +38,14 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_activitiesCache.db");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/x-win10-timeline");
+        try(InputStream stream = getStream("test-files/test_activitiesCache.db")){
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/x-win10-timeline");
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -45,10 +53,15 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_skypeMain.db");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/sqlite-skype");
+        try(InputStream stream = getStream("test-files/test_skypeMain.db")){
+	        
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/sqlite-skype");
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -56,10 +69,15 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_skypeS4lStreeguil1.db");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/sqlite-skype-v12");
+        try(InputStream stream = getStream("test-files/test_skypeS4lStreeguil1.db")){
+	        
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/sqlite-skype-v12");
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -67,10 +85,14 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_cloudGraph.db");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/x-gdrive-cloud-graph");
+        try(InputStream stream = getStream("test-files/test_cloudGraph.db")){
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/x-gdrive-cloud-graph");
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -78,9 +100,13 @@ public class SQLiteContainerDetectorTest extends TestCase {
 
         SQLiteContainerDetector detector = new SQLiteContainerDetector();
         Metadata metadata = new Metadata();
-        InputStream stream = getStream("test-files/test_historyChrome");
-        TikaInputStream tis = TikaInputStream.get(stream);
-        MediaType assertion = detector.detect(tis, metadata);
-        assertEquals(assertion.toString(), "application/x-chrome-sqlite");
+        try(InputStream stream = getStream("test-files/test_historyChrome")){
+	        TikaInputStream tis = TikaInputStream.get(stream);
+	        MediaType assertion = detector.detect(tis, metadata);
+	        assertEquals(assertion.toString(), "application/x-chrome-sqlite");
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 }

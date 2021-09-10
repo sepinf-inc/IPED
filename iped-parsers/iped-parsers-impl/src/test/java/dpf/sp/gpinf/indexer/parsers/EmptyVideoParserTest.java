@@ -24,12 +24,16 @@ public class EmptyVideoParserTest extends TestCase {
         EmptyVideoParser parser = new EmptyVideoParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_videoMp4.mp4");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         ISO6709Converter converter = new ISO6709Converter();
         converter.populateLocation(metadata, getName());
-        parser.parse(stream, handler, metadata, context);
+        try(InputStream stream = getStream("test-files/test_videoMp4.mp4")){
+        	parser.parse(stream, handler, metadata, context);
+        	stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 

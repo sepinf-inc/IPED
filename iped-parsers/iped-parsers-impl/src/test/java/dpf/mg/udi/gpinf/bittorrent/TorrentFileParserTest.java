@@ -26,15 +26,19 @@ public class TorrentFileParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_torrentSimple.torrent");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-
-        assertTrue(hts.contains("NovaROFull_19112020.exe"));
-        assertTrue(hts.contains("3259111196"));
+        try(InputStream stream = getStream("test-files/test_torrentSimple.torrent")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	
+	        assertTrue(hts.contains("NovaROFull_19112020.exe"));
+	        assertTrue(hts.contains("3259111196"));
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -45,19 +49,23 @@ public class TorrentFileParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-bittorrent").toString());
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_torrentMultiple.torrent");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-
-        assertTrue(hts.contains("Big Buck Bunny"));
-        assertTrue(hts.contains("Big Buck Bunny.mp4"));
-        assertTrue(hts.contains("Big Buck Bunny.en.srt"));
-        assertTrue(hts.contains("140"));
-        assertTrue(hts.contains("276134947"));
-        assertTrue(hts.contains("310380"));
+        try(InputStream stream = getStream("test-files/test_torrentMultiple.torrent")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	
+	        assertTrue(hts.contains("Big Buck Bunny"));
+	        assertTrue(hts.contains("Big Buck Bunny.mp4"));
+	        assertTrue(hts.contains("Big Buck Bunny.en.srt"));
+	        assertTrue(hts.contains("140"));
+	        assertTrue(hts.contains("276134947"));
+	        assertTrue(hts.contains("310380"));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 }

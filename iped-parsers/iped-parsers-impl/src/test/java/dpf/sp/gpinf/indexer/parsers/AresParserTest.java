@@ -24,35 +24,42 @@ public class AresParserTest extends TestCase {
         AresParser parser = new AresParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_shareL.dat");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-        assertTrue(hts.contains("mocktext2"));
-        assertTrue(hts.contains("mocktext5"));
-        assertTrue(hts.contains("mocktext1"));
-
-        assertTrue(hts.contains("c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mocktext2.txt"));
-        assertTrue(hts.contains(
-                "c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mockfolder\\mocktext5.txt"));
-        assertTrue(hts.contains("c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mocktext1.txt"));
+        try(InputStream stream = getStream("test-files/test_shareL.dat")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	        assertTrue(hts.contains("mocktext2"));
+	        assertTrue(hts.contains("mocktext5"));
+	        assertTrue(hts.contains("mocktext1"));
+	
+	        assertTrue(hts.contains("c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mocktext2.txt"));
+	        assertTrue(hts.contains(
+	                "c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mockfolder\\mocktext5.txt"));
+	        assertTrue(hts.contains("c:\\Users\\guilh\\OneDrive\\Área de Trabalho\\PF\\test-files\\cpio\\mocktext1.txt"));
+	       
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
-
+    
     public void testAresParserEmbeddedShareL() throws IOException, SAXException, TikaException {
 
         AresParser parser = new AresParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_shareL.dat");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        assertEquals("4", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
-        assertEquals("3caf8ead5f326604bfbc7eae5274a15fb7840d08", metadata.get(ExtraProperties.SHARED_HASHES));
-
+        try(InputStream stream = getStream("test-files/test_shareL.dat")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        assertEquals("4", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
+	        assertEquals("3caf8ead5f326604bfbc7eae5274a15fb7840d08", metadata.get(ExtraProperties.SHARED_HASHES));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 
     public void testAresParserParsingShareH() throws IOException, SAXException, TikaException {
@@ -60,14 +67,18 @@ public class AresParserTest extends TestCase {
         AresParser parser = new AresParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_shareH.dat");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-        assertTrue(hts.contains("Undisclosed Desires"));
-        assertTrue(hts.contains("8a199330e3882ff26a4b"));
+        try(InputStream stream = getStream("test-files/test_shareH.dat")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	        assertTrue(hts.contains("Undisclosed Desires"));
+	        assertTrue(hts.contains("8a199330e3882ff26a4b"));
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -76,13 +87,16 @@ public class AresParserTest extends TestCase {
         AresParser parser = new AresParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_shareH.dat");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        assertEquals("1", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
-        assertEquals("8a199330e3882ff26a4b02e8285f5a9dc20d1ef1", metadata.get(ExtraProperties.SHARED_HASHES));
-
+        try(InputStream stream = getStream("test-files/test_shareH.dat")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        assertEquals("1", metadata.get(ExtraProperties.P2P_REGISTRY_COUNT));
+	        assertEquals("8a199330e3882ff26a4b02e8285f5a9dc20d1ef1", metadata.get(ExtraProperties.SHARED_HASHES));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
     }
 }

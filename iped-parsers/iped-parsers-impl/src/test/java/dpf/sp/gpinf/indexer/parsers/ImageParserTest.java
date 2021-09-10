@@ -26,13 +26,17 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenaJpeg.jpg");
         metadata.set(Metadata.CONTENT_TYPE, "image/jpeg");
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-        // tiff
-        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
-        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+        try(InputStream stream = getStream("test-files/test_lenaJpeg.jpg")){
+	        parser.parse(stream, handler, metadata, context);
+	        // tiff
+	        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
+	        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -43,13 +47,17 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenaPng.png");
         metadata.set(Metadata.CONTENT_TYPE, "image/png");
         // tiff
-        parser.parse(stream, handler, metadata, context);
-        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
-        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
-        assertEquals("8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
+        try(InputStream stream = getStream("test-files/test_lenaPng.png")){
+	        parser.parse(stream, handler, metadata, context);
+	        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
+	        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+	        assertEquals("8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -60,11 +68,15 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenaTiff.tiff");
         metadata.set(Metadata.CONTENT_TYPE, "image/tiff");
-        parser.parse(stream, handler, metadata, context);
-        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
-        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+        try(InputStream stream = getStream("test-files/test_lenaTiff.tiff")){
+	        parser.parse(stream, handler, metadata, context);
+	        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
+	        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -75,13 +87,15 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenaBmp.bmp");
         metadata.set(Metadata.CONTENT_TYPE, "image/bmp");
-        parser.parse(stream, handler, metadata, context);
-        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
-        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
-        // assertEquals("8 8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
-
+        try(InputStream stream = getStream("test-files/test_lenaBmp.bmp")){
+	        parser.parse(stream, handler, metadata, context);
+	        assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
+	        assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
     }
 
     @Test
@@ -91,9 +105,13 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_lenaJp2.jp2");
         metadata.set(Metadata.CONTENT_TYPE, "image/jp2");
-        parser.parse(stream, handler, metadata, context);
+        try(InputStream stream = getStream("test-files/test_lenaJp2.jp2")){
+	        parser.parse(stream, handler, metadata, context);
+	        stream.close();
+        }catch(Exception e) {
+        	System.out.println(e);
+        }
 
     }
 
@@ -104,11 +122,15 @@ public class ImageParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        InputStream stream = getStream("test-files/test_horseGif.gif");
         metadata.set(Metadata.CONTENT_TYPE, "image/gif");
-        parser.parse(stream, handler, metadata, context);
-        assertEquals("342", metadata.get(Metadata.IMAGE_LENGTH));
-        assertEquals("500", metadata.get(Metadata.IMAGE_WIDTH));
+        try(InputStream stream = getStream("test-files/test_horseGif.gif")){
+	        parser.parse(stream, handler, metadata, context);
+	        assertEquals("342", metadata.get(Metadata.IMAGE_LENGTH));
+	        assertEquals("500", metadata.get(Metadata.IMAGE_WIDTH));
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
+        }
 
     }
 }

@@ -25,18 +25,22 @@ public class GDriveCloudGraphParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("x-gdrive-cloud-graph").toString());
         ContentHandler handler = new BodyContentHandler(10000000);
-        InputStream stream = getStream("test-files/test_cloudGraph.db");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        parser.parse(stream, handler, metadata, context);
-
-        String hts = handler.toString();
-
-        assertTrue(hts.contains("Google Drive.lnk"));
-        assertTrue(hts.contains("12jDbJlY6dA7uqMuiQAEDOD43QCKz3Ird"));
-        assertTrue(hts.contains("testRFC822_quoted"));
-        assertTrue(hts.contains("testRFC822-multipart"));
-        assertTrue(hts.contains("Md5Checker.exe"));
+        try(InputStream stream = getStream("test-files/test_cloudGraph.db")){
+	        parser.parse(stream, handler, metadata, context);
+	
+	        String hts = handler.toString();
+	
+	        assertTrue(hts.contains("Google Drive.lnk"));
+	        assertTrue(hts.contains("12jDbJlY6dA7uqMuiQAEDOD43QCKz3Ird"));
+	        assertTrue(hts.contains("testRFC822_quoted"));
+	        assertTrue(hts.contains("testRFC822-multipart"));
+	        assertTrue(hts.contains("Md5Checker.exe"));
+	        stream.close();
+        }catch (Exception e) {
+			System.out.println(e);
+		}
 
     }
 }

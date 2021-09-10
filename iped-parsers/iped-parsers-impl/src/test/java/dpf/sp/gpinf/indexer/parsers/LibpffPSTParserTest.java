@@ -30,17 +30,18 @@ public class LibpffPSTParserTest {
         parser.setExtractOnlyDeleted(false);
         parser.getSupportedTypes(context);
         assumeFalse(parser.getSupportedTypes(context).isEmpty());
-
         try (InputStream stream = getStream("test-files/test_sample.pst")) {
             parser.parse(stream, handler, metadata, context);
+
+	        String hts = handler.toString();
+	        String mts = metadata.toString();
+	
+	        // TODO remove print below and test assertions
+	        System.out.println(hts + "\n" + mts);
+	        stream.close();
+        }catch (Exception e) {
+        	System.out.println(e);
         }
-
-        String hts = handler.toString();
-        String mts = metadata.toString();
-
-        // TODO remove print below and test assertions
-        System.out.println(hts + "\n" + mts);
-
     }
 
 }

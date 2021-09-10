@@ -29,14 +29,14 @@ public class PythonParserTest extends TestCase {
         Metadata metadata = new Metadata();
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-sh");
         ContentHandler handler = new BodyContentHandler();
-        InputStream stream = getStream("test-files/test_setup.py");
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try {
+        try (InputStream stream = getStream("test-files/test_setup.py")){
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
             String mts = metadata.toString();
             System.out.println(hts + "\n" + mts);
+            stream.close();
         } catch (Exception e) {
             System.out.println(e);
         }
