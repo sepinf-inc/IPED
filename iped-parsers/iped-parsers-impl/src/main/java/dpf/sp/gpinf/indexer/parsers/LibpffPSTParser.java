@@ -188,9 +188,6 @@ public class LibpffPSTParser extends AbstractParser {
 
             throw new TikaException(this.getClass().getSimpleName() + " interrupted", e); //$NON-NLS-1$
 
-        } catch (Exception e) {
-            LOGGER.error("Error parsing " + fileName, e); //$NON-NLS-1$
-
         } finally {
             if (p != null)
                 p.destroyForcibly();

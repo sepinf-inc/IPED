@@ -172,9 +172,6 @@ public class RegistryParser extends AbstractParser {
                     }
             }
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            LOGGER.warn("Error parsing " + metadata.get(Metadata.RESOURCE_NAME_KEY), e); //$NON-NLS-1$
         } finally {
             tmp.close();
         }
