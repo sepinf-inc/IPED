@@ -1,5 +1,8 @@
 package dpf.sp.gpinf.indexer.parsers;
 
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
+
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,18 +14,7 @@ import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-import junit.framework.TestCase;
-
-public class IndexDatParserTest extends TestCase {
-
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
-
-    // Using external program:
-    // private String TOOL_PATH =
-    // "C:\\Users\\guilh\\Downloads\\libpff-main\\libmsiecf-main\\vs2019\\Release\\Win32\\";
-    // //$NON-NLS-1$
+public class IndexDatParserTest {
 
     @Test
     public void testIndexDatParser() throws IOException, SAXException, TikaException {
@@ -31,8 +23,9 @@ public class IndexDatParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new ToTextContentHandler();
         ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        try (InputStream stream = getStream("test-files/test_index.dat")) {
+        assumeFalse(parser.getSupportedTypes(context).isEmpty());
+
+        try (InputStream stream = this.getClass().getResourceAsStream("/test-files/test_index.dat")) {
             parser.parse(stream, handler, metadata, context);
             String hts = handler.toString();
             assertTrue(hts.contains("Record type"));
@@ -49,8 +42,6 @@ public class IndexDatParserTest extends TestCase {
             assertTrue(hts.contains("Cookie:guileb@google.com.br/complete/search"));
             assertTrue(hts.contains("Cookie:guileb@www.incredibarvuz1.com/"));
             assertTrue(hts.contains("Export completed."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
