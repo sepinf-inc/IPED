@@ -3,7 +3,6 @@ package dpf.inc.sepinf.browsers.parsers;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Set;
 import junit.framework.TestCase;
@@ -24,7 +23,6 @@ import iped3.util.ExtraProperties;
 public abstract class AbstractPkgTest extends TestCase {
     protected ParseContext firefoxContext;
     protected ParseContext chromeContext;
-    protected ParseContext edgeContext;
     protected ParseContext safariContext;
     protected ParseContext safariContexthst;
     protected ParseContext safariContextbkm;
@@ -33,7 +31,6 @@ public abstract class AbstractPkgTest extends TestCase {
     protected Parser autoDetectParser;
     protected EmbeddedFirefoxParser firefoxtracker;
     protected EmbeddedChromeParser chrometracker;
-    protected EmbeddedEdgeParser edgetracker;
     protected EmbeddedSafariParser safaritracker;
     protected EmbeddedSafariParserHst safaritrackerhst;
     protected EmbeddedSafariParserBkm safaritrackerbkm;
@@ -53,10 +50,6 @@ public abstract class AbstractPkgTest extends TestCase {
         chrometracker = new EmbeddedChromeParser();
         chromeContext = new ParseContext();
         chromeContext.set(Parser.class, chrometracker);
-
-        edgetracker = new EmbeddedEdgeParser();
-        edgeContext = new ParseContext();
-        edgeContext.set(Parser.class, edgetracker);
 
         safaritracker = new EmbeddedSafariParser();
         safaritrackerhst = new EmbeddedSafariParserHst();
@@ -202,36 +195,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
         public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
                 throws IOException, SAXException, TikaException {
-
-        }
-    }
-
-    @SuppressWarnings("serial")
-    protected static class EmbeddedEdgeParser extends AbstractParser {
-
-        protected List<String> bookmarktitle = new ArrayList<String>();
-        protected List<String> bookmarkmodified = new ArrayList<String>();
-        protected List<String> visitUrl = new ArrayList<>();
-        protected List<Date> visitDate = new ArrayList<>();
-
-        public Set<MediaType> getSupportedTypes(ParseContext context) {
-            return (new AutoDetectParser()).getSupportedTypes(context);
-        }
-
-        public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
-                throws IOException, SAXException, TikaException {
-
-            if (metadata.get(TikaCoreProperties.TITLE) != null)
-                bookmarktitle.add(metadata.get(TikaCoreProperties.TITLE));
-
-            if (metadata.get(TikaCoreProperties.MODIFIED) != null)
-                bookmarkmodified.add(metadata.get(TikaCoreProperties.MODIFIED));
-
-            if (metadata.get(ExtraProperties.URL) != null)
-                visitUrl.add(metadata.get(ExtraProperties.URL));
-
-            if (metadata.get(ExtraProperties.VISIT_DATE) != null)
-                visitDate.add(metadata.getDate(ExtraProperties.VISIT_DATE));
 
         }
     }
