@@ -87,7 +87,7 @@ public class MinIOTask extends AbstractTask {
     private File tarfile = null;
     private long tarLength = 0;
     private long tarFiles = 0;
-    private HashSet<IItem> queue;
+    private HashSet<IItem> queue = new HashSet<>();
     private boolean sendQueue = false;
 
     @Override
@@ -98,7 +98,7 @@ public class MinIOTask extends AbstractTask {
         if (!minIOConfig.isEnabled()) {
             return;
         }
-        queue = new HashSet<>();
+
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
 
         tarMaxLength = minIOConfig.getTarMaxLength();
@@ -195,11 +195,14 @@ public class MinIOTask extends AbstractTask {
 
         tarFiles++;
         tarLength += length;
-        TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
-        entry.setSize(length);
-        out.putArchiveEntry(entry);
 
-        IOUtils.copy(is, out);
+        TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
+        byte[] coppied = IOUtils.toByteArray(is);
+        entry.setSize(coppied.length);
+        out.putArchiveEntry(entry);
+        out.write(coppied);
+        // IOUtils.copy(coppied, out);
+
         out.closeArchiveEntry();
 
     }
