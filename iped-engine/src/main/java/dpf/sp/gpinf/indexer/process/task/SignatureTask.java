@@ -1,9 +1,11 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.Detector;
 import org.apache.tika.io.TikaInputStream;
@@ -17,6 +19,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.SignatureConfig;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.IItem;
+import iped3.io.SeekableInputStream;
 import iped3.util.MediaTypes;
 import macee.core.Configurable;
 
@@ -67,6 +70,12 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
+                if (MediaType.application("x-disk-image").equals(type)) {
+                    if(hasVHDFooter(evidence)) {
+                        type = MediaType.application("x-vhd");
+                    }
+                }
+
                 // Caso seja item office07 cifrado e tenha extensão específica, refina o tipo
                 if (type != null && type.toString().equals("application/x-tika-ooxml-protected") //$NON-NLS-1$
                         && "docx xlsx pptx".contains(evidence.getExt().toLowerCase())) { //$NON-NLS-1$
@@ -97,6 +106,23 @@ public class SignatureTask extends AbstractTask {
             }
         }
         evidence.setMediaType(MediaTypes.getMediaTypeRegistry().normalize(type));
+    }
+
+    private boolean hasVHDFooter(IItem item) {
+        if (item.getLength() == null) {
+            return false;
+        }
+        try (SeekableInputStream is = item.getStream()) {
+            is.seek(item.getLength() - 512);
+            byte[] cookie = IOUtils.readFully(is, 9);
+            if ("conectix".equals(new String(cookie, 0, 8, StandardCharsets.ISO_8859_1))
+                    || "conectix".equals(new String(cookie, 1, 8, StandardCharsets.ISO_8859_1))) {
+                return true;
+            }
+        } catch (IOException e) {
+            // ignore
+        }
+        return false;
     }
 
     @Override
