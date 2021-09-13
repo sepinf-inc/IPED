@@ -149,6 +149,7 @@ public class OutlookPSTParser extends AbstractParser {
         TikaInputStream tis = null;
         File tmpFile = null;
         PSTFile pstFile = null;
+        boolean libpffCalled = false;
         try {
             tis = TikaInputStream.get(stream, tmp);
             tmpFile = tis.getFile();
@@ -169,6 +170,7 @@ public class OutlookPSTParser extends AbstractParser {
 
             if (recoverDeleted) {
                 libpffParser.setExtractOnlyDeleted(true);
+                libpffCalled = true;
                 libpffParser.parse(tis, handler, metadata, context);
             }
 
@@ -183,17 +185,28 @@ public class OutlookPSTParser extends AbstractParser {
             } else if (e instanceof TikaException && e.getCause() instanceof InterruptedException)
                 throw (TikaException) e;
             else {
-                if (useLibpffParser) {
+                boolean throwException = false;
+                if (useLibpffParser && !libpffCalled) {
                     LOGGER.warn("java-libpst failed, using libpff on " + fileName, e); //$NON-NLS-1$
                     libpffParser.setExtractOnlyDeleted(false);
                     if (!recoverDeleted)
                         libpffParser.setExtractOnlyActive(true);
                     libpffParser.parse(tis, handler, metadata, context);
-                } else
-                    LOGGER.error("java-libpst failed on " + fileName, e); //$NON-NLS-1$
+                } else {
+                    LOGGER.error("PST/OST parsing failed on {}", fileName); //$NON-NLS-1$
+                    throwException = true;
+                }
 
                 if (e.toString().contains("Only unencrypted and compressable PST files are supported at this time")) //$NON-NLS-1$
                     throw new EncryptedDocumentException(e);
+
+                if (throwException) {
+                    if (e instanceof TikaException) {
+                        throw (TikaException) e;
+                    } else {
+                        throw new TikaException("PST/OST parsing failed", e);
+                    }
+                }
             }
 
         } finally {
