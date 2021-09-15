@@ -64,6 +64,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
@@ -158,6 +159,13 @@ public class Manager {
         this.palavrasChave = palavras;
 
         this.caseData = new CaseData(QUEUE_SIZE);
+
+        for (File source : sources) {
+            if (source.getName().toLowerCase().endsWith(Marcadores.EXT)) {
+                this.caseData.setIpedReport(true);
+                break;
+            }
+        }
 
         Item.setStartID(0);
 

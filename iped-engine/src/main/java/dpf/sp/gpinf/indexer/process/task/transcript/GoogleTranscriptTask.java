@@ -70,11 +70,15 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
             return;
         }
 
+        // TODO how to allow user enable this task when creating report from GUI?
+        // Plugin folder does not exist in case folder, so lib won't be found...
+        if (caseData.isIpedReport()) {
+            transcriptConfig.setEnabled(false);
+            return;
+        }
+
         try {
-            // TODO how to allow user enable this task when creating report from GUI?
-            // Plugin folder does not exist in case folder...
-            if (!caseData.isIpedReport())
-                Class.forName("com.google.cloud.speech.v1p1beta1.SpeechClient");
+            Class.forName("com.google.cloud.speech.v1p1beta1.SpeechClient");
 
         } catch (ClassNotFoundException e) {
             throw new IPEDException(
