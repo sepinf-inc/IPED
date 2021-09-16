@@ -53,6 +53,8 @@ public class AutoCompletarColunas {
                                     for (int i = 0; i < cols.length; i++) {
                                         NEXT: for (int j = 0; j < cols[i].length; j++) {
                                             String col = cols[i][j];
+                                            if (col.equals(ResultTableModel.BOOKMARK_COL) || col.equals(ResultTableModel.SCORE_COL))
+                                                continue;
                                             if ((step == 0 && col.toLowerCase().startsWith(base))
                                                     || (step == 1 && col.toLowerCase().indexOf(base) > 0)) {
                                                 for (int k = 0; k < l.size(); k++) {
