@@ -260,8 +260,11 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
         int selIdx = groups.getSelectedIndex();
         if (selIdx != -1) {
             String[] fields = ColumnsManager.getInstance().fieldGroups[selIdx];
-            for (String f : fields)
+            for (String f : fields) {
+                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL))
+                    continue;
                 props.addItem(f);
+            }
         }
         updatingProps = false;
     }
