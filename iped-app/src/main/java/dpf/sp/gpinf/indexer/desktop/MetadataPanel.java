@@ -1,7 +1,6 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.BorderLayout;
-import java.awt.Dialog.ModalityType;
 import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -14,7 +13,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -29,27 +27,21 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import org.apache.lucene.analysis.core.WhitespaceAnalyzer;
 import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.SlowCompositeReaderWrapper;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
-import org.apache.lucene.search.BooleanClause.Occur;
-import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import iped3.IItemId;
 import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
@@ -64,6 +56,7 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
     private static final String MONEY_FIELD = RegexTask.REGEX_PREFIX + "MONEY"; //$NON-NLS-1$
     private static final String LINEAR_SCALE = Messages.getString("MetadataPanel.Linear"); //$NON-NLS-1$
     private static final String LOG_SCALE = Messages.getString("MetadataPanel.Log"); //$NON-NLS-1$
+    private static final int MAX_TERMS_TO_HIGHLIGHT = 1024;
 
     private volatile static LeafReader reader;
 
@@ -758,8 +751,12 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
             return Collections.emptySet();
 
         Set<String> highlightTerms = new HashSet<String>();
-        for (ValueCount item : list.getSelectedValuesList())
+        for (ValueCount item : list.getSelectedValuesList()) {
             highlightTerms.add(item.getVal());
+            if (highlightTerms.size() >= MAX_TERMS_TO_HIGHLIGHT) {
+                break;
+            }
+        }
 
         return highlightTerms;
 
@@ -767,28 +764,41 @@ public class MetadataPanel extends JPanel implements ActionListener, ListSelecti
 
     public Query getHighlightQuery() throws ParseException, QueryNodeException {
 
-        String field = (String) props.getSelectedItem();
-        if (field == null || !(field.startsWith(RegexTask.REGEX_PREFIX) || field.startsWith(NamedEntityTask.NER_PREFIX))
-                || list.isSelectionEmpty())
+        Set<String> terms = getHighlightTerms();
+        if (terms.isEmpty()) {
             return null;
+        }
 
         StringBuilder str = new StringBuilder();
         str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (ValueCount item : list.getSelectedValuesList())
-            str.append("\"" + escape(item.getVal()) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+        for (String term : terms) {
+            str.append("\"*" + removeIllegalChars(term).trim() + "*\" ");
+        }
         str.append(")"); //$NON-NLS-1$
 
-        return new QueryBuilder(App.get().appCase).getQuery(str.toString());
+        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(IndexItem.CONTENT,
+                App.get().appCase.getAnalyzer());
+        cpqp.setAllowLeadingWildcard(true);
 
+        try {
+            return cpqp.parse(str.toString());
+
+        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    private String escape(String s) {
+    private String removeIllegalChars(String s) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (!Character.isLetterOrDigit(c))
-                sb.append('\\');
-            sb.append(c);
+            int c = s.codePointAt(i);
+            if (!Character.isLetterOrDigit(c)) {
+                sb.append(' ');
+            } else {
+                sb.appendCodePoint(c);
+            }
         }
         return sb.toString();
     }
