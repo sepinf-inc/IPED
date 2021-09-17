@@ -44,6 +44,7 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
+import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
@@ -59,7 +60,6 @@ import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
-import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -1338,21 +1338,33 @@ public class MetadataPanel extends JPanel
         StringBuilder str = new StringBuilder();
         str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
         for (String term : terms) {
-            str.append("\"" + escape(term) + "\" "); //$NON-NLS-1$ //$NON-NLS-2$
+            str.append("\"*" + removeIllegalChars(term).trim() + "*\" ");
         }
         str.append(")"); //$NON-NLS-1$
 
-        return new QueryBuilder(App.get().appCase).getQuery(str.toString());
+        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(IndexItem.CONTENT,
+                App.get().appCase.getAnalyzer());
+        cpqp.setAllowLeadingWildcard(true);
 
+        try {
+            return cpqp.parse(str.toString());
+
+        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
+            e.printStackTrace();
+        }
+
+        return null;
     }
 
-    private String escape(String s) {
+    private String removeIllegalChars(String s) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i);
-            if (!Character.isLetterOrDigit(c))
-                sb.append('\\');
-            sb.append(c);
+            int c = s.codePointAt(i);
+            if (!Character.isLetterOrDigit(c)) {
+                sb.append(' ');
+            } else {
+                sb.appendCodePoint(c);
+            }
         }
         return sb.toString();
     }
