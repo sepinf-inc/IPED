@@ -415,7 +415,7 @@ public class VideoThumbTask extends ThumbTask {
                         File thumbFile = getThumbFile(evidence);
                         saveThumb(evidence, thumbFile);
                         t = System.currentTimeMillis() - t;
-                        totalTimeGallery.incrementAndGet();
+                        totalTimeGallery.addAndGet(t);
                         totalGallery.incrementAndGet();
                     }
                 } catch (Throwable e) {
