@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -487,7 +488,7 @@ public class VideoThumbTask extends ThumbTask {
         
         if (mediaType.equals("image/gif")) {
             ImageReader reader = null;
-            try (ImageInputStream iis = ImageIO.createImageInputStream(evidence.getBufferedStream())) {
+            try (BufferedInputStream is = evidence.getBufferedStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);
@@ -495,6 +496,19 @@ public class VideoThumbTask extends ThumbTask {
             } finally {
                 if (reader != null)
                     reader.dispose();
+            }
+        
+        } else if (mediaType.equals("image/png")) {
+            byte[] b = new byte[128];
+            try (BufferedInputStream is = evidence.getBufferedStream()) {
+                int read = is.read(b);
+                for (int i = 0; i <= read - 8; i++) {
+                    if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {
+                        numImages = ((b[i + 5] & 0xFF) << 16) | ((b[i + 6] & 0xFF) << 8) | (b[i + 7] & 0xFF);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
             }
         }
         
