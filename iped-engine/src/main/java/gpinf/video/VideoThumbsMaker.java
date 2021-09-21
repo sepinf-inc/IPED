@@ -94,7 +94,7 @@ public class VideoThumbsMaker {
         boolean fixed = false;
         File lnk = null;
         String videoStream = null;
-        for (int step = numFrames == 0 ? 0 : 1; step <= 1; step++) {
+        for (int step = numFrames <= 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
                 int pos = cmds.indexOf("-demuxer"); //$NON-NLS-1$
                 if (pos < 0) {
@@ -181,7 +181,7 @@ public class VideoThumbsMaker {
 
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
-        if (numFrames == 0) {
+        if (numFrames <= 0) {
             cmds.add("-demuxer"); //$NON-NLS-1$
             cmds.add("lavf"); //$NON-NLS-1$
         }
@@ -194,7 +194,7 @@ public class VideoThumbsMaker {
         cmds.add("-noaspect"); //$NON-NLS-1$
         cmds.add("-sws"); //$NON-NLS-1$
         cmds.add("1"); //$NON-NLS-1$
-        if (ignoreWaitKeyFrame != 1 && numFrames == 0) {
+        if (ignoreWaitKeyFrame != 1 && numFrames <= 0) {
             cmds.add("-lavdopts"); //$NON-NLS-1$
             cmds.add("wait_keyframe"); //$NON-NLS-1$
         }
@@ -238,14 +238,12 @@ public class VideoThumbsMaker {
                     cmds.remove(pos + 1);
                     cmds.remove(pos);
                     int frameStep = 0;
-                    if (numFrames == 0) {
+                    if (numFrames <= 0) {
                         float fps = Math.min(240, result.getFPS());
                         frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
                     } else {
-                        frameStep = (int) (numFrames / (maxThumbs + 2));
+                        frameStep = numFrames / (maxThumbs + 2);
                     }
-                    System.err.println(">>>>frameStep="+frameStep);
-                    System.err.println(">>>>numFrames="+numFrames);
                     if (frameStep < 1) {
                         frameStep = 1;
                     } else if (frameStep > 600) {
