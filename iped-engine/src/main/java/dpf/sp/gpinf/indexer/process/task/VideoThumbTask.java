@@ -22,6 +22,7 @@ import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -32,6 +33,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
@@ -148,6 +151,12 @@ public class VideoThumbTask extends ThumbTask {
      */
     private String tempSuffix;
 
+    /**
+     * Property to be set if the evidence is a animated image (i.e. contain multiple
+     * frames). Only set if the number of frames is greater than one.
+     */
+    private static final String propAnimatedFrames = "AnimatedFrames";
+    
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
     private VideoThumbsConfig videoConfig;
@@ -289,7 +298,7 @@ public class VideoThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!taskEnabled || (!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
             return;
         }
@@ -328,7 +337,7 @@ public class VideoThumbTask extends ThumbTask {
                 mainOutFile.getParentFile().mkdirs();
             }
 
-            // Já está pasta? Então não é necessário gerar.
+            // Já existe a pasta? Então não é necessário gerar.
             if (mainOutFile.exists()) {
                 synchronized (processedVideos) {
                     r = processedVideos.get(evidence.getHash());
@@ -338,8 +347,14 @@ public class VideoThumbTask extends ThumbTask {
                 mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
                 mainConfig.setOutFile(mainTmpFile);
 
+                //Set the number of frames for animated images
+                int numFrames = 0;
+                String strFrames = evidence.getMetadata().get(propAnimatedFrames);
+                if (strFrames != null) 
+                    numFrames = Integer.parseInt(strFrames);
+
                 long t = System.currentTimeMillis();
-                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
+                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
                     totalProcessed.incrementAndGet();
@@ -460,5 +475,34 @@ public class VideoThumbTask extends ThumbTask {
      */
     public static boolean isVideoType(MediaType mediaType) {
         return MetadataUtil.isVideoType(mediaType);
+    }
+
+    /** 
+     * Checks if the evidence is an animated image, and update
+     * its metadata if this is the case.
+     */
+    private static boolean checkAnimatedImage(IItem evidence) {
+        int numImages = -1;
+        String mediaType = evidence.getMediaType().toString();
+        
+        if (mediaType.equals("image/gif")) {
+            ImageReader reader = null;
+            try (ImageInputStream iis = ImageIO.createImageInputStream(evidence.getBufferedStream())) {
+                reader = ImageIO.getImageReaders(iis).next();
+                reader.setInput(iis, false, true);
+                numImages = reader.getNumImages(true);
+            } catch (IOException e) {
+            } finally {
+                if (reader != null)
+                    reader.dispose();
+            }
+        }
+        
+        if (numImages > 1) {
+            // Set only for images with multiple animated frames
+            evidence.getMetadata().set(propAnimatedFrames, String.valueOf(numImages));
+            return true;
+        }
+        return false;
     }
 }
