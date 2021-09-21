@@ -65,10 +65,10 @@ public class VideoThumbsMaker {
     }
 
     public VideoProcessResult getInfo(File inOrg, File tmp) throws Exception {
-        return createThumbs(inOrg, tmp, null);
+        return createThumbs(inOrg, tmp, null, 0);
     }
 
-    public VideoProcessResult createThumbs(File inOrg, File tmp, List<VideoThumbsOutputConfig> outs) throws Exception {
+    public VideoProcessResult createThumbs(File inOrg, File tmp, List<VideoThumbsOutputConfig> outs, int numFrames) throws Exception {
         if (escape == null) {
             try {
                 escape = ""; //$NON-NLS-1$
@@ -94,7 +94,7 @@ public class VideoThumbsMaker {
         boolean fixed = false;
         File lnk = null;
         String videoStream = null;
-        for (int step = 0; step <= 1; step++) {
+        for (int step = numFrames == 0 ? 0 : 1; step <= 1; step++) {
             if (step == 1) {
                 int pos = cmds.indexOf("-demuxer"); //$NON-NLS-1$
                 if (pos < 0) {
@@ -135,7 +135,9 @@ public class VideoThumbsMaker {
             if (info != null) {
                 result.setVideoInfo(info);
                 videoStream = result.getVideoStream();
-
+                if (numFrames > 0) {
+                    result.setVideoDuration(1);
+                }
                 if (result.getVideoDuration() > 0 && result.getDimension() != null) {
                     break;
                 }
@@ -179,8 +181,10 @@ public class VideoThumbsMaker {
 
         cmds = new ArrayList<String>();
         cmds.add(mplayer);
-        cmds.add("-demuxer"); //$NON-NLS-1$
-        cmds.add("lavf"); //$NON-NLS-1$
+        if (numFrames == 0) {
+            cmds.add("-demuxer"); //$NON-NLS-1$
+            cmds.add("lavf"); //$NON-NLS-1$
+        }
         cmds.add("-speed"); //$NON-NLS-1$
         cmds.add("100"); //$NON-NLS-1$
         cmds.add("-dr"); //$NON-NLS-1$
@@ -190,7 +194,7 @@ public class VideoThumbsMaker {
         cmds.add("-noaspect"); //$NON-NLS-1$
         cmds.add("-sws"); //$NON-NLS-1$
         cmds.add("1"); //$NON-NLS-1$
-        if (ignoreWaitKeyFrame != 1) {
+        if (ignoreWaitKeyFrame != 1 && numFrames == 0) {
             cmds.add("-lavdopts"); //$NON-NLS-1$
             cmds.add("wait_keyframe"); //$NON-NLS-1$
         }
@@ -233,10 +237,15 @@ public class VideoThumbsMaker {
                     pos = cmds.indexOf("-ss"); //$NON-NLS-1$
                     cmds.remove(pos + 1);
                     cmds.remove(pos);
-                    float fps = result.getFPS();
-                    if (fps > 240)
-                        fps = 1;
-                    int frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+                    int frameStep = 0;
+                    if (numFrames == 0) {
+                        float fps = Math.min(240, result.getFPS());
+                        frameStep = (int) (fps * (result.getVideoDuration() - 1) * 0.001 / (maxThumbs + 2));
+                    } else {
+                        frameStep = (int) (numFrames / (maxThumbs + 2));
+                    }
+                    System.err.println(">>>>frameStep="+frameStep);
+                    System.err.println(">>>>numFrames="+numFrames);
                     if (frameStep < 1) {
                         frameStep = 1;
                     } else if (frameStep > 600) {
@@ -269,7 +278,7 @@ public class VideoThumbsMaker {
                 cmds.add(pos, "-forceidx"); //$NON-NLS-1$
 
                 frameStepStr = null;
-                pos = cmds.indexOf("-vf");
+                pos = cmds.indexOf("-vf"); //$NON-NLS-1$
                 if (pos > 0) {
                     cmds.remove(pos + 1);
                     cmds.remove(pos);
