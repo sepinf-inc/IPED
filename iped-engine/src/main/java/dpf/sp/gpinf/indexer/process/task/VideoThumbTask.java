@@ -357,6 +357,10 @@ public class VideoThumbTask extends ThumbTask {
                 long t = System.currentTimeMillis();
                 r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
+                if (r != null && numFrames > 0) {
+                    //Clear video duration for animated images
+                    r.setVideoDuration(-1);
+                }
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
                     totalProcessed.incrementAndGet();
                 } else {
