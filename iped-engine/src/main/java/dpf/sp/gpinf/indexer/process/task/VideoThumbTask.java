@@ -156,7 +156,7 @@ public class VideoThumbTask extends ThumbTask {
      * Property to be set if the evidence is a animated image (i.e. contain multiple
      * frames). Only set if the number of frames is greater than one.
      */
-    private static final String propAnimatedFrames = "AnimatedFrames";
+    private static final String propAnimationFrames = "AnimationFrames";
     
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
@@ -350,7 +350,7 @@ public class VideoThumbTask extends ThumbTask {
 
                 //Set the number of frames for animated images
                 int numFrames = 0;
-                String strFrames = evidence.getMetadata().get(propAnimatedFrames);
+                String strFrames = evidence.getMetadata().get(propAnimationFrames);
                 if (strFrames != null) 
                     numFrames = Integer.parseInt(strFrames);
 
@@ -514,7 +514,7 @@ public class VideoThumbTask extends ThumbTask {
         
         if (numImages > 1) {
             // Set only for images with multiple animated frames
-            evidence.getMetadata().set(propAnimatedFrames, String.valueOf(numImages));
+            evidence.getMetadata().set(propAnimationFrames, String.valueOf(numImages));
             return true;
         }
         return false;
