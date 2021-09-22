@@ -320,7 +320,7 @@ public class Manager {
         }
     }
 
-    public void initSleuthkitServers(final String dbPath) throws InterruptedException {
+    public synchronized void initSleuthkitServers(final String dbPath) throws InterruptedException {
         if (!initSleuthkitServers.getAndSet(true)) {
             SleuthkitClient.initSleuthkitServers(dbPath);
         }
