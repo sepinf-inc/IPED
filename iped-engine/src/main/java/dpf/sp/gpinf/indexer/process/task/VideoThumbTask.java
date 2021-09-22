@@ -496,7 +496,7 @@ public class VideoThumbTask extends ThumbTask {
                 reader = ImageIO.getImageReaders(iis).next();
                 reader.setInput(iis, false, true);
                 numImages = reader.getNumImages(true);
-            } catch (IOException e) {
+            } catch (Exception e) {
             } finally {
                 if (reader != null)
                     reader.dispose();
@@ -512,7 +512,7 @@ public class VideoThumbTask extends ThumbTask {
                         break;
                     }
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
             }
         }
         
