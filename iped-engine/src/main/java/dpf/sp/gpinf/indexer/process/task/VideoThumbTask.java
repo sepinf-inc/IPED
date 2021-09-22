@@ -23,7 +23,6 @@ import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -96,19 +95,24 @@ public class VideoThumbTask extends ThumbTask {
     /**
      * Objeto estático com total de videos processados .
      */
-    private static final AtomicLong totalProcessed = new AtomicLong();
+    private static final AtomicLong totalVideosProcessed = new AtomicLong();
 
     /**
      * Objeto estático com total de videos que falharam.
      */
-    private static final AtomicLong totalFailed = new AtomicLong();
+    private static final AtomicLong totalVideosFailed = new AtomicLong();
 
     /**
      * Objeto estático com total de tempo gasto no processamento de vídeos, em
      * milisegundos.
      */
-    private static final AtomicLong totalTime = new AtomicLong();
+    private static final AtomicLong totalVideosTime = new AtomicLong();
 
+    // Statistics for animated images
+    private static final AtomicLong totalAnimatedImagesProcessed = new AtomicLong();
+    private static final AtomicLong totalAnimatedImagesFailed = new AtomicLong();
+    private static final AtomicLong totalAnimatedImagesTime = new AtomicLong();
+    
     private static final AtomicLong totalTimeGallery = new AtomicLong();
     private static final AtomicLong totalGallery = new AtomicLong();
 
@@ -275,16 +279,29 @@ public class VideoThumbTask extends ThumbTask {
             if (taskEnabled && !finished.get()) {
                 processedVideos.clear();
                 finished.set(true);
-                logger.info("Total videos processed: " + totalProcessed); //$NON-NLS-1$
-                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalFailed); //$NON-NLS-1$
-                long total = totalProcessed.longValue() + totalFailed.longValue();
-                if (total > 0) {
-                    logger.info("Average processing time (milliseconds/video): " + (totalTime.longValue() / total)); //$NON-NLS-1$
-                }
+
+                // Videos statistics
+                logger.info("Total videos processed: " + totalVideosProcessed); //$NON-NLS-1$
+                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed); //$NON-NLS-1$
+                long total = totalVideosProcessed.longValue() + totalVideosFailed.longValue();
+                if (total > 0)
+                    logger.info("Average video processing time (milliseconds/video): " //$NON-NLS-1$
+                            + (totalVideosTime.longValue() / total));
+
+                // Animated images statistics
+                logger.info("Total animated images processed: " + totalAnimatedImagesProcessed); //$NON-NLS-1$
+                logger.info(
+                        "Total animated images failed (MPlayer failed to create thumbs): " + totalAnimatedImagesFailed); //$NON-NLS-1$
+                total = totalAnimatedImagesProcessed.longValue() + totalAnimatedImagesFailed.longValue();
+                if (total > 0)
+                    logger.info("Average animated image processing time (milliseconds/image): " //$NON-NLS-1$
+                            + (totalAnimatedImagesTime.longValue() / total));
+
+                // Gallery thumb generation statistics
                 total = totalGallery.longValue();
                 if (total > 0) {
                     logger.info("Total gallery thumbs generated: " + total); //$NON-NLS-1$
-                    logger.info("Average gallery thumb generation time (milliseconds/video): " //$NON-NLS-1$
+                    logger.info("Average gallery thumb generation time (milliseconds/item): " //$NON-NLS-1$
                             + (totalTimeGallery.longValue() / total));
                 }
             }
@@ -362,10 +379,10 @@ public class VideoThumbTask extends ThumbTask {
                     r.setVideoDuration(-1);
                 }
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
-                    totalProcessed.incrementAndGet();
+                    (numFrames > 0 ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
                 } else {
                     r.setSuccess(false);
-                    totalFailed.incrementAndGet();
+                    (numFrames > 0 ? totalAnimatedImagesFailed : totalVideosFailed).incrementAndGet();
                     if (r.isTimeout()) {
                         stats.incTimeouts();
                         evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true"); //$NON-NLS-1$
@@ -373,7 +390,7 @@ public class VideoThumbTask extends ThumbTask {
                                 + evidence.getLength() + " bytes)"); //$NON-NLS-1$
                     }
                 }
-                totalTime.addAndGet(t);
+                (numFrames > 0 ? totalAnimatedImagesTime : totalVideosTime).addAndGet(t);
             }
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
