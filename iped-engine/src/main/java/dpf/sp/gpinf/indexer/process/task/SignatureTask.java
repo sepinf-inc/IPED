@@ -99,8 +99,8 @@ public class SignatureTask extends AbstractTask {
                     }
 
                 }
-
-            } catch (Exception | OutOfMemoryError e) {
+            // catch OOME and StackOverflow from Tika, see #768
+            } catch (Throwable e) {
                 type = MediaType.OCTET_STREAM;
 
                 LOGGER.warn("{} Error detecting signature: {} ({} bytes)\t\t{}", Thread.currentThread().getName(), //$NON-NLS-1$
