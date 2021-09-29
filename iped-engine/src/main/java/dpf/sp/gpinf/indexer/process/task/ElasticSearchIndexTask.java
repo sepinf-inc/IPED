@@ -365,10 +365,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
             idToPath.put(parentId, item.getPath());
 
             do {
-                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum--);
+                String contentPersistentId = Util.generatePersistentIdForTextFrag(parentId, fragNum);
 
                 // creates the json _source of the fragment
-                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentPersistentId);
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentPersistentId,
+                        fragNum--);
 
                 // creates the request
                 IndexRequest contentRequest = createIndexRequest(contentPersistentId, parentId, jsonContent);
@@ -519,7 +520,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private XContentBuilder getJsonFragmentBuilder(IItem item, Reader textReader, String parentID,
-            String contentPersistentId) throws IOException {
+            String contentPersistentId, int fragNum) throws IOException {
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -530,7 +531,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
-                .field("contentPersistentId", contentPersistentId)
+                .field("contentPersistentId", contentPersistentId).field("fragNum", fragNum)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();
