@@ -36,6 +36,7 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMP;
@@ -522,7 +523,7 @@ public class VideoThumbTask extends ThumbTask {
         } else if (mediaType.equals("image/png")) {
             byte[] b = new byte[128];
             try (BufferedInputStream is = evidence.getBufferedStream()) {
-                int read = is.read(b);
+                int read = IOUtils.read(is, b);
                 for (int i = 0; i <= read - 8; i++) {
                     if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {
                         numImages = ((b[i + 5] & 0xFF) << 16) | ((b[i + 6] & 0xFF) << 8) | (b[i + 7] & 0xFF);
