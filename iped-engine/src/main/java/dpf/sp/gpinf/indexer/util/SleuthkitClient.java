@@ -11,6 +11,7 @@ import java.nio.channels.FileChannel;
 import java.nio.channels.FileChannel.MapMode;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -44,6 +45,8 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
     private static List<SleuthkitClient> clientsList = new ArrayList<>();
 
     public static int NUM_TSK_SERVERS;
+
+    private static final HashMap<String, String> newEnvVars = new HashMap<>();
 
     static volatile String dbDirPath;
     static AtomicInteger idStart = new AtomicInteger();
@@ -105,6 +108,10 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             requestTime = System.currentTimeMillis() / 1000;
         else
             requestTime = 0;
+    }
+
+    public static synchronized void addEnvVar(String key, String value) {
+        newEnvVars.put(key, value);
     }
 
     public static SleuthkitClient get() {
@@ -174,6 +181,7 @@ public class SleuthkitClient implements Comparable<SleuthkitClient> {
             logger.info("Starting SleuthkitServer " + id + ": " + Arrays.asList(cmd));
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
+            pb.environment().putAll(newEnvVars);
             process = pb.start();
 
             logStdErr(process.getErrorStream(), id);
