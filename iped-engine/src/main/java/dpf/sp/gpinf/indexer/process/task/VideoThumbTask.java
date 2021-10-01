@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.util.ArrayList;
@@ -32,7 +33,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
+import javax.imageio.ImageReader;
+import javax.imageio.stream.ImageInputStream;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.metadata.XMP;
@@ -53,6 +57,7 @@ import gpinf.video.VideoProcessResult;
 import gpinf.video.VideoThumbsMaker;
 import gpinf.video.VideoThumbsOutputConfig;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 import macee.core.Configurable;
 
 /**
@@ -92,19 +97,24 @@ public class VideoThumbTask extends ThumbTask {
     /**
      * Objeto estático com total de videos processados .
      */
-    private static final AtomicLong totalProcessed = new AtomicLong();
+    private static final AtomicLong totalVideosProcessed = new AtomicLong();
 
     /**
      * Objeto estático com total de videos que falharam.
      */
-    private static final AtomicLong totalFailed = new AtomicLong();
+    private static final AtomicLong totalVideosFailed = new AtomicLong();
 
     /**
      * Objeto estático com total de tempo gasto no processamento de vídeos, em
      * milisegundos.
      */
-    private static final AtomicLong totalTime = new AtomicLong();
+    private static final AtomicLong totalVideosTime = new AtomicLong();
 
+    // Statistics for animated images
+    private static final AtomicLong totalAnimatedImagesProcessed = new AtomicLong();
+    private static final AtomicLong totalAnimatedImagesFailed = new AtomicLong();
+    private static final AtomicLong totalAnimatedImagesTime = new AtomicLong();
+    
     private static final AtomicLong totalTimeGallery = new AtomicLong();
     private static final AtomicLong totalGallery = new AtomicLong();
 
@@ -148,6 +158,12 @@ public class VideoThumbTask extends ThumbTask {
      */
     private String tempSuffix;
 
+    /**
+     * Property to be set if the evidence is a animated image (i.e. contain multiple
+     * frames). Only set if the number of frames is greater than one.
+     */
+    public static final String ANIMATION_FRAMES_PROP = ExtraProperties.IMAGE_META_PREFIX + "AnimationFrames";
+    
     private ISO6709Converter iso6709Converter = new ISO6709Converter();
 
     private VideoThumbsConfig videoConfig;
@@ -265,16 +281,29 @@ public class VideoThumbTask extends ThumbTask {
             if (taskEnabled && !finished.get()) {
                 processedVideos.clear();
                 finished.set(true);
-                logger.info("Total videos processed: " + totalProcessed); //$NON-NLS-1$
-                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalFailed); //$NON-NLS-1$
-                long total = totalProcessed.longValue() + totalFailed.longValue();
-                if (total > 0) {
-                    logger.info("Average processing time (milliseconds/video): " + (totalTime.longValue() / total)); //$NON-NLS-1$
-                }
+
+                // Videos statistics
+                logger.info("Total videos processed: " + totalVideosProcessed); //$NON-NLS-1$
+                logger.info("Total videos failed (MPlayer failed to create thumbs): " + totalVideosFailed); //$NON-NLS-1$
+                long total = totalVideosProcessed.longValue() + totalVideosFailed.longValue();
+                if (total > 0)
+                    logger.info("Average video processing time (milliseconds/video): " //$NON-NLS-1$
+                            + (totalVideosTime.longValue() / total));
+
+                // Animated images statistics
+                logger.info("Total animated images processed: " + totalAnimatedImagesProcessed); //$NON-NLS-1$
+                logger.info(
+                        "Total animated images failed (MPlayer failed to create thumbs): " + totalAnimatedImagesFailed); //$NON-NLS-1$
+                total = totalAnimatedImagesProcessed.longValue() + totalAnimatedImagesFailed.longValue();
+                if (total > 0)
+                    logger.info("Average animated image processing time (milliseconds/image): " //$NON-NLS-1$
+                            + (totalAnimatedImagesTime.longValue() / total));
+
+                // Gallery thumb generation statistics
                 total = totalGallery.longValue();
                 if (total > 0) {
                     logger.info("Total gallery thumbs generated: " + total); //$NON-NLS-1$
-                    logger.info("Average gallery thumb generation time (milliseconds/video): " //$NON-NLS-1$
+                    logger.info("Average gallery thumb generation time (milliseconds/item): " //$NON-NLS-1$
                             + (totalTimeGallery.longValue() / total));
                 }
             }
@@ -289,7 +318,7 @@ public class VideoThumbTask extends ThumbTask {
     @Override
     protected void process(IItem evidence) throws Exception {
         // Verifica se está desabilitado e se o tipo de arquivo é tratado
-        if (!taskEnabled || !isVideoType(evidence.getMediaType()) || !evidence.isToAddToCase()
+        if (!taskEnabled || (!isVideoType(evidence.getMediaType()) && !checkAnimatedImage(evidence)) || !evidence.isToAddToCase()
                 || evidence.getHashValue() == null) {
             return;
         }
@@ -328,7 +357,7 @@ public class VideoThumbTask extends ThumbTask {
                 mainOutFile.getParentFile().mkdirs();
             }
 
-            // Já está pasta? Então não é necessário gerar.
+            // Já existe a pasta? Então não é necessário gerar.
             if (mainOutFile.exists()) {
                 synchronized (processedVideos) {
                     r = processedVideos.get(evidence.getHash());
@@ -338,14 +367,24 @@ public class VideoThumbTask extends ThumbTask {
                 mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
                 mainConfig.setOutFile(mainTmpFile);
 
+                //Set the number of frames for animated images
+                int numFrames = 0;
+                String strFrames = evidence.getMetadata().get(ANIMATION_FRAMES_PROP);
+                if (strFrames != null) 
+                    numFrames = Integer.parseInt(strFrames);
+
                 long t = System.currentTimeMillis();
-                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs);
+                r = videoThumbsMaker.createThumbs(evidence.getTempFile(), tmpFolder, configs, numFrames);
                 t = System.currentTimeMillis() - t;
+                if (r != null && numFrames > 0) {
+                    //Clear video duration for animated images
+                    r.setVideoDuration(-1);
+                }
                 if (r.isSuccess() && (mainOutFile.exists() || mainTmpFile.renameTo(mainOutFile))) {
-                    totalProcessed.incrementAndGet();
+                    (numFrames > 0 ? totalAnimatedImagesProcessed : totalVideosProcessed).incrementAndGet();
                 } else {
                     r.setSuccess(false);
-                    totalFailed.incrementAndGet();
+                    (numFrames > 0 ? totalAnimatedImagesFailed : totalVideosFailed).incrementAndGet();
                     if (r.isTimeout()) {
                         stats.incTimeouts();
                         evidence.setExtraAttribute(ImageThumbTask.THUMB_TIMEOUT, "true"); //$NON-NLS-1$
@@ -353,7 +392,7 @@ public class VideoThumbTask extends ThumbTask {
                                 + evidence.getLength() + " bytes)"); //$NON-NLS-1$
                     }
                 }
-                totalTime.addAndGet(t);
+                (numFrames > 0 ? totalAnimatedImagesTime : totalVideosTime).addAndGet(t);
             }
         } catch (Exception e) {
             logger.warn(evidence.toString(), e);
@@ -399,7 +438,7 @@ public class VideoThumbTask extends ThumbTask {
                         File thumbFile = getThumbFile(evidence);
                         saveThumb(evidence, thumbFile);
                         t = System.currentTimeMillis() - t;
-                        totalTimeGallery.incrementAndGet();
+                        totalTimeGallery.addAndGet(t);
                         totalGallery.incrementAndGet();
                     }
                 } catch (Throwable e) {
@@ -460,5 +499,47 @@ public class VideoThumbTask extends ThumbTask {
      */
     public static boolean isVideoType(MediaType mediaType) {
         return MetadataUtil.isVideoType(mediaType);
+    }
+
+    /** 
+     * Checks if the evidence is an animated image, and update
+     * its metadata if this is the case.
+     */
+    private static boolean checkAnimatedImage(IItem evidence) {
+        int numImages = -1;
+        String mediaType = evidence.getMediaType().toString();
+        
+        if (mediaType.equals("image/gif")) {
+            ImageReader reader = null;
+            try (BufferedInputStream is = evidence.getBufferedStream(); ImageInputStream iis = ImageIO.createImageInputStream(is)) {
+                reader = ImageIO.getImageReaders(iis).next();
+                reader.setInput(iis, false, true);
+                numImages = reader.getNumImages(true);
+            } catch (Exception e) {
+            } finally {
+                if (reader != null)
+                    reader.dispose();
+            }
+        
+        } else if (mediaType.equals("image/png")) {
+            byte[] b = new byte[128];
+            try (BufferedInputStream is = evidence.getBufferedStream()) {
+                int read = IOUtils.read(is, b);
+                for (int i = 0; i <= read - 8; i++) {
+                    if (b[i] == 'a' && b[i + 1] == 'c' && b[i + 2] == 'T' && b[i + 3] == 'L') {
+                        numImages = ((b[i + 5] & 0xFF) << 16) | ((b[i + 6] & 0xFF) << 8) | (b[i + 7] & 0xFF);
+                        break;
+                    }
+                }
+            } catch (Exception e) {
+            }
+        }
+        
+        if (numImages > 1) {
+            // Set only for images with multiple animated frames
+            evidence.getMetadata().set(ANIMATION_FRAMES_PROP, String.valueOf(numImages));
+            return true;
+        }
+        return false;
     }
 }
