@@ -35,7 +35,12 @@ import java.util.Date;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.TreeSet;
+import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import org.apache.tika.io.IOUtils;
@@ -47,6 +52,7 @@ import org.sleuthkit.datamodel.FsContent;
 import org.sleuthkit.datamodel.Image;
 import org.sleuthkit.datamodel.SlackFile;
 import org.sleuthkit.datamodel.SleuthkitCase;
+import org.sleuthkit.datamodel.SleuthkitJNI;
 import org.sleuthkit.datamodel.SleuthkitCase.CaseDbQuery;
 import org.sleuthkit.datamodel.SleuthkitJNI.CaseDbHandle.AddImageProcess;
 import org.sleuthkit.datamodel.TskCoreException;
@@ -54,6 +60,7 @@ import org.sleuthkit.datamodel.TskData.TSK_DB_FILES_TYPE_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_META_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_NAME_FLAG_ENUM;
 import org.sleuthkit.datamodel.TskData.TSK_FS_TYPE_ENUM;
+import org.sleuthkit.datamodel.TskDataException;
 import org.sleuthkit.datamodel.Volume;
 import org.sleuthkit.datamodel.VolumeSystem;
 import org.slf4j.Logger;
@@ -61,7 +68,6 @@ import org.slf4j.LoggerFactory;
 import org.sqlite.SQLiteException;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
@@ -71,6 +77,7 @@ import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -88,21 +95,19 @@ public class SleuthkitReader extends DataSourceReader {
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
-    public static final String MIN_TSK_VER = "4.6.5";
+    public static final String MIN_TSK_VER = "4.11.0";
 
     public static String DB_NAME = "sleuth.db"; //$NON-NLS-1$
-    private static String IMG_NAME = "IMG_NAME"; //$NON-NLS-1$
     public static MediaType UNALLOCATED_MIMETYPE = BaseCarveTask.UNALLOCATED_MIMETYPE;
     public static final String IN_FAT_FS = "inFatFs"; //$NON-NLS-1$
 
     private static boolean tskChecked = false;
     private static boolean isTskPatched = false;
 
+    private static ExecutorService executor = Executors.newFixedThreadPool(1);
     private static ConcurrentHashMap<File, Long[]> idRangeMap = new ConcurrentHashMap<>();
-    private static volatile Thread waitLoadDbThread;
+    private static volatile Future<Void> addImageFuture;
     private static volatile Exception exception = null;
-
-    private static String[] TSK_CMD = { "tsk_loaddb", "-a", "-d", DB_NAME, IMG_NAME }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
     private CmdLineArgs args;
     private Long firstId, lastId;
@@ -128,9 +133,6 @@ public class SleuthkitReader extends DataSourceReader {
 
     public SleuthkitReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
-
-        if (Configuration.getInstance().loaddbPathWin != null)
-            TSK_CMD[0] = Configuration.getInstance().loaddbPathWin;
     }
 
     public boolean isSupported(File file) {
@@ -208,43 +210,38 @@ public class SleuthkitReader extends DataSourceReader {
             return;
         }
 
-        String[] TSK_VERSION = { TSK_CMD[0], "-V" }; //$NON-NLS-1$
-        ProcessBuilder pb = new ProcessBuilder(TSK_VERSION);
-        Process process = pb.start();
-
-        process.getOutputStream().close();
-        process.waitFor();
-        if (process.exitValue() != 0) {
-            throw new Exception("Error testing tsk_loaddb. It returned error code " + process.exitValue()); //$NON-NLS-1$
-        }
-
-        InputStreamReader reader = new InputStreamReader(process.getInputStream());
-        StringBuilder out = new StringBuilder();
-        char[] buffer = new char[1024];
-        for (int n = reader.read(buffer); n != -1; n = reader.read(buffer)) {
-            out.append(buffer, 0, n);
-        }
-
-        reader.close();
-        process.getErrorStream().close();
-
-        String[] str = out.toString().split(" "); //$NON-NLS-1$
-        String tskVer = str[str.length - 1].trim();
+        String tskVer = SleuthkitJNI.getVersion();
         LOGGER.info("Sleuthkit version " + tskVer + " detected."); //$NON-NLS-1$ //$NON-NLS-2$
 
         String patchSufix = "-iped-patch";
         if (tskVer.contains(patchSufix)) { // $NON-NLS-1$
             isTskPatched = true;
             tskVer = tskVer.substring(0, tskVer.indexOf(patchSufix));
-        } else
-            LOGGER.error("It is highly recommended to apply the iped patch (in sources folder) on sleuthkit!"); //$NON-NLS-1$
+        } else {
+            LOGGER.error("We recommend to apply the iped patch on sleuthkit, see https://github.com/sepinf-inc/IPED/wiki/Linux#the-sleuthkit"); //$NON-NLS-1$
+        }
 
-        if (tskVer.compareTo(MIN_TSK_VER) < 0) // $NON-NLS-1$
+        String[] minVerParts = MIN_TSK_VER.split("\\.");
+        String[] currVerParts = tskVer.split("\\.");
+
+        int majorVerExpected = Integer.valueOf(minVerParts[0]);
+        int majorVerFound = Integer.valueOf(currVerParts[0]);
+        int minorVerExpected = Integer.valueOf(minVerParts[1]);
+        int minorVerFound = Integer.valueOf(currVerParts[1]);
+
+        if (majorVerExpected != majorVerFound || minorVerFound < minorVerExpected)
             throw new Exception("Sleuthkit version " + tskVer + " not supported. Install version " + MIN_TSK_VER); //$NON-NLS-1$ //$NON-NLS-2$
-        else if (tskVer.compareTo(MIN_TSK_VER) > 0) // $NON-NLS-1$
+        else if (minorVerFound > minorVerExpected) // $NON-NLS-1$
             LOGGER.error("Sleuthkit version " + tskVer + " not tested! It may contain incompatibilities!"); //$NON-NLS-1$ //$NON-NLS-2$
 
         tskChecked = true;
+    }
+
+    public static synchronized boolean isTSKPatched() throws Exception {
+        if (!tskChecked) {
+            checkTSKVersion();
+        }
+        return isTskPatched;
     }
 
     @Override
@@ -270,6 +267,12 @@ public class SleuthkitReader extends DataSourceReader {
 
         int sectorSize = args.getBlocksize();
         String password = args.getPassword();
+
+        if (password != null) {
+            String envVar = image.getName() + "_PASSWORD";
+            Util.setEnvVar(envVar, password);
+            SleuthkitClient.addEnvVar(envVar, password);
+        }
 
         firstId = null;
         lastId = null;
@@ -341,58 +344,8 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
 
-                boolean extraParamsAdded = false;
-                ArrayList<String> cmdArray = new ArrayList<>();
-                for (String param : TSK_CMD) {
-                    if (param.equals(DB_NAME)) {
-                        cmdArray.add(dbPath);
-                    } else if (param.equals(IMG_NAME)) {
-                        cmdArray.add(image.getAbsolutePath());
-                    } else {
-                        cmdArray.add(param);
-                    }
-                    if (!extraParamsAdded) {
-                        if (isTskPatched) {
-                            cmdArray.add("-z"); //$NON-NLS-1$
-                            cmdArray.add(timezone);
-                        }
-                        if (sectorSize > 0) {
-                            cmdArray.add("-b"); //$NON-NLS-1$
-                            cmdArray.add("" + sectorSize); //$NON-NLS-1$
-                        }
-                        if (password != null) {
-                            cmdArray.add("-K"); //$NON-NLS-1$
-                            cmdArray.add(password); // $NON-NLS-1$
-                        }
-                        extraParamsAdded = true;
-                    }
-                }
-
-                String[] cmd = cmdArray.toArray(new String[0]);
-
-                if (!isTskPatched) {
-                    sleuthCase.acquireExclusiveLock();
-                }
-
-                try {
-                    ProcessBuilder pb = new ProcessBuilder(cmd);
-                    Process process = pb.start();
-
-                    process.getOutputStream().close();
-                    logStream(process.getInputStream(), image.getAbsolutePath());
-                    logStream(process.getErrorStream(), image.getAbsolutePath());
-
-                    if (!isTskPatched) {
-                        waitProcess(process, image);
-                    } else {
-                        waitProcessInOtherThread(process, image);
-                    }
-
-                } finally {
-                    if (!isTskPatched) {
-                        sleuthCase.releaseExclusiveLock();
-                    }
-                }
+                addImage = sleuthCase.makeAddImageProcess(timezone, true, false, "");
+                addImageInBackground(addImage, image, sectorSize);
 
             }
 
@@ -405,13 +358,16 @@ public class SleuthkitReader extends DataSourceReader {
                 readItensAdded(image);
 
             } catch (Exception e) {
-                if (waitLoadDbThread != null)
-                    waitLoadDbThread.interrupt();
+                if (addImageFuture != null) {
+                    addImageFuture.cancel(true);
+                }
                 throw e;
+
             }
 
-        } else if (waitLoadDbThread != null)
-            waitLoadDbThread.join();
+        } else if (addImageFuture != null) {
+            addImageFuture.get();
+        }
 
     }
     
@@ -426,10 +382,12 @@ public class SleuthkitReader extends DataSourceReader {
             String queries[] = {
                     "DELETE FROM tsk_files WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_vs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_pool_info WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_vs_parts WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_image_names WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_image_info WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_fs_info WHERE obj_id >= '" + sourceId + "';",
+                    "DELETE FROM tsk_file_attributes WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_file_layout WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM tsk_files_path WHERE obj_id >= '" + sourceId + "';",
                     "DELETE FROM data_source_info WHERE obj_id >= '" + sourceId + "';",
@@ -485,18 +443,10 @@ public class SleuthkitReader extends DataSourceReader {
         return null;
     }
 
-    private void waitProcess(Process process, File image) {
-        int exit = -1;
-        try {
-            exit = process.waitFor();
-            if (exit != 0) {
-                LOGGER.error("Sleuthkit LoadDb returned an error {}. Possibly" //$NON-NLS-1$
-                        + " many items were not added to the case!", exit); //$NON-NLS-1$
-            }
+    private void addImageBlocking(AddImageProcess addImage, File image, int sectorSize)
+            throws TskCoreException, TskDataException {
 
-        } catch (InterruptedException ie) {
-            process.destroyForcibly();
-        }
+        addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
 
         LOGGER.info("Image decoded: {}", image.getAbsolutePath()); //$NON-NLS-1$
 
@@ -507,7 +457,7 @@ public class SleuthkitReader extends DataSourceReader {
             exception = e;
         }
 
-        if (exit == 0 && lastId != null) {
+        if (lastId != null) {
             saveDecodedRangeId(image, firstId, lastId);
         }
 
@@ -518,14 +468,14 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private void waitProcessInOtherThread(final Process process, final File image) {
-
-        waitLoadDbThread = new Thread() {
-            public void run() {
-                waitProcess(process, image);
+    private void addImageInBackground(AddImageProcess addImage, File image, int sectorSize) {
+        addImageFuture = executor.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                addImageBlocking(addImage, image, sectorSize);
+                return null;
             }
-        };
-        waitLoadDbThread.start();
+        });
     }
 
     /**

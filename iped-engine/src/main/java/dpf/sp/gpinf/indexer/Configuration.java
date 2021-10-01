@@ -62,7 +62,6 @@ public class Configuration {
     public Logger logger;
     public UTF8Properties properties = new UTF8Properties();
     public String configPath, appRoot;
-    public String loaddbPathWin;
 
     public static Configuration getInstance() {
         if (singleton == null) {
@@ -122,10 +121,7 @@ public class Configuration {
             if (System.getProperty("os.arch").contains("64")) //$NON-NLS-1$ //$NON-NLS-2$
                 arch = "x64"; //$NON-NLS-1$
 
-            loaddbPathWin = appRoot + "/tools/tsk/" + arch + "/tsk_loaddb"; //$NON-NLS-1$ //$NON-NLS-2$
-
-            File nativelibs = new File(loaddbPathWin).getParentFile().getParentFile();
-            nativelibs = new File(nativelibs, arch);
+            File nativelibs = new File(appRoot, "tools/tsk/" + arch);
 
             if (System.getProperty("ipedNativeLibsLoaded") == null) { //$NON-NLS-1$
                 Util.loadNatLibs(nativelibs);
