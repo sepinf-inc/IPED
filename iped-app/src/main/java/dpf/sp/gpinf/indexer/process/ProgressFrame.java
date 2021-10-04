@@ -74,6 +74,7 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
     private Worker[] workers;
     private NumberFormat sizeFormat = LocalizedFormat.getNumberInstance();
     private boolean paused = false;
+    private String decodingDir = null;
 
     private class RestrictedSizeLabel extends JLabel {
 
@@ -150,6 +151,8 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
                     / (((long) volume + 1) * 1000);
             msg += Messages.getString("ProgressFrame.FinishIn") + secsToEnd / 3600 + "h " + (secsToEnd / 60) % 60 + "m " //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                     + secsToEnd % 60 + "s"; //$NON-NLS-1$
+        } else if (decodingDir != null) {
+            msg += " - " + decodingDir;
         }
         progressBar.setString(msg);
 
@@ -178,6 +181,9 @@ public class ProgressFrame extends JFrame implements PropertyChangeListener, Win
         } else if ("discovered".equals(evt.getPropertyName())) { //$NON-NLS-1$
             discovered = (Integer) evt.getNewValue();
             updateString();
+
+        } else if ("decodingDir".equals(evt.getPropertyName())) { //$NON-NLS-1$
+            decodingDir = (String) evt.getNewValue();
 
         } else if ("mensagem".equals(evt.getPropertyName())) { //$NON-NLS-1$
             progressBar.setString((String) evt.getNewValue());
