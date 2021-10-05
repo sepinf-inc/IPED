@@ -30,7 +30,7 @@ public interface CmdLineArgs {
 
     int getBlocksize();
 
-    String getPassword();
+    List<String> getPasswords();
 
     String getProfile();
 
@@ -57,6 +57,8 @@ public interface CmdLineArgs {
     Map<String, String> getExtraParams();
 
     String getDataSourceName(File datasource);
+
+    String getDataSourcePassword(File datasource);
 
     public String getEvidenceToRemove();
 

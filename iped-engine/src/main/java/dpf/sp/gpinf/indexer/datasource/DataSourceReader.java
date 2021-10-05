@@ -137,6 +137,14 @@ public abstract class DataSourceReader implements Closeable {
         return cmdArgs.getDataSourceName(datasource);
     }
 
+    public String getEvidencePassword(File datasource) {
+        CmdLineArgs cmdArgs = ((CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName()));
+        if (cmdArgs.getPasswords() == null || cmdArgs.getPasswords().size() == 0) {
+            return null;
+        }
+        return cmdArgs.getDataSourcePassword(datasource);
+    }
+
     @Override
     public void close() throws IOException {
         // TODO remove and implement in all subclasses

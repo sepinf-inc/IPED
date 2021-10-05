@@ -84,7 +84,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private int blocksize;
 
     @Parameter(names = { "-p", "-password" }, description = "password for encrypted images/volumes")
-    private String password;
+    private List<String> passwords;
 
     @Parameter(names = "-profile", description = "use a processing profile: forensic, pedo, "
             + "fastmode, blind, triage. More details in manual.")
@@ -189,8 +189,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     @Override
-    public String getPassword() {
-        return password;
+    public List<String> getPasswords() {
+        return passwords;
     }
 
     @Override
@@ -259,14 +259,36 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     @Override
     public String getDataSourceName(File datasource) {
+        boolean isEvidenceParam = false;
         for (int i = 0; i < allArgs.size(); i++) {
-            if ((allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) //$NON-NLS-1$ //$NON-NLS-2$
-                    && datasource.equals(new File(allArgs.get(i + 1))) && i + 2 < allArgs.size()
-                    && allArgs.get(i + 2).equals("-dname")) { //$NON-NLS-1$
-                return allArgs.get(i + 3);
+            if (datasource.equals(new File(allArgs.get(i)))) {
+                isEvidenceParam = true;
+            }
+            if (allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) {
+                isEvidenceParam = false;
+            }
+            if (isEvidenceParam && allArgs.get(i).equals("-dname")) {
+                return allArgs.get(i + 1);
             }
         }
         return datasource.getName();
+    }
+
+    @Override
+    public String getDataSourcePassword(File datasource) {
+        boolean isEvidenceParam = false;
+        for (int i = 0; i < allArgs.size(); i++) {
+            if (datasource.equals(new File(allArgs.get(i)))) {
+                isEvidenceParam = true;
+            }
+            if (allArgs.get(i).equals("-d") || allArgs.get(i).equals("-data")) {
+                isEvidenceParam = false;
+            }
+            if (isEvidenceParam && (allArgs.get(i).equals("-p") || allArgs.get(i).equals("-password"))) {
+                return allArgs.get(i + 1);
+            }
+        }
+        return null;
     }
 
     public static class FileExistsValidator implements IParameterValidator {
