@@ -1,7 +1,7 @@
-# Uses auxiliary processes to read the images. If Sleuthkit crashes, only
-# the auxiliary process is killed and restarted. Increases RAM usage often in about ~500MB per process. 
-# Increases a lot the processing speed of compressed E01 images or images in network.
-robustImageReading = false
+# Uses auxiliary processes to read file contents in images. If Sleuthkit crashes, only
+# the auxiliary processes are killed and restarted. Increases RAM usage often in about ~500MB per process. 
+# Increases up to 3x the processing speed of compressed E01 images, APFS containers or images in network.
+robustImageReading = true
 
 # Number of auxiliary image reading processes. 'auto' uses 1/4 of the number of logical CPU cores.
 # You can decrease the value if it uses too much RAM. Increasing the value is not efficient, because often
