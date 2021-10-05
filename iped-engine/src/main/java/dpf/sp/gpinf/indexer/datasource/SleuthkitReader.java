@@ -479,7 +479,17 @@ public class SleuthkitReader extends DataSourceReader {
     private void addImageBlocking(AddImageProcess addImage, File image, int sectorSize)
             throws TskCoreException, TskDataException {
 
-        addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
+        try {
+            addImage.run(UUID.randomUUID().toString(), new String[] { image.getAbsolutePath() }, sectorSize);
+
+        } catch (TskDataException e) {
+            int idx = e.toString().toLowerCase().indexOf("encryption detected"); //$NON-NLS-1$
+            if (idx != -1) {
+                LOGGER.error(e.toString().substring(idx).trim() + " decoding {}", image.getAbsolutePath()); //$NON-NLS-1$
+            } else {
+                throw e;
+            }
+        }
 
         LOGGER.info("Image decoded: {}", image.getAbsolutePath()); //$NON-NLS-1$
 
