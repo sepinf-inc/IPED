@@ -257,14 +257,9 @@ public class SleuthkitReader extends DataSourceReader {
                 fastmode = true;
         }
 
-        int offset = TimeZone.getDefault().getRawOffset() / 3600000;
-        String timezone = "GMT" + (-offset); //$NON-NLS-1$
-        if (args.getTimezone() != null) { // $NON-NLS-1$
+        String timezone = TimeZone.getDefault().getID();
+        if (args.getTimezone() != null) {
             timezone = args.getTimezone();
-            if (timezone.contains("+")) //$NON-NLS-1$
-                timezone = timezone.replace('+', '-');
-            else
-                timezone = timezone.replace('-', '+');
         }
 
         int sectorSize = args.getBlocksize();
