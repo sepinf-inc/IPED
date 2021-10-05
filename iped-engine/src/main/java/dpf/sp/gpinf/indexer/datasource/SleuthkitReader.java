@@ -93,6 +93,7 @@ public class SleuthkitReader extends DataSourceReader {
     private static Logger LOGGER = LoggerFactory.getLogger(SleuthkitReader.class);
 
     private static final String RANGE_ID_FILE = "data/SleuthkitIdsPerImage.txt";
+    private static final String PASSWORD_PER_IMAGE = "data/PasswordPerImage.txt";
 
     // TODO update @deleteDatasource() when updating TSK
     public static final String MIN_TSK_VER = "4.11.0";
@@ -267,12 +268,10 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         int sectorSize = args.getBlocksize();
-        String password = args.getPassword();
 
+        String password = getEvidencePassword(image);
         if (password != null) {
-            String envVar = image.getName() + "_PASSWORD";
-            Util.setEnvVar(envVar, password);
-            SleuthkitClient.addEnvVar(envVar, password);
+            setImagePassword(output, image.getName(), password);
         }
 
         firstId = null;
@@ -408,6 +407,44 @@ public class SleuthkitReader extends DataSourceReader {
     public int read(File image) throws Exception {
         read(image, null);
         return 0;
+    }
+
+    public static synchronized void loadImagePasswords(File output) {
+        File file = new File(output, PASSWORD_PER_IMAGE);
+        if (file.exists()) {
+            UTF8Properties props = new UTF8Properties();
+            try {
+                props.load(file);
+                for (String key : props.stringPropertyNames()) {
+                    setEnvVar(key, props.getProperty(key));
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static synchronized void setImagePassword(File output, String imageName, String password) {
+        String envVar = imageName + "_PASSWORD";
+        setEnvVar(envVar, password);
+
+        File file = new File(output, PASSWORD_PER_IMAGE);
+        UTF8Properties props = new UTF8Properties();
+        try {
+            if (file.exists()) {
+                props.load(file);
+            }
+            props.setProperty(envVar, password);
+            props.store(file);
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void setEnvVar(String envVar, String value) {
+        Util.setEnvVar(envVar, value);
+        SleuthkitClient.addEnvVar(envVar, value);
     }
 
     private synchronized void saveDecodedRangeId(File image, Long start, Long last) {

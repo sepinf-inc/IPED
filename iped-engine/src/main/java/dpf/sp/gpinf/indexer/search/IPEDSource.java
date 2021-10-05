@@ -209,6 +209,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
             splitedIds = getSplitedIds();
             countTotalItems();
 
+            SleuthkitReader.loadImagePasswords(moduleDir);
+
             File textSizesFile = new File(moduleDir, "data/texts.size"); //$NON-NLS-1$
             if (textSizesFile.exists()) {
                 Object array = Util.readObject(textSizesFile.getAbsolutePath());
