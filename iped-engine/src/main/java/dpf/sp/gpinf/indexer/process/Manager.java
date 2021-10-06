@@ -769,7 +769,7 @@ public class Manager {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
 
