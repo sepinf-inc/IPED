@@ -19,6 +19,8 @@ import macee.core.Configurable;
  */
 public class SetTypeTask extends AbstractTask {
 
+    public static final String EXT_MISMATCH = "extMismatch"; //$NON-NLS-1$
+
     private TikaConfig tikaConfig;
 
     @Override
@@ -34,6 +36,7 @@ public class SetTypeTask extends AbstractTask {
                 ext = ext.substring(1);
             }
             evidence.setType(new GenericFileType(ext));
+            evidence.setExtraAttribute(EXT_MISMATCH, !ext.equals(evidence.getExt()));
         }
 
     }
