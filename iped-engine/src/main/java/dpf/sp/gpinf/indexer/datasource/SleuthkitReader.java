@@ -271,7 +271,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         int sectorSize = args.getBlocksize();
-        String password = args.getPassword();
+        String password = getEvidencePassword(image);
 
         firstId = null;
         lastId = null;
