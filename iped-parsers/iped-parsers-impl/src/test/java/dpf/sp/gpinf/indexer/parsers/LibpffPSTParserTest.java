@@ -19,6 +19,8 @@ public class LibpffPSTParserTest {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
+    // TODO: put assertions here, nothing is being tested...
+
     @Test
     public void testLibpffPSTParser() throws IOException, SAXException, TikaException {
 
@@ -35,9 +37,6 @@ public class LibpffPSTParserTest {
 
 	        String hts = handler.toString();
 	        String mts = metadata.toString();
-	
-	        // TODO remove print below and test assertions
-	        System.out.println(hts + "\n" + mts);
 	        
         }catch (Exception e) {
         	System.out.println(e);
