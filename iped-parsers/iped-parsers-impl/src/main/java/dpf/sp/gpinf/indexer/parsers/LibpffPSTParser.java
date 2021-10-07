@@ -287,6 +287,7 @@ public class LibpffPSTParser extends AbstractParser {
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OutlookPSTParser.OUTLOOK_MSG_MIME);
         metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(++virtualId));
         metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
+        metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
         if (deleted)
             metadata.set(ExtraProperties.DELETED, "true"); //$NON-NLS-1$
 

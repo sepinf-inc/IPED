@@ -96,6 +96,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Safari History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseSafariResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
@@ -122,6 +123,7 @@ public class SafariSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                     metadataHistory.add((BasicProps.LENGTH), "");
+                    metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }

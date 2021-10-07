@@ -29,6 +29,7 @@ import iped3.io.IItemBase;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class UsnJrnlParser extends AbstractParser {
     public enum ReportType {
@@ -151,6 +152,7 @@ public class UsnJrnlParser extends AbstractParser {
                 name += " " + n;
             }
 
+            cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             cMetadata.set(TikaCoreProperties.TITLE, name);
             extractor.parseEmbedded(is, handler, cMetadata, false);
 
@@ -168,6 +170,7 @@ public class UsnJrnlParser extends AbstractParser {
                 metadataItem.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, USNJRNL_REGISTRY.toString());
                 metadataItem.set(TikaCoreProperties.TITLE, "USN journal Entry " + entry.getUSN());
                 metadataItem.set(BasicProps.LENGTH, "");
+                metadataItem.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 String[] props = ReportGenerator.cols;
 

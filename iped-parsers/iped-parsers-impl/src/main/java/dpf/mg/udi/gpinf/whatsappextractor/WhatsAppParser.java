@@ -234,6 +234,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                 chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
                 chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
                 if (extractMessages && msgSubset.size() > 0) {
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                 }
@@ -412,6 +414,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         meta.set(ExtraProperties.USER_ACCOUNT, account.getFullId());
         meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
         meta.set(ExtraProperties.USER_NOTES, account.getStatus());
+        meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
         if (account.getAvatar() != null) {
             meta.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(account.getAvatar()));
         }
@@ -506,6 +510,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
             meta.set(ExtraProperties.MESSAGE_DATE, m.getTimeStamp());
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
+            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             if (!m.isSystemMessage()) {
                 String local = formatContact(account, cache);
@@ -750,6 +755,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     cMetadata.set(ExtraProperties.USER_ACCOUNT_TYPE, WHATSAPP);
                     cMetadata.set(ExtraProperties.CONTACT_OF_ACCOUNT, account.getFullId());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getStatus());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+
                     getAvatar(searcher, c);
                     if (c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));

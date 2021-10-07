@@ -33,6 +33,7 @@ import dpf.mt.gpinf.registro.model.KeyNode;
 import dpf.mt.gpinf.registro.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
+import iped3.util.ExtraProperties;
 
 public class UserAssistKeyParser extends HtmlKeyParser {
     static HashMap<String, String> knownFolders = new HashMap<String, String>();
@@ -137,6 +138,7 @@ public class UserAssistKeyParser extends HtmlKeyParser {
 
             kmeta.add(TikaCoreProperties.TITLE, rot13Name);
             kmeta.set(TikaCoreProperties.MODIFIED, dataUltimaModificacao);
+            kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             out.print("<tr>");
             out.print("<td>Valor:</td>");
