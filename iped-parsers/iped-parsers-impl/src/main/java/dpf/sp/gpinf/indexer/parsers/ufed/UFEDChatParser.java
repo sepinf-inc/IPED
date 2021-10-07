@@ -131,6 +131,7 @@ public class UFEDChatParser extends AbstractParser {
                         chatName += "_" + frag++; //$NON-NLS-1$
                     chatMetadata.set(TikaCoreProperties.TITLE, chatName);
                     chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, UFED_CHAT_PREVIEW_MIME.toString());
+                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
                     extractor.parseEmbedded(chatStream, handler, chatMetadata, false);

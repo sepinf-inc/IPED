@@ -26,6 +26,7 @@ import dpf.mt.gpinf.registro.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class HtmlKeyParser implements RegistryKeyParser {
 
@@ -48,6 +49,7 @@ public class HtmlKeyParser implements RegistryKeyParser {
                 Metadata kmeta = new Metadata();
                 kmeta.set(TikaCoreProperties.MODIFIED, kn.getLastWrittenAsDate());
                 kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "text/html");
+                kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 if (hasChildren) {
                     kmeta.set(BasicProps.HASCHILD, "true");
                 }

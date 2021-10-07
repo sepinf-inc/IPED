@@ -30,6 +30,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import iped3.util.ExtraProperties;
 
 public class RegistryParser extends AbstractParser {
 
@@ -159,6 +160,7 @@ public class RegistryParser extends AbstractParser {
                 Metadata reportMetadata = new Metadata();
                 reportMetadata.set(Metadata.RESOURCE_NAME_KEY, filename + "-Report"); //$NON-NLS-1$
                 reportMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-windows-registry-report"); //$NON-NLS-1$
+                reportMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 File htmlFile = getHtml(outFile, tmp);
 

@@ -27,6 +27,7 @@ import dpf.mt.gpinf.registro.model.KeyNode;
 import dpf.mt.gpinf.registro.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
+import iped3.util.ExtraProperties;
 
 public class MRUKeyParser extends HtmlKeyParser {
     @Override
@@ -129,6 +130,7 @@ public class MRUKeyParser extends HtmlKeyParser {
 
             kmeta.add(TikaCoreProperties.TITLE, keyValue.getValueName() + "--" + fullPath.toString());
             kmeta.set(TikaCoreProperties.MODIFIED, dataUltimaModificacao);
+            kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             out.print("<tr>");
             out.print("<td>Caminho do arquivo:</td>");

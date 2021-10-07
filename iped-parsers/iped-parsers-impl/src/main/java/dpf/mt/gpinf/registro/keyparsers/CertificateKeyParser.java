@@ -20,6 +20,7 @@ import dpf.mt.gpinf.registro.model.KeyNode;
 import dpf.mt.gpinf.registro.model.KeyValue;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
+import iped3.util.ExtraProperties;
 
 public class CertificateKeyParser extends HtmlKeyParser {
 
@@ -77,6 +78,7 @@ public class CertificateKeyParser extends HtmlKeyParser {
                     kmeta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MediaType.application("pkix-cert").toString());
                     X509Certificate cert = (X509Certificate) cf.generateCertificate(keyStream);
                     kmeta.add(TikaCoreProperties.TITLE, cert.getSubjectX500Principal().getName());
+                    kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     context.set(EmbeddedParent.class, parent);
                     extractor.parseEmbedded(new ByteArrayInputStream(data), handler, kmeta, false);

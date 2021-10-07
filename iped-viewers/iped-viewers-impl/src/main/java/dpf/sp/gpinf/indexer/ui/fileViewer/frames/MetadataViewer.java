@@ -267,6 +267,7 @@ public abstract class MetadataViewer extends Viewer {
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
+        fillProp(sb, BasicProps.EXT, item.getExt());
         fillProp(sb, BasicProps.TYPE, item.getTypeExt());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());

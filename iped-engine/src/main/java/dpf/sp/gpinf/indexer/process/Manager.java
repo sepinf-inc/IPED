@@ -66,6 +66,7 @@ import dpf.sp.gpinf.indexer.process.task.IndexTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.IndexerSimilarity;
+import dpf.sp.gpinf.indexer.search.Marcadores;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.CustomIndexDeletionPolicy;
 import dpf.sp.gpinf.indexer.util.ExeFileFilter;
@@ -161,6 +162,13 @@ public class Manager {
         this.palavrasChave = palavras;
 
         this.caseData = new CaseData(QUEUE_SIZE);
+
+        for (File source : sources) {
+            if (source.getName().toLowerCase().endsWith(Marcadores.EXT)) {
+                this.caseData.setIpedReport(true);
+                break;
+            }
+        }
 
         Item.setStartID(0);
 
@@ -761,7 +769,7 @@ public class Manager {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htm"), new File(output, "htm")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
             IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
 

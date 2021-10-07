@@ -74,7 +74,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     private static final File globalCols = getGlobalColsFile();
 
-    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 100, 60, 150, 155, 155, 155, 155,
+    private static final List<Integer> defaultWidths = Arrays.asList(50, 100, 200, 50, 50, 100, 60, 150, 155, 155, 155, 155,
             155, 155, 250, 2000);
 
     public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
@@ -97,7 +97,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
     }
 
     private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
-            IndexItem.NAME, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
+            IndexItem.NAME, IndexItem.EXT, IndexItem.TYPE, IndexItem.LENGTH, IndexItem.DELETED, IndexItem.CATEGORY, IndexItem.CREATED,
             IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
             IndexItem.HASH, IndexItem.PATH };
 

@@ -113,6 +113,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     downloadsMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome Downloads"); //$NON-NLS-1$
                     downloadsMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     downloadsMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    downloadsMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeDownloads(downloadsHandler, downloadsMetadata, context, downloads);
 
@@ -143,6 +144,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                         metadataDownload.add(ExtraProperties.DOWNLOAD_RECEIVED_BYTES, d.getReceivedBytes().toString());
                     metadataDownload.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(0));
                     metadataDownload.set(BasicProps.LENGTH, "");
+                    metadataDownload.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataDownload, true);
                 }
@@ -155,6 +157,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     historyMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome History"); //$NON-NLS-1$
                     historyMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(1));
                     historyMetadata.set(BasicProps.HASCHILD, "true"); //$NON-NLS-1$
+                    historyMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeResumedHistory(historyHandler, historyMetadata, context, resumedHistory);
 
@@ -181,6 +184,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     metadataHistory.add(ExtraProperties.URL, h.getUrl());
                     metadataHistory.add(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(1));
                     metadataHistory.set(BasicProps.LENGTH, "");
+                    metadataHistory.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     extractor.parseEmbedded(new EmptyInputStream(), handler, metadataHistory, true);
                 }
@@ -193,6 +197,7 @@ public class ChromeSqliteParser extends AbstractSqliteBrowserParser {
                     searchesMetadata.add(Metadata.RESOURCE_NAME_KEY, "Chrome Searches"); //$NON-NLS-1$
                     searchesMetadata.add(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(0));
                     searchesMetadata.set(BasicProps.HASCHILD, "false"); //$NON-NLS-1$
+                    searchesMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     parseChromeSearches(searchesHandler, searchesMetadata, context, searches);
 

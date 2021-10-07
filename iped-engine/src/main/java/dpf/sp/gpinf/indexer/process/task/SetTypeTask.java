@@ -10,6 +10,7 @@ import org.apache.tika.mime.MimeTypeException;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 import macee.core.Configurable;
 
 /**
@@ -18,6 +19,8 @@ import macee.core.Configurable;
  *
  */
 public class SetTypeTask extends AbstractTask {
+
+    public static final String EXT_MISMATCH = "extMismatch"; //$NON-NLS-1$
 
     private TikaConfig tikaConfig;
 
@@ -34,6 +37,10 @@ public class SetTypeTask extends AbstractTask {
                 ext = ext.substring(1);
             }
             evidence.setType(new GenericFileType(ext));
+            Boolean isDecodedData = (Boolean) evidence.getExtraAttribute(ExtraProperties.DECODED_DATA);
+            if (isDecodedData == null || !isDecodedData) {
+                evidence.setExtraAttribute(EXT_MISMATCH, !ext.equals(evidence.getExt()));
+            }
         }
 
     }

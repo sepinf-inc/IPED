@@ -136,6 +136,7 @@ public class SkypeParser extends AbstractParser {
                     cMetadata.set(ExtraProperties.USER_BIRTH, c.getBirthday());
                     cMetadata.set(ExtraProperties.USER_ADDRESS, c.getCity());
                     cMetadata.set(ExtraProperties.USER_NOTES, c.getAbout());
+                    cMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     if (c.getAvatar() != null) {
                         cMetadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(c.getAvatar()));
                     }
@@ -182,6 +183,7 @@ public class SkypeParser extends AbstractParser {
                     chatMetadata.set(TikaCoreProperties.MODIFIED, conv.getLastActivity());
                     chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, conv.getId());
                     chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
+                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     storeSharedHashes(conv, chatMetadata);
 
@@ -199,6 +201,7 @@ public class SkypeParser extends AbstractParser {
                             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MESSAGE_MIME_TYPE);
                             meta.set(TikaCoreProperties.TITLE, conv.getTitle() + "_msg_" + msgNum++);
                             meta.set(TikaCoreProperties.CREATED, sm.getData());
+                            meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                             meta.set(ExtraProperties.PARENT_VIRTUAL_ID, conv.getId());
                             meta.set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(sm.getId()));
                             meta.set(ExtraProperties.USER_ACCOUNT_TYPE, SKYPE);
@@ -209,6 +212,7 @@ public class SkypeParser extends AbstractParser {
                             meta.set("messageStatus", String.valueOf(sm.getChatMessageStatus()));
                             meta.set("sendingStatus", String.valueOf(sm.getSendingStatus()));
                             meta.set(BasicProps.LENGTH, "");
+
                             if (sm.getDataEdicao() != null) {
                                 meta.set(TikaCoreProperties.MODIFIED, sm.getDataEdicao());
                             }
@@ -239,6 +243,7 @@ public class SkypeParser extends AbstractParser {
                     String name = Messages.getString("SkypeParser.SkypeTransfer") + t.getFilename(); //$NON-NLS-1$
                     tMetadata.set(TikaCoreProperties.TITLE, name);
                     tMetadata.set(ExtraProperties.PARENT_VIRTUAL_ID, t.getConversation().getId());
+                    tMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                     // TODO embed transfer in parent chat html
                     // tMetadata.set(ExtraProperties.PARENT_VIEW_POSITION,
                     // String.valueOf(t.getId()));
@@ -289,6 +294,7 @@ public class SkypeParser extends AbstractParser {
 
                 // cria o item que representa a conta do usuário (Account)
                 Metadata meta = new Metadata();
+                meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, ACCOUNT_MIME_TYPE);
                 meta.set(HttpHeaders.CONTENT_TYPE, ACCOUNT_MIME_TYPE);
                 String name = account.getBestName();
