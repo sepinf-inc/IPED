@@ -358,6 +358,7 @@ public class OutlookPSTParser extends AbstractParser {
 
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, String.valueOf(obj.getDescriptorNodeId()));
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, String.valueOf(parent));
+            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
             StringBuilder preview = new StringBuilder();
             preview.append("<html>"); //$NON-NLS-1$
@@ -448,7 +449,7 @@ public class OutlookPSTParser extends AbstractParser {
                 subject = Messages.getString("OutlookPSTParser.NoSubject"); //$NON-NLS-1$
             metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, OUTLOOK_MSG_MIME);
-
+            metadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             metadata.set(ExtraProperties.ITEM_VIRTUAL_ID, virtualId);
             metadata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
 

@@ -40,6 +40,7 @@ import dpf.mt.gpinf.mapas.parsers.kmlstore.Folder;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class GeofileParser extends AbstractParser {
 
@@ -160,6 +161,7 @@ public class GeofileParser extends AbstractParser {
                 ByteArrayInputStream featureStream = new ByteArrayInputStream(generateFeatureHtml(feature));
 
                 Metadata kmeta = new Metadata();
+                kmeta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
                 kmeta.set(TikaCoreProperties.CREATED, metadata.get(TikaCoreProperties.CREATED));
                 String timestamp = (String) feature.getAttribute("timestamp");
                 if (timestamp != null) {
