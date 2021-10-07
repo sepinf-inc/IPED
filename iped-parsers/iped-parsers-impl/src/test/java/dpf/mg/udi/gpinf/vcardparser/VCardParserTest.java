@@ -188,27 +188,25 @@ public class VCardParserTest extends TestCase {
         }
 	        
     }
-
+    
+    // comment out useless test without asserts
+    /*
     @Test
     public void testVCardCompleteHTMLToString() throws IOException, SAXException, TikaException {
 
         VCardParser parser = new VCardParser();
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
-        ClassLoader classLoader = getClass().getClassLoader();
         try(InputStream stream = getStream("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf")){
-	        File file = new File(
-	                classLoader.getResource("test-files/test_contactsCompleteWithoutThumbHTMLToString.vcf").toURI());
-	        PrintWriter out = new PrintWriter(file);
 	        ParseContext context = new ParseContext();
 	        parser.getSupportedTypes(context);
        
 	        parser.parse(stream, handler, metadata, context);
-	        VCardParser.printHtmlFromString(out, handler.toString());
 	        
         }catch(Exception e) {
         	System.out.println(e);
         }
     }
+    */
 
 }
