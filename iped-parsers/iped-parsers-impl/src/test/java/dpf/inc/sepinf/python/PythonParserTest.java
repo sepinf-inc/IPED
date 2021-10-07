@@ -22,27 +22,27 @@ public class PythonParserTest extends TestCase {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
     }
 
-    @Test
-    public void testPythonParser() throws IOException, SAXException, TikaException, URISyntaxException {
-
-        ClassLoader classLoader = getClass().getClassLoader();
-        File file = new File(classLoader.getResource("test-files/test_setup.py").toURI());
-        PythonParser parser = new PythonParser(file);
-        Metadata metadata = new Metadata();
-        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-sh");
-        ContentHandler handler = new BodyContentHandler();
-        ParseContext context = new ParseContext();
-        parser.getSupportedTypes(context);
-        try (InputStream stream = getStream("test-files/test_setup.py")){
-            parser.parse(stream, handler, metadata, context);
-            String hts = handler.toString();
-            String mts = metadata.toString();
-            System.out.println(hts + "\n" + mts);
-            
-        } catch (Exception e) {
-            System.out.println(e);
-        }
-
-    }
+    // Wrong test, must be fixed. PythonParser is a delegate parser to call parsers
+    // implemented in python, not to parse arbitrary python scripts.
+    /*
+     * @Test public void testPythonParser() throws IOException, SAXException,
+     * TikaException, URISyntaxException {
+     * 
+     * ClassLoader classLoader = getClass().getClassLoader(); File file = new
+     * File(classLoader.getResource("test-files/test_setup.py").toURI());
+     * PythonParser parser = new PythonParser(file); Metadata metadata = new
+     * Metadata(); metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE,
+     * "application/x-sh"); ContentHandler handler = new BodyContentHandler();
+     * ParseContext context = new ParseContext(); parser.getSupportedTypes(context);
+     * try (InputStream stream = getStream("test-files/test_setup.py")){
+     * parser.parse(stream, handler, metadata, context); String hts =
+     * handler.toString(); String mts = metadata.toString(); System.out.println(hts
+     * + "\n" + mts);
+     * 
+     * } catch (Exception e) { System.out.println(e); }
+     * 
+     * }
+     * 
+     */
 
 }
