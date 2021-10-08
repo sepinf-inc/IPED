@@ -27,10 +27,10 @@ public class PDFOCRTextParserTest extends TestCase {
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_pdfProtected.pdf")){
-        	parser.parse(stream, handler, metadata, context);
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -45,22 +45,22 @@ public class PDFOCRTextParserTest extends TestCase {
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
         parser.setUseIcePDF(true);
-        try(InputStream stream = getStream("test-files/test_pdfProtected.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String mts = metadata.toString();
-	
-	        assertEquals("PScript5.dll Version 5.2", metadata.get(Metadata.CREATOR));
-	        assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
-	        assertEquals("The Bank of England", metadata.get(Metadata.AUTHOR));
-	        assertEquals("April 28, 2009 10:06:56 (UTC +01:00)", metadata.get(Metadata.CREATION_DATE));
-	        assertEquals(
-	                "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
-	                metadata.get(Metadata.TITLE));
-	        assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
-	        assertTrue(mts.contains("Content-Type=application/pdf"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String mts = metadata.toString();
+
+            assertEquals("PScript5.dll Version 5.2", metadata.get(Metadata.CREATOR));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
+            assertEquals("The Bank of England", metadata.get(Metadata.AUTHOR));
+            assertEquals("April 28, 2009 10:06:56 (UTC +01:00)", metadata.get(Metadata.CREATION_DATE));
+            assertEquals(
+                    "Rethinking the Financial Network, Speech by Andrew G Haldane, Executive Director, Financial Stability delivered at the Financial Student Association, Amsterdam on 28 April 2009",
+                    metadata.get(Metadata.TITLE));
+            assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
+            assertTrue(mts.contains("Content-Type=application/pdf"));
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -73,18 +73,20 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfProtected.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        assertEquals("Rethinking the Financial Network, Speech by Andrew G Haldane,"
-	                + " Executive Director, Financial Stability delivered at the Financial"
-	                + " Student Association, Amsterdam on 28 April 2009", metadata.get(TikaCoreProperties.TITLE));
-	        assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
-	        assertEquals("The Bank of England", metadata.get(TikaCoreProperties.CREATOR));
-	        assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
-	        assertEquals("Speeches by Andrew G Haldane", metadata.get(metadata.DESCRIPTION));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            assertEquals(
+                    "Rethinking the Financial Network, Speech by Andrew G Haldane,"
+                            + " Executive Director, Financial Stability delivered at the Financial"
+                            + " Student Association, Amsterdam on 28 April 2009",
+                    metadata.get(TikaCoreProperties.TITLE));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(Metadata.SUBJECT));
+            assertEquals("The Bank of England", metadata.get(TikaCoreProperties.CREATOR));
+            assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
+            assertEquals("Speeches by Andrew G Haldane", metadata.get(metadata.DESCRIPTION));
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -96,17 +98,17 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfProtected.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("RETHINKING THE FINANCIAL NETWORK"));
-	        assertTrue(hts.contains("This paper considers the financial system as a complex adaptive system."));
-	        assertTrue(hts.contains("In recent years the pace of change and innovation in financial markets and"));
-	        assertTrue(hts.contains("• Whose diversity was gradually eroded by institutions’"));
-    	}catch (Exception e) {
-    		System.out.println(e);
-    	}
+        try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("RETHINKING THE FINANCIAL NETWORK"));
+            assertTrue(hts.contains("This paper considers the financial system as a complex adaptive system."));
+            assertTrue(hts.contains("In recent years the pace of change and innovation in financial markets and"));
+            assertTrue(hts.contains("• Whose diversity was gradually eroded by institutions’"));
+        } catch (Exception e) {
+            System.out.println(e);
+        }
     }
 
     @Test
@@ -116,10 +118,10 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfResumes.pdf")){
-        	parser.parse(stream, handler, metadata, context);
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfResumes.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -131,16 +133,16 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfResumes.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("Freshman Resume"));
-	        assertTrue(hts.contains("Leadership MIT Undergraduate Giving Campaign Cambridge"));
-	        assertTrue(hts.contains("Manage a $1,000 budget to put on events such as “study-breaks”"));
-	        assertTrue(hts.contains("•   Managed 25 science journalists,"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfResumes.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("Freshman Resume"));
+            assertTrue(hts.contains("Leadership MIT Undergraduate Giving Campaign Cambridge"));
+            assertTrue(hts.contains("Manage a $1,000 budget to put on events such as “study-breaks”"));
+            assertTrue(hts.contains("•   Managed 25 science journalists,"));
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -151,10 +153,10 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfImages.pdf")){
-        	parser.parse(stream, handler, metadata, context);
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -167,16 +169,16 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new DefaultHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfImages.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        assertEquals("g2free.lo", metadata.get(TikaCoreProperties.TITLE));
-	        assertEquals("QuarkXPress(tm) 4.11", metadata.get(TikaCoreProperties.CREATOR_TOOL));
-	        assertEquals("E", metadata.get(TikaCoreProperties.CREATOR));
-	        assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
-	        assertEquals("2002-02-21", metadata.get(metadata.CREATION_DATE).substring(0, 10));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            assertEquals("g2free.lo", metadata.get(TikaCoreProperties.TITLE));
+            assertEquals("QuarkXPress(tm) 4.11", metadata.get(TikaCoreProperties.CREATOR_TOOL));
+            assertEquals("E", metadata.get(TikaCoreProperties.CREATOR));
+            assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
+            assertEquals("2002-02-21", metadata.get(metadata.CREATION_DATE).substring(0, 10));
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -187,16 +189,16 @@ public class PDFOCRTextParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_pdfImages.pdf")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("Polygon-based representations of 3D"));
-	        assertTrue(hts.contains("finite polygon size (see Figure 1)."));
-	        assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
-	        assertTrue(hts.contains("To generate our training set, we start from a collec"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
+            parser.parse(stream, handler, metadata, context);
+
+            String hts = handler.toString();
+            assertTrue(hts.contains("Polygon-based representations of 3D"));
+            assertTrue(hts.contains("finite polygon size (see Figure 1)."));
+            assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
+            assertTrue(hts.contains("To generate our training set, we start from a collec"));
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 

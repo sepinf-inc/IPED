@@ -40,17 +40,17 @@ public class RegistroParserTest extends TestCase {
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_security")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        RegistryFile rf = new RegistryFile(file);
-	        rf.load();
-	        HiveCell c = rf.getRootCell();
-	        KeyNode k = (KeyNode) c.getCellContent();
-	        assertEquals(k.getKeyName(), "ROOT");
-	        
-        }catch(Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_security")) {
+            parser.parse(stream, handler, metadata, context);
+
+            RegistryFile rf = new RegistryFile(file);
+            rf.load();
+            HiveCell c = rf.getRootCell();
+            KeyNode k = (KeyNode) c.getCellContent();
+            assertEquals(k.getKeyName(), "ROOT");
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -67,17 +67,17 @@ public class RegistroParserTest extends TestCase {
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_sam")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        RegistryFile rf = new RegistryFile(file);
-	        rf.load();
-	        HiveCell c = rf.getRootCell();
-	        KeyNode k = (KeyNode) c.getCellContent();
-	        assertEquals(k.getKeyName(), "ROOT");
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_sam")) {
+            parser.parse(stream, handler, metadata, context);
+
+            RegistryFile rf = new RegistryFile(file);
+            rf.load();
+            HiveCell c = rf.getRootCell();
+            KeyNode k = (KeyNode) c.getCellContent();
+            assertEquals(k.getKeyName(), "ROOT");
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -93,23 +93,23 @@ public class RegistroParserTest extends TestCase {
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_system")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        RegistryFile rf = new RegistryFile(file);
-	        rf.load();
-	        HiveCell c = rf.getRootCell();
-	        KeyNode k = (KeyNode) c.getCellContent();
-	        assertEquals(k.getKeyName(), "CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}");
-	        KeyNode kf = rf.findKeyNode("ControlSet001/Control/ComputerName/ComputerName");
-	        assertEquals("Computer Name: " + kf.getValue("ComputerName").getValueDataAsString(),
-	                "Computer Name: WKS-WIN732BITA");
-	        kf = rf.findKeyNode("Setup");
-	        assertEquals("Working directory: " + kf.getValue("WorkingDirectory").getValueDataAsString(),
-	                "Working directory: C:\\Windows\\Panther");
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_system")) {
+            parser.parse(stream, handler, metadata, context);
+
+            RegistryFile rf = new RegistryFile(file);
+            rf.load();
+            HiveCell c = rf.getRootCell();
+            KeyNode k = (KeyNode) c.getCellContent();
+            assertEquals(k.getKeyName(), "CMI-CreateHive{F10156BE-0E87-4EFB-969E-5DA29D131144}");
+            KeyNode kf = rf.findKeyNode("ControlSet001/Control/ComputerName/ComputerName");
+            assertEquals("Computer Name: " + kf.getValue("ComputerName").getValueDataAsString(),
+                    "Computer Name: WKS-WIN732BITA");
+            kf = rf.findKeyNode("Setup");
+            assertEquals("Working directory: " + kf.getValue("WorkingDirectory").getValueDataAsString(),
+                    "Working directory: C:\\Windows\\Panther");
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -126,22 +126,23 @@ public class RegistroParserTest extends TestCase {
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_software")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        RegistryFile rf = new RegistryFile(file);
-	        rf.load();
-	        HiveCell c = rf.getRootCell();
-	        KeyNode k = (KeyNode) c.getCellContent();
-	        assertEquals(k.getKeyName(), "CMI-CreateHive{3D971F19-49AB-4000-8D39-A6D9C673D809}");
-	        KeyNode kf = rf.findKeyNode("Adobe/Acrobat Reader/10.0/Installer");
-	        assertEquals("Install Date: " + kf.getValue("InstallDate").getValueDataAsString(), "Install Date: 8/28/2011");
-	        kf = rf.findKeyNode("Microsoft/Windows Defender/");
-	        assertEquals("Disable Anti Spyware: " + kf.getValue("DisableAntiSpyware").getValueDataAsString(),
-	                "Disable Anti Spyware: 1");
-	        
-        }catch(Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_software")) {
+            parser.parse(stream, handler, metadata, context);
+
+            RegistryFile rf = new RegistryFile(file);
+            rf.load();
+            HiveCell c = rf.getRootCell();
+            KeyNode k = (KeyNode) c.getCellContent();
+            assertEquals(k.getKeyName(), "CMI-CreateHive{3D971F19-49AB-4000-8D39-A6D9C673D809}");
+            KeyNode kf = rf.findKeyNode("Adobe/Acrobat Reader/10.0/Installer");
+            assertEquals("Install Date: " + kf.getValue("InstallDate").getValueDataAsString(),
+                    "Install Date: 8/28/2011");
+            kf = rf.findKeyNode("Microsoft/Windows Defender/");
+            assertEquals("Disable Anti Spyware: " + kf.getValue("DisableAntiSpyware").getValueDataAsString(),
+                    "Disable Anti Spyware: 1");
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -158,28 +159,28 @@ public class RegistroParserTest extends TestCase {
         ItemInfo itemInfo = new ItemInfo(0, getName(), null, null, "system32/config", false);
         context.set(ItemInfo.class, itemInfo);
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_ntuser.dat")){
-	        parser.parse(stream, handler, metadata, context);
-	
-	        RegistryFile rf = new RegistryFile(file);
-	        rf.load();
-	        HiveCell c = rf.getRootCell();
-	        KeyNode k = (KeyNode) c.getCellContent();
-	        assertEquals(k.getKeyName(), "CMI-CreateHive{6A1C4018-979D-4291-A7DC-7AED1C75B67C}");
-	        KeyNode kf = rf.findKeyNode("/Control Panel/Desktop");
-	        assertEquals("Wallpaper: " + kf.getValue("Wallpaper").getValueDataAsString(),
-	                "Wallpaper: C:\\Users\\vibranium\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\TranscodedWallpaper.jpg");
-	        kf = rf.findKeyNode("/Identities");
-	        ArrayList<KeyNode> identities = kf.getSubKeys();
-	        for (int i = 0; i < identities.size(); i++) {
-	            assertEquals("Username: " + identities.get(i).getValue("Username").getValueDataAsString(),
-	                    "Username: Main Identity");
-	            assertEquals("Username ID: " + identities.get(i).getValue("User ID").getValueDataAsString(),
-	                    "Username ID: {EF208C86-65AC-4012-84A1-F1B2647B21FD}");
-	        }
-	        
-        }catch(Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_ntuser.dat")) {
+            parser.parse(stream, handler, metadata, context);
+
+            RegistryFile rf = new RegistryFile(file);
+            rf.load();
+            HiveCell c = rf.getRootCell();
+            KeyNode k = (KeyNode) c.getCellContent();
+            assertEquals(k.getKeyName(), "CMI-CreateHive{6A1C4018-979D-4291-A7DC-7AED1C75B67C}");
+            KeyNode kf = rf.findKeyNode("/Control Panel/Desktop");
+            assertEquals("Wallpaper: " + kf.getValue("Wallpaper").getValueDataAsString(),
+                    "Wallpaper: C:\\Users\\vibranium\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\TranscodedWallpaper.jpg");
+            kf = rf.findKeyNode("/Identities");
+            ArrayList<KeyNode> identities = kf.getSubKeys();
+            for (int i = 0; i < identities.size(); i++) {
+                assertEquals("Username: " + identities.get(i).getValue("Username").getValueDataAsString(),
+                        "Username: Main Identity");
+                assertEquals("Username ID: " + identities.get(i).getValue("User ID").getValueDataAsString(),
+                        "Username ID: {EF208C86-65AC-4012-84A1-F1B2647B21FD}");
+            }
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 }
