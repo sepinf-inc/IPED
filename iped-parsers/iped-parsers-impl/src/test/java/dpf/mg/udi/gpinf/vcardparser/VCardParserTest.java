@@ -4,6 +4,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -112,14 +115,16 @@ public class VCardParserTest extends TestCase {
 		            String[] useremails;
 		            String[] userurls;
 		            String[] userorganizations;
+                    Date userBirth;
+
 		            phonenumbers = metadata.getValues(ExtraProperties.USER_PHONE);
 		            useraddresses = metadata.getValues(ExtraProperties.USER_ADDRESS);
 		            useremails = metadata.getValues(ExtraProperties.USER_EMAIL);
 		            userurls = metadata.getValues(ExtraProperties.USER_URLS);
 		            userorganizations = metadata.getValues(ExtraProperties.USER_ORGANIZATION);
+                    userBirth = metadata.getDate(ExtraProperties.USER_BIRTH);
 		
 		            assertTrue(hts.contains("ratuxo"));
-		            assertTrue(hts.contains("Outubro 24, 1996"));
 		            assertTrue(hts.contains("nicolecity,"));
 		            assertTrue(hts.contains("Test@paraparaparapara"));
 		            assertTrue(hts.contains("www.rato.com.br"));
@@ -131,6 +136,9 @@ public class VCardParserTest extends TestCase {
 		            assertEquals("021 (61)3468-2000", phonenumbers[0]);
 		            assertEquals("021 (61)3011-7666", phonenumbers[1]);
 		            assertEquals("[nicolecity, dança]", userorganizations[0]);
+
+                    SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
+                    assertEquals(df.parse("19961024"), userBirth);
 		            
 	        	}catch (Exception e) {
 	        		System.out.println(e);

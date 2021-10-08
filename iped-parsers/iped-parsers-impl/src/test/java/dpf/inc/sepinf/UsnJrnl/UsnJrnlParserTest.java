@@ -13,6 +13,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 public class UsnJrnlParserTest extends AbstractPkgTest {
 
@@ -46,6 +47,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 	        int style = DateFormat.MEDIUM;
 	        DateFormat df;
 	        df = DateFormat.getDateTimeInstance(style, style, new Locale("pt", "BR"));
+            df.setTimeZone(TimeZone.getTimeZone("America/Sao_Paulo"));
 	
 	        assertEquals(3, usntracker.contenttype.size());
 	        assertEquals(3085, usntracker.title.size());
@@ -126,6 +128,7 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
 	        int style = DateFormat.MEDIUM;
 	        DateFormat df;
 	        df = DateFormat.getDateTimeInstance(style, style, new Locale("pt", "BR"));
+            df.setTimeZone(TimeZone.getTimeZone("America/Sao_Paulo"));
 	
 	        assertEquals(3, usntracker.contenttype.size());
 	        assertEquals(3085, usntracker.title.size());
