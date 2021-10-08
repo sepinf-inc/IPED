@@ -22,6 +22,7 @@ import javax.swing.tree.TreePath;
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 
 public class CategoryTreeModel implements TreeModel {
 
@@ -87,7 +88,7 @@ public class CategoryTreeModel implements TreeModel {
             if (numItems == null) {
                 return name + " (...)"; //$NON-NLS-1$
             } else {
-                return name + " (" + numItems + ")"; //$NON-NLS-1$ //$NON-NLS-2$
+                return name + " (" + LocalizedFormat.format(numItems) + ")"; //$NON-NLS-1$ //$NON-NLS-2$
             }
         }
 
