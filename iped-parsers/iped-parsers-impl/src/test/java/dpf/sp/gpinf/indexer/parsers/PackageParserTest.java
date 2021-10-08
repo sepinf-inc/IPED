@@ -9,6 +9,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
+import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -961,40 +962,28 @@ public class PackageParserTest extends AbstractPkgTest {
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(trackingContext);
         try(InputStream stream = getStream("test-files/test_mockDoc1.docx")){
-	        parser.parse(stream, handler, metadata, trackingContext);
-	        assertEquals(17, tracker.filenames.size());
-	        assertEquals(12, tracker.modifieddate.size());
-	        assertEquals(17, tracker.itensmd5.size());
-	        assertEquals(5, tracker.folderCount);
-	
-	        int style = DateFormat.MEDIUM;
-	        DateFormat df;
-	        df = DateFormat.getDateTimeInstance(style, style, new Locale("pt", "BR"));
-	
-	        assertEquals("[Content_Types].xml", tracker.filenames.get(0));
-	        Date date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(0));
-	        if (getVersion() < 9)
-	            assertEquals("01/01/1980 03:00:00", df.format(date));
-	        if (getVersion() >= 9 && getVersion() < 12)
-	            assertEquals("1 de jan de 1980 03:00:00", df.format(date));
-	        if (getVersion() >= 12)
-	            assertEquals("1 de jan. de 1980 03:00:00", df.format(date));
-	        assertEquals("A7CBC749C317FA432BA2DB5A47131123", tracker.itensmd5.get(0));
-	        assertEquals("false", tracker.isfolder.get(0));
-	
-	        assertEquals("_rels", tracker.filenames.get(1));
-	        date = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'").parse(tracker.modifieddate.get(1));
-	        if (getVersion() < 9)
-	            assertEquals("01/01/1980 03:00:00", df.format(date));
-	        if (getVersion() >= 9 && getVersion() < 12)
-	            assertEquals("1 de jan de 1980 03:00:00", df.format(date));
-	        if (getVersion() >= 12)
-	            assertEquals("1 de jan. de 1980 03:00:00", df.format(date));
-	        assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
-	        assertEquals("true", tracker.isfolder.get(1));
-	        
+            parser.parse(stream, handler, metadata, trackingContext);
+            assertEquals(17, tracker.filenames.size());
+            assertEquals(12, tracker.modifieddate.size());
+            assertEquals(17, tracker.itensmd5.size());
+            assertEquals(5, tracker.folderCount);
+
+            DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+
+            assertEquals("[Content_Types].xml", tracker.filenames.get(0));
+            Date date = parseFromDefaultDateFormat(tracker.modifieddate.get(0));
+            assertEquals(df.parse("01/01/1980 00:00:00"), date);
+            assertEquals("A7CBC749C317FA432BA2DB5A47131123", tracker.itensmd5.get(0));
+            assertEquals("false", tracker.isfolder.get(0));
+
+            assertEquals("_rels", tracker.filenames.get(1));
+            date = parseFromDefaultDateFormat(tracker.modifieddate.get(1));
+            assertEquals(df.parse("01/01/1980 00:00:00"), date);
+            assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
+            assertEquals("true", tracker.isfolder.get(1));
+
         }catch (Exception e) {
-        	System.out.println(e);
+            System.out.println(e);
         }
 
     }
