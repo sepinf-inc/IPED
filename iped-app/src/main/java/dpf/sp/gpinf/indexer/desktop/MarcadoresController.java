@@ -8,6 +8,7 @@ import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
 import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 
 public class MarcadoresController {
 
@@ -78,8 +79,9 @@ public class MarcadoresController {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                App.get().checkBox.setText(App.get().appCase.getMultiMarcadores().getTotalSelected() + " / " //$NON-NLS-1$
-                        + App.get().appCase.getTotalItens());
+                App.get().checkBox.setText(
+                        LocalizedFormat.format(App.get().appCase.getMultiMarcadores().getTotalSelected()) + " / " //$NON-NLS-1$
+                                + LocalizedFormat.format(App.get().appCase.getTotalItens()));
                 App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();
