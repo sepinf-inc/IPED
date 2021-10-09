@@ -45,6 +45,7 @@ import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -163,7 +164,7 @@ public class TextParser extends CancelableWorker implements ITextParser {
     @Override
     public void done() {
 
-        App.get().hitsDock.setTitleText(hits.size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+        App.get().hitsDock.setTitleText(LocalizedFormat.format(hits.size()) + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
         if (progressMonitor != null) {
             progressMonitor.close();
         }

@@ -44,6 +44,7 @@ import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
@@ -299,7 +300,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             try {
                 App.get().ipedResult = this.get();
 
-                App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(this.get().getLength());
+                App.get().resultsTable.getColumnModel().getColumn(0).setHeaderValue(LocalizedFormat.format(this.get().getLength()));
                 App.get().resultsTable.getTableHeader().repaint();
                 if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
                     App.get().resultsTable.getRowSorter().allRowsChanged();
