@@ -4,7 +4,7 @@
 
 # Habilita cálculo de hash dos arquivos. Para calcular vários hashes utilize ; como separador
 # Valores possíveis: md5, sha-1, sha-256, sha-512 e edonkey
-hash = md5; sha-256
+hash = md5; sha-1; sha-256
 
 # Habilita o cálculo do hash photoDNA de imagens. Caso tenha direito de uso (forças da lei que combatem pornografia infantil)
 # e tenha recebido a biblioteca, necessário copiá-la para a pasta de plugins/optional_jars.

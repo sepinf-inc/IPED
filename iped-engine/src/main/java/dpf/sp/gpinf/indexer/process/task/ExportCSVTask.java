@@ -58,6 +58,7 @@ public class ExportCSVTask extends AbstractTask {
 
     private CmdLineArgs args;
     private File tmp;
+    private boolean useOldHashColumn = false;
 
     /**
      * Indica que itens ignorados, como duplicados ou conhecidos (hash), devem ser
@@ -130,11 +131,27 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        value = evidence.getHash();
-        if (value == null) {
-            value = ""; //$NON-NLS-1$
+        if (useOldHashColumn) {
+            value = evidence.getHash();
+            if (value == null) {
+                value = ""; //$NON-NLS-1$
+            }
+            list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+
+        } else {
+            value = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
+            if (value == null) {
+                value = ""; //$NON-NLS-1$
+            }
+            list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+            list.append(SEPARATOR);
+
+            value = (String) evidence.getExtraAttribute(HashTask.HASH.SHA1.toString());
+            if (value == null) {
+                value = ""; //$NON-NLS-1$
+            }
+            list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
         value = Boolean.toString(evidence.isDeleted());
@@ -266,8 +283,17 @@ public class ExportCSVTask extends AbstractTask {
         this.output = new File(output.getParentFile(), CSV_NAME);
 
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (output.exists() && !args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
-            Files.delete(output.toPath());
+        if (output.exists()) {
+            if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart()) {
+                Files.delete(output.toPath());
+            } else {
+                try (BufferedReader reader = Files.newBufferedReader(output.toPath())) {
+                    String firstLine = reader.readLine();
+                    if (firstLine.contains("\"Hash\"")) {
+                        useOldHashColumn = true;
+                    }
+                }
+            }
         }
 
         tmp = new File(output.getAbsolutePath() + ".tmp");
