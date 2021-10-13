@@ -347,7 +347,7 @@ public class ExtractorAndroid extends Extractor {
     private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation FROM chat_list ORDER BY creation DESC"; //$NON-NLS-1$
     
-    private static final String SELECT_CHAT_VIEW = "SELECT raw_string_jid AS contact," //$NON-NLS-1$
+    private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
             + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
     /*
