@@ -289,7 +289,7 @@ public class ExportCSVTask extends AbstractTask {
             } else {
                 try (BufferedReader reader = Files.newBufferedReader(output.toPath())) {
                     String firstLine = reader.readLine();
-                    if (firstLine.contains("\"Hash\"")) {
+                    if (firstLine != null && firstLine.contains("\"Hash\"")) {
                         useOldHashColumn = true;
                     }
                 }
