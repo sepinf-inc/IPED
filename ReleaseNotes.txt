@@ -1,3 +1,28 @@
+10/14/2021: IPED-3.18.9
+News:
+#758: Support new Android WhatsApp msgstore.db schema (Luis Nassif)
+#558: New regex patterns to search for cripto wallets seed phrases (João Hauck & Luis Nassif)
+#752: Validation for crypto wallets seed phrases (João Hauck & Luis Nassif)
+#778: Compute md5, sha1 (and sha256) by default and include them in "FileListing.csv" (Luis Nassif)
+#754: Add fixed size VHD detection based on footer signature (Luis Nassif)
+#773: Allow specifying multiple passwords for different evidences in command line (Luis Nassif)
+#733: Add a "-nocontent all" parameter value when exporting items to report (Luis Nassif)
+#761: Remove "bookmark" and "score" properties from metadata panel and autocomplete (Wladimir Leite)
+#768: Protection for StackOverflow from Tika in SignatureTask (Luis Nassif)
+Fixes:
+#708: Don't print Shareaza albums entries in new rows again if already in the library (Fábio Pfeifer)
+#718: Aborting IllegalArgumentException in ExportCSVTask.finish() with --continue/--restart and EN locale (Luis Nassif)
+#709: ClassCastException when re-extracting subitems from carved/sub containers when resuming processing (Luis Nassif)
+#719: NullPointerException caused by 2nd level containers if processed again with --continue (Luis Nassif)
+#721: Error exporting subitem: java.io.FileNotFoundException indexador\subitens\043 (Access is denied) when resuming processing (Luis Nassif)
+#783: Processing aborting due to MaxBytesLengthExceededException: bytes can be at most 32766 in length (Luis Nassif)
+#760: Highlight regex hits corresponding to substrings in TextViewer and HitsTab (Luis Nassif)
+#759: Report creation from UI with Google audio transcription enabled fails (Luis Nassif)
+#740: Legacy Imagemagick 6.x version does not work with IPED on Linux (Luis Nassif)
+#705: MPlayer consuming enormous ammount of memory on Linux (Wladimir Leite)
+#750: RegistryParser, OutlookPSTParser & LibPffPSTParser not flagging files with parsing errors (Luis Nassif)
+#717: Rare aborting NullPointerExceptions when resuming processing (Luis Nassif)
+
 08/18/2021: IPED-3.18.8
 News:
 #470: Change default plain text parser to support chars outside Latin1 charset (Luis Nassif)
