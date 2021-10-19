@@ -156,7 +156,7 @@ public class Util {
 
             StringBuilder sb = new StringBuilder();
             sb.append(IndexItem.ID_IN_SOURCE).append(item.getParentIdInDataSource());
-            sb.append(BasicProps.PATH).append(getParentPath(item.getPath()));
+            sb.append(BasicProps.PATH).append(getParentPath(item));
 
             id = DigestUtils.md5Hex(sb.toString());
             item.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, id);
@@ -164,16 +164,14 @@ public class Util {
         return id;
     }
 
-    private static String getParentPath(String path) {
-        int idx = path.lastIndexOf('/');
-        if (idx != -1) {
-            return path.substring(0, idx);
-        }
-        idx = path.lastIndexOf('\\');
-        if (idx != -1) {
-            return path.substring(0, idx);
-        }
-        return "";
+    public static String getParentPath(IItem item) {
+        String path = item.getPath();
+        int end = path.length() - item.getName().length() - 1;
+        if (end <= 0)
+            return "";
+        if (path.charAt(end) == '>' && path.indexOf(end - 1) == '>')
+            end--;
+        return path.substring(0, end);
     }
 
     public static void main(String[] args) {

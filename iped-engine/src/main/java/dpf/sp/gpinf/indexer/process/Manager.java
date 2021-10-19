@@ -193,6 +193,10 @@ public class Manager {
         return workers;
     }
 
+    public int getNumWorkers() {
+        return workers.length;
+    }
+
     public IndexWriter getIndexWriter() {
         return this.writer;
     }
