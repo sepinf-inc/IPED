@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -210,18 +209,54 @@ public class CaseData implements ICaseData {
      *            arquivo a ser adicionado
      * @throws InterruptedException
      */
+    @Override
     public void addItem(IItem item) throws InterruptedException {
-        computeGlobalId(item);
-        addItemToQueue(item, 0);
+        addItemToQueue(item, 0, false, true);
     }
 
+    @Override
+    public void addItemFirst(IItem item) throws InterruptedException {
+        addItemToQueue(item, 0, true, true);
+    }
+
+    @Override
+    public void addItemNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, 0, false, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void addItemFirstNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, 0, true, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
+        addItemToQueue(item, queuePriority, false, false);
+    }
+
+    private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
+            throws InterruptedException {
+
+        computeGlobalId(item);
+
         LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
-        while (queuePriority == 0 && queue.size() >= maxQueueSize) {
+        while (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
             Thread.sleep(1000);
         }
 
-        queue.put(item);
+        if (addFirst) {
+            queue.addFirst(item);
+        } else {
+            queue.addLast(item);
+        }
     }
 
     private void computeGlobalId(IItem item) {
