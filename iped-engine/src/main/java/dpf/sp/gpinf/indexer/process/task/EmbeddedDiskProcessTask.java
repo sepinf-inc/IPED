@@ -75,8 +75,18 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             File exportDir = new File(this.output, outputFolder);
             exportDir.mkdirs();
             imageFile = new File(exportDir, item.getId() + "." + item.getTypeExt());
-            try (InputStream is = item.getBufferedStream()) {
-                Files.copy(is, imageFile.toPath());
+            boolean alreadyExported = false;
+            if (imageFile.exists()) {
+                if (imageFile.length() != item.getLength()) {
+                    Files.delete(imageFile.toPath());
+                } else {
+                    alreadyExported = true;
+                }
+            }
+            if (!alreadyExported) {
+                try (InputStream is = item.getBufferedStream()) {
+                    Files.copy(is, imageFile.toPath());
+                }
             }
             exportedDisks.add(imageFile);
         }
