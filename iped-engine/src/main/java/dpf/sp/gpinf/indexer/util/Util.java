@@ -169,7 +169,7 @@ public class Util {
         int end = path.length() - item.getName().length() - 1;
         if (end <= 0)
             return "";
-        if (path.charAt(end) == '>' && path.indexOf(end - 1) == '>')
+        if (path.charAt(end) == '>' && path.charAt(end - 1) == '>')
             end--;
         return path.substring(0, end);
     }
