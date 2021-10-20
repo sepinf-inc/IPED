@@ -299,7 +299,6 @@ public class Item implements ISleuthKitItem {
         if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
             try {
                 if (file != null && file.exists() && isNotHashId(file.getName()) && !file.delete()) {
-                    // in some scenarios file.delete() works but Files.delete() throws ioexception
                     throw new IOException("Fail to delete file " + file.getAbsolutePath());
                 }
             } catch (IOException e) {
@@ -309,7 +308,10 @@ public class Item implements ISleuthKitItem {
     }
 
     private boolean isNotHashId(String id) {
-        return id == null || (id.length() != 32 && id.length() != 40 && id.length() != 64);
+        int idx = id.indexOf('.');
+        if (idx != -1)
+            id = id.substring(0, idx);
+        return id.length() != 32 && id.length() != 40 && id.length() != 64;
     }
 
     /**

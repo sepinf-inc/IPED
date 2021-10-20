@@ -399,7 +399,7 @@ public class ExportFileTask extends AbstractTask {
 
                 } else {
                     changeTargetFile(evidence, hashFile);
-                    if (!file.delete()) {
+                    if (!file.equals(hashFile) && !file.delete()) {
                         LOGGER.warn("{} Error Deleting {}", Thread.currentThread().getName(), file.getAbsolutePath()); //$NON-NLS-1$
                     }
                 }
