@@ -1349,25 +1349,30 @@ public class MetadataPanel extends JPanel
             return null;
         }
 
-        StringBuilder str = new StringBuilder();
-        str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (String term : terms) {
-            str.append("\"*" + removeIllegalChars(term).trim() + "*\" ");
-        }
-        str.append(")"); //$NON-NLS-1$
-
-        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(IndexItem.CONTENT,
+        QueryBuilder stdParser = new QueryBuilder(App.get().appCase);
+        ComplexPhraseQueryParser complexPhraseParser = new ComplexPhraseQueryParser(IndexItem.CONTENT,
                 App.get().appCase.getAnalyzer());
-        cpqp.setAllowLeadingWildcard(true);
+        stdParser.setAllowLeadingWildcard(true);
+        complexPhraseParser.setAllowLeadingWildcard(true);
 
-        try {
-            return cpqp.parse(str.toString());
+        Builder builder = new BooleanQuery.Builder();
+        for (String term : terms) {
+            try {
+                String queryStr = "*" + removeIllegalChars(term).trim() + "*";
+                Query query;
+                if (queryStr.contains(" ")) {
+                    query = complexPhraseParser.parse("\"" + queryStr + "\"");
+                } else {
+                    query = stdParser.getQuery(queryStr);
+                }
+                builder.add(query, Occur.SHOULD);
 
-        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        return null;
+        return builder.build();
     }
 
     private String removeIllegalChars(String s) {
