@@ -193,6 +193,10 @@ public class Manager {
         return workers;
     }
 
+    public int getNumWorkers() {
+        return workers.length;
+    }
+
     public IndexWriter getIndexWriter() {
         return this.writer;
     }
@@ -320,7 +324,7 @@ public class Manager {
         }
     }
 
-    public void initSleuthkitServers(final String dbPath) throws InterruptedException {
+    public synchronized void initSleuthkitServers(final String dbPath) throws InterruptedException {
         if (!initSleuthkitServers.getAndSet(true)) {
             SleuthkitClient.initSleuthkitServers(dbPath);
         }

@@ -41,6 +41,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.apache.tika.io.IOUtils;
@@ -73,6 +75,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.SplitLargeBinaryConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -87,6 +90,7 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import iped3.util.MediaTypes;
 
 public class SleuthkitReader extends DataSourceReader {
 
@@ -110,6 +114,13 @@ public class SleuthkitReader extends DataSourceReader {
     private static volatile Future<Void> addImageFuture;
     private static volatile Exception exception = null;
 
+    // this guarantees just one producer populates the DB at a time (e.g. when
+    // decoding embedded disks recursively)
+    private static Semaphore decodeImageSemaphore = new Semaphore(1);
+
+    // count number of embedded disks being decoded at the same time
+    private static AtomicInteger embeddedDisksBeingDecoded = new AtomicInteger();
+
     private CmdLineArgs args;
     private Long firstId, lastId;
 
@@ -121,19 +132,31 @@ public class SleuthkitReader extends DataSourceReader {
 
     private List<Integer> inheritedParents;
     private String inheritedPath;
+    private IItem parent;
 
     private AddImageProcess addImage;
     private String deviceName;
     private boolean isISO9660 = false;
     private boolean fastmode = false;
+    private boolean embeddedDisk = false;
+    private int itemCount = 0;
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
 
+    public SleuthkitReader(boolean embeddedDisk, ICaseData caseData, File output) {
+        this(caseData, output, false);
+        this.embeddedDisk = embeddedDisk;
+    }
+
     public SleuthkitReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
+    }
+
+    public int getItemCount() {
+        return itemCount;
     }
 
     public boolean isSupported(File file) {
@@ -155,6 +178,25 @@ public class SleuthkitReader extends DataSourceReader {
 
     public static boolean isPhysicalDrive(File file) {
         return Util.isPhysicalDrive(file);
+    }
+
+    private MediaType getMediaType(String ext) {
+        if (isISO9660) {
+            return MediaTypes.ISO_IMAGE;
+        } else {
+            switch (ext) {
+                case "e01":
+                    return MediaTypes.E01_IMAGE;
+                case "vmdk":
+                    return MediaTypes.VMDK;
+                case "vhd":
+                    return MediaTypes.VHD;
+                case "vhdx":
+                    return MediaTypes.VHDX;
+                default:
+                    return MediaTypes.RAW_IMAGE;
+            }
+        }
     }
 
     private boolean isISO9660(File file) {
@@ -251,6 +293,10 @@ public class SleuthkitReader extends DataSourceReader {
 
         checkTSKVersion();
 
+        if (embeddedDisk) {
+            embeddedDisksBeingDecoded.incrementAndGet();
+        }
+
         args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
         if (args.getProfile() != null) {
             if (args.getProfile().equals("fastmode")) //$NON-NLS-1$ //$NON-NLS-2$
@@ -281,25 +327,35 @@ public class SleuthkitReader extends DataSourceReader {
             inheritedParents = Collections.emptyList();
             inheritedPath = "";
         } else {
+            this.parent = parent;
+            dataSource = parent.getDataSource();
             inheritedParents = new ArrayList<>(parent.getParentIds());
             inheritedParents.add(parent.getId());
             inheritedPath = parent.getPath();
+            if (embeddedDisk) {
+                deviceName = parent.getName();
+                inheritedPath = Util.getParentPath(parent);
+            }
         }
 
         String dbPath = output.getParent() + File.separator + DB_NAME;
 
-        if (listOnly) {
+        if (listOnly || embeddedDisk) {
 
             if (sleuthCase == null) {
-                if (new File(dbPath).exists()) {
-                    sleuthCase = SleuthkitCase.openCase(dbPath);
+                synchronized (this.getClass()) {
+                    if (sleuthCase == null) {
+                        if (new File(dbPath).exists()) {
+                            sleuthCase = SleuthkitCase.openCase(dbPath);
 
-                } else {
-                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                            Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
-                    LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
-                    sleuthCase = SleuthkitCase.newCase(dbPath);
-                    LOGGER.info("{} database created", dbPath); //$NON-NLS-1$
+                        } else {
+                            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
+                                    Messages.getString("SleuthkitReader.Creating") + dbPath); //$NON-NLS-1$
+                            LOGGER.info("Creating database {}", dbPath); //$NON-NLS-1$
+                            sleuthCase = SleuthkitCase.newCase(dbPath);
+                            LOGGER.info("{} database created", dbPath); //$NON-NLS-1$
+                        }
+                    }
                 }
             }
 
@@ -323,6 +379,10 @@ public class SleuthkitReader extends DataSourceReader {
                     idRangeMap.notify();
                 }
             } else {
+
+                // get permit before any DB changes and getting last obj ID
+                decodeImageSemaphore.acquire();
+
                 if (args.isContinue()) {
                     deleteDatasource(image);
                 }
@@ -348,7 +408,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         java.util.logging.Logger.getLogger("org.sleuthkit").setLevel(java.util.logging.Level.SEVERE); //$NON-NLS-1$
 
-        if (!(listOnly && fastmode)) {
+        if (!(listOnly && fastmode) || embeddedDisk) {
             try {
                 readItensAdded(image);
 
@@ -362,6 +422,10 @@ public class SleuthkitReader extends DataSourceReader {
 
         } else if (addImageFuture != null) {
             addImageFuture.get();
+        }
+
+        if (embeddedDisk) {
+            embeddedDisksBeingDecoded.decrementAndGet();
         }
 
     }
@@ -499,6 +563,9 @@ public class SleuthkitReader extends DataSourceReader {
         } catch (TskCoreException e) {
             exception = e;
         }
+
+        // release permit after DB changes and getting last obj ID
+        decodeImageSemaphore.release();
 
         if (lastId != null) {
             saveDecodedRangeId(image, firstId, lastId);
@@ -766,7 +833,7 @@ public class SleuthkitReader extends DataSourceReader {
         return addItem(absFile, null, false);
     }
 
-    private IItem addItem(AbstractFile absFile, IItem evidence, boolean unalloc) throws Exception {
+    private IItem addItem(AbstractFile absFile, Item evidence, boolean unalloc) throws Exception {
 
         if (absFile.isDir() && (absFile.getName().equals(".") || absFile.getName().equals(".."))) { //$NON-NLS-1$ //$NON-NLS-2$
             return null;
@@ -793,7 +860,8 @@ public class SleuthkitReader extends DataSourceReader {
             evidence.setLength(absFile.getSize());
         }
 
-        if (listOnly || fastmode) {
+        if (listOnly || fastmode || embeddedDisk) {
+            itemCount++;
             caseData.incDiscoveredEvidences(1);
             caseData.incDiscoveredVolume(evidence.getLength());
             if (listOnly)
@@ -880,7 +948,11 @@ public class SleuthkitReader extends DataSourceReader {
             evidence.setExtraAttribute(BasicProps.FILESYSTEM_ID, Long.toString(fileSystemId));
         }
 
-        caseData.addItem(evidence);
+        if (embeddedDisk) {
+            setSubitemProperties(evidence);
+        }
+
+        addToProcessingQueue(caseData, evidence);
 
         return evidence;
     }
@@ -898,7 +970,11 @@ public class SleuthkitReader extends DataSourceReader {
 
     private IItem addEvidenceFile(Content content) throws Exception {
 
-        if (listOnly || fastmode) {
+        if (embeddedDisk && content instanceof Image) {
+            return parent;
+        }
+        if (listOnly || fastmode || embeddedDisk) {
+            itemCount++;
             caseData.incDiscoveredEvidences(1);
             if (listOnly)
                 return null;
@@ -950,11 +1026,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (content instanceof Image) {
             evidence.setRoot(true);
-            if (isISO9660) {
-                evidence.setMediaType(MediaType.application("x-iso9660-image")); //$NON-NLS-1$
-            } else {
-                evidence.setMediaType(MediaType.application("x-disk-image")); //$NON-NLS-1$
-            }
+            evidence.setMediaType(getMediaType(evidence.getExt()));
         } else {
             evidence.setIsDir(true);
         }
@@ -978,9 +1050,37 @@ public class SleuthkitReader extends DataSourceReader {
         }
         evidence.addParentIds(inheritedParents);
 
-        caseData.addItem(evidence);
+        if (embeddedDisk) {
+            setSubitemProperties(evidence);
+        }
+
+        addToProcessingQueue(caseData, evidence);
 
         return evidence;
+    }
+
+    private void setSubitemProperties(Item item) {
+        item.setSubItem(true);
+        item.setSubitemId(itemCount);
+        Util.generatePersistentId((String) parent.getExtraAttribute(IndexItem.PERSISTENT_ID), item);
+        item.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(parent));
+    }
+
+    private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {
+        if (embeddedDisk) {
+            // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
+            caseData.addItemFirstNonBlocking(item);
+        } else {
+            if (embeddedDisksBeingDecoded.get() < Manager.getInstance().getNumWorkers()) {
+                // this can block if queue is full, but we have at least 1 worker running
+                caseData.addItem(item);
+            } else {
+                // avoid deadlock if all workers are trying to decode virtual disks and the main
+                // evidence is still being decoded
+                caseData.addItemNonBlocking(item);
+            }
+
+        }
     }
 
     private boolean isFATFile(Content content) {
