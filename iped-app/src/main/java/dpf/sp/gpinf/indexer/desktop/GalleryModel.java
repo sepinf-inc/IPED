@@ -98,6 +98,10 @@ public class GalleryModel extends AbstractTableModel {
         return ImageThumbTask.isImageType(MediaType.parse(mediaType));
     }
 
+    private boolean isAnimationImage(Document doc) {
+        return doc.get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+    }
+
     private boolean isSupportedVideo(String mediaType) {
         return VideoThumbTask.isVideoType(MediaType.parse(mediaType));
     }
@@ -177,7 +181,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && (!isSupportedVideo(mediaType) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((isSupportedImage(mediaType) && !isAnimationImage(doc)) || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));
@@ -188,7 +192,7 @@ public class GalleryModel extends AbstractTableModel {
 
                     String hash = doc.get(IndexItem.HASH);
                     if (image == null && hash != null && !hash.isEmpty()) {
-                        image = getViewImage(docId, hash, !isSupportedImage(mediaType));
+                        image = getViewImage(docId, hash, isSupportedVideo(mediaType) || isAnimationImage(doc));
                         int resizeTolerance = 4;
                         if (image != null) {
                             if (image.getWidth() < thumbSize - resizeTolerance
@@ -301,7 +305,7 @@ public class GalleryModel extends AbstractTableModel {
                 try {
                     Document doc = App.get().appCase.getSearcher().doc(docId);
                     String mediaType = doc.get(IndexItem.CONTENTTYPE);
-                    if (isSupportedVideo(mediaType)) {
+                    if (isSupportedVideo(mediaType) || isAnimationImage(doc)) {
                         it.remove();
                     }
                 } catch (Exception e) {

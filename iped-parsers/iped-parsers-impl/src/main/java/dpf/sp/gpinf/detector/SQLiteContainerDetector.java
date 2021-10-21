@@ -131,7 +131,7 @@ public class SQLiteContainerDetector implements Detector {
                 tableNames.contains("Calls")) //$NON-NLS-1$
             return SkypeParser.SKYPE_MIME;
 
-        if (tableNames.contains("chat_list") && //$NON-NLS-1$
+        if ((tableNames.contains("chat_list") || tableNames.contains("chat")) && //$NON-NLS-1$
                 tableNames.contains("messages") && //$NON-NLS-1$
                 tableNames.contains("group_participants") && //$NON-NLS-1$
                 tableNames.contains("media_refs") && //$NON-NLS-1$

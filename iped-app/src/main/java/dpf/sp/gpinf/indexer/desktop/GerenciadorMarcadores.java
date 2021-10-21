@@ -63,6 +63,7 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
 import iped3.util.BasicProps;
@@ -138,9 +139,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     public static void updateCounters() {
         instance.highlighted.setText(Messages.getString("BookmarksManager.Highlighted") + " (" //$NON-NLS-1$ //$NON-NLS-2$
-                + App.get().resultsTable.getSelectedRowCount() + ")"); //$NON-NLS-1$
+                + LocalizedFormat.format(App.get().resultsTable.getSelectedRowCount()) + ")"); //$NON-NLS-1$
         instance.checked.setText(Messages.getString("BookmarksManager.Checked") + " (" //$NON-NLS-1$ //$NON-NLS-2$
-                + App.get().appCase.getMultiMarcadores().getTotalSelected() + ")"); //$NON-NLS-1$
+                + LocalizedFormat.format(App.get().appCase.getMultiMarcadores().getTotalSelected()) + ")"); //$NON-NLS-1$
     }
 
     private GerenciadorMarcadores() {

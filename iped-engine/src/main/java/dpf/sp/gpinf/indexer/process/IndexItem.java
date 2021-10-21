@@ -331,6 +331,13 @@ public class IndexItem extends BasicProps {
         doc.add(nameField);
         doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
+        value = evidence.getExt();
+        if (value == null) {
+            value = "";
+        }
+        doc.add(new Field(EXT, value, storedTokenizedNoNormsField));
+        doc.add(new SortedDocValuesField(EXT, new BytesRef(normalize(value))));
+
         IEvidenceFileType fileType = evidence.getType();
         if (fileType != null) {
             value = fileType.getLongDescr();

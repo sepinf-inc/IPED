@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import iped3.util.ExtraProperties;
 
 /**
  * Abstract class that handles iterating through tables within a database.
@@ -85,6 +86,7 @@ abstract class AbstractDBParser extends AbstractParser {
                 tableM.set(Database.TABLE_NAME, reader.getTableName());
                 tableM.set(Database.COLUMN_COUNT, Integer.toString(trg.getCols()));
                 tableM.set(Database.ROW_COUNT, Integer.toString(trg.getRows()));
+                tableM.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                 extractor.parseEmbedded(is, handler, tableM, false);
             }

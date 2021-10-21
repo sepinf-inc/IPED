@@ -327,6 +327,17 @@ public class MetadataPanel extends JPanel
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance();
             StringBuilder sb = new StringBuilder();
+            sb.append(getVal());
+            sb.append(" ("); //$NON-NLS-1$
+            sb.append(nf.format(count));
+            sb.append(')');            
+            return sb.toString();
+        }
+        
+        @Override
+        public String getVal() {
+            StringBuilder sb = new StringBuilder();
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
             sb.append(nf.format(start));
             if (start != end && (!Double.isNaN(start) || !Double.isNaN(end))) {
                 sb.append(' ');
@@ -334,9 +345,6 @@ public class MetadataPanel extends JPanel
                 sb.append(' ');
                 sb.append(nf.format(end));
             }
-            sb.append(" ("); //$NON-NLS-1$
-            sb.append(nf.format(count));
-            sb.append(')');            
             return sb.toString();
         }
     }
@@ -360,6 +368,12 @@ public class MetadataPanel extends JPanel
             return sb.toString();
         }
 
+        @Override
+        public String getVal() {
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
+            return nf.format(value);
+        }
+        
         public int compareTo(SingleValueCount o) {
             return Double.compare(value, o.value);
         }

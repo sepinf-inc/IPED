@@ -18,6 +18,7 @@
  */
 package dpf.sp.gpinf.indexer.parsers;
 
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
@@ -140,14 +141,14 @@ public class RARParser extends AbstractParser {
             Metadata entrydata = new Metadata();
             if (header.isDirectory())
                 entrydata.set(ExtraProperties.EMBEDDED_FOLDER, "true"); //$NON-NLS-1$
-
+            
             entrydata.set(Metadata.RESOURCE_NAME_KEY, header.getFileNameString().replace("\\", "/")); //$NON-NLS-1$ //$NON-NLS-2$
             entrydata.set(TikaCoreProperties.CREATED, header.getCTime());
             entrydata.set(TikaCoreProperties.MODIFIED, header.getMTime());
             entrydata.set(ExtraProperties.ACCESSED, header.getATime());
             entrydata.set(ExtraProperties.ITEM_VIRTUAL_ID, header.getFileNameString());
             entrydata.set(ExtraProperties.PARENT_VIRTUAL_ID, parent);
-
+            
             if (extractor.shouldParseEmbedded(entrydata))
                 extractor.parseEmbedded(subFile, handler, entrydata, true);
 

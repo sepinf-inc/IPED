@@ -1,0 +1,21 @@
+BEGIN:VCARD
+VERSION:3.0
+FN:Taxi Lago Norte
+N:;Taxi Lago Norte;;;
+TEL;TYPE=CELL:021 (61)3468-2000
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Sushi Loko Flamingo
+N:Flamingo;Sushi;Loko;;
+TEL;TYPE=CELL:021 (61)3011-7666
+CATEGORIES:myContacts
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+FN:Smart Assistência Técnica
+N:Técnica;Smart;Assistência;;
+TEL;TYPE=CELL:99592-3794
+CATEGORIES:myContacts
+END:VCARD

@@ -584,6 +584,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 subItem.setDeleted(true);
             }
 
+            if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
+                subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                metadata.remove(ExtraProperties.DECODED_DATA);
+            }
+
             // causa problema de subitens corrompidos de zips carveados serem apagados,
             // mesmo sendo referenciados por outros subitens
             // subItem.setCarved(parent.isCarved());

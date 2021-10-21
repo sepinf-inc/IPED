@@ -138,7 +138,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public String getColumnName(int col) {
         if (col == 0) {
-            return String.valueOf(App.get().ipedResult.getLength());
+            return LocalizedFormat.format(App.get().ipedResult.getLength());
         } else {
             return columnNames[col];
         }
@@ -210,7 +210,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     public Object getValueAt(int row, int col) {
 
         if (col == 0)
-            return String.valueOf(App.get().resultsTable.convertRowIndexToView(row) + 1);
+            return LocalizedFormat.format(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
             return app.appCase.getMultiMarcadores().isSelected(app.ipedResult.getItem(row));

@@ -134,7 +134,14 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        value = evidence.getHash();
+        value = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
+
+        value = (String) evidence.getExtraAttribute(HashTask.HASH.SHA1.toString());
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }

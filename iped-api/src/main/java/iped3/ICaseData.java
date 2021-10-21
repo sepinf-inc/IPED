@@ -31,6 +31,12 @@ public interface ICaseData extends Serializable {
      */
     void addItem(IItem item) throws InterruptedException;
 
+    void addItemFirst(IItem item) throws InterruptedException;
+
+    void addItemNonBlocking(IItem item);
+
+    void addItemFirstNonBlocking(IItem item);
+
     void addItemToQueue(IItem item, int queuePriority) throws InterruptedException;
 
     /**

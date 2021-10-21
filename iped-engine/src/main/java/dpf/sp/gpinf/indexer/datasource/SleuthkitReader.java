@@ -263,11 +263,15 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         int sectorSize = args.getBlocksize();
+<<<<<<< HEAD
 
         String password = getEvidencePassword(image);
         if (password != null) {
             setImagePassword(output, image.getName(), password);
         }
+=======
+        String password = getEvidencePassword(image);
+>>>>>>> refs/heads/master
 
         firstId = null;
         lastId = null;

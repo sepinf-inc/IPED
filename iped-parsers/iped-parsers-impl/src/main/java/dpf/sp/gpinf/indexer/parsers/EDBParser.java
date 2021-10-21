@@ -34,6 +34,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
+import iped3.util.ExtraProperties;
 
 public class EDBParser extends AbstractParser {
 
@@ -117,6 +118,7 @@ public class EDBParser extends AbstractParser {
 
                     Metadata tableMetadata = new Metadata();
                     tableMetadata.set(Metadata.RESOURCE_NAME_KEY, TABLE_PREFIX + "-" + table.getName()); //$NON-NLS-1$
+                    tableMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
                     if (metadata.get(Metadata.CONTENT_TYPE).endsWith("x-webcache")) //$NON-NLS-1$
                         tableMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-webcache-table"); //$NON-NLS-1$
