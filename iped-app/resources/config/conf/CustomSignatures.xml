@@ -623,12 +623,16 @@
         </magic>
     </mime-type>
   	
-    <mime-type type="application/x-disk-image">
-        <acronym>ISO</acronym>
+    <mime-type type="application/x-e01-image">
         <_comment>E01 disk images</_comment>
         <magic priority="50">
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
+        <glob pattern="*.e01"/>
+    </mime-type>
+        
+    <mime-type type="application/x-raw-image">
         <_comment>RAW disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
@@ -636,6 +640,8 @@
                 <match value="0x5A5A" type="string" offset="444"/>
             </match>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
+        <glob pattern="*.dd"/>
     </mime-type>
     
     <mime-type type="application/x-wim-image">
