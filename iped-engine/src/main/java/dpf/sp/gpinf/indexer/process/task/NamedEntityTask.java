@@ -27,6 +27,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import macee.core.Configurable;
@@ -168,8 +169,11 @@ public class NamedEntityTask extends AbstractTask {
                 }
 
                 metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
-                // try to solve #329
-                metadata.remove(null);
+
+                // debugging #329 & #794
+                if (metadata instanceof SyncMetadata) {
+                    ((SyncMetadata) metadata).setReadOnly(true);
+                }
 
                 try (InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))) {
 
@@ -178,6 +182,11 @@ public class NamedEntityTask extends AbstractTask {
                 } finally {
                     metadata.set(Metadata.CONTENT_TYPE, originalContentType);
                     cleanHugeResults(metadata);
+
+                    // debugging #329 & #794
+                    if (metadata instanceof SyncMetadata) {
+                        ((SyncMetadata) metadata).setReadOnly(false);
+                    }
                 }
             }
         }
