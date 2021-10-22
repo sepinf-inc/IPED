@@ -511,7 +511,7 @@
                                 <artifactItem>
                                     <groupId>libre-office</groupId>
                                     <artifactId>nativeview-dll</artifactId>
-                                    <version>1.0.0</version>
+                                    <version>1.0.1</version>
                                     <type>zip</type>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${lib.dir}</outputDirectory>
