@@ -24,9 +24,11 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
+import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 
@@ -190,9 +192,14 @@ public class NamedEntityTask extends AbstractTask {
                         textFrag = textFrag.substring(0, k);
                 }
 
+                // debugging #329 & #794
+                if (metadata instanceof SyncMetadata) {
+                    ((SyncMetadata) metadata).setReadOnly(true);
+                }
+
+                metadata = MetadataUtil.clone(metadata);
+
                 metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
-                // try to solve #329
-                metadata.remove(null);
 
                 try (InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))) {
 
@@ -201,6 +208,19 @@ public class NamedEntityTask extends AbstractTask {
                 } finally {
                     metadata.set(Metadata.CONTENT_TYPE, originalContentType);
                     cleanHugeResults(metadata);
+
+                    // debugging #329 & #794
+                    if (evidence.getMetadata() instanceof SyncMetadata) {
+                        ((SyncMetadata) evidence.getMetadata()).setReadOnly(false);
+                    }
+
+                    for (String key : metadata.names()) {
+                        if (key.startsWith(NER_PREFIX)) {
+                            for (String val : metadata.getValues(key)) {
+                                evidence.getMetadata().add(key, val);
+                            }
+                        }
+                    }
                 }
             }
         }
