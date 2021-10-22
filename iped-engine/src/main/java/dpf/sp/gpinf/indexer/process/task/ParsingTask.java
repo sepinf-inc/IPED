@@ -85,6 +85,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
+import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
@@ -532,6 +533,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // root has children
             evidence.setHasChildren(true);
 
+            // protection for future concurrent access, see #794
+            metadata = new SyncMetadata(metadata);
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
