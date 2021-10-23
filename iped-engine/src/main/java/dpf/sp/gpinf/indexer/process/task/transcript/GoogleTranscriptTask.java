@@ -96,10 +96,10 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
 
     @Override
     public void finish() throws Exception {
+        super.finish();
         if (!transcriptConfig.isEnabled()) {
             return;
         }
-        super.finish();
         speechClient.close();
     }
 
