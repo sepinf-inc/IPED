@@ -6,59 +6,118 @@ import java.nio.charset.StandardCharsets;
 
 import javax.sound.sampled.AudioSystem;
 
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 import org.vosk.Model;
 import org.vosk.Recognizer;
 
 import dpf.sp.gpinf.indexer.Configuration;
+import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 
 public class VoskTranscriptTask extends AbstractTranscriptTask {
 
     private static Model model;
 
+    private Recognizer recognizer;
+
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
-        
-        if (model == null) {
-            synchronized (this.getClass()) {
-                if (model == null) {
-                    model = new Model(
-                            new File(Configuration.getInstance().appRoot, "models/vosk-model").getAbsolutePath());
-                }
-            }
+    public void init(ConfigurationManager configurationManager) throws Exception {
+
+        super.init(configurationManager);
+
+        if (!this.isEnabled()) {
+            return;
         }
 
+        if (model == null) {
+            model = new Model(new File(Configuration.getInstance().appRoot, "models/vosk").getAbsolutePath());
+        }
+
+        recognizer = new Recognizer(model, 16000);
+        recognizer.setWords(true);
+
+    }
+
+    @Override
+    public void finish() throws Exception {
+        super.finish();
+        if (this.isEnabled()) {
+            recognizer.close();
+            if (model != null) {
+                model.close();
+                model = null;
+            }
+        }
+    }
+
+    @Override
+    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+
         TextAndScore textAndScore = null;
+        recognizer.reset();
 
-        try (InputStream ais = AudioSystem.getAudioInputStream(tmpFile);
-                Recognizer recognizer = new Recognizer(model, 16000)) {
+        try (InputStream ais = AudioSystem.getAudioInputStream(tmpFile)) {
 
-            StringBuilder text = new StringBuilder();
+            StringBuilder totalText = new StringBuilder();
+            double totalScore = 0;
+            int words = 0;
 
             int nbytes;
-            byte[] b = new byte[4096];
+            byte[] b = new byte[1 << 14];
             while ((nbytes = ais.read(b)) >= 0) {
                 if (recognizer.acceptWaveForm(b, nbytes)) {
-                    text.append(decodeFromJson(recognizer.getResult())).append(" ");
+                    TextScoreWords result = decodeFromJson(recognizer.getResult());
+                    if (result != null) {
+                        totalText.append(result.text).append(" ");
+                        totalScore += result.score;
+                        words += result.words;
+                    }
                 } else {
                     // System.out.println(recognizer.getPartialResult());
                 }
             }
 
-            text.append(decodeFromJson(recognizer.getFinalResult()));
+            TextScoreWords result = decodeFromJson(recognizer.getFinalResult());
+            if (result != null) {
+                totalText.append(result.text);
+                totalScore += result.score;
+                words += result.words;
+            }
 
             textAndScore = new TextAndScore();
-            textAndScore.text = text.toString();
-            textAndScore.score = Double.NaN;
+            textAndScore.text = totalText.toString().trim();
+            textAndScore.score = totalScore / words;
         }
 
         return textAndScore;
     }
 
-    private String decodeFromJson(String text) {
+    private TextScoreWords decodeFromJson(String text) throws ParseException {
         String str = new String(text.getBytes(), StandardCharsets.UTF_8);
-        int idx = str.indexOf(':');
-        idx = str.indexOf('\"', idx + 1);
-        return str.substring(idx + 1, str.lastIndexOf("\""));
+        JSONParser parser = new JSONParser();
+        JSONObject root = (JSONObject) parser.parse(str);
+        JSONArray array = (JSONArray) root.get("result");
+        if (array == null) {
+            return null;
+        }
+
+        double score = 0;
+        for (int i = 0; i < array.size(); i++) {
+            JSONObject obj = (JSONObject) array.get(i);
+            score += (Double) obj.get("conf");
+        }
+
+        TextScoreWords result = new TextScoreWords();
+        result.text = (String) root.get("text");
+        result.score = score;
+        result.words = array.size();
+        return result;
+    }
+
+    private static class TextScoreWords extends TextAndScore {
+        int words = 0;
     }
 
 }
