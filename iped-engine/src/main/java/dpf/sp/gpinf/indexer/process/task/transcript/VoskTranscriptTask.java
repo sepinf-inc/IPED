@@ -65,12 +65,12 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
             int words = 0;
 
             int nbytes;
-            byte[] b = new byte[1 << 14];
-            while ((nbytes = ais.read(b)) >= 0) {
-                if (recognizer.acceptWaveForm(b, nbytes)) {
+            byte[] buf = new byte[1 << 20];
+            while ((nbytes = ais.read(buf)) >= 0) {
+                if (recognizer.acceptWaveForm(buf, nbytes)) {
                     TextScoreWords result = decodeFromJson(recognizer.getResult());
                     if (result != null) {
-                        totalText.append(result.text).append(" ");
+                        totalText.append(result.text);
                         totalScore += result.score;
                         words += result.words;
                     }
@@ -86,33 +86,43 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
                 words += result.words;
             }
 
-            textAndScore = new TextAndScore();
-            textAndScore.text = totalText.toString().trim();
-            textAndScore.score = totalScore / words;
+            if (words > 0) {
+                textAndScore = new TextAndScore();
+                textAndScore.text = totalText.toString().trim();
+                textAndScore.score = totalScore / words;
+            }
         }
 
         return textAndScore;
     }
 
-    private TextScoreWords decodeFromJson(String text) throws ParseException {
-        String str = new String(text.getBytes(), StandardCharsets.UTF_8);
+    private TextScoreWords decodeFromJson(String json) throws ParseException {
+        String str = new String(json.getBytes(), StandardCharsets.UTF_8);
         JSONParser parser = new JSONParser();
         JSONObject root = (JSONObject) parser.parse(str);
         JSONArray array = (JSONArray) root.get("result");
-        if (array == null) {
+        if (array == null || array.size() == 0) {
             return null;
         }
 
-        double score = 0;
-        for (int i = 0; i < array.size(); i++) {
+        double totScore = 0;
+        int words = array.size();
+        StringBuilder text = new StringBuilder();
+        for (int i = 0; i < words; i++) {
             JSONObject obj = (JSONObject) array.get(i);
-            score += (Double) obj.get("conf");
+            double score = (Double) obj.get("conf");
+            if (score >= transcriptConfig.getMinWordScore()) {
+                text.append(obj.get("word")).append(" ");
+            } else {
+                text.append("* ");
+            }
+            totScore += score;
         }
 
         TextScoreWords result = new TextScoreWords();
-        result.text = (String) root.get("text");
-        result.score = score;
-        result.words = array.size();
+        result.text = text.toString();
+        result.score = totScore;
+        result.words = words;
         return result;
     }
 

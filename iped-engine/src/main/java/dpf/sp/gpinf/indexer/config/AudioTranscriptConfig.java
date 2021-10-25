@@ -24,6 +24,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private static final String CONVERT_CMD_KEY = "convertCommand";
     private static final String REQUEST_INTERVAL_KEY = "requestIntervalMillis";
     private static final String MAX_REQUESTS_KEY = "maxConcurrentRequests";
+    private static final String MIN_WORD_SCORE = "minWordScore";
 
     private static final String LANG_AUTO_VAL = "auto";
 
@@ -35,6 +36,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String convertCmd;
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
+    private float minWordScore = 0.8f;
 
     public String getServiceRegion() {
         return serviceRegion;
@@ -66,6 +68,10 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
 
     public String getConvertCmd() {
         return convertCmd;
+    }
+
+    public float getMinWordScore() {
+        return minWordScore;
     }
 
     @Override
@@ -101,6 +107,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
         timeoutPerSec = Integer.valueOf(properties.getProperty(TIMEOUT_KEY).trim());
         requestIntervalMillis = Integer.valueOf(properties.getProperty(REQUEST_INTERVAL_KEY).trim());
         maxConcurrentRequests = Integer.valueOf(properties.getProperty(MAX_REQUESTS_KEY).trim());
+        minWordScore = Float.valueOf(properties.getProperty(MIN_WORD_SCORE).trim());
 
     }
 
