@@ -501,6 +501,44 @@
                         </configuration>
                     </execution>
                     <execution>
+                        <id>unpack-vosk-model-en</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>vosk</groupId>
+                                    <artifactId>vosk-model-small-en-us</artifactId>
+                                    <version>0.15</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models/vosk</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>unpack-vosk-model-pt</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>unpack</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>vosk</groupId>
+                                    <artifactId>vosk-model-small-pt</artifactId>
+                                    <version>0.3</version>
+                                    <type>zip</type>
+                                    <overWrite>false</overWrite>
+                                    <outputDirectory>${release.dir}/models/vosk</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                    <execution>
                         <id>unpack-nativeview</id>
                         <phase>package</phase>
                         <goals>
