@@ -36,7 +36,7 @@ public class AudioTranscriptConfig extends AbstractTaskPropertiesConfig {
     private String convertCmd;
     private int requestIntervalMillis = 0;
     private int maxConcurrentRequests;
-    private float minWordScore = 0.8f;
+    private float minWordScore = 0.7f;
 
     public String getServiceRegion() {
         return serviceRegion;

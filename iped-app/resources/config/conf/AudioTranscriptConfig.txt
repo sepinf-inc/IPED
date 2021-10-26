@@ -16,7 +16,7 @@ implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.VoskTranscrip
 #implementationClass = dpf.sp.gpinf.indexer.process.task.transcript.GoogleTranscriptTask
 
 # Minimum word score to include the word in transcription result. Applies just to Vosk implementation.
-minWordScore = 0.8
+minWordScore = 0.7
 
 # Specific for Microsoft service. Replace with your own subscription region identifier from here: https://aka.ms/speech/sdkregion
 serviceRegion = brazilsouth
