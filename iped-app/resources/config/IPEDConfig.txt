@@ -86,8 +86,11 @@ enableSplitLargeBinary = true
 # Indexes files contents. If disabled, indexes only the properties of files.
 indexFileContents = true
 
-# Enable audio transcription. Default implementation uses Microsoft Azure Service. You can change to Google.
-# Configure it in conf/AudioTranscriptConfig.txt and use cmd line option -XazureSubscriptionKey=KEY
+# Enable audio transcription.
+# Default implementation uses VOSK transcription [EXPERIMENTAL] on local CPU (slow and medium quality).
+# We include Vosk portable models for 'en' and 'pt-BR', the lang model is taken from 'locale' in LocalConfig.txt
+# You can change it from Vosk to Microsoft Azure or Google Cloud services (faster and better quality).
+# Configure it in conf/AudioTranscriptConfig.txt
 enableAudioTranscription = false
 
 # Enables carving. "addUnallocated" must be enabled to unallocated area be searched.

@@ -127,7 +127,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         }
     }
 
-    protected class TextAndScore {
+    protected static class TextAndScore {
         String text;
         double score;
     }

@@ -20,9 +20,19 @@
 	      <name>Microsoft Cognitive Services Speech Maven Repository</name>
 	      <url>https://csspeechstorage.blob.core.windows.net/maven/</url>
 	    </repository>
+	    <repository>
+	      <id>maven-vosk</id>
+	      <name>Alphaceph Vosk Java Maven Repo</name>
+	      <url>https://alphacephei.com/maven/</url>
+	    </repository>
     </repositories>
     
     <dependencies>
+        <dependency>
+            <groupId>com.alphacephei</groupId>
+            <artifactId>vosk</artifactId>
+            <version>0.3.32</version>
+        </dependency>
    	    <dependency>
             <groupId>com.microsoft.cognitiveservices.speech</groupId>
             <artifactId>client-sdk</artifactId>
