@@ -44,6 +44,7 @@ import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
 import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
+import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IEvidenceFileType;
@@ -1309,13 +1310,16 @@ public class Item implements ISleuthKitItem {
 
     public Metadata getMetadata() {
         if (metadata == null) {
-            metadata = new Metadata();
+            metadata = new SyncMetadata();
         }
         return metadata;
     }
 
     public void setMetadata(Metadata metadata) {
-        this.metadata = metadata;
+        if (metadata instanceof SyncMetadata)
+            this.metadata = metadata;
+        else
+            throw new IllegalArgumentException("Just SyncMetadata instances should be set in Item metadata.");
     }
 
     public IDataSource getDataSource() {

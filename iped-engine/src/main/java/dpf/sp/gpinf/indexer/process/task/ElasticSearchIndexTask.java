@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Collections;
-import java.util.ConcurrentModificationException;
 import java.util.HashMap;
 import java.util.Map.Entry;
 import java.util.Properties;
@@ -449,17 +448,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
         return null;
     }
 
-    // catch rare ConcurrentModificationException if metadata is updated by
-    // disconnected timed out threads
     private String[] getMetadataKeys(IItem item) {
-        String[] names = null;
-        while (names == null) {
-            try {
-                names = item.getMetadata().names();
-            } catch (ConcurrentModificationException e) {
-            }
-        }
-        return names;
+        return item.getMetadata().names();
     }
 
 }

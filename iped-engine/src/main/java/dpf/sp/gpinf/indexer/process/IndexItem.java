@@ -29,7 +29,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.ConcurrentModificationException;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -528,15 +527,7 @@ public class IndexItem extends BasicProps {
         if (mimetype != null)
             mimetype = mimetype.getBaseType();
 
-        // previne mto raro ConcurrentModificationException no caso de
-        // thread desconectada por timeout que altere os metadados
-        String[] names = null;
-        while (names == null) {
-            try {
-                names = metadata.names();
-            } catch (ConcurrentModificationException e) {
-            }
-        }
+        String[] names = metadata.names();
 
         for (String key : names) {
             if (key == null || key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
