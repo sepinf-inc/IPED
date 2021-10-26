@@ -211,18 +211,18 @@ public class CaseData implements ICaseData {
      */
     @Override
     public void addItem(IItem item) throws InterruptedException {
-        addItemToQueue(item, 0, false, true);
+        addItemToQueue(item, currentQueuePriority, false, true);
     }
 
     @Override
     public void addItemFirst(IItem item) throws InterruptedException {
-        addItemToQueue(item, 0, true, true);
+        addItemToQueue(item, currentQueuePriority, true, true);
     }
 
     @Override
     public void addItemNonBlocking(IItem item) {
         try {
-            addItemToQueue(item, 0, false, false);
+            addItemToQueue(item, currentQueuePriority, false, false);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -231,7 +231,7 @@ public class CaseData implements ICaseData {
     @Override
     public void addItemFirstNonBlocking(IItem item) {
         try {
-            addItemToQueue(item, 0, true, false);
+            addItemToQueue(item, currentQueuePriority, true, false);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
