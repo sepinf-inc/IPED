@@ -14,6 +14,7 @@ exportFileProps = false
 processFileSignatures = false
 enableFileParsing = false
 expandContainers = false
+processEmbeddedDisks = false
 enableRegexSearch = false
 enableAutomaticExportFiles = false
 enableLanguageDetect = false

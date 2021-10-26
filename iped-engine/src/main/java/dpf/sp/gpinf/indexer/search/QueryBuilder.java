@@ -60,8 +60,14 @@ public class QueryBuilder implements IQueryBuilder {
 
     private IIPEDSource ipedCase;
 
+    private boolean allowLeadingWildCard = true;
+
     public QueryBuilder(IIPEDSource ipedCase) {
         this.ipedCase = ipedCase;
+    }
+
+    public void setAllowLeadingWildcard(boolean allow) {
+        this.allowLeadingWildCard = allow;
     }
 
     private Set<String> getQueryStrings(Query query) {
@@ -255,7 +261,7 @@ public class QueryBuilder implements IQueryBuilder {
 
             StandardQueryParser parser = new StandardQueryParser(analyzer);
             parser.setMultiFields(fields);
-            parser.setAllowLeadingWildcard(true);
+            parser.setAllowLeadingWildcard(allowLeadingWildCard);
             parser.setFuzzyPrefixLength(2);
             parser.setFuzzyMinSim(0.7f);
             parser.setDateResolution(DateTools.Resolution.SECOND);

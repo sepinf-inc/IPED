@@ -23,6 +23,8 @@ import java.beans.PropertyChangeListener;
 
 import javax.swing.SwingUtilities;
 
+import dpf.sp.gpinf.indexer.util.LocalizedFormat;
+
 public class TextParserListener implements PropertyChangeListener {
 
     TextParser fileParser;
@@ -60,8 +62,8 @@ public class TextParserListener implements PropertyChangeListener {
                 } catch (Exception e) {
                 }
 
-            App.get().hitsDock
-                    .setTitleText(fileParser.getHits().size() + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
+            App.get().hitsDock.setTitleText(LocalizedFormat.format(fileParser.getHits().size())
+                    + Messages.getString("TextParserListener.hits")); //$NON-NLS-1$
 
         }
 

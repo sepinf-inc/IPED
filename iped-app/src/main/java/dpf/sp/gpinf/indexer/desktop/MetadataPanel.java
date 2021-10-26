@@ -45,6 +45,9 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.index.SortedSetDocValues;
 import org.apache.lucene.queryparser.complexPhrase.ComplexPhraseQueryParser;
+import org.apache.lucene.search.BooleanClause.Occur;
+import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
@@ -60,6 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -327,6 +331,17 @@ public class MetadataPanel extends JPanel
         public String toString() {
             NumberFormat nf = LocalizedFormat.getNumberInstance();
             StringBuilder sb = new StringBuilder();
+            sb.append(getVal());
+            sb.append(" ("); //$NON-NLS-1$
+            sb.append(nf.format(count));
+            sb.append(')');            
+            return sb.toString();
+        }
+        
+        @Override
+        public String getVal() {
+            StringBuilder sb = new StringBuilder();
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
             sb.append(nf.format(start));
             if (start != end && (!Double.isNaN(start) || !Double.isNaN(end))) {
                 sb.append(' ');
@@ -334,9 +349,6 @@ public class MetadataPanel extends JPanel
                 sb.append(' ');
                 sb.append(nf.format(end));
             }
-            sb.append(" ("); //$NON-NLS-1$
-            sb.append(nf.format(count));
-            sb.append(')');            
             return sb.toString();
         }
     }
@@ -360,6 +372,12 @@ public class MetadataPanel extends JPanel
             return sb.toString();
         }
 
+        @Override
+        public String getVal() {
+            NumberFormat nf = LocalizedFormat.getNumberInstance();
+            return nf.format(value);
+        }
+        
         public int compareTo(SingleValueCount o) {
             return Double.compare(value, o.value);
         }
@@ -1335,25 +1353,30 @@ public class MetadataPanel extends JPanel
             return null;
         }
 
-        StringBuilder str = new StringBuilder();
-        str.append(IndexItem.CONTENT + ":("); //$NON-NLS-1$
-        for (String term : terms) {
-            str.append("\"*" + removeIllegalChars(term).trim() + "*\" ");
-        }
-        str.append(")"); //$NON-NLS-1$
-
-        ComplexPhraseQueryParser cpqp = new ComplexPhraseQueryParser(IndexItem.CONTENT,
+        QueryBuilder stdParser = new QueryBuilder(App.get().appCase);
+        ComplexPhraseQueryParser complexPhraseParser = new ComplexPhraseQueryParser(IndexItem.CONTENT,
                 App.get().appCase.getAnalyzer());
-        cpqp.setAllowLeadingWildcard(true);
+        stdParser.setAllowLeadingWildcard(true);
+        complexPhraseParser.setAllowLeadingWildcard(true);
 
-        try {
-            return cpqp.parse(str.toString());
+        Builder builder = new BooleanQuery.Builder();
+        for (String term : terms) {
+            try {
+                String queryStr = "*" + removeIllegalChars(term).trim() + "*";
+                Query query;
+                if (queryStr.contains(" ")) {
+                    query = complexPhraseParser.parse("\"" + queryStr + "\"");
+                } else {
+                    query = stdParser.getQuery(queryStr);
+                }
+                builder.add(query, Occur.SHOULD);
 
-        } catch (org.apache.lucene.queryparser.classic.ParseException e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
-        return null;
+        return builder.build();
     }
 
     private String removeIllegalChars(String s) {

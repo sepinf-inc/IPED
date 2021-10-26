@@ -86,6 +86,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
 
         } catch (Exception e) {
             System.out.println(e);
+
         }
 
     }

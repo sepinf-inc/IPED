@@ -44,6 +44,10 @@ enableFileParsing = true
 # File types to be expanded can be modified in file "conf/CategoriesToExpand.txt"
 expandContainers = true
 
+# Process supported disk images (like dd, e01, vhd, vmdk) contained in the main evidence recursively.
+# Splitted images and snapshots are not supported for now.
+processEmbeddedDisks = true
+
 # Searches texts extracted from items by regular expressions 
 # like social numbers, emails, URLs, credit cards, money values, etc. 
 # New expressions can be configured in file "conf/RegexConfig.txt"

@@ -6,6 +6,7 @@ import java.io.Reader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,8 @@ public class NamedEntityTask extends AbstractTask {
     public static final String NER_PREFIX = NamedEntityParser.MD_KEY_PREFIX;
 
     private static final int MAX_TEXT_LEN = 100000;
+
+    private static final int MAX_ENTITY_BYTES_LEN = 32766;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(NamedEntityTask.class);
 
@@ -144,9 +147,6 @@ public class NamedEntityTask extends AbstractTask {
             }
         }
 
-        Metadata metadata = evidence.getMetadata();
-        String originalContentType = metadata.get(Metadata.CONTENT_TYPE);
-
         char[] cbuf = new char[MAX_TEXT_LEN];
         int i = 0;
         try (Reader textReader = evidence.getTextReader()) {
@@ -164,16 +164,48 @@ public class NamedEntityTask extends AbstractTask {
                         textFrag = textFrag.substring(0, k);
                 }
 
+                Metadata metadata = new Metadata();
                 metadata.set(Metadata.CONTENT_TYPE, MediaType.TEXT_PLAIN.toString());
-                // try to solve #329
-                metadata.remove(null);
 
                 try (InputStream is = new ByteArrayInputStream(textFrag.getBytes(StandardCharsets.UTF_8))) {
 
                     nerParser.parse(is, new IgnoreContentHandler(), metadata, new ParseContext());
 
                 } finally {
-                    metadata.set(Metadata.CONTENT_TYPE, originalContentType);
+                    cleanHugeResults(metadata);
+                    // save results in item metadata
+                    for (String key : metadata.names()) {
+                        if (key.startsWith(NER_PREFIX)) {
+                            for (String val : metadata.getValues(key)) {
+                                evidence.getMetadata().add(key, val);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    // workaround for issue #783
+    private void cleanHugeResults(Metadata meta) {
+        for (String key : meta.names()) {
+            if (key.startsWith(NER_PREFIX)) {
+                ArrayList<String> list = new ArrayList<>();
+                String[] vals = meta.getValues(key);
+                boolean remove = false;
+                for (String val : vals) {
+                    if (val.getBytes(StandardCharsets.UTF_8).length <= MAX_ENTITY_BYTES_LEN) {
+                        list.add(val);
+                    } else {
+                        remove = true;
+                    }
+                }
+                if (remove) {
+                    meta.remove(key);
+                    for (String val : list) {
+                        meta.add(key, val);
+                    }
                 }
             }
         }

@@ -79,7 +79,7 @@ ISO disks = application/x-iso9660-image; application/x-udf-image;
 
 Virtual disks = application/x-wim-image; application/x-vmdk; application/x-vhd; application/x-vdi; application/x-vhdx
 
-Other disks = application/x-disk-image;
+Other disks = application/x-raw-image; application/x-e01-image;
 
 Mozilla Firefox Saved Session = application/x-firefox-savedsession
 
