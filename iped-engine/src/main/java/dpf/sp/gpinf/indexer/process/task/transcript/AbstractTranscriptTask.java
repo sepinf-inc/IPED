@@ -128,7 +128,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     }
 
     protected static class TextAndScore {
-        String text;
+        String text = "";
         double score;
     }
 
@@ -248,11 +248,20 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         try {
             this.evidence = evidence;
-            TextAndScore result = transcribeWav(tempWav);
-            if (result != null) {
-                evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
-                evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
-                storeTextInDb(evidence.getHash(), result.text, result.score);
+            List<TextAndScore> results = transcribeWav(tempWav);
+            for (int i = 0; i < results.size(); i++) {
+                TextAndScore result = results.get(i);
+                if (result != null) {
+                    String transcriptionKey = ExtraProperties.TRANSCRIPT_ATTR;
+                    if (i > 0) {
+                        transcriptionKey += (i + 1);
+                    }
+                    String confidenceKey = transcriptionKey + ExtraProperties.CONFIDENCE_SUFFIX;
+
+                    evidence.getMetadata().set(transcriptionKey, result.text);
+                    evidence.getMetadata().set(confidenceKey, Double.toString(result.score));
+                    storeTextInDb(evidence.getHash(), result.text, result.score);
+                }
             }
 
         } finally {
@@ -263,6 +272,6 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
     }
 
-    protected abstract TextAndScore transcribeWav(File tmpFile) throws Exception;
+    protected abstract List<TextAndScore> transcribeWav(File tmpFile) throws Exception;
 
 }

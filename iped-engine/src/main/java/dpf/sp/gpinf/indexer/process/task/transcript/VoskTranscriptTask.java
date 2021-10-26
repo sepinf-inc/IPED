@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.process.task.transcript;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.sampled.AudioSystem;
@@ -52,6 +53,7 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
 
         recognizer = new Recognizer(model, 16000);
         recognizer.setWords(true);
+        recognizer.setMaxAlternatives(3);
 
     }
 
@@ -68,81 +70,88 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+    protected List<TextAndScore> transcribeWav(File tmpFile) throws Exception {
 
-        TextAndScore textAndScore = null;
+        List<TextAndScore> results = new ArrayList<>();
         recognizer.reset();
 
         try (InputStream ais = AudioSystem.getAudioInputStream(tmpFile)) {
-
-            StringBuilder totalText = new StringBuilder();
-            double totalScore = 0;
-            int words = 0;
 
             int nbytes;
             byte[] buf = new byte[1 << 20];
             while ((nbytes = ais.read(buf)) >= 0) {
                 if (recognizer.acceptWaveForm(buf, nbytes)) {
-                    TextScoreWords result = decodeFromJson(recognizer.getResult());
-                    if (result != null) {
-                        totalText.append(result.text);
-                        totalScore += result.score;
-                        words += result.words;
+                    List<TextScoreWords> alternatives = decodeFromJson(recognizer.getResult());
+                    for (int i = 0; i < alternatives.size(); i++) {
+                        TextScoreWords alternative = alternatives.get(i);
+                        if (i == results.size()) {
+                            results.add(alternative);
+                        } else {
+                            TextScoreWords result = (TextScoreWords) results.get(i);
+                            result.text += alternative.text + " ";
+                            result.score += alternative.score;
+                            result.chunks += alternative.chunks;
+                        }
                     }
+
                 } else {
                     // System.out.println(recognizer.getPartialResult());
                 }
             }
 
-            TextScoreWords result = decodeFromJson(recognizer.getFinalResult());
-            if (result != null) {
-                totalText.append(result.text);
-                totalScore += result.score;
-                words += result.words;
+            List<TextScoreWords> alternatives = decodeFromJson(recognizer.getFinalResult());
+            for (int i = 0; i < alternatives.size(); i++) {
+                TextScoreWords alternative = alternatives.get(i);
+                if (i == results.size()) {
+                    results.add(alternative);
+                } else {
+                    TextScoreWords result = (TextScoreWords) results.get(i);
+                    result.text += alternative.text;
+                    result.score += alternative.score;
+                    result.chunks += alternative.chunks;
+                }
             }
 
-            if (words > 0) {
-                textAndScore = new TextAndScore();
-                textAndScore.text = totalText.toString().trim();
-                textAndScore.score = totalScore / words;
+            for (TextAndScore result : results) {
+                int chunks = ((TextScoreWords) result).chunks;
+                if (chunks > 0) {
+                    result.score /= chunks;
+                }
             }
         }
 
-        return textAndScore;
+        return results;
     }
 
-    private TextScoreWords decodeFromJson(String json) throws ParseException {
+    private List<TextScoreWords> decodeFromJson(String json) throws ParseException {
+        List<TextScoreWords> results = new ArrayList<>();
         String str = new String(json.getBytes(), StandardCharsets.UTF_8);
         JSONParser parser = new JSONParser();
         JSONObject root = (JSONObject) parser.parse(str);
-        JSONArray array = (JSONArray) root.get("result");
-        if (array == null || array.size() == 0) {
-            return null;
+        JSONArray alternatives = (JSONArray) root.get("alternatives");
+        if (alternatives == null || alternatives.size() == 0) {
+            return results;
         }
+        for (int a = 0; a < alternatives.size(); a++) {
+            JSONObject alternative = (JSONObject) alternatives.get(a);
 
-        double totScore = 0;
-        int words = array.size();
-        StringBuilder text = new StringBuilder();
-        for (int i = 0; i < words; i++) {
-            JSONObject obj = (JSONObject) array.get(i);
-            double score = (Double) obj.get("conf");
-            if (score >= transcriptConfig.getMinWordScore()) {
-                text.append(obj.get("word")).append(" ");
-            } else {
-                text.append("* ");
+            TextScoreWords result = new TextScoreWords();
+            result.text = (String) alternative.get("text");
+            // this confidence score is not normalized, how to normalize it between 0-1?
+            // when just setWords(true) is used, normalized scores are returned per word
+            // but when alternatives are enabled, confidence is not normalized...
+            result.score = (Double) alternative.get("confidence");
+            if (!result.text.trim().isEmpty()) {
+                result.chunks = 1;
             }
-            totScore += score;
+            results.add(result);
         }
 
-        TextScoreWords result = new TextScoreWords();
-        result.text = text.toString();
-        result.score = totScore;
-        result.words = words;
-        return result;
+        return results;
     }
 
     private static class TextScoreWords extends TextAndScore {
-        int words = 0;
+        int chunks = 0;
     }
 
 }

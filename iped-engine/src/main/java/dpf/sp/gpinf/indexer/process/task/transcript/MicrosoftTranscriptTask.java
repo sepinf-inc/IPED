@@ -1,6 +1,8 @@
 package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -71,7 +73,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
     }
 
     @Override
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+    protected List<TextAndScore> transcribeWav(File tmpFile) throws Exception {
 
         int tries = 0;
         AtomicBoolean ok = new AtomicBoolean();
@@ -163,7 +165,7 @@ public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
             }
         }
 
-        return textAndScore;
+        return Arrays.asList(textAndScore);
 
     }
 

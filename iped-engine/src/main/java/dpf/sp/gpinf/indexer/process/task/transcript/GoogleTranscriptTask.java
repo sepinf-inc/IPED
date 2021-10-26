@@ -5,6 +5,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -103,29 +104,35 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         speechClient.close();
     }
 
-    protected TextAndScore transcribeWav(File tmpFile) throws Exception {
+    protected List<TextAndScore> transcribeWav(File tmpFile) throws Exception {
 
         if (tmpFile.length() <= MAX_WAV_SIZE || !isFfmpegOk()) {
             return transcribeWavPart(tmpFile);
         } else {
+            List<TextAndScore> results = new ArrayList<>();
             Collection<File> parts = getAudioSplits(tmpFile);
-            StringBuilder sb = new StringBuilder();
-            double score = 0;
             for (File part : parts) {
-                TextAndScore partResult = transcribeWavPart(part);
-                if (partResult != null) {
-                    if (score > 0)
-                        sb.append(" ");
-                    sb.append(partResult.text);
-                    score += partResult.score;
+                List<TextAndScore> alternatives = transcribeWavPart(part);
+                for (int i = 0; i < alternatives.size(); i++) {
+                    TextAndScore alternative = alternatives.get(i);
+                    if (i == results.size()) {
+                        alternative.score /= parts.size();
+                        results.add(alternative);
+                    } else {
+                        TextAndScore result = results.get(i);
+                        if (alternative.score > 0) {
+                            result.text += " ";
+                        }
+                        result.text += alternative.text;
+                        result.score += alternative.score / parts.size();
+                    }
                 }
                 part.delete();
             }
-            TextAndScore result = new TextAndScore();
-            result.text = sb.toString();
-            result.score = score / parts.size();
-            return result;
+
+            return results;
         }
+
     }
 
     private Collection<File> getAudioSplits(File tmpFile) throws InterruptedException, IOException {
@@ -165,7 +172,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
         }
     }
 
-    protected TextAndScore transcribeWavPart(File tmpFile) throws Exception {
+    protected List<TextAndScore> transcribeWavPart(File tmpFile) throws Exception {
 
         // google has request per time quota limits
         synchronized (lock) {
@@ -177,7 +184,7 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
             lastTime = System.currentTimeMillis();
         }
 
-        TextAndScore textAndScore = null;
+        List<TextAndScore> results = new ArrayList<>();
         try {
             // The language of the supplied audio
             String languageCode = transcriptConfig.getLanguages().get(0);
@@ -226,31 +233,30 @@ public class GoogleTranscriptTask extends AbstractTranscriptTask {
                     MIN_TIMEOUT + (transcriptConfig.getTimeoutPerSec() * tmpFile.length() / WAV_BYTES_PER_SEC),
                     TimeUnit.SECONDS);
 
-            StringBuilder text = new StringBuilder();
-            float confidence = 0;
-            int i = 0;
+
             for (SpeechRecognitionResult result : response.getResultsList()) {
-                // First alternative is the most probable result
-                SpeechRecognitionAlternative alternative = result.getAlternativesList().get(0);
-                confidence += alternative.getConfidence();
-                i++;
-                text.append(alternative.getTranscript()).append(" ");
+                for (int a = 0; a < result.getAlternativesCount(); a++) {
+                    if (a == results.size()) {
+                        results.add(new TextAndScore());
+                    }
+                    TextAndScore textAndScore = results.get(a);
+                    SpeechRecognitionAlternative alternative = result.getAlternativesList().get(a);
+                    textAndScore.score += alternative.getConfidence() / response.getResultsCount();
+                    textAndScore.text += alternative.getTranscript() + " ";
+                }
             }
-            if (i == 0)
-                i = 1;
 
-            textAndScore = new TextAndScore();
-            textAndScore.text = text.toString();
-            textAndScore.score = confidence / i;
-
-            LOGGER.debug("GG Transcript of {} : {}", evidence.getPath(), text.toString());
+            int alternative = 0;
+            for (TextAndScore result : results) {
+                LOGGER.debug("GG transcript {} of {} : {}", ++alternative, evidence.getPath(), result.text);
+            }
 
         } catch (Exception e) {
             LOGGER.error("Failed to transcript {} : {}", evidence.getPath(), e);
             LOGGER.warn("", e);
         }
 
-        return textAndScore;
+        return results;
 
     }
 

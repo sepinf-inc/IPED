@@ -116,7 +116,9 @@ public class ExtraProperties {
 
     public static final String TRANSCRIPT_ATTR = AUDIO_META_PREFIX + "transcription";
 
-    public static final String CONFIDENCE_ATTR = AUDIO_META_PREFIX + "transcriptConfidence";
+    public static final String CONFIDENCE_SUFFIX = "Confidence";
+
+    public static final String CONFIDENCE_ATTR = TRANSCRIPT_ATTR + CONFIDENCE_SUFFIX;
 
     public static final String TIME_EVENT_ORDS = "timeEventOrds";
 
