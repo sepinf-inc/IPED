@@ -1,11 +1,13 @@
 package dpf.sp.gpinf.indexer.process.task.transcript;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -106,6 +108,8 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
                 textAndScore.text = totalText.toString().trim();
                 textAndScore.score = totalScore / words;
             }
+        } catch (IOException | UnsupportedAudioFileException e) {
+            logger.warn("Fail to transcribe audio file " + evidence.getPath(), e);
         }
 
         return textAndScore;
