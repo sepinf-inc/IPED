@@ -162,6 +162,7 @@ public class PackageParserTest extends AbstractPkgTest {
             parser.parse(stream, handler, metadata, trackingContext);
 
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals(10, tracker.filenames.size());
             assertEquals(10, tracker.modifieddate.size());
@@ -447,6 +448,7 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(6, tracker.itensmd5.size());
 
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals("mockdoc1.docx", tracker.filenames.get(0));
             Date date = parseFromDefaultDateFormat(tracker.modifieddate.get(0));
@@ -521,6 +523,7 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(6, tracker.itensmd5.size());
 
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals("mockdoc1.docx", tracker.filenames.get(0));
             Date date = parseFromDefaultDateFormat(tracker.modifieddate.get(0));
@@ -596,6 +599,7 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(8, tracker.itensmd5.size());
 
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals("mockdoc1.docx", tracker.filenames.get(0));
             Date date = parseFromDefaultDateFormat(tracker.modifieddate.get(0));

@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 import java.text.DateFormat;
 
 public class SevenZipParserTest extends AbstractPkgTest {
@@ -98,6 +99,7 @@ public class SevenZipParserTest extends AbstractPkgTest {
         try (InputStream stream = getStream("test-files/test_mockRar5.rar")) {
             parser.parse(stream, handler, mockedMetadata, trackingContext);
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals(19, tracker.filenames.size());
             assertEquals(19, tracker.modifieddate.size());
