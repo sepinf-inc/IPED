@@ -31,16 +31,16 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.getSupportedTypes(whatsappContext);
         try (InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")) {
             parser.parse(stream, handler, metadata, whatsappContext);
-            assertEquals(63, whatsapptracker.title.size());
+            assertEquals(103, whatsapptracker.title.size());
             assertEquals(0, whatsapptracker.username.size());
             assertEquals(0, whatsapptracker.userphone.size());
             assertEquals(0, whatsapptracker.useraccount.size());
             assertEquals(0, whatsapptracker.usernotes.size());
-            assertEquals(19, whatsapptracker.participants.size());
+            assertEquals(29, whatsapptracker.participants.size());
             assertEquals(4, whatsapptracker.messagefrom.size());
-            assertEquals(44, whatsapptracker.messagebody.size());
+            assertEquals(74, whatsapptracker.messagebody.size());
             assertEquals(4, whatsapptracker.messageto.size());
-            assertEquals(44, whatsapptracker.messagedate.size());
+            assertEquals(74, whatsapptracker.messagedate.size());
 
             assertEquals("WhatsApp Chat - 556183125151", whatsapptracker.title.get(0));
             assertEquals("WhatsApp Chat - 556183125151_message_0", whatsapptracker.title.get(1));
