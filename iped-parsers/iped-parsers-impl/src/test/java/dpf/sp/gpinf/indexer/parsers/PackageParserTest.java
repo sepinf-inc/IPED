@@ -8,6 +8,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.TimeZone;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
@@ -264,6 +265,7 @@ public class PackageParserTest extends AbstractPkgTest {
             parser.parse(stream, handler, metadata, trackingContext);
             
             DateFormat df = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
+            df.setTimeZone(TimeZone.getTimeZone("GMT-3"));
 
             assertEquals(11, tracker.filenames.size());
             assertEquals(11, tracker.modifieddate.size());
