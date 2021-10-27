@@ -30,14 +30,14 @@ public class CryptoAPIBlobParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_server.pfx")){
-	        parser.parse(stream, handler, metadata, context);
-	        assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPUBLICKEY));
-	        assertEquals("", metadata.get(CryptoAPIBlobParser.ALIAS));
-	        assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
-        	
-        }catch(Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_server.pfx")) {
+            parser.parse(stream, handler, metadata, context);
+            assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPUBLICKEY));
+            assertEquals("", metadata.get(CryptoAPIBlobParser.ALIAS));
+            assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 

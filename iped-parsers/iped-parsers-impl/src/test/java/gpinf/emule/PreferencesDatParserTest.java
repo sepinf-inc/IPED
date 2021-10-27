@@ -26,13 +26,13 @@ public class PreferencesDatParserTest extends TestCase {
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
         parser.getSupportedTypes(context);
-        try(InputStream stream = getStream("test-files/test_preferences.dat")){
-	        parser.parse(stream, handler, metadata, context);
-	        String hts = handler.toString();
-	        assertTrue(hts.contains("20"));
-	        assertTrue(hts.contains("02237df8aa0e92ae78f7bfe1d79a6fb2"));
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_preferences.dat")) {
+            parser.parse(stream, handler, metadata, context);
+            String hts = handler.toString();
+            assertTrue(hts.contains("20"));
+            assertTrue(hts.contains("02237df8aa0e92ae78f7bfe1d79a6fb2"));
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
@@ -44,12 +44,12 @@ public class PreferencesDatParserTest extends TestCase {
         Metadata metadata = new Metadata();
         ContentHandler handler = new BodyContentHandler();
         ParseContext context = new ParseContext();
-        try(InputStream stream = getStream("test-files/test_preferences.dat")){
-	        parser.parse(stream, handler, metadata, context);
-	        String mts = metadata.toString();
-	        System.out.println(mts);
-        }catch (Exception e) {
-        	System.out.println(e);
+        try (InputStream stream = getStream("test-files/test_preferences.dat")) {
+            parser.parse(stream, handler, metadata, context);
+            String mts = metadata.toString();
+            System.out.println(mts);
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }

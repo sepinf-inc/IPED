@@ -35,11 +35,11 @@ public class LibpffPSTParserTest {
         try (InputStream stream = getStream("test-files/test_sample.pst")) {
             parser.parse(stream, handler, metadata, context);
 
-	        String hts = handler.toString();
-	        String mts = metadata.toString();
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+            String hts = handler.toString();
+            String mts = metadata.toString();
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 

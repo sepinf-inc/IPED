@@ -3,9 +3,14 @@ package dpf.sp.gpinf.indexer.parsers;
 import static org.apache.commons.codec.digest.MessageDigestAlgorithms.MD5;
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
+import java.util.TimeZone;
+
 import junit.framework.TestCase;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.tika.exception.TikaException;
@@ -35,6 +40,12 @@ public abstract class AbstractPkgTest extends TestCase {
     protected EmbeddedMboxParser mboxtracker;
     protected EmbeddedPSTParser psttracker;
     protected EmbeddedOLEParser oletracker;
+
+    protected Date parseFromDefaultDateFormat(String value) throws ParseException {
+        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'");
+        df.setTimeZone(TimeZone.getTimeZone("GMT"));
+        return df.parse(value);
+    }
 
     protected void setUp() throws Exception {
         super.setUp();

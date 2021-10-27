@@ -49,14 +49,14 @@ public class MSGParserTest extends AbstractPkgTest {
         msgContext.set(EmbeddedDocumentExtractor.class, embeddedTracker);
         try (InputStream stream = getStream("test-files/test_msgSample.msg")) {
             parser.parse(stream, handler, metadata, msgContext);
-	        assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(Metadata.SUBJECT));
-	        assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
-	        assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
-	        assertEquals(0, embeddedTracker.attachmentsMeta.size());
-	        assertEquals(0, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+            assertEquals("Aula 02 No Ar! Semana Javascript Expert", metadata.get(Metadata.SUBJECT));
+            assertEquals("Erick Wendel", metadata.get(Metadata.MESSAGE_FROM));
+            assertEquals("Guilherme Monteiro", metadata.get(Metadata.MESSAGE_TO));
+            assertEquals(0, embeddedTracker.attachmentsMeta.size());
+            assertEquals(0, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
     }
 
@@ -72,23 +72,22 @@ public class MSGParserTest extends AbstractPkgTest {
         try (InputStream stream = getStream("test-files/test_msgSampleAttach.msg")) {
             parser.getSupportedTypes(msgContext);
             parser.parse(stream, handler, metadata, msgContext);
-        
 
-	        assertEquals("[cic-bcc-l] Passe Estudantil - Atividades em Per?odo de F?rias", metadata.get(Metadata.SUBJECT));
-	        assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação",
-	                metadata.get(Metadata.MESSAGE_FROM));
-	        assertEquals(
-	                "cic-bcc-l@listas.unb.br; cic-lic-l@listas.unb.br; cic-mec-l@listas.unb.br; cic-eng-l@listas.unb.br",
-	                metadata.get(Metadata.MESSAGE_TO));
-	        assertEquals(1, embeddedTracker.attachmentsMeta.size());
-	        for (Metadata attachMeta : embeddedTracker.attachmentsMeta) {
-	            assertEquals("true", attachMeta.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
-	        }
-	        assertEquals(1, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
-	        
-	        
-        }catch (Exception e) {
-        	System.out.println(e);
+            assertEquals("[cic-bcc-l] Passe Estudantil - Atividades em Per?odo de F?rias",
+                    metadata.get(Metadata.SUBJECT));
+            assertEquals("Lista Informativa do Curso de Bacharelado em Ciência da Computação",
+                    metadata.get(Metadata.MESSAGE_FROM));
+            assertEquals(
+                    "cic-bcc-l@listas.unb.br; cic-lic-l@listas.unb.br; cic-mec-l@listas.unb.br; cic-eng-l@listas.unb.br",
+                    metadata.get(Metadata.MESSAGE_TO));
+            assertEquals(1, embeddedTracker.attachmentsMeta.size());
+            for (Metadata attachMeta : embeddedTracker.attachmentsMeta) {
+                assertEquals("true", attachMeta.get(ExtraProperties.MESSAGE_IS_ATTACHMENT));
+            }
+            assertEquals(1, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
+
+        } catch (Exception e) {
+            System.out.println(e);
         }
 
     }
