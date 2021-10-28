@@ -61,6 +61,7 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
@@ -72,6 +73,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.Category;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.exception.ZipBombException;
@@ -118,6 +120,7 @@ public class ExportFileTask extends AbstractTask {
     private List<String> noContentLabels;
     private ExportByCategoriesConfig exportByCategories;
     private ExportByKeywordsConfig exportByKeywords;
+    private CategoryConfig categoryConfig;
     private boolean automaticExportEnabled = false;
 
     public ExportFileTask() {
@@ -225,15 +228,16 @@ public class ExportFileTask extends AbstractTask {
 
     private boolean isToBeExtracted(IItem evidence) {
 
-        boolean result = false;
-        for (String category : evidence.getCategorySet()) {
-            if (exportByCategories.isToExportCategory(category)) {
-                result = true;
-                break;
+        for (String catName : evidence.getCategorySet()) {
+            Category category = categoryConfig.getCategoryFromName(catName);
+            while (category != null && category.getName() != null) {
+                if (exportByCategories.isToExportCategory(category.getName())) {
+                    return true;
+                }
+                category = category.getParent();
             }
         }
-
-        return result;
+        return false;
     }
 
     public void process(IItem evidence) {
@@ -724,6 +728,8 @@ public class ExportFileTask extends AbstractTask {
         automaticExportEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
         exportByCategories = configurationManager.findObject(ExportByCategoriesConfig.class);
         exportByKeywords = configurationManager.findObject(ExportByKeywordsConfig.class);
+        categoryConfig = configurationManager.findObject(CategoryConfig.class);
+
         if (isAutomaticExportEnabled()) {
             caseData.setContainsReport(true);
         }
