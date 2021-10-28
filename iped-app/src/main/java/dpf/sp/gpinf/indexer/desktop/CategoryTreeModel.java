@@ -16,9 +16,9 @@ import javax.swing.tree.TreePath;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.Category;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import gpinf.dev.data.Category;
 
 public class CategoryTreeModel implements TreeModel {
 
