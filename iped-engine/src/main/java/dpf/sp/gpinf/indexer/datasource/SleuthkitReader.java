@@ -38,6 +38,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.tika.io.IOUtils;
@@ -819,7 +820,7 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void setPath(IItem evidence, String path) {
         if (deviceName != null) {
-            path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
+            path = path.replaceFirst("img_.+?\\/", Matcher.quoteReplacement(deviceName) + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         path = inheritedPath + path;
         evidence.setPath(path);
