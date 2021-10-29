@@ -1124,8 +1124,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     DownloadMetadata.set(TikaCoreProperties.TITLE,
                                             "dowloaded_item_" + (++DOWNLOADED_FILES));
 
-
-
                                     extractor.parseEmbedded(new FileInputStream(f), handler, DownloadMetadata, false);
 
                                     EmbeddedItem container = context.get(EmbeddedItem.class);

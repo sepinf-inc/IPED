@@ -43,7 +43,6 @@ public class DecryptFile {
         cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
         decripted = cipher.doFinal(file);
 
-
         FileUtils.writeByteArrayToFile(f, decripted);
         return decripted;
 

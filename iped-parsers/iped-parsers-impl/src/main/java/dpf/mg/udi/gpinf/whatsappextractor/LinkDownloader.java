@@ -18,12 +18,9 @@ public class LinkDownloader {
     private String ext;
     private String hash;
 
-
-
     public String getFileName() {
         return fileName;
     }
-
 
     public static String getSHA256(byte[] b) {
         if (b != null) {
@@ -38,8 +35,8 @@ public class LinkDownloader {
         return null;
     }
 
-    public void downloadUsingStream( File tmp) throws IOException {
-        
+    public void downloadUsingStream(File tmp) throws IOException {
+
         URL url = new URL(urlStr);
         FileUtils.copyURLToFile(url, tmp, 500, 50);
 

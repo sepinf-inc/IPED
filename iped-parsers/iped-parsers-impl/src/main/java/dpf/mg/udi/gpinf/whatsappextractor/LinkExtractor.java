@@ -164,9 +164,8 @@ public class LinkExtractor {
         }
 
         try {
-            
-            
-            StringBuilder base64Hashes=null;
+
+            StringBuilder base64Hashes = null;
             for (String hash : hashes) {
                 hash = Base64.getEncoder().encodeToString(Hex.decodeHex(hash));
 
