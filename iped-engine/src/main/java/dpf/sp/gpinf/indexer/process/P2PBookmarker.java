@@ -17,6 +17,7 @@ import dpf.mt.gpinf.skype.parser.SkypeParser;
 import dpf.sp.gpinf.indexer.Messages;
 import dpf.sp.gpinf.indexer.parsers.AresParser;
 import dpf.sp.gpinf.indexer.parsers.KnownMetParser;
+import dpf.sp.gpinf.indexer.parsers.PartMetParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -55,6 +56,7 @@ public class P2PBookmarker {
         HashMap<String, P2PProgram> p2pPrograms = new HashMap<String, P2PProgram>();
 
         p2pPrograms.put(KnownMetParser.EMULE_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
+        p2pPrograms.put(PartMetParser.EMULE_PART_MET_MIME_TYPE, new P2PProgram(HashTask.HASH.EDONKEY.toString(), "Emule")); //$NON-NLS-1$
         p2pPrograms.put(AresParser.ARES_MIME_TYPE, new P2PProgram(HashTask.HASH.SHA1.toString(), "Ares")); //$NON-NLS-1$
         p2pPrograms.put(ShareazaLibraryDatParser.LIBRARY_DAT_MIME_TYPE,
                 new P2PProgram(HashTask.HASH.MD5.toString(), "Shareaza")); //$NON-NLS-1$
