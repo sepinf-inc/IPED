@@ -62,7 +62,7 @@ public class KnownMetParser {
         return l;
     }
 
-    private static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
+    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
         int pos = offset;
         long ms = toInt(b, pos) * 1000L;
         if (ms < dataMin || ms > dataMax)
