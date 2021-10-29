@@ -658,6 +658,11 @@
         <sub-class-of type="application/x-p2p"/>
         <glob pattern="known*.met"/>
     </mime-type>
+
+    <mime-type type="application/x-emule-part-met">
+        <sub-class-of type="application/x-p2p"/>
+        <glob pattern="*.part.met"/>
+    </mime-type>
     
     <mime-type type="application/x-preview-with-links">
         <sub-class-of type="text/html"/>
