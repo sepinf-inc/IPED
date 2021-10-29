@@ -1,15 +1,14 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Writer;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
+
+import org.apache.commons.io.FileUtils;
 
 public class LinkDownloader {
     private String urlStr;
@@ -42,16 +41,7 @@ public class LinkDownloader {
     public void downloadUsingStream( File tmp) throws IOException {
         
         URL url = new URL(urlStr);
-        BufferedInputStream bis = new BufferedInputStream(url.openStream());
-
-        try (OutputStream out = new FileOutputStream(tmp)) {
-            byte[] buffer = new byte[1024];
-            int count = 0;
-            while ((count = bis.read(buffer, 0, 1024)) != -1) {
-                out.write(buffer, 0, count);
-            }
-        }
-        bis.close();
+        FileUtils.copyURLToFile(url, tmp, 500, 50);
 
     }
 

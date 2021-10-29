@@ -40,6 +40,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -138,6 +141,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean mainDbFound = false;
 
+    private int DOWNLOADED_FILES = 0;
+
     /**
      * Experimental and incomplete feature. See TODOs below.
      */
@@ -214,8 +219,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private void createReport(List<Chat> chatList, IItemSearcher searcher, WAContactsDirectory contacts,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, WAAccount account, File dbPath,
-            ParseContext context)
-            throws Exception {
+            ParseContext context) throws Exception {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
@@ -1098,42 +1102,64 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (!hashesToSearchFor.isEmpty()) {
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
                 le.extractLinks();
-                int i = 0;
+                ExecutorService e = Executors.newFixedThreadPool(20);
+                ArrayList<Thread> downloads = new ArrayList<>();
                 for (LinkDownloader ld : le.getLinks()) {
-                    try (TemporaryResources tmp = new TemporaryResources()) {
-                        File f = tmp.createTemporaryFile();
-                        ld.downloadUsingStream(f);
-                        ld.decript(f, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
 
-                        Metadata DownloadMetadata = new Metadata();
+                    Runnable r = new Runnable() {
 
-                        DownloadMetadata.set("downloaded", "true");
-                        DownloadMetadata.set(TikaCoreProperties.TITLE, "dowloaded_item_" + (++i));
+                        @Override
+                        public void run() {
+                            try (TemporaryResources tmp = new TemporaryResources()) {
+
+                                // TODO Auto-generated method stub
+                                File f = tmp.createTemporaryFile();
+                                ld.downloadUsingStream(f);
+                                ld.decript(f, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
+
+                                Metadata DownloadMetadata = new Metadata();
+
+                                DownloadMetadata.set("downloaded", "true");
+                                synchronized (this) {
+                                    DownloadMetadata.set(TikaCoreProperties.TITLE,
+                                            "dowloaded_item_" + (++DOWNLOADED_FILES));
 
 
-                        extractor.parseEmbedded(new FileInputStream(f), handler, DownloadMetadata, false);
-                        
-                        EmbeddedItem container = context.get(EmbeddedItem.class);
-                        
-                        IItem item = (IItem) container.getObj();
-                        item.getExtraAttributeMap().put("sha-256", ld.getHash());
 
-                        List<Message> messageList = hashesToSearchFor.get(ld.getHash());
+                                    extractor.parseEmbedded(new FileInputStream(f), handler, DownloadMetadata, false);
 
-                        for (Message m : messageList) {
-                            m.setMediaItem(item);
-                            m.setMediaQuery(escapeQuery("sha-256:" + ld.getHash(), true));
+                                    EmbeddedItem container = context.get(EmbeddedItem.class);
+
+                                    IItem item = (IItem) container.getObj();
+                                    item.getExtraAttributeMap().put("sha-256", ld.getHash());
+
+                                    List<Message> messageList = hashesToSearchFor.get(ld.getHash());
+
+                                    for (Message m : messageList) {
+                                        m.setMediaItem(item);
+                                        m.setMediaQuery(escapeQuery("sha-256:" + ld.getHash(), true));
+                                    }
+
+                                }
+                            } catch (IOException ex) {
+
+                            } catch (Exception e) {
+                                // TODO: handle exception
+                                e.printStackTrace(System.out);
+                            }
+
                         }
+                    };
+                    e.submit(r);
 
-                        // System.out.println(ld.getFileName());
-
-                    } catch (IOException ex) {
-
-                    } catch (Exception e) {
-                        // TODO: handle exception
-                        e.printStackTrace(System.out);
-                    }
                 }
+                try {
+                    e.awaitTermination(50 + le.getLinks().size() * 20, TimeUnit.MILLISECONDS);
+                } catch (InterruptedException e1) {
+                    // TODO Auto-generated catch block
+                    e1.printStackTrace(System.out);
+                }
+
             }
         }
 

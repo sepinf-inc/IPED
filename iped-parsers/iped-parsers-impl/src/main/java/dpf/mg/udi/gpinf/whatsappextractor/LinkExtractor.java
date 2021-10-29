@@ -150,8 +150,11 @@ public class LinkExtractor {
     private String aux = "";
 
     public static String capitalize(String aux) {
-        String temp = aux = aux.substring(0, 1).toUpperCase() + aux.substring(1);
-        return temp;
+        if (aux != null && !aux.isEmpty()) {
+            aux = aux.substring(0, 1).toUpperCase() + aux.substring(1);
+
+        }
+        return aux;
     }
 
     public void extractLinks() {
@@ -194,7 +197,10 @@ public class LinkExtractor {
                 if (tipo == null) {
                     continue;
                 }
-                aux = tipo.substring(0, tipo.indexOf("/"));
+                aux = tipo;
+                if (tipo.indexOf("/") >= 0) {
+                    aux = tipo.substring(0, tipo.indexOf("/"));
+                }
                 aux = capitalize(aux).trim();
                 aux = "WhatsApp " + aux + " Keys";
 
