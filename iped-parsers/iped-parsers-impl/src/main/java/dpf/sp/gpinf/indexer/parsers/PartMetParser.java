@@ -73,6 +73,8 @@ public class PartMetParser extends AbstractParser {
         if (ret <= 0)
             return;
 
+        metadata.add(ExtraProperties.SHARED_HASHES, e.getHash());
+        
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
         XHTMLContentHandler xhtml = new XHTMLContentHandler(handler, metadata);
@@ -130,7 +132,7 @@ public class PartMetParser extends AbstractParser {
 
         if (hashDBHits > 0)
             metadata.set(ExtraProperties.CSAM_HASH_HITS, Integer.toString(hashDBHits));
-
+        
         xhtml.endElement("table");
         xhtml.endDocument();
     }
