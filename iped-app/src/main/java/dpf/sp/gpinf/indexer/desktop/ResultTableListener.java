@@ -371,8 +371,10 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     private String getCell(JTable table, int row, int col) {
         String cell = table.getValueAt(row, col).toString();
-        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-                .replace(App.get().getParams().HIGHLIGHT_START_TAG, "")
+        if (App.get().getParams().FONT_START_TAG != null)
+            cell = cell.replace(App.get().getParams().FONT_START_TAG, ""); //$NON-NLS-1$
+        return cell.replace("<html><nobr>", "").replace("</html>", "") //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+                .replace(App.get().getParams().HIGHLIGHT_START_TAG, "") //$NON-NLS-1$
                 .replace(App.get().getParams().HIGHLIGHT_END_TAG, ""); //$NON-NLS-1$
     }
 
