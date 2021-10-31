@@ -114,7 +114,7 @@ public class IndexItem extends BasicProps {
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
-    private static volatile boolean guessMetaTypes = false;
+    private static volatile boolean collectMetaTypes = false;
 
     private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
@@ -413,7 +413,7 @@ public class IndexItem extends BasicProps {
         }
 
         if (typesMap.size() == 0) {
-            guessMetaTypes = true;
+            collectMetaTypes = true;
         }
 
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
@@ -430,11 +430,10 @@ public class IndexItem extends BasicProps {
             }
         }
 
-        // TRIAGE comentar
         Metadata metadata = evidence.getMetadata();
         if (metadata != null) {
-            if (guessMetaTypes) {
-                guessMetadataTypes(evidence.getMetadata());
+            if (collectMetaTypes) {
+                collectMetadataTypes(evidence.getMetadata());
             } else {
                 addMetadataToDoc(doc, evidence.getMetadata());
             }
@@ -443,7 +442,7 @@ public class IndexItem extends BasicProps {
         return doc;
     }
 
-    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey,
+    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isPossibleType,
             boolean isMultiValued) {
         boolean isString = false;
 
@@ -452,7 +451,7 @@ public class IndexItem extends BasicProps {
          * prefixo no nome para diferenciar
          */
         String keyPrefix = ""; //$NON-NLS-1$
-        if (isMetadataKey) {
+        if (isPossibleType) {
             keyPrefix = "_num_"; //$NON-NLS-1$
         }
         if (oValue instanceof Date) {
@@ -507,12 +506,12 @@ public class IndexItem extends BasicProps {
             doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
         }
 
-        if (isMetadataKey || isString) {
+        if (isPossibleType || isString) {
             String value = oValue.toString();
             if (value.length() > MAX_DOCVALUE_SIZE) {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
-            if (isMetadataKey) {
+            if (isPossibleType) {
                 keyPrefix = "_"; //$NON-NLS-1$
             }
             if (!isMultiValued)
@@ -546,55 +545,72 @@ public class IndexItem extends BasicProps {
     private static void addMetadataKeyToDoc(Document doc, String key, String value, boolean isMultiValued,
             MediaType mimetype) {
         Object oValue = value;
-        Class type = typesMap.get(key);
+        Class<?> type = typesMap.get(key);
 
         if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
             return;
 
-        if (type == null || !type.equals(String.class)) {
-
+        if (type == null) {
+            // try to guess unknown type
             try {
-                if (type == null || type.equals(Double.class)) {
+                oValue = Double.valueOf(value);
+                type = setAndGetType(key, Double.class);
+            } catch (NumberFormatException e) {
+                Date date = DateUtil.tryToParseDate(value);
+                if (date != null) {
+                    oValue = date;
+                    type = setAndGetType(key, Date.class);
+                }
+            }
+        } else {
+            try {
+                if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
-                    if (type == null) {
-                        newtypesMap.put(key, Double.class);
-                        typesMap.put(key, Double.class);
-                    }
                 } else if (type.equals(Integer.class)) {
                     oValue = Integer.valueOf(value);
                 } else if (type.equals(Float.class)) {
                     oValue = Float.valueOf(value);
                 } else if (type.equals(Long.class)) {
                     oValue = Long.valueOf(value);
+                } else if (type.equals(Date.class)) {
+                    Date date = DateUtil.tryToParseDate(value);
+                    if (date != null)
+                        oValue = date;
+                    else
+                        throw new ParseException("Not a date", 0);
                 }
-
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException | ParseException e) {
                 if (newtypesMap.containsKey(key)) {
-                    typesMap.put(key, String.class);
+                    // prev guessed type was wrong, fallback to string
+                    type = setAndGetType(key, String.class);
+                } else {
+                    // value doesn't match built-in type, store value in other field as string
+                    key += ":string";
+                    type = String.class;
                 }
             }
         }
 
-        Date date = DateUtil.tryToParseDate(value);
-        if (date != null) {
-            oValue = date;
-            typesMap.put(key, Date.class);
+        if (type == null) {
+            type = setAndGetType(key, String.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued);
+        addExtraAttributeToDoc(doc, key, oValue, newtypesMap.containsKey(key), isMultiValued);
     }
 
-    private static void guessMetadataTypes(Metadata metadata) {
+    private static Class<?> setAndGetType(String key, Class<?> type) {
+        newtypesMap.put(key, type);
+        typesMap.put(key, type);
+        return type;
+    }
+
+    private static void collectMetadataTypes(Metadata metadata) {
 
         for (String key : metadata.names()) {
             if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
                 continue;
             }
-            if (metadata.getValues(key).length > 1) {
-                typesMap.put(key, String.class);
 
-                continue;
-            }
             String val = metadata.get(key);
 
             if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class)) {
@@ -629,6 +645,14 @@ public class IndexItem extends BasicProps {
                                     break;
                                 }
                             case 4:
+                                if (typesMap.get(key) == null || typesMap.get(key).equals(Date.class)) {
+                                    Date date = DateUtil.tryToParseDate(val);
+                                    if (date != null) {
+                                        typesMap.put(key, Date.class);
+                                        break;
+                                    }
+                                }
+                            default:
                                 typesMap.put(key, String.class);
                         }
                         type = 100;
