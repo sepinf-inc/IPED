@@ -24,6 +24,7 @@ import java.io.Reader;
 import java.lang.reflect.Constructor;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -938,12 +939,10 @@ public class IndexItem extends BasicProps {
         if (evidence.isSubItem())
             return localFile;
         Path path = localFile.toPath();
-        String pathSuffix = "";
-        if (path.getNameCount() > 1)
-            pathSuffix = path.subpath(1, path.getNameCount()).toString();
-        if (localFile.toPath().endsWith(pathSuffix)) {
-            String evidenceFolderStr = localFile.getAbsolutePath().substring(0,
-                    localFile.getAbsolutePath().lastIndexOf(pathSuffix));
+        Path pathSuffix = Paths.get(evidence.getPath());
+        pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
+        if (path.endsWith(pathSuffix)) {
+            String evidenceFolderStr = path.toString().substring(0, path.toString().lastIndexOf(pathSuffix.toString()));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
             if (mappedFolder == null) {
@@ -963,7 +962,7 @@ public class IndexItem extends BasicProps {
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }
-            localFile = new File(mappedFolder, pathSuffix);
+            localFile = new File(mappedFolder, pathSuffix.toString());
         }
         return localFile;
     }
