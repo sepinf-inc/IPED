@@ -489,6 +489,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (e.isConsumed())
+            return;
+        
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
