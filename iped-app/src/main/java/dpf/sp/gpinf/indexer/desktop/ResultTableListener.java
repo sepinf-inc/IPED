@@ -186,6 +186,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void keyPressed(KeyEvent evt) {
+        if (evt.isConsumed())
+            return;
         if (App.get().resultsTable.getSelectedRow() == -1)
             return;
 
