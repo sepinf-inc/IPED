@@ -135,6 +135,9 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
+    // a global hashmap to prevent redownload files;
+    private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
+
     private static final boolean FALLBACK_DOWNLOAD_FILES = true;
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
@@ -948,6 +951,15 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
+    private void setItemToMessage(IItemBase item, List<Message> messageList, String query) {
+        if (messageList != null) {
+            for (Message m : messageList) {
+                m.setMediaItem(item);
+                m.setMediaQuery(escapeQuery(query, true)); // $NON-NLS-1$ //$NON-NLS-2$
+            }
+        }
+    }
+
     private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher, ContentHandler handler,
             EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context) {
         Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
@@ -992,12 +1004,23 @@ public class WhatsAppParser extends SQLite3DBParser {
             for (IItemBase item : result) {
                 String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
                 List<Message> messageList = hashesToSearchFor.remove(hash);
-                if (messageList != null) {
-                    for (Message m : messageList) {
-                        m.setMediaItem(item);
-                        m.setMediaQuery(escapeQuery("sha-256:" + hash, true)); //$NON-NLS-1$ //$NON-NLS-2$
+
+                setItemToMessage(item, messageList, "sha-256:" + hash);
+
+            }
+            for (String hash : hashesToSearchFor.keySet()) {
+                synchronized (hashesDownloaded) {
+
+                    IItem item = hashesDownloaded.get(hash);
+                    if (item != null) {
+                        setItemToMessage(item, hashesToSearchFor.get(hash), "sha-256:" + hash);
+                    }
+
+                    if (hashesDownloaded.containsKey(hash)) {
+                        hashesToSearchFor.remove(hash);
                     }
                 }
+
             }
         }
 
@@ -1102,10 +1125,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (!hashesToSearchFor.isEmpty()) {
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
                 le.extractLinks();
-                ExecutorService e = Executors.newFixedThreadPool(20);
+                ExecutorService e = Executors.newFixedThreadPool(50);
                 ArrayList<Thread> downloads = new ArrayList<>();
                 for (LinkDownloader ld : le.getLinks()) {
-
+                    synchronized (hashesDownloaded) {
+                        hashesDownloaded.put(ld.getHash(), null);
+                    }
                     Runnable r = new Runnable() {
 
                         @Override
@@ -1130,13 +1155,13 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                                     IItem item = (IItem) container.getObj();
                                     item.getExtraAttributeMap().put("sha-256", ld.getHash());
+                                    synchronized (hashesDownloaded) {
+                                        hashesDownloaded.put(ld.getHash(), item);
+                                    }
 
                                     List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
-                                    for (Message m : messageList) {
-                                        m.setMediaItem(item);
-                                        m.setMediaQuery(escapeQuery("sha-256:" + ld.getHash(), true));
-                                    }
+                                    setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
 
                                 }
                             } catch (IOException ex) {
