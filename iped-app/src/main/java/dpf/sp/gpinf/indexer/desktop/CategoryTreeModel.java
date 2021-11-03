@@ -1,6 +1,5 @@
 package dpf.sp.gpinf.indexer.desktop;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -13,11 +12,6 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
-import dpf.sp.gpinf.indexer.config.CategoryConfig;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.search.IPEDSearcher;
-import dpf.sp.gpinf.indexer.search.IPEDSource;
 import gpinf.dev.data.Category;
 
 public class CategoryTreeModel implements TreeModel {
@@ -34,62 +28,17 @@ public class CategoryTreeModel implements TreeModel {
         else {
             CategoryTreeModel model = new CategoryTreeModel();
             App.get().categoryTree.setModel(model);
-            model.updateItemCount(model.root);
         }
     }
 
     private CategoryTreeModel() {
-        try {
-            this.root = loadHierarchy();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.root = App.get().appCase.getCategoryTree();
+        this.root.setName(rootName);
     }
 
     private void updateCategories() {
-        try {
-            Category newRoot = loadHierarchy();
-            updateChildren(this.root, newRoot);
-            updateItemCount(this.root);
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public synchronized int countNumItems(Category category, IPEDSource ipedCase) {
-        if (category.getNumItems() != -1)
-            return category.getNumItems();
-
-        if (!category.getChildren().isEmpty()) {
-            int num = 0;
-            for (Category child : category.getChildren()) {
-                num += countNumItems(child, ipedCase);
-            }
-            category.setNumItems(num);
-
-        } else {
-            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
-            IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
-            searcher.setNoScoring(true);
-            try {
-                category.setNumItems(searcher.multiSearch().getLength());
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        fireNodeChanged(category);
-        return category.getNumItems();
-    }
-
-    private void updateItemCount(Category category) {
-        new Thread() {
-            public void run() {
-                countNumItems(category, App.get().appCase);
-            }
-        }.start();
+        Category newRoot = App.get().appCase.getCategoryTree();
+        updateChildren(this.root, newRoot);
     }
 
     private void fireNodeChanged(final Category category) {
@@ -111,29 +60,9 @@ public class CategoryTreeModel implements TreeModel {
         });
     }
 
-    private String upperCaseChars(String cat) {
-        StringBuilder str = new StringBuilder();
-        for (String s : cat.split(" ")) //$NON-NLS-1$
-            if (s.length() == 3)
-                str.append(s.toUpperCase() + " "); //$NON-NLS-1$
-            else if (s.length() > 3)
-                str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " "); //$NON-NLS-1$
-            else
-                str.append(s + " "); //$NON-NLS-1$
-        return str.toString().trim();
-    }
-
-    private Category loadHierarchy() throws IOException {
-        CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
-        Category root = config.getConfiguration().clone();
-        root.setName(rootName);
-        filterEmptyCategories(root, getLeafCategories(root));
-        return root;
-    }
-
     private void updateChildren(Category oldRoot, Category newRoot) {
         int idx = 0;
-        oldRoot.clearItemCount();
+        oldRoot.setNumItems(newRoot.getNumItems());
         fireNodeChanged(oldRoot);
         for (Category cat : newRoot.getChildren()) {
             if (!oldRoot.getChildren().contains(cat)) {
@@ -167,31 +96,6 @@ public class CategoryTreeModel implements TreeModel {
         TreeModelEvent e = new TreeModelEvent(this, path.toArray(), idxs, cats);
         for (TreeModelListener l : listeners)
             l.treeNodesInserted(e);
-    }
-
-    private ArrayList<Category> getLeafCategories(Category root) {
-        ArrayList<Category> categoryList = new ArrayList<Category>();
-        for (String category : App.get().appCase.getCategories()) {
-            category = upperCaseChars(category);
-            categoryList.add(new Category(category, root));
-        }
-        return categoryList;
-    }
-
-    private boolean filterEmptyCategories(Category category, ArrayList<Category> leafCategories) {
-        boolean hasItems = false;
-        if (leafCategories.contains(category)) {
-            hasItems = true;
-        }
-        for (Category child : category.getChildren().toArray(new Category[0])) {
-            if (filterEmptyCategories(child, leafCategories)) {
-                hasItems = true;
-            }
-        }
-        if (!hasItems && category.getParent() != null) {
-            category.getParent().getChildren().remove(category);
-        }
-        return hasItems;
     }
 
     @Override

@@ -45,7 +45,7 @@ public interface IIPEDSource extends Closeable {
 
     File getCaseDir();
 
-    List<String> getCategories();
+    List<String> getLeafCategories();
 
     Set<String> getExtraAttributes();
 

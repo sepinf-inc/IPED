@@ -20,7 +20,7 @@ public class Categories {
     @Produces(MediaType.APPLICATION_JSON)
     public DataListJSON<String> get() throws Exception {
 
-        List<String> categories = Sources.multiSource.getCategories();
+        List<String> categories = Sources.multiSource.getLeafCategories();
         DataListJSON<String> result = new DataListJSON<String>(categories);
 
         return result;
