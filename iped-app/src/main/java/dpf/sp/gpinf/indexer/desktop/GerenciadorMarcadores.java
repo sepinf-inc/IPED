@@ -496,6 +496,9 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
     @Override
     public void keyPressed(KeyEvent e) {
+        if (e.isConsumed())
+            return;
+        
         if (e.getKeyCode() == KeyEvent.VK_SHIFT || e.getKeyCode() == KeyEvent.VK_CONTROL
                 || e.getKeyCode() == KeyEvent.VK_ALT) {
             return;
@@ -505,6 +508,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         //and CTRL+C (copy selected table cell content).
         if (e.isControlDown() && (e.getKeyCode() == 'B' || e.getKeyCode() == 'C')) {
             showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+            e.consume();
             return;
         }
         
@@ -523,6 +527,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (e.getKeyCode() == KeyEvent.VK_SPACE || e.getKeyCode() == 'R') {
             if (e.getSource() == list) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert4"));
+                e.consume();
             }
             return;
         }
@@ -532,14 +537,17 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         if (e.getSource() == list) {
             if (list.getSelectedIndices().length != 1) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert1"));
+                e.consume();
                 return;
             }
             if ((e.getModifiers() & KeyEvent.ALT_MASK) != 0) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert2"));
+                e.consume();
                 return;
             }
             if (keystrokeToBookmark.containsKey(stroke)) {
                 showMessage(Messages.getString("BookmarksManager.KeyStrokeAlert3"));
+                e.consume();
                 return;
             }
             int index = list.getSelectedIndex();
@@ -560,7 +568,8 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
             App.get().appCase.getMultiMarcadores().setLabelKeyStroke(label, stroke);
             App.get().appCase.getMultiMarcadores().saveState();
-
+            e.consume();
+            
         } else {
             String label = keystrokeToBookmark.get(stroke);
             if (label == null) {
@@ -568,6 +577,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             }
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
             bookmark(uniqueSelectedIds, Collections.singletonList(label), (e.getModifiers() & KeyEvent.ALT_MASK) == 0);
+            e.consume();
         }
 
     }

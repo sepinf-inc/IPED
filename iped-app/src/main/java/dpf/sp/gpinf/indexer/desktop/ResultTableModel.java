@@ -330,7 +330,15 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             } else if (field.equals(IndexItem.NAME)) {
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
-                    value = "<html><nobr>" + fragments[0].toString() + "</html>"; //$NON-NLS-1$ //$NON-NLS-2$
+                    StringBuilder s = new StringBuilder();
+                    s.append("<html><nobr>"); //$NON-NLS-1$
+                    if (App.get().getParams().FONT_START_TAG != null)
+                        s.append(App.get().getParams().FONT_START_TAG);
+                    s.append(fragments[0].toString());
+                    if (App.get().getParams().FONT_START_TAG != null)
+                        s.append(App.get().getParams().HIGHLIGHT_END_TAG);
+                    s.append("</html>"); //$NON-NLS-1$
+                    value = s.toString();
                 }
             }
 

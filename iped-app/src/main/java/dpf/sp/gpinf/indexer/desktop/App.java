@@ -70,6 +70,7 @@ import javax.swing.RowSorter.SortKey;
 import javax.swing.SortOrder;
 import javax.swing.SwingUtilities;
 import javax.swing.ToolTipManager;
+import javax.swing.UIManager;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -122,6 +123,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
 import dpf.sp.gpinf.indexer.util.IconUtil;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -771,6 +773,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         termo.getEditor().getEditorComponent().addMouseListener(appletListener);
         termo.getComponent(0).addMouseListener(appletListener);
         new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        
+        Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
+        if (foreground == null)
+            getParams().FONT_START_TAG = null;
+        else
+            getParams().FONT_START_TAG = "<font color=" + UiUtil.getHexRGB(foreground) + ">"; //$NON-NLS-1$ //$NON-NLS-2$
         
         if (refresh) {
             if (gallery != null) {
