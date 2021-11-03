@@ -661,7 +661,8 @@
 
     <mime-type type="application/x-emule-part-met">
         <sub-class-of type="application/x-p2p"/>
-        <glob pattern="*.part.met"/>
+        <glob pattern=".*\.part( \([1-9]\))?\.met" isregex="true"/>
+        <glob pattern=".*\.part\.met( \([1-9]\))?\.bak" isregex="true"/>
     </mime-type>
     
     <mime-type type="application/x-preview-with-links">
