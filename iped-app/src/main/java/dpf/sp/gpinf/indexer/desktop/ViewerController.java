@@ -198,19 +198,6 @@ public class ViewerController {
         return false;
     }
 
-    private void checkInit() {
-        if (!init) {
-            synchronized (lock) {
-                while (!init) {
-                    try {
-                        lock.wait();
-                    } catch (InterruptedException e) {
-                    }
-                }
-            }
-        }
-    }
-
     private boolean isInitialized() {
         synchronized (lock) {
             return init;
@@ -225,7 +212,9 @@ public class ViewerController {
     }
 
     public void loadFile(IStreamSource file, IStreamSource viewFile, String contentType, Set<String> highlightTerms) {
-        checkInit();
+        if (!isInitialized()) {
+            return;
+        }
         this.file = file;
         this.viewFile = viewFile;
         this.contentType = contentType;
