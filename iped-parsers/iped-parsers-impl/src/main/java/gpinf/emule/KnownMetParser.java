@@ -95,6 +95,12 @@ public class KnownMetParser {
             return -3;
         if (DEBUG)
             System.err.println("      Tags=" + numTags); //$NON-NLS-1$
+
+        // For some files numTags is zero (or one), but the parser will try to read at least 
+        // the first two tags, which should be the file name and its size. 
+        if (numTags < 2)
+            numTags = 2;
+        
         pos += 4;
         if (numTags > 0 && DEBUG)
             System.err.println();
