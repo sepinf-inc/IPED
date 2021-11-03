@@ -62,7 +62,7 @@ public class KnownMetParser {
         return l;
     }
 
-    private static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
+    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
         int pos = offset;
         long ms = toInt(b, pos) * 1000L;
         if (ms < dataMin || ms > dataMax)
@@ -75,15 +75,15 @@ public class KnownMetParser {
 
         String hash = toHex(b, pos, 16);
         if (hash == null)
-            return 0;
+            return -1;
         entry.setHash(hash);
         pos += 16;
         if (DEBUG)
             System.err.println("      Hash=" + hash); //$NON-NLS-1$
 
         int numParts = toSmall(b, pos);
-        if (numParts > 1024 || numParts < 0)
-            return 0;
+        if (numParts > 4096 || numParts < 0)
+            return -2;
 
         if (DEBUG)
             System.err.println("      Parts=" + numParts); //$NON-NLS-1$
@@ -91,10 +91,16 @@ public class KnownMetParser {
         pos += 16 * numParts;
 
         int numTags = toInt(b, pos);
-        if (numTags < 0 || numTags > 255)
-            return 0;
+        if (numTags < 0 || numTags > 1024)
+            return -3;
         if (DEBUG)
             System.err.println("      Tags=" + numTags); //$NON-NLS-1$
+
+        // For some files numTags is zero (or one), but the parser will try to read at least 
+        // the first two tags, which should be the file name and its size. 
+        if (numTags < 2)
+            numTags = 2;
+        
         pos += 4;
         if (numTags > 0 && DEBUG)
             System.err.println();
@@ -130,11 +136,11 @@ public class KnownMetParser {
             } else if (tagType == 2) {
                 int slen = toSmall(b, pos);
                 if (slen < 0 || slen > 1024)
-                    return 0;
+                    return -4;
                 pos += 2;
                 strVal = toStr(b, pos, slen);
                 if (strVal == null)
-                    return 0;
+                    return -5;
                 pos += slen;
                 if (DEBUG)
                     System.err.println("          Str=" + strVal); //$NON-NLS-1$
@@ -163,7 +169,7 @@ public class KnownMetParser {
             } else {
                 if (DEBUG)
                     System.err.println("TagType desconhecido = " + tagType); //$NON-NLS-1$
-                return 0;
+                return -6;
             }
             if (DEBUG)
                 System.err.println();
@@ -212,7 +218,7 @@ public class KnownMetParser {
             }
         }
         if (entry.getName() == null)
-            return 0;
+            return -7;
         return pos - offset;
     }
 

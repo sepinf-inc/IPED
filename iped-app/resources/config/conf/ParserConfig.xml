@@ -294,6 +294,7 @@
         </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.PartMetParser"></parser>
         <parser class="gpinf.emule.PreferencesDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
