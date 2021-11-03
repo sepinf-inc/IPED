@@ -56,6 +56,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
@@ -68,6 +69,7 @@ import dpf.sp.gpinf.indexer.util.SelectImagePathWithDialog;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.TouchSleuthkitImages;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.Category;
 import gpinf.dev.data.Item;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -104,7 +106,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private ExecutorService searchExecutorService;
 
-    protected ArrayList<String> categories = new ArrayList<String>();
+    protected ArrayList<String> leafCategories = new ArrayList<String>();
+    protected Category categoryTree;
 
     private IMarcadores marcadores;
     IMultiMarcadores globalMarcadores;
@@ -218,7 +221,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
             } else
                 textSizes = new long[lastId + 1];
 
-            loadCategories();
+            loadLeafCategories();
+            loadCategoryTree();
 
             loadKeywords();
 
@@ -305,7 +309,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
         }
     }
 
-    private void loadCategories() throws IOException {
+    private void loadLeafCategories() throws IOException {
         Fields fields = atomicReader.fields();
         if (fields == null)
             return;
@@ -315,8 +319,66 @@ public class IPEDSource implements Closeable, IIPEDSource {
         TermsEnum termsEnum = terms.iterator();
         while (termsEnum.next() != null) {
             String cat = termsEnum.term().utf8ToString();
-            categories.add(cat);
+            leafCategories.add(cat);
         }
+    }
+
+    protected void loadCategoryTree() {
+        CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
+        Category root = config.getConfiguration().clone();
+        // root.setName(rootName);
+        filterEmptyCategories(root, getLeafCategories(root));
+        countNumItems(root);
+        categoryTree = root;
+    }
+
+    private ArrayList<Category> getLeafCategories(Category root) {
+        ArrayList<Category> categoryList = new ArrayList<Category>();
+        for (String category : leafCategories) {
+            categoryList.add(new Category(category, root));
+        }
+        return categoryList;
+    }
+
+    private boolean filterEmptyCategories(Category category, ArrayList<Category> leafCategories) {
+        boolean hasItems = false;
+        if (leafCategories.contains(category)) {
+            hasItems = true;
+        }
+        for (Category child : category.getChildren().toArray(new Category[0])) {
+            if (filterEmptyCategories(child, leafCategories)) {
+                hasItems = true;
+            }
+        }
+        if (!hasItems && category.getParent() != null) {
+            category.getParent().getChildren().remove(category);
+        }
+        return hasItems;
+    }
+
+    private int countNumItems(Category category) {
+        if (category.getNumItems() != -1)
+            return category.getNumItems();
+
+        if (!category.getChildren().isEmpty()) {
+            int num = 0;
+            for (Category child : category.getChildren()) {
+                num += countNumItems(child);
+            }
+            category.setNumItems(num);
+
+        } else {
+            String query = IndexItem.CATEGORY + ":\"" + category.getName() + "\"";
+            IPEDSearcher searcher = new IPEDSearcher(this, query);
+            searcher.setNoScoring(true);
+            try {
+                category.setNumItems(searcher.luceneSearch().getLength());
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return category.getNumItems();
     }
 
     private void loadKeywords() {
@@ -581,8 +643,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return splitedIds.get(id);
     }
 
-    public List<String> getCategories() {
-        return categories;
+    public List<String> getLeafCategories() {
+        return leafCategories;
+    }
+
+    public Category getCategoryTree() {
+        return categoryTree;
     }
 
     public Set<String> getKeywords() {

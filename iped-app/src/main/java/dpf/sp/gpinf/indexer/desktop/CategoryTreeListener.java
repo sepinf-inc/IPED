@@ -15,9 +15,8 @@ import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 
-import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
-import dpf.sp.gpinf.indexer.desktop.CategoryTreeModel.Category;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import gpinf.dev.data.Category;
 
 public class CategoryTreeListener implements TreeSelectionListener, TreeExpansionListener, ClearFilterListener {
 
@@ -72,10 +71,10 @@ public class CategoryTreeListener implements TreeSelectionListener, TreeExpansio
     }
 
     private void addCategoryToQuery(Category category, Builder builder) {
-        String name = IndexItem.normalize(category.name, true);
+        String name = IndexItem.normalize(category.getName(), true);
         builder.add(new TermQuery(new Term(IndexItem.CATEGORY, name)), Occur.SHOULD);
 
-        for (Category subcat : category.children) {
+        for (Category subcat : category.getChildren()) {
             addCategoryToQuery(subcat, builder);
         }
     }
