@@ -66,14 +66,18 @@ public class PartMetParser extends AbstractParser {
         byte[] bytes = new byte[1 << 20];
         IOUtils.read(stream, bytes);
         int version = bytes[0] & 0xFF;
-        if (version != 224 && version != 225 && version != 226)
-            return;
+        if (version != 224 && version != 225 && version != 226) {
+            throw new TikaException("Detected part.met file format version not supported: " + version);
+        }
+
         KnownMetEntry e = new KnownMetEntry();
         int ret = gpinf.emule.KnownMetParser.parseEntry(e, 1, bytes);
-        if (ret <= 0)
-            return;
+        if (ret <= 0) {
+            throw new TikaException("part.met file parsing returned error code " + ret);
+        }
 
         metadata.add(ExtraProperties.SHARED_HASHES, e.getHash());
+        metadata.set(ExtraProperties.P2P_REGISTRY_COUNT, String.valueOf(1));
         
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
