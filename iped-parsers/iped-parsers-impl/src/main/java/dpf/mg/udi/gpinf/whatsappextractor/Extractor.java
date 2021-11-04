@@ -6,16 +6,20 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.List;
 
+import org.apache.tika.parser.ParseContext;
+
 public abstract class Extractor {
     protected final File databaseFile;
     protected List<Chat> chatList;
     protected final WAContactsDirectory contacts;
     protected WAAccount account;
+    protected ParseContext context;
 
-    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
+    protected Extractor(File databaseFile, WAContactsDirectory contacts, WAAccount account, ParseContext context) {
         this.databaseFile = databaseFile;
         this.contacts = contacts;
         this.account = account;
+        this.context = context;
     }
 
     /**

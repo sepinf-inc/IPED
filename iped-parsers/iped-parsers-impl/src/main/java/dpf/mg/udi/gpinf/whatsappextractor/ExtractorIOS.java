@@ -40,6 +40,8 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.regex.Pattern;
 
+import org.apache.tika.parser.ParseContext;
+
 import com.google.common.collect.ImmutableSet;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
@@ -54,8 +56,8 @@ public class ExtractorIOS extends Extractor {
 
     private SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); //$NON-NLS-1$
 
-    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
-        super(databaseFile, contacts, account);
+    public ExtractorIOS(File databaseFile, WAContactsDirectory contacts, WAAccount account, ParseContext context) {
+        super(databaseFile, contacts, account, context);
         dateFormat.setTimeZone(TimeZone.getTimeZone("GMT")); //$NON-NLS-1$
     }
 
@@ -183,6 +185,7 @@ public class ExtractorIOS extends Extractor {
                     } catch (IllegalArgumentException _) {
                     } // ignore
                 }
+                m.setDeleted(false);
                 messages.add(m);
 
             }
@@ -283,11 +286,11 @@ public class ExtractorIOS extends Extractor {
             + "ORDER BY ZLASTMESSAGEDATE DESC"; //$NON-NLS-1$
     /*
      * Filtragem por status da mensagem (ZMESSAGESTATUS):
-     * 
+     *
      * 0 - Mensagens de sistema. TODO: decodificar estas mensagens. Possiveis campos
      * para realizar decodificacao: Z_OPT, ZGROUPEVENTTYPE, ZMESSAGETYPE,
      * ZSPOTLIGHTSTATUS atualmente mensagens de sistema ignoradas
-     * 
+     *
      * 1 - mensagens enviadas 3 - mensagens enviadas 5 - mensagens com mídia
      * associada 6 - mensagens 8 - mensagens
      */

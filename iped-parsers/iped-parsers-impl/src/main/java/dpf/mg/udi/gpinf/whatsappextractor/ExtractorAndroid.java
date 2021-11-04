@@ -39,11 +39,23 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.tika.parser.ParseContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import dpf.mg.udi.gpinf.sqlite.SQLiteRecordValidator;
+import dpf.mg.udi.gpinf.sqlite.SQLiteRowResultSetAdapter;
+import dpf.mg.udi.gpinf.sqlite.SQLiteUndelete;
+import dpf.mg.udi.gpinf.sqlite.SQLiteUndeleteTable;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
+import fqlite.base.SqliteRow;
 
 /**
  *
@@ -53,15 +65,34 @@ public class ExtractorAndroid extends Extractor {
 
     private boolean hasThumbTable = false;
     private boolean hasEditVersionCol = false;
+    private static Logger logger = LoggerFactory.getLogger(ExtractorAndroid.class);
     private boolean hasChatView = false;
 
-    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account) {
-        super(databaseFile, contacts, account);
+    public ExtractorAndroid(File databaseFile, WAContactsDirectory contacts, WAAccount account, ParseContext context) {
+        super(databaseFile, contacts, account, context);
     }
 
     @Override
     protected List<Chat> extractChatList() throws WAExtractorException {
         List<Chat> list = new ArrayList<>();
+
+        SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
+        undelete.addTableToRecover("messages");
+        undelete.addRecordValidator("messages", new WAAndroidMessageValidator());
+        SQLiteUndeleteTable result = undelete.undeleteData().get("messages");
+
+        Map<String, List<SqliteRow>> undeletedMessages = new HashMap<>();
+        result.getTableRows().stream().forEach(row -> {
+            String chatId = result.getTextValue(row, "key_remote_jid");
+            if (chatId != null) {
+                List<SqliteRow> rows = undeletedMessages.get(chatId);
+                if (rows == null) {
+                    rows = new ArrayList<>();
+                    undeletedMessages.put(chatId, rows);
+                }
+                rows.add(row);
+            }
+        });
 
         try (Connection conn = getConnection(); Statement stmt = conn.createStatement()) {
             boolean hasSortTimestamp = databaseHasSortTimestamp(conn);
@@ -85,7 +116,7 @@ public class ExtractorAndroid extends Extractor {
                 }
 
                 for (Chat c : list) {
-                    c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat()));
+                    c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat(), undeletedMessages, result, hasThumbTable, hasEditVersionCol));
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn);
                     }
@@ -130,7 +161,7 @@ public class ExtractorAndroid extends Extractor {
         }
         return result;
     }
-    
+
     private boolean databaseHasChatView(Connection conn) throws SQLException {
         boolean result = false;
         DatabaseMetaData md = conn.getMetaData();
@@ -154,77 +185,116 @@ public class ExtractorAndroid extends Extractor {
         return result;
     }
 
-    private List<Message> extractMessages(Connection conn, WAContact remote, boolean isGroupChat) throws SQLException {
+    private List<Message> extractMessages(Connection conn, WAContact remote, boolean isGroupChat, Map<String, List<SqliteRow>> undeletedMessages,
+                                          SQLiteUndeleteTable undeleteTable, boolean hasThumbTable, boolean hasEditVersionCol) throws SQLException {
         List<Message> messages = new ArrayList<>();
+
+        String id = remote.getId();
+        id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
+
         try (PreparedStatement stmt = conn
                 .prepareStatement(hasThumbTable ? SELECT_MESSAGES_THUMBS_TABLE
                         : hasEditVersionCol ? SELECT_MESSAGES_NO_THUMBS_TABLE : SELECT_MESSAGES_NO_EDIT_VERSION)) {
             stmt.setFetchSize(1000);
-            String id = remote.getId();
-            id += isGroupChat ? "@g.us" : "@s.whatsapp.net"; //$NON-NLS-1$ //$NON-NLS-2$
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                Message m = new Message();
-                if (account != null)
-                    m.setLocalResource(account.getId());
-                int type = rs.getInt("messageType"); //$NON-NLS-1$
-                int status = rs.getInt("status"); //$NON-NLS-1$
-                String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
-                String str = SQLite3DBParser.getStringIfExists(rs, "edit_version"); //$NON-NLS-1$
-                Integer edit_version = str != null ? Integer.parseInt(str) : null;
-                long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
-                m.setId(rs.getLong("id")); //$NON-NLS-1$
-                String remoteResource = rs.getString("remoteResource");
-                if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
-                    remoteResource = remote.getFullId();
-                }
-                m.setRemoteResource(remoteResource); // $NON-NLS-1$
-                m.setStatus(status); // $NON-NLS-1$
-                m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
-                m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
-                m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
-                m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
-                m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
-                m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
-                m.setMediaCaption(caption); // $NON-NLS-1$
-                m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
-                m.setMediaSize(media_size);
-                m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
-                m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
-                m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
-                m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
-                if (m.getMessageType() == CONTACT_MESSAGE) {
-                    m.setVcards(Arrays.asList(new String[] { m.getData() }));
-                }
-                byte[] thumbData = rs.getBytes("rawData"); //$NON-NLS-1$
-                if (thumbData == null) {
-                    thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
-                }
-                m.setThumbData(thumbData);
-                if (m.isFromMe()) {
-                    switch (m.getStatus()) {
-                        case 4:
-                            m.setMessageStatus(MessageStatus.MESSAGE_SENT);
-                            break;
-                        case 5:
-                            m.setMessageStatus(MessageStatus.MESSAGE_DELIVERED);
-                            break;
-                        case 13:
-                            m.setMessageStatus(MessageStatus.MESSAGE_VIEWED);
-                            break;
-                        case 0:
-                            m.setMessageStatus(MessageStatus.MESSAGE_UNSENT);
-                            break;
-                        default:
-                            break;
-                    }
-                }
-                messages.add(m);
-
+                messages.add(createMessageFromDBRow(rs, remote, isGroupChat, false, hasThumbTable, hasEditVersionCol));
             }
         }
+
+        // get deleted messages
+        SQLiteRowResultSetAdapter rs = new SQLiteRowResultSetAdapter(undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(), MESSAGES_TABLE_COL_MAP);
+        while (rs.next()) {
+            try {
+                Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);
+                messages.add(m);
+            } catch (SQLException e) {
+            } catch (RuntimeException e) {
+                logger.warn(e.toString());
+            }
+        }
+
+        Collections.sort(messages, (a, b) -> a.getTimeStamp().compareTo(b.getTimeStamp()));
         return messages;
+    }
+
+    private Message createMessageFromDBRow(ResultSet rs,  WAContact remote, boolean isGroupChat, boolean deleted, boolean hasThumbTable, boolean hasEditVersionCol) throws SQLException {
+        Message m = new Message();
+        if (account != null)
+            m.setLocalResource(account.getId());
+        int type = rs.getInt("messageType"); //$NON-NLS-1$
+        int status = rs.getInt("status"); //$NON-NLS-1$
+        String caption = rs.getString("mediaCaption"); //$NON-NLS-1$
+        String str = null;
+        if (hasEditVersionCol) {
+            try {
+                str = rs.getString("edit_version"); //$NON-NLS-1$
+            } catch (RuntimeException | SQLException e) {
+            }
+        }
+        Integer edit_version = str != null ? Integer.parseInt(str) : null;
+        long media_size = rs.getLong("mediaSize"); //$NON-NLS-1$
+        m.setId(rs.getLong("id")); //$NON-NLS-1$
+        String remoteResource = rs.getString("remoteResource");
+        if (remoteResource == null || remoteResource.isEmpty() || !isGroupChat) {
+            remoteResource = remote.getFullId();
+        }
+        m.setRemoteResource(remoteResource); // $NON-NLS-1$
+        m.setStatus(status); // $NON-NLS-1$
+        m.setData(Util.getUTF8String(rs, "data")); //$NON-NLS-1$
+        m.setFromMe(rs.getInt("fromMe") == 1); //$NON-NLS-1$
+        m.setTimeStamp(new Date(rs.getLong("timestamp"))); //$NON-NLS-1$
+        m.setMediaUrl(rs.getString("mediaUrl")); //$NON-NLS-1$
+        m.setMediaMime(rs.getString("mediaMime")); //$NON-NLS-1$
+        m.setMediaName(rs.getString("mediaName")); //$NON-NLS-1$
+        m.setMediaCaption(caption); // $NON-NLS-1$
+        m.setMediaHash(rs.getString("mediaHash"), true); //$NON-NLS-1$
+        m.setMediaSize(media_size);
+        m.setLatitude(rs.getDouble("latitude")); //$NON-NLS-1$
+        m.setLongitude(rs.getDouble("longitude")); //$NON-NLS-1$
+        m.setMessageType(decodeMessageType(type, status, edit_version, caption, (int) media_size));
+        m.setMediaDuration(rs.getInt("media_duration")); //$NON-NLS-1$
+        if (m.getMessageType() == CONTACT_MESSAGE) {
+            m.setVcards(Arrays.asList(new String[] { m.getData() }));
+        }
+        byte[] thumbData = null;
+        if (hasThumbTable) {
+            try {
+                thumbData = rs.getBytes("thumbData"); //$NON-NLS-1$
+            } catch (SQLException e) {
+            }
+        }
+
+        if (thumbData == null) {
+            try {
+                thumbData = rs.getBytes("rawData"); //$NON-NLS-1$
+            } catch (SQLException e) {
+            }
+        }
+        m.setThumbData(thumbData);
+        if (m.isFromMe()) {
+            switch (m.getStatus()) {
+                case 4:
+                    m.setMessageStatus(MessageStatus.MESSAGE_SENT);
+                    break;
+                case 5:
+                    m.setMessageStatus(MessageStatus.MESSAGE_DELIVERED);
+                    break;
+                case 13:
+                    m.setMessageStatus(MessageStatus.MESSAGE_VIEWED);
+                    break;
+                case 0:
+                    m.setMessageStatus(MessageStatus.MESSAGE_UNSENT);
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        m.setDeleted(deleted);
+
+        return m;
     }
 
     protected Message.MessageType decodeMessageType(int messageType, int status, Integer edit_version, String caption,
@@ -326,7 +396,7 @@ public class ExtractorAndroid extends Extractor {
                         result = DELETED_FROM_SENDER;
                     }
                 }
-                break; 
+                break;
             case 16:
                 result = SHARE_LOCATION_MESSAGE;
                 break;
@@ -346,7 +416,7 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String SELECT_CHAT_LIST_NO_SORTTIMESTAMP = "SELECT _id as id,key_remote_jid AS contact," //$NON-NLS-1$
             + " subject, creation FROM chat_list ORDER BY creation DESC"; //$NON-NLS-1$
-    
+
     private static final String SELECT_CHAT_VIEW = "SELECT _id as id, raw_string_jid AS contact," //$NON-NLS-1$
             + " subject, created_timestamp as creation, sort_timestamp FROM chat_view ORDER BY sort_timestamp DESC"; //$NON-NLS-1$
 
@@ -387,4 +457,53 @@ public class ExtractorAndroid extends Extractor {
 
     private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where 'group'=?"; //$NON-NLS-1$
 
+    private static final Map<String, String> MESSAGES_TABLE_COL_MAP = new HashMap<>();
+
+    static {
+        MESSAGES_TABLE_COL_MAP.put("id", "_id");
+        MESSAGES_TABLE_COL_MAP.put("remoteId", "key_remote_jid");
+        MESSAGES_TABLE_COL_MAP.put("remoteResource", "remote_resource");
+        MESSAGES_TABLE_COL_MAP.put("fromMe", "key_from_me");
+        MESSAGES_TABLE_COL_MAP.put("mediaUrl", "media_url");
+        MESSAGES_TABLE_COL_MAP.put("mediaMime", "media_mime_type");
+        MESSAGES_TABLE_COL_MAP.put("mediaSize", "media_size");
+        MESSAGES_TABLE_COL_MAP.put("mediaName", "media_name");
+        MESSAGES_TABLE_COL_MAP.put("messageType", "media_wa_type");
+        MESSAGES_TABLE_COL_MAP.put("rawData", "raw_data");
+        MESSAGES_TABLE_COL_MAP.put("mediaCaption", "media_caption");
+        MESSAGES_TABLE_COL_MAP.put("mediaHash", "media_hash");
+        MESSAGES_TABLE_COL_MAP.put("thumbData", "thumbnail");
+    }
+
+    private static class WAAndroidMessageValidator implements SQLiteRecordValidator {
+
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {
+                String remoteId = row.getTextValue("key_remote_jid");
+                if (remoteId == null || !(remoteId.endsWith("whatsapp.net") || remoteId.endsWith("g.us"))) {
+                    return false;
+                }
+
+                long fromMe = row.getIntValue("key_from_me");
+                if (fromMe != 0 && fromMe != 1) {
+                    return false;
+                }
+
+                long status = row.getIntValue("status");
+                if (status < 0 || status >= 100) {
+                    return false;
+                }
+
+                long timestamp = row.getIntValue("timestamp");
+                if (timestamp < 1230768000000L || timestamp > 2461449600000L) {
+                    return false;
+                }
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
+
+    }
 }
