@@ -8,14 +8,14 @@
     </parent>
     <artifactId>iped-parsers-impl</artifactId>
     <packaging>jar</packaging>
-    
+
     <dependencies>
-    	<dependency>
-    		<groupId>org.slf4j</groupId>
-    		<artifactId>slf4j-api</artifactId>
-    		<version>${slf4j.version}</version>
-    		<type>jar</type>
-    	</dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+            <type>jar</type>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-core</artifactId>
@@ -25,53 +25,53 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-    		<version>3.8.0</version>
-    		<scope>test</scope>
-		</dependency>
-		<dependency>
-    		<groupId>javax.xml.bind</groupId>
-    		<artifactId>jaxb-api</artifactId>
-    		<version>2.1</version>
-		</dependency>
+            <version>3.8.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>javax.xml.bind</groupId>
+            <artifactId>jaxb-api</artifactId>
+            <version>2.1</version>
+        </dependency>
         <dependency>
             <groupId>org.apache.tika</groupId>
             <artifactId>tika-parsers</artifactId>
             <version>${tika.version}</version>
             <type>jar</type>
             <exclusions>
-        		<exclusion>
-          			<groupId>com.pff</groupId>
-    				<artifactId>java-libpst</artifactId>
-        		</exclusion>
-        		<exclusion>
-  					<groupId>org.opengis</groupId>
-				  	<artifactId>geoapi</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>edu.ucar</groupId>
-          			<artifactId>*</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>org.apache.opennlp</groupId>
-          			<artifactId>*</artifactId>
-        		</exclusion>
-        		<exclusion>
-					<groupId>org.apache.sis.core</groupId>
-					<artifactId>*</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.sis.storage</groupId>
-					<artifactId>sis-netcdf</artifactId>
-				</exclusion>
-        		<exclusion>
-          			<groupId>com.google.guava</groupId>
-          			<artifactId>guava</artifactId>
-        		</exclusion>
-        		<exclusion>
+                <exclusion>
+                    <groupId>com.pff</groupId>
+                    <artifactId>java-libpst</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.opengis</groupId>
+                    <artifactId>geoapi</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>edu.ucar</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.opennlp</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sis.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.sis.storage</groupId>
+                    <artifactId>sis-netcdf</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>com.google.guava</groupId>
+                    <artifactId>guava</artifactId>
+                </exclusion>
+                <exclusion>
                     <groupId>xerces</groupId>
                     <artifactId>xercesImpl</artifactId>
                 </exclusion>
-      		</exclusions> 
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.tallison</groupId>
@@ -103,36 +103,36 @@
             <type>jar</type>
         </dependency>
         <dependency>
-        	<groupId>iped</groupId>
-        	<artifactId>iped-utils</artifactId>
-        	<version>${project.version}</version>
+            <groupId>iped</groupId>
+            <artifactId>iped-utils</artifactId>
+            <version>${project.version}</version>
         </dependency>
-		<dependency>
-			<groupId>net.sf.sevenzipjbinding</groupId>
-			<artifactId>sevenzipjbinding</artifactId>
-			<version>16.02-2.01</version>
-		</dependency>
-		<dependency>
-			<groupId>net.sf.sevenzipjbinding</groupId>
-			<artifactId>sevenzipjbinding-all-platforms</artifactId>
-			<version>16.02-2.01</version>
-		</dependency>
-		<dependency>
-	        <groupId>com.googlecode.ez-vcard</groupId>
-	        <artifactId>ez-vcard</artifactId>
-	        <version>0.10.6</version>
-	        <exclusions>
-				<!-- hCard functionality not needed -->
-				<exclusion>
-					<groupId>org.jsoup</groupId>
-					<artifactId>jsoup</artifactId>
-				</exclusion>
-				<!-- jCard functionality not needed -->
-				<exclusion>
-					<groupId>com.fasterxml.jackson.core</groupId>
-					<artifactId>jackson-core</artifactId>
-				</exclusion>
-			</exclusions>
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding</artifactId>
+            <version>16.02-2.01</version>
+        </dependency>
+        <dependency>
+            <groupId>net.sf.sevenzipjbinding</groupId>
+            <artifactId>sevenzipjbinding-all-platforms</artifactId>
+            <version>16.02-2.01</version>
+        </dependency>
+        <dependency>
+            <groupId>com.googlecode.ez-vcard</groupId>
+            <artifactId>ez-vcard</artifactId>
+            <version>0.10.6</version>
+            <exclusions>
+                <!-- hCard functionality not needed -->
+                <exclusion>
+                    <groupId>org.jsoup</groupId>
+                    <artifactId>jsoup</artifactId>
+                </exclusion>
+                <!-- jCard functionality not needed -->
+                <exclusion>
+                    <groupId>com.fasterxml.jackson.core</groupId>
+                    <artifactId>jackson-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.dampcake</groupId>
@@ -156,21 +156,36 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-    		<groupId>black.ninia</groupId>
-  			<artifactId>jep</artifactId>
-  			<version>3.9.1</version>
-  		</dependency>
+            <groupId>black.ninia</groupId>
+            <artifactId>jep</artifactId>
+            <version>3.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.antlr</groupId>
+            <artifactId>antlr4-runtime</artifactId>
+            <version>4.9.2</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+            <version>1.15</version>
+        </dependency>
         <dependency>
             <groupId>net.sf</groupId>
             <artifactId>java-dbx</artifactId>
             <version>${java.dbx.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>io.github.fmpfeifer</groupId>
+            <artifactId>libfqlite</artifactId>
+            <version>1.56.02-beta</version>
+        </dependency>
     </dependencies>
-    
+
     <build>
-    	<plugins>
-    		<plugin>
+        <plugins>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <version>2.4</version>
@@ -183,6 +198,6 @@
                     </execution>
                 </executions>
             </plugin>
-    	</plugins>
+        </plugins>
     </build>
 </project>
