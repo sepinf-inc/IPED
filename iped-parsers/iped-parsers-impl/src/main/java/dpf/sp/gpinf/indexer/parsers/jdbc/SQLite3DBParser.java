@@ -77,8 +77,10 @@ public class SQLite3DBParser extends AbstractDBParser {
         try {
             File dbFile = TikaInputStream.get(stream, tmp).getFile();
             boolean isTempDb = IOUtil.isTemporaryFile(dbFile);
-            if (isTempDb)
-                exportWalLog(dbFile, context);
+            if (isTempDb) {
+                exportWalLog(dbFile, context, null);
+                exportRollbackJournal(dbFile, context, null);
+            }
 
             SQLiteConfig config = new SQLiteConfig();
             config.setReadOnly(true);
@@ -96,6 +98,7 @@ public class SQLite3DBParser extends AbstractDBParser {
                             // these files may be created by sqlite, even if wal was not exported
                             new File(dbFile.getAbsolutePath() + "-wal").delete();
                             new File(dbFile.getAbsolutePath() + "-shm").delete();
+                            new File(dbFile.getAbsoluteFile() + "-journal").delete();
                         }
                     } catch (IOException e) {
                         throw new SQLException(e);
@@ -109,23 +112,36 @@ public class SQLite3DBParser extends AbstractDBParser {
         return connection;
     }
 
-    private File exportWalLog(File dbFile, ParseContext context) {
+    public static File exportWalLog(File dbFile, ParseContext context, TemporaryResources tmp) {
+        return exportRelatedFile(dbFile, "-wal", context, tmp);
+    }
+    
+    public static File exportRollbackJournal(File dbFile, ParseContext context, TemporaryResources tmp) {
+        return exportRelatedFile(dbFile, "-journal", context, tmp);
+    }
+    
+    private static File exportRelatedFile(File theFile, String suffix, ParseContext context, TemporaryResources tmp) {
         IItemSearcher searcher = context.get(IItemSearcher.class);
         if (searcher != null) {
-            IItemBase dbItem = context.get(IItemBase.class);
-            if (dbItem != null) {
-                String dbPath = dbItem.getPath();
-                String walQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(dbPath + "-wal") + "\"";
-                List<IItemBase> items = searcher.search(walQuery);
+            IItemBase parsingItem = context.get(IItemBase.class);
+            if (parsingItem != null) {
+                String parsingFilePath = parsingItem.getPath();
+                String relatedFileQuery = BasicProps.PATH + ":\"" + searcher.escapeQuery(parsingFilePath + suffix) + "\"";
+                List<IItemBase> items = searcher.search(relatedFileQuery);
                 if (items.size() > 0) {
-                    IItemBase wal = items.get(0);
-                    File walTemp = new File(dbFile.getAbsolutePath() + "-wal");
-                    try (InputStream in = wal.getBufferedStream()) {
-                        Files.copy(in, walTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                    IItemBase relatedItem = items.get(0);
+                    File relatedFileTemp = new File(theFile.getAbsolutePath() + suffix);
+                    try (InputStream in = relatedItem.getBufferedStream()) {
+                        Files.copy(in, relatedFileTemp.toPath(), StandardCopyOption.REPLACE_EXISTING);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    return walTemp;
+                    if (null != tmp) {
+                        tmp.addResource(()-> {
+                            relatedFileTemp.delete();
+                        });
+                    }
+                    return relatedFileTemp;
                 }
             }
         }
