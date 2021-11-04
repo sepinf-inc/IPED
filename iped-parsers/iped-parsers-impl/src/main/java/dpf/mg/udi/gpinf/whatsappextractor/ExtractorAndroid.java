@@ -50,7 +50,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.mg.udi.gpinf.sqlite.SQLiteRecordValidator;
-import dpf.mg.udi.gpinf.sqlite.SQLiteRowResultSetAdapter;
+import dpf.mg.udi.gpinf.sqlite.SQLiteUndeleteTableResultSetAdapter;
 import dpf.mg.udi.gpinf.sqlite.SQLiteUndelete;
 import dpf.mg.udi.gpinf.sqlite.SQLiteUndeleteTable;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageStatus;
@@ -204,7 +204,7 @@ public class ExtractorAndroid extends Extractor {
         }
 
         // get deleted messages
-        SQLiteRowResultSetAdapter rs = new SQLiteRowResultSetAdapter(undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(), MESSAGES_TABLE_COL_MAP);
+        SQLiteUndeleteTableResultSetAdapter rs = new SQLiteUndeleteTableResultSetAdapter(undeletedMessages.getOrDefault(id, Collections.emptyList()), undeleteTable.getColumnNames(), MESSAGES_TABLE_COL_MAP);
         while (rs.next()) {
             try {
                 Message m = createMessageFromDBRow(rs, remote, isGroupChat, true, hasThumbTable, hasEditVersionCol);

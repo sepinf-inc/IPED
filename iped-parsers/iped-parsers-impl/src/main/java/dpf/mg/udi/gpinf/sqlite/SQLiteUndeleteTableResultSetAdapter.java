@@ -29,34 +29,34 @@ import java.util.function.Predicate;
 
 import fqlite.base.SqliteRow;
 
-public class SQLiteRowResultSetAdapter implements ResultSet {
+public class SQLiteUndeleteTableResultSetAdapter implements ResultSet {
 
     private SQLiteUndeleteTable table;
     private int idx;
     private Map<String, String> columnNamesMap;
     private Set<String> colNamesSet;
 
-    public SQLiteRowResultSetAdapter(SQLiteUndeleteTable table, Predicate<SqliteRow> filter) {
+    public SQLiteUndeleteTableResultSetAdapter(SQLiteUndeleteTable table, Predicate<SqliteRow> filter) {
         this(table, Collections.emptyMap(), filter);
     }
-    
-    public SQLiteRowResultSetAdapter(SQLiteUndeleteTable table, Map<String, String> columnNamesMap, Predicate<SqliteRow> filter) {
+
+    public SQLiteUndeleteTableResultSetAdapter(SQLiteUndeleteTable table, Map<String, String> columnNamesMap, Predicate<SqliteRow> filter) {
         this(table.getTableRows(), table.getColumnNames(), columnNamesMap, filter);
     }
-    
-    public SQLiteRowResultSetAdapter(List<SqliteRow> rows, List<String> columnNames) {
+
+    public SQLiteUndeleteTableResultSetAdapter(List<SqliteRow> rows, List<String> columnNames) {
         this(rows, columnNames, Collections.emptyMap());
     }
 
-    public SQLiteRowResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Map<String, String> columnNamesMap) {
+    public SQLiteUndeleteTableResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Map<String, String> columnNamesMap) {
         this(rows, columnNames, columnNamesMap, (x) -> true);
     }
 
-    public SQLiteRowResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Predicate<SqliteRow> filter) {
+    public SQLiteUndeleteTableResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Predicate<SqliteRow> filter) {
         this(rows, columnNames, Collections.emptyMap(), filter);
     }
-    
-    public SQLiteRowResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Map<String, String> columnNamesMap, Predicate<SqliteRow> filter) {
+
+    public SQLiteUndeleteTableResultSetAdapter(List<SqliteRow> rows, List<String> columnNames, Map<String, String> columnNamesMap, Predicate<SqliteRow> filter) {
         this.columnNamesMap = columnNamesMap;
         this.table = new SQLiteUndeleteTable(columnNames);
         this.colNamesSet = new HashSet<>(columnNames);
@@ -67,7 +67,7 @@ public class SQLiteRowResultSetAdapter implements ResultSet {
         }
         idx = -1;
     }
-    
+
     private String getMappedColumnName(String columnName) throws SQLException {
         String result = columnNamesMap.getOrDefault(columnName, columnName);
         if (colNamesSet.contains(result)) {
