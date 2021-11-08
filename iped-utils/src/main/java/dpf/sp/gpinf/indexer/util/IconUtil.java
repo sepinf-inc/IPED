@@ -1,21 +1,24 @@
 package dpf.sp.gpinf.indexer.util;
 
+import java.awt.Component;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class IconUtil {
-    private static final Map<String, ImageIcon> memoIcon = new HashMap<String, ImageIcon>();
+    private static final Map<String, Icon> memoIcon = new HashMap<String, Icon>();
 
-    public static final ImageIcon getIcon(String name, String resPath) {
+    public static final Icon getIcon(String name, String resPath) {
         return getIcon(name, resPath, 0);
     }
 
-    public static final ImageIcon getIcon(String name, String resPath, int iconSize) {
+    public static final Icon getIcon(String name, String resPath, int iconSize) {
         String key = resPath + "/" + name + "/" + iconSize;
         synchronized (memoIcon) {
             if (memoIcon.containsKey(key)) {
@@ -23,25 +26,39 @@ public class IconUtil {
             }
         }
         try {
-            ImageIcon icon = new ImageIcon(IconUtil.class.getResource(resPath + name + ".png"));
+            ImageIcon orgIcon = new ImageIcon(IconUtil.class.getResource(resPath + name + ".png"));
+            Icon resizedIcon = orgIcon;
             if (iconSize > 0) {
-                double zoom = Math.min(iconSize / (double) icon.getIconWidth(),
-                        iconSize / (double) icon.getIconHeight());
-                int w = (int) Math.round(zoom * icon.getIconWidth());
-                int h = (int) Math.round(zoom * icon.getIconHeight());
-                BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-                Graphics2D g2 = (Graphics2D) img.getGraphics();
-                g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2.drawImage(icon.getImage(), 0, 0, w, h, null);
-                icon = new ImageIcon(img);
-                g2.dispose();
+                double zoom = Math.min(iconSize / (double) orgIcon.getIconWidth(),
+                        iconSize / (double) orgIcon.getIconHeight());
+                int w = (int) Math.round(zoom * orgIcon.getIconWidth());
+                int h = (int) Math.round(zoom * orgIcon.getIconHeight());
+                resizedIcon = new Icon() {
+                    @Override
+                    public void paintIcon(Component c, Graphics g, int x, int y) {
+                        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
+                        Graphics2D g2 = (Graphics2D) img.getGraphics();
+                        g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                        g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+                        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                        g2.drawImage(orgIcon.getImage(), x, y, w, h, null);
+                    }
+
+                    @Override
+                    public int getIconWidth() {
+                        return w;
+                    }
+
+                    @Override
+                    public int getIconHeight() {
+                        return h;
+                    }
+                };
             }
             synchronized (memoIcon) {
-                memoIcon.put(key, icon);
+                memoIcon.put(key, resizedIcon);
             }
-            return icon;
+            return resizedIcon;
         } catch (Exception e) {
             e.printStackTrace();
         }
