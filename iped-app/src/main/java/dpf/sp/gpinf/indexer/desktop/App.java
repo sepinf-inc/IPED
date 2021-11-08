@@ -44,6 +44,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -113,6 +114,7 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
@@ -961,16 +963,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             int toolbarSupport = viewer.getToolbarSupported();
             if (toolbarSupport >= 0) {
-                CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"),
-                        IconUtil.getToolbarIcon("down", resPath)) {
-                    protected void changed() {
-                        viewer.setToolbarVisible(isSelected());
+                Icon downIcon = IconUtil.getToolbarIcon("down", resPath);
+                Icon upIcon = IconUtil.getToolbarIcon("up", resPath);
+                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon, downIcon);
+                butToolbar.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        butToolbar.toggle();
+                        viewer.setToolbarVisible(butToolbar.isSelected());
                     }
-                };
-                chkToolbar.setSelectedIcon(IconUtil.getToolbarIcon("up", resPath));
-                chkToolbar.setSelected(true);
-                viewerDock.addAction(chkToolbar);
-                viewerDock.putAction("toolbar", chkToolbar);
+                });
+                viewerDock.addAction(butToolbar);
+                viewerDock.putAction("toolbar", butToolbar);
             }
 
             viewerDock.addSeparator();
