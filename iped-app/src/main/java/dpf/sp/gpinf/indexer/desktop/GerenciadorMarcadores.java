@@ -180,11 +180,15 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
 
         JPanel left1 = new JPanel();
         left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
-        left1.add(novo);
-        left1.add(updateComment);
-        left1.add(Box.createRigidArea(new Dimension(0, 65)));
-        left1.add(add);
-        left1.add(remove);
+        JPanel left0 = new JPanel(new GridLayout(0, 1, 0, 0));
+        left0.add(novo);
+        left0.add(updateComment);
+        left1.add(left0);
+        left1.add(Box.createVerticalStrut(65));
+        JPanel left3 = new JPanel(new GridLayout(0, 1, 0, 0));
+        left3.add(add);
+        left3.add(remove);
+        left1.add(left3);
         left1.add(Box.createRigidArea(new Dimension(0, 35)));
 
         JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
