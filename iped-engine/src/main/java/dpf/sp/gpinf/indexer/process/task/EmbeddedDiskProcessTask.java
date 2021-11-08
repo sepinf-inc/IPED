@@ -31,6 +31,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(EmbeddedDiskProcessTask.class);
 
+    private static final int MIN_DD_SIZE = 1024;
+
     private static final String ENABLE_PARAM = "processEmbeddedDisks";
 
     private static final String outputFolder = "embeddedDisks";
@@ -85,6 +87,10 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
         if (isFirstImagePart(item)) {
             if (MediaTypes.RAW_IMAGE.equals(item.getMediaType())) {
+                // skip some false positives like $MBR files
+                if (item.getLength() < MIN_DD_SIZE) {
+                    return;
+                }
                 // look up for DD parts
                 ItemSearcher searcher = (ItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
                 int dotIdx = item.getName().lastIndexOf(".");
