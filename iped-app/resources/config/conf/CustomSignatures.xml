@@ -629,6 +629,10 @@
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
         </magic>
         <sub-class-of type="application/x-disk-image"/>
+    </mime-type>
+    
+    <mime-type type="application/x-e01-first-image">
+        <sub-class-of type="application/x-e01-image"/>
         <glob pattern="*.e01"/>
     </mime-type>
         
