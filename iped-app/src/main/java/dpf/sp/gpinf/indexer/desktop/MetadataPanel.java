@@ -23,7 +23,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
@@ -183,26 +182,19 @@ public class MetadataPanel extends JPanel
         list.setFixedCellWidth(2000);
         list.addListSelectionListener(this);
 
-        JPanel l1 = new JPanel(new BorderLayout());
-        JLabel label = new JLabel(Messages.getString("MetadataPanel.Group")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(80, 20));
-        l1.add(label, BorderLayout.WEST);
-        l1.add(groups, BorderLayout.CENTER);
+        JPanel left = new JPanel(new GridLayout(3, 1, 1, 1));
+        left.add(new JLabel(Messages.getString("MetadataPanel.Group"))); //$NON-NLS-1$
+        left.add(new JLabel(Messages.getString("MetadataPanel.Property"))); //$NON-NLS-1$
+        left.add(new JLabel(Messages.getString("MetadataPanel.Filter"))); //$NON-NLS-1$
 
-        JPanel l2 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Property")); //$NON-NLS-1$
-        label.setPreferredSize(new Dimension(80, 20));
-        l2.add(label, BorderLayout.WEST);
-        l2.add(props, BorderLayout.CENTER);
-
-        JPanel l3 = new JPanel(new BorderLayout());
-        label = new JLabel(Messages.getString("MetadataPanel.Filter"));
-        label.setPreferredSize(new Dimension(80, 20));
-        l3.add(label, BorderLayout.WEST);
-        JPanel l3c = new JPanel(new GridLayout(1,2,0,4));
+        JPanel l3c = new JPanel(new GridLayout(1, 2, 0, 4));
         l3c.add(propsFilter);
         l3c.add(listFilter);
-        l3.add(l3c, BorderLayout.CENTER);
+
+        JPanel center = new JPanel(new GridLayout(3, 1, 1, 1));
+        center.add(groups);
+        center.add(props);
+        center.add(l3c);
         
         propsFilter.getDocument().addDocumentListener(new DocumentListener() {
             public void removeUpdate(DocumentEvent e) {
@@ -233,12 +225,10 @@ public class MetadataPanel extends JPanel
 
         listFilter.addActionListener(this);
 
-        JPanel top = new JPanel();
-        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.add(l1);
-        top.add(l2);
-        top.add(l3);
-        top.add(l4);
+        JPanel top = new JPanel(new BorderLayout(1, 1));
+        top.add(center, BorderLayout.CENTER);
+        top.add(left, BorderLayout.WEST);
+        top.add(l4, BorderLayout.SOUTH);
 
         this.add(top, BorderLayout.NORTH);
         this.add(scrollList, BorderLayout.CENTER);
