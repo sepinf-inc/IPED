@@ -27,14 +27,10 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Insets;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -214,8 +210,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color alertColor = Color.RED;
     Color alertFocusedColor = Color.RED;
     Color alertSelectedColor = Color.RED;
-
-    private int zoomLevel;
 
     public SimilarImagesFilterPanel similarImageFilterPanel;
     public IItem similarImagesQueryRefItem;
@@ -679,10 +673,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         refazLayout(false);
 
-        if (triageGui) {
-            zoomFont(this, -1);
-        }
-
         status = new JLabel(" "); //$NON-NLS-1$
         this.appSearchParams.status = status;
 
@@ -743,36 +733,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
-
-        // Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
         gallery.repaint();
-        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        manager.addKeyEventDispatcher(new KeyEventDispatcher() {
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_RELEASED) {
-                    if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-                        if (e.getKeyCode() == KeyEvent.VK_EQUALS || e.getKeyCode() == KeyEvent.VK_PLUS) {
-                            synchronized (App.this) {
-                                if (zoomLevel < 8) {
-                                    zoomLevel++;
-                                    zoomFont(App.this, 1);
-                                }
-                            }
-                            return true;
-                        } else if (e.getKeyCode() == KeyEvent.VK_MINUS) {
-                            synchronized (App.this) {
-                                if (zoomLevel > -4) {
-                                    zoomLevel--;
-                                    zoomFont(App.this, -1);
-                                }
-                            }
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-        });
     }
     
     public void updateUI(boolean refresh) {
@@ -1173,23 +1134,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         for(String key : Messages.getKeys("FileChooser.")) {
             UIManager.put(key, Messages.get(key));
         }
-    }
-
-    private void zoomFont(Component c, int inc) {
-        if (c instanceof Container) {
-            Component[] childs = ((Container) c).getComponents();
-            for (Component child : childs) {
-                zoomFont(child, inc);
-            }
-        }
-        int currSize = c.getFont().getSize();
-        int newSize = currSize + inc;
-        c.setFont(c.getFont().deriveFont((float) newSize));
-        if (c instanceof JTable) {
-            ((JTable) c).setRowHeight(newSize + 4);
-        }
-        revalidate();
-        repaint();
     }
 
     public void refazLayout(boolean remove) {
