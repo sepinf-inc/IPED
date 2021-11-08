@@ -13,10 +13,11 @@ import javax.swing.ImageIcon;
 
 public class IconUtil {
     private static final Map<String, Icon> memoIcon = new HashMap<String, Icon>();
+    private static final int toolbarIconSize = 16;
 
-   /* public static final Icon getIcon(String name, String resPath) {
-        return getIcon(name, resPath, 0);
-    }*/
+    public static final Icon getToolbarIcon(String name, String resPath) {
+        return getIcon(name, resPath, toolbarIconSize);
+    }
 
     public static final Icon getIcon(String name, String resPath, int iconSize) {
         String key = resPath + "/" + name + "/" + iconSize;

@@ -662,8 +662,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getIcon("time", resPath));
-        timelineListener = new TimelineListener(timelineButton, IconUtil.getIcon("timeon", resPath));
+        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath));
+        timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
         timelineButton.addActionListener(timelineListener);
 
         if (triageGui) {
@@ -778,7 +778,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
         CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
-                IconUtil.getIcon("video", resPath));
+                IconUtil.getToolbarIcon("video", resPath));
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
         butToggleVideoFramesMode.addActionListener(new ActionListener() {
@@ -791,7 +791,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         if (SimilarImagesFilterActions.isFeatureEnabled()) {
             CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
-                    IconUtil.getIcon("find", resPath));
+                    IconUtil.getToolbarIcon("find", resPath));
             galleryTabDock.addAction(butSimSearch);
             galleryTabDock.addSeparator();
             butSimSearch.addActionListener(new ActionListener() {
@@ -823,10 +823,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
-                IconUtil.getIcon("minus", resPath));
+                IconUtil.getToolbarIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
         CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"),
-                IconUtil.getIcon("plus", resPath));
+                IconUtil.getToolbarIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -908,7 +908,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private void setupViewerDocks() {
         CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"),
-                IconUtil.getIcon("pin", resPath)) {
+                IconUtil.getToolbarIcon("pin", resPath)) {
             protected void changed() {
                 viewerController.setFixed(isSelected());
             }
@@ -940,9 +940,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             });
 
             CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"),
-                    IconUtil.getIcon("prev", resPath));
+                    IconUtil.getToolbarIcon("prev", resPath));
             CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"),
-                    IconUtil.getIcon("next", resPath));
+                    IconUtil.getToolbarIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     viewer.scrollToNextHit(false);
@@ -962,12 +962,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             int toolbarSupport = viewer.getToolbarSupported();
             if (toolbarSupport >= 0) {
                 CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"),
-                        IconUtil.getIcon("down", resPath)) {
+                        IconUtil.getToolbarIcon("down", resPath)) {
                     protected void changed() {
                         viewer.setToolbarVisible(isSelected());
                     }
                 };
-                chkToolbar.setSelectedIcon(IconUtil.getIcon("up", resPath));
+                chkToolbar.setSelectedIcon(IconUtil.getToolbarIcon("up", resPath));
                 chkToolbar.setSelected(true);
                 viewerDock.addAction(chkToolbar);
                 viewerDock.putAction("toolbar", chkToolbar);
