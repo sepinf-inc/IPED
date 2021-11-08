@@ -189,7 +189,6 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         left3.add(add);
         left3.add(remove);
         left1.add(left3);
-        left1.add(Box.createRigidArea(new Dimension(0, 35)));
 
         JPanel left2 = new JPanel(new GridLayout(0, 1, 0, 0));
         left2.add(rename);
