@@ -140,7 +140,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     }
 
     private void createDialog() {
-        dialog = new JDialog();
+        dialog = new JDialog(App.get());
         dialog.setLayout(null);
         dialog.setTitle(Messages.getString("FilterManager.Title")); //$NON-NLS-1$
         dialog.setBounds(0, 0, 680, 350);
