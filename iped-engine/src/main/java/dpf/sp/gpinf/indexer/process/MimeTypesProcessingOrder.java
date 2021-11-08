@@ -72,6 +72,7 @@ public class MimeTypesProcessingOrder {
         // support for embedded splited image formats
         mediaTypes.put(MediaTypes.E01_FIRST_IMAGE, 1);
         mediaTypes.put(MediaTypes.RAW_IMAGE, 1);
+        mediaTypes.put(MediaTypes.VMDK_DESCRIPTOR, 1);
 
         // avoid NPE when the parser gets the item from parseContext when external
         // parsing is on

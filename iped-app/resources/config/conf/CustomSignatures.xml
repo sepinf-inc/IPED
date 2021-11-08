@@ -638,6 +638,7 @@
         
     <mime-type type="application/x-raw-image">
         <_comment>RAW disk images</_comment>
+        <_comment>This priority must be equal to x-vmdk</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
                 <match value="0x0000" type="string" offset="444"/>
@@ -646,6 +647,24 @@
         </magic>
         <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.dd"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk">
+        <_comment>This priority must be equal to x-raw-image</_comment>
+        <magic priority="30">
+            <match value="0x55AA" type="string" offset="510">
+                <match value="0x0000" type="string" offset="444"/>
+                <match value="0x5A5A" type="string" offset="444"/>
+            </match>
+        </magic>
+        <glob pattern="*.vmdk"/>
+    </mime-type>
+    
+    <mime-type type="application/x-vmdk-descriptor">
+        <magic priority="50">
+            <match value="# Disk DescriptorFile" type="string" offset="0"/>
+        </magic>
+        <sub-class-of type="text/plain"/>
     </mime-type>
     
     <mime-type type="application/x-wim-image">

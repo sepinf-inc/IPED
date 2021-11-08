@@ -39,8 +39,9 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static final String outputFolder = "embeddedDisks";
 
-    private static Set<MediaType> supportedMimes = MediaType.set(MediaTypes.VMDK, MediaTypes.VHD, MediaTypes.RAW_IMAGE,
-            MediaTypes.E01_IMAGE, MediaTypes.E01_FIRST_IMAGE);
+    private static Set<MediaType> supportedMimes = MediaType.set(MediaTypes.VMDK, MediaTypes.VMDK_DATA,
+            MediaTypes.VMDK_DESCRIPTOR, MediaTypes.VHD, MediaTypes.RAW_IMAGE, MediaTypes.E01_IMAGE,
+            MediaTypes.E01_FIRST_IMAGE);
 
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
@@ -75,9 +76,10 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null;
     }
 
-    private static boolean isFirstImagePart(IItem item) {
+    private static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_FIRST_IMAGE.equals(item.getMediaType())
-                || MediaTypes.RAW_IMAGE.equals(item.getMediaType());
+                || MediaTypes.RAW_IMAGE.equals(item.getMediaType())
+                || MediaTypes.VMDK_DESCRIPTOR.equals(item.getMediaType());
     }
 
     @Override
@@ -87,7 +89,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             return;
         }
 
-        if (isFirstImagePart(item)) {
+        if (isFirstOrUniqueImagePart(item)) {
             if (MediaTypes.RAW_IMAGE.equals(item.getMediaType())) {
                 // skip some false positives like $MBR files
                 if (item.getLength() < MIN_DD_SIZE) {
@@ -108,8 +110,9 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 }
             }
 
-        } else if (MediaTypes.isInstanceOf(item.getMediaType(), MediaTypes.E01_IMAGE)) {
-            // export e01 parts to process them later
+        } else if (MediaTypes.E01_IMAGE.equals(item.getMediaType())
+                || MediaTypes.VMDK_DATA.equals(item.getMediaType())) {
+            // export e01/vmdk parts to process them later
             exportItem(item);
             return;
         }

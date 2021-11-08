@@ -25,6 +25,8 @@ public class MediaTypes {
     public static final MediaType E01_FIRST_IMAGE = MediaType.application("x-e01-first-image"); //$NON-NLS-1$
     public static final MediaType ISO_IMAGE = MediaType.application("x-iso9660-image"); //$NON-NLS-1$
     public static final MediaType VMDK = MediaType.application("x-vmdk"); //$NON-NLS-1$
+    public static final MediaType VMDK_DATA = MediaType.application("x-vmdk-data"); //$NON-NLS-1$
+    public static final MediaType VMDK_DESCRIPTOR = MediaType.application("x-vmdk-descriptor"); //$NON-NLS-1$
     public static final MediaType VHD = MediaType.application("x-vhd"); //$NON-NLS-1$
     public static final MediaType VHDX = MediaType.application("x-vhdx"); //$NON-NLS-1$
     public static final MediaType VDI = MediaType.application("x-vdi"); //$NON-NLS-1$
