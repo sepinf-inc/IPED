@@ -21,8 +21,8 @@ public class MediaTypes {
     public static final MediaType JBIG2 = MediaType.image("x-jbig2");
     public static final MediaType OUTLOOK_MSG = MediaType.application("vnd.ms-outlook");
     public static final MediaType RAW_IMAGE = MediaType.application("x-raw-image"); //$NON-NLS-1$
+    public static final MediaType EWF_IMAGE = MediaType.application("x-ewf-image"); //$NON-NLS-1$
     public static final MediaType E01_IMAGE = MediaType.application("x-e01-image"); //$NON-NLS-1$
-    public static final MediaType E01_FIRST_IMAGE = MediaType.application("x-e01-first-image"); //$NON-NLS-1$
     public static final MediaType ISO_IMAGE = MediaType.application("x-iso9660-image"); //$NON-NLS-1$
     public static final MediaType VMDK = MediaType.application("x-vmdk"); //$NON-NLS-1$
     public static final MediaType VMDK_DATA = MediaType.application("x-vmdk-data"); //$NON-NLS-1$

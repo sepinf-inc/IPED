@@ -623,7 +623,7 @@
         </magic>
     </mime-type>
   	
-    <mime-type type="application/x-e01-image">
+    <mime-type type="application/x-ewf-image">
         <_comment>E01 disk images</_comment>
         <magic priority="50">
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
@@ -631,8 +631,8 @@
         <sub-class-of type="application/x-disk-image"/>
     </mime-type>
     
-    <mime-type type="application/x-e01-first-image">
-        <sub-class-of type="application/x-e01-image"/>
+    <mime-type type="application/x-e01-image">
+        <sub-class-of type="application/x-ewf-image"/>
         <glob pattern="*.e01"/>
     </mime-type>
         
