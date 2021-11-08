@@ -44,7 +44,6 @@ public class FilterManager implements ActionListener, ListSelectionListener {
     JLabel labExpr = new JLabel(Messages.getString("FilterManager.Expresion")); //$NON-NLS-1$
 
     JButton butSave = new JButton(Messages.getString("FilterManager.Save")); //$NON-NLS-1$
-    JButton rename = new JButton(Messages.getString("FilterManager.Rename")); //$NON-NLS-1$
     JButton butNew = new JButton(Messages.getString("FilterManager.New")); //$NON-NLS-1$
     JButton butDelete = new JButton(Messages.getString("FilterManager.Delete")); //$NON-NLS-1$
 
