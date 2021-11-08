@@ -647,6 +647,8 @@
         </magic>
         <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.dd"/>
+        <glob pattern="*.000"/>
+        <glob pattern="*.001"/>
     </mime-type>
     
     <mime-type type="application/x-vmdk">
