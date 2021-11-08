@@ -964,7 +964,8 @@ public class IndexItem extends BasicProps {
             return localFile;
         Path path = localFile.toPath();
         Path pathSuffix = Paths.get(evidence.getPath());
-        pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
+        if (pathSuffix.getNameCount() > 1)
+            pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
         if (path.endsWith(pathSuffix)) {
             String evidenceFolderStr = path.toString().substring(0, path.toString().lastIndexOf(pathSuffix.toString()));
             File evidenceFolder = new File(evidenceFolderStr);
