@@ -40,13 +40,13 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     JDialog dialog;
 
-    JLabel msg = new JLabel(Messages.getString("FilterManager.Filters")); //$NON-NLS-1$
-    JLabel texto = new JLabel(Messages.getString("FilterManager.Expresion")); //$NON-NLS-1$
+    JLabel labFilters = new JLabel(Messages.getString("FilterManager.Filters")); //$NON-NLS-1$
+    JLabel labExpr = new JLabel(Messages.getString("FilterManager.Expresion")); //$NON-NLS-1$
 
-    JButton save = new JButton(Messages.getString("FilterManager.Save")); //$NON-NLS-1$
+    JButton butSave = new JButton(Messages.getString("FilterManager.Save")); //$NON-NLS-1$
     JButton rename = new JButton(Messages.getString("FilterManager.Rename")); //$NON-NLS-1$
-    JButton novo = new JButton(Messages.getString("FilterManager.New")); //$NON-NLS-1$
-    JButton delete = new JButton(Messages.getString("FilterManager.Delete")); //$NON-NLS-1$
+    JButton butNew = new JButton(Messages.getString("FilterManager.New")); //$NON-NLS-1$
+    JButton butDelete = new JButton(Messages.getString("FilterManager.Delete")); //$NON-NLS-1$
 
     DefaultListModel<String> listModel = new DefaultListModel<String>();
     JList<String> list = new JList<String>(listModel);
@@ -150,32 +150,32 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         expression.setToolTipText(Messages.getString("FilterManager.Expression.Tip")); //$NON-NLS-1$
-        novo.setToolTipText(Messages.getString("FilterManager.New.Tip")); //$NON-NLS-1$
-        save.setToolTipText(Messages.getString("FilterManager.Save.Tip")); //$NON-NLS-1$
-        delete.setToolTipText(Messages.getString("FilterManager.Del.Tip")); //$NON-NLS-1$
+        butNew.setToolTipText(Messages.getString("FilterManager.New.Tip")); //$NON-NLS-1$
+        butSave.setToolTipText(Messages.getString("FilterManager.Save.Tip")); //$NON-NLS-1$
+        butDelete.setToolTipText(Messages.getString("FilterManager.Del.Tip")); //$NON-NLS-1$
 
-        msg.setBounds(20, 20, 200, 20);
-        texto.setBounds(300, 20, 200, 20);
+        labFilters.setBounds(20, 20, 200, 20);
+        labExpr.setBounds(300, 20, 200, 20);
         scrollList.setBounds(20, 40, 260, 230);
         scrollExpression.setBounds(300, 40, 340, 230);
-        novo.setBounds(550, 270, 90, 30);
-        save.setBounds(450, 270, 90, 30);
-        delete.setBounds(190, 270, 90, 30);
+        butNew.setBounds(550, 270, 90, 30);
+        butSave.setBounds(450, 270, 90, 30);
+        butDelete.setBounds(190, 270, 90, 30);
 
         populateList();
 
-        dialog.getContentPane().add(msg);
-        dialog.getContentPane().add(texto);
+        dialog.getContentPane().add(labFilters);
+        dialog.getContentPane().add(labExpr);
         dialog.getContentPane().add(scrollList);
         dialog.getContentPane().add(scrollExpression);
-        dialog.getContentPane().add(novo);
-        dialog.getContentPane().add(save);
-        dialog.getContentPane().add(delete);
+        dialog.getContentPane().add(butNew);
+        dialog.getContentPane().add(butSave);
+        dialog.getContentPane().add(butDelete);
 
         list.addListSelectionListener(this);
-        save.addActionListener(this);
-        novo.addActionListener(this);
-        delete.addActionListener(this);
+        butSave.addActionListener(this);
+        butNew.addActionListener(this);
+        butDelete.addActionListener(this);
 
     }
 
@@ -201,7 +201,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
     @Override
     public void actionPerformed(ActionEvent e) {
-        if (e.getSource() == novo) {
+        if (e.getSource() == butNew) {
             String newLabel = JOptionPane.showInputDialog(dialog, Messages.getString("FilterManager.NewName"), //$NON-NLS-1$
                     list.getSelectedValue());
             if (newLabel != null && !(newLabel = newLabel.trim()).isEmpty() && !listModel.contains(newLabel)) {
@@ -212,10 +212,10 @@ public class FilterManager implements ActionListener, ListSelectionListener {
 
         String filter = list.getSelectedValue();
         filter = localizationMap.getOrDefault(filter, filter);
-        if (e.getSource() == save && filter != null) {
+        if (e.getSource() == butSave && filter != null) {
             filters.put(filter, expression.getText());
         }
-        if (e.getSource() == delete && filter != null) {
+        if (e.getSource() == butDelete && filter != null) {
             filters.remove(filter);
         }
         populateList();
