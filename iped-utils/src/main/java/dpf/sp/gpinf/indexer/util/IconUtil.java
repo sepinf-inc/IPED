@@ -14,9 +14,9 @@ import javax.swing.ImageIcon;
 public class IconUtil {
     private static final Map<String, Icon> memoIcon = new HashMap<String, Icon>();
 
-    public static final Icon getIcon(String name, String resPath) {
+   /* public static final Icon getIcon(String name, String resPath) {
         return getIcon(name, resPath, 0);
-    }
+    }*/
 
     public static final Icon getIcon(String name, String resPath, int iconSize) {
         String key = resPath + "/" + name + "/" + iconSize;
@@ -36,8 +36,7 @@ public class IconUtil {
                 resizedIcon = new Icon() {
                     @Override
                     public void paintIcon(Component c, Graphics g, int x, int y) {
-                        BufferedImage img = new BufferedImage(w, h, BufferedImage.TYPE_4BYTE_ABGR);
-                        Graphics2D g2 = (Graphics2D) img.getGraphics();
+                        Graphics2D g2 = (Graphics2D) g;
                         g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                         g2.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
                         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
