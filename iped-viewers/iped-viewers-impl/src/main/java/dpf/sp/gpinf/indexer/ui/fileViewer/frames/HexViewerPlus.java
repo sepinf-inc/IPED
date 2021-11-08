@@ -795,6 +795,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dialogOpcoes() {
 
         dialogOpcoes = new JDialog(getParentWindow());
+        dialogOpcoes.setResizable(false);
         dialogOpcoes.setModal(true);
         dialogOpcoes.setTitle(Messages.getString("HexViewerPlus.settings") + " - " + appName);
         dialogOpcoes.setBounds(0, 0, 810, 600);
@@ -1895,6 +1896,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dialogSelecionar() {
 
         dialogSelecionar = new JDialog(getParentWindow());
+        dialogSelecionar.setResizable(false);
         dialogSelecionar.setModal(true);
         dialogSelecionar.setTitle(Messages.getString("HexViewerPlus.selectBlock") + " - " + appName);
         dialogSelecionar.setBounds(0, 0, 550, 240);
@@ -2110,6 +2112,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dialogIrParaResultado() {
 
         dialogIrParaResultado = new JDialog(getParentWindow());
+        dialogIrParaResultado.setResizable(false);
         dialogIrParaResultado.setModal(true);
         dialogIrParaResultado.setTitle(Messages.getString("HexViewerPlus.goToHit") + " - " + appName);
         dialogIrParaResultado.setBounds(0, 0, 530, 170);
@@ -2202,6 +2205,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dialogIrParaEndereco() {
 
         dialogIrParaEndereco = new JDialog(getParentWindow());
+        dialogIrParaEndereco.setResizable(false);
         dialogIrParaEndereco.setModal(true);
         dialogIrParaEndereco.setTitle(Messages.getString("HexViewerPlus.goToPosition") + " - " + appName);
         dialogIrParaEndereco.setBounds(0, 0, 530, 240);
@@ -2364,6 +2368,7 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
     public void dialogPesquisar() {
 
         dialogPesquisar = new JDialog(getParentWindow());
+        dialogPesquisar.setResizable(false);
         dialogPesquisar.setModal(true);
         dialogPesquisar.setTitle(Messages.getString("HexViewerPlus.search") + " - " + appName);
         dialogPesquisar.setBounds(0, 0, 570, 300);
