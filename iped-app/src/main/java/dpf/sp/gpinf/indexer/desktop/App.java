@@ -108,6 +108,7 @@ import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -411,6 +412,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         ToolTipManager.sharedInstance().setInitialDelay(10);
         
         dockingControl = new CControl(this);
+
+        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+        dockingControl.setLanguage(localeConfig.getLocale());        
         
         try {
             ThemeManager.getInstance().setLookAndFeel();
