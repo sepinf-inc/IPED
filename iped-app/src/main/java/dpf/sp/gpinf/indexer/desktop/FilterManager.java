@@ -1,18 +1,20 @@
 package dpf.sp.gpinf.indexer.desktop;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
-import java.text.Collator;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
@@ -20,6 +22,7 @@ import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
@@ -142,7 +145,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         dialog = new JDialog(App.get());
         dialog.setLayout(null);
         dialog.setTitle(Messages.getString("FilterManager.Title")); //$NON-NLS-1$
-        dialog.setBounds(0, 0, 680, 350);
+        dialog.setBounds(0, 0, 680, 450);
         dialog.setAlwaysOnTop(true);
 
         expression.setLineWrap(true);
@@ -153,23 +156,35 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         butSave.setToolTipText(Messages.getString("FilterManager.Save.Tip")); //$NON-NLS-1$
         butDelete.setToolTipText(Messages.getString("FilterManager.Del.Tip")); //$NON-NLS-1$
 
-        labFilters.setBounds(20, 20, 200, 20);
-        labExpr.setBounds(300, 20, 200, 20);
-        scrollList.setBounds(20, 40, 260, 230);
-        scrollExpression.setBounds(300, 40, 340, 230);
-        butNew.setBounds(550, 270, 90, 30);
-        butSave.setBounds(450, 270, 90, 30);
-        butDelete.setBounds(190, 270, 90, 30);
+        Dimension butSize = new Dimension(85, 30);
+        butNew.setPreferredSize(butSize);
+        butSave.setPreferredSize(butSize);
+        butDelete.setPreferredSize(butSize);
+        
+        JPanel left = new JPanel(new BorderLayout(2, 2));
+        left.add(labFilters, BorderLayout.NORTH);
+        left.add(scrollList, BorderLayout.CENTER);
+        JPanel leftButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        leftButtons.add(butDelete);
+        left.add(leftButtons, BorderLayout.SOUTH);
+        left.setPreferredSize(new Dimension(250, 4000));
 
+        JPanel right = new JPanel(new BorderLayout(2, 2));
+        right.add(labExpr, BorderLayout.NORTH);
+        right.add(scrollExpression, BorderLayout.CENTER);
+        JPanel rightButtons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        rightButtons.add(butSave);
+        rightButtons.add(butNew);
+        right.add(rightButtons, BorderLayout.SOUTH);
+
+        JPanel main = new JPanel(new BorderLayout(8, 2));
+        main.add(left, BorderLayout.WEST);
+        main.add(right, BorderLayout.CENTER);
+        dialog.setContentPane(main);
+
+        main.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        
         populateList();
-
-        dialog.getContentPane().add(labFilters);
-        dialog.getContentPane().add(labExpr);
-        dialog.getContentPane().add(scrollList);
-        dialog.getContentPane().add(scrollExpression);
-        dialog.getContentPane().add(butNew);
-        dialog.getContentPane().add(butSave);
-        dialog.getContentPane().add(butDelete);
 
         list.addListSelectionListener(this);
         butSave.addActionListener(this);
