@@ -135,6 +135,7 @@ public class SleuthkitReader extends DataSourceReader {
     private boolean fastmode = false;
     private boolean embeddedDisk = false;
     private int itemCount = 0;
+    private volatile boolean decodingError = false;
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
@@ -155,6 +156,10 @@ public class SleuthkitReader extends DataSourceReader {
 
     public int getItemCount() {
         return itemCount;
+    }
+
+    public boolean hasDecodingError() {
+        return this.decodingError;
     }
 
     public boolean isSupported(File file) {
@@ -546,6 +551,7 @@ public class SleuthkitReader extends DataSourceReader {
             if (exit != 0) {
                 LOGGER.error("Sleuthkit LoadDb returned an error {}. Possibly" //$NON-NLS-1$
                         + " many items were not added to the case!", exit); //$NON-NLS-1$
+                decodingError = true;
             }
 
         } catch (InterruptedException ie) {
@@ -1119,6 +1125,7 @@ public class SleuthkitReader extends DataSourceReader {
                             if (line.toLowerCase().contains("error") //$NON-NLS-1$
                                     && !line.toLowerCase().contains("microsoft reserved partition")) { //$NON-NLS-1$
                                 LOGGER.error("Sleuthkit error processing {}: {}", image, line.trim()); //$NON-NLS-1$
+                                decodingError = true;
                             } else {
                                 LOGGER.info("Sleuthkit: " + line.trim()); //$NON-NLS-1$
                             }

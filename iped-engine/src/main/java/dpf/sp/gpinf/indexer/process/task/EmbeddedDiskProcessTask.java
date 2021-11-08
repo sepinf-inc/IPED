@@ -18,7 +18,9 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
+import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
+import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.io.IItemBase;
@@ -123,6 +125,11 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 item.setHasChildren(true);
                 item.setExtraAttribute(ParsingTask.HAS_SUBITEM, Boolean.TRUE.toString());
                 item.setExtraAttribute(ParsingTask.NUM_SUBITEMS, numSubitems);
+            }
+            if (reader.hasDecodingError()) {
+                item.getMetadata().set(IndexerDefaultParser.PARSER_EXCEPTION, Boolean.TRUE.toString());
+            } else {
+                ((Item) item).setParsedTextCache(new TextCache());
             }
         }
 
