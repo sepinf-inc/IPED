@@ -12,6 +12,8 @@ import java.util.Set;
 
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
@@ -26,6 +28,8 @@ import iped3.util.MediaTypes;
 import macee.core.Configurable;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
+
+    private static Logger logger = LoggerFactory.getLogger(EmbeddedDiskProcessTask.class);
 
     private static final String ENABLE_PARAM = "processEmbeddedDisks";
 
@@ -89,6 +93,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
                 String query = BasicProps.PARENTID + ":" + item.getParentId() + " && " + BasicProps.NAME + ":\""
                         + QueryParserUtil.escape(item.getName().substring(0, dotIdx)) + "\"";
                 List<IItemBase> possibleParts = searcher.search(query);
+                logger.info("Found {} possible image segments of {}", possibleParts.size(), item.getPath());
                 for (IItemBase possiblePart : possibleParts) {
                     // export DD parts
                     exportItem(possiblePart);
@@ -105,6 +110,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
         File imageFile = exportItem(item);
 
         try (SleuthkitReader reader = new SleuthkitReader(true, caseData, output)) {
+            logger.info("Decoding embedded disk image {} -> {}", item.getPath(), imageFile.getAbsolutePath());
             reader.read(imageFile, (Item) item);
             int numSubitems = reader.getItemCount();
             if (numSubitems > 0) {
@@ -127,12 +133,15 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             boolean alreadyExported = false;
             if (imageFile.exists()) {
                 if (imageFile.length() != item.getLength()) {
+                    logger.info("Deleting incomplete exported item {} -> {}", item.getPath(),
+                            imageFile.getAbsolutePath());
                     Files.delete(imageFile.toPath());
                 } else {
                     alreadyExported = true;
                 }
             }
             if (!alreadyExported) {
+                logger.info("Exporting item {} -> {}", item.getPath(), imageFile.getAbsolutePath());
                 try (InputStream is = item.getBufferedStream()) {
                     Files.copy(is, imageFile.toPath());
                 }
