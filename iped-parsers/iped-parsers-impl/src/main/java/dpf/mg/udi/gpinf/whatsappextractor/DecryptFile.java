@@ -1,6 +1,9 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.OutputStream;
 import java.util.Arrays;
 
 import javax.crypto.Cipher;
@@ -8,6 +11,7 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 
 /**
  *
@@ -16,9 +20,7 @@ import org.apache.commons.io.FileUtils;
 public class DecryptFile {
     private byte[] iv;
     private byte[] cipherKey;
-    private byte[] hmacKey;
-    private byte[] file;
-    private byte[] decripted;
+
     private File f;
 
     public DecryptFile(byte[] iv, byte[] cipherKey, File f) {
@@ -27,24 +29,50 @@ public class DecryptFile {
         this.f = f;
     }
 
-    public void readEncFile() throws Exception {
-        file = FileUtils.readFileToByteArray(f);
-        if (file.length == 0) {
-            throw new Exception("Empty File");
-        }
-        file = Arrays.copyOfRange(file, 0, file.length - 10);
-    }
 
-    public byte[] decrypt(String ext) throws Exception {
-        readEncFile();
+
+    public void decrypt(OutputStream fout) throws Exception {
+
         IvParameterSpec iv = new IvParameterSpec(this.iv);
         SecretKeySpec skeySpec = new SecretKeySpec(cipherKey, "AES");
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
-        decripted = cipher.doFinal(file);
+        byte file[] = FileUtils.readFileToByteArray(f);
+        file = Arrays.copyOfRange(file, 0, file.length - 10);
+        byte b[] = cipher.doFinal(file);
 
-        FileUtils.writeByteArrayToFile(f, decripted);
-        return decripted;
+        IOUtils.copy(new ByteArrayInputStream(b), fout);
+
+
+    }
+
+    public void decryptStream(OutputStream fout) throws Exception {
+
+        IvParameterSpec iv = new IvParameterSpec(this.iv);
+        SecretKeySpec skeySpec = new SecretKeySpec(cipherKey, "AES");
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
+
+        FileInputStream fin = new FileInputStream(f);
+        
+        byte[] buff=new byte[8*1024];
+        int cont = 0, tot = 0;
+        while ((cont = fin.read(buff)) > 0) {
+            
+            if(tot+cont>=f.length()-10) {
+                cont=(int) (f.length()-10 - tot);
+            }
+            
+            tot += cont;
+            
+            byte[] b=cipher.update(buff, 0, cont);
+            fout.write(b);
+            if(tot>=f.length()-10) {
+                break;
+            }
+        }
+        fout.write(cipher.doFinal());
+
 
     }
 

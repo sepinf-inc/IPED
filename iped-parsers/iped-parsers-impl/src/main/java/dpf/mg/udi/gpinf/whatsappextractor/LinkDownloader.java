@@ -1,9 +1,14 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Writer;
 import java.net.URL;
+import java.security.DigestInputStream;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
@@ -15,20 +20,23 @@ public class LinkDownloader {
     private String fileName;
     private byte[] cipherKey;
     private byte[] iv;
-    private String ext;
     private String hash;
 
     public String getFileName() {
         return fileName;
     }
 
-    public static String getSHA256(byte[] b) {
-        if (b != null) {
+    public static String getSHA256(InputStream input) {
+        if (input != null) {
             try {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
-                byte[] array = digest.digest(b);
-                return getHex(array);
-            } catch (NoSuchAlgorithmException e) {
+                DigestInputStream digestInput = new DigestInputStream(new BufferedInputStream(input), digest);
+                byte[] buffer = new byte[1024 * 8];
+                while (digestInput.read(buffer) > 0)
+                    ;
+                digestInput.close();
+                return getHex(digest.digest());
+            } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();
             }
         }
@@ -46,7 +54,7 @@ public class LinkDownloader {
         urlStr = url;
         this.hash = base64Decode(hash);
         setFileName(hash);
-        this.ext = ext;
+
         this.cipherKey = cipherKey;
         this.iv = iv;
     }
@@ -83,24 +91,28 @@ public class LinkDownloader {
 
     }
 
-    public void decript(File dest, Writer log) throws Exception {
+    public void decript(File Input, File dest, Writer log) throws Exception {
 
-        DecryptFile df = new DecryptFile(iv, cipherKey, dest);
-
+        DecryptFile df = new DecryptFile(iv, cipherKey, Input);
         try {
-            String hash = getSHA256(df.decrypt(ext));
+            FileOutputStream out = new FileOutputStream(dest);
+            df.decryptStream(out);
+            out.close();
+            String hash = getSHA256(new FileInputStream(dest));
+
+            if (!this.hash.equals(hash)) {
+                log.write("Erro hash do arquivo nao bate\n");
+                log.write("banco:" + this.hash + "\n");
+                log.write("Calculado:" + hash + "\n");
+                throw new Exception("Hash invalido");
+            }
+
         } catch (Exception e) {
+            e.printStackTrace(System.out);
             log.write(e.toString() + "\n");
             log.write("cippher key" + getHex(cipherKey) + "\n");
             log.write("IV" + getHex(iv) + "\n");
-            throw new Exception(e.toString());
-        }
-        if (!this.hash.equals(hash)) {
-            log.write("Erro hash do arquivo nao bate\n");
-            log.write("banco:" + this.hash + "\n");
-            log.write("Calculado:" + hash + "\n");
-            throw new Exception("Hash invalido");
-
+            throw new Exception("cipher error");
         }
 
     }

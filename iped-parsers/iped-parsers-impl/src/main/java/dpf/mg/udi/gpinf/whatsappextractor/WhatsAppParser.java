@@ -146,6 +146,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private int DOWNLOADED_FILES = 0;
 
+    private static final int POOL_SIZE = 20;
+
     /**
      * Experimental and incomplete feature. See TODOs below.
      */
@@ -519,6 +521,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             EmbeddedDocumentExtractor extractor, Map<String, String> cache) throws SAXException, IOException {
         int msgCount = 0;
         for (dpf.mg.udi.gpinf.whatsappextractor.Message m : messages) {
+
             Metadata meta = new Metadata();
             meta.set(TikaCoreProperties.TITLE, chatName + "_message_" + msgCount++); //$NON-NLS-1$
             meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_MESSAGE.toString());
@@ -1008,6 +1011,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 setItemToMessage(item, messageList, "sha-256:" + hash);
 
             }
+            ArrayList<String> hashesToRemove = new ArrayList<>();
             for (String hash : hashesToSearchFor.keySet()) {
                 synchronized (hashesDownloaded) {
 
@@ -1017,11 +1021,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                     }
 
                     if (hashesDownloaded.containsKey(hash)) {
-                        hashesToSearchFor.remove(hash);
+                        hashesToRemove.add(hash);
                     }
                 }
 
             }
+
+            for (String hash : hashesToRemove) {
+                hashesToSearchFor.remove(hash);
+            }
+
         }
 
         // for media messages without hash, try to find by filename and size
@@ -1125,22 +1134,26 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (!hashesToSearchFor.isEmpty()) {
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
                 le.extractLinks();
-                ExecutorService e = Executors.newFixedThreadPool(50);
-                ArrayList<Thread> downloads = new ArrayList<>();
+                ExecutorService e = Executors.newFixedThreadPool(POOL_SIZE);
+
                 for (LinkDownloader ld : le.getLinks()) {
-                    synchronized (hashesDownloaded) {
-                        hashesDownloaded.put(ld.getHash(), null);
-                    }
+
                     Runnable r = new Runnable() {
 
                         @Override
                         public void run() {
+                            IItem item = null;
+
                             try (TemporaryResources tmp = new TemporaryResources()) {
 
                                 // TODO Auto-generated method stub
-                                File f = tmp.createTemporaryFile();
+                                File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
+
                                 ld.downloadUsingStream(f);
-                                ld.decript(f, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
+
+                                ld.decript(f, fout, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
+
+
 
                                 Metadata DownloadMetadata = new Metadata();
 
@@ -1149,21 +1162,34 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     DownloadMetadata.set(TikaCoreProperties.TITLE,
                                             "dowloaded_item_" + (++DOWNLOADED_FILES));
 
-                                    extractor.parseEmbedded(new FileInputStream(f), handler, DownloadMetadata, false);
+                                    extractor.parseEmbedded(new FileInputStream(fout), handler, DownloadMetadata,
+                                            false);
 
                                     EmbeddedItem container = context.get(EmbeddedItem.class);
 
-                                    IItem item = (IItem) container.getObj();
+                                    item = (IItem) container.getObj();
                                     item.getExtraAttributeMap().put("sha-256", ld.getHash());
-                                    synchronized (hashesDownloaded) {
-                                        hashesDownloaded.put(ld.getHash(), item);
-                                    }
 
                                     List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
                                     setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
 
+
+
+
+                                    synchronized (hashesDownloaded) {
+                                        if (hashesDownloaded.get(ld.getHash()) == null && item != null) {
+                                            hashesDownloaded.put(ld.getHash(), item);
+                                        }
+                                    }
                                 }
+                                // save that this hash is not available
+                                synchronized (hashesDownloaded) {
+                                    if (!hashesDownloaded.containsKey(ld.getHash())) {
+                                        hashesDownloaded.put(ld.getHash(), null);
+                                    }
+                                }
+
                             } catch (IOException ex) {
 
                             } catch (Exception e) {
@@ -1171,16 +1197,24 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 e.printStackTrace(System.out);
                             }
 
+
+
                         }
                     };
+
                     e.submit(r);
 
                 }
                 try {
-                    e.awaitTermination(50 + le.getLinks().size() * 20, TimeUnit.MILLISECONDS);
+                    e.awaitTermination(500 + le.getLinks().size() * 20, TimeUnit.MILLISECONDS);
                 } catch (InterruptedException e1) {
                     // TODO Auto-generated catch block
                     e1.printStackTrace(System.out);
+                }
+                try {
+                    le.close();
+                } catch (Exception ex) {
+                    // TODO: handle exception
                 }
 
             }

@@ -9,6 +9,7 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
@@ -31,7 +32,6 @@ public class LinkExtractor {
     private Connection con;
     private HashSet<String> hashes;
     private ArrayList<LinkDownloader> links;
-    private String folder;
 
     public LinkExtractor(File dbPath, HashSet<String> hashes) {
         this.hashes = hashes;
@@ -157,7 +157,7 @@ public class LinkExtractor {
         return aux;
     }
 
-    public void extractLinks() {
+    public synchronized void extractLinks() {
 
         if (con == null) {
             return;
@@ -192,7 +192,6 @@ public class LinkExtractor {
                     continue;
                 }
                 String tipo = rs.getString("tipo");
-                long id = rs.getLong("_id");
                 if (tipo == null) {
                     continue;
                 }
@@ -219,6 +218,11 @@ public class LinkExtractor {
         } catch (Exception e) {
             e.printStackTrace(System.out);
         }
+    }
+
+    public void close() throws SQLException {
+        if (con != null && !con.isClosed())
+            this.con.close();
     }
 
     public ArrayList<LinkDownloader> getLinks() {
