@@ -90,6 +90,12 @@ import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.TabPanePainter;
 import bibliothek.gui.DockController;
 import bibliothek.gui.Dockable;
 import bibliothek.gui.dock.StackDockStation;
+import bibliothek.gui.dock.action.ActionType;
+import bibliothek.gui.dock.action.ButtonDockAction;
+import bibliothek.gui.dock.action.SelectableDockAction;
+import bibliothek.gui.dock.action.view.ActionViewConverter;
+import bibliothek.gui.dock.action.view.ViewGenerator;
+import bibliothek.gui.dock.action.view.ViewTarget;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
@@ -100,6 +106,9 @@ import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
+import bibliothek.gui.dock.themes.basic.action.BasicSelectableHandler;
+import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
@@ -115,6 +124,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
+import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
@@ -656,7 +666,31 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 return RectGradientPainter.FACTORY.createDecorationPainter(pane);
             }
         });
-
+        
+        // Customize appearance of buttons and check boxes shown in docking frames title bar,
+        // so focus is not painted (avoiding intersection with buttons icons) and more clear 
+        // indication when a CCheckBox is selected. 
+        dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE,
+                new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action,
+                            Dockable dockable) {
+                        BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
+                        CustomButton button = new CustomButton(handler, handler);
+                        handler.setModel(button.getModel());
+                        return handler;
+                    }
+                });
+        dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE,
+                new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter,
+                            SelectableDockAction action, Dockable dockable) {
+                        BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
+                        CustomButton button = new CustomButton(handler, handler);
+                        handler.setModel(button.getModel());
+                        return handler;
+                    }
+                });
+        
         dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
         this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
         defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
