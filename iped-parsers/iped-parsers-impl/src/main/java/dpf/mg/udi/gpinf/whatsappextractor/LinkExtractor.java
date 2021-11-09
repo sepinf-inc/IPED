@@ -112,7 +112,7 @@ public class LinkExtractor {
             else {
                 HKDF hkg = new HKDF();
 
-                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), aux.getBytes("UTF-8"), 112);
+                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
 
                 byte[] cpk = Arrays.copyOfRange(key, 16, 48);
 
@@ -135,7 +135,7 @@ public class LinkExtractor {
             } else {
                 HKDF hkg = new HKDF();
 
-                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), aux.getBytes("UTF-8"), 112);
+                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
 
                 byte[] iv = Arrays.copyOfRange(key, 0, 16);
 
@@ -147,7 +147,7 @@ public class LinkExtractor {
         return null;
     }
 
-    private String aux = "";
+    private String mediaType = "";
 
     public static String capitalize(String aux) {
         if (aux != null && !aux.isEmpty()) {
@@ -195,12 +195,12 @@ public class LinkExtractor {
                 if (tipo == null) {
                     continue;
                 }
-                aux = tipo;
+                mediaType = tipo;
                 if (tipo.indexOf("/") >= 0) {
-                    aux = tipo.substring(0, tipo.indexOf("/"));
+                    mediaType = tipo.substring(0, tipo.indexOf("/"));
                 }
-                aux = capitalize(aux).trim();
-                aux = "WhatsApp " + aux + " Keys";
+                mediaType = capitalize(mediaType).trim();
+                mediaType = "WhatsApp " + mediaType + " Keys";
 
                 tipo = tipo.substring(tipo.indexOf("/") + 1);
 

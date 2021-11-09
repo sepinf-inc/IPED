@@ -53,25 +53,26 @@ public class DecryptFile {
         Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
         cipher.init(Cipher.DECRYPT_MODE, skeySpec, iv);
 
-        FileInputStream fin = new FileInputStream(f);
-        
-        byte[] buff=new byte[8*1024];
-        int cont = 0, tot = 0;
-        while ((cont = fin.read(buff)) > 0) {
-            
-            if(tot+cont>=f.length()-10) {
-                cont=(int) (f.length()-10 - tot);
+        try (FileInputStream fin = new FileInputStream(f)) {
+            byte[] buff = new byte[8 * 1024];
+            int cont = 0, tot = 0;
+            while ((cont = fin.read(buff)) > 0) {
+
+                if (tot + cont >= f.length() - 10) {
+                    cont = (int) (f.length() - 10 - tot);
+                }
+
+                tot += cont;
+
+                byte[] b = cipher.update(buff, 0, cont);
+                fout.write(b);
+                if (tot >= f.length() - 10) {
+                    break;
+                }
             }
-            
-            tot += cont;
-            
-            byte[] b=cipher.update(buff, 0, cont);
-            fout.write(b);
-            if(tot>=f.length()-10) {
-                break;
-            }
+            fout.write(cipher.doFinal());
         }
-        fout.write(cipher.doFinal());
+
 
 
     }

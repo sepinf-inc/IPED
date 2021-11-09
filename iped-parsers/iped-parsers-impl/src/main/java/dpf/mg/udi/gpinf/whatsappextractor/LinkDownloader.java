@@ -6,7 +6,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.Writer;
 import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -91,27 +90,20 @@ public class LinkDownloader {
 
     }
 
-    public void decript(File Input, File dest, Writer log) throws Exception {
+    public void decript(File Input, File dest) throws Exception {
 
         DecryptFile df = new DecryptFile(iv, cipherKey, Input);
-        try {
-            FileOutputStream out = new FileOutputStream(dest);
+        try (FileOutputStream out = new FileOutputStream(dest)) {
+
             df.decryptStream(out);
-            out.close();
+
             String hash = getSHA256(new FileInputStream(dest));
 
             if (!this.hash.equals(hash)) {
-                log.write("Erro hash do arquivo nao bate\n");
-                log.write("banco:" + this.hash + "\n");
-                log.write("Calculado:" + hash + "\n");
                 throw new Exception("Hash invalido");
             }
 
         } catch (Exception e) {
-            e.printStackTrace(System.out);
-            log.write(e.toString() + "\n");
-            log.write("cippher key" + getHex(cipherKey) + "\n");
-            log.write("IV" + getHex(iv) + "\n");
             throw new Exception("cipher error");
         }
 

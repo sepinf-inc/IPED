@@ -24,8 +24,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -1151,7 +1149,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                                 ld.downloadUsingStream(f);
 
-                                ld.decript(f, fout, new PrintWriter(new OutputStreamWriter(System.out, "UTF-8")));
+                                ld.decript(f, fout);
 
 
 
