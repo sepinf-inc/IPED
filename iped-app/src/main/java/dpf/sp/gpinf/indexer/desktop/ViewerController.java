@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -73,8 +74,10 @@ public class ViewerController {
     private final Object lock = new Object();
 
     public ViewerController(AppSearchParams params) {
+        Window owner = App.get();
+        
         // These viewers will have their own docking frame
-        viewers.add(new HexViewerPlus(new HexSearcherImpl()));
+        viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer(params));
         viewers.add(new MetadataViewer() {
             @Override
