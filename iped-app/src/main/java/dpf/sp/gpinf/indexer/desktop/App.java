@@ -27,14 +27,10 @@ import java.awt.Dimension;
 import java.awt.FileDialog;
 import java.awt.Frame;
 import java.awt.Insets;
-import java.awt.KeyEventDispatcher;
-import java.awt.KeyboardFocusManager;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.File;
@@ -48,6 +44,7 @@ import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
@@ -93,6 +90,12 @@ import bibliothek.extension.gui.dock.theme.eclipse.stack.tab.TabPanePainter;
 import bibliothek.gui.DockController;
 import bibliothek.gui.Dockable;
 import bibliothek.gui.dock.StackDockStation;
+import bibliothek.gui.dock.action.ActionType;
+import bibliothek.gui.dock.action.ButtonDockAction;
+import bibliothek.gui.dock.action.SelectableDockAction;
+import bibliothek.gui.dock.action.view.ActionViewConverter;
+import bibliothek.gui.dock.action.view.ViewGenerator;
+import bibliothek.gui.dock.action.view.ViewTarget;
 import bibliothek.gui.dock.common.CControl;
 import bibliothek.gui.dock.common.CLocation;
 import bibliothek.gui.dock.common.ColorMap;
@@ -103,11 +106,15 @@ import bibliothek.gui.dock.common.event.CDockableLocationEvent;
 import bibliothek.gui.dock.common.event.CDockableLocationListener;
 import bibliothek.gui.dock.common.theme.ThemeMap;
 import bibliothek.gui.dock.station.stack.tab.layouting.TabPlacement;
+import bibliothek.gui.dock.themes.basic.action.BasicButtonHandler;
+import bibliothek.gui.dock.themes.basic.action.BasicSelectableHandler;
+import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
 import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.Manager;
@@ -116,6 +123,8 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
+import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
@@ -213,8 +222,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     Color alertColor = Color.RED;
     Color alertFocusedColor = Color.RED;
     Color alertSelectedColor = Color.RED;
-
-    private int zoomLevel;
 
     public SimilarImagesFilterPanel similarImageFilterPanel;
     public IItem similarImagesQueryRefItem;
@@ -411,7 +418,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         ToolTipManager.sharedInstance().setInitialDelay(10);
         
         dockingControl = new CControl(this);
+
+        // Set the locale used for docking frames, so texts and tool tips are localized (if available)
+        LocaleConfig localeConfig = ConfigurationManager.get().findObject(LocaleConfig.class);
+        dockingControl.setLanguage(localeConfig.getLocale());        
         
+        localizeFileChooser();
         try {
             ThemeManager.getInstance().setLookAndFeel();
         } catch (Exception e) {
@@ -654,7 +666,31 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 return RectGradientPainter.FACTORY.createDecorationPainter(pane);
             }
         });
-
+        
+        // Customize appearance of buttons and check boxes shown in docking frames title bar,
+        // so focus is not painted (avoiding intersection with buttons icons) and more clear 
+        // indication when a CCheckBox is selected. 
+        dockingControl.getController().getActionViewConverter().putClient(ActionType.BUTTON, ViewTarget.TITLE,
+                new ViewGenerator<ButtonDockAction, BasicTitleViewItem<JComponent>>() {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter, ButtonDockAction action,
+                            Dockable dockable) {
+                        BasicButtonHandler handler = new BasicButtonHandler(action, dockable);
+                        CustomButton button = new CustomButton(handler, handler);
+                        handler.setModel(button.getModel());
+                        return handler;
+                    }
+                });
+        dockingControl.getController().getActionViewConverter().putTheme(ActionType.CHECK, ViewTarget.TITLE,
+                new ViewGenerator<SelectableDockAction, BasicTitleViewItem<JComponent>>() {
+                    public BasicTitleViewItem<JComponent> create(ActionViewConverter converter,
+                            SelectableDockAction action, Dockable dockable) {
+                        BasicSelectableHandler.Check handler = new BasicSelectableHandler.Check(action, dockable);
+                        CustomButton button = new CustomButton(handler, handler);
+                        handler.setModel(button.getModel());
+                        return handler;
+                    }
+                });
+        
         dockingControl.putProperty(StackDockStation.TAB_PLACEMENT, TabPlacement.TOP_OF_DOCKABLE);
         this.getContentPane().add(dockingControl.getContentArea(), BorderLayout.CENTER);
         defaultColor = dockingControl.getController().getColors().get(ColorMap.COLOR_KEY_TAB_BACKGROUND);
@@ -662,8 +698,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         defaultSelectedColor = dockingControl.getController().getColors()
                 .get(ColorMap.COLOR_KEY_TAB_BACKGROUND_SELECTED);
 
-        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getIcon("time", resPath));
-        timelineListener = new TimelineListener(timelineButton, IconUtil.getIcon("timeon", resPath));
+        timelineButton = new CButton(Messages.get("App.ToggleTimelineView"), IconUtil.getToolbarIcon("time", resPath));
+        timelineListener = new TimelineListener(timelineButton, IconUtil.getToolbarIcon("timeon", resPath));
         timelineButton.addActionListener(timelineListener);
 
         if (triageGui) {
@@ -672,10 +708,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         refazLayout(false);
-
-        if (triageGui) {
-            zoomFont(this, -1);
-        }
 
         status = new JLabel(" "); //$NON-NLS-1$
         this.appSearchParams.status = status;
@@ -737,36 +769,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
-
-        // Permite zoom das fontes da interface com CTRL+"-" e CTRL+"="
         gallery.repaint();
-        KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-        manager.addKeyEventDispatcher(new KeyEventDispatcher() {
-            public boolean dispatchKeyEvent(KeyEvent e) {
-                if (e.getID() == KeyEvent.KEY_RELEASED) {
-                    if ((e.getModifiers() & InputEvent.CTRL_MASK) == InputEvent.CTRL_MASK) {
-                        if (e.getKeyCode() == KeyEvent.VK_EQUALS || e.getKeyCode() == KeyEvent.VK_PLUS) {
-                            synchronized (App.this) {
-                                if (zoomLevel < 8) {
-                                    zoomLevel++;
-                                    zoomFont(App.this, 1);
-                                }
-                            }
-                            return true;
-                        } else if (e.getKeyCode() == KeyEvent.VK_MINUS) {
-                            synchronized (App.this) {
-                                if (zoomLevel > -4) {
-                                    zoomLevel--;
-                                    zoomFont(App.this, -1);
-                                }
-                            }
-                            return true;
-                        }
-                    }
-                }
-                return false;
-            }
-        });
     }
     
     public void updateUI(boolean refresh) {
@@ -811,7 +814,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         graphDock = createDockable("graphtab", Messages.getString("App.Links"), appGraphAnalytics);
 
         CButton butToggleVideoFramesMode = new CButton(Messages.getString("Gallery.ToggleVideoFrames"),
-                IconUtil.getIcon("video", resPath));
+                IconUtil.getToolbarIcon("video", resPath));
         galleryTabDock.addAction(butToggleVideoFramesMode);
         galleryTabDock.addSeparator();
         butToggleVideoFramesMode.addActionListener(new ActionListener() {
@@ -824,7 +827,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         if (SimilarImagesFilterActions.isFeatureEnabled()) {
             CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
-                    IconUtil.getIcon("find", resPath));
+                    IconUtil.getToolbarIcon("find", resPath));
             galleryTabDock.addAction(butSimSearch);
             galleryTabDock.addSeparator();
             butSimSearch.addActionListener(new ActionListener() {
@@ -856,10 +859,10 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         // Add buttons to control the thumbnails size / number of columns in the gallery
         CButton butDec = new CButton(Messages.getString("Gallery.DecreaseThumbsSize"),
-                IconUtil.getIcon("minus", resPath));
+                IconUtil.getToolbarIcon("minus", resPath));
         galleryTabDock.addAction(butDec);
         CButton butInc = new CButton(Messages.getString("Gallery.IncreaseThumbsSize"),
-                IconUtil.getIcon("plus", resPath));
+                IconUtil.getToolbarIcon("plus", resPath));
         galleryTabDock.addAction(butInc);
         galleryTabDock.addSeparator();
         butDec.addActionListener(new ActionListener() {
@@ -941,7 +944,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
     private void setupViewerDocks() {
         CCheckBox chkFixed = new CCheckBox(Messages.getString("ViewerController.FixViewer"),
-                IconUtil.getIcon("pin", resPath)) {
+                IconUtil.getToolbarIcon("pin", resPath)) {
             protected void changed() {
                 viewerController.setFixed(isSelected());
             }
@@ -973,9 +976,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             });
 
             CButton prevHit = new CButton(Messages.getString("ViewerController.PrevHit"),
-                    IconUtil.getIcon("prev", resPath));
+                    IconUtil.getToolbarIcon("prev", resPath));
             CButton nextHit = new CButton(Messages.getString("ViewerController.NextHit"),
-                    IconUtil.getIcon("next", resPath));
+                    IconUtil.getToolbarIcon("next", resPath));
             prevHit.addActionListener(new ActionListener() {
                 public void actionPerformed(ActionEvent e) {
                     viewer.scrollToNextHit(false);
@@ -994,16 +997,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
             int toolbarSupport = viewer.getToolbarSupported();
             if (toolbarSupport >= 0) {
-                CCheckBox chkToolbar = new CCheckBox(Messages.getString("ViewerController.ShowToolBar"),
-                        IconUtil.getIcon("down", resPath)) {
-                    protected void changed() {
-                        viewer.setToolbarVisible(isSelected());
+                Icon downIcon = IconUtil.getToolbarIcon("down", resPath);
+                Icon upIcon = IconUtil.getToolbarIcon("up", resPath);
+                CSelButton butToolbar = new CSelButton(Messages.getString("ViewerController.ShowToolBar"), upIcon, downIcon);
+                butToolbar.addActionListener(new ActionListener() {
+                    public void actionPerformed(ActionEvent e) {
+                        butToolbar.toggle();
+                        viewer.setToolbarVisible(butToolbar.isSelected());
                     }
-                };
-                chkToolbar.setSelectedIcon(IconUtil.getIcon("up", resPath));
-                chkToolbar.setSelected(true);
-                viewerDock.addAction(chkToolbar);
-                viewerDock.putAction("toolbar", chkToolbar);
+                });
+                viewerDock.addAction(butToolbar);
+                viewerDock.putAction("toolbar", butToolbar);
             }
 
             viewerDock.addSeparator();
@@ -1161,22 +1165,12 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         }
     }
-
-    private void zoomFont(Component c, int inc) {
-        if (c instanceof Container) {
-            Component[] childs = ((Container) c).getComponents();
-            for (Component child : childs) {
-                zoomFont(child, inc);
-            }
+    
+    private void localizeFileChooser() {
+        // Forward to UIManager any localized value belonging to FileChooser
+        for(String key : Messages.getKeys("FileChooser.")) {
+            UIManager.put(key, Messages.get(key));
         }
-        int currSize = c.getFont().getSize();
-        int newSize = currSize + inc;
-        c.setFont(c.getFont().deriveFont((float) newSize));
-        if (c instanceof JTable) {
-            ((JTable) c).setRowHeight(newSize + 4);
-        }
-        revalidate();
-        repaint();
     }
 
     public void refazLayout(boolean remove) {

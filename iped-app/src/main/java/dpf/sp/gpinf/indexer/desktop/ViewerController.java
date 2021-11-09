@@ -3,6 +3,7 @@ package dpf.sp.gpinf.indexer.desktop;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.KeyboardFocusManager;
+import java.awt.Window;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -21,9 +22,9 @@ import org.apache.tika.Tika;
 import bibliothek.extension.gui.dock.theme.eclipse.stack.EclipseTabPaneContent;
 import bibliothek.gui.dock.common.DefaultSingleCDockable;
 import bibliothek.gui.dock.common.action.CButton;
-import bibliothek.gui.dock.common.action.CCheckBox;
 import bibliothek.gui.dock.common.mode.ExtendedMode;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
@@ -73,8 +74,10 @@ public class ViewerController {
     private final Object lock = new Object();
 
     public ViewerController(AppSearchParams params) {
+        Window owner = App.get();
+        
         // These viewers will have their own docking frame
-        viewers.add(new HexViewerPlus(new HexSearcherImpl()));
+        viewers.add(new HexViewerPlus(owner, new HexSearcherImpl()));
         viewers.add(textViewer = new TextViewer(params));
         viewers.add(new MetadataViewer() {
             @Override
@@ -292,9 +295,9 @@ public class ViewerController {
 
                 int toolbarSupport = viewer.getToolbarSupported();
                 if (toolbarSupport >= 0) {
-                    CCheckBox chkToolbar = (CCheckBox) dock.getAction("toolbar");
-                    chkToolbar.setEnabled(toolbarSupport == 1);
-                    chkToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
+                    CSelButton butToolbar = (CSelButton) dock.getAction("toolbar");
+                    butToolbar.setEnabled(toolbarSupport == 1);
+                    butToolbar.setSelected(toolbarSupport == 1 && viewer.isToolbarVisible());
                 }
             }
         } else {
