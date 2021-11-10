@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
@@ -316,16 +317,14 @@ public class Statistics {
 
         int minMemPerThread = 200;
         if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {
-            String memoryAlert = Messages.getString("Statistics.LowMemory.1") + minMemPerThread //$NON-NLS-1$
-                    + Messages.getString("Statistics.LowMemory.2") + Messages.getString("Statistics.LowMemory.3") //$NON-NLS-1$ //$NON-NLS-2$
-                    + Messages.getString("Statistics.LowMemory.4") + Messages.getString("Statistics.LowMemory.5") //$NON-NLS-1$ //$NON-NLS-2$
-                    + Messages.getString("Statistics.LowMemory.6"); //$NON-NLS-1$
+            String memoryAlert = Messages.getString("Statistics.LowMemory.Msg").replace("{}", //$NON-NLS-1$
+                    Integer.toString(minMemPerThread));
             CmdLineArgs cmdArgs = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             if (!cmdArgs.isNogui()) {
                 JOptionPane.showMessageDialog(null, memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
                         JOptionPane.WARNING_MESSAGE);
             }
-            throw new Exception(memoryAlert);
+            throw new IPEDException(memoryAlert);
         }
 
     }
