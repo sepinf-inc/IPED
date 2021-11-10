@@ -181,7 +181,7 @@ public class GalleryModel extends AbstractTableModel {
                     }
 
                     BytesRef bytesRef = doc.getBinaryValue(IndexItem.THUMB);
-                    if (bytesRef != null && ((isSupportedImage(mediaType) && !isAnimationImage(doc)) || App.get().useVideoThumbsInGallery)) {
+                    if (bytesRef != null && ((!isSupportedVideo(mediaType) && !isAnimationImage(doc)) || App.get().useVideoThumbsInGallery)) {
                         byte[] thumb = bytesRef.bytes;
                         if (thumb.length > 0) {
                             image = ImageIO.read(new ByteArrayInputStream(thumb));

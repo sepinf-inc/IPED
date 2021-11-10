@@ -54,7 +54,7 @@ public class SelectImagePathWithDialog implements Runnable {
 
         public ImageFilter(File file) {
             int extIdx = file.getName().lastIndexOf('.');
-            if (extIdx >= file.getName().length() - 5)
+            if (extIdx != -1 && extIdx >= file.getName().length() - 5)
                 ext = file.getName().substring(extIdx).toLowerCase();
         }
 

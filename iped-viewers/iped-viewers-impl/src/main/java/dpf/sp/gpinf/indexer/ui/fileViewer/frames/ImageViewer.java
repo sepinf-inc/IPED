@@ -18,7 +18,7 @@ import java.io.InputStream;
 import java.util.Set;
 
 import javax.swing.BorderFactory;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -261,7 +261,7 @@ public class ImageViewer extends Viewer implements ActionListener {
     private void createToolBar() {
         toolBar = new JToolBar();
         toolBar.setFloatable(false);
-        ImageIcon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
+        Icon iconSeparator = IconUtil.getIcon("separator", resPath, 24);
 
         toolBar.add(new JLabel(iconSeparator));
         createToolBarButton(actionRotLeft);
@@ -285,13 +285,13 @@ public class ImageViewer extends Viewer implements ActionListener {
                 }
             }
         });
-        ImageIcon icon = IconUtil.getIcon("bright", resPath, 12);
+        Icon icon = IconUtil.getIcon("bright", resPath, 12);
         JPanel panelAux = new JPanel() {
             private static final long serialVersionUID = 8147197693022129080L;
 
             protected void paintComponent(Graphics g) {
                 super.paintComponent(g);
-                g.drawImage(icon.getImage(), (getWidth() - icon.getIconWidth()) / 2, 0, null);
+                icon.paintIcon(this, g, (getWidth() - icon.getIconWidth()) / 2, 0);
             }
         };
         panelAux.setOpaque(false);

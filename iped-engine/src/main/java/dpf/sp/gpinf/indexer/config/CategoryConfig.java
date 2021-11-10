@@ -1,7 +1,7 @@
 package dpf.sp.gpinf.indexer.config;
 
-import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -9,26 +9,33 @@ import java.util.Map;
 
 import org.apache.tika.mime.MediaType;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+
+import gpinf.dev.data.Category;
 import iped3.util.MediaTypes;
 
-public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
+public class CategoryConfig extends AbstractTaskConfig<Category> {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private static final String CONFIG_FILE = "CategoriesByTypeConfig.txt";
+    private static final String CONFIG_FILE = "CategoriesConfig.json";
 
-    private Map<String, String> mimetypeToCategoryMap = new HashMap<>();
+    private Category root;
 
     private transient Map<String, String> normalizedMap;
+
+    private transient Map<String, Category> nameToCategoryMap;
 
     private Map<String, String> getNormalizedMap() {
         if (normalizedMap == null) {
             synchronized (this) {
                 if (normalizedMap == null) {
                     normalizedMap = new HashMap<>();
+                    Map<String, String> mimetypeToCategoryMap = getMimeToCategoryMap(root);
                     for(String key : mimetypeToCategoryMap.keySet()) {
                         MediaType type = MediaTypes.normalize(MediaType.parse(key));
                         String mime = type != null ? type.toString() : key;
@@ -38,6 +45,17 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
             }
         }
         return normalizedMap;
+    }
+
+    private Map<String, String> getMimeToCategoryMap(Category category) {
+        Map<String, String> mimetypeToCategoryMap = new HashMap<>();
+        for (String mimeType : category.getMimes()) {
+            mimetypeToCategoryMap.put(mimeType, category.getName());
+        }
+        for (Category subCategory : category.getChildren()) {
+            mimetypeToCategoryMap.putAll(getMimeToCategoryMap(subCategory));
+        }
+        return mimetypeToCategoryMap;
     }
 
     public String getCategory(MediaType type) {
@@ -64,13 +82,13 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
     }
 
     @Override
-    public Map<String, String> getConfiguration() {
-        return mimetypeToCategoryMap;
+    public Category getConfiguration() {
+        return root;
     }
 
     @Override
-    public void setConfiguration(Map<String, String> config) {
-        this.mimetypeToCategoryMap = config;
+    public void setConfiguration(Category root) {
+        this.root = root;
     }
 
     @Override
@@ -86,23 +104,44 @@ public class CategoryConfig extends AbstractTaskConfig<Map<String, String>> {
     @Override
     public void processTaskConfig(Path resource) throws IOException {
 
-        try (BufferedReader reader = Files.newBufferedReader(resource)) {
-            String line = reader.readLine();
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("#")) { //$NON-NLS-1$
-                    continue;
-                }
-                String[] keyValuePair = line.split("="); //$NON-NLS-1$
-                if (keyValuePair.length == 2) {
-                    String category = keyValuePair[0].trim();
-                    String mimeTypes = keyValuePair[1].trim();
-                    for (String mimeType : mimeTypes.split(";")) { //$NON-NLS-1$
-                        mimeType = mimeType.trim();
-                        mimetypeToCategoryMap.put(mimeType, category);
-                    }
+        ObjectMapper objectMapper = new ObjectMapper();
+        ObjectReader reader = objectMapper.readerFor(Category.class);
+        try (Reader in = Files.newBufferedReader(resource)) {
+            root = reader.readValue(in);
+            populateParents(root);
+        }
+
+    }
+
+    private void populateParents(Category category) {
+        for (Category subCategory : category.getChildren()) {
+            subCategory.setParent(category);
+            populateParents(subCategory);
+        }
+    }
+
+    private Map<String, Category> getNameToCategoryMap() {
+        if (nameToCategoryMap == null) {
+            synchronized (this) {
+                if (nameToCategoryMap == null) {
+                    nameToCategoryMap = buildNameToCategoryMap(root);
                 }
             }
         }
+        return nameToCategoryMap;
+    }
+
+    private Map<String, Category> buildNameToCategoryMap(Category category) {
+        Map<String, Category> map = new HashMap<>();
+        map.put(category.getName(), category);
+        for (Category sub : category.getChildren()) {
+            map.putAll(buildNameToCategoryMap(sub));
+        }
+        return map;
+    }
+
+    public Category getCategoryFromName(String categoryName) {
+        return getNameToCategoryMap().get(categoryName);
     }
 
 }

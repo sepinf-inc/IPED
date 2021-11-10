@@ -126,7 +126,7 @@ public class IndexItem extends BasicProps {
 
     static HashSet<String> ignoredMetadata = new HashSet<String>();
 
-    private static volatile boolean guessMetaTypes = false;
+    private static volatile boolean collectMetaTypes = false;
 
     private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
@@ -482,7 +482,7 @@ public class IndexItem extends BasicProps {
         }
 
         if (typesMap.size() == 0) {
-            guessMetaTypes = true;
+            collectMetaTypes = true;
         }
 
         for (Entry<String, Object> entry : evidence.getExtraAttributeMap().entrySet()) {
@@ -497,11 +497,10 @@ public class IndexItem extends BasicProps {
             }
         }
 
-        // TRIAGE comentar
         Metadata metadata = evidence.getMetadata();
         if (metadata != null) {
-            if (guessMetaTypes) {
-                guessMetadataTypes(evidence.getMetadata());
+            if (collectMetaTypes) {
+                collectMetadataTypes(evidence.getMetadata());
             } else {
                 addMetadataToDoc(doc, evidence.getMetadata(), timeEventSet);
             }
@@ -608,7 +607,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMetadataKey,
+    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isPossibleType,
             boolean isMultiValued, Set<TimeStampEvent> timeEventSet) {
         boolean isString = false;
 
@@ -617,7 +616,7 @@ public class IndexItem extends BasicProps {
          * prefixo no nome para diferenciar
          */
         String keyPrefix = ""; //$NON-NLS-1$
-        if (isMetadataKey) {
+        if (isPossibleType) {
             keyPrefix = POSSIBLE_NUM_DOCVALUES_PREFIX;
         }
         if (oValue instanceof Date) {
@@ -677,12 +676,12 @@ public class IndexItem extends BasicProps {
             doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
         }
 
-        if (isMetadataKey || isString) {
+        if (isPossibleType || isString) {
             String value = oValue.toString();
             if (value.length() > MAX_DOCVALUE_SIZE) {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
-            if (isMetadataKey) {
+            if (isPossibleType) {
                 keyPrefix = POSSIBLE_STR_DOCVALUES_PREFIX;
             }
             if (!isMultiValued)
@@ -730,13 +729,19 @@ public class IndexItem extends BasicProps {
         if (type == null && MetadataUtil.isHtmlMediaType(mimetype) && !key.startsWith(ExtraProperties.UFED_META_PREFIX))
             return;
 
-        if (type == null || isNumeric(key)) {
-            if (type == null) {
-                // try generic number
-                type = Double.class;
-                newtypesMap.put(key, type);
-                typesMap.put(key, type);
+        if (type == null) {
+            // try to guess unknown type
+            try {
+                oValue = Double.valueOf(value);
+                type = setAndGetType(key, Double.class);
+            } catch (NumberFormatException e) {
+                Date date = DateUtil.tryToParseDate(value);
+                if (date != null) {
+                    oValue = date;
+                    type = setAndGetType(key, Date.class);
+                }
             }
+        } else {
             try {
                 if (type.equals(Double.class)) {
                     oValue = Double.valueOf(value);
@@ -746,35 +751,45 @@ public class IndexItem extends BasicProps {
                     oValue = Float.valueOf(value);
                 } else if (type.equals(Long.class)) {
                     oValue = Long.valueOf(value);
+                } else if (type.equals(Date.class)) {
+                    Date date = DateUtil.tryToParseDate(value);
+                    if (date != null)
+                        oValue = date;
+                    else
+                        throw new ParseException("Not a date", 0);
                 }
-
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException | ParseException e) {
                 if (newtypesMap.containsKey(key)) {
-                    typesMap.put(key, String.class);
+                    // prev guessed type was wrong, fallback to string
+                    type = setAndGetType(key, String.class);
+                } else {
+                    // value doesn't match built-in type, store value in other field as string
+                    key += ":string";
+                    type = String.class;
                 }
             }
         }
 
-        Date date = DateUtil.tryToParseDate(value);
-        if (date != null) {
-            oValue = date;
-            typesMap.put(key, Date.class);
+        if (type == null) {
+            type = setAndGetType(key, String.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, true, isMultiValued, timeEventSet);
+        addExtraAttributeToDoc(doc, key, oValue, newtypesMap.containsKey(key), isMultiValued, timeEventSet);
     }
 
-    private static void guessMetadataTypes(Metadata metadata) {
+    private static Class<?> setAndGetType(String key, Class<?> type) {
+        newtypesMap.put(key, type);
+        typesMap.put(key, type);
+        return type;
+    }
+
+    private static void collectMetadataTypes(Metadata metadata) {
 
         for (String key : metadata.names()) {
             if (key.contains("Unknown tag") || ignoredMetadata.contains(key)) { //$NON-NLS-1$
                 continue;
             }
-            if (metadata.getValues(key).length > 1) {
-                typesMap.put(key, String.class);
 
-                continue;
-            }
             String val = metadata.get(key);
 
             if (typesMap.get(key) == null || !typesMap.get(key).equals(String.class)) {
@@ -809,6 +824,14 @@ public class IndexItem extends BasicProps {
                                     break;
                                 }
                             case 4:
+                                if (typesMap.get(key) == null || typesMap.get(key).equals(Date.class)) {
+                                    Date date = DateUtil.tryToParseDate(val);
+                                    if (date != null) {
+                                        typesMap.put(key, Date.class);
+                                        break;
+                                    }
+                                }
+                            default:
                                 typesMap.put(key, String.class);
                         }
                         type = 100;
@@ -1123,12 +1146,11 @@ public class IndexItem extends BasicProps {
         if (evidence.isSubItem())
             return localFile;
         Path path = localFile.toPath();
-        String pathSuffix = "";
-        if (path.getNameCount() > 1)
-            pathSuffix = path.subpath(1, path.getNameCount()).toString();
-        if (localFile.toPath().endsWith(pathSuffix)) {
-            String evidenceFolderStr = localFile.getAbsolutePath().substring(0,
-                    localFile.getAbsolutePath().lastIndexOf(pathSuffix));
+        Path pathSuffix = Paths.get(evidence.getPath());
+        if (pathSuffix.getNameCount() > 1)
+            pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
+        if (path.endsWith(pathSuffix)) {
+            String evidenceFolderStr = path.toString().substring(0, path.toString().lastIndexOf(pathSuffix.toString()));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
             if (mappedFolder == null) {
@@ -1148,7 +1170,7 @@ public class IndexItem extends BasicProps {
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }
-            localFile = new File(mappedFolder, pathSuffix);
+            localFile = new File(mappedFolder, pathSuffix.toString());
         }
         return localFile;
     }

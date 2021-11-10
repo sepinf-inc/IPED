@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.DirectoryStream.Filter;
 import java.nio.file.Path;
-import java.util.Date;
+import java.util.Random;
 
 import org.slf4j.Logger;
 
@@ -72,10 +72,11 @@ public class LocalConfig extends AbstractPropertiesConfigurable {
                     tmp = newTmp;
                 }
             }
-            indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
+            Random rand = new Random();
+            indexerTemp = new File(tmp, "indexador-temp" + rand.nextLong()); //$NON-NLS-1$
             if (!indexerTemp.mkdirs()) {
                 tmp = new File(System.getProperty("java.io.basetmpdir")); //$NON-NLS-1$
-                indexerTemp = new File(tmp, "indexador-temp" + new Date().getTime()); //$NON-NLS-1$
+                indexerTemp = new File(tmp, "indexador-temp" + rand.nextLong()); //$NON-NLS-1$
                 indexerTemp.mkdirs();
             }
             if (indexerTemp.exists()) {

@@ -169,7 +169,7 @@ public class IndexTask extends AbstractTask {
                 }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);
-                addDocumentSafe(doc, evidence);
+                worker.writer.addDocument(doc);
 
                 while (worker.state != STATE.RUNNING) {
                     try {
@@ -195,34 +195,6 @@ public class IndexTask extends AbstractTask {
 
         textSizes.add(new IdLenPair(evidence.getId(), fragReader.getTotalTextSize()));
 
-    }
-
-    private void addDocumentSafe(Document doc, IItem evidence) throws IOException {
-        // loop to handle possible corrupted metadata, see #571
-        while (true) {
-            try {
-                worker.writer.addDocument(doc);
-                break;
-            } catch (IllegalArgumentException e) {
-                String msg = e.toString();
-                if (msg.contains("cannot change DocValues type from")) {
-                    String badField = msg.substring(msg.indexOf('\"') + 1, msg.length() - 1);
-                    String badValue = doc.get(badField);
-                    LOGGER.warn("Possible corrupted metadata value '{}' in field '{}' in item '{}' ({} bytes)",
-                            badValue, badField, evidence.getPath(), evidence.getLength());
-                    // removes default field
-                    doc.removeField(badField);
-                    // removes docValues field
-                    doc.removeField(badField);
-                    // add the value in other similar field as a generic string
-                    badField += ":string";
-                    doc.add(new TextField(badField, badValue, Field.Store.YES));
-                    doc.add(new SortedSetDocValuesField(badField, new BytesRef(IndexItem.normalize(badValue, true))));
-                } else {
-                    throw e;
-                }
-            }
-        }
     }
 
     private Metadata getMetadata(IItem evidence) {

@@ -1162,15 +1162,23 @@ public class Item implements ISleuthKitItem {
      */
     @Deprecated
     public void setParsedTextCache(String parsedText) {
-        this.textCache = new TextCache();
+        TextCache textCache = new TextCache();
         try {
-            this.textCache.write(parsedText);
+            textCache.write(parsedText);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        this.setParsedTextCache(textCache);
     }
 
     public void setParsedTextCache(TextCache textCache) {
+        if (this.textCache != null) {
+            try {
+                this.textCache.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
         this.textCache = textCache;
     }
 

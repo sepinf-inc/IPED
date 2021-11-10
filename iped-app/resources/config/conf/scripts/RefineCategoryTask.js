@@ -24,6 +24,10 @@ function process(e){
 	var categorias = e.getCategories();
 	var length = e.getLength();
 	var ext = e.getExt().toLowerCase();
+	
+	if(/.*(-delta|-flat|-(f|s)[0-9]{3})\.vmdk/i.test(e.getName())){
+	    e.setMediaTypeStr("application/x-vmdk-data");
+	}
 
 	if(e.getExt().toLowerCase().equals("mts")){
 		e.setMediaTypeStr("video/mp2t");

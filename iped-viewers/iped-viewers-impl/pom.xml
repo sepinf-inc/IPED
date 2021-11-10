@@ -66,39 +66,14 @@
         </dependency>
         <dependency>
             <groupId>org.libreoffice</groupId>
-            <artifactId>ridl</artifactId>
+            <artifactId>libreoffice</artifactId>
             <version>${libreoffice.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>unoil</artifactId>
-            <version>${libreoffice.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>jurt</artifactId>
-            <version>${libreoffice.version}</version>
-            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.libreoffice</groupId>
             <artifactId>officebean</artifactId>
             <version>${libreoffice.version}</version>
         </dependency>
-        <!--dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>juh</artifactId>
-            <version>${libreoffice.version}</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.libreoffice</groupId>
-            <artifactId>unoloader</artifactId>
-            <version>${libreoffice.version}</version>
-            <scope>provided</scope>
-        </dependency-->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>

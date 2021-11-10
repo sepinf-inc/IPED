@@ -38,6 +38,7 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 
 import org.apache.tika.io.IOUtils;
@@ -134,6 +135,7 @@ public class SleuthkitReader extends DataSourceReader {
     private boolean fastmode = false;
     private boolean embeddedDisk = false;
     private int itemCount = 0;
+    private volatile boolean decodingError = false;
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
@@ -154,6 +156,10 @@ public class SleuthkitReader extends DataSourceReader {
 
     public int getItemCount() {
         return itemCount;
+    }
+
+    public boolean hasDecodingError() {
+        return this.decodingError;
     }
 
     public boolean isSupported(File file) {
@@ -545,6 +551,7 @@ public class SleuthkitReader extends DataSourceReader {
             if (exit != 0) {
                 LOGGER.error("Sleuthkit LoadDb returned an error {}. Possibly" //$NON-NLS-1$
                         + " many items were not added to the case!", exit); //$NON-NLS-1$
+                decodingError = true;
             }
 
         } catch (InterruptedException ie) {
@@ -819,7 +826,7 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void setPath(IItem evidence, String path) {
         if (deviceName != null) {
-            path = path.replaceFirst("img_.+?\\/", deviceName + "/"); //$NON-NLS-1$ //$NON-NLS-2$
+            path = path.replaceFirst("img_.+?\\/", Matcher.quoteReplacement(deviceName) + "/"); //$NON-NLS-1$ //$NON-NLS-2$
         }
         path = inheritedPath + path;
         evidence.setPath(path);
@@ -859,7 +866,8 @@ public class SleuthkitReader extends DataSourceReader {
         if (listOnly || fastmode || embeddedDisk) {
             itemCount++;
             caseData.incDiscoveredEvidences(1);
-            caseData.incDiscoveredVolume(evidence.getLength());
+            if (!embeddedDisk)
+                caseData.incDiscoveredVolume(evidence.getLength());
             if (listOnly)
                 return null;
         }
@@ -1117,6 +1125,7 @@ public class SleuthkitReader extends DataSourceReader {
                             if (line.toLowerCase().contains("error") //$NON-NLS-1$
                                     && !line.toLowerCase().contains("microsoft reserved partition")) { //$NON-NLS-1$
                                 LOGGER.error("Sleuthkit error processing {}: {}", image, line.trim()); //$NON-NLS-1$
+                                decodingError = true;
                             } else {
                                 LOGGER.info("Sleuthkit: " + line.trim()); //$NON-NLS-1$
                             }
