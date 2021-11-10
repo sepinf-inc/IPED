@@ -240,9 +240,8 @@ public class LibreOfficeViewer extends Viewer {
     public void constructLOFrame() {
         try {
             if (!System.getProperty("os.name").startsWith("Windows")
-                    && !"gtk".equals(System.getenv("SAL_USE_VCLPLUGIN")))
-                LOGGER.error(
-                        "LibreOffice viewer may not work properly. Install libreoffice-gtk2 and set environment var SAL_USE_VCLPLUGIN='gtk'");
+                    && !"gen".equals(System.getenv("SAL_USE_VCLPLUGIN")))
+                LOGGER.error("LibreOffice viewer may not work properly. Set environment var SAL_USE_VCLPLUGIN='gen'");
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
