@@ -281,9 +281,8 @@ public class Statistics {
            * " itens de " + extracted);
            */
 
-        if (this.getIoErrors() > activeFiles * IO_ERROR_RATE_TO_WARN)
-            LOGGER.error(
-                    "Alert: Errors while reading " + getIoErrors() + " items! Maybe the datasource was unavailable!"); //$NON-NLS-1$ //$NON-NLS-2$
+        if (this.getIoErrors() > processed * IO_ERROR_RATE_TO_WARN)
+            LOGGER.error("Warning: IO Errors happened while reading {} items from {}!", getIoErrors(), processed); //$NON-NLS-1$
     }
 
     public void printSystemInfo() throws Exception {
