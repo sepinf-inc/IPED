@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.net.URLConnection;
@@ -13,8 +14,6 @@ import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
 import java.util.ResourceBundle.Control;
-
-import iped3.configuration.IConfigurationDirectory;
 
 public abstract class Messages {
 
@@ -31,10 +30,13 @@ public abstract class Messages {
 
     public static ResourceBundle getExternalBundle(String bundleName, Locale locale) {
         File file = null;
-        String baseFolder = System.getProperty(IConfigurationDirectory.IPED_ROOT);
-        if (baseFolder != null) {
-            file = new File(baseFolder, BUNDLES_FOLDER);
-        } else {
+        try {
+            URL url = Messages.class.getProtectionDomain().getCodeSource().getLocation();
+            file = new File(new File(url.toURI()).getParentFile().getParentFile(), BUNDLES_FOLDER);
+        } catch (URISyntaxException e1) {
+            e1.printStackTrace();
+        }
+        if (file != null && !file.exists()) {
             File baseFile = new File(System.getProperty("user.dir"));
             do {
                 baseFile = baseFile.getParentFile();
