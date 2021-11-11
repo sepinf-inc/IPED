@@ -61,6 +61,9 @@ public class SQLiteUndelete {
         Job.LOGLEVEL = Base.NONE;
         Global.CONVERT_DATETIME = false;
 
+        // recover only deleted records
+        job.recoverOnlyDeletedRecords = true;
+
         try {
             job.processDB();
             result = new HashMap<>();
@@ -70,10 +73,8 @@ public class SQLiteUndelete {
                 if (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName())) {
                     SQLiteRecordValidator validator = recordValidators.get(td.getName());
                     for (SqliteRow row : job.getRowsForTable(td.getName())) {
-                        if (row.getRecordType().contains("D") || row.getRecordType().contains("F") || row.getRecordType().contains("U")) {
-                            if (validator == null || validator.validateRecord(row)) {
-                                table.getTableRows().add(row);
-                            }
+                        if (validator == null || validator.validateRecord(row)) {
+                            table.getTableRows().add(row);
                         }
                     }
                     result.put(td.getName(), table);

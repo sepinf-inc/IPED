@@ -169,7 +169,7 @@
         <dependency>
             <groupId>io.github.fmpfeifer</groupId>
             <artifactId>libfqlite</artifactId>
-            <version>1.56.02-beta</version>
+            <version>1.56.03-beta</version>
         </dependency>
     </dependencies>
 
