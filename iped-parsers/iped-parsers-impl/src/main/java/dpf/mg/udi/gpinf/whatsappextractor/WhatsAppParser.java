@@ -823,7 +823,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ParseContext context = new ParseContext();
         context.set(IItemSearcher.class, searcher);
         context.set(IItemBase.class, item);
-        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.newInstance();
+        ExtractorFactory extFactory = (ExtractorFactory) extFactoryClass.getDeclaredConstructor().newInstance();
 
         try (InputStream is = item.getBufferedStream()) {
             extFactory.setConnectionParams(is, null, context, this);

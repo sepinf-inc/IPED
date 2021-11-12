@@ -291,6 +291,7 @@ public class Message {
             case YOU_ADMIN:
             case UNKNOWN_MESSAGE:
                 return true;
+            default:
         }
         return false;
     }
@@ -315,7 +316,7 @@ public class Message {
     public void addChildPornSets(Collection<String> sets) {
         this.childPornSets.addAll(sets);
     }
-    
+
     public IItemBase getMediaItem() {
         return mediaItem;
     }
