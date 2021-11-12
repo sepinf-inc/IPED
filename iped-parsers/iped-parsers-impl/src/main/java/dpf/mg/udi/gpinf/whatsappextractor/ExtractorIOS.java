@@ -79,13 +79,17 @@ public class ExtractorIOS extends Extractor {
 
         SQLiteUndelete undelete = new SQLiteUndelete(databaseFile.toPath());
         undelete.addTableToRecover("ZWAMESSAGE"); //$NON-NLS-1$
+        undelete.addTableToRecoverOnlyDeleted("ZWAMESSAGE"); //$NON-NLS-1$
         undelete.addRecordValidator("ZWAMESSAGE", new WAIOSMessageValidator()); //$NON-NLS-1$
         undelete.addTableToRecover("ZWAMEDIAITEM"); //$NON-NLS-1$
-        undelete.addTableToRecoverOnlyDeleted("ZWAMEDIAITEM"); //$NON-NLS-1$
+        undelete.addRecordValidator("ZWAMEDIAITEM", new WAIOSMediaItemValidator()); //$NON-NLS-1$
+        undelete.addTableToRecover("ZWAGROUPMEMBER"); //$NON-NLS-1$
+        undelete.addRecordValidator("ZWAGROUPMEMBER", new WAIOSGroupMemberValidator()); //$NON-NLS-1$
         undelete.setRecoverOnlyDeletedRecords(false);
         Map<String, SQLiteUndeleteTable> undeleteTables = undelete.undeleteData();
         SQLiteUndeleteTable messagesUndeletedTable = undeleteTables.get("ZWAMESSAGE"); //$NON-NLS-1$
-        SQLiteUndeleteTable mediaInfoUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
+        SQLiteUndeleteTable mediaItemUndeletedTable = undeleteTables.get("ZWAMEDIAITEM"); //$NON-NLS-1$
+        SQLiteUndeleteTable groupMembersUndeletedTable = undeleteTables.get("ZWAGROUPMEMBER"); //$NON-NLS-1$
 
         Map<Long, List<SqliteRow>> undeletedMessages = new HashMap<>();
         if (messagesUndeletedTable != null) {
@@ -102,12 +106,22 @@ public class ExtractorIOS extends Extractor {
             });
         }
 
-        Map<Long, SqliteRow> mediaInfos = new HashMap<>();
-        if (mediaInfoUndeletedTable != null) {
-            mediaInfoUndeletedTable.getTableRows().stream().forEach(row -> {
-                long mediaInfoPK = mediaInfoUndeletedTable.getIntValue(row, "ZMESSAGE"); //$NON-NLS-1$
-                if (mediaInfoPK > 0) {
-                    mediaInfos.put(mediaInfoPK, row);
+        Map<Long, SqliteRow> mediaItems = new HashMap<>();
+        if (mediaItemUndeletedTable != null) {
+            mediaItemUndeletedTable.getTableRows().stream().forEach(row -> {
+                long messagePK = mediaItemUndeletedTable.getIntValue(row, "ZMESSAGE"); //$NON-NLS-1$
+                if (messagePK > 0) {
+                    mediaItems.put(messagePK, row);
+                }
+            });
+        }
+
+        Map<Long, SqliteRow> groupMembers = new HashMap<>();
+        if (groupMembersUndeletedTable != null) {
+            groupMembersUndeletedTable.getTableRows().stream().forEach(row -> {
+                long groupMemberPK = groupMembersUndeletedTable.getIntValue(row, "Z_PK"); //$NON-NLS-1$
+                if (groupMemberPK >= 0) {
+                    mediaItems.put(groupMemberPK, row);
                 }
             });
         }
@@ -131,7 +145,7 @@ public class ExtractorIOS extends Extractor {
                 }
 
                 for (Chat c : list) {
-                    c.setMessages(extractMessages(conn, c, undeletedMessages, messagesUndeletedTable, mediaInfos));
+                    c.setMessages(extractMessages(conn, c, undeletedMessages, messagesUndeletedTable, mediaItems, groupMembers));
                     if (c.isGroupChat()) {
                         setGroupMembers(c, conn);
                     }
@@ -166,7 +180,8 @@ public class ExtractorIOS extends Extractor {
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat, Map<Long, List<SqliteRow>> undeletedMessages,
-                                          SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaInfos) throws SQLException {
+                                          SQLiteUndeleteTable undeleteTable, Map<Long, SqliteRow> mediaItems,
+                                          Map<Long, SqliteRow> groupMembers) throws SQLException {
         List<Message> messages = new ArrayList<>();
         String sql = chat.isGroupChat() ? SELECT_MESSAGES_GROUP : SELECT_MESSAGES_USER;
         try (PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -182,7 +197,7 @@ public class ExtractorIOS extends Extractor {
         List<SqliteRow> undeletedRows = undeletedMessages.getOrDefault(chat.getId(), Collections.emptyList());
         for (SqliteRow row : undeletedRows) {
             try {
-                Message m = createMessageFromUndeletedRecord(row, chat, mediaInfos);
+                Message m = createMessageFromUndeletedRecord(row, chat, mediaItems, groupMembers);
                 messages.add(m);
             } catch (SQLException e) {
             } catch (RuntimeException e) {
@@ -258,12 +273,23 @@ public class ExtractorIOS extends Extractor {
         return m;
     }
 
-    private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat, Map<Long, SqliteRow> mediaInfos) throws SQLException {
+    private Message createMessageFromUndeletedRecord(SqliteRow row, Chat chat,
+                                                     Map<Long, SqliteRow> mediaItems,
+                                                     Map<Long, SqliteRow> groupMemebers) throws SQLException {
         Message m = new Message();
         if (account != null)
             m.setLocalResource(account.getId());
         m.setId(row.getIntValue("Z_PK")); //$NON-NLS-1$
-        String remoteResource = row.getTextValue("ZFROMJID"); //$NON-NLS-1$
+        String remoteResource = null;
+        if (chat.isGroupChat()) {
+            long groupMemberID = row.getIntValue("ZGROUPMEMBER"); //$NON-NLS-1$
+            SqliteRow groupMemberRow = groupMemebers.get(groupMemberID);
+            if (groupMemberRow != null) {
+                remoteResource = groupMemberRow.getTextValue("ZMEMBERJID"); //$NON-NLS-1$
+            }
+        } else {
+            remoteResource = row.getTextValue("ZFROMJID"); //$NON-NLS-1$
+        }
         if (remoteResource == null || remoteResource.isEmpty() || !chat.isGroupChat()) {
             remoteResource = chat.getRemote().getFullId();
         }
@@ -299,29 +325,29 @@ public class ExtractorIOS extends Extractor {
         int gEventType = (int) row.getIntValue("ZGROUPEVENTTYPE"); //$NON-NLS-1$
         int messageType = (int) row.getIntValue("ZMESSAGETYPE"); //$NON-NLS-1$
         m.setMessageType(decodeMessageType(messageType, gEventType));
-        SqliteRow mediaInfo = mediaInfos.get(m.getId());
-        if (mediaInfo != null) {
+        SqliteRow mediaItem = mediaItems.get(m.getId());
+        if (mediaItem != null) {
             try {
                 if (m.getMessageType() != CONTACT_MESSAGE) {
-                    m.setMediaMime(mediaInfo.getTextValue("ZVCARDSTRING")); //$NON-NLS-1$
+                    m.setMediaMime(mediaItem.getTextValue("ZVCARDSTRING")); //$NON-NLS-1$
                 } else {
-                    String vcards = mediaInfo.getTextValue("ZVCARDSTRING"); //$NON-NLS-1$
+                    String vcards = mediaItem.getTextValue("ZVCARDSTRING"); //$NON-NLS-1$
                     if (vcards != null) {
                         m.setVcards(Arrays.asList(vcards.split(Pattern.quote(VCARD_SEPARATOR))));
                     }
                 }
             } catch (RuntimeException e) {
             }
-            m.setMediaName(mediaInfo.getTextValue("ZMEDIALOCALPATH")); //$NON-NLS-1$
-            m.setMediaSize(mediaInfo.getIntValue("ZFILESIZE")); //$NON-NLS-1$
-            m.setMediaCaption(mediaInfo.getTextValue("ZTITLE")); //$NON-NLS-1$
-            m.setThumbpath(mediaInfo.getTextValue("ZXMPPTHUMBPATH")); //$NON-NLS-1$
-            m.setUrl(mediaInfo.getTextValue("ZMEDIAURL")); //$NON-NLS-1$
-            m.setLatitude(mediaInfo.getFloatValue("ZLATITUDE")); //$NON-NLS-1$
-            m.setLongitude(mediaInfo.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
+            m.setMediaName(mediaItem.getTextValue("ZMEDIALOCALPATH")); //$NON-NLS-1$
+            m.setMediaSize(mediaItem.getIntValue("ZFILESIZE")); //$NON-NLS-1$
+            m.setMediaCaption(mediaItem.getTextValue("ZTITLE")); //$NON-NLS-1$
+            m.setThumbpath(mediaItem.getTextValue("ZXMPPTHUMBPATH")); //$NON-NLS-1$
+            m.setUrl(mediaItem.getTextValue("ZMEDIAURL")); //$NON-NLS-1$
+            m.setLatitude(mediaItem.getFloatValue("ZLATITUDE")); //$NON-NLS-1$
+            m.setLongitude(mediaItem.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
-                    m.setMediaHash(mediaInfo.getTextValue("ZVCARDNAME"), true);
+                    m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true);
                 } catch (IllegalArgumentException e) {
                 } // ignore
             }
@@ -497,5 +523,47 @@ public class ExtractorIOS extends Extractor {
             return false;
         }
 
+    }
+
+    private static class WAIOSMediaItemValidator implements SQLiteRecordValidator {
+
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {
+                long message = row.getIntValue("ZMESSAGE"); //$NON-NLS-1$
+                if (message < 0) {
+                    return false;
+                }
+                row.getTextValue("ZVCARDSTRING"); //$NON-NLS-1$
+                row.getTextValue("ZMEDIALOCALPATH"); //$NON-NLS-1$
+                row.getTextValue("ZTITLE"); //$NON-NLS-1$
+                row.getIntValue("ZFILESIZE"); //$NON-NLS-1$
+                row.getTextValue("ZXMPPTHUMBPATH"); //$NON-NLS-1$
+                row.getTextValue("ZMEDIAURL"); //$NON-NLS-1$
+                row.getTextValue("ZVCARDNAME"); //$NON-NLS-1$
+                row.getFloatValue("ZLATITUDE"); //$NON-NLS-1$
+                row.getFloatValue("ZLONGITUDE"); //$NON-NLS-1$
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
+    }
+
+    private static class WAIOSGroupMemberValidator implements SQLiteRecordValidator {
+
+        @Override
+        public boolean validateRecord(SqliteRow row) {
+            try {
+                long pk = row.getIntValue("Z_PK"); //$NON-NLS-1$
+                if (pk < 0) {
+                    return false;
+                }
+                row.getTextValue("ZMEMBERJID"); //$NON-NLS-1$
+                return true;
+            } catch (Exception e) {
+            }
+            return false;
+        }
     }
 }
