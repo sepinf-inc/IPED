@@ -1,5 +1,6 @@
 package dpf.mg.udi.gpinf.sqlite;
 
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -20,6 +21,8 @@ public class SQLiteUndelete {
     private Path rollbackJournalFile = null;
     private Set<String> tablesToRecover = new HashSet<>();
     private Map<String, SQLiteRecordValidator> recordValidators = new HashMap<>();
+    private boolean recoverOnlyDeletedRecords = true;
+    private Set<String> tablesToRecoverOnlyDeleted = new HashSet<>();
 
     public SQLiteUndelete(Path sqliteFile) {
         this.sqliteFile = sqliteFile;
@@ -43,6 +46,18 @@ public class SQLiteUndelete {
         tablesToRecover.add(tableName);
     }
 
+    public void setRecoverOnlyDeletedRecords(boolean recoverOnlyDeletedRecords) {
+        this.recoverOnlyDeletedRecords = recoverOnlyDeletedRecords;
+    }
+
+    public boolean getRecoverOnlyDeletedRecords() {
+        return recoverOnlyDeletedRecords;
+    }
+
+    public void addTableToRecoverOnlyDeleted(String tableName) {
+        tablesToRecoverOnlyDeleted.add(tableName);
+    }
+
     public Map<String, SQLiteUndeleteTable> undeleteData() {
         Map<String, SQLiteUndeleteTable> result = null;
 
@@ -62,25 +77,32 @@ public class SQLiteUndelete {
         Global.CONVERT_DATETIME = false;
 
         // recover only deleted records
-        job.recoverOnlyDeletedRecords = true;
+        job.recoverOnlyDeletedRecords = recoverOnlyDeletedRecords;
+        result = new HashMap<>();
 
         try {
-            job.processDB();
-            result = new HashMap<>();
-            for (TableDescriptor td : job.headers.values()) {
-                SQLiteUndeleteTable table = new SQLiteUndeleteTable(td.columnnames);
-                table.setTableName(td.getName());
-                if (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName())) {
-                    SQLiteRecordValidator validator = recordValidators.get(td.getName());
-                    for (SqliteRow row : job.getRowsForTable(td.getName())) {
-                        if (validator == null || validator.validateRecord(row)) {
-                            table.getTableRows().add(row);
+            if (job.processDB() == 0) {
+                for (TableDescriptor td : job.headers.values()) {
+                    if (td.columnnames != null) {
+                        SQLiteUndeleteTable table = new SQLiteUndeleteTable(td.columnnames);
+                        table.setTableName(td.getName());
+                        if (tablesToRecover.isEmpty() || tablesToRecover.contains(td.getName())) {
+                            SQLiteRecordValidator validator = recordValidators.get(td.getName());
+                            for (SqliteRow row : job.getRowsForTable(td.getName())) {
+                                if (row.isDeletedRow() ||
+                                   ( (!recoverOnlyDeletedRecords) &&
+                                     !tablesToRecoverOnlyDeleted.contains(td.getName()))) {
+                                    if (validator == null || validator.validateRecord(row)) {
+                                        table.getTableRows().add(row);
+                                    }
+                                }
+                            }
+                            result.put(td.getName(), table);
                         }
                     }
-                    result.put(td.getName(), table);
                 }
             }
-        } catch (ExecutionException | InterruptedException e) {
+        } catch (ExecutionException | InterruptedException | IOException e) {
         }
 
         return result;
