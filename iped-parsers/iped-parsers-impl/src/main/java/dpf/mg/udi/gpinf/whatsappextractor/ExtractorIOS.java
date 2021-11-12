@@ -347,7 +347,7 @@ public class ExtractorIOS extends Extractor {
             m.setLongitude(mediaItem.getFloatValue("ZLONGITUDE")); //$NON-NLS-1$
             if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                 try {
-                    m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true);
+                    m.setMediaHash(mediaItem.getTextValue("ZVCARDNAME"), true); //$NON-NLS-1$
                 } catch (IllegalArgumentException e) {
                 } // ignore
             }
