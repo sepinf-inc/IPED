@@ -5,6 +5,7 @@ News:
 #451: Unified Timeline Table View and Event Filtering (Luis Nassif)
 #515: Run OCR on HEIC, PSD, WEBP, WMF, EMF, SVG, JBIG2 and other non standard image types (Wladimir Leite & Luis Nassif)
 #619: Run OCR on partially corrupted images (Luis Nassif)
+#248: [Experimental] Local audio transcription (Luis Nassif)
 #102: Processing of supported forensic images recursively (Luís Nassif)
 #238: Support for OpenStreetMaps/Bing maps using Leaflet library (Patrick Bernardina & Luis Nassif)
 #483: Support parser implementations in python (Luis Nassif)
