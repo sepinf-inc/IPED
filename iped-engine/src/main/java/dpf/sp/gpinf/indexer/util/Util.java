@@ -66,7 +66,7 @@ import iped3.util.BasicProps;
 public class Util {
 
     public static final Integer MIN_JAVA_VER = 8;
-    public static final Integer MAX_JAVA_VER = 8;
+    public static final Integer MAX_JAVA_VER = 11;
 
     // These java versions have a WebView bug that crashes the JVM: JDK-8196011
     private static final String[] buggedVersions = { "1.8.0_161", "1.8.0_162", "1.8.0_171" };
