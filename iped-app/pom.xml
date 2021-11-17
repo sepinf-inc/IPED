@@ -72,9 +72,9 @@
                                 <artifactItem>
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
-                                    <version>1.8.0_152</version>
+                                    <version>11.0.13</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
