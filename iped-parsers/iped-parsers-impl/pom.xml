@@ -166,6 +166,11 @@
             <version>${java.dbx.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>github.sepinf</groupId>
+            <artifactId>png-reader</artifactId>
+            <version>jdk11+28-p1</version>
+        </dependency>
     </dependencies>
     
     <build>
