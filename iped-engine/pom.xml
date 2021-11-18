@@ -238,7 +238,17 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>3.4.10-shaded</version>
+            <version>3.5.30</version>
+            <exclusions>
+        		<exclusion>
+          			<groupId>org.apache.lucene</groupId>
+    				<artifactId>lucene-codecs</artifactId>
+        		</exclusion>
+        		<exclusion>
+          			<groupId>jdk.tools</groupId>
+                    <artifactId>jdk.tools</artifactId>
+        		</exclusion>
+        	</exclusions>
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>
