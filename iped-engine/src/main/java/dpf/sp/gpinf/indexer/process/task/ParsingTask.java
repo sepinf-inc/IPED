@@ -440,6 +440,12 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             metadata.remove(KFFTask.KFF_STATUS);
         }
 
+        String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
+        if (compressRatio != null) {
+            evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
+            evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
+        }
+
     }
 
     @Override
