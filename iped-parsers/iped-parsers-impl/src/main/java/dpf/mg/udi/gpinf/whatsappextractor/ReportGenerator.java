@@ -1,8 +1,6 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -157,8 +155,24 @@ public class ReportGenerator {
         return chatBytes.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory,
+    private synchronized void printMessage(PrintWriter out, Message message, boolean group,
+            WAContactsDirectory contactsDirectory,
             WAAccount account) {
+
+        if (message.isDownloaded()) {
+            int i = 0;
+            // retry 5 times
+            while (message.getMediaItem().getExtraAttribute("ended") == null && i++ < 5) {
+                try {
+                    message.getMediaItem().wait(1000);
+                } catch (Exception e) {
+                    // TODO Auto-generated catch block
+                }
+
+            }
+
+        }
+
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {

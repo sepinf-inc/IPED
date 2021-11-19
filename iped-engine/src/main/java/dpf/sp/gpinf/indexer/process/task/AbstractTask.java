@@ -196,6 +196,10 @@ public abstract class AbstractTask {
 
         // ESTATISTICAS
         if (nextTask == null && !evidence.isQueueEnd()) {
+            synchronized (evidence) {
+                evidence.setExtraAttribute("ended", true);
+                evidence.notifyAll();
+            }
             evidence.dispose();
             stats.incProcessed();
             if (!evidence.isSubItem() && !evidence.isCarved() && !evidence.isDeleted() && evidence.isToSumVolume()) {
