@@ -70,6 +70,8 @@ public interface IMultiMarcadores extends Serializable {
 
     void saveState();
 
+    void saveState(boolean sync);
+
     void saveState(File file) throws IOException;
 
     void selectAll();

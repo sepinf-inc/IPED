@@ -82,7 +82,11 @@ public interface IMarcadores extends Serializable {
 
     void saveState();
 
+    void saveState(boolean sync);
+
     void saveState(File file) throws IOException;
+
+    void saveState(File file, boolean sync) throws IOException;
 
     void selectAll();
 
