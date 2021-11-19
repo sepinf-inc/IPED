@@ -34,13 +34,14 @@ public class CategoryConfig extends AbstractTaskConfig<Category> {
         if (normalizedMap == null) {
             synchronized (this) {
                 if (normalizedMap == null) {
-                    normalizedMap = new HashMap<>();
+                    Map<String, String> map = new HashMap<>();
                     Map<String, String> mimetypeToCategoryMap = getMimeToCategoryMap(root);
                     for(String key : mimetypeToCategoryMap.keySet()) {
                         MediaType type = MediaTypes.normalize(MediaType.parse(key));
                         String mime = type != null ? type.toString() : key;
-                        normalizedMap.put(mime, mimetypeToCategoryMap.get(key));
+                        map.put(mime, mimetypeToCategoryMap.get(key));
                     }
+                    normalizedMap = map;
                 }
             }
         }

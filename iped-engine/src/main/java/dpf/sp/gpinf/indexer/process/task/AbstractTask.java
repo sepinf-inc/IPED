@@ -229,7 +229,7 @@ public abstract class AbstractTask {
     protected void sendToNextTask(IItem evidence) throws Exception {
         if (nextTask != null) {
             int priority = MimeTypesProcessingOrder.getProcessingPriority(evidence.getMediaType());
-            if (priority <= caseData.getCurrentQueuePriority())
+            if (evidence.isRoot() || priority <= caseData.getCurrentQueuePriority())
                 nextTask.processAndSendToNextTask(evidence);
             else {
                 evidence.dispose();
