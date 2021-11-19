@@ -957,6 +957,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             for (Message m : messageList) {
                 m.setMediaItem(item);
                 m.setMediaQuery(escapeQuery(query, true)); // $NON-NLS-1$ //$NON-NLS-2$
+                if (item.getExtraAttribute("downloaded") != null) {
+                    m.setDownloaded(true);
+                }
             }
         }
     }
@@ -1166,7 +1169,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                                     EmbeddedItem container = context.get(EmbeddedItem.class);
 
                                     item = (IItem) container.getObj();
-                                    item.getExtraAttributeMap().put("sha-256", ld.getHash());
+                                    item.setExtraAttribute("sha-256", ld.getHash());
+                                    item.setExtraAttribute("downloaded", true);
 
                                     List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 

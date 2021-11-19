@@ -49,6 +49,7 @@ public class Message {
     private Set<String> childPornSets = new HashSet<>();
     private IItemBase mediaItem = null;
     private String mediaQuery = null;
+    private boolean downloaded = false;
 
     public Message() {
         messageType = MessageType.TEXT_MESSAGE;
@@ -330,6 +331,14 @@ public class Message {
 
     public void setMediaQuery(String mediaQuery) {
         this.mediaQuery = mediaQuery;
+    }
+
+    public boolean isDownloaded() {
+        return downloaded;
+    }
+
+    public void setDownloaded(boolean downloaded) {
+        this.downloaded = downloaded;
     }
 
     public static enum MessageType {
