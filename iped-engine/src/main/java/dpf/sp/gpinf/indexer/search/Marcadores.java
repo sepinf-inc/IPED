@@ -403,22 +403,37 @@ public class Marcadores implements Serializable, IMarcadores {
         return result;
     }
 
+    @Override
     public void saveState() {
+        saveState(false);
+    }
+
+    @Override
+    public void saveState(boolean synchronous) {
         try {
             if (stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
-                saveState(stateFile);
+                saveState(stateFile, synchronous);
             else
-                saveState(cookie);
+                saveState(cookie, synchronous);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    @Override
     public void saveState(File file) throws IOException {
-        LOGGER.info("Saving state to file " + file.getAbsolutePath()); //$NON-NLS-1$
-        // Util.writeObject(this, file.getAbsolutePath());
-        SaveStateThread.getInstance().saveState(this, file);
+        saveState(file, false);
+    }
+
+    @Override
+    public void saveState(File file, boolean synchronous) throws IOException {
+        LOGGER.info("Saving state sync={} to file {}", synchronous, file.getAbsolutePath()); //$NON-NLS-1$
+        if (synchronous) {
+            Util.writeObject(this, file.getAbsolutePath());
+        } else {
+            SaveStateThread.getInstance().saveState(this, file);
+        }
     }
 
     public void addToTypedWords(String texto) {
