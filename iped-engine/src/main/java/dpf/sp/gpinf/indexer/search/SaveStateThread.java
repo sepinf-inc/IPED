@@ -37,7 +37,7 @@ public class SaveStateThread extends Thread {
 
     public void run() {
         while (!Thread.interrupted()) {
-            for (IMarcadores state : stateMap.keySet()) {
+            for (IMarcadores state : stateMap.keySet().toArray(new IMarcadores[0])) {
                 File file = stateMap.remove(state);
                 if (file == null)
                     continue;
@@ -45,7 +45,7 @@ public class SaveStateThread extends Thread {
                     File tmp = new File(file.getAbsolutePath() + ".tmp"); //$NON-NLS-1$
                     if (tmp.exists())
                         tmp.delete();
-                    Util.writeObject(state, tmp.getAbsolutePath());
+                    state.saveState(tmp, true);
                     if (!file.exists()) {
                         tmp.renameTo(file);
                     } else {
