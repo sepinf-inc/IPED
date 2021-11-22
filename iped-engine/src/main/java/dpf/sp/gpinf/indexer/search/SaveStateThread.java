@@ -37,11 +37,12 @@ public class SaveStateThread extends Thread {
 
     public void run() {
         while (!Thread.interrupted()) {
-            for (IMarcadores state : stateMap.keySet().toArray(new IMarcadores[0])) {
-                File file = stateMap.remove(state);
-                if (file == null)
-                    continue;
-                try {
+            try {
+                for (IMarcadores state : stateMap.keySet().toArray(new IMarcadores[0])) {
+                    File file = stateMap.remove(state);
+                    if (file == null)
+                        continue;
+
                     File tmp = new File(file.getAbsolutePath() + ".tmp"); //$NON-NLS-1$
                     if (tmp.exists())
                         tmp.delete();
@@ -53,15 +54,13 @@ public class SaveStateThread extends Thread {
                         if (!tmp.renameTo(file))
                             bkp.renameTo(file);
                     }
-
-                } catch (IOException e1) {
-                    e1.printStackTrace();
                 }
-            }
-            try {
                 Thread.sleep(200);
+
             } catch (InterruptedException e) {
                 break;
+            } catch (Exception e1) {
+                e1.printStackTrace();
             }
         }
     }
