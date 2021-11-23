@@ -73,6 +73,7 @@ News:
 #716: Relocate all elasticsearch & minio shaded jars dependencies (Luís Nassif)
 #178: Upgrade to Tika 1.26 (Luis Nassif)
 #179: Upgrade to Lucene 6.6.6 (Luis Nassif)
+#836: Upgrade Neo4J to 3.5.30 (Luís Nassif)
 #228: Upgrade drewnoakes metadata-extractor (Luis Nassif)
 Fixes:
 #420: Fix diacritics normalization and filtering rules for other languages (Luis Nassif)

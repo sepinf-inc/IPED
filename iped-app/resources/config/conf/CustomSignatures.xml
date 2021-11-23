@@ -571,6 +571,7 @@
     </mime-type>
     
     <mime-type type="application/x-vdi">
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vdi"/>
     </mime-type>
     
@@ -578,6 +579,7 @@
         <magic priority="50">
             <match value="vhdxfile" type="string" offset="0"/>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vhdx"/>
     </mime-type>
     
@@ -635,30 +637,26 @@
         <sub-class-of type="application/x-ewf-image"/>
         <glob pattern="*.e01"/>
     </mime-type>
-        
-    <mime-type type="application/x-raw-image">
-        <_comment>RAW disk images</_comment>
-        <_comment>This priority must be equal to x-vmdk</_comment>
+    
+    <mime-type type="application/x-disk-image">
+        <_comment>Generic disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
                 <match value="0x0000" type="string" offset="444"/>
                 <match value="0x5A5A" type="string" offset="444"/>
             </match>
         </magic>
+    </mime-type>
+        
+    <mime-type type="application/x-raw-image">
+        <_comment>RAW disk images</_comment>
         <sub-class-of type="application/x-disk-image"/>
-        <glob pattern="*.dd"/>
-        <glob pattern="*.000"/>
-        <glob pattern="*.001"/>
+        <!--dd/001 extensions are omitted to avoid classification based on generic exts-->
     </mime-type>
     
     <mime-type type="application/x-vmdk">
         <_comment>This priority must be equal to x-raw-image</_comment>
-        <magic priority="30">
-            <match value="0x55AA" type="string" offset="510">
-                <match value="0x0000" type="string" offset="444"/>
-                <match value="0x5A5A" type="string" offset="444"/>
-            </match>
-        </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vmdk"/>
     </mime-type>
     
@@ -675,6 +673,7 @@
                 <match value="0x0000" type="string" offset="5"/>
             </match>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.wim"/>
     </mime-type>
     

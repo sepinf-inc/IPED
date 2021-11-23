@@ -351,11 +351,18 @@ public class MultiMarcadores implements Serializable, IMultiMarcadores {
             marcador.updateCookie();
     }
 
+    @Override
     public void saveState() {
-        for (IMarcadores m : map.values())
-            m.saveState();
+        saveState(false);
     }
 
+    @Override
+    public void saveState(boolean sync) {
+        for (IMarcadores m : map.values())
+            m.saveState(sync);
+    }
+
+    @Override
     public void saveState(File file) throws IOException {
         Util.writeObject(this, file.getAbsolutePath());
     }
