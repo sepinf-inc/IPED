@@ -44,10 +44,10 @@ public class IPEDCrawler {
                 MediaType.application("x-sas-data"),
                 MediaType.application("vnd.adobe.indesign-idml-package") };
 
-        final String query = "path:\"AppData/Roaming/discord/cache\" OR caminho:\"AppData/Roaming/discord/cache\"";
+        final String query = "tipo:gif OR type:gif";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\discord");
+        File exportFolder = new File("F:\\teste-files\\gif-crawling");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
@@ -59,7 +59,15 @@ public class IPEDCrawler {
             System.exit(0);
         }
         // initialize sleuthkit using just this thread
-        try (IPEDSource ipedCase = new IPEDSource(cases.get(0))) {
+        int i = 0;
+        while (true) {
+            System.out.println("Initializing from case " + cases.get(i).getAbsolutePath());
+            try (IPEDSource ipedCase = new IPEDSource(cases.get(i))) {
+                break;
+            } catch (Throwable e) {
+                e.printStackTrace();
+                i++;
+            }
         }
         for (File file : cases) {
             executor.execute(new Runnable() {
@@ -72,8 +80,7 @@ public class IPEDCrawler {
                         List<Integer> itemIds = searcher.search().getIds();
                         System.out.println("Found " + itemIds.size() + " files.");
                         if (!itemIds.isEmpty()) {
-                            System.out.println("Found discord folder in case: " + file.getAbsolutePath());
-                            return;
+                            System.out.println("Exporting...");
                         }
                         for (Integer id : itemIds) {
                             IItem item = ipedCase.getItemByID(id);
@@ -122,6 +129,7 @@ public class IPEDCrawler {
     private static List<File> searchCasesinFolder(File folder) {
         ArrayList<File> files = new ArrayList<File>();
         if (folder.isDirectory()) {
+            System.out.println("Searching cases in folder " + folder.getAbsolutePath());
             if (new File(folder, IPEDSource.MODULE_DIR).exists()) {
                 files.add(folder);
             } else {
