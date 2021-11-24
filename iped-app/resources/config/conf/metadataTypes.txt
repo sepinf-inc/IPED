@@ -4121,6 +4121,7 @@ twitter:image:src = java.lang.String
 twitter:title = java.lang.String
 ufed:extractionId = java.lang.Integer
 ufed:labels = java.lang.String
+ufed:msgChildIds = java.lang.Integer
 ufed:RepeatInterval = java.lang.Integer
 ufed:SMSC = java.lang.String
 ufed:VisitCount = java.lang.Integer
