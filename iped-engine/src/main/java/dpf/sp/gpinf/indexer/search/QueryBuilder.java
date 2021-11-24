@@ -75,8 +75,9 @@ public class QueryBuilder implements IQueryBuilder {
         if (query != null)
             if (query instanceof BooleanQuery) {
                 for (BooleanClause clause : ((BooleanQuery) query).clauses()) {
-                    // System.out.println(clause.getQuery().toString());
-                    result.addAll(getQueryStrings(clause.getQuery()));
+                    if (!clause.isProhibited()) {
+                        result.addAll(getQueryStrings(clause.getQuery()));
+                    }
                 }
             } else if (query instanceof BoostQuery) {
                 result.addAll(getQueryStrings(((BoostQuery) query).getQuery()));
