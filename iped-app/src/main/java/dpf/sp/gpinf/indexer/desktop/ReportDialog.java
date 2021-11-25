@@ -264,8 +264,13 @@ public class ReportDialog implements ActionListener, TableModelListener {
             File input = File.createTempFile("report", ".iped"); //$NON-NLS-1$ //$NON-NLS-2$
             App.get().appCase.getMultiMarcadores().saveState(input);
 
+            String javaBin = "java";
+            if (System.getProperty("os.name").toLowerCase().startsWith("windows")) {
+                javaBin = new File(App.get().appCase.getAtomicSources().get(0).getModuleDir(), "jre\\bin\\java.exe")
+                        .getAbsolutePath();
+            }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, IndexFiles.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
                     "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
