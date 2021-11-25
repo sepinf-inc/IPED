@@ -614,7 +614,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoriesPanel = new JScrollPane(categoryTree);
         bookmarksPanel = new JScrollPane(bookmarksTree);
 
-        boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+        boolean isFTKReport = new File(casesPathFile, "iped/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
 
         if (!isFTKReport) {
             recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$

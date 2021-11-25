@@ -87,7 +87,7 @@ public class IpedCase {
     public boolean isProcessed() {
         File caseFile = getCaseFile();
         File caseDir = caseFile.getParentFile();
-        File indexFolder = new File(caseDir, "indexador");
+        File indexFolder = new File(caseDir, "iped");
         return indexFolder.exists();
     }
 

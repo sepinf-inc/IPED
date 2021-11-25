@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃƒÂªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
-    public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
 

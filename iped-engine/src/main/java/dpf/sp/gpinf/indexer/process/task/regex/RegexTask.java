@@ -51,7 +51,7 @@ public class RegexTask extends AbstractTask {
 
     private static Logger logger = LoggerFactory.getLogger(RegexTask.class);
 
-    private static final File cacheFile = new File(System.getProperty("user.home"), ".indexador/regexAutomata.cache");
+    private static final File cacheFile = new File(System.getProperty("user.home"), ".iped/regexAutomata.cache");
 
     private static List<Regex> regexList;
 

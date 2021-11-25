@@ -132,7 +132,7 @@ public class IndexFiles {
         } else {
             rootPath = new File(url.toURI()).getParent();
             // test for report generation from case folder
-            if (rootPath.endsWith("indexador" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
+            if (rootPath.endsWith("iped" + File.separator + "lib")) { //$NON-NLS-1$ //$NON-NLS-2$
                 rootPath = new File(url.toURI()).getParentFile().getParent();
             }
         }
@@ -235,20 +235,20 @@ public class IndexFiles {
             args = CustomLoader.clearCustomLoaderArgs(args);
         }
 
-        IndexFiles indexador = new IndexFiles(args);
+        IndexFiles iped = new IndexFiles(args);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
         try {
-            indexador.setConfigPath();
-            indexador.logConfiguration = new LogConfiguration(indexador, logPath);
-            indexador.logConfiguration.configureLogParameters(indexador.cmdLineParams.isNologfile(), fromCustomLoader);
+            iped.setConfigPath();
+            iped.logConfiguration = new LogConfiguration(iped, logPath);
+            iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile(), fromCustomLoader);
 
             LOGGER = LoggerFactory.getLogger(IndexFiles.class);
             if (!fromCustomLoader)
                 LOGGER.info(Versao.APP_NAME);
 
-            Configuration.getInstance().loadConfigurables(indexador.configPath);
+            Configuration.getInstance().loadConfigurables(iped.configPath);
 
             if (!fromCustomLoader) {
                 List<File> jars = new ArrayList<File>();
@@ -258,21 +258,21 @@ public class IndexFiles {
 
                 // currently with --nogui, user can not open analysis app, so no need to load
                 // libreoffice jars
-                if (!indexador.cmdLineParams.isNogui()) {
+                if (!iped.cmdLineParams.isNogui()) {
                     System.setProperty(IOfficeApplication.NOA_NATIVE_LIB_PATH,
-                            new File(indexador.rootPath, "lib/nativeview").getAbsolutePath());
-                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(indexador.rootPath));
+                            new File(iped.rootPath, "lib/nativeview").getAbsolutePath());
+                    LibreOfficeFinder loFinder = new LibreOfficeFinder(new File(iped.rootPath));
                     if (loFinder.getLOPath() != null)
                         UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
                 }
 
                 String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args,
-                        indexador.logFile);
+                        iped.logFile);
                 CustomLoader.run(customArgs, jars);
                 return;
 
             } else {
-                success = indexador.execute();
+                success = iped.execute();
             }
 
         } catch (Exception e) {
@@ -285,19 +285,19 @@ public class IndexFiles {
             SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
-        if (indexador.logFile != null) {
-            SystemOut.println("Check the log at " + indexador.logFile.getAbsolutePath()); //$NON-NLS-1$
+        if (iped.logFile != null) {
+            SystemOut.println("Check the log at " + iped.logFile.getAbsolutePath()); //$NON-NLS-1$
         }
 
         if (getInstance().manager == null || !getInstance().manager.isSearchAppOpen())
             System.exit((success) ? 0 : 1);
 
         // PARA ASAP:
-        // IndexFiles indexador = new IndexFiles(List<File> reports, File
+        // IndexFiles iped = new IndexFiles(List<File> reports, File
         // output, String configPath, File logFile, File keywordList);
         // keywordList e logFile podem ser null. Nesse caso, o último é criado
         // na pasta log dentro de configPath
-        // boolean success = indexador.executar();
+        // boolean success = iped.executar();
     }
 
 }

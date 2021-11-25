@@ -87,7 +87,7 @@ public class LedCarveTask extends BaseCarveTask {
 
     private static HashDBDataSource hashDBDataSource;
 
-    private static final String cachePath = System.getProperty("user.home") + "/.indexador/ledcarve.cache";
+    private static final String cachePath = System.getProperty("user.home") + "/.iped/ledcarve.cache";
 
     @Override
     public boolean isEnabled() {

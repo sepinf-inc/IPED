@@ -127,7 +127,7 @@ public class HtmlViewer extends Viewer {
                         if (file.length() <= getMaxHtmlSize()) {
                             if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) { //$NON-NLS-1$ //$NON-NLS-2$
                                 try {
-                                    tmpFile = File.createTempFile("indexador", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+                                    tmpFile = File.createTempFile("iped", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
                                     tmpFile.deleteOnExit();
                                     IOUtil.copiaArquivo(file, tmpFile);
                                     file = tmpFile;

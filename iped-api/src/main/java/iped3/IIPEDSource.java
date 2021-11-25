@@ -29,7 +29,7 @@ import iped3.search.IMultiMarcadores;
 public interface IIPEDSource extends Closeable {
 
     String INDEX_DIR = "index"; //$NON-NLS-1$
-    String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    String MODULE_DIR = "iped"; //$NON-NLS-1$
     String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
 
     void checkImagePaths() throws IPEDException, TskCoreException;

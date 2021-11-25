@@ -35,7 +35,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionL
     final JFXPanel jfxPanel;
     JSInterfaceFunctions jsInterface = new JSGoogleInterfaceFunctions(this);
     String googleApiKey = "";
-    File keyStore = new File(System.getProperty("user.home") + "/.indexador/googleApi.key");
+    File keyStore = new File(System.getProperty("user.home") + "/.iped/googleApi.key");
 
     @SuppressWarnings("restriction")
     public MapaCanvasWebkit() {

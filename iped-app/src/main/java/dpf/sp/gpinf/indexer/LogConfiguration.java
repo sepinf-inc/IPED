@@ -25,16 +25,16 @@ public class LogConfiguration {
         logFile = log;
     }
 
-    public LogConfiguration(IndexFiles indexador, String logPath) {
-        rootPath = indexador.rootPath;
+    public LogConfiguration(IndexFiles iped, String logPath) {
+        rootPath = iped.rootPath;
         if (logPath != null) {
             logFile = new File(logPath);
         } else {
-            logFile = indexador.logFile;
+            logFile = iped.logFile;
             if (logFile == null)
                 logFile = new File(rootPath, "log/IPED-" + df.format(new Date()) + ".log"); //$NON-NLS-1$ //$NON-NLS-2$
         }
-        indexador.logFile = logFile;
+        iped.logFile = logFile;
     }
 
     public File getLogFile() {

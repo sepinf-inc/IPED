@@ -349,7 +349,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
     private void checkIfAppendingToCompatibleCase() {
         if (this.isAppendIndex()) {
-            String classpath = outputDir.getAbsolutePath() + "/indexador/lib/iped-search-app.jar"; //$NON-NLS-1$
+            String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
             List<String> cmd = new ArrayList<>();
             cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
 
@@ -431,15 +431,15 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         if (new File(reportDir, "Report_files/files").exists()) { //$NON-NLS-1$
             IndexFiles.getInstance().dataSource.remove(reportDir);
             IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(reportDir, "iped"); //$NON-NLS-1$
         }
 
         if (outputDir != null) {
-            IndexFiles.getInstance().output = new File(outputDir, "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
         } else if (reportDir != null) {
-            IndexFiles.getInstance().output = new File(reportDir, "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(reportDir, "iped"); //$NON-NLS-1$
         } else {
-            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "indexador"); //$NON-NLS-1$
+            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
         }
 
         File file = outputDir;
@@ -452,7 +452,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             file = file.getParentFile();
         }
 
-        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "indexador").exists())) {
+        if ((appendIndex || isContinue || restart) && !(new File(outputDir, "iped").exists())) {
             throw new IPEDException(
                     "You cannot use --append, --continue or --restart with an inexistent or invalid case folder.");
         }

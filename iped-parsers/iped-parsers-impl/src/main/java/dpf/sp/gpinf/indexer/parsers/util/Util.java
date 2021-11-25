@@ -29,8 +29,8 @@ import iped3.search.IItemSearcher;
 
 public class Util {
 
-    private static final String imageThumbsDir = "../../../../indexador/thumbs/"; //$NON-NLS-1$
-    private static final String videoThumbsDir = "../../../../indexador/view/"; //$NON-NLS-1$
+    private static final String imageThumbsDir = "../../../../iped/thumbs/"; //$NON-NLS-1$
+    private static final String videoThumbsDir = "../../../../iped/view/"; //$NON-NLS-1$
     private static final int MAX_PREVIEW_SIZE = 128;
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 

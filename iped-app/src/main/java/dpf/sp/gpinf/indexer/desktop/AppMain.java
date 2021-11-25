@@ -85,14 +85,14 @@ public class AppMain {
     private void detectCasePath() throws URISyntaxException {
         if (testPath != null) {
             casePath = testPath;
-            libDir = new File(casePath + "/indexador/lib");
+            libDir = new File(casePath + "/iped/lib");
             return;
         }
 
         libDir = detectLibDir();
         casePath = libDir.getParentFile().getParentFile();
 
-        if (!new File(casePath, "indexador").exists()) //$NON-NLS-1$
+        if (!new File(casePath, "iped").exists()) //$NON-NLS-1$
             casePath = null;
     }
 
