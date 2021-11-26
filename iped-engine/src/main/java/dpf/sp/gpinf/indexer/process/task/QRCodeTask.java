@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.zxing.BinaryBitmap;
 import com.google.zxing.MultiFormatReader;
-import com.google.zxing.NotFoundException;
+import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
@@ -135,23 +135,24 @@ public class QRCodeTask extends AbstractTask {
 
         } else {
             try {
+
                 BinaryBitmap binaryBitmap = new BinaryBitmap(
                         new HybridBinarizer(new BufferedImageLuminanceSource(img)));
 
                 MultiFormatReader reader = new MultiFormatReader();
                 Result rs = reader.decode(binaryBitmap);
-                if (rs.getText().length() > 0) {
+                if (rs.getText() != null && rs.getText().length() > 0) {
                     evidence.setExtraAttribute(QRCODE_TEXT, rs.getText());
                 }
-                if (rs.getRawBytes().length > 0) {
+                if (rs.getRawBytes() != null && rs.getRawBytes().length > 0) {
                     evidence.setExtraAttribute(QRCODE_HEX, getHex(rs.getRawBytes()));
                 }
                 if (rs.getBarcodeFormat() != null) {
                     evidence.setExtraAttribute(QRCODE_TYPE, rs.getBarcodeFormat().toString());
                 }
                 totalQRCodesFound.incrementAndGet();
-            } catch (NotFoundException e) {
-
+            } catch (ReaderException e) {
+                logger.debug("Error {}\n File ", e.toString(), evidence.getName());
             }
             totalImagesProcessed.incrementAndGet();
         }
