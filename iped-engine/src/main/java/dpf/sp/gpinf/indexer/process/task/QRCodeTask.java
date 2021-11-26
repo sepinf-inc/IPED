@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 
 import javax.imageio.ImageIO;
 
@@ -32,12 +33,22 @@ public class QRCodeTask extends AbstractTask {
      */
     private static final AtomicBoolean init = new AtomicBoolean(false);
 
+    /**
+     * Static object to control (synchronize) the termination of the task.
+     */
+    private static final AtomicBoolean finished = new AtomicBoolean(false);
+
     private static final String ENABLE_PARAM = "enableQRCode"; //$NON-NLS-1$
 
     private static final String QRCODE_TEXT = "QRCodeText";
 
     private static final String QRCODE_HEX = "QRCodeHex";
     private static final String QRCODE_TYPE = "QRCodeType";
+
+    private static final AtomicLong totalImagesProcessed = new AtomicLong();
+    private static final AtomicLong totalImagesFailed = new AtomicLong();
+    private static final AtomicLong totalQRCodesFound = new AtomicLong();
+    private static final AtomicLong totalTime = new AtomicLong();
 
     private static boolean taskEnabled = false;
 
@@ -78,7 +89,20 @@ public class QRCodeTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        // TODO Auto-generated method stub
+        synchronized (finished) {
+            if (!finished.get()) {
+                finished.set(true);
+                long totalImages = totalImagesProcessed.longValue() + totalImagesFailed.longValue();
+                if (totalImages != 0) {
+                    logger.info("Total images processed: " + totalImagesProcessed); //$NON-NLS-1$
+                    logger.info("Total images not processed: " + totalImagesFailed); //$NON-NLS-1$
+                    logger.info("QRCodes Found: " + totalQRCodesFound.longValue()); //$NON-NLS-1$
+                    logger.info("Average image processing time (ms/image): " + (totalTime.longValue() / totalImages)); //$NON-NLS-1$
+                }
+            }
+
+        }
+
 
     }
 
@@ -98,6 +122,7 @@ public class QRCodeTask extends AbstractTask {
             return;
         }
         BufferedImage img = null;
+        long t = System.currentTimeMillis();
         try {
             img = ImageIO.read(evidence.getBufferedStream());
         } catch (IOException e) {
@@ -106,27 +131,32 @@ public class QRCodeTask extends AbstractTask {
 
         if (img == null) {
             logger.warn("cannot read file " + evidence.getName());
-            return;
+            totalImagesFailed.incrementAndGet();
+
+        } else {
+            try {
+                BinaryBitmap binaryBitmap = new BinaryBitmap(
+                        new HybridBinarizer(new BufferedImageLuminanceSource(img)));
+
+                MultiFormatReader reader = new MultiFormatReader();
+                Result rs = reader.decode(binaryBitmap);
+                if (rs.getText().length() > 0) {
+                    evidence.setExtraAttribute(QRCODE_TEXT, rs.getText());
+                }
+                if (rs.getRawBytes().length > 0) {
+                    evidence.setExtraAttribute(QRCODE_HEX, getHex(rs.getRawBytes()));
+                }
+                if (rs.getBarcodeFormat() != null) {
+                    evidence.setExtraAttribute(QRCODE_TYPE, rs.getBarcodeFormat().toString());
+                }
+                totalQRCodesFound.incrementAndGet();
+            } catch (NotFoundException e) {
+
+            }
+            totalImagesProcessed.incrementAndGet();
         }
-
-        try {
-            BinaryBitmap binaryBitmap = new BinaryBitmap(new HybridBinarizer(new BufferedImageLuminanceSource(img)));
-
-            MultiFormatReader reader = new MultiFormatReader();
-            Result rs = reader.decode(binaryBitmap);
-            if (rs.getText().length() > 0) {
-                evidence.setExtraAttribute(QRCODE_TEXT, rs.getText());
-            }
-            if (rs.getRawBytes().length > 0) {
-                evidence.setExtraAttribute(QRCODE_HEX, getHex(rs.getRawBytes()));
-            }
-            if (rs.getBarcodeFormat() != null) {
-                evidence.setExtraAttribute(QRCODE_TYPE, rs.getBarcodeFormat().toString());
-
-            }
-        } catch (NotFoundException e) {
-
-        }
+        t = System.currentTimeMillis() - t;
+        totalTime.addAndGet(t);
 
     }
 
