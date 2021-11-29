@@ -1,6 +1,7 @@
 package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
@@ -123,8 +124,8 @@ public class QRCodeTask extends AbstractTask {
         }
         BufferedImage img = null;
         long t = System.currentTimeMillis();
-        try {
-            img = ImageIO.read(evidence.getBufferedStream());
+        try (BufferedInputStream in = evidence.getBufferedStream()) {
+            img = ImageIO.read(in);
         } catch (IOException e) {
             img = null;
         }
