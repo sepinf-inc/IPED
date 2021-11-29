@@ -131,10 +131,10 @@ public class QRCodeTask extends AbstractTask {
         }
 
         if (img == null) {
-            logger.warn("cannot read file " + evidence.getName());
+            logger.debug("cannot read file " + evidence.getName());
             totalImagesFailed.incrementAndGet();
 
-        } else {
+        } else if (img.getWidth() > 80 && img.getHeight() > 80) {
             try {
 
                 BinaryBitmap binaryBitmap = new BinaryBitmap(
