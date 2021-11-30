@@ -2,6 +2,7 @@ package dpf.sp.gpinf.indexer.process.task;
 
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -149,30 +150,36 @@ public class QRCodeTask extends AbstractTask {
                         new HybridBinarizer(new BufferedImageLuminanceSource(img)));
                 QRCodeMultiReader reader = new QRCodeMultiReader();
                 Result[] results = reader.decodeMultiple(binaryBitmap, hints);
-
+                List<String> texts = new ArrayList<>(), types = new ArrayList<>(), rawBytes = new ArrayList<>(),
+                        points = new ArrayList<>();
                 for (Result rs : results) {
                     String text = "", type = "", bytes = "";
 
                     if (rs.getText() != null && rs.getText().length() > 0) {
                         text = rs.getText();
                     }
-                    evidence.getMetadata().add(QRCODE_TEXT, text);
-                    
+                    texts.add(text);
+
                     if (rs.getRawBytes() != null && rs.getRawBytes().length > 0) {
                         bytes = getHex(rs.getRawBytes());
                     }
-                    evidence.getMetadata().add(QRCODE_HEX, bytes);
+                    rawBytes.add(bytes);
 
                     if (rs.getBarcodeFormat() != null) {
                         type = rs.getBarcodeFormat().toString();
                     }
-                    evidence.getMetadata().add(QRCODE_TYPE, type);
+                    types.add(type);
 
                     for (ResultPoint p : rs.getResultPoints()) {
-                        evidence.getMetadata().add(QRCODE_POINTS, "(" + p.getX() + "," + p.getY() + ")");
+                        points.add("(" + p.getX() + "," + p.getY() + ")");
                     }
 
                 }
+                evidence.setExtraAttribute(QRCODE_TEXT, texts);
+                evidence.setExtraAttribute(QRCODE_HEX, rawBytes);
+                evidence.setExtraAttribute(QRCODE_TYPE, types);
+                evidence.setExtraAttribute(QRCODE_POINTS, points);
+
                 totalQRCodesFound.addAndGet(results.length);
                
 
