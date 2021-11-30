@@ -3,7 +3,9 @@ package dpf.sp.gpinf.indexer.process.task;
 import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -13,11 +15,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.zxing.BinaryBitmap;
-import com.google.zxing.MultiFormatReader;
+import com.google.zxing.DecodeHintType;
 import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
+import com.google.zxing.ResultPoint;
 import com.google.zxing.client.j2se.BufferedImageLuminanceSource;
 import com.google.zxing.common.HybridBinarizer;
+import com.google.zxing.multi.qrcode.QRCodeMultiReader;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
@@ -44,11 +48,14 @@ public class QRCodeTask extends AbstractTask {
 
     private static final String QRCODE_HEX = "QRCodeHex";
     private static final String QRCODE_TYPE = "QRCodeType";
+    private static final String QRCODE_POINTS = "QRCodePoints";
 
     private static final AtomicLong totalImagesProcessed = new AtomicLong();
     private static final AtomicLong totalImagesFailed = new AtomicLong();
     private static final AtomicLong totalQRCodesFound = new AtomicLong();
     private static final AtomicLong totalTime = new AtomicLong();
+
+    private static final Map<DecodeHintType, Object> hints = new HashMap<>();
 
     private static boolean taskEnabled = false;
 
@@ -76,6 +83,7 @@ public class QRCodeTask extends AbstractTask {
             if (!init.get()) {
                 init.set(true);
                 taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
+                hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
                     init.set(true);
@@ -103,7 +111,6 @@ public class QRCodeTask extends AbstractTask {
 
         }
 
-
     }
 
     public static String getHex(byte[] bytes) {
@@ -114,6 +121,8 @@ public class QRCodeTask extends AbstractTask {
 
         return result.toString();
     }
+
+
 
     @Override
     protected void process(IItem evidence) throws Exception {
@@ -138,19 +147,35 @@ public class QRCodeTask extends AbstractTask {
 
                 BinaryBitmap binaryBitmap = new BinaryBitmap(
                         new HybridBinarizer(new BufferedImageLuminanceSource(img)));
+                QRCodeMultiReader reader = new QRCodeMultiReader();
+                Result[] results = reader.decodeMultiple(binaryBitmap, hints);
 
-                MultiFormatReader reader = new MultiFormatReader();
-                Result rs = reader.decode(binaryBitmap);
-                if (rs.getText() != null && rs.getText().length() > 0) {
-                    evidence.setExtraAttribute(QRCODE_TEXT, rs.getText());
+                for (Result rs : results) {
+                    String text = "", type = "", bytes = "";
+
+                    if (rs.getText() != null && rs.getText().length() > 0) {
+                        text = rs.getText();
+                    }
+                    evidence.getMetadata().add(QRCODE_TEXT, text);
+                    
+                    if (rs.getRawBytes() != null && rs.getRawBytes().length > 0) {
+                        bytes = getHex(rs.getRawBytes());
+                    }
+                    evidence.getMetadata().add(QRCODE_HEX, bytes);
+
+                    if (rs.getBarcodeFormat() != null) {
+                        type = rs.getBarcodeFormat().toString();
+                    }
+                    evidence.getMetadata().add(QRCODE_TYPE, type);
+
+                    for (ResultPoint p : rs.getResultPoints()) {
+                        evidence.getMetadata().add(QRCODE_POINTS, "(" + p.getX() + "," + p.getY() + ")");
+                    }
+
                 }
-                if (rs.getRawBytes() != null && rs.getRawBytes().length > 0) {
-                    evidence.setExtraAttribute(QRCODE_HEX, getHex(rs.getRawBytes()));
-                }
-                if (rs.getBarcodeFormat() != null) {
-                    evidence.setExtraAttribute(QRCODE_TYPE, rs.getBarcodeFormat().toString());
-                }
-                totalQRCodesFound.incrementAndGet();
+                totalQRCodesFound.addAndGet(results.length);
+               
+
             } catch (ReaderException e) {
                 logger.debug("Error {}\n File ", e.toString(), evidence.getName());
             }
