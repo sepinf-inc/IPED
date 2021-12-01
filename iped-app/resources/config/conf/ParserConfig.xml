@@ -192,7 +192,9 @@
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/heic</mime>
+            <mime>image/heif</mime>
             <mime>image/heic-sequence</mime>
+            <mime>image/heif-sequence</mime>
             <params>
                 <param name="parserName" type="string">HeicParser</param>
                 <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.HeifParser</param>
