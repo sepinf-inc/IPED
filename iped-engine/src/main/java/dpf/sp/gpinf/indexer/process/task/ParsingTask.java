@@ -25,11 +25,13 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -37,6 +39,7 @@ import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 import org.apache.commons.compress.archivers.ArchiveStreamFactory;
 import org.apache.tika.extractor.EmbeddedDocumentExtractor;
@@ -438,6 +441,13 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (hashSetStatus != null) {
             evidence.setExtraAttribute(KFFTask.KFF_STATUS, hashSetStatus);
             metadata.remove(KFFTask.KFF_STATUS);
+        }
+
+        List<String> hashSets = Arrays.asList(metadata.getValues(KFFTask.KFF_GROUP));
+        if (!hashSets.isEmpty()) {
+            String groups = hashSets.stream().collect(Collectors.joining(" | "));
+            evidence.setExtraAttribute(KFFTask.KFF_GROUP, groups);
+            metadata.remove(KFFTask.KFF_GROUP);
         }
 
         String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
