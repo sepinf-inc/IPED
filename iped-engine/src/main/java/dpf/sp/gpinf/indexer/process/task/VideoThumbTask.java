@@ -367,7 +367,7 @@ public class VideoThumbTask extends ThumbTask {
                 mainTmpFile = new File(mainOutFile.getParentFile(), evidence.getHash() + tempSuffix);
                 mainConfig.setOutFile(mainTmpFile);
 
-                //Check if it is an animated images
+                //Check if it is an animated image
                 int numFrames = 0;
                 boolean isAnimated = isImageSequence(evidence.getMediaType().toString());
                 if (!isAnimated) {
