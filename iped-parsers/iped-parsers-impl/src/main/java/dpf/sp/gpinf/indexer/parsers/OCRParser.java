@@ -194,6 +194,9 @@ public class OCRParser extends AbstractParser {
         types.add(MediaType.image("aces")); //$NON-NLS-1$
         types.add(MediaType.image("emf")); //$NON-NLS-1$
         types.add(MediaType.image("heic")); //$NON-NLS-1$
+        types.add(MediaType.image("heif")); //$NON-NLS-1$
+        types.add(MediaType.image("heic-sequence")); //$NON-NLS-1$
+        types.add(MediaType.image("heif-sequence")); //$NON-NLS-1$
         types.add(MediaType.image("svg+xml")); //$NON-NLS-1$
         types.add(MediaType.image("vnd.adobe.photoshop")); //$NON-NLS-1$
         types.add(MediaType.image("vnd.wap.wbmp")); //$NON-NLS-1$
