@@ -3101,6 +3101,7 @@ ufed:VisitCount = java.lang.Integer
 ufed:Width = java.lang.Integer
 ufed:extractionId = java.lang.Integer
 ufed:labels = java.lang.String
+ufed:msgChildIds = java.lang.Integer
 updated = java.lang.String
 url = java.lang.String
 userBirthday = java.util.Date
