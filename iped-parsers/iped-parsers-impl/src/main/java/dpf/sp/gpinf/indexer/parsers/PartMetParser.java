@@ -27,7 +27,6 @@ import org.xml.sax.helpers.AttributesImpl;
 
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
-import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import gpinf.emule.KnownMetEntry;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -55,7 +54,7 @@ public class PartMetParser extends AbstractParser {
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
-        final DecimalFormat nf = LocalizedFormat.getDecimalInstance("#,##0");
+        final DecimalFormat nf = new DecimalFormat("#,##0"); //$NON-NLS-1$
         final DateFormat df = new SimpleDateFormat(Messages.getString("KnownMetParser.DataFormat"));
         df.setTimeZone(TimeZone.getTimeZone("GMT+0"));
 
