@@ -7,6 +7,8 @@ News:
 #860: New methods to allow saving bookmarks synchronously (Luis Nassif)
 #846: Some export files/properties dialogs take a long time to open (Luis Nassif)
 #852: Upgrade to ImageMagick-7.1.0-q8-x64 to fix animated webp images not being rendered (Luis Nassif)
+#710: Improve bookmarks shortcuts responsiveness (Wladimir Leite)
+#722: Avoid conflict between bookmark shortcuts and navigation/assigned keys (Wladimir Leite)
 Fixes:
 #793: Error in "Name" column when selecting some Regexes caused by IllegalArgumentException in 3.18.9 (Luis Nassif)
 #848: NumberFormatException in Report Generation in 3.18.9 (Wladimir Leite)
@@ -17,6 +19,7 @@ Fixes:
 #805: Date values in unexpected fields could cause the processing to abort (Luis Nassif & Fábio Pfeifer)
 #785: Not found folder datasource look up and replacement may fail (Luis Nassif)
 #795: Missing DLL in OfficeViewer could cause LibreOffice window to be detached from main GUI (Luis Nassif)
+#817: Fix copying items table cell content using CTRL+C (Wladimir Leite)
 #788: Subitems of 2nd level containers might point to no parent when resuming processing (Luis Nassif)
 #806: Processing error if evidence has dollar sign in the name (Luis Nassif)
 #766: Ignore search matches when the search expression is used to filter  (Luis Nassif)
