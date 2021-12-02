@@ -492,6 +492,8 @@ public class VideoThumbTask extends ThumbTask {
                     }
                 } catch (Throwable e) {
                     logger.warn(evidence.toString(), e);
+                } finally {
+                    updateHasThumb(evidence);
                 }
             }
 
