@@ -44,10 +44,10 @@ public class IPEDCrawler {
                 MediaType.application("x-sas-data"),
                 MediaType.application("vnd.adobe.indesign-idml-package") };
 
-        final String query = "tipo:gif OR type:gif";
+        final String query = "tipo:(emf wmf svg webp tif* heic heif psd cdr jp2 jpx j2c wbmp ras xbm rgb ppm pgm pbm pcx dcx exr) OR type:(emf wmf svg webp tif* heic heif psd cdr jp2 jpx j2c wbmp ras xbm rgb ppm pgm pbm pcx dcx exr)";
 
         File folderToScan = new File("Z:\\SINQ");
-        File exportFolder = new File("F:\\teste-files\\gif-crawling");
+        File exportFolder = new File("F:\\teste-files\\images-non-standard-crawling");
         exportFolder.mkdirs();
 
         List<File> cases = searchCasesinFolder(folderToScan);
