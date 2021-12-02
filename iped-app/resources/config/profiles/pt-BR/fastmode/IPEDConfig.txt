@@ -28,4 +28,5 @@ enableCarving = false
 enableImageThumbs = false
 enableImageSimilarity = false
 enableVideoThumbs = false
+enableDocThumbs = false
 enableHTMLReport = false

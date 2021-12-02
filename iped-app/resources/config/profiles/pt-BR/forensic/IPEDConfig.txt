@@ -118,6 +118,10 @@ enableImageSimilarity = true
 # Os parâmetros de extração podem ser alterados no arquivo conf/VideoThumbsConfig.txt
 enableVideoThumbs = true
 
+# [Experimental] Enables thumbnail creation for PDFs and many formats supported by LibreOffice.
+# Advanced configurations can be found at conf/DocThumbsConfig.txt.
+enableDocThumbs = false
+
 # Habilita geração de relatório HTML em extrações automáticas ou de itens selecionados.
 # Os parâmetros de geração podem ser alterados no arquivo conf/HTMLReportConfig.txt
 enableHTMLReport = true
