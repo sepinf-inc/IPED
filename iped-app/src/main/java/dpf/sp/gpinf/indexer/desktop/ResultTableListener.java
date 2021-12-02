@@ -186,38 +186,34 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     @Override
     public void keyPressed(KeyEvent evt) {
-        if (App.get().resultsTable.getSelectedRow() == -1) {
+        if (App.get().resultsTable.getSelectedRow() == -1)
             return;
-        }
 
         if (evt.getKeyCode() == KeyEvent.VK_C && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
-
             int selCol = App.get().resultsTable.getSelectedColumn();
-            if (selCol < 0) {
+            if (selCol < 0)
                 return;
-            }
             String value = getCell(App.get().resultsTable, App.get().resultsTable.getSelectedRow(), selCol);
             StringSelection selection = new StringSelection(value);
             Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
-            clipboard.setContents(selection, selection);
-
-        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE)
+            clipboard.setContents(selection, null);
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_SPACE) {
             itemSelection();
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // Deep-Selection
-                                                                                                        // (Item plus
-                                                                                                        // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to Deep-Selection (Item plus sub-items)
             recursiveItemSelection(true);
-        else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) // Shortcut to
-                                                                                                       // Deep-Selection
-                                                                                                       // (Item plus
-                                                                                                       // sub-items)
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_R && ((evt.getModifiers() & KeyEvent.ALT_MASK) != 0)) {
+            // Shortcut to Deep-Selection Remove (Item plus sub-items)
             recursiveItemSelection(false);
-        else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) // Shortcut to
-                                                                                                        // BookmarkManager
-                                                                                                        // Window
+            evt.consume();
+        } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
+            // Shortcut to BookmarkManager Window
             GerenciadorMarcadores.setVisible();
-        else
+            evt.consume();
+        } else 
             GerenciadorMarcadores.get().keyPressed(evt);
 
     }
