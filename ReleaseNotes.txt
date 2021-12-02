@@ -8,9 +8,10 @@ News:
 #622: Use embedded JRE on windows when creating report (Luis Nassif)
 #860: New methods to allow saving bookmarks synchronously (Luis Nassif)
 #846: Some export files/properties dialogs take a long time to open (Luis Nassif)
-#852: Upgrade to ImageMagick-7.1.0-q8-x64 to fix animated webp images not being rendered (Luis Nassif)
 #710: Improve bookmarks shortcuts responsiveness (Wladimir Leite)
 #722: Avoid conflict between bookmark shortcuts and navigation/assigned keys (Wladimir Leite)
+#852: Upgrade to ImageMagick-7.1.0-q8-x64 to fix animated webp images not being rendered (Luis Nassif)
+#862: Upgrade to PDFBox 2.0.23 (Luís Nassif)
 Fixes:
 #793: Error in "Name" column when selecting some Regexes caused by IllegalArgumentException in 3.18.9 (Luis Nassif)
 #848: NumberFormatException in Report Generation in 3.18.9 (Wladimir Leite)

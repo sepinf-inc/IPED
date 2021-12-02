@@ -181,12 +181,12 @@
         <dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox</artifactId>
-  			<version>2.0.17</version>
+  			<version>2.0.23</version>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
   			<artifactId>pdfbox-tools</artifactId>
-  			<version>2.0.17</version>
+  			<version>2.0.23</version>
 		</dependency>
 		<dependency>
   			<groupId>org.apache.pdfbox</groupId>
