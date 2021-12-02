@@ -43,6 +43,22 @@ function process(e){
 		e.setMediaTypeStr("application/x-telegram-user-conf");
 		//e.setCategory("Contacts");
 	}
+	
+	//emule files
+	if(mime.equals("application/x-emule-searches")){
+		e.addCategory("Searches");
+		e.addCategory("Peer-to-peer");
+	}
+	if(e.getPath().toLowerCase().contains("mule")){
+		if(e.getName().equals("preferences.ini")){
+			e.setMediaTypeStr("application/x-emule-preferences-ini");
+			e.addCategory("Peer-to-peer");
+		}
+		if(e.getName().equals("preferences.dat")){
+			e.setMediaTypeStr("application/x-emule-preferences-dat");
+			e.addCategory("Peer-to-peer");
+		}
+	}
 
 	if(categorias.indexOf("Images") > -1){
 
