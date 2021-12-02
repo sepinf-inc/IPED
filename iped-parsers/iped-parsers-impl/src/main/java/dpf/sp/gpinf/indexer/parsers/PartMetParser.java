@@ -128,7 +128,7 @@ public class PartMetParser extends AbstractParser {
         addLine(xhtml, Messages.getString("KnownMetParser.AcceptedRequests"), toFormatStr(nf, e.getAcceptedRequests()));
         addLine(xhtml, Messages.getString("KnownMetParser.BytesSent"), toFormatStr(nf, e.getBytesTransfered()));
         addLine(xhtml, Messages.getString("KnownMetParser.TempFile"), nvlStr(e.getPartName()));
-        addLine(xhtml, Messages.getString("KnownMetParser.FoundInPedoHashDB"),
+        addLine(xhtml, Messages.getString("KnownMetParser.FoundInKff"),
                 hashSets.isEmpty() ? "" : hashSets.toString());
         addLine(xhtml, Messages.getString("KnownMetParser.FoundInCase"),
                 item != null ? Messages.getString("KnownMetParser.Yes") : "");
