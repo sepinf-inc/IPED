@@ -1,5 +1,7 @@
 xx/12/2021: IPED-3.18.10
 News:
+#119: Create thumbnails for PDFs (Wladimir Leite & Luís Nassif)
+#419: Create thumbnails for formats supported by LibreOffice (Wladimir Leite & Luís Nassif)
 #809: Parse eMule part.met files (Wladimir Leite & Luís Nassif)
 #615: Classify preferences.ini/AC_SearchStrings.dat and parse preferences.dat eMule artifacts (João Hauck, Luís Nassif & Wladimir Leite)
 #811: Improve decoding of E-Mule known.met entry file names with diacritics (Wladimir Leite)
