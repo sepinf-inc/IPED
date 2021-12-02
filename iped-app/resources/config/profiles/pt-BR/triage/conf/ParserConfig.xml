@@ -117,6 +117,7 @@
         </parser>
         <parser class="dpf.mt.gpinf.skype.parser.SkypeParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.PartMetParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaLibraryDatParser"></parser>
