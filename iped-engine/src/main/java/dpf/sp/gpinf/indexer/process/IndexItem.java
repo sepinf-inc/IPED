@@ -325,7 +325,6 @@ public class IndexItem extends BasicProps {
             value = ""; //$NON-NLS-1$
         }
         Field nameField = new TextField(NAME, value, Field.Store.YES);
-        nameField.setBoost(1000.0f);
         doc.add(nameField);
         doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
