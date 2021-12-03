@@ -1,4 +1,4 @@
-xx/12/2021: IPED-3.18.10
+03/12/2021: IPED-3.18.10
 News:
 #119: Create thumbnails for PDFs (Wladimir Leite & Luís Nassif)
 #419: Create thumbnails for formats supported by LibreOffice (Wladimir Leite & Luís Nassif)
