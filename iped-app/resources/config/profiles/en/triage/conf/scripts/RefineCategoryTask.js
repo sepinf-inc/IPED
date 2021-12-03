@@ -39,21 +39,9 @@ function process(e){
 		e.setMediaTypeStr("application/x-whatsapp-user-xml");
 		e.setCategory("Contacts");
 	}
-	
-	//emule files
-	if(mime.equals("application/x-emule-searches")){
-		e.addCategory("Searches");
-		e.addCategory("Peer-to-peer");
-	}
-	if(e.getPath().toLowerCase().contains("mule")){
-		if(e.getName().equals("preferences.ini")){
-			e.setMediaTypeStr("application/x-emule-preferences-ini");
-			e.addCategory("Peer-to-peer");
-		}
-		if(e.getName().equals("preferences.dat")){
-			e.setMediaTypeStr("application/x-emule-preferences-dat");
-			e.addCategory("Peer-to-peer");
-		}
+	if(mime.equals("application/dita+xml") && e.getName().equals("userconfing.xml")){
+		e.setMediaTypeStr("application/x-telegram-user-conf");
+		//e.setCategory("Contacts");
 	}
 	
 	if(categorias.indexOf("Images") > -1){
@@ -115,6 +103,22 @@ function process(e){
 				   nome.indexOf("journal") > -1)
 					e.setCategory("Internet History");
 			}
+		}
+	}
+	
+	//emule files
+	if(mime.equals("application/x-emule-searches")){
+		e.setCategory("Searches");
+		e.addCategory("Peer-to-peer");
+	}
+	if(e.getPath().toLowerCase().contains("mule")){
+		if(e.getName().equals("preferences.ini")){
+			e.setMediaTypeStr("application/x-emule-preferences-ini");
+			e.addCategory("Peer-to-peer");
+		}
+		if(e.getName().equals("preferences.dat")){
+			e.setMediaTypeStr("application/x-emule-preferences-dat");
+			e.setCategory("Peer-to-peer");
 		}
 	}
 	
