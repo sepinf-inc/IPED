@@ -25,6 +25,7 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
@@ -87,8 +88,8 @@ public class SkipCommitedTask extends AbstractTask {
 
             SortedDocValues evidenceUUIDs = aReader.getSortedDocValues(BasicProps.EVIDENCE_UUID);
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-                String uuid = evidenceUUIDs.get(doc).utf8ToString();
-                if (!prevRootNameToEvidenceUUID.containsValue(uuid)) {
+                String uuid = DocValuesUtil.getVal(evidenceUUIDs, doc);
+                if (uuid != null && !prevRootNameToEvidenceUUID.containsValue(uuid)) {
                     Document luceneDoc = aReader.document(doc);
                     String path = luceneDoc.get(BasicProps.PATH);
                     prevRootNameToEvidenceUUID.put(Util.getRootName(path), uuid);
@@ -123,24 +124,28 @@ public class SkipCommitedTask extends AbstractTask {
             NumericDocValues prevParentIds = aReader.getNumericDocValues(IndexItem.PARENTID);
             NumericDocValues prevIds = aReader.getNumericDocValues(IndexItem.ID);
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-                String hashVal = persistentParents == null ? null : persistentParents.get(doc).utf8ToString();
+                String hashVal = persistentParents == null ? null : DocValuesUtil.getVal(persistentParents, doc);
                 if (hashVal != null && !hashVal.isEmpty()) {
                     HashValue persistParent = new HashValue(hashVal);
                     if (prevParentIds != null && Arrays.binarySearch(commitedPersistentIds, persistParent) < 0) {
-                        persistentToIdMap.put(persistParent, (int) prevParentIds.get(doc));
+                        persistentToIdMap.put(persistParent, DocValuesUtil.get(prevParentIds, doc).intValue());
                     }
                 }
-                boolean hasChild = hasChildValues != null && Boolean.valueOf(hasChildValues.get(doc).utf8ToString());
-                boolean isDir = isDirValues != null && Boolean.valueOf(isDirValues.get(doc).utf8ToString());
-                boolean isRoot = isRootValues != null && Boolean.valueOf(isRootValues.get(doc).utf8ToString());
-                boolean isTexSplitted = hasSplittedText != null && Boolean.valueOf(hasSplittedText.get(doc).utf8ToString());
+                boolean hasChild = hasChildValues != null && Boolean.valueOf(DocValuesUtil.getVal(hasChildValues, doc));
+                boolean isDir = isDirValues != null && Boolean.valueOf(DocValuesUtil.getVal(isDirValues, doc));
+                boolean isRoot = isRootValues != null && Boolean.valueOf(DocValuesUtil.getVal(isRootValues, doc));
+                boolean isTexSplitted = hasSplittedText != null && Boolean.valueOf(DocValuesUtil.getVal(hasSplittedText, doc));
                 if (prevIds != null && persistIds != null && (hasChild || isDir || isRoot || isTexSplitted)) {
-                    HashValue persistentId = new HashValue(persistIds.get(doc).utf8ToString());
-                    persistentToIdMap.put(persistentId, (int) prevIds.get(doc));
+                    HashValue persistentId = new HashValue(DocValuesUtil.getVal(persistIds, doc));
+                    persistentToIdMap.put(persistentId, DocValuesUtil.get(prevIds, doc).intValue());
                 }
             }
 
             caseData.putCaseObject(GLOBALID_ID_MAP, persistentToIdMap);
+
+            // reset doc values to iterate again
+            persistIds = aReader.getSortedDocValues(IndexItem.PERSISTENT_ID);
+            prevIds = aReader.getNumericDocValues(IndexItem.ID);
 
             collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_PERSISTENT_ID,
                     ParsingTask.NUM_SUBITEMS);
@@ -171,11 +176,11 @@ public class SkipCommitedTask extends AbstractTask {
 
         BitSet countedIds = new BitSet();
         for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-            int id = (int) ids.get(doc);
-            int ord = parentContainers.getOrd(doc);
+            int id = DocValuesUtil.get(ids, doc).intValue();
+            int ord = DocValuesUtil.getOrd(parentContainers, doc);
             if (ord != -1 && !countedIds.get(id)) {
                 if (parentIdField == IndexItem.CONTAINER_PERSISTENT_ID || subitems == null
-                        || !Boolean.valueOf(subitems.get(doc).utf8ToString())) {
+                        || !Boolean.valueOf(DocValuesUtil.getVal(subitems, doc))) {
                     referencingSubitems[ord]++;
                 }
             }
@@ -183,11 +188,12 @@ public class SkipCommitedTask extends AbstractTask {
             countedIds.set(id);
         }
 
-        Bits docsWithField = aReader.getDocsWithField(subitemCountField);
         for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-            if (docsWithField.get(doc)) {
-                int subitemsCount = (int) numSubitems.get(doc);
-                BytesRef persistId = persistIds.get(doc);
+            int subitemsCount = DocValuesUtil.get(numSubitems, doc).intValue();
+            if (subitemsCount != -1) {
+                if (!persistIds.advanceExact(doc))
+                    continue;
+                BytesRef persistId = persistIds.binaryValue();
                 int ord = parentContainers.lookupTerm(persistId);
                 int carvedIgnored = 0;
                 if (subitemCountField == BaseCarveTask.NUM_CARVED_AND_FRAGS) {
