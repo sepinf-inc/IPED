@@ -110,7 +110,7 @@ public class Worker extends Thread {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
                         Messages.getString("Worker.Starting") + task.getName()); //$NON-NLS-1$
             }
-            task.init(Configuration.getInstance().properties, new File(Configuration.getInstance().configPath, "conf")); //$NON-NLS-1$
+            task.init(Configuration.getInstance().properties, new File(output, "conf")); //$NON-NLS-1$
         }
 
     }
