@@ -1,3 +1,8 @@
+10/12/2021: IPED-3.18.11
+Fixes:
+#871: Upgrade log4j to 2.15.0 (Luís Nassif)
+#864: CriptoSeedPhraseValidator not working on 3.18.x (Luís Nassif)
+
 03/12/2021: IPED-3.18.10
 News:
 #119: Create thumbnails for PDFs (Wladimir Leite & Luís Nassif)

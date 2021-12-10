@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>iped</groupId>
     <artifactId>iped-parent</artifactId>
-    <version>3.18.10</version>
+    <version>3.18.11</version>
     <packaging>pom</packaging>
     
     <modules>
