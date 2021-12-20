@@ -961,6 +961,9 @@ public class IndexItem extends BasicProps {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                             Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
                             sisf = c.newInstance(absPath);
+                            if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                                IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
+                            }
 
                         } catch (NoSuchMethodException e) {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
@@ -1099,7 +1102,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
         Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
@@ -1141,7 +1144,7 @@ public class IndexItem extends BasicProps {
         return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
+    public static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
             throws IOException {
         if (evidence.isSubItem())
             return localFile;
