@@ -62,10 +62,6 @@ public class RowComparator implements Comparator<Integer> {
     private boolean isTimeEvent = false;
     private boolean isCategory = false;
 
-    protected SortedDocValues sdv;
-    protected SortedSetDocValues ssdv;
-    private NumericDocValues ndv;
-    private SortedNumericDocValues sndv;
     private int[] localizedCategoryOrds;
 
     private int[] sdvOrds;
@@ -119,6 +115,11 @@ public class RowComparator implements Comparator<Integer> {
         try {
             atomicReader = App.get().appCase.getLeafReader();
 
+            SortedDocValues sdv = null;
+            SortedSetDocValues ssdv = null;
+            NumericDocValues ndv = null;
+            SortedNumericDocValues sndv = null;
+
             if (IndexItem.getMetadataTypes().get(indexedField) == null
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
@@ -146,14 +147,15 @@ public class RowComparator implements Comparator<Integer> {
                     sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
             }
 
-            loadOrds();
+            loadOrds(sdv, ssdv, ndv, sndv);
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void loadOrds() throws IOException {
+    private void loadOrds(SortedDocValues sdv, SortedSetDocValues ssdv, NumericDocValues ndv,
+            SortedNumericDocValues sndv) throws IOException {
         int maxDoc = App.get().appCase.getLeafReader().maxDoc();
         if (sdv != null) {
             sdvOrds = new int[maxDoc];
@@ -233,7 +235,7 @@ public class RowComparator implements Comparator<Integer> {
     }
 
     public boolean isStringComparator() {
-        return sdv != null || ssdv != null || bookmarkCol;
+        return sdvOrds != null || ssdvOrds != null || bookmarkCol;
     }
 
     @Override
@@ -274,10 +276,10 @@ public class RowComparator implements Comparator<Integer> {
             int ordB = ((TimeItemId) itemB).getTimeEventOrd();
             return Integer.compare(ordA, ordB);
 
-        } else if (sdv != null) {
+        } else if (sdvOrds != null) {
             return sdvOrds[a] - sdvOrds[b];
 
-        } else if (ssdv != null) {
+        } else if (ssdvOrds != null) {
             int result, k = 0, ordA = -1, ordB = -1;
             do {
                 ordA = k < ssdvOrds[a].length ? ssdvOrds[a][k] : -1;
@@ -298,7 +300,7 @@ public class RowComparator implements Comparator<Integer> {
 
             return result;
 
-        } else if (sndv != null) {
+        } else if (sndvOrds != null) {
             int result, k = 0, countA = sndvOrds[a].length, countB = sndvOrds[b].length;
             do {
                 long ordA = k < countA ? sndvOrds[a][k] : Long.MIN_VALUE;
@@ -310,7 +312,7 @@ public class RowComparator implements Comparator<Integer> {
 
             return result;
 
-        } else if (ndv != null) {
+        } else if (ndvOrds != null) {
             return Long.compare(ndvOrds[a], ndvOrds[b]);
         }
 
