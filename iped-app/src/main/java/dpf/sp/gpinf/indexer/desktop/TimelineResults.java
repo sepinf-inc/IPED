@@ -43,7 +43,6 @@ public class TimelineResults {
             int luceneId = App.get().appCase.getLuceneId(id);
             String eventsInDocStr = DocValuesUtil.getVal(eventsInDocOrdsValues, luceneId);
             if (eventsInDocStr.isEmpty()) {
-                System.out.println("empty eventsInDoc " + luceneId);
                 continue;
             }
             loadOrdsFromString(eventsInDocStr, eventsInDocOrds);
