@@ -3,12 +3,12 @@ package dpf.sp.gpinf.indexer.analysis;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.FilteringTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
 /* [Triage] The following libraries are used to process tokens in a non-standard way */
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.FilteringTokenFilter;
 
 /*
  * Analisador de texto que utiliza o tokenizador LowerCaseLetterDigitTokenizer e

@@ -26,6 +26,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.io.IOException;
 import java.text.Collator;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -63,6 +64,7 @@ import org.apache.lucene.util.BytesRef;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
+import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.ProgressDialog;
@@ -287,7 +289,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
         }
     }
 
-    private int getEmptyDataHashOrd(SortedDocValues sdv) {
+    private int getEmptyDataHashOrd(SortedDocValues sdv) throws IOException {
         byte[] emptyData = new byte[0];
         String emptyMD5 = DigestUtils.md5Hex(emptyData).toUpperCase();
         int ord = sdv.lookupTerm(new BytesRef(emptyMD5));
@@ -324,7 +326,7 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
             BitSet luceneIds = new BitSet(reader.maxDoc());
             for (IItemId item : uniqueSelectedIds) {
                 int luceneId = ipedCase.getLuceneId(item);
-                int ord = sdv.getOrd(luceneId);
+                int ord = DocValuesUtil.getOrd(sdv, luceneId);
                 if (ord > emptyValueOrd && ord != emptyDataHashOrd) {
                     hashOrd.set(ord);
                 }
@@ -334,8 +336,10 @@ public class GerenciadorMarcadores implements ActionListener, ListSelectionListe
                     return;
             }
             int duplicates = 0;
+            // must reset docValues to call getOrd again
+            sdv = reader.getSortedDocValues(BasicProps.HASH);
             for (int doc = 0; doc < reader.maxDoc(); doc++) {
-                int ord = sdv.getOrd(doc);
+                int ord = DocValuesUtil.getOrd(sdv, doc);
                 if (ord != -1 && hashOrd.get(ord) && !luceneIds.get(doc)) {
                     IItemId itemId = ipedCase.getItemId(doc);
                     uniqueSelectedIds.add(itemId);
