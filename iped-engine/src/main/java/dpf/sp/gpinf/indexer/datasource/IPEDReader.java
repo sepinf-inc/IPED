@@ -524,7 +524,10 @@ public class IPEDReader extends DataSourceReader {
             if (!treeNode) {
                 value = doc.get(IndexItem.EXPORT);
                 if (value != null && !value.isEmpty()) {
-                    evidence.setFile(Util.getResolvedFile(basePath, value));
+                    File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value);
+                    localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
+                    evidence.setFile(localFile);
+
                 } else {
                     value = doc.get(IndexItem.SLEUTHID);
                     if (value != null && !value.isEmpty()) {
@@ -545,6 +548,9 @@ public class IPEDReader extends DataSourceReader {
                             Class<?> clazz = Class.forName(className);
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                             sisf = c.newInstance(absPath);
+                            if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                                IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
+                            }
                             inputStreamFactories.put(absPath, sisf);
                         }
                         evidence.setInputStreamFactory(sisf);

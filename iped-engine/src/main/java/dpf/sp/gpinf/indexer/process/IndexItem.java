@@ -916,7 +916,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
         Path path = sisf.getDataSourcePath();
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
@@ -958,7 +958,7 @@ public class IndexItem extends BasicProps {
         return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
+    public static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
             throws IOException {
         if (evidence.isSubItem())
             return localFile;
