@@ -1,32 +1,23 @@
 package dpf.sp.gpinf.indexer.util;
 
-import java.lang.reflect.Field;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.VarHandle;
+import java.nio.ByteOrder;
 import java.nio.MappedByteBuffer;
 
-import sun.misc.Unsafe;
-
-@SuppressWarnings("restriction")
 public class DirectMemory {
 
-    private static Unsafe unsafe;
+    private static VarHandle varHandle;
 
     static {
-        try {
-            Field singleoneInstanceField = Unsafe.class.getDeclaredField("theUnsafe"); //$NON-NLS-1$
-            singleoneInstanceField.setAccessible(true);
-            unsafe = (Unsafe) singleoneInstanceField.get(null);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+        varHandle = MethodHandles.byteBufferViewVarHandle(byte[].class, ByteOrder.LITTLE_ENDIAN);
     }
 
     public static final void putByteVolatile(MappedByteBuffer bb, long pos, byte val) {
-        unsafe.putByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos, val);
+        varHandle.setVolatile(bb, pos, val);
     }
 
     public static final byte getByteVolatile(MappedByteBuffer bb, long pos) {
-        return unsafe.getByteVolatile(null, ((sun.nio.ch.DirectBuffer) bb).address() + pos);
+        return (byte) varHandle.getVolatile(bb, pos);
     }
 }
