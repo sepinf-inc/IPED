@@ -100,7 +100,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
             tok = new LowerCaseFilter(tok);
         }
         if (convertCharsToAscii) {
-            tok = new FastASCIIFoldingFilter(tokenizer);
+            tok = new FastASCIIFoldingFilter(tok);
         }
 
         /*
