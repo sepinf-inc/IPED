@@ -312,10 +312,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     private void loadLeafCategories() throws IOException {
-        Fields fields = ((SlowCompositeReaderWrapper) atomicReader).fields();
-        if (fields == null)
-            return;
-        Terms terms = fields.terms(IndexItem.CATEGORY);
+        Terms terms = atomicReader.terms(IndexItem.CATEGORY);
         if (terms == null)
             return;
         TermsEnum termsEnum = terms.iterator();

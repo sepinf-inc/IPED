@@ -147,7 +147,7 @@ public class IPEDSearcher implements IIPEDSearcher {
             if (scoreDocs != null)
                 lastScoreDoc = scoreDocs[scoreDocs.length - 1];
 
-            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true, false).scoreDocs;
+            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true).scoreDocs;
 
             searchResult = searchResult.addResults(scoreDocs);
 

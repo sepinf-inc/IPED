@@ -30,7 +30,7 @@ import org.apache.lucene.search.similarities.SimilarityBase;
 public class IndexerSimilarity extends SimilarityBase {
 
     @Override
-    protected float score(BasicStats stats, float freq, float docLen) {
+    protected double score(BasicStats stats, double freq, double docLen) {
         return freq;
     }
 
