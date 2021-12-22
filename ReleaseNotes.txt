@@ -1,3 +1,11 @@
+22/12/2021: IPED-3.18.12
+News:
+#887: Upgrade to Log4j-2.17.0 in 3.x branch (Luís Nassif)
+Fixes:
+#881: Subitems > 16MB or exported to HTML reports not opened by analysis app [3.18.10 regression] (Luis Nassif)
+#880: Exporting files to report fails depending on evidence type if it was moved (Luís Nassif)
+#872: Aborting NullPointerException in DocThumbTask (Luís Nassif)
+
 10/12/2021: IPED-3.18.11
 Fixes:
 #871: Upgrade log4j to 2.15.0 (Luís Nassif)
