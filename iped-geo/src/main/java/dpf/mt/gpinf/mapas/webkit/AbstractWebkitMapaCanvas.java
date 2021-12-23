@@ -32,14 +32,6 @@ public abstract class AbstractWebkitMapaCanvas extends AbstractMapaCanvas {
 
                 webEngine = browser.getEngine();
                 webEngine.setJavaScriptEnabled(true);
-                com.sun.javafx.webkit.WebConsoleListener
-                        .setDefaultListener(new com.sun.javafx.webkit.WebConsoleListener() {
-                            @Override
-                            public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
-                                System.out.println(
-                                        "From webview: " + message + " [" + sourceId + " - " + lineNumber + "]");
-                            }
-                        });
                 webEngine.setOnError(new EventHandler<WebErrorEvent>() {
                     public void handle(WebErrorEvent event) {
                         System.out.println("Error:" + event.getMessage()); //$NON-NLS-1$

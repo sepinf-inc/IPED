@@ -397,10 +397,10 @@ public class Manager {
                 "WARN: removing evidence does NOT update duplicate flag, graph and internal storage for now!");
         LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
         TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
-        int prevDocs = writer.numDocs();
+        int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
         writer.commit();
-        int deletes = prevDocs - writer.numDocs();
+        int deletes = prevDocs - writer.getDocStats().numDocs;
         LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
         writer.close();
     }

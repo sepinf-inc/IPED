@@ -325,7 +325,6 @@ public class IndexItem extends BasicProps {
             value = ""; //$NON-NLS-1$
         }
         Field nameField = new TextField(NAME, value, Field.Store.YES);
-        nameField.setBoost(1000.0f);
         doc.add(nameField);
         doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
@@ -961,6 +960,9 @@ public class IndexItem extends BasicProps {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
                             Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
                             sisf = c.newInstance(absPath);
+                            if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                                IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
+                            }
 
                         } catch (NoSuchMethodException e) {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
@@ -1099,7 +1101,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
         Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
@@ -1141,16 +1143,20 @@ public class IndexItem extends BasicProps {
         return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
+    public static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
             throws IOException {
-        if (evidence.isSubItem())
+        if (localFile.exists()) {
             return localFile;
-        Path path = localFile.toPath();
-        Path pathSuffix = Paths.get(evidence.getPath());
-        if (pathSuffix.getNameCount() > 1)
-            pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
-        if (path.endsWith(pathSuffix)) {
-            String evidenceFolderStr = path.toString().substring(0, path.toString().lastIndexOf(pathSuffix.toString()));
+        }
+        String origPath = evidence.getPath().replace('\\', File.separatorChar).replace('/', File.separatorChar);
+        int idx = origPath.indexOf(File.separatorChar, 1);
+        String pathSuffix = "";
+        if (idx != -1) {
+            pathSuffix = origPath.substring(idx + 1);
+        }
+        String localPath = localFile.getCanonicalPath();
+        if (localPath.endsWith(pathSuffix)) {
+            String evidenceFolderStr = localPath.substring(0, localPath.lastIndexOf(pathSuffix));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
             if (mappedFolder == null) {
@@ -1170,7 +1176,7 @@ public class IndexItem extends BasicProps {
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }
-            localFile = new File(mappedFolder, pathSuffix.toString());
+            localFile = new File(mappedFolder, pathSuffix);
         }
         return localFile;
     }

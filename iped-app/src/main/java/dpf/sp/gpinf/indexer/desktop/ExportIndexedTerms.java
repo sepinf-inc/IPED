@@ -11,6 +11,7 @@ import javax.swing.JFileChooser;
 
 import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.MultiFields;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 
@@ -74,9 +75,11 @@ public class ExportIndexedTerms extends CancelableWorker<Boolean, Integer> imple
 
             // Não exibe progresso pois SlowCompositeReaderWrapper não fornece o número
             // total de termos
-            Fields fields = atomicReader.fields();
             for (String f : field) {
-                Terms terms = fields.terms(f);
+                Terms terms = atomicReader.terms(f);
+                if (terms == null) {
+                    continue;
+                }
                 TermsEnum termsEnum = terms.iterator();
 
                 while (termsEnum.next() != null) {

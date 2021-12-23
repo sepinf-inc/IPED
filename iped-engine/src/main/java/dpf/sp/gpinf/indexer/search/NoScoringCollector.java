@@ -5,7 +5,7 @@ import java.io.InterruptedIOException;
 import java.util.BitSet;
 
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.search.Scorer;
+import org.apache.lucene.search.ScoreMode;
 import org.apache.lucene.search.SimpleCollector;
 
 import iped3.search.LuceneSearchResult;
@@ -31,10 +31,6 @@ public class NoScoringCollector extends SimpleCollector {
 
     public void cancel() {
         canceled = true;
-    }
-
-    @Override
-    public void setScorer(Scorer scorer) throws IOException {
     }
 
     @Override
@@ -80,8 +76,8 @@ public class NoScoringCollector extends SimpleCollector {
     }
 
     @Override
-    public boolean needsScores() {
-        return false;
+    public ScoreMode scoreMode() {
+        return ScoreMode.COMPLETE_NO_SCORES;
     }
 
 }
