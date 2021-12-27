@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.BinaryDocValues;
@@ -14,6 +15,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
 import iped3.IItemId;
@@ -89,7 +91,7 @@ public class ImageSimilarityScorer {
                     for (int i = i0; i < i1; i++) {
                         IItemId itemId = result.getItem(i);
                         int luceneId = App.get().appCase.getLuceneId(itemId);
-                        BytesRef bytesRef = similarityFeaturesValues.get(luceneId);
+                        BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
                         if (bytesRef == null || bytesRef.length == 0) {
                             result.setScore(i, 0);
                         } else {
@@ -138,6 +140,25 @@ public class ImageSimilarityScorer {
             }
         }
         trim(0);
+        
+        BinaryDocValues similarityFeaturesValues = null;
+        try {
+            similarityFeaturesValues = App.get().appCase.getLeafReader()
+                    .getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+        } catch (IOException e) {
+            e.printStackTrace();
+            return;
+        }
+        // put features in a map, BinaryDocValues is not random accessible anymore
+        HashMap<Integer, byte[]> idToFeaturesMap = new HashMap<>();
+        for (Integer idx : topResults.stream().sorted().collect(Collectors.toList())) {
+            IItemId itemId = result.getItem(idx);
+            int luceneId = App.get().appCase.getLuceneId(itemId);
+            BytesRef bytesRef = DocValuesUtil.getBytesRef(similarityFeaturesValues, luceneId);
+            byte[] currFeatures = bytesRef.bytes.clone();
+            idToFeaturesMap.put(idx, currFeatures);
+        }
+        
         int start = topResults.size();
         for (int i = 1; i < topResults.size(); i++) {
             int idx = topResults.get(i);
@@ -151,20 +172,9 @@ public class ImageSimilarityScorer {
         float maxScore = result.getScore(topResults.get(start));
         float minScore = result.getScore(topResults.get(topResults.size() - 1));
 
-        BinaryDocValues similarityFeaturesValues = null;
-        LeafReader leafReader = App.get().appCase.getLeafReader();
-        try {
-            similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return;
-        }
         for (int i = start - 1; i < topResults.size(); i++) {
             int idx = topResults.get(i);
-            IItemId itemId = result.getItem(idx);
-            int luceneId = App.get().appCase.getLuceneId(itemId);
-            BytesRef bytesRef = similarityFeaturesValues.get(luceneId);
-            byte[] currFeatures = bytesRef.bytes.clone();
+            byte[] currFeatures = idToFeaturesMap.get(idx);
             topFeatures.put(idx, currFeatures);
             refDist.put(idx, ImageSimilarity.distance(refSimilarityFeatures, currFeatures));
         }

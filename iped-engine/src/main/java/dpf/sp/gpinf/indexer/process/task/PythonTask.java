@@ -10,13 +10,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.sun.imageio.plugins.common.ImageUtil;
-
 import dpf.inc.sepinf.python.PythonParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.ImageUtil;
 import iped3.ICaseData;
 import iped3.IItem;
 import jep.Jep;

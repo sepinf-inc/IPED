@@ -20,7 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -31,8 +31,15 @@ import iped3.desktop.CancelableWorker;
 import iped3.desktop.ProgressDialog;
 
 public class ResultTableRowSorter extends ParallelTableRowSorter<ResultTableSortModel> {
+    
+    private static final int MAX_COMPARATOR_CACHE = 3;
 
-    private static volatile Map<Integer, RowComparator> comparatorCache = new HashMap<Integer, RowComparator>();
+    private static volatile Map<Integer, RowComparator> comparatorCache = new LinkedHashMap<Integer, RowComparator>(16, 0.75f, true){
+        @Override
+        protected boolean removeEldestEntry(Map.Entry<Integer, RowComparator> eldest) {
+            return this.size() > MAX_COMPARATOR_CACHE;
+        }
+    };
 
     public ResultTableRowSorter() {
         super(new ResultTableSortModel());

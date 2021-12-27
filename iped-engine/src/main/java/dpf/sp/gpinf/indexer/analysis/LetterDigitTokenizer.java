@@ -9,16 +9,13 @@ import org.apache.lucene.analysis.util.CharTokenizer;
  */
 public class LetterDigitTokenizer extends CharTokenizer {
 
-    private final boolean convertCharsToLowerCase;
-
     private final int[] extraCodePoints;
 
     /**
      * Construct a new LetterTokenizer.
      */
-    public LetterDigitTokenizer(boolean convertCharsToLowerCase, int[] extraCodePoints) {
+    public LetterDigitTokenizer(int[] extraCodePoints) {
         super();
-        this.convertCharsToLowerCase = convertCharsToLowerCase;
         this.extraCodePoints = extraCodePoints;
     }
 
@@ -56,18 +53,6 @@ public class LetterDigitTokenizer extends CharTokenizer {
         }
 
         return false;
-    }
-
-    /**
-     * Converts char to lower case {@link Character#toLowerCase(char)}.
-     */
-    @Override
-    protected int normalize(int c) {
-        if (convertCharsToLowerCase) {
-            return Character.toLowerCase(c);
-        } else {
-            return c;
-        }
     }
 
 }

@@ -46,6 +46,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -250,8 +251,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
 
-        for (int i = 0; i < reader.maxDoc(); i++) {
-            ids[i] = (int) ndv.get(i);
+        int i;
+        while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            ids[i] = (int) ndv.longValue();
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -310,10 +312,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     private void loadLeafCategories() throws IOException {
-        Fields fields = atomicReader.fields();
-        if (fields == null)
-            return;
-        Terms terms = fields.terms(IndexItem.CATEGORY);
+        Terms terms = atomicReader.terms(IndexItem.CATEGORY);
         if (terms == null)
             return;
         TermsEnum termsEnum = terms.iterator();

@@ -3,12 +3,13 @@ package dpf.sp.gpinf.indexer.analysis;
 import java.util.Set;
 
 import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.FilteringTokenFilter;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.Tokenizer;
+import org.apache.lucene.analysis.core.LowerCaseFilter;
 /* [Triage] The following libraries are used to process tokens in a non-standard way */
 import org.apache.lucene.analysis.miscellaneous.LengthFilter;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
-import org.apache.lucene.analysis.util.FilteringTokenFilter;
 
 /*
  * Analisador de texto que utiliza o tokenizador LowerCaseLetterDigitTokenizer e
@@ -25,7 +26,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
      */
     // private final boolean replaceInvalidAcronym,enableStopPositionIncrements;
 
-    private final boolean pipeTokenizer;
+    private final boolean categoryTokenizer;
 
     /**
      * Default maximum allowed token length
@@ -48,8 +49,8 @@ public class StandardASCIIAnalyzer extends Analyzer {
      * @param matchVersion
      *            Lucene version to match
      */
-    public StandardASCIIAnalyzer(boolean pipeTokenizer) {
-        this.pipeTokenizer = pipeTokenizer;
+    public StandardASCIIAnalyzer(boolean categoryTokenizer) {
+        this.categoryTokenizer = categoryTokenizer;
     }
 
     public void setFilterNonLatinChars(boolean filterNonLatinChars) {
@@ -88,18 +89,19 @@ public class StandardASCIIAnalyzer extends Analyzer {
     protected TokenStreamComponents createComponents(final String fieldName) {
 
         Tokenizer tokenizer;
-        if (pipeTokenizer) {
+        if (categoryTokenizer) {
             tokenizer = new CategoryTokenizer();
         } else {
-            tokenizer = new LetterDigitTokenizer(convertCharsToLowerCase, extraChars);
+            tokenizer = new LetterDigitTokenizer(extraChars);
         }
 
-        // src.setMaxTokenLength(maxTokenLength);
         TokenStream tok = tokenizer;
-        if (convertCharsToAscii)
-            tok = new FastASCIIFoldingFilter(tokenizer);
-
-        // tok = new StopFilter(matchVersion, tok, stopwords);
+        if (convertCharsToLowerCase || categoryTokenizer) {
+            tok = new LowerCaseFilter(tok);
+        }
+        if (convertCharsToAscii) {
+            tok = new FastASCIIFoldingFilter(tok);
+        }
 
         /*
          * The following code removes tokens that exceed the maximum size or that
@@ -107,7 +109,7 @@ public class StandardASCIIAnalyzer extends Analyzer {
          * FastASCIIFoldingFilter). Nonetheless, the filters are not applied to the
          * Category's description, which is checked by the following "if"
          */
-        if (!(pipeTokenizer)) {
+        if (!(categoryTokenizer)) {
             tok = new LengthFilter(tok, 1, maxTokenLength);
             if (filterNonLatinChars)
                 tok = new Latin1CharacterFilter(tok);

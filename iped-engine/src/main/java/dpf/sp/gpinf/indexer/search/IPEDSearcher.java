@@ -28,6 +28,8 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
+import org.apache.lucene.search.Sort;
+import org.apache.lucene.search.SortField;
 import org.apache.lucene.search.TermQuery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,12 +132,14 @@ public class IPEDSearcher implements IIPEDSearcher {
         } catch (InterruptedIOException e) {
             // e.printStackTrace();
         }
-        // não calcula scores (lento) quando resultado é mto grande
+        // do not compute scores (slow) when result set is large
         if (noScore || collector.getTotalHits() > MAX_SIZE_TO_SCORE || canceled)
             return collector.getSearchResults();
 
-        // obtém resultados calculando score
+        // otherwise get results computing score
         LuceneSearchResult searchResult = new LuceneSearchResult(0);
+        // sort by index doc order: needed by features using docValues that iterate over results
+        Sort sort = new Sort(SortField.FIELD_DOC);
         int maxResults = MAX_SIZE_TO_SCORE;
         ScoreDoc[] scoreDocs = null;
         do {
@@ -143,7 +147,7 @@ public class IPEDSearcher implements IIPEDSearcher {
             if (scoreDocs != null)
                 lastScoreDoc = scoreDocs[scoreDocs.length - 1];
 
-            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults).scoreDocs;
+            scoreDocs = ipedCase.getSearcher().searchAfter(lastScoreDoc, query, maxResults, sort, true).scoreDocs;
 
             searchResult = searchResult.addResults(scoreDocs);
 

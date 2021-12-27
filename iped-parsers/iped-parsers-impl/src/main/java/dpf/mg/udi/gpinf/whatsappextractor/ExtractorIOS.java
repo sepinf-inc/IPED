@@ -180,7 +180,7 @@ public class ExtractorIOS extends Extractor {
                 if (MEDIA_MESSAGES.contains(m.getMessageType())) {
                     try {
                         m.setMediaHash(rs.getString("mediaHash"), true);
-                    } catch (IllegalArgumentException _) {
+                    } catch (IllegalArgumentException ignore) {
                     } // ignore
                 }
                 messages.add(m);

@@ -343,68 +343,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }.start();
     }
 
-    private Set<String> getUsedCols2(ProgressDialog progress) {
-
-        progress.setMaximum(indexFields.length);
-
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        TreeSet<String> dinamicFields = new TreeSet<>(collator);
-
-        int[] docs = new int[App.get().ipedResult.getLength()];
-        int i = 0;
-        for (IItemId item : App.get().ipedResult.getIterator())
-            docs[i++] = App.get().appCase.getLuceneId(item);
-        Arrays.sort(docs);
-
-        int[] docBases = new int[App.get().appCase.getReader().leaves().size() + 1];
-        for (i = 0; i < docBases.length - 1; i++)
-            docBases[i] = App.get().appCase.getReader().leaves().get(i).docBase;
-        docBases[docBases.length - 1] = Integer.MAX_VALUE;
-
-        int p = 0;
-        for (String field : indexFields) {
-            if (progress.isCanceled())
-                return null;
-            try {
-                int baseOrd = 0;
-                int MAX_ITEMS_TO_CHECK = 50;
-                int interval = docs.length / MAX_ITEMS_TO_CHECK;
-                if (interval == 0)
-                    interval = 1;
-                LeafReader reader = null;
-                Bits bits0 = null, bits1 = null, bits2 = null;
-                for (i = 0; i < docs.length; i += interval) {
-                    while (docs[i] >= docBases[baseOrd + 1]) {
-                        baseOrd++;
-                        reader = null;
-                    }
-                    if (reader == null) {
-                        reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
-                        bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                        bits2 = reader.getDocsWithField(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                    }
-                    int doc = docs[i] - docBases[baseOrd];
-                    if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
-                            || (bits0 != null && bits0.get(doc))) {
-                        dinamicFields.add(field);
-                        break;
-                    }
-                }
-                // t1 += System.currentTimeMillis() - tb;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            progress.setProgress(++p);
-        }
-        // System.out.println("t0 = " + t0);
-        // System.out.println("t1 = " + t1);
-
-        return dinamicFields;
-    }
-
     private Set<String> getUsedCols(ProgressDialog progress) {
 
         Collator collator = Collator.getInstance();

@@ -78,18 +78,32 @@
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>
       		<match value="ftypheix" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+	<mime-type type="image/heic-sequence">
+    	<magic priority="60">
       		<match value="ftyphevc" type="string" offset="4"/>
       		<match value="ftyphevx" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heic"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
   	
   	<mime-type type="image/heif">
     	<magic priority="60">
       		<match value="ftypmif1" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
+  	<mime-type type="image/heif-sequence">
+    	<magic priority="60">
       		<match value="ftypmsf1" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heif"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
 
 	<mime-type type="application/x-dbf">
