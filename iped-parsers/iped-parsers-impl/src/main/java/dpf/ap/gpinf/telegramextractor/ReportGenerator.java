@@ -39,6 +39,12 @@ public class ReportGenerator {
     private boolean firstFragment = true;
     private int currentMsg = 0;
 
+
+    private String creatSpanTag(String text) {
+        return "<span class=\"tooltiptext\">" + text.replaceAll("<script[\\s\\S]*>[\\s\\S]*(<\\/script>)?", "")
+                + "</span>";
+    }
+
     ReportGenerator(IItemSearcher s) {
         this.searcher = s;
     }
@@ -167,7 +173,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
@@ -211,7 +217,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
@@ -258,7 +264,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
@@ -291,7 +297,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
