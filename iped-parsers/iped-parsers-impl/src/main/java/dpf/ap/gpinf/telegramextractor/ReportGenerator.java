@@ -351,7 +351,7 @@ public class ReportGenerator {
                     + contact + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
-            out.print(message.getType() + "<br>");
+            out.print(StringEscapeUtils.escapeHtml(message.getType()) + "<br>");
         }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().equals("geo")) {
@@ -371,7 +371,7 @@ public class ReportGenerator {
 
         }
         if (message.getData() != null) {
-            out.print(message.getData()); // $NON-NLS-1$
+            out.print(StringEscapeUtils.escapeHtml(message.getData())); // $NON-NLS-1$
         }
 
         out.println("<br/>");
