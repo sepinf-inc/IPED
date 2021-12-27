@@ -41,7 +41,7 @@ public class ReportGenerator {
 
 
     private String creatSpanTag(String text) {
-        return "<span class=\"tooltiptext\">" + text.replaceAll("<script[\\s\\S]*>[\\s\\S]*(<\\/script>)?", "")
+        return "<span class=\"tooltiptext\">" + text.replaceAll("<script[\\s\\S]*?>([\\s\\S]*<\\/script>)?", "")
                 + "</span>";
     }
 
