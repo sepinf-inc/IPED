@@ -25,6 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import org.apache.commons.lang.StringEscapeUtils;
+
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -41,8 +43,8 @@ public class ReportGenerator {
 
 
     private String creatSpanTag(String text) {
-        return "<span class=\"tooltiptext\">" + text.replaceAll("<script[\\s\\S]*?>([\\s\\S]*<\\/script>)?", "")
-                + "</span>";
+
+        return "<span class=\"tooltiptext\">" + StringEscapeUtils.escapeHtml(text) + "</span>";
     }
 
     ReportGenerator(IItemSearcher s) {
