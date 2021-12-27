@@ -128,7 +128,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
-
+    private static String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static boolean mainDbFound = false;
 
     /**
@@ -311,7 +311,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
 
         // TODO if no main db is found, backups are not processed. This must be fixed!
-        if (!mainDbFound && !MSGSTORE_BKP.matcher(dbName).find()) {
+        if (!mainDbFound && !MSGSTORE_BKP.matcher(dbName).find() && !dbName.contains(MSGSTORE_CRYPTO)) {
             metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
             mainDbFound = true;
         }
@@ -336,7 +336,12 @@ public class WhatsAppParser extends SQLite3DBParser {
         String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         query += " && " + BasicProps.EVIDENCE_UUID + ":" + mainDB.getDataSource().getUUID(); //$NON-NLS-1$ //$NON-NLS-2$
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
-
+        Collections.sort(result, new Comparator<IItemBase>() {
+            @Override
+            public int compare(IItemBase o1, IItemBase o2) {
+                return -o1.getModDate().compareTo(o2.getModDate());
+            }
+        });
         TemporaryResources tmp = new TemporaryResources();
         try {
             String dbPath = mainDB.getPath();
@@ -351,7 +356,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             chatlist.addAll(getChatList(extFactory, contacts, account, mainTempFile));
 
             for (IItemBase it : result) {
-
                 List<Chat> tempChatList;
                 try (InputStream is = it.getStream()) {
                     TikaInputStream tis = TikaInputStream.get(is, tmp);

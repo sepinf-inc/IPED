@@ -77,10 +77,13 @@ public class ChatMerge {
         int indexmain = 0;
 
         for (Chat c : backup) {
-            indexmain = findChat(main, c);
+            indexmain = findChatByContact(main, c);
             if (indexmain == -1) {// chat was removed
                 main.add(c);
                 c.setRecoveredFrom(dbname);
+                for (Message m : c.getMessages()) {
+                    m.setRecoveredFrom(dbname);
+                }
                 tot_rec += c.getMessages().size();
             } else {
                 tot_rec += mergeMessageList(main.get(indexmain).getMessages(), c.getMessages());
@@ -109,6 +112,15 @@ public class ChatMerge {
         }
         return tot_rec;
 
+    }
+
+    private int findChatByContact(List<Chat> l, Chat key) {
+        for (int i = 0; i < l.size(); i++) {
+            if (l.get(i).getRemote().getId().equals(key.getRemote().getId())) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     
