@@ -339,7 +339,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         Collections.sort(result, new Comparator<IItemBase>() {
             @Override
             public int compare(IItemBase o1, IItemBase o2) {
-                return -o1.getModDate().compareTo(o2.getModDate());
+                return -o1.getName().compareTo(o2.getName());
             }
         });
         TemporaryResources tmp = new TemporaryResources();
@@ -1070,14 +1070,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
                             }
                             List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
-                            for (Message m : messageList) {
-                                long mediaSize = m.getMediaSize();
-                                long fileSize = item.getLength();
-                                if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
-                                    if (itemStreamEndsWithZeros(item, mediaSize)) {
-                                        m.setMediaItem(item);
-                                        m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                                                    // //$NON-NLS-3$
+                            if (messageList != null) {
+                                for (Message m : messageList) {
+                                    long mediaSize = m.getMediaSize();
+                                    long fileSize = item.getLength();
+                                    if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
+                                        if (itemStreamEndsWithZeros(item, mediaSize)) {
+                                            m.setMediaItem(item);
+                                            m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                        // //$NON-NLS-3$
+                                        }
                                     }
                                 }
                             }
