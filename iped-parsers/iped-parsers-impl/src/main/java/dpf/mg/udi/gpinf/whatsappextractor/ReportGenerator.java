@@ -8,10 +8,10 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.function.Supplier;
 
-import org.apache.commons.lang.StringEscapeUtils;
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
+import org.springframework.web.util.HtmlUtils;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
@@ -218,7 +218,7 @@ public class ReportGenerator {
                 out.println(Messages.getString("WhatsAppReport.GroupCreated") + " " + message.getRemoteResource() //$NON-NLS-1$ //$NON-NLS-2$
                         + "</br>"); //$NON-NLS-1$
                 if (message.getData() != null && !message.getData().isEmpty()) {
-                    out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_JOINED_GROUP:
@@ -227,14 +227,14 @@ public class ReportGenerator {
                 out.println(
                         Messages.getString("WhatsAppReport.UserJoinedGroup") + message.getRemoteResource() + "</br>"); //$NON-NLS-1$ //$NON-NLS-2$
                 if (message.getData() != null) {
-                    out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_JOINED_GROUP_FROM_LINK:
                 out.println("<div class=\"systemmessage\">"); //$NON-NLS-1$
                 out.println(Messages.getString("WhatsAppReport.UserJoinedGroupLink")); //$NON-NLS-1$
                 if (message.getData() != null) {
-                    out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                    out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                 }
                 break;
             case USER_LEFT_GROUP:
@@ -305,13 +305,13 @@ public class ReportGenerator {
                 switch (message.getMessageType()) {
                     case TEXT_MESSAGE:
                         if (message.getData() != null) {
-                            out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case URL_MESSAGE:
                         out.println("<a href=\"" + message.getUrl() + "\">" + message.getUrl() + "</a><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
                         if (message.getData() != null) {
-                            out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case LOCATION_MESSAGE:
@@ -319,7 +319,7 @@ public class ReportGenerator {
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case SHARE_LOCATION_MESSAGE:
@@ -327,7 +327,7 @@ public class ReportGenerator {
                         out.println("Latitude: " + message.getLatitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         out.println("Longitude: " + message.getLongitude() + "<br/>"); //$NON-NLS-1$ //$NON-NLS-2$
                         if (message.getData() != null) {
-                            out.print(StringEscapeUtils.escapeHtml(message.getData()) + "<br/>"); //$NON-NLS-1$
+                            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8") + "<br/>"); //$NON-NLS-1$
                         }
                         break;
                     case CONTACT_MESSAGE:
