@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import org.apache.commons.lang.StringEscapeUtils;
+import org.springframework.web.util.HtmlUtils;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import iped3.io.IItemBase;
@@ -44,7 +44,7 @@ public class ReportGenerator {
 
     private String creatSpanTag(String text) {
 
-        return "<span class=\"tooltiptext\">" + StringEscapeUtils.escapeHtml(text) + "</span>";
+        return "<span class=\"tooltiptext\">" + HtmlUtils.htmlEscape(text, "UTF-8") + "</span>";
     }
 
     ReportGenerator(IItemSearcher s) {
@@ -356,7 +356,7 @@ public class ReportGenerator {
                     + contact + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
-            out.print(StringEscapeUtils.escapeHtml(message.getType()) + "<br>");
+            out.print(HtmlUtils.htmlEscape(message.getType(), "UTF-8") + "<br>");
         }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().equals("geo")) {
@@ -376,7 +376,7 @@ public class ReportGenerator {
 
         }
         if (message.getData() != null) {
-            out.print(StringEscapeUtils.escapeHtml(message.getData())); // $NON-NLS-1$
+            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8")); // $NON-NLS-1$
         }
 
         out.println("<br/>");
