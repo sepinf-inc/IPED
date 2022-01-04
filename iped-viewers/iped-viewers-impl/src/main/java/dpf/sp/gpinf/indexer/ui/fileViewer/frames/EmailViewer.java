@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -135,7 +136,7 @@ public class EmailViewer extends HtmlViewer {
 
         public void open(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
-            if (IOUtil.isToOpenExternally(info.name, IOUtil.getExtension(info.tmpFile))) {
+            if (IOUtil.isToOpenExternally(info.name, Util.getTrueExtension(info.tmpFile))) {
                 this.openFile(info.tmpFile);
             }
         }
