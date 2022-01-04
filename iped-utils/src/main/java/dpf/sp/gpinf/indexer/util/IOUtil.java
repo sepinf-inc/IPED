@@ -68,11 +68,11 @@ public class IOUtil {
         externalOpenConfig = config;
     }
 
-    public static boolean isToOpenExternally(String fileName, String fileExt) {
+    public static boolean isToOpenExternally(String fileName, String trueExt) {
         return IOUtil.externalOpenConfig == ExternalOpenEnum.ALWAYS
-                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_ALWAYS && IOUtil.confirmOpenDialog(fileName))
+                || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_ALWAYS && IOUtil.confirmOpenDialog(fileName, trueExt))
                 || (IOUtil.externalOpenConfig == ExternalOpenEnum.ASK_IF_EXE
-                        && (!IOUtil.isDangerousExtension(fileExt) || IOUtil.confirmOpenDialog(fileName)));
+                        && (!IOUtil.isDangerousExtension(trueExt) || IOUtil.confirmOpenDialog(fileName, trueExt)));
     }
 
     public static final boolean isDangerousExtension(String ext) {
@@ -88,9 +88,11 @@ public class IOUtil {
         }
     }
 
-    public static final boolean confirmOpenDialog(String fileName) {
+    public static final boolean confirmOpenDialog(String fileName, String trueExt) {
+        String fileType = !trueExt.isEmpty() ? "(." + trueExt + ")"
+                : "(" + Messages.getString("IOUtil.ConfirmOpening.Unknown") + ")";
         int option = JOptionPane.showConfirmDialog(null,
-                Messages.getString("IOUtil.ConfirmOpening") + " \"" + fileName + "\" ?", "",
+                Messages.getString("IOUtil.ConfirmOpening") + " \"" + fileName + "\" " + fileType + " ?", "",
                 JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
         if (option == JOptionPane.YES_OPTION)
             return true;
