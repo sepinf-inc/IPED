@@ -68,7 +68,7 @@ public class SetTypeTask extends AbstractTask {
             }
         }
 
-        if (ext.isEmpty() || ext.equals(".txt")) { //$NON-NLS-1$
+        if (!ext1.isEmpty() && (ext.isEmpty() || ext.equals(".txt"))) { //$NON-NLS-1$
             ext = ext1;
         }
 
