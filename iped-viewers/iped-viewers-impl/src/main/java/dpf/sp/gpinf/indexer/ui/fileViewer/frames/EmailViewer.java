@@ -407,8 +407,9 @@ public class EmailViewer extends HtmlViewer {
                     bodyFile.delete();
                 }
 
-                inlined.stream().forEach(a -> attachments.remove(a));
-                for (AttachInfo attach : attachments.values()) {
+                Map<String, AttachInfo> notInlined = new LinkedHashMap<>(attachments);
+                inlined.stream().forEach(a -> notInlined.remove(a));
+                for (AttachInfo attach : notInlined.values()) {
                     if (attach.mime.startsWith("image")) { //$NON-NLS-1$
                         writer.write("<hr>"); //$NON-NLS-1$
                         if (attach.name != null) {
