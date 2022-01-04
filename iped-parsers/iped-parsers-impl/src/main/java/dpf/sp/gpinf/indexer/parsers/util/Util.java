@@ -389,7 +389,7 @@ public class Util {
                         .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
             }
 
-            if (trueExt.isEmpty() || trueExt.equals(".txt")) { //$NON-NLS-1$
+            if (!origExt.isEmpty() && (trueExt.isEmpty() || trueExt.equals(".txt"))) { //$NON-NLS-1$
                 trueExt = origExt;
             }
             if (trueExt.startsWith(".")) {
