@@ -1,5 +1,6 @@
 package dpf.sp.gpinf.indexer.parsers.util;
 
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
@@ -12,9 +13,14 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.tika.Tika;
+import org.apache.tika.config.TikaConfig;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
+import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.mime.MediaType;
+import org.apache.tika.mime.MimeTypeException;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.TextContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
@@ -24,6 +30,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import iped3.IItem;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
@@ -35,6 +42,7 @@ public class Util {
     public static final String KNOWN_CONTENT_ENCODING = "KNOWN-CONTENT-ENCODING"; //$NON-NLS-1$
 
     private static IndexerDefaultParser autoParser;
+    private static TikaConfig tikaConfig;
 
     private static IndexerDefaultParser getAutoParser() {
         if (autoParser == null) {
@@ -345,6 +353,53 @@ public class Util {
             return getParentPath(path.substring(0, path.length() - 1));
         else
             return path.substring(0, i);
+    }
+
+    public static String getTrueExtension(File file) {
+        String trueExt = "";
+        String origExt = "";
+        try {
+            int idx = file.getName().lastIndexOf('.');
+            if (idx != -1) {
+                origExt = file.getName().substring(idx);
+            }
+            Metadata meta = new Metadata();
+            MediaType mediaType = MediaType.OCTET_STREAM;
+            try (TikaInputStream in = TikaInputStream.get(file.toPath(), meta)) {
+                if (tikaConfig == null) {
+                    tikaConfig = new TikaConfig();
+                }
+                mediaType = tikaConfig.getDetector().detect(in, meta);
+            }
+            if (!mediaType.equals(MediaType.OCTET_STREAM)) {
+                do {
+                    boolean first = true;
+                    for (String ext : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
+                        if (first) {
+                            trueExt = ext;
+                            first = false;
+                        }
+                        if (ext.equals(origExt)) {
+                            trueExt = origExt;
+                            break;
+                        }
+                    }
+
+                } while (trueExt.isEmpty() && !MediaType.OCTET_STREAM
+                        .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
+            }
+
+            if (trueExt.isEmpty() || trueExt.equals(".txt")) { //$NON-NLS-1$
+                trueExt = origExt;
+            }
+            if (trueExt.startsWith(".")) {
+                trueExt = trueExt.substring(1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return trueExt.toLowerCase();
     }
 
 }
