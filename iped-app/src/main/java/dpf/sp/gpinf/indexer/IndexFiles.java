@@ -38,6 +38,7 @@ import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
+import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
@@ -180,6 +181,9 @@ public class IndexFiles {
      * Instancia listener de progresso, executa o processamento e aguarda.
      */
     public boolean execute() {
+
+        // Set the UiScale (must be before any UI-related code).
+        UiScale.loadUserSetting();
 
         WorkerProvider provider = WorkerProvider.getInstance();
         provider.setExecutorThread(Thread.currentThread());
