@@ -24,6 +24,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
+import org.springframework.web.util.HtmlUtils;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -280,16 +281,16 @@ public class VCardParser extends AbstractParser {
             if (props == null || props.isEmpty())
                 return;
             newRow();
-            println(propName);
+            println(propName, true);
             newCell();
             for (TextProperty prop : props) {
                 if (first) {
                     first = false;
                 } else {
-                    println(";<br/>"); //$NON-NLS-1$
+                    println(";<br/>", false); //$NON-NLS-1$
                 }
                 if (prop.getValue() != null)
-                    print(prop.getValue());
+                    print(prop.getValue(), true);
             }
         }
 
@@ -298,33 +299,33 @@ public class VCardParser extends AbstractParser {
             if (names == null || names.isEmpty())
                 return;
             newRow();
-            println(propName);
+            println(propName, true);
             newCell();
 
             for (StructuredName name : names) {
                 if (first) {
                     first = false;
                 } else {
-                    println(";<br/>"); //$NON-NLS-1$
+                    println(";<br/>", false); //$NON-NLS-1$
                 }
                 boolean ff = true;
                 for (String pre : name.getPrefixes()) {
                     if (ff) {
                         ff = false;
                     } else {
-                        print(" "); //$NON-NLS-1$
+                        print(" ", false); //$NON-NLS-1$
                     }
-                    print(pre);
+                    print(pre, true);
                 }
                 if (!ff) {
-                    print(" "); //$NON-NLS-1$
+                    print(" ", false); //$NON-NLS-1$
                 }
-                print(name.getGiven());
-                print(" "); //$NON-NLS-1$
-                print(name.getFamily());
+                print(name.getGiven(), true);
+                print(" ", false); //$NON-NLS-1$
+                print(name.getFamily(), true);
                 for (String suf : name.getSuffixes()) {
-                    print(" "); //$NON-NLS-1$
-                    print(suf);
+                    print(" ", false); //$NON-NLS-1$
+                    print(suf, true);
                 }
 
             }
@@ -335,16 +336,16 @@ public class VCardParser extends AbstractParser {
             if (props == null || props.isEmpty())
                 return;
             newRow();
-            println(propName);
+            println(propName, true);
             newCell();
             for (Telephone prop : props) {
                 if (first) {
                     first = false;
                 } else {
-                    println(";<br/>"); //$NON-NLS-1$
+                    println(";<br/>", false); //$NON-NLS-1$
                 }
                 if (prop.getText() != null)
-                    print(prop.getText());
+                    print(prop.getText(), true);
             }
         }
 
@@ -353,15 +354,15 @@ public class VCardParser extends AbstractParser {
             if (props == null || props.isEmpty())
                 return;
             newRow();
-            println(propName);
+            println(propName, true);
             newCell();
             for (TextListProperty prop : props) {
                 if (first) {
                     first = false;
                 } else {
-                    println(";<br/>\n"); //$NON-NLS-1$
+                    println(";<br/>\n", false); //$NON-NLS-1$
                 }
-                print(expandTextListProp(prop));
+                print(expandTextListProp(prop), true);
             }
         }
 
@@ -401,16 +402,16 @@ public class VCardParser extends AbstractParser {
             if (photo == null)
                 return;
             newRow();
-            println(Messages.getString("VCardParser.Photo")); //$NON-NLS-1$
+            println(Messages.getString("VCardParser.Photo"), false); //$NON-NLS-1$
             newCell();
             byte[] data = photo.getData();
             if (data != null) {
                 println("<img src=\"data:image/jpg;base64," + Util.encodeBase64(data) //$NON-NLS-1$
-                        + "\" width=\"112\"/>"); //$NON-NLS-1$
+                        + "\" width=\"112\"/>", false); //$NON-NLS-1$
             } else {
                 String url = photo.getUrl();
                 if (url != null) {
-                    println("<img src=\"" + url + "\" />"); //$NON-NLS-1$ //$NON-NLS-2$
+                    println("<img src=\"" + url + "\" />", false); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }
@@ -424,28 +425,34 @@ public class VCardParser extends AbstractParser {
 
         private void printRow(String cell1, String cell2) {
             newRow();
-            println(cell1);
+            println(cell1, true);
             newCell();
-            println(cell2);
+            println(cell2, true);
             closeRow();
         }
 
-        private void print(String data) {
+        private void print(String data, boolean escapeHtml) {
             if (data == null) {
                 return;
             }
             if (!inCell) {
                 newCell();
+            }
+            if (escapeHtml) {
+                data = HtmlUtils.htmlEscape(data, "UTF-8");
             }
             out.print(data);
         }
 
-        private void println(String data) {
+        private void println(String data, boolean escapeHtml) {
             if (data == null) {
                 return;
             }
             if (!inCell) {
                 newCell();
+            }
+            if (escapeHtml) {
+                data = HtmlUtils.htmlEscape(data, "UTF-8");
             }
             out.println(data);
         }
