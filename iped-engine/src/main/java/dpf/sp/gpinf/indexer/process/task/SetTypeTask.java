@@ -46,7 +46,10 @@ public class SetTypeTask extends AbstractTask {
 
     private String getExtBySig(IItem evidence) throws TikaException, IOException {
 
-        String origExt = "." + evidence.getExt(); //$NON-NLS-1$
+        String origExt = evidence.getExt();
+        if (!origExt.isEmpty()) {
+            origExt = "." + origExt;
+        }
         MediaType mediaType = evidence.getMediaType();
         String ext = Util.getTrueExtension(origExt, mediaType);
         return ext;
