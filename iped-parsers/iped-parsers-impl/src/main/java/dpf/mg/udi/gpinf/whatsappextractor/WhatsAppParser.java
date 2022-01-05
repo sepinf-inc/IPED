@@ -446,15 +446,17 @@ public class WhatsAppParser extends SQLite3DBParser {
             query += "\"com.whatsapp_preferences.xml\""; //$NON-NLS-1$
         else
             query += "\"group.net.whatsapp.WhatsApp.shared.plist\""; //$NON-NLS-1$
-        List<IItemBase> result = searcher.search(query);
-        IItemBase item = getBestItem(result, dbPath);
-        if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
-                WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
-                if (account != null)
-                    return account;
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (searcher != null) {
+            List<IItemBase> result = searcher.search(query);
+            IItemBase item = getBestItem(result, dbPath);
+            if (item != null) {
+                try (InputStream is = item.getBufferedStream()) {
+                    WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
+                    if (account != null)
+                        return account;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         WAAccount account = new WAAccount("unknownAccount");
