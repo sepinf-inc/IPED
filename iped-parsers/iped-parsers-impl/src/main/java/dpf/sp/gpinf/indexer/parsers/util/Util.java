@@ -16,7 +16,6 @@ import java.util.Optional;
 import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.Tika;
 import org.apache.tika.config.TikaConfig;
-import org.apache.tika.detect.AutoDetectReader;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
@@ -356,6 +355,17 @@ public class Util {
             return path.substring(0, i);
     }
 
+    private static TikaConfig getTikaConfig() throws TikaException, IOException {
+        if (tikaConfig == null) {
+            synchronized (Util.class) {
+                if (tikaConfig == null) {
+                    tikaConfig = new TikaConfig();
+                }
+            }
+        }
+        return tikaConfig;
+    }
+
     public static String getTrueExtension(File file) {
         String trueExt = "";
         String origExt = "";
@@ -367,38 +377,43 @@ public class Util {
             Metadata meta = new Metadata();
             MediaType mediaType = MediaType.OCTET_STREAM;
             try (TikaInputStream in = TikaInputStream.get(file.toPath(), meta)) {
-                if (tikaConfig == null) {
-                    tikaConfig = new TikaConfig();
-                }
-                mediaType = tikaConfig.getDetector().detect(in, meta);
-            }
-            if (!mediaType.equals(MediaType.OCTET_STREAM)) {
-                do {
-                    boolean first = true;
-                    for (String ext : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
-                        if (first) {
-                            trueExt = ext;
-                            first = false;
-                        }
-                        if (ext.equals(origExt)) {
-                            trueExt = origExt;
-                            break;
-                        }
-                    }
-
-                } while (trueExt.isEmpty() && !MediaType.OCTET_STREAM
-                        .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
+                mediaType = getTikaConfig().getDetector().detect(in, meta);
             }
 
-            if (!origExt.isEmpty() && (trueExt.isEmpty() || trueExt.equals(".txt"))) { //$NON-NLS-1$
-                trueExt = origExt;
-            }
+            trueExt = getTrueExtension(origExt, mediaType);
+
             if (trueExt.startsWith(".")) {
                 trueExt = trueExt.substring(1);
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+        return trueExt;
+    }
+
+    public static String getTrueExtension(String origExt, MediaType mediaType) throws TikaException, IOException {
+        String trueExt = "";
+        if (!mediaType.equals(MediaType.OCTET_STREAM)) {
+            do {
+                boolean first = true;
+                for (String ext : getTikaConfig().getMimeRepository().forName(mediaType.toString()).getExtensions()) {
+                    if (first) {
+                        trueExt = ext;
+                        first = false;
+                    }
+                    if (ext.equals(origExt)) {
+                        trueExt = origExt;
+                        break;
+                    }
+                }
+
+            } while (trueExt.isEmpty() && !MediaType.OCTET_STREAM
+                    .equals((mediaType = getTikaConfig().getMediaTypeRegistry().getSupertype(mediaType))));
+        }
+
+        if (!origExt.isEmpty() && (trueExt.isEmpty() || trueExt.equals(".txt"))) { //$NON-NLS-1$
+            trueExt = origExt;
         }
         return trueExt.toLowerCase();
     }

@@ -4,13 +4,13 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.IItem;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Properties;
 
-import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypeException;
 
-import dpf.sp.gpinf.indexer.process.Worker;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType
@@ -19,10 +19,7 @@ import dpf.sp.gpinf.indexer.process.Worker;
  */
 public class SetTypeTask extends AbstractTask {
 
-    TikaConfig tikaConfig;
-
     public SetTypeTask() {
-        tikaConfig = TikaConfig.getDefaultConfig();
     }
 
     @Override
@@ -42,37 +39,12 @@ public class SetTypeTask extends AbstractTask {
 
     }
 
-    public String getExtBySig(IItem evidence) {
+    private String getExtBySig(IItem evidence) throws TikaException, IOException {
 
-        String ext = ""; //$NON-NLS-1$
-        String ext1 = "." + evidence.getExt(); //$NON-NLS-1$
+        String origExt = "." + evidence.getExt(); //$NON-NLS-1$
         MediaType mediaType = evidence.getMediaType();
-        if (!mediaType.equals(MediaType.OCTET_STREAM)) {
-            try {
-                do {
-                    boolean first = true;
-                    for (String ext2 : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
-                        if (first) {
-                            ext = ext2;
-                            first = false;
-                        }
-                        if (ext2.equals(ext1)) {
-                            ext = ext1;
-                            break;
-                        }
-                    }
-
-                } while (ext.isEmpty() && !MediaType.OCTET_STREAM
-                        .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
-            } catch (MimeTypeException e) {
-            }
-        }
-
-        if (!ext1.isEmpty() && (ext.isEmpty() || ext.equals(".txt"))) { //$NON-NLS-1$
-            ext = ext1;
-        }
-
-        return ext.toLowerCase();
+        String ext = Util.getTrueExtension(origExt, mediaType);
+        return ext;
 
     }
 
