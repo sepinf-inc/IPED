@@ -41,6 +41,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.util.ToXMLContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -592,7 +593,7 @@ public class MsgViewer extends HtmlViewer {
             Pair<File, String> pair = attachs.get(attNum);
             File file = pair.getLeft();
             String attachName = pair.getRight();
-            if (IOUtil.isToOpenExternally(attachName, IOUtil.getExtension(file))) {
+            if (IOUtil.isToOpenExternally(attachName, Util.getTrueExtension(file))) {
                 this.openFile(file);
             }
         }
