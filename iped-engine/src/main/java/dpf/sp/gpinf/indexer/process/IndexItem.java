@@ -758,14 +758,9 @@ public class IndexItem extends BasicProps {
                         throw new ParseException("Not a date", 0);
                 }
             } catch (NumberFormatException | ParseException e) {
-                if (newtypesMap.containsKey(key)) {
-                    // prev guessed type was wrong, fallback to string
-                    type = setAndGetType(key, String.class);
-                } else {
-                    // value doesn't match built-in type, store value in other field as string
-                    key += ":string";
-                    type = String.class;
-                }
+                // value doesn't match built-in/guessed type, store value in other field as string
+                key += ":string";
+                type = null;
             }
         }
 
