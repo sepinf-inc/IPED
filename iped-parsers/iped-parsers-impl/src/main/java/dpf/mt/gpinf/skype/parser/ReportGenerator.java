@@ -131,7 +131,7 @@ public class ReportGenerator {
                     out.println("<input class=\"check\" type=\"checkbox\" onclick=app.check(\"" + query
                             + "\",this.checked) name=\"" + item.getHash() + "\" />");
                     out.println("<a onclick=app.open(\"" + query + "\") "); //$NON-NLS-1$
-                    out.println(" href=\"" + exportPath + "\">");
+                    out.println(" href=\"" + FormatUtil.format(exportPath) + "\">");
                     if (thumb != null) {
                         out.print("<img height=\"100\" width=\"100\" src=\"data:image/jpg;charset=utf-8;base64," //$NON-NLS-1$
                                 + Base64.getEncoder().encodeToString(thumb) + "\"/>"); //$NON-NLS-1$
@@ -386,7 +386,7 @@ public class ReportGenerator {
             if (result != null && !result.isEmpty()) {
                 String exportPath = Util.getExportPath(result.get(0));
                 if (!exportPath.isEmpty())
-                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                    out.println("href=\"" + FormatUtil.format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
             }
             out.println(">" + SimpleHTMLEncoder.htmlEncode(query)); //$NON-NLS-1$
             byte[] thumb = Util.getPreview(item);

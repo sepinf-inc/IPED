@@ -134,7 +134,7 @@ public class ReportGenerator {
                 String ext = message.getMediaTrueExt();
                 String exportPath = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(), ext); // $NON-NLS-1$
                 if (!exportPath.isEmpty())
-                    out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                    out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                 out.println(">"); //$NON-NLS-1$
             }
             byte[] thumb = message.getThumbData();
