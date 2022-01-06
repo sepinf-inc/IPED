@@ -124,27 +124,17 @@ public class RowComparator implements Comparator<Integer> {
                     || !IndexItem.getMetadataTypes().get(indexedField).equals(String.class)) {
                 ndv = atomicReader.getNumericDocValues(indexedField);
                 if (ndv == null) {
-                    ndv = atomicReader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
-                }
-                if (ndv == null) {
                     sndv = atomicReader.getSortedNumericDocValues(indexedField);
-                    if (sndv == null)
-                        sndv = atomicReader
-                                .getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 }
             }
             if (ndv == null && sndv == null) {
                 ssdv = atomicReader.getSortedSetDocValues(indexedField);
-                if (ssdv == null)
-                    ssdv = atomicReader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
                 if (isCategory) {
                     localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
                 }
             }
             if (ndv == null && sndv == null && ssdv == null) {
                 sdv = atomicReader.getSortedDocValues(indexedField);
-                if (sdv == null)
-                    sdv = atomicReader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + indexedField); // $NON-NLS-1$
             }
 
             loadOrds(sdv, ssdv, ndv, sndv);

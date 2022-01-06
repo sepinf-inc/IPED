@@ -488,11 +488,11 @@ public class IndexItem extends BasicProps {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
                     typesMap.putIfAbsent(entry.getKey(), val.getClass());
-                    addExtraAttributeToDoc(doc, entry.getKey(), val, false, true, timeEventSet);
+                    addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
                 typesMap.putIfAbsent(entry.getKey(), entry.getValue().getClass());
-                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false, timeEventSet);
+                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, timeEventSet);
             }
         }
 
@@ -606,18 +606,9 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isPossibleType,
-            boolean isMultiValued, Set<TimeStampEvent> timeEventSet) {
-        boolean isString = false;
+    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMultiValued,
+            Set<TimeStampEvent> timeEventSet) {
 
-        /*
-         * utilizar docvalue de outro tipo com mesmo nome provoca erro, entao usamos um
-         * prefixo no nome para diferenciar
-         */
-        String keyPrefix = ""; //$NON-NLS-1$
-        if (isPossibleType) {
-            keyPrefix = POSSIBLE_NUM_DOCVALUES_PREFIX;
-        }
         if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
@@ -657,10 +648,9 @@ public class IndexItem extends BasicProps {
             doc.add(new DoublePoint(key, (Double) oValue));
             doc.add(new StoredField(key, (Double) oValue));
             if (!isMultiValued)
-                doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
+                doc.add(new DoubleDocValuesField(key, (Double) oValue));
             else
-                doc.add(new SortedNumericDocValuesField(keyPrefix + key,
-                        NumericUtils.doubleToSortableLong((Double) oValue)));
+                doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
             byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
@@ -668,25 +658,16 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(key, byteArray));
 
         } else {
-            isString = true;
-        }
-
-        if (isString) {
-            doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
-        }
-
-        if (isPossibleType || isString) {
+            // value is typed as string
             String value = oValue.toString();
+            doc.add(new Field(key, value, storedTokenizedNoNormsField));
             if (value.length() > MAX_DOCVALUE_SIZE) {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
-            if (isPossibleType) {
-                keyPrefix = POSSIBLE_STR_DOCVALUES_PREFIX;
-            }
             if (!isMultiValued)
-                doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedDocValuesField(key, new BytesRef(normalize(value))));
             else
-                doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedSetDocValuesField(key, new BytesRef(normalize(value))));
         }
 
     }
@@ -768,7 +749,7 @@ public class IndexItem extends BasicProps {
             type = setAndGetType(key, String.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, newtypesMap.containsKey(key), isMultiValued, timeEventSet);
+        addExtraAttributeToDoc(doc, key, oValue, isMultiValued, timeEventSet);
     }
 
     private static Class<?> setAndGetType(String key, Class<?> type) {
