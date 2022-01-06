@@ -187,8 +187,8 @@ public class ReportGenerator {
                     .getSourceFileIfExists(message.getMediaFile());
 
             img.setAtribute("title", "Video");
-            img.setAtribute("data-src1", reportSource);
-            img.setAtribute("data-src2", originalSource);
+            img.setAtribute("data-src1", format(reportSource));
+            img.setAtribute("data-src2", format(originalSource));
             img.setAtribute("class", img.getAtribute("class") + " iped-video");
 
             link.getInner().add(img);
@@ -229,10 +229,10 @@ public class ReportGenerator {
                     .getSourceFileIfExists(message.getMediaFile());
 
             if (reportSource != null) {
-                img.setAtribute("data-src1", reportSource);
+                img.setAtribute("data-src1", format(reportSource));
             }
             if (originalSource != null) {
-                img.setAtribute("data-src2", originalSource);
+                img.setAtribute("data-src2", format(originalSource));
             }
             img.setAtribute("class", "audioImg iped-audio");
 
@@ -271,7 +271,7 @@ public class ReportGenerator {
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
-            link.setAtribute("href", ref);
+            link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "imageImg");
 
@@ -304,7 +304,7 @@ public class ReportGenerator {
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
-            link.setAtribute("href", ref);
+            link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "attachImg");
 

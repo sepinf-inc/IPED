@@ -411,7 +411,7 @@ public class VCardParser extends AbstractParser {
             } else {
                 String url = photo.getUrl();
                 if (url != null) {
-                    println("<img src=\"" + url + "\" />", false); //$NON-NLS-1$ //$NON-NLS-2$
+                    println("<img src=\"" + SimpleHTMLEncoder.htmlEncode(url) + "\" />", false); //$NON-NLS-1$ //$NON-NLS-2$
                 }
             }
         }

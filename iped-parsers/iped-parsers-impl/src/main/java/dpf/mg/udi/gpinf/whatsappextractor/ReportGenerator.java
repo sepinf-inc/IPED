@@ -314,7 +314,8 @@ public class ReportGenerator {
                         }
                         break;
                     case URL_MESSAGE:
-                        out.println("<a href=\"" + message.getUrl() + "\">" + format(message.getUrl()) + "</a><br/>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+                        out.println("<a href=\"" + format(message.getUrl()) + "\">" + format(message.getUrl()) //$NON-NLS-1$ //$NON-NLS-2$
+                                + "</a><br/>"); //$NON-NLS-1$
                         if (message.getData() != null) {
                             out.print(format(message.getData()) + "<br/>"); //$NON-NLS-1$
                         }
@@ -358,6 +359,7 @@ public class ReportGenerator {
                     case APP_MESSAGE:
                     case STICKER_MESSAGE:
                         mediaItem = message.getMediaItem();
+                        // query is already html escaped
                         query = message.getMediaQuery();
 
                         if (mediaItem != null) {
@@ -373,7 +375,7 @@ public class ReportGenerator {
                             out.println("<a onclick=\"app.open(" + query + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
 
                             if (exportPath != null && !exportPath.isEmpty()) {
-                                out.println("href=\"" + exportPath + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                                out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                             }
                             out.println(">"); //$NON-NLS-1$
                         }
@@ -392,22 +394,23 @@ public class ReportGenerator {
                                 if (message.getMessageType() == MessageType.AUDIO_MESSAGE) {
                                     out.println(Messages.getString("WhatsAppReport.AudioMessageTitle")); //$NON-NLS-1$
                                     out.println("<div class=\"audioImg iped-audio\" " //$NON-NLS-1$
-                                            + " title=\"Audio\" " + "data-src1=\"" + exportPath + "\" " + "data-src2=\"" //$NON-NLS-4$
-                                            + source + "\" ></div>");
+                                            + " title=\"Audio\" " + "data-src1=\"" + format(exportPath) + "\" "
+                                            + "data-src2=\"" //$NON-NLS-1$
+                                            + format(source) + "\" ></div>");
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 } else {
                                     out.println(Messages.getString("WhatsAppReport.VideoMessageTitle")); //$NON-NLS-1$
                                     if (thumb != null) {
                                         out.print("<img class=\"thumb iped-video\" src=\""); //$NON-NLS-1$
                                         out.print("data:image/jpg;base64," + Util.encodeBase64(thumb) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
-                                        out.print(" data-src1=\"" + exportPath + "\"");
-                                        out.print(" data-src2=\"" + source + "\"");
+                                        out.print(" data-src1=\"" + format(exportPath) + "\"");
+                                        out.print(" data-src2=\"" + format(source) + "\"");
                                         out.println(" title=\"" + getTitle(message) + "\"/>"); //$NON-NLS-1$ //$NON-NLS-2$
 
                                     } else {
                                         out.println("<div class=\"videoImg iped-video\" title=\"Video\""); //$NON-NLS-1$
-                                        out.println(" data-src1=\"" + exportPath + "\"");
-                                        out.println(" data-src2=\"" + source + "\" ></div>");
+                                        out.println(" data-src1=\"" + format(exportPath) + "\"");
+                                        out.println(" data-src2=\"" + format(source) + "\" ></div>");
                                     }
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
