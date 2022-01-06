@@ -11,12 +11,12 @@ import java.util.function.Supplier;
 import org.apache.commons.text.StringSubstitutor;
 import org.apache.commons.text.lookup.StringLookup;
 import org.apache.commons.text.lookup.StringLookupFactory;
-import org.springframework.web.util.HtmlUtils;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.util.ExtraProperties;
 
@@ -105,7 +105,7 @@ public class ReportGenerator {
         if (s == null || s.trim().isEmpty())
             return "-"; //$NON-NLS-1$
         else
-            return HtmlUtils.htmlEscape(s.trim(), "UTF-8");
+            return SimpleHTMLEncoder.htmlEncode(s.trim());
 
     }
 

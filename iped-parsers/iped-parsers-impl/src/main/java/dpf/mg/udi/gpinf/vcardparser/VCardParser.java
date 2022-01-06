@@ -24,13 +24,13 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AbstractParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.XHTMLContentHandler;
-import org.springframework.web.util.HtmlUtils;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.whatsappextractor.Util;
 import dpf.sp.gpinf.indexer.parsers.util.IndentityHtmlParser;
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import ezvcard.Ezvcard;
 import ezvcard.VCard;
 import ezvcard.io.chain.ChainingHtmlWriter;
@@ -439,7 +439,7 @@ public class VCardParser extends AbstractParser {
                 newCell();
             }
             if (escapeHtml) {
-                data = HtmlUtils.htmlEscape(data, "UTF-8");
+                data = SimpleHTMLEncoder.htmlEncode(data);
             }
             out.print(data);
         }
@@ -452,7 +452,7 @@ public class VCardParser extends AbstractParser {
                 newCell();
             }
             if (escapeHtml) {
-                data = HtmlUtils.htmlEscape(data, "UTF-8");
+                data = SimpleHTMLEncoder.htmlEncode(data);
             }
             out.println(data);
         }
