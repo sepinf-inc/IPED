@@ -374,8 +374,9 @@ public class ReportGenerator {
                             }
                             out.println("<a onclick=\"app.open(" + query + ")\" "); //$NON-NLS-1$ //$NON-NLS-2$
 
-                            if (exportPath != null && !exportPath.isEmpty()) {
-                                out.println("href=\"" + format(exportPath) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+                            if (mediaItem != null) {
+                                String href = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(mediaItem);
+                                out.println("href=\"" + format(href) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
                             }
                             out.println(">"); //$NON-NLS-1$
                         }
