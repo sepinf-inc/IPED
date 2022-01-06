@@ -446,15 +446,17 @@ public class WhatsAppParser extends SQLite3DBParser {
             query += "\"com.whatsapp_preferences.xml\""; //$NON-NLS-1$
         else
             query += "\"group.net.whatsapp.WhatsApp.shared.plist\""; //$NON-NLS-1$
-        List<IItemBase> result = searcher.search(query);
-        IItemBase item = getBestItem(result, dbPath);
-        if (item != null) {
-            try (InputStream is = item.getBufferedStream()) {
-                WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
-                if (account != null)
-                    return account;
-            } catch (IOException e) {
-                e.printStackTrace();
+        if (searcher != null) {
+            List<IItemBase> result = searcher.search(query);
+            IItemBase item = getBestItem(result, dbPath);
+            if (item != null) {
+                try (InputStream is = item.getBufferedStream()) {
+                    WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
+                    if (account != null)
+                        return account;
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
             }
         }
         WAAccount account = new WAAccount("unknownAccount");
@@ -1066,14 +1068,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 fileName = fileName.substring(fileName.lastIndexOf('/') + 1); //$NON-NLS-1$
                             }
                             List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
-                            for (Message m : messageList) {
-                                long mediaSize = m.getMediaSize();
-                                long fileSize = item.getLength();
-                                if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
-                                    if (itemStreamEndsWithZeros(item, mediaSize)) {
-                                        m.setMediaItem(item);
-                                        m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
-                                                                                                                    // //$NON-NLS-3$
+                            if (messageList != null) {
+                                for (Message m : messageList) {
+                                    long mediaSize = m.getMediaSize();
+                                    long fileSize = item.getLength();
+                                    if (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15) {
+                                        if (itemStreamEndsWithZeros(item, mediaSize)) {
+                                            m.setMediaItem(item);
+                                            m.setMediaQuery(escapeQuery(BasicProps.HASH + ":" + item.getHash(), true)); //$NON-NLS-1$ //$NON-NLS-2$
+                                                                                                                        // //$NON-NLS-3$
+                                        }
                                     }
                                 }
                             }

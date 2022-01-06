@@ -4,7 +4,10 @@ import java.awt.Desktop;
 import java.awt.GridLayout;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Set;
 
@@ -14,11 +17,13 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.network.util.ProxySever;
 import iped3.io.IStreamSource;
+import iped3.IItem;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -54,7 +59,8 @@ public class HtmlViewer extends Viewer {
     boolean enableProxy = true;
     FileHandler fileHandler = new FileHandler();
 
-    protected volatile File file;
+    protected volatile File tmpFile;
+    private volatile String fileName;
     protected Set<String> highlightTerms;
     private volatile boolean scrollToPositionDone = false;
 
@@ -105,8 +111,6 @@ public class HtmlViewer extends Viewer {
         // System.out.println("Viewer " + getName() + " ok");
     }
 
-    File tmpFile;
-
     @Override
     public void loadFile(final IStreamSource content, final Set<String> terms) {
 
@@ -122,26 +126,21 @@ public class HtmlViewer extends Viewer {
 
                 if (content != null) {
                     try {
-                        file = content.getFile();
+                        tmpFile = getTempFile(content);
+                        if (content instanceof IItem) {
+                            fileName = ((IItem) content).getName();
+                        } else {
+                            fileName = tmpFile.getName();
+                        }
                         highlightTerms = terms;
-                        if (file.length() <= getMaxHtmlSize()) {
-                            if (!file.getName().endsWith(".html") && !file.getName().endsWith(".htm")) { //$NON-NLS-1$ //$NON-NLS-2$
-                                try {
-                                    tmpFile = File.createTempFile("iped", ".html"); //$NON-NLS-1$ //$NON-NLS-2$
-                                    tmpFile.deleteOnExit();
-                                    IOUtil.copiaArquivo(file, tmpFile);
-                                    file = tmpFile;
-                                } catch (IOException e) {
-                                    e.printStackTrace();
-                                }
 
-                            }
+                        if (tmpFile.length() <= getMaxHtmlSize()) {
                             webEngine.setJavaScriptEnabled(enableJavascript);
                             if (enableProxy) {
                                 ProxySever.get().enable();
                             }
                             webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
-                            webEngine.load(file.toURI().toURL().toString());
+                            webEngine.load(tmpFile.toURI().toURL().toString());
 
                         } else {
                             webEngine.setJavaScriptEnabled(true);
@@ -156,13 +155,27 @@ public class HtmlViewer extends Viewer {
         });
     }
 
+    private File getTempFile(IStreamSource content) {
+        try (InputStream in = content.getStream()) {
+            File tmpFile = File.createTempFile("iped", ".html");
+            Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            tmpFile.deleteOnExit();
+            return tmpFile;
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     public class FileHandler {
 
         public void openExternal() {
-            openFile(file);
+            if (IOUtil.isToOpenExternally(fileName, Util.getTrueExtension(tmpFile))) {
+                openFile(tmpFile);
+            }
         }
 
-        public void openFile(final File file) {
+        protected void openFile(final File file) {
             new Thread() {
                 public void run() {
                     try {
@@ -174,7 +187,8 @@ public class HtmlViewer extends Viewer {
                                 Runtime.getRuntime().exec(new String[] { "rundll32", "SHELL32.DLL,ShellExec_RunDLL", //$NON-NLS-1$ //$NON-NLS-2$
                                         "\"" + file.getCanonicalFile() + "\"" }); //$NON-NLS-1$ //$NON-NLS-2$
                             } else {
-                                Runtime.getRuntime().exec(new String[] { "xdg-open", file.toURI().toURL().toString() }); //$NON-NLS-1$
+                                Runtime.getRuntime()
+                                        .exec(new String[] { "xdg-open", file.toURI().toURL().toString() }); //$NON-NLS-1$
                             }
 
                         } catch (Exception e2) {
@@ -204,7 +218,7 @@ public class HtmlViewer extends Viewer {
 
                         if (newState == Worker.State.SUCCEEDED || newState == Worker.State.FAILED) {
 
-                            if (file != null && !webEngine.getLocation().endsWith(file.getName()))
+                            if (tmpFile != null && !webEngine.getLocation().endsWith(tmpFile.getName()))
                                 return;
 
                             doc = webEngine.getDocument();
@@ -218,7 +232,7 @@ public class HtmlViewer extends Viewer {
                                     highlightNode(doc, false);
                                 }
 
-                            } else if (file != null) {
+                            } else if (tmpFile != null) {
                                 LOGGER.info("Null DOM to highlight!"); //$NON-NLS-1$
                                 queryTerms = highlightTerms.toArray(new String[0]);
                                 currTerm = queryTerms.length > 0 ? 0 : -1;

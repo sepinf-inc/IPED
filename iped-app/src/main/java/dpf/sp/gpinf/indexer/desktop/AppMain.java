@@ -22,6 +22,7 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
@@ -43,6 +44,9 @@ public class AppMain {
     File libDir;
 
     public static void main(String[] args) {
+        // Set the UiScale (must be before any UI-related code).
+        UiScale.loadUserSetting();
+
         checkJavaVersion();
         AppMain appMain = new AppMain();
         try {
