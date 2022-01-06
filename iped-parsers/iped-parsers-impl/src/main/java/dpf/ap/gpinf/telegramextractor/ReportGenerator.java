@@ -43,7 +43,6 @@ public class ReportGenerator {
 
 
     private String creatSpanTag(String text) {
-
         return "<span class=\"tooltiptext\">" + HtmlUtils.htmlEscape(text, "UTF-8") + "</span>";
     }
 
@@ -59,7 +58,7 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return s;
+        return HtmlUtils.htmlEscape(s.trim(), "UTF-8");
     }
 
     public byte[] genarateContactHtml(Contact contact) {
@@ -353,10 +352,10 @@ public class ReportGenerator {
         Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                    + contact + "</span><br/>"); //$NON-NLS-1$
+                    + format(contact.toString()) + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
-            out.print(HtmlUtils.htmlEscape(message.getType(), "UTF-8") + "<br>");
+            out.print(format(message.getType()) + "<br>");
         }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().equals("geo")) {
@@ -376,7 +375,7 @@ public class ReportGenerator {
 
         }
         if (message.getData() != null) {
-            out.print(HtmlUtils.htmlEscape(message.getData(), "UTF-8")); // $NON-NLS-1$
+            out.print(format(message.getData()));
         }
 
         out.println("<br/>");
