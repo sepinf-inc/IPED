@@ -25,9 +25,8 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
-import org.springframework.web.util.HtmlUtils;
-
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
@@ -43,7 +42,7 @@ public class ReportGenerator {
 
 
     private String creatSpanTag(String text) {
-        return "<span class=\"tooltiptext\">" + HtmlUtils.htmlEscape(text, "UTF-8") + "</span>";
+        return "<span class=\"tooltiptext\">" + SimpleHTMLEncoder.htmlEncode(text) + "</span>";
     }
 
     ReportGenerator(IItemSearcher s) {
@@ -58,7 +57,7 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return HtmlUtils.htmlEscape(s.trim(), "UTF-8");
+        return SimpleHTMLEncoder.htmlEncode(s.trim());
     }
 
     public byte[] genarateContactHtml(Contact contact) {
