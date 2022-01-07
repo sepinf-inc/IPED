@@ -580,7 +580,10 @@ public class MsgViewer extends HtmlViewer {
             Pair<File, String> pair = attachs.get(attNum);
             File file = pair.getLeft();
             String attachName = pair.getRight();
-            if (IOUtil.isToOpenExternally(attachName, Util.getTrueExtension(file))) {
+            String ext = Util.getTrueExtension(file);
+            file = EmailViewer.getFileRenamedToExt(file, ext);
+            attachs.set(attNum, Pair.of(file, attachName));
+            if (IOUtil.isToOpenExternally(attachName, ext)) {
                 this.openFile(file);
             }
         }
