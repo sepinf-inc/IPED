@@ -83,6 +83,8 @@ public class MapTypeMSG {
         msg.put("TL_messageActionChatEditTitle", 5);
 
         msg.put("TL_messageActionPinMessage", 6);
+        
+        msg.put("TL_messageActionChatMigrateTo", 8);
 
         msg.put("TL_messageActionChatJoinedByLink", 7);
 
@@ -126,6 +128,7 @@ public class MapTypeMSG {
 
     public static String decodeMsg(String classname) {
         // toDo decode android types using classname
+        classname = classname.replaceAll("_layer[0-9]+", "");
         Integer a = androidmsg.get(classname);
 
         if (a != null)

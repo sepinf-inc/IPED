@@ -369,7 +369,7 @@ public class Extractor {
         return msgs;
     }
 
-    private void loadDocument(Message message, List<String> names, int size) {
+    private void loadDocument(Message message, List<String> names, long size) {
         for (String name : names) {
             String query = getQuery(name, size);
             IItemBase item = getFileFromQuery(query);
@@ -427,7 +427,7 @@ public class Extractor {
         }
     }
 
-    private String getQuery(String name, int size) {
+    private String getQuery(String name, long size) {
         String query = BasicProps.NAME + ":\"" + searcher.escapeQuery(name) + "\"";
         query += size > 0 ? " && " + BasicProps.LENGTH + ":" + size : "";
         return query;
