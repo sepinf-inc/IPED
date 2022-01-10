@@ -223,6 +223,7 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
+        boolean success = false;
         for (String SQL : EXTRACT_MESSAGES_SQL) {
             try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
                 stmt.setLong(1, chat.getId());
@@ -275,12 +276,16 @@ public class Extractor {
 
                         msgs.add(message);
                     }
+                    success = true;
                     break;
                 }
             } catch (SQLiteException e) {
                 // TODO: handle exception
                 logger.debug("SQLite error: {}", e.toString());
             }
+        }
+        if (!success) {
+            throw new Exception("Cannot parse the message database");
         }
 
         Collections.sort(msgs, MSG_TIME_COMPARATOR);
