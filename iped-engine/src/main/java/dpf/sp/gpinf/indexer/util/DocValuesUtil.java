@@ -10,14 +10,9 @@ import org.apache.lucene.util.BytesRef;
 public class DocValuesUtil {
 
     public static final String getVal(SortedDocValues sdv, int doc) {
-        BytesRef ret = getBytesRef(sdv, doc);
-        return ret != null ? ret.utf8ToString() : null;
-    }
-
-    public static final BytesRef getBytesRef(SortedDocValues sdv, int doc) {
         try {
             if (sdv.advanceExact(doc)) {
-                return sdv.binaryValue();
+                return sdv.lookupOrd(sdv.ordValue()).utf8ToString();
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -501,17 +501,9 @@ public class MetadataPanel extends JPanel
     private void loadDocValues(String field) throws IOException {
         // System.out.println("getDocValues");
         numValues = reader.getNumericDocValues(field);
-        if (numValues == null)
-            numValues = reader.getNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         numValuesSet = reader.getSortedNumericDocValues(field);
-        if (numValuesSet == null)
-            numValuesSet = reader.getSortedNumericDocValues(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         docValues = reader.getSortedDocValues(field);
-        if (docValues == null)
-            docValues = reader.getSortedDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         docValuesSet = reader.getSortedSetDocValues(field);
-        if (docValuesSet == null)
-            docValuesSet = reader.getSortedSetDocValues(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }

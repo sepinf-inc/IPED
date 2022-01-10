@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.index.*;
 import org.apache.lucene.index.MultiDocValues.MultiSortedDocValues;
+import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.Version;
 
@@ -299,4 +300,18 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
   public LeafMetaData getMetaData() {
     return metaData;
   }
+
+    @Override
+    public VectorValues getVectorValues(String field) throws IOException {
+        // TODO implement this method properly when we start to index feature vectors
+        // using Lucene
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
+
+    @Override
+    public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs) throws IOException {
+        // TODO implement this method properly when we start to index feature vectors
+        // using Lucene
+        throw new UnsupportedOperationException("Not implemented yet.");
+    }
 }
