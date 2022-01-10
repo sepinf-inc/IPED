@@ -41,7 +41,7 @@ public class MapTypeMSG {
 
         msg.put(6, Messages.getString("TelegramReport.pinnMessage"));
         msg.put(7, Messages.getString("TelegramReport.UserJoinLink"));
-        msg.put(8, Messages.getString("TelegramReport.ChangeToGroup"));
+        msg.put(8, Messages.getString("TelegramReport.ChannelMigratedFromGroup"));
         msg.put(9, Messages.getString("TelegramReport.ChangeToChannel"));
         msg.put(10, Messages.getString("TelegramReport.HistoryCleared"));
 
@@ -52,10 +52,19 @@ public class MapTypeMSG {
         msg.put(15, Messages.getString("TelegramReport.PaymentSent"));
 
         msg.put(16, Messages.getString("TelegramReport.CustomText"));
+
         msg.put(17, Messages.getString("TelegramReport.BotAcess"));
         msg.put(18, Messages.getString("TelegramReport.BotSent"));
         msg.put(19, Messages.getString("TelegramReport.PeerJoin"));
         msg.put(20, Messages.getString("TelegramReport.PhoneNumberRequest"));
+
+        msg.put(21, Messages.getString("TelegramReport.geoProximityReached"));
+
+        msg.put(22, Messages.getString("TelegramReport.groupPhoneCall"));
+        msg.put(23, Messages.getString("TelegramReport.inviteToGroupPhoneCall"));
+
+        msg.put(24, Messages.getString("TelegramReport.ChangeChatTheme"));
+        msg.put(25, Messages.getString("TelegramReport.joinedByRequest"));
 
         // extra from android
 
@@ -84,11 +93,11 @@ public class MapTypeMSG {
 
         msg.put("TL_messageActionPinMessage", 6);
         
-        msg.put("TL_messageActionChatMigrateTo", 8);
+        msg.put("TL_messageActionChatMigrateTo", 9);
 
         msg.put("TL_messageActionChatJoinedByLink", 7);
 
-        msg.put("TL_messageActionChannelMigrateFrom", 9);
+        msg.put("TL_messageActionChannelMigrateFrom", 8);
 
         msg.put("TL_messageActionHistoryClear", 10);
 
@@ -97,7 +106,10 @@ public class MapTypeMSG {
         msg.put("TL_messageActionGameScore", 13);
 
         msg.put("TL_messageActionPhoneCall", 14);
-        msg.put("TL_messageActionGroupCall", 14);
+
+        msg.put("TL_messageActionInviteToGroupCall", 23);
+        
+        msg.put("TL_messageActionGroupCall", 22);
 
         msg.put("TL_messageActionPaymentSent", 15);
 
@@ -109,10 +121,21 @@ public class MapTypeMSG {
 
         msg.put("TL_messageActionUserJoined", 19);
 
+        msg.put("TL_messageActionChatJoinedByRequest", 25);
+        
+        msg.put("TL_messageActionSetChatTheme", 24);
+
+        msg.put("TL_messageActionGeoProximityReached", 21);
+
+        msg.put("TL_messageActionSetMessagesTTL", 12);
+
+        msg.put("TL_messageActionTTLChange", 12);
+
         // only android
         msg.put("TL_messageActionContactSignUp", 30);
 
         msg.put("TL_messageActionChatDeletePhoto", 31);
+
 
         return msg;
     }
