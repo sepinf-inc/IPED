@@ -97,6 +97,7 @@ public class MapTypeMSG {
         msg.put("TL_messageActionGameScore", 13);
 
         msg.put("TL_messageActionPhoneCall", 14);
+        msg.put("TL_messageActionGroupCall", 14);
 
         msg.put("TL_messageActionPaymentSent", 15);
 
