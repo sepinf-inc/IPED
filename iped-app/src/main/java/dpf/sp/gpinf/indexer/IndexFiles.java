@@ -21,6 +21,7 @@ package dpf.sp.gpinf.indexer;
 import java.io.File;
 import java.io.PrintStream;
 import java.net.URL;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +41,7 @@ import dpf.sp.gpinf.indexer.process.ProgressConsole;
 import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
@@ -255,6 +257,11 @@ public class IndexFiles {
             Configuration.getInstance().loadConfigurables(iped.configPath);
 
             if (!fromCustomLoader) {
+
+                // blocks internet access from viewers
+                Policy.setPolicy(new DefaultPolicy());
+                System.setSecurityManager(new SecurityManager());
+
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
