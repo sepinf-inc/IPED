@@ -39,6 +39,7 @@ import org.sqlite.SQLiteException;
 
 import dpf.ap.gpinf.interfacetelegram.DecoderTelegramInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
+import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
@@ -223,63 +224,59 @@ public class Extractor {
 
     protected ArrayList<Message> extractMessages(Chat chat) throws Exception {
         ArrayList<Message> msgs = new ArrayList<Message>();
-        for (String SQL : EXTRACT_MESSAGES_SQL) {
-            try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
-                stmt.setLong(1, chat.getId());
-                ResultSet rs = stmt.executeQuery();
-                ChatGroup cg = null;
-                if (chat.isGroup()) {
-                    cg = (ChatGroup) chat;
-                }
-                if (rs != null) {
-                    while (rs.next()) {
-                        byte[] data = rs.getBytes("data");
-                        long mid = rs.getLong("mid");
-                        Message message = new Message(mid, chat);
-                        android_decoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
-                        android_decoder.getMessageData(message);
-                        long fromid = android_decoder.getRemetenteId();
-                        if (fromid != 0) {
-                            message.setFrom(getContact(fromid));
-                        }
-                        setFrom(message, chat);
-
-                        if (cg != null && message.getFrom().getId() != 0) {
-                            cg.addMember(message.getFrom().getId());
-                        }
-
-                        if (message.getMediaMime() != null) {
-                            if (message.getMediaMime().startsWith("image")) {
-                                List<PhotoData> list = android_decoder.getPhotoData();
-                                loadImage(message, list);
-                            } else if (message.getMediaMime().startsWith("link")) {
-                                loadLink(message, android_decoder.getPhotoData());
-                            } else if (message.getMediaMime().length() > 0) {
-                                loadDocument(message, android_decoder.getDocumentNames(),
-                                        android_decoder.getDocumentSize());
-                            }
-
-                        }
-                        if (message.getType() != null) {
-                            String type = message.getType();
-                            String msg_decoded;
-
-                            if (type.contains(":")) {
-                                String[] aux = type.split(":");
-                                msg_decoded = MapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
-                            } else {
-                                msg_decoded = MapTypeMSG.decodeMsg(type);
-                            }
-                            message.setType(msg_decoded);
-                        }
-
-                        msgs.add(message);
+        String SQL = SQLite3DBParser.containsTable("messages_v2", conn)
+                && SQLite3DBParser.containsTable("media_v3", conn) ? EXTRACT_MESSAGES_SQL_2 : EXTRACT_MESSAGES_SQL_1;
+        try (PreparedStatement stmt = conn.prepareStatement(SQL)) {
+            stmt.setLong(1, chat.getId());
+            ResultSet rs = stmt.executeQuery();
+            ChatGroup cg = null;
+            if (chat.isGroup()) {
+                cg = (ChatGroup) chat;
+            }
+            if (rs != null) {
+                while (rs.next()) {
+                    byte[] data = rs.getBytes("data");
+                    long mid = rs.getLong("mid");
+                    Message message = new Message(mid, chat);
+                    android_decoder.setDecoderData(data, DecoderTelegramInterface.MESSAGE);
+                    android_decoder.getMessageData(message);
+                    long fromid = android_decoder.getRemetenteId();
+                    if (fromid != 0) {
+                        message.setFrom(getContact(fromid));
                     }
-                    break;
+                    setFrom(message, chat);
+
+                    if (cg != null && message.getFrom().getId() != 0) {
+                        cg.addMember(message.getFrom().getId());
+                    }
+
+                    if (message.getMediaMime() != null) {
+                        if (message.getMediaMime().startsWith("image")) {
+                            List<PhotoData> list = android_decoder.getPhotoData();
+                            loadImage(message, list);
+                        } else if (message.getMediaMime().startsWith("link")) {
+                            loadLink(message, android_decoder.getPhotoData());
+                        } else if (message.getMediaMime().length() > 0) {
+                            loadDocument(message, android_decoder.getDocumentNames(),
+                                    android_decoder.getDocumentSize());
+                        }
+
+                    }
+                    if (message.getType() != null) {
+                        String type = message.getType();
+                        String msg_decoded;
+
+                        if (type.contains(":")) {
+                            String[] aux = type.split(":");
+                            msg_decoded = MapTypeMSG.decodeMsg(aux[0]) + ":" + aux[1];
+                        } else {
+                            msg_decoded = MapTypeMSG.decodeMsg(type);
+                        }
+                        message.setType(msg_decoded);
+                    }
+
+                    msgs.add(message);
                 }
-            } catch (SQLiteException e) {
-                // TODO: handle exception
-                logger.debug("SQLite error: {}", e.toString());
             }
         }
 
@@ -605,10 +602,9 @@ public class Extractor {
     private static final String EXTRACT_MESSAGES_SQL_IOS = "SELECT t7.key,t7.value FROM t7 where substr(t7.key,1,8)=? and "
             + "substr(t7.value,1,1)=x'00'";
 
-    private static final String[] EXTRACT_MESSAGES_SQL = {
-            "SELECT m.*,md.data as mediaData FROM messages m  left join media_v2 md on md.mid=m.mid where m.uid=? order by date",
-            "SELECT m.*,md.data as mediaData FROM messages_v2 m left join media_v3 md on md.mid=m.mid where m.uid=? order by date" };
+    private static final String EXTRACT_MESSAGES_SQL_1 = "SELECT m.*,md.data as mediaData FROM messages m  left join media_v2 md on md.mid=m.mid where m.uid=? order by date";
 
+    private static final String EXTRACT_MESSAGES_SQL_2 = "SELECT m.*,md.data as mediaData FROM messages_v2 m left join media_v3 md on md.mid=m.mid where m.uid=? order by date";
 
     private static final String EXTRACT_CONTACTS_SQL = "SELECT * FROM users";
     private static final String EXTRACT_CONTACTS_SQL_IOS = "SELECT * FROM t2";
