@@ -250,7 +250,21 @@ public class RegexTask extends AbstractTask {
         try (Reader reader = evidence.getTextReader()) {
             processRegex(evidence, reader);
         }
+
         processRegex(evidence, new StringReader(evidence.getName()));
+        
+        processRegex(evidence, getExtraAttributeReader(evidence));
+    }
+
+    private Reader getExtraAttributeReader(IItem item) {
+        StringBuilder sb = new StringBuilder();
+        for (String key : item.getExtraAttributeMap().keySet().toArray(new String[0])) {
+            if (!key.startsWith(REGEX_PREFIX)) {
+                Object val = item.getExtraAttribute(key);
+                sb.append(key).append(": ").append(val.toString());
+            }
+        }
+        return new StringReader(sb.toString());
     }
 
     @SuppressWarnings("unchecked")
