@@ -58,6 +58,7 @@ import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.LedCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -128,6 +129,7 @@ public class IPEDReader extends DataSourceReader {
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
         DIETask.setEnabled(false);
+        QRCodeTask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
         if (deviceName.endsWith(Marcadores.EXT)) {
