@@ -46,7 +46,6 @@ public class QRCodeTask extends AbstractTask {
     private static final String ENABLE_PARAM = "enableQRCode"; //$NON-NLS-1$
 
     private static final String QRCODE_TEXT = "QRCodeText";
-
     private static final String QRCODE_HEX = "QRCodeHex";
     private static final String QRCODE_TYPE = "QRCodeType";
     private static final String QRCODE_POINTS = "QRCodePoints";
@@ -71,7 +70,6 @@ public class QRCodeTask extends AbstractTask {
 
     @Override
     public List<Configurable<?>> getConfigurables() {
-        // TODO Auto-generated method stub
         return Arrays.asList(new EnableTaskProperty(ENABLE_PARAM));
     }
 
@@ -81,14 +79,13 @@ public class QRCodeTask extends AbstractTask {
          * initialization process (it should run only once for all threads).
          */
         synchronized (init) {
-            if (!init.get()) {
-                init.set(true);
+            if (!init.getAndSet(true)) {
                 taskEnabled = configurationManager.getEnableTaskProperty(ENABLE_PARAM);
                 hints.put(DecodeHintType.TRY_HARDER, Boolean.TRUE);
                 if (!taskEnabled) {
                     logger.info("Task disabled."); //$NON-NLS-1$
-                    init.set(true);
-                    return;
+                } else {
+                    logger.info("Task enabled."); //$NON-NLS-1$
                 }
             }
 
@@ -99,8 +96,7 @@ public class QRCodeTask extends AbstractTask {
     @Override
     public void finish() throws Exception {
         synchronized (finished) {
-            if (!finished.get()) {
-                finished.set(true);
+            if (!finished.getAndSet(true)) {
                 long totalImages = totalImagesProcessed.longValue() + totalImagesFailed.longValue();
                 if (totalImages != 0) {
                     logger.info("Total images processed: " + totalImagesProcessed); //$NON-NLS-1$
@@ -119,11 +115,8 @@ public class QRCodeTask extends AbstractTask {
         for (byte b : bytes) {
             result.append(String.format("%1$02X", b)); //$NON-NLS-1$
         }
-
         return result.toString();
     }
-
-
 
     @Override
     protected void process(IItem evidence) throws Exception {
@@ -136,14 +129,12 @@ public class QRCodeTask extends AbstractTask {
         try (BufferedInputStream in = evidence.getBufferedStream()) {
             img = ImageIO.read(in);
         } catch (Exception e) {
-            img = null;
+            logger.warn("Cannot read image file {} ({} bytes): {}", evidence.getPath(), evidence.getLength(),
+                    e.toString());
+            totalImagesFailed.incrementAndGet();
         }
 
-        if (img == null) {
-            logger.debug("cannot read file " + evidence.getName());
-            totalImagesFailed.incrementAndGet();
-
-        } else if (img.getWidth() > 80 && img.getHeight() > 80) {
+        if (img != null && img.getWidth() > 80 && img.getHeight() > 80) {
             try {
 
                 BinaryBitmap binaryBitmap = new BinaryBitmap(
@@ -153,38 +144,48 @@ public class QRCodeTask extends AbstractTask {
                 List<String> texts = new ArrayList<>(), types = new ArrayList<>(), rawBytes = new ArrayList<>(),
                         points = new ArrayList<>();
                 for (Result rs : results) {
-                    String text = "", type = "", bytes = "";
 
                     if (rs.getText() != null && rs.getText().length() > 0) {
-                        text = rs.getText();
+                        String text = rs.getText();
+                        texts.add(text);
                     }
-                    texts.add(text);
 
                     if (rs.getRawBytes() != null && rs.getRawBytes().length > 0) {
-                        bytes = getHex(rs.getRawBytes());
+                        String bytes = getHex(rs.getRawBytes());
+                        rawBytes.add(bytes);
                     }
-                    rawBytes.add(bytes);
 
                     if (rs.getBarcodeFormat() != null) {
-                        type = rs.getBarcodeFormat().toString();
+                        String type = rs.getBarcodeFormat().toString();
+                        types.add(type);
                     }
-                    types.add(type);
 
+                    List<String> coords = new ArrayList<>();
                     for (ResultPoint p : rs.getResultPoints()) {
-                        points.add("(" + p.getX() + "," + p.getY() + ")");
+                        coords.add("(" + p.getX() + "," + p.getY() + ")");
                     }
-
+                    if (!coords.isEmpty()) {
+                        points.add(coords.toString());
+                    }
                 }
-                evidence.setExtraAttribute(QRCODE_TEXT, texts);
-                evidence.setExtraAttribute(QRCODE_HEX, rawBytes);
-                evidence.setExtraAttribute(QRCODE_TYPE, types);
-                evidence.setExtraAttribute(QRCODE_POINTS, points);
 
-                totalQRCodesFound.addAndGet(results.length);
-               
+                if (results.length > 0) {
+                    evidence.setExtraAttribute(QRCODE_TEXT, texts);
+                    evidence.setExtraAttribute(QRCODE_HEX, rawBytes);
+                    // for now we are just detecting qrcodes because barcode
+                    // detection doesn't work with multiple qrcodes detection
+                    // evidence.setExtraAttribute(QRCODE_TYPE, types);
+                    evidence.setExtraAttribute(QRCODE_POINTS, points);
+                    
+                    logger.info("Found {} qrcode(s) in file {} ({} bytes)", results.length, evidence.getPath(),
+                            evidence.getLength());
+
+                    totalQRCodesFound.addAndGet(results.length);
+                }
 
             } catch (ReaderException e) {
-                logger.debug("Error {}\n File ", e.toString(), evidence.getName());
+                logger.debug("Error searching for qrcodes in file {} ({} bytes): {}", evidence.getPath(),
+                        evidence.getLength(), e.toString());
             }
             totalImagesProcessed.incrementAndGet();
         }
