@@ -188,7 +188,8 @@ public class SQLiteContainerDetector implements Detector {
             return GDriveMainParser.GDRIVE_ACCOUNT_INFO;
 
         if (tableNames.contains("dialogs") && tableNames.contains("chats") && tableNames.contains("users")
-                && tableNames.contains("messages") && tableNames.contains("media_v2"))
+                && (tableNames.contains("messages") || tableNames.contains("messages_v2"))
+                && (tableNames.contains("media_v2") || tableNames.contains("media_v3")))
             return TelegramParser.TELEGRAM_DB;
         
         if (tableNames.contains("t1") && tableNames.contains("t2") && tableNames.contains("t7")
