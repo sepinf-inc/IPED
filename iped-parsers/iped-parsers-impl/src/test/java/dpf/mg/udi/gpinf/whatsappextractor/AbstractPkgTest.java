@@ -413,12 +413,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setFtkID(Integer ftkID) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setFileOffset(long fileOffset) {
                 // TODO Auto-generated method stub
 
@@ -636,12 +630,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public IHashValue getHashValue() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Integer getFtkID() {
                 // TODO Auto-generated method stub
                 return null;
             }

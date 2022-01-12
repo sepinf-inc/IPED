@@ -169,11 +169,6 @@ public class ParentTableModel extends AbstractTableModel
             textQuery = IndexItem.ID + ":" + parentId; //$NON-NLS-1$
         }
 
-        String ftkId = doc.get(IndexItem.FTKID);
-        if (ftkId != null) {
-            textQuery = IndexItem.FTKID + ":" + parentId; //$NON-NLS-1$
-        }
-
         String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
         textQuery += " && " + IndexItem.EVIDENCE_UUID + ":" + sourceUUID; //$NON-NLS-1$ //$NON-NLS-2$
 

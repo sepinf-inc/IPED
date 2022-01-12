@@ -104,7 +104,6 @@ public class IndexItem extends BasicProps {
     public static final String POSSIBLE_STR_DOCVALUES_PREFIX = "_str_";
     public static final String POSSIBLE_NUM_DOCVALUES_PREFIX = "_num_";
 
-    public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
     public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
     public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
@@ -161,7 +160,6 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -269,16 +267,9 @@ public class IndexItem extends BasicProps {
         doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
         doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-        Integer intVal = evidence.getFtkID();
-        if (intVal != null) {
-            doc.add(new IntPoint(FTKID, intVal));
-            doc.add(new StoredField(FTKID, intVal));
-            doc.add(new NumericDocValuesField(FTKID, intVal));
-        }
-
         if (evidence instanceof ISleuthKitItem) {
             ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
-            intVal = sevidence.getSleuthId();
+            Integer intVal = sevidence.getSleuthId();
             if (intVal != null) {
                 doc.add(new IntPoint(SLEUTHID, intVal));
                 doc.add(new StoredField(SLEUTHID, intVal));
@@ -303,7 +294,7 @@ public class IndexItem extends BasicProps {
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
         }
 
-        intVal = evidence.getSubitemId();
+        Integer intVal = evidence.getSubitemId();
         if (intVal != null) {
             doc.add(new IntPoint(SUBITEMID, intVal));
             doc.add(new StoredField(SUBITEMID, intVal));
