@@ -21,8 +21,7 @@ public interface IItemBase extends IStreamSource {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId();
 

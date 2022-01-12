@@ -181,14 +181,7 @@ public class MenuListener implements ActionListener {
                 for (int row : App.get().resultsTable.getSelectedRows()) {
                     IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
                     selectedIds.add(item);
-                    // exporta versão nao selecionada caso exista
-                    /*
-                     * Integer docId2 = App.get().viewToRawMap.getRaw(docId); if (docId2 == null)
-                     * docId2 = App.get().viewToRawMap.getView(docId); if (docId2 != null)
-                     * selectedIds.add(docId2);
-                     */
                 }
-
                 (new CopiarArquivos(dir, selectedIds)).execute();
             }
 
