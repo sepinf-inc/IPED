@@ -30,6 +30,11 @@ public class MapTypeMSG {
 
     private static final HashMap<String, Integer> androidmsg = initAndroidMsg();
 
+    /*
+     * this file is based on the observations made in the file found at
+     * https://github.com/TelegramMessenger/Telegram-iOS/blob/master/submodules/
+     * TelegramCore/Sources/SyncCore/SyncCore_TelegramMediaAction.swift
+     */
     private static HashMap<Integer, String> initMsg() {
         // reference telegramMediaAction.swift
         HashMap<Integer, String> msg = new HashMap<>();
