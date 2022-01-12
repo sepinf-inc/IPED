@@ -64,7 +64,7 @@ public class FolderTreeReader extends DataSourceReader {
         super(caseData, output, listOnly);
     }
 
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
         evidenceName = getEvidenceName(file);
         if (evidenceName == null) {
             evidenceName = file.getName();
@@ -72,7 +72,6 @@ public class FolderTreeReader extends DataSourceReader {
         dataSource = new DataSource(file);
         dataSource.setName(evidenceName);
         read(file, null);
-        return 0;
 
     }
 
