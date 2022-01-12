@@ -56,6 +56,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.parsers.RFC822Parser;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.FileContentSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -131,11 +132,23 @@ public class EmailViewer extends HtmlViewer {
 
     }
 
+    public static File getFileRenamedToExt(File file, String ext) {
+        if (!ext.isEmpty() && !file.getName().endsWith("." + ext)) {
+            File renamedFile = new File(file.getAbsolutePath() + "." + ext);
+            if (renamedFile.exists() || file.renameTo(renamedFile)) {
+                return renamedFile;
+            }
+        }
+        return file;
+    }
+
     public class AttachmentOpen extends FileHandler {
 
         public void open(int attNum) {
             AttachInfo info = mch.attachments.values().toArray(new AttachInfo[0])[attNum];
-            if (IOUtil.isToOpenExternally(info.name, IOUtil.getExtension(info.tmpFile))) {
+            String ext = Util.getTrueExtension(info.tmpFile);
+            info.tmpFile = getFileRenamedToExt(info.tmpFile, ext);
+            if (IOUtil.isToOpenExternally(info.name, ext)) {
                 this.openFile(info.tmpFile);
             }
         }
