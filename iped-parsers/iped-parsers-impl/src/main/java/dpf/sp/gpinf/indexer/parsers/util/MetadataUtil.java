@@ -38,6 +38,8 @@ public class MetadataUtil {
 
     private static Set<String> generalKeys = getGeneralKeys();
 
+    private static Set<String> commonKeys = getCommonKeys();
+
     private static Map<String, Property> compositeProps = getCompositeProps();
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
@@ -121,6 +123,8 @@ public class MetadataUtil {
             return key.substring(ExtraProperties.OFFICE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.GENERIC_META_PREFIX))
             return key.substring(ExtraProperties.GENERIC_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.COMMON_META_PREFIX))
+            return key.substring(ExtraProperties.COMMON_META_PREFIX.length());
         return key;
     }
     
@@ -173,9 +177,9 @@ public class MetadataUtil {
         generalKeys.add(Metadata.RESOURCE_NAME_KEY);
         generalKeys.add(Metadata.CONTENT_LENGTH);
         generalKeys.add(Metadata.EMBEDDED_RELATIONSHIP_ID);
-        generalKeys.add(TikaCoreProperties.TIKA_META_PREFIX);
         generalKeys.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME.getName());
         generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING.getName());
+        generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_EMBEDDED_STREAM.getName());
         generalKeys.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         generalKeys.add(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         generalKeys.add(IndexerDefaultParser.PARSER_EXCEPTION);
@@ -242,7 +246,10 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.TITLE);
         props.add(TikaCoreProperties.DESCRIPTION);
         props.add(TikaCoreProperties.PRINT_DATE);
-        props.add(TikaCoreProperties.EMBEDDED_RESOURCE_TYPE);
+        props.add(TikaCoreProperties.TRANSITION_KEYWORDS_TO_DC_SUBJECT);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_DESCRIPTION);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_OO_SUBJECT);
         props.add(IPTC.COPYRIGHT_OWNER_ID);
         props.add(IPTC.IMAGE_CREATOR_ID);
         props.add(IPTC.IMAGE_SUPPLIER_ID);
@@ -252,6 +259,37 @@ public class MetadataUtil {
         for (Property prop : props)
             map.put(prop.getName(), prop);
         return map;
+    }
+
+    private static Set<String> getCommonKeys() {
+        Set<String> props = new HashSet<String>();
+        props.add(TikaCoreProperties.CREATOR.getName());
+        props.add(TikaCoreProperties.CREATED.getName());
+        props.add(TikaCoreProperties.MODIFIED.getName());
+        props.add(TikaCoreProperties.COMMENTS.getName());
+        props.add(TikaCoreProperties.KEYWORDS.getName());
+        props.add(TikaCoreProperties.FORMAT.getName());
+        props.add(TikaCoreProperties.IDENTIFIER.getName());
+        props.add(TikaCoreProperties.CONTRIBUTOR.getName());
+        props.add(TikaCoreProperties.COVERAGE.getName());
+        props.add(TikaCoreProperties.MODIFIER.getName());
+        props.add(TikaCoreProperties.LANGUAGE.getName());
+        props.add(TikaCoreProperties.PUBLISHER.getName());
+        props.add(TikaCoreProperties.RELATION.getName());
+        props.add(TikaCoreProperties.RIGHTS.getName());
+        props.add(TikaCoreProperties.SOURCE.getName());
+        props.add(TikaCoreProperties.TYPE.getName());
+        props.add(TikaCoreProperties.TITLE.getName());
+        props.add(TikaCoreProperties.DESCRIPTION.getName());
+        props.add(TikaCoreProperties.PRINT_DATE.getName());
+        props.add(TikaCoreProperties.CREATOR_TOOL.getName());
+        props.add(TikaCoreProperties.METADATA_DATE.getName());
+        props.add(TikaCoreProperties.LATITUDE.getName());
+        props.add(TikaCoreProperties.LONGITUDE.getName());
+        props.add(TikaCoreProperties.ALTITUDE.getName());
+        props.add(TikaCoreProperties.RATING.getName());
+        props.add(TikaCoreProperties.HAS_SIGNATURE.getName());
+        return props;
     }
 
     private static Set<String> getIgnoreKeys() {
@@ -278,6 +316,7 @@ public class MetadataUtil {
         removeIgnorable(metadata);
         removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
+        prefixCommonMetadata(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
         prefixVideoMetadata(metadata);
@@ -458,6 +497,7 @@ public class MetadataUtil {
         }
     }
 
+    // used to prefix metadata keys with names already used by basic item properties
     private static void prefixBasicMetadata(Metadata metadata) {
         for (String key : metadata.names()) {
             if (BasicProps.SET.contains(key)) {
@@ -474,12 +514,27 @@ public class MetadataUtil {
         String[] keys = metadata.names();
         for (String key : keys) {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
-                    || key.startsWith(ExtraProperties.UFED_META_PREFIX))
+                    || key.startsWith(ExtraProperties.UFED_META_PREFIX)
+                    || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX))
                 continue;
             String[] values = metadata.getValues(key);
             metadata.remove(key);
             for (String val : values)
                 metadata.add(prefix + key, val);
+        }
+    }
+
+    private static void prefixCommonMetadata(Metadata metadata) {
+        for (String key : metadata.names()) {
+            if (commonKeys.contains(key)) {
+                String[] values = metadata.getValues(key);
+                // this is commented to duplicate common keys, see #570 discussion
+                // metadata.remove(key);
+                for (String val : values) {
+                    metadata.add(ExtraProperties.COMMON_META_PREFIX + key, val);
+                }
+            }
         }
     }
 

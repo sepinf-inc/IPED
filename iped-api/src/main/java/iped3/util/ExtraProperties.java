@@ -60,6 +60,8 @@ public class ExtraProperties {
 
     public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
 
+    public static final String COMMON_META_PREFIX = "common:"; //$NON-NLS-1$
+
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$
