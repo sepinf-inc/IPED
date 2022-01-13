@@ -231,11 +231,9 @@ public class MenuClass extends JPopupMenu {
 
         this.addSeparator();
 
-        if (!App.get().appCase.isFTKReport()) {
-            navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
-            navigateToParent.addActionListener(menuListener);
-            this.add(navigateToParent);
-        }
+        navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
+        navigateToParent.addActionListener(menuListener);
+        this.add(navigateToParent);
 
         navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
         navigateToParentChat.addActionListener(menuListener);

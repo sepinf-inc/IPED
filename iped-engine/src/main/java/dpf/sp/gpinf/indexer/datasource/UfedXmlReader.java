@@ -178,9 +178,8 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     @Override
-    public int read(File root) throws Exception {
+    public void read(File root) throws Exception {
         read(root, null);
-        return 0;
     }
 
     @Override

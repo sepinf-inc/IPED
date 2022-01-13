@@ -123,15 +123,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             numFilters++;
         }
 
-        if (!App.get().appCase.isFTKReport()) {
-            Query treeQuery = App.get().treeListener.getQuery();
-            if (treeQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                boolQuery.add(treeQuery, Occur.MUST);
-                boolQuery.add(result, Occur.MUST);
-                result = boolQuery.build();
-                numFilters++;
-            }
+        Query treeQuery = App.get().treeListener.getQuery();
+        if (treeQuery != null) {
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+            boolQuery.add(treeQuery, Occur.MUST);
+            boolQuery.add(result, Occur.MUST);
+            result = boolQuery.build();
+            numFilters++;
         }
 
         if (App.get().similarImagesQueryRefItem != null) {

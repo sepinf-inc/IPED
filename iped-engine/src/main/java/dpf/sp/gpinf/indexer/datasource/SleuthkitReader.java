@@ -505,9 +505,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    public int read(File image) throws Exception {
+    public void read(File image) throws Exception {
         read(image, null);
-        return 0;
     }
 
     private synchronized void saveDecodedRangeId(File image, Long start, Long last) {

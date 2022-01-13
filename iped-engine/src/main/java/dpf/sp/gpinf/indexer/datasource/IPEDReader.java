@@ -114,7 +114,7 @@ public class IPEDReader extends DataSourceReader {
         return name.endsWith(Marcadores.EXT);
     }
 
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
 
         Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE); //$NON-NLS-1$
 
@@ -141,11 +141,9 @@ public class IPEDReader extends DataSourceReader {
             IMultiMarcadores mm = (IMultiMarcadores) obj;
             for (IMarcadores m : mm.getSingleBookmarks())
                 processBookmark(m);
-        } else
+        } else {
             processBookmark((IMarcadores) obj);
-
-        return 0;
-
+        }
     }
 
     public void read(Set<HashValue> parentsWithLostSubitems, Manager manager) throws Exception {

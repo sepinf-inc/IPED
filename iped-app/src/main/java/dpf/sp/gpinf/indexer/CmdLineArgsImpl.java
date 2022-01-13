@@ -53,10 +53,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
     private String evidenceToRemove;
 
-    @Parameter(names = { "-r",
-            "-report" }, description = "FTK3+ report folder", validateWith = FTKReportValidator.class)
-    private File reportDir;
-
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
             + "Keywords with no hits are filtered out.", validateWith = FileExistsValidator.class)
     private File palavrasChave;
@@ -138,11 +134,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Override
     public File getOutputDir() {
         return outputDir;
-    }
-
-    @Override
-    public File getReportDir() {
-        return reportDir;
     }
 
     @Override
@@ -303,18 +294,6 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         }
     }
 
-    public static class FTKReportValidator implements IParameterValidator {
-        @Override
-        public void validate(String name, String value) throws ParameterException {
-            File reportDir = new File(value);
-            if (!(new File(reportDir, "files")).exists() && //$NON-NLS-1$
-                    !(new File(reportDir, "Report_files/files")).exists() && //$NON-NLS-1$
-                    !(new File(reportDir, "Export")).exists()) { //$NON-NLS-1$
-                throw new ParameterException("Invalid FTK report folder!"); //$NON-NLS-1$
-            }
-        }
-    }
-
     /**
      * Salva os parâmetros no objeto do caso, para serem consultados pelos módulos.
      *
@@ -397,13 +376,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         IndexFiles.getInstance().dataSource = new ArrayList<File>();
 
-        if (reportDir == null && (datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
+        if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 
-        if (this.reportDir != null) {
-            IndexFiles.getInstance().dataSource.add(this.reportDir);
-        }
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
                 IndexFiles.getInstance().dataSource.add(dataSource);
@@ -424,20 +400,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             IndexFiles.getInstance().logFile = this.logFile;
         }
 
-        if (outputDir != null && reportDir != null) {
-            throw new ParameterException("Option -o can not be used with FTK reports!"); //$NON-NLS-1$
-        }
-
-        if (new File(reportDir, "Report_files/files").exists()) { //$NON-NLS-1$
-            IndexFiles.getInstance().dataSource.remove(reportDir);
-            IndexFiles.getInstance().dataSource.add(new File(reportDir, "Report_files")); //$NON-NLS-1$
-            IndexFiles.getInstance().output = new File(reportDir, "iped"); //$NON-NLS-1$
-        }
-
         if (outputDir != null) {
             IndexFiles.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
-        } else if (reportDir != null) {
-            IndexFiles.getInstance().output = new File(reportDir, "iped"); //$NON-NLS-1$
         } else {
             IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
         }

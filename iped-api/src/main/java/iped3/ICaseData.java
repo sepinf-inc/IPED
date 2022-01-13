@@ -54,8 +54,6 @@ public interface ICaseData extends Serializable {
      */
     boolean containsReport();
 
-    int getAlternativeFiles();
-
     /**
      * Obtém lista de bookmarks.
      *
@@ -109,8 +107,6 @@ public interface ICaseData extends Serializable {
      * @return lista não modificável de grupo de arquivos por data.
      */
     List<IFileGroup> getTimeGroups();
-
-    void incAlternativeFiles(int inc);
 
     void incDiscoveredEvidences(int inc);
 

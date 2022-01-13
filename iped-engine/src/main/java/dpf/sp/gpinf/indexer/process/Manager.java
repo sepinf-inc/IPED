@@ -55,7 +55,6 @@ import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
@@ -91,7 +90,7 @@ import iped3.util.BasicProps;
  * permitindo que seja estimado o progresso e término do processamento.
  *
  * O produtor obtém os itens a partir de uma fonte de dados específica
- * (relatório do FTK, diretório, imagem), inserindo-os numa fila de
+ * (relatório do UFED, diretório, imagem), inserindo-os numa fila de
  * processamento com tamanho limitado (para limitar o uso de memória).
  *
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo
@@ -628,10 +627,6 @@ public class Manager {
 
         if (caseData.containsReport()) {
             new File(output, "data/containsReport.flag").createNewFile(); //$NON-NLS-1$
-        }
-
-        if (FTK3ReportReader.wasExecuted) {
-            new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
         }
 
     }

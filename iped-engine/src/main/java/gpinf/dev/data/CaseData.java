@@ -70,8 +70,6 @@ public class CaseData implements ICaseData {
 
     private int discoveredEvidences = 0;
 
-    private int alternativeFiles = 0;
-
     /**
      * @return retorna o volume de dados descobertos até o momento
      */
@@ -107,14 +105,6 @@ public class CaseData implements ICaseData {
 
     public void setIpedReport(boolean ipedReport) {
         this.ipedReport = ipedReport;
-    }
-
-    synchronized public void incAlternativeFiles(int inc) {
-        alternativeFiles += inc;
-    }
-
-    synchronized public int getAlternativeFiles() {
-        return alternativeFiles;
     }
 
     synchronized public void incDiscoveredEvidences(int inc) {

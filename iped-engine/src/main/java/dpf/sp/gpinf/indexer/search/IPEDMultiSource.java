@@ -149,10 +149,6 @@ public class IPEDMultiSource extends IPEDSource {
 
         analyzer = AppAnalyzer.get();
 
-        for (IPEDSource iCase : cases)
-            if (iCase.isFTKReport)
-                isFTKReport = true;
-
         LOGGER.info("Loaded " + cases.size() + " cases."); //$NON-NLS-1$ //$NON-NLS-2$
     }
 

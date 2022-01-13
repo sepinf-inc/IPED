@@ -13,7 +13,7 @@ import org.apache.lucene.index.IndexWriter;
  * permitindo que seja estimado o progresso e término do processamento.
  *
  * O produtor obtém os itens a partir de uma fonte de dados específica
- * (relatório do FTK, diretório, imagem), inserindo-os numa fila de
+ * (relatório do UFED, diretório, imagem), inserindo-os numa fila de
  * processamento com tamanho limitado (para limitar o uso de memória).
  *
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo
