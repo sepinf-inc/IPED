@@ -68,6 +68,9 @@ public class Marcadores implements Serializable, IMarcadores {
     private File indexDir;
     private File stateFile, cookie;
 
+    // for future use when implementing extended bookmark types
+    private Map<String, Serializable> extendedBookmarks;
+
     private transient IIPEDSource ipedCase;
 
     public Marcadores(IIPEDSource ipedCase, File modulePath) {
