@@ -227,7 +227,7 @@ public class MinIOTask extends AbstractTask {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
-        if (item.getViewFile() != null) {
+        if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
                 String fullPath = insertItem(hash, is, item.getViewFile().length(),
                         getMimeType(item.getViewFile().getName()), true);
