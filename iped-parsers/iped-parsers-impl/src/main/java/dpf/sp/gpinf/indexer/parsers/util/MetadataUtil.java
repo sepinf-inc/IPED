@@ -266,16 +266,39 @@ public class MetadataUtil {
     }
 
     private static final void removeIgnorable(Metadata metadata) {
-        for (String key : keysToIgnore)
+        // removes ignorable keys
+        for (String key : keysToIgnore) {
             metadata.remove(key);
+        }
+        for (String key : metadata.names()) {
+            String[] values = metadata.getValues(key);
+            // paranoid cleaning
+            if (values == null || values.length == 0) {
+                metadata.remove(key);
+                continue;
+            }
+            // removes null or empty values
+            ArrayList<String> nonEmpty = new ArrayList<>(values.length);
+            for (String val : values) {
+                if (val != null && !(val = val.strip()).isEmpty()) {
+                    nonEmpty.add(val);
+                }
+            }
+            if (nonEmpty.size() < values.length) {
+                metadata.remove(key);
+                for (String val : nonEmpty) {
+                    metadata.add(key, val);
+                }
+            }
+        }
     }
 
     public static final void normalizeMetadata(Metadata metadata) {
         // remove possible null key (#329)
         metadata.remove(null);
+        removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
-        removeIgnorable(metadata);
         removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
         prefixAudioMetadata(metadata);
