@@ -83,19 +83,13 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             progress.setMaximum(results.getLength());
         }
 
-        String imagePrefix = ExtraProperties.IMAGE_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String videoPrefix = ExtraProperties.VIDEO_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String ufedPrefix = ExtraProperties.UFED_META_PREFIX.replace(":", "\\:"); //$NON-NLS-1$ //$NON-NLS-2$
-        String latKey = Metadata.LATITUDE.getName().replace(":", "\\:");
-        String longKey = Metadata.LONGITUDE.getName().replace(":", "\\:");
+        String latKey = (ExtraProperties.COMMON_META_PREFIX + Metadata.LATITUDE.getName()).replace(":", "\\:");
+        String longKey = (ExtraProperties.COMMON_META_PREFIX + Metadata.LONGITUDE.getName()).replace(":", "\\:");
         String range1 = ":[-90 TO 90]";
         String range2 = ":[-180 TO 180]";
 
         StringBuilder sb = new StringBuilder();
         sb.append("(" + latKey + range1 + " && " + longKey + range2 + ") ");
-        sb.append("(" + imagePrefix + latKey + range1 + " && " + imagePrefix + longKey + range2 + ") ");
-        sb.append("(" + videoPrefix + latKey + range1 + " && " + videoPrefix + longKey + range2 + ") ");
-        sb.append("(" + ufedPrefix + "Latitude" + range1 + " && " + ufedPrefix + "Longitude" + range2 + ") ");
         sb.append("(" + ExtraProperties.LOCATIONS + ":*)");
 
         /* nova query com apenas os itens que possuem georreferenciamento */
@@ -261,36 +255,18 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
     }
 
     static public String resolveLatitude(Document doc) {
-        String lat = doc.get(Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LATITUDE.getName());
-        if (lat == null)
-            lat = doc.get(ExtraProperties.UFED_META_PREFIX + "Latitude"); //$NON-NLS-1$
+        String lat = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.LATITUDE.getName());
         return lat;
 
     }
 
     static public String resolveLongitude(Document doc) {
-        String longit = doc.get(Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.LONGITUDE.getName());
-        if (longit == null)
-            longit = doc.get(ExtraProperties.UFED_META_PREFIX + "Longitude"); //$NON-NLS-1$
+        String longit = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.LONGITUDE.getName());
         return longit;
     }
 
     static public String resolveAltitude(Document doc) {
-        String alt = doc.get(Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.IMAGE_META_PREFIX + Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.VIDEO_META_PREFIX + Metadata.ALTITUDE.getName());
-        if (alt == null)
-            alt = doc.get(ExtraProperties.UFED_META_PREFIX + "Altitude"); //$NON-NLS-1$
+        String alt = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.ALTITUDE.getName());
         return alt;
     }
 

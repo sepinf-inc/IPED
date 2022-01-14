@@ -560,7 +560,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (m.getMessageType() == MessageType.LOCATION_MESSAGE
                     || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
-                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude()); //$NON-NLS-1$
+                meta.set(TikaCoreProperties.LATITUDE, m.getLatitude());
+                meta.set(TikaCoreProperties.LONGITUDE, m.getLongitude());
             }
 
             if (m.getMessageStatus() != null) {

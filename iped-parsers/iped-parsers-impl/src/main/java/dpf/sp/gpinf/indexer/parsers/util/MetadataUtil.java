@@ -109,6 +109,7 @@ public class MetadataUtil {
     }
     
     private static String removePrefix(String key) {
+        // UFED prefix doesn't need to be removed because it is not added by this class
         if (key.startsWith(ExtraProperties.IMAGE_META_PREFIX))
             return key.substring(ExtraProperties.IMAGE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.VIDEO_META_PREFIX))
@@ -148,6 +149,9 @@ public class MetadataUtil {
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        rename.put(ExtraProperties.UFED_META_PREFIX + "Latitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.LATITUDE.getName());
+        rename.put(ExtraProperties.UFED_META_PREFIX + "Longitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.LONGITUDE.getName());
+        rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
         return rename;
     }
 
