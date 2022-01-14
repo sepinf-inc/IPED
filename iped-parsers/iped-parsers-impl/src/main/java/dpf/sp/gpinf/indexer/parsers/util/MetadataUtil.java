@@ -263,32 +263,55 @@ public class MetadataUtil {
 
     private static Set<String> getCommonKeys() {
         Set<String> props = new HashSet<String>();
+        /*
+         * Commented properties below are set only by 1 parser or rarely set by other
+         * parsers using Tika-1.27/iped-4.0.0, this can change in future releases.
+         */
         props.add(TikaCoreProperties.CREATOR.getName());
         props.add(TikaCoreProperties.CREATED.getName());
         props.add(TikaCoreProperties.MODIFIED.getName());
         props.add(TikaCoreProperties.COMMENTS.getName());
         props.add(TikaCoreProperties.KEYWORDS.getName());
-        props.add(TikaCoreProperties.FORMAT.getName());
-        props.add(TikaCoreProperties.IDENTIFIER.getName());
-        props.add(TikaCoreProperties.CONTRIBUTOR.getName());
-        props.add(TikaCoreProperties.COVERAGE.getName());
+
+        // set by PDF and rarely set by OpenOffice/DcXML parsers today
+        // props.add(TikaCoreProperties.FORMAT.getName());
+
         props.add(TikaCoreProperties.MODIFIER.getName());
         props.add(TikaCoreProperties.LANGUAGE.getName());
-        props.add(TikaCoreProperties.PUBLISHER.getName());
-        props.add(TikaCoreProperties.RELATION.getName());
-        props.add(TikaCoreProperties.RIGHTS.getName());
-        props.add(TikaCoreProperties.SOURCE.getName());
-        props.add(TikaCoreProperties.TYPE.getName());
+
+        // set by Office and rarely set by DcXML/Iptc parsers today
+        // props.add(TikaCoreProperties.PUBLISHER.getName());
+
+        // below properties are rarely set by parsers
+        // props.add(TikaCoreProperties.IDENTIFIER.getName());
+        // props.add(TikaCoreProperties.CONTRIBUTOR.getName());
+        // props.add(TikaCoreProperties.COVERAGE.getName());
+        // props.add(TikaCoreProperties.RELATION.getName());
+        // props.add(TikaCoreProperties.RIGHTS.getName());
+        // props.add(TikaCoreProperties.SOURCE.getName());
+        // props.add(TikaCoreProperties.TYPE.getName());
+
         props.add(TikaCoreProperties.TITLE.getName());
         props.add(TikaCoreProperties.DESCRIPTION.getName());
-        props.add(TikaCoreProperties.PRINT_DATE.getName());
+
+        // set only by Office parsers today
+        // props.add(TikaCoreProperties.PRINT_DATE.getName());
+
         props.add(TikaCoreProperties.CREATOR_TOOL.getName());
-        props.add(TikaCoreProperties.METADATA_DATE.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.METADATA_DATE.getName());
+
         props.add(TikaCoreProperties.LATITUDE.getName());
         props.add(TikaCoreProperties.LONGITUDE.getName());
         props.add(TikaCoreProperties.ALTITUDE.getName());
-        props.add(TikaCoreProperties.RATING.getName());
-        props.add(TikaCoreProperties.HAS_SIGNATURE.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.RATING.getName());
+
+        // set by PDFParser and rarely set by OpenOffice parser today
+        // props.add(TikaCoreProperties.HAS_SIGNATURE.getName());
+
         return props;
     }
 
@@ -566,8 +589,7 @@ public class MetadataUtil {
         for (String key : metadata.names()) {
             if (commonKeys.contains(key)) {
                 String[] values = metadata.getValues(key);
-                // this is commented to duplicate common keys, see #570 discussion
-                // metadata.remove(key);
+                metadata.remove(key);
                 for (String val : values) {
                     metadata.add(ExtraProperties.COMMON_META_PREFIX + key, val);
                 }
