@@ -5,7 +5,6 @@ id = java.lang.Integer
 parentId = java.lang.Integer
 subitemId = java.lang.Integer
 sleuthId = java.lang.Integer
-ftkId = java.lang.Integer
 size = java.lang.Long
 textSize = java.lang.Long
 ALTSUBJECT = java.lang.String

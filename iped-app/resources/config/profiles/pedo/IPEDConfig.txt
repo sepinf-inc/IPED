@@ -6,6 +6,7 @@ enablePhotoDNA = true
 enableHashDBLookup = true
 enablePhotoDNALookup = true
 enableLedDie = true
+enableQRCode = true
 enableCarving = true
 enableLedCarving = true
 enableKnownMetCarving = true

@@ -58,6 +58,7 @@ import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.LedCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -113,7 +114,7 @@ public class IPEDReader extends DataSourceReader {
         return name.endsWith(Marcadores.EXT);
     }
 
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
 
         Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE); //$NON-NLS-1$
 
@@ -128,6 +129,7 @@ public class IPEDReader extends DataSourceReader {
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
         DIETask.setEnabled(false);
+        QRCodeTask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
         if (deviceName.endsWith(Marcadores.EXT)) {
@@ -139,11 +141,9 @@ public class IPEDReader extends DataSourceReader {
             IMultiMarcadores mm = (IMultiMarcadores) obj;
             for (IMarcadores m : mm.getSingleBookmarks())
                 processBookmark(m);
-        } else
+        } else {
             processBookmark((IMarcadores) obj);
-
-        return 0;
-
+        }
     }
 
     public void read(Set<HashValue> parentsWithLostSubitems, Manager manager) throws Exception {

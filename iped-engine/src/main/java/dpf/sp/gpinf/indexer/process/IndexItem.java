@@ -104,7 +104,6 @@ public class IndexItem extends BasicProps {
     public static final String POSSIBLE_STR_DOCVALUES_PREFIX = "_str_";
     public static final String POSSIBLE_NUM_DOCVALUES_PREFIX = "_num_";
 
-    public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
     public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
     public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
@@ -161,7 +160,6 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -269,16 +267,9 @@ public class IndexItem extends BasicProps {
         doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
         doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-        Integer intVal = evidence.getFtkID();
-        if (intVal != null) {
-            doc.add(new IntPoint(FTKID, intVal));
-            doc.add(new StoredField(FTKID, intVal));
-            doc.add(new NumericDocValuesField(FTKID, intVal));
-        }
-
         if (evidence instanceof ISleuthKitItem) {
             ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
-            intVal = sevidence.getSleuthId();
+            Integer intVal = sevidence.getSleuthId();
             if (intVal != null) {
                 doc.add(new IntPoint(SLEUTHID, intVal));
                 doc.add(new StoredField(SLEUTHID, intVal));
@@ -303,7 +294,7 @@ public class IndexItem extends BasicProps {
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
         }
 
-        intVal = evidence.getSubitemId();
+        Integer intVal = evidence.getSubitemId();
         if (intVal != null) {
             doc.add(new IntPoint(SUBITEMID, intVal));
             doc.add(new StoredField(SUBITEMID, intVal));
@@ -488,11 +479,11 @@ public class IndexItem extends BasicProps {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
                     typesMap.putIfAbsent(entry.getKey(), val.getClass());
-                    addExtraAttributeToDoc(doc, entry.getKey(), val, false, true, timeEventSet);
+                    addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
                 typesMap.putIfAbsent(entry.getKey(), entry.getValue().getClass());
-                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false, timeEventSet);
+                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, timeEventSet);
             }
         }
 
@@ -606,18 +597,9 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isPossibleType,
-            boolean isMultiValued, Set<TimeStampEvent> timeEventSet) {
-        boolean isString = false;
+    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMultiValued,
+            Set<TimeStampEvent> timeEventSet) {
 
-        /*
-         * utilizar docvalue de outro tipo com mesmo nome provoca erro, entao usamos um
-         * prefixo no nome para diferenciar
-         */
-        String keyPrefix = ""; //$NON-NLS-1$
-        if (isPossibleType) {
-            keyPrefix = POSSIBLE_NUM_DOCVALUES_PREFIX;
-        }
         if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
@@ -657,10 +639,9 @@ public class IndexItem extends BasicProps {
             doc.add(new DoublePoint(key, (Double) oValue));
             doc.add(new StoredField(key, (Double) oValue));
             if (!isMultiValued)
-                doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
+                doc.add(new DoubleDocValuesField(key, (Double) oValue));
             else
-                doc.add(new SortedNumericDocValuesField(keyPrefix + key,
-                        NumericUtils.doubleToSortableLong((Double) oValue)));
+                doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
             byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
@@ -668,25 +649,16 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(key, byteArray));
 
         } else {
-            isString = true;
-        }
-
-        if (isString) {
-            doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
-        }
-
-        if (isPossibleType || isString) {
+            // value is typed as string
             String value = oValue.toString();
+            doc.add(new Field(key, value, storedTokenizedNoNormsField));
             if (value.length() > MAX_DOCVALUE_SIZE) {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
-            if (isPossibleType) {
-                keyPrefix = POSSIBLE_STR_DOCVALUES_PREFIX;
-            }
             if (!isMultiValued)
-                doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedDocValuesField(key, new BytesRef(normalize(value))));
             else
-                doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedSetDocValuesField(key, new BytesRef(normalize(value))));
         }
 
     }
@@ -758,14 +730,9 @@ public class IndexItem extends BasicProps {
                         throw new ParseException("Not a date", 0);
                 }
             } catch (NumberFormatException | ParseException e) {
-                if (newtypesMap.containsKey(key)) {
-                    // prev guessed type was wrong, fallback to string
-                    type = setAndGetType(key, String.class);
-                } else {
-                    // value doesn't match built-in type, store value in other field as string
-                    key += ":string";
-                    type = String.class;
-                }
+                // value doesn't match built-in/guessed type, store value in other field as string
+                key += ":string";
+                type = null;
             }
         }
 
@@ -773,7 +740,7 @@ public class IndexItem extends BasicProps {
             type = setAndGetType(key, String.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, newtypesMap.containsKey(key), isMultiValued, timeEventSet);
+        addExtraAttributeToDoc(doc, key, oValue, isMultiValued, timeEventSet);
     }
 
     private static Class<?> setAndGetType(String key, Class<?> type) {

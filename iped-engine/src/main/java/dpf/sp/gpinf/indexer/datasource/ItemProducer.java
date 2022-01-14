@@ -40,7 +40,7 @@ import iped3.ICaseData;
 /**
  * Responsável por instanciar e executar o contador e o produtor de itens do
  * caso que adiciona os itens a fila de processamento. Podem obter os itens de
- * diversas fontes de dados: pastas, relatórios do FTK, imagens forenses ou
+ * diversas fontes de dados: pastas, relatórios do UFED, imagens forenses ou
  * casos do IPED.
  *
  */
@@ -70,7 +70,7 @@ public class ItemProducer extends Thread implements Closeable {
 
     private void installDataSourceReaders() throws Exception {
 
-        Class<? extends DataSourceReader>[] readerList = new Class[] { FTK3ReportReader.class, SleuthkitReader.class,
+        Class<? extends DataSourceReader>[] readerList = new Class[] { SleuthkitReader.class,
                 IPEDReader.class, UfedXmlReader.class, AD1DataSourceReader.class, IpedCaseReader.class,
                 FolderTreeReader.class // deve ser o último
         };
@@ -113,7 +113,6 @@ public class ItemProducer extends Thread implements Closeable {
                     LOGGER.info("Adding '{}'", source.getAbsolutePath()); //$NON-NLS-1$
                 }
 
-                int alternativeFiles = 0;
                 for (DataSourceReader srcReader : supportedReaders) {
                     if (srcReader.isSupported(source)) {
                         Constructor<? extends DataSourceReader> constr = srcReader.getClass()
@@ -121,12 +120,11 @@ public class ItemProducer extends Thread implements Closeable {
                         srcReader = constr.newInstance(caseData, output, listOnly);
                         instantiatedReaders.add(srcReader);
                         currentReader = srcReader;
-                        alternativeFiles += srcReader.read(source);
+                        srcReader.read(source);
                         break;
                     }
 
                 }
-                caseData.incAlternativeFiles(alternativeFiles);
 
                 // executed only when restarting interrupted processing
                 Set<HashValue> parentsWithLostSubitems = (Set<HashValue>) caseData

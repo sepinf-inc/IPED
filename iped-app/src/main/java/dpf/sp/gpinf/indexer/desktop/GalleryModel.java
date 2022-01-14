@@ -205,13 +205,6 @@ public class GalleryModel extends AbstractTableModel {
                         }
                     }
 
-                    String export = doc.get(IndexItem.EXPORT);
-                    if (image == null && export != null && !export.isEmpty() && isSupportedImage(mediaType)) {
-                        image = getThumbFromFTKReport(
-                                App.get().appCase.getAtomicSource(docId).getCaseDir().getAbsolutePath(), export);
-                        getDimension = false;
-                    }
-
                     if (image == null && !isSupportedImage(mediaType) && !isSupportedVideo(mediaType)) {
                         image = errorImg;
                         value.icon = unsupportedIcon;
@@ -335,36 +328,6 @@ public class GalleryModel extends AbstractTableModel {
         } else {
             return null;
         }
-    }
-
-    private BufferedImage getThumbFromFTKReport(String basePath, String export) {
-
-        BufferedImage image = null;
-        try {
-            int i0 = export.lastIndexOf("/"); //$NON-NLS-1$
-            String nome = export.substring(i0 + 1);
-            int extIdx = nome.indexOf("."); //$NON-NLS-1$
-            if (extIdx > -1) {
-                nome = nome.substring(0, extIdx);
-            }
-            nome += ".jpg"; //$NON-NLS-1$
-
-            // Report FTK3+
-            int i1 = export.indexOf("files/"); //$NON-NLS-1$
-            File file = null;
-            if (i1 > -1) {
-                String thumbPath = export.substring(0, i1) + "thumbnails/" + nome; //$NON-NLS-1$
-                file = Util.getResolvedFile(basePath, thumbPath);
-            }
-            if (file != null && file.exists()) {
-                image = ImageIO.read(file);
-                image = ImageUtil.trim(image);
-            }
-        } catch (Exception e) {
-            // e.printStackTrace();
-        }
-
-        return image;
     }
 
     @Override

@@ -128,8 +128,6 @@ public class Item implements ISleuthKitItem {
 
     private int id = -1;
 
-    private Integer ftkID;
-
     private Integer parentId;
 
     private Integer subitemId;
@@ -449,14 +447,6 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    public Integer getFtkID() {
-        return ftkID;
-    }
-
-    /**
-     *
      * @return o hash do arquivo, caso existente.
      */
     public String getHash() {
@@ -527,8 +517,7 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId() {
         return parentId;
@@ -1026,16 +1015,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setFileOffset(long fileOffset) {
         this.startOffset = fileOffset;
-    }
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    public void setFtkID(Integer ftkID) {
-        this.ftkID = ftkID;
     }
 
     /**

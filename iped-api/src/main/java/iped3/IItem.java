@@ -141,12 +141,6 @@ public interface IItem extends IItemBase {
      */
     String getFileToIndex();
 
-    /**
-     *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    Integer getFtkID();
-
     IHashValue getHashValue();
 
     /**
@@ -357,14 +351,6 @@ public interface IItem extends IItemBase {
      *            offset do item
      */
     void setFileOffset(long fileOffset);
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    void setFtkID(Integer ftkID);
 
     /**
      * Define se o item tem filhos, como subitens ou itens de carving

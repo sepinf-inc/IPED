@@ -614,27 +614,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoriesPanel = new JScrollPane(categoryTree);
         bookmarksPanel = new JScrollPane(bookmarksTree);
 
-        boolean isFTKReport = new File(casesPathFile, "iped/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+        recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
+        recursiveTreeList.setSelected(true);
 
-        if (!isFTKReport) {
-            recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
-            recursiveTreeList.setSelected(true);
+        tree = new JTree(new Object[0]);
+        tree.setRootVisible(true);
+        tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        treeListener = new TreeListener();
+        tree.addTreeSelectionListener(treeListener);
+        tree.addTreeExpansionListener(treeListener);
+        tree.addMouseListener(treeListener);
 
-            tree = new JTree(new Object[0]);
-            tree.setRootVisible(true);
-            tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-            treeListener = new TreeListener();
-            tree.addTreeSelectionListener(treeListener);
-            tree.addTreeExpansionListener(treeListener);
-            tree.addMouseListener(treeListener);
+        evidencePanel = new JPanel(new BorderLayout());
+        evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
+        evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-            evidencePanel = new JPanel(new BorderLayout());
-            evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
-            evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
-
-            // treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null,
-            // evidencePanel, null, 2); //$NON-NLS-1$
-        }
+        // treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null,
+        // evidencePanel, null, 2);
 
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
@@ -730,9 +726,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         appSearchParams.dialogBar = dialogBar;
 
         appletListener = new AppListener();
-        if (!isFTKReport) {
-            recursiveTreeList.addActionListener(treeListener);
-        }
+        recursiveTreeList.addActionListener(treeListener);
         termo.addActionListener(appletListener);
         filtro.addActionListener(appletListener);
         filterDuplicates.addActionListener(appletListener);

@@ -58,7 +58,6 @@ public class HtmlLinkViewer extends HtmlViewer implements SelectionListener {
         this.attachSearcher = attachSearcher;
         this.fileHandler = new AttachmentHandler();
         this.enableJavascript = true;
-        this.enableProxy = false;
 
         Platform.runLater(new Runnable() {
             @Override

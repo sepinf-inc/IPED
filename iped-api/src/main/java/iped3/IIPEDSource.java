@@ -87,8 +87,6 @@ public interface IIPEDSource extends Closeable {
 
     Set<String> getEvidenceUUIDs();
 
-    boolean isFTKReport();
-
     void populateLuceneIdToIdMap() throws IOException;
 
     void reopen() throws IOException;

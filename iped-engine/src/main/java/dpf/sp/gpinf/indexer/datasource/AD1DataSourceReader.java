@@ -30,7 +30,7 @@ public class AD1DataSourceReader extends DataSourceReader {
     }
 
     @Override
-    public int read(File datasource) throws Exception {
+    public void read(File datasource) throws Exception {
 
         rootItem = addRootItem(datasource);
 
@@ -49,7 +49,6 @@ public class AD1DataSourceReader extends DataSourceReader {
 
         }
 
-        return 0;
     }
 
     private IItem addRootItem(File root) throws InterruptedException {

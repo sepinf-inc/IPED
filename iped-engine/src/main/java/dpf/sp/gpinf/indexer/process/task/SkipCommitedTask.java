@@ -193,7 +193,7 @@ public class SkipCommitedTask extends AbstractTask {
             if (subitemsCount != -1) {
                 if (!persistIds.advanceExact(doc))
                     continue;
-                BytesRef persistId = persistIds.binaryValue();
+                BytesRef persistId = persistIds.lookupOrd(persistIds.ordValue());
                 int ord = parentContainers.lookupTerm(persistId);
                 int carvedIgnored = 0;
                 if (subitemCountField == BaseCarveTask.NUM_CARVED_AND_FRAGS) {

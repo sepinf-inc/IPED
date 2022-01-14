@@ -19,9 +19,8 @@ enablePhotoDNALookup = false
 # and "nudityClass" (1 to 5) for ranking and/or filtering.
 enableLedDie = false
 
-
 # Enables QRcode detection and decoding
-enableQRCode = true
+enableQRCode = false
 
 # Enables nudity detection using Yahoo OpenNSFW deeplearning algorithm.
 # You MUST install python and some dependencies to enable it, see https://github.com/sepinf-inc/IPED/wiki/User-Manual#python-modules

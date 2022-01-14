@@ -46,6 +46,8 @@ public class MetadataUtil {
 
     private static final Map<String, String> renameMap = getRenameMap();
 
+    private static final Map<String, String> renameOrRemoveMap = getRenameOrRemoveMap();
+    
     private static final Set<String> singleValueKeys = getSingleValKeys();
 
     private static Map<String, String> metaCaseMap = getMetaCaseMap();
@@ -93,6 +95,10 @@ public class MetadataUtil {
 
     private static Map<String, String> getMetaCaseMap() {
         Map<String, String> metaCaseMap = new HashMap<String, String>();
+        for(String key : renameOrRemoveMap.values()) {
+            key = removePrefix(key);
+            metaCaseMap.put(key.toLowerCase(), key);
+        }
         for(String key : renameMap.values()) {
             key = removePrefix(key);
             metaCaseMap.put(key.toLowerCase(), key);
@@ -141,6 +147,14 @@ public class MetadataUtil {
         return rename;
     }
 
+    private static Map<String, String> getRenameOrRemoveMap() {
+        // Properties here are renamed if is no value already associated with the new name, otherwise they are simply removed. 
+        Map<String, String> renameOrRemove = new HashMap<String, String>();
+        renameOrRemove.put(ExtraProperties.IMAGE_META_PREFIX + "Image Width", ExtraProperties.IMAGE_META_PREFIX + "Width");
+        renameOrRemove.put(ExtraProperties.IMAGE_META_PREFIX + "Image Height", ExtraProperties.IMAGE_META_PREFIX + "Height");
+        return renameOrRemove;
+    }
+    
     private static Set<String> getIgnorePreviewMetas() {
         ignorePreviewMetas = new HashSet<>();
         ignorePreviewMetas.add(Metadata.RESOURCE_NAME_KEY);
@@ -570,11 +584,25 @@ public class MetadataUtil {
     private static void renameKeys(Metadata metadata) {
         for (String oldName : renameMap.keySet()) {
             String[] values = metadata.getValues(oldName);
-            if (values != null) {
+            if (values != null && values.length > 0) {
                 metadata.remove(oldName);
                 String newName = renameMap.get(oldName);
                 for (String val : values) {
                     metadata.add(newName, val);
+                }
+            }
+        }
+        for (String oldName : renameOrRemoveMap.keySet()) {
+            String[] oldValues = metadata.getValues(oldName);
+            if (oldValues != null && oldValues.length > 0) {
+                metadata.remove(oldName);
+                String newName = renameOrRemoveMap.get(oldName);
+                String[] newValues = metadata.getValues(newName);
+                if (newValues == null || newValues.length == 0) {
+                    // Add old values only if there is no values associated with the new name 
+                    for (String val : oldValues) {
+                        metadata.add(newName, val);
+                    }
                 }
             }
         }

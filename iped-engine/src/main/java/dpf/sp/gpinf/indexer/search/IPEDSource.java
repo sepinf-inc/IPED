@@ -130,7 +130,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     Set<String> evidenceUUIDs = new HashSet<String>();
 
-    boolean isFTKReport = false, isReport = false;
+    boolean isReport = false;
 
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
@@ -174,7 +174,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
         try {
             Configuration.getInstance().loadConfigurables(moduleDir.getAbsolutePath(), true);
 
-            isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
             File sleuthFile = new File(casePath, SLEUTH_DB);
@@ -696,10 +695,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLastId() {
         return lastId;
-    }
-
-    public boolean isFTKReport() {
-        return isFTKReport;
     }
 
     public boolean isReport() {

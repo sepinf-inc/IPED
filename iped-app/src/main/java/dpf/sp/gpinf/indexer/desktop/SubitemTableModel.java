@@ -155,10 +155,7 @@ public class SubitemTableModel extends AbstractTableModel
 
     public void listSubItens(Document doc) {
 
-        String parentId = doc.get(IndexItem.FTKID);
-        if (parentId == null) {
-            parentId = doc.get(IndexItem.ID);
-        }
+        String parentId = doc.get(IndexItem.ID);
 
         String textQuery = IndexItem.PARENTID + ":" + parentId; //$NON-NLS-1$
 

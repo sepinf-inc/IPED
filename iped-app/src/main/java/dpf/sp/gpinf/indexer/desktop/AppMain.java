@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.PrintStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.Policy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -22,7 +23,9 @@ import dpf.sp.gpinf.indexer.Versao;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
+import dpf.sp.gpinf.indexer.util.DefaultPolicy;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
@@ -43,6 +46,9 @@ public class AppMain {
     File libDir;
 
     public static void main(String[] args) {
+        // Set the UiScale (must be before any UI-related code).
+        UiScale.loadUserSetting();
+
         checkJavaVersion();
         AppMain appMain = new AppMain();
         try {
@@ -173,6 +179,11 @@ public class AppMain {
             Configuration.getInstance().loadConfigurables(libDir.getParentFile().getAbsolutePath());
 
             if (!finalLoader && processingManager == null) {
+
+                // blocks internet access from viewers
+                Policy.setPolicy(new DefaultPolicy());
+                System.setSecurityManager(new SecurityManager());
+
                 List<File> jars = new ArrayList<File>();
                 PluginConfig pluginConfig = ConfigurationManager.get().findObject(PluginConfig.class);
                 jars.addAll(Arrays.asList(pluginConfig.getPluginJars()));
