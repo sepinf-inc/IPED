@@ -21,6 +21,7 @@ import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import dpf.sp.gpinf.network.util.ProxySever;
 import iped3.io.IStreamSource;
 import iped3.IItem;
 import javafx.application.Platform;
@@ -55,6 +56,7 @@ public class HtmlViewer extends Viewer {
     WebView htmlViewer;
     WebEngine webEngine;
     boolean enableJavascript = false;
+    boolean enableProxy = true;
     FileHandler fileHandler = new FileHandler();
 
     protected volatile File tmpFile;
@@ -134,6 +136,9 @@ public class HtmlViewer extends Viewer {
 
                         if (tmpFile.length() <= getMaxHtmlSize()) {
                             webEngine.setJavaScriptEnabled(enableJavascript);
+                            if (enableProxy) {
+                                ProxySever.get().enable();
+                            }
                             webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
                             webEngine.load(tmpFile.toURI().toURL().toString());
 

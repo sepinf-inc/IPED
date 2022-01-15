@@ -266,16 +266,39 @@ public class MetadataUtil {
     }
 
     private static final void removeIgnorable(Metadata metadata) {
-        for (String key : keysToIgnore)
+        // removes ignorable keys
+        for (String key : keysToIgnore) {
             metadata.remove(key);
+        }
+        for (String key : metadata.names()) {
+            String[] values = metadata.getValues(key);
+            // paranoid cleaning
+            if (values == null || values.length == 0) {
+                metadata.remove(key);
+                continue;
+            }
+            // removes null or empty values
+            ArrayList<String> nonEmpty = new ArrayList<>(values.length);
+            for (String val : values) {
+                if (val != null && !(val = val.strip()).isEmpty()) {
+                    nonEmpty.add(val);
+                }
+            }
+            if (nonEmpty.size() < values.length) {
+                metadata.remove(key);
+                for (String val : nonEmpty) {
+                    metadata.add(key, val);
+                }
+            }
+        }
     }
 
     public static final void normalizeMetadata(Metadata metadata) {
         // remove possible null key (#329)
         metadata.remove(null);
+        removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
-        removeIgnorable(metadata);
         removeInvalidGPSMeta(metadata);
         normalizeCase(metadata);
         prefixAudioMetadata(metadata);
@@ -292,9 +315,23 @@ public class MetadataUtil {
     private static void removeDuplicateKeys(Metadata metadata) {
         for (String key : metadata.names()) {
             Property prop = compositeProps.get(key);
+            String[] values = metadata.getValues(key);
             if (prop != null && prop.getSecondaryExtractProperties() != null) {
-                for (Property p : prop.getSecondaryExtractProperties())
-                    metadata.remove(p.getName());
+                for (Property p : prop.getSecondaryExtractProperties()) {
+                    String[] secValues = metadata.getValues(p.getName());
+                    if (values.length == secValues.length) {
+                        boolean equal = true;
+                        for (int i = 0; i < values.length; i++) {
+                            if (!values[i].equals(secValues[i])) {
+                                equal = false;
+                                break;
+                            }
+                        }
+                        if (equal) {
+                            metadata.remove(p.getName());
+                        }
+                    }
+                }
             }
         }
         if (metadata.get(TiffPageParser.propNumPages) != null) {

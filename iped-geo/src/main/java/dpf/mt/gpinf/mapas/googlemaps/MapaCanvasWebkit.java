@@ -1,6 +1,8 @@
 package dpf.mt.gpinf.mapas.googlemaps;
 
 import java.awt.Component;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 import java.io.File;
 import java.io.IOException;
 import java.util.Base64;
@@ -12,6 +14,7 @@ import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.mt.gpinf.mapas.impl.JMapOptionsPane;
 import dpf.mt.gpinf.mapas.webkit.JSInterfaceFunctions;
 import dpf.sp.gpinf.indexer.util.UiUtil;
+import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,7 +28,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MapaCanvasWebkit extends AbstractMapaCanvas {
+public class MapaCanvasWebkit extends AbstractMapaCanvas implements MouseMotionListener {
 
     WebView browser;
     WebEngine webEngine = null;
@@ -37,6 +40,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
     @SuppressWarnings("restriction")
     public MapaCanvasWebkit() {
         this.jfxPanel = new JFXPanel();
+        this.jfxPanel.addMouseMotionListener(this);
 
         Platform.runLater(new Runnable() {
             public void run() {
@@ -104,6 +108,7 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
 
         Platform.runLater(new Runnable() {
             public void run() {
+                ProxySever.get().disable();
                 webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
@@ -211,6 +216,16 @@ public class MapaCanvasWebkit extends AbstractMapaCanvas {
                 }
             }
         });
+    }
+
+    @Override
+    public void mouseDragged(MouseEvent e) {
+        ProxySever.get().disable();
+    }
+
+    @Override
+    public void mouseMoved(MouseEvent e) {
+        ProxySever.get().disable();
     }
 
 }

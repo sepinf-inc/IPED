@@ -1,7 +1,7 @@
 package dpf.mt.gpinf.mapas.webkit;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
-
+import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -64,6 +64,7 @@ public abstract class AbstractWebkitMapaCanvas extends AbstractMapaCanvas {
 
         Platform.runLater(new Runnable() {
             public void run() {
+                ProxySever.get().disable();
                 webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
