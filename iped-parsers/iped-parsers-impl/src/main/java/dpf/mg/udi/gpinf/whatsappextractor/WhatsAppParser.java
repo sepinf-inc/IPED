@@ -61,7 +61,6 @@ import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3Parser;
-import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
@@ -371,7 +370,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         IItemBase i = context.get(IItemBase.class);
         WhatsAppContext wcontext = dbsFounded.get(i.getExtraAttribute(PERSISTENT_ID).toString());
-        System.out.println("ccc" + wcontext.getItem().getName());
         IItemBase DB = context.get(IItemBase.class);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -381,7 +379,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         try {
         if(!wcontext.isMainDB()) {
-            System.out.println("aa1");
             if (wcontext.getChalist() == null) {
                 synchronized (wcontext) {
 
@@ -416,9 +413,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             createReport(wcontext.getChalist(), searcher,
                     getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass()), handler, extractor,
                     getUserAccount(searcher, DB.getPath(), true));
-            context.set(EmbeddedParent.class, null);
         }
-
         if (wcontext.isMainDB()) {
             stream.skip(mainDbFound.getItem().getLength());
             WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDbFound.getItem().getPath(), searcher,
@@ -438,7 +433,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 synchronized (this) {
                     ChatMerge cm = new ChatMerge(mainDbFound.getChalist(), other.getItem().getName());
                     if (other.getChalist() == null) {
-
                         other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
                         other.setBackup(cm.isBackup(other.getChalist()));
                     }
@@ -463,12 +457,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private List<Chat> getChatList(ExtractorFactory extFactory, WAContactsDirectory contacts, WAAccount account,
-            File dbFile) throws Exception {
-        Extractor waExtractor = extFactory.createMessageExtractor(dbFile, contacts, account);
-        return waExtractor.getChatList();
-
-    }
 
     private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid)
             throws SAXException, IOException {
