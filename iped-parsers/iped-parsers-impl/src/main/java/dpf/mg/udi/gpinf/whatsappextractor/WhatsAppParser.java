@@ -116,6 +116,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     public static final MediaType WHATSAPP_CALL = MediaType.parse("call/x-whatsapp-call"); //$NON-NLS-1$
 
     public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled"; //$NON-NLS-1$
+    
+    
 
     private static final AtomicBoolean sha256Checked = new AtomicBoolean();
 
@@ -129,7 +131,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
-    private static boolean mainDbFound = false;
+    private static WhatsAppContext mainDbFound = null;
+
+    private static final String PERSISTENT_ID = "persistentId";
+
+    private static final HashMap<String, WhatsAppContext> dbsFounded = new HashMap<>();
 
     /**
      * Experimental and incomplete feature. See TODOs below.
@@ -189,7 +195,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
                 if (mergeDbs)
-                    checkIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                    checkIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory(), this);
                 else
                     parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
@@ -302,22 +308,57 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private static synchronized void checkIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
-            ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
+            ParseContext context, ExtractorFactory extFactory, WhatsAppParser parser) throws IOException, SAXException,
+            TikaException {
 
         // workaround to show backups in tree view, because they could be expanded later
         // TODO this should be enhanced when flags could be updated, it's a minor detail
         metadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
 
         String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
-
+        
+        WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
         // TODO if no main db is found, backups are not processed. This must be fixed!
-        if (!mainDbFound && !MSGSTORE_BKP.matcher(dbName).find() && !dbName.contains(MSGSTORE_CRYPTO)) {
-            metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
-            mainDbFound = true;
+        if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
+            if(mainDbFound==null) {
+                try {
+                    mainDbFound = wcontext;
+                    wcontext.setMainDB(true);
+                    IItemSearcher searcher = context.get(IItemSearcher.class);
+                    WAContactsDirectory contacts = parser.getWAContactsDirectoryForPath(wcontext.getItem().getPath(),
+                            searcher, extFactory.getClass());
+
+                    WAAccount account = parser.getUserAccount(searcher, wcontext.getItem().getPath(),
+                            extFactory instanceof ExtractorAndroidFactory);
+                    wcontext.setChalist(
+                            parser.extractChatList(wcontext, extFactory, metadata, context, contacts, account));
+
+                } catch (Exception e) {
+                    // TODO: handle exception
+                    e.printStackTrace();
+                    logger.error(e.toString());
+                }
+            }
         }
+
+        dbsFounded.put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+
+        metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
 
         logger.info("hasChildren " + ((IItem) context.get(IItemBase.class)).getParentIds().toString()); //$NON-NLS-1$
 
+    }
+
+    private List<Chat> extractChatList(WhatsAppContext wcontext, ExtractorFactory extFactory, Metadata metadata,
+            ParseContext context, WAContactsDirectory contacts, WAAccount account)
+            throws WAExtractorException, IOException {
+        try (TemporaryResources tmp = new TemporaryResources()) {
+            TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getStream(), tmp);
+            File tempFile = tis.getFile();
+            extFactory.setConnectionParams(tis, metadata, context, this);
+            Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account);
+            return waExtractor.getChatList();
+        }
     }
 
     private void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
@@ -328,70 +369,97 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (!extractor.shouldParseEmbedded(metadata)) {
             return;
         }
-
-        IItemBase mainDB = context.get(IItemBase.class);
+        IItemBase i = context.get(IItemBase.class);
+        WhatsAppContext wcontext = dbsFounded.get(i.getExtraAttribute(PERSISTENT_ID).toString());
+        System.out.println("ccc" + wcontext.getItem().getName());
+        IItemBase DB = context.get(IItemBase.class);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
-       
-        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\""; //$NON-NLS-1$ //$NON-NLS-2$
-        query += " && " + BasicProps.EVIDENCE_UUID + ":" + mainDB.getDataSource().getUUID(); //$NON-NLS-1$ //$NON-NLS-2$
-        List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
-        Collections.sort(result, new Comparator<IItemBase>() {
-            @Override
-            public int compare(IItemBase o1, IItemBase o2) {
-                return -o1.getName().compareTo(o2.getName());
-            }
-        });
-        TemporaryResources tmp = new TemporaryResources();
-        try {
-            String dbPath = mainDB.getPath();
-            WAContactsDirectory contacts = getWAContactsDirectoryForPath(dbPath, searcher, extFactory.getClass());
-            
-            WAAccount account = getUserAccount(searcher, dbPath, extFactory instanceof ExtractorAndroidFactory);
-            
-            TikaInputStream mainTis = TikaInputStream.get(stream, tmp);
-            File mainTempFile = mainTis.getFile();
-            extFactory.setConnectionParams(mainTis, metadata, context, this);
-            List<Chat> chatlist = new ArrayList<>();
-            chatlist.addAll(getChatList(extFactory, contacts, account, mainTempFile));
-
-            for (IItemBase it : result) {
-                List<Chat> tempChatList;
-                try (InputStream is = it.getStream()) {
-                    TikaInputStream tis = TikaInputStream.get(is, tmp);
-                    File tempFile = tis.getFile();
-                    extFactory.setConnectionParams(tis, metadata, context, this);
-                    tempChatList = getChatList(extFactory, contacts, account, tempFile);
-                }
-                
-                ChatMerge cm = new ChatMerge(chatlist, it.getName());
-                if (cm.isBackup(tempChatList)) {
-                    // merge in the main chat list
-                    int numMsgRecovered = cm.mergeChatList(tempChatList);
-                    logger.info("Recovered {} messages from {}", numMsgRecovered, it.getPath()); //$NON-NLS-1$
-
-                } else {
-                    // TODO if the backup is not merged, parent of chats should be the backup, not
-                    // main db. This is not working currently.
-                    logger.info("Creating separate report for {}", it.getPath()); //$NON-NLS-1$
-                    context.set(EmbeddedParent.class, new EmbeddedParent(it));
-                    createReport(tempChatList, searcher,
-                            getWAContactsDirectoryForPath(it.getPath(), searcher, extFactory.getClass()), handler,
-                            extractor,
-                            getUserAccount(searcher, it.getPath(), true));
-                    context.set(EmbeddedParent.class, null);
-                }
-            }
-            createReport(chatlist, searcher, contacts, handler, extractor, account);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            // sqliteParser.parse(tis, handler, metadata, context);
-            throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
-
-        } finally {
-            tmp.dispose();
+        if (wcontext.isBackup()) {
+            // already parsed
+            return;
         }
+        try {
+        if(!wcontext.isMainDB()) {
+            System.out.println("aa1");
+            if (wcontext.getChalist() == null) {
+                synchronized (wcontext) {
+
+                    IItemBase item = wcontext.getItem();
+                    if (mainDbFound != null) {
+                        item = mainDbFound.getItem();
+                    }
+                    WAContactsDirectory contacts = getWAContactsDirectoryForPath(item.getPath(), searcher,
+                            extFactory.getClass());
+
+                    WAAccount account = getUserAccount(searcher, item.getPath(),
+                            extFactory instanceof ExtractorAndroidFactory);
+
+                    wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
+                }
+
+            }
+            if (mainDbFound != null) {
+                ChatMerge cm = new ChatMerge(mainDbFound.getChalist(), DB.getName());
+                synchronized (this) {
+                    if (cm.isBackup(wcontext.getChalist())) {
+                        wcontext.setBackup(true);
+                        return;
+                    }
+                }
+
+
+            }
+            // if not a backup or main db not found create a report
+            logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
+
+            createReport(wcontext.getChalist(), searcher,
+                    getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass()), handler, extractor,
+                    getUserAccount(searcher, DB.getPath(), true));
+            context.set(EmbeddedParent.class, null);
+        }
+
+        if (wcontext.isMainDB()) {
+            stream.skip(mainDbFound.getItem().getLength());
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDbFound.getItem().getPath(), searcher,
+                    extFactory.getClass());
+
+            WAAccount account = getUserAccount(searcher, mainDbFound.getItem().getPath(),
+                    extFactory instanceof ExtractorAndroidFactory);
+            List<WhatsAppContext> dbs = new ArrayList<>(dbsFounded.values());
+            Collections.sort(dbs, new Comparator<WhatsAppContext>() {
+                @Override
+                public int compare(WhatsAppContext o1, WhatsAppContext o2) {
+                    return -o1.getItem().getName().compareTo(o2.getItem().getName());
+                }
+            });
+
+            for (WhatsAppContext other : dbs) {
+                synchronized (this) {
+                    ChatMerge cm = new ChatMerge(mainDbFound.getChalist(), other.getItem().getName());
+                    if (other.getChalist() == null) {
+
+                        other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
+                        other.setBackup(cm.isBackup(other.getChalist()));
+                    }
+                    if (other.isBackup()) {
+                        // merge in the main chat list
+                        int numMsgRecovered = cm.mergeChatList(other.getChalist());
+                        logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
+                    }
+                }
+
+            }
+
+            createReport(mainDbFound.getChalist(), searcher, contacts, handler, extractor, account);
+        }
+    } catch (Exception e) {
+        // TODO: handle exception
+        e.printStackTrace();
+        logger.error(e.toString());
+    }
+       
+
 
     }
 
