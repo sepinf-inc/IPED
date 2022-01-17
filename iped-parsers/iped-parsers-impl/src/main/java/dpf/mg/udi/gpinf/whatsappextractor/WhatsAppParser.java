@@ -130,11 +130,23 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
-    private static WhatsAppContext mainDbFound = null;
+    private static HashMap<String, WhatsAppContext> mainDbFound = new HashMap<>();
 
     private static final String PERSISTENT_ID = "persistentId";
 
-    private static final HashMap<String, WhatsAppContext> dbsFounded = new HashMap<>();
+    private static final HashMap<String, HashMap<String, WhatsAppContext>> dbsFounded = new HashMap<>();
+
+    private static final void putDB(WhatsAppContext wcontext) {
+        if (!dbsFounded.containsKey(wcontext.getItem().getDataSource().getUUID())) {
+            dbsFounded.put(wcontext.getItem().getDataSource().getUUID(), new HashMap<>());
+        }
+        dbsFounded.get(wcontext.getItem().getDataSource().getUUID())
+                .put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+    }
+
+    private static WhatsAppContext getContext(IItemBase item) {
+        return dbsFounded.get(item.getDataSource().getUUID()).get(item.getExtraAttribute(PERSISTENT_ID).toString());
+    }
 
 
     private boolean mergeDbs = false;
@@ -210,56 +222,59 @@ public class WhatsAppParser extends SQLite3DBParser {
             ContentHandler handler, EmbeddedDocumentExtractor extractor, WAAccount account) throws Exception {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
-        for (Chat c : chatList) {
-            getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher);
-            int frag = 0;
-            int firstMsg = 0;
-            ReportGenerator reportGenerator = new ReportGenerator();
-            byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
-            while (bytes != null) {
-                Metadata chatMetadata = new Metadata();
-                int nextMsg = reportGenerator.getNextMsgNum();
+        synchronized (chatList) {
+            for (Chat c : chatList) {
+                getAvatar(searcher, c.getRemote());
+                searchMediaFilesForMessagesInBatches(c.getMessages(), searcher);
+                int frag = 0;
+                int firstMsg = 0;
+                ReportGenerator reportGenerator = new ReportGenerator();
+                byte[] bytes = reportGenerator.generateNextChatHtml(c, contacts, account);
+                while (bytes != null) {
+                    Metadata chatMetadata = new Metadata();
+                    int nextMsg = reportGenerator.getNextMsgNum();
 
-                List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
-                storeLinkedHashes(msgSubset, chatMetadata, searcher);
-                storeLocations(msgSubset, chatMetadata);
+                    List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
+                    storeLinkedHashes(msgSubset, chatMetadata, searcher);
+                    storeLocations(msgSubset, chatMetadata);
 
-                firstMsg = nextMsg;
-                byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
+                    firstMsg = nextMsg;
+                    byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
 
-                String chatName = c.getTitle();
-                if (frag > 0 || nextBytes != null)
-                    chatName += "_" + frag++; //$NON-NLS-1$
+                    String chatName = c.getTitle();
+                    if (frag > 0 || nextBytes != null)
+                        chatName += "_" + frag++; //$NON-NLS-1$
 
-                chatMetadata.set(TikaCoreProperties.TITLE, chatName);
-                chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
-                chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
-                chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
+                    chatMetadata.set(TikaCoreProperties.TITLE, chatName);
+                    chatMetadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_CHAT.toString());
+                    chatMetadata.set(ExtraProperties.ITEM_VIRTUAL_ID, Integer.toString(chatVirtualId));
+                    chatMetadata.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
 
-                if (extractMessages && msgSubset.size() > 0) {
-                    chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
-                }
-                if (account != null) {
-                    String local = formatContact(account, cache);
-                    chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
-                }
-                if (c.isGroupChat()) {
-                    for (WAContact member : c.getGroupmembers()) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                    if (extractMessages && msgSubset.size() > 0) {
+                        chatMetadata.set(BasicProps.HASCHILD, Boolean.TRUE.toString());
                     }
-                } else {
-                    if (c.getRemote() != null) {
-                        chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+                    if (account != null) {
+                        String local = formatContact(account, cache);
+                        chatMetadata.add(ExtraProperties.PARTICIPANTS, local);
                     }
-                }
+                    if (c.isGroupChat()) {
+                        for (WAContact member : c.getGroupmembers()) {
+                            chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
+                        }
+                    } else {
+                        if (c.getRemote() != null) {
+                            chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
+                        }
+                    }
 
-                ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
-                extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
-                bytes = nextBytes;
+                    ByteArrayInputStream chatStream = new ByteArrayInputStream(bytes);
+                    extractor.parseEmbedded(chatStream, handler, chatMetadata, false);
+                    bytes = nextBytes;
 
-                if (extractMessages) {
-                    extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor, cache);
+                    if (extractMessages) {
+                        extractMessages(chatName, c, msgSubset, account, contacts, chatVirtualId++, handler, extractor,
+                                cache);
+                    }
                 }
             }
         }
@@ -302,7 +317,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private static synchronized void checkIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
+    private static void checkIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory, WhatsAppParser parser) throws IOException, SAXException,
             TikaException {
         String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
@@ -324,13 +339,13 @@ public class WhatsAppParser extends SQLite3DBParser {
             logger.error(e.toString());
         }
         if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
-            if(mainDbFound==null) {
-                mainDbFound = wcontext;
+            if (!mainDbFound.containsKey(wcontext.getItem().getDataSource().getUUID())) {
+                mainDbFound.put(wcontext.getItem().getDataSource().getUUID(), wcontext);
                 wcontext.setMainDB(true);
             }
         }
 
-        dbsFounded.put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+        putDB(wcontext);
 
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
 
@@ -350,20 +365,20 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void findOtherDBS(IItemSearcher searcher) {
+    private void findOtherDBS(IItemSearcher searcher, WhatsAppContext mainDbFound) {
         String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\""; //$NON-NLS-1$ //$NON-NLS-2$
         query += " AND " + BasicProps.EVIDENCE_UUID + ":" + mainDbFound.getItem().getDataSource().getUUID(); //$NON-NLS-1$ //$NON-NLS-2$
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
             if (!dbsFounded.containsKey(it.getExtraAttribute(PERSISTENT_ID).toString())) {
                 WhatsAppContext wcontext = new WhatsAppContext(false, it);
-                dbsFounded.put(it.getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+                putDB(wcontext);
             }
         }
     }
 
-    private void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context,
-            ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
+    private synchronized void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
@@ -371,7 +386,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             return;
         }
         IItemBase i = context.get(IItemBase.class);
-        WhatsAppContext wcontext = dbsFounded.get(i.getExtraAttribute(PERSISTENT_ID).toString());
+        WhatsAppContext wcontext = getContext(i);
         IItemBase DB = context.get(IItemBase.class);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -382,30 +397,30 @@ public class WhatsAppParser extends SQLite3DBParser {
         try {
         if(!wcontext.isMainDB()) {
             if (wcontext.getChalist() == null) {
-                synchronized (wcontext) {
 
-                    IItemBase item = wcontext.getItem();
-                    if (mainDbFound != null) {
-                        item = mainDbFound.getItem();
-                    }
-                    WAContactsDirectory contacts = getWAContactsDirectoryForPath(item.getPath(), searcher,
-                            extFactory.getClass());
 
-                    WAAccount account = getUserAccount(searcher, item.getPath(),
-                            extFactory instanceof ExtractorAndroidFactory);
-
-                    wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
+                IItemBase item = wcontext.getItem();
+                if (mainDbFound.containsKey(wcontext.getItem().getDataSource().getUUID())) {
+                    item = mainDbFound.get(wcontext.getItem().getDataSource().getUUID()).getItem();
                 }
+                WAContactsDirectory contacts = getWAContactsDirectoryForPath(item.getPath(), searcher,
+                        extFactory.getClass());
+
+                WAAccount account = getUserAccount(searcher, item.getPath(),
+                        extFactory instanceof ExtractorAndroidFactory);
+
+                wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
 
             }
-            if (mainDbFound != null) {
-                ChatMerge cm = new ChatMerge(mainDbFound.getChalist(), DB.getName());
-                synchronized (this) {
-                    if (cm.isBackup(wcontext.getChalist())) {
-                        wcontext.setBackup(true);
-                        return;
-                    }
+            if (mainDbFound.containsKey(wcontext.getItem().getDataSource().getUUID())) {
+                ChatMerge cm = new ChatMerge(mainDbFound.get(wcontext.getItem().getDataSource().getUUID()).getChalist(),
+                        DB.getName());
+
+                if (cm.isBackup(wcontext.getChalist())) {
+                    wcontext.setBackup(true);
+                    return;
                 }
+
 
 
             }
@@ -417,14 +432,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                     getUserAccount(searcher, DB.getPath(), true));
         }
         if (wcontext.isMainDB()) {
-            findOtherDBS(searcher);
-            stream.skip(mainDbFound.getItem().getLength());
-            WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDbFound.getItem().getPath(), searcher,
+            WhatsAppContext mainDb = wcontext;
+            findOtherDBS(searcher, mainDb);
+            stream.skip(wcontext.getItem().getLength());
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDb.getItem().getPath(), searcher,
                     extFactory.getClass());
 
-            WAAccount account = getUserAccount(searcher, mainDbFound.getItem().getPath(),
+            WAAccount account = getUserAccount(searcher, mainDb.getItem().getPath(),
                     extFactory instanceof ExtractorAndroidFactory);
-            List<WhatsAppContext> dbs = new ArrayList<>(dbsFounded.values());
+            List<WhatsAppContext> dbs = new ArrayList<>(
+                    dbsFounded.get(wcontext.getItem().getDataSource().getUUID()).values());
             Collections.sort(dbs, new Comparator<WhatsAppContext>() {
                 @Override
                 public int compare(WhatsAppContext o1, WhatsAppContext o2) {
@@ -433,22 +450,22 @@ public class WhatsAppParser extends SQLite3DBParser {
             });
 
             for (WhatsAppContext other : dbs) {
-                synchronized (this) {
-                    ChatMerge cm = new ChatMerge(mainDbFound.getChalist(), other.getItem().getName());
-                    if (other.getChalist() == null) {
-                        other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
-                    }
-                    other.setBackup(cm.isBackup(other.getChalist()));
-                    if (other.isBackup()) {
-                        // merge in the main chat list
-                        int numMsgRecovered = cm.mergeChatList(other.getChalist());
-                        logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
-                    }
+
+                ChatMerge cm = new ChatMerge(mainDb.getChalist(), other.getItem().getName());
+                if (other.getChalist() == null) {
+                    other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
                 }
+                other.setBackup(cm.isBackup(other.getChalist()));
+                if (other.isBackup()) {
+                    // merge in the main chat list
+                    int numMsgRecovered = cm.mergeChatList(other.getChalist());
+                    logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
+                }
+
 
             }
 
-            createReport(mainDbFound.getChalist(), searcher, contacts, handler, extractor, account);
+            createReport(mainDb.getChalist(), searcher, contacts, handler, extractor, account);
         }
     } catch (Exception e) {
 
