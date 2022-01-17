@@ -31,15 +31,15 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
  */
 public class VideoThumbsMaker {
 
+    private static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
+
     private String mplayer = "mplayer.exe"; //$NON-NLS-1$
     private int timeoutProcess = 45000;
     private int timeoutInfo = 15000;
     private int timeoutFirstCall = 300000;
     private boolean verbose = false;
     private int quality = 50;
-    private String escape = null;
     private boolean firstCall = true;
-    private boolean isWindows = false;
     private static final String prefix = "_vtm"; //$NON-NLS-1$
     private int ignoreWaitKeyFrame;
     private static final int maxLines = 20000;
@@ -69,16 +69,6 @@ public class VideoThumbsMaker {
     }
 
     public VideoProcessResult createThumbs(File inOrg, File tmp, List<VideoThumbsOutputConfig> outs, int numFrames) throws Exception {
-        if (escape == null) {
-            try {
-                escape = ""; //$NON-NLS-1$
-                if (System.getProperty("os.name").toLowerCase().indexOf("win") >= 0) { //$NON-NLS-1$ //$NON-NLS-2$
-                    isWindows = true;
-                    escape = "\\\""; //$NON-NLS-1$
-                }
-            } catch (Exception e) {
-            }
-        }
 
         long start = System.currentTimeMillis();
         VideoProcessResult result = new VideoProcessResult();
