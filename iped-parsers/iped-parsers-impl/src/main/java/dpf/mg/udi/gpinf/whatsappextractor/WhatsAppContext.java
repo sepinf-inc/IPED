@@ -16,6 +16,7 @@ public class WhatsAppContext {
     public WhatsAppContext(boolean isMainDB, IItemBase item) {
         this.setMainDB(isMainDB);
         this.setItem(item);
+        this.setBackup(false);
         
     }
 
