@@ -450,7 +450,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             });
 
             for (WhatsAppContext other : dbs) {
-
+                // skip the main db
+                if (other.isMainDB()) {
+                    continue;
+                }
                 ChatMerge cm = new ChatMerge(mainDb.getChalist(), other.getItem().getName());
                 if (other.getChalist() == null) {
                     other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
