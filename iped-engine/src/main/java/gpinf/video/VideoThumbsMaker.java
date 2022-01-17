@@ -47,7 +47,7 @@ public class VideoThumbsMaker {
     public String getVersion() {
         List<String> cmds = new ArrayList<String>(Arrays.asList(new String[] { mplayer }));
 
-        ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
+        ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo, null);
         if (res.exitCode != 0) {
             return null;
         }
@@ -103,7 +103,7 @@ public class VideoThumbsMaker {
                 cmds.remove(pos + 1);
                 cmds.remove(pos);
             }
-            ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo);
+            ExecResult res = run(cmds.toArray(new String[0]), firstCall ? timeoutFirstCall : timeoutInfo, null);
             if (firstCall) {
                 firstCall = false;
             }
@@ -204,9 +204,7 @@ public class VideoThumbsMaker {
             cmds.add(videoStream);
         }
 
-        cmds.addAll(Arrays.asList(new String[] { "-vo", //$NON-NLS-1$
-                "jpeg:smooth=50:nobaseline:quality=" + quality + ":outdir=" + escape //$NON-NLS-1$ //$NON-NLS-2$
-                        + subTmp.getPath().replace('\\', '/') + escape }));
+        cmds.addAll(Arrays.asList(new String[] { "-vo", "jpeg:smooth=50:nobaseline:quality=" + quality}));
 
         String rot = null;
         boolean transposed = false;
@@ -284,7 +282,7 @@ public class VideoThumbsMaker {
                 cmds.addAll(vfOptions(frameStepStr, scale, rot));
             }
 
-            ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess);
+            ExecResult res = run(cmds.toArray(new String[0]), timeoutProcess, subTmp);
             if (res.timeout) {
                 result.setTimeout(true);
             } else if (result.isTimeout()) {
@@ -395,7 +393,7 @@ public class VideoThumbsMaker {
             return null;
         }
         String[] cdir = new String[] { "cmd", "/c", "dir", "/x", in.getPath() }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
-        ExecResult res = run(cdir, 1000);
+        ExecResult res = run(cdir, 1000, null);
         String sdir = res.output;
         if (sdir != null && res.exitCode == 0) {
             String ext = getExtensao(in.getName());
@@ -467,7 +465,7 @@ public class VideoThumbsMaker {
         subTmp.delete();
     }
 
-    private final ExecResult run(String[] cmds, int timeout) {
+    private final ExecResult run(String[] cmds, int timeout, File currDir) {
         if (verbose) {
             System.err.print("CMD = "); //$NON-NLS-1$
             for (int i = 0; i < cmds.length; i++) {
@@ -485,6 +483,9 @@ public class VideoThumbsMaker {
         try {
             final ProcessBuilder pb = new ProcessBuilder(cmds);
             pb.redirectErrorStream(true);
+            if (currDir != null) {
+                pb.directory(currDir);
+            }
             process = pb.start();
             StreamGobbler outputGobbler = new StreamGobbler(process.getInputStream(), sb, process);
             outputGobbler.start();
