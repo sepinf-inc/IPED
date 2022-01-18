@@ -5,7 +5,7 @@ import java.util.List;
 
 public class CPFRegexValidatorService extends AbstractDocRegexValidatorService {
 
-    private static final String REGEX_NAME = "CPF";
+    private static final String REGEX_NAME = "BR_CPF";
 
     static final int[] CPF_WEIGHTS = { 11, 10, 9, 8, 7, 6, 5, 4, 3, 2 };
 

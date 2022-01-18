@@ -11,7 +11,7 @@ public class TituloEleitorRegexValidatorService extends BasicAbstractRegexValida
 
     private static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 
-    private static final String REGEX_NAME = "TITULO_ELEITOR";
+    private static final String REGEX_NAME = "BR_TITULO_ELEITOR";
 
     @Override
     public void init(File confDir) {
