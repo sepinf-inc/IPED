@@ -257,8 +257,7 @@ public class TelegramParser extends SQLite3DBParser {
             meta.set(TikaCoreProperties.CREATED, m.getTimeStamp());
             meta.set(ExtraProperties.DECODED_DATA, Boolean.TRUE.toString());
             if (m.getLatitude() != null && m.getLongitude() != null) {
-                meta.set(TikaCoreProperties.LATITUDE, m.getLatitude());
-                meta.set(TikaCoreProperties.LONGITUDE, m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude());
             }
             meta.set(org.apache.tika.metadata.Message.MESSAGE_FROM, m.getFrom().toString());
             if (m.getChat().isGroup()) {

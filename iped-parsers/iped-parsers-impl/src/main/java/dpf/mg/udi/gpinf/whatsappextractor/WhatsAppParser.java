@@ -222,7 +222,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 List<Message> msgSubset = c.getMessages().subList(firstMsg, nextMsg);
                 storeLinkedHashes(msgSubset, chatMetadata, searcher);
-                storeLocations(msgSubset, chatMetadata);
+
+                // condition to avoid duplicate locations being saved in chat & messages
+                if (!extractMessages) {
+                    storeLocations(msgSubset, chatMetadata);
+                }
 
                 firstMsg = nextMsg;
                 byte[] nextBytes = reportGenerator.generateNextChatHtml(c, contacts, account);
@@ -560,8 +564,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             if (m.getMessageType() == MessageType.LOCATION_MESSAGE
                     || m.getMessageType() == MessageType.SHARE_LOCATION_MESSAGE) {
-                meta.set(TikaCoreProperties.LATITUDE, m.getLatitude());
-                meta.set(TikaCoreProperties.LONGITUDE, m.getLongitude());
+                meta.set(ExtraProperties.LOCATIONS, m.getLatitude() + ";" + m.getLongitude()); //$NON-NLS-1$
             }
 
             if (m.getMessageStatus() != null) {
