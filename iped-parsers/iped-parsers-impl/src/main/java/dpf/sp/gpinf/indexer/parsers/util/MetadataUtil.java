@@ -38,6 +38,8 @@ public class MetadataUtil {
 
     private static Set<String> generalKeys = getGeneralKeys();
 
+    private static Set<String> commonKeys = getCommonKeys();
+
     private static Map<String, Property> compositeProps = getCompositeProps();
 
     private static Set<String> keysToIgnore = getIgnoreKeys();
@@ -107,6 +109,7 @@ public class MetadataUtil {
     }
     
     private static String removePrefix(String key) {
+        // UFED prefix doesn't need to be removed because it is not added by this class
         if (key.startsWith(ExtraProperties.IMAGE_META_PREFIX))
             return key.substring(ExtraProperties.IMAGE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.VIDEO_META_PREFIX))
@@ -121,6 +124,8 @@ public class MetadataUtil {
             return key.substring(ExtraProperties.OFFICE_META_PREFIX.length());
         if (key.startsWith(ExtraProperties.GENERIC_META_PREFIX))
             return key.substring(ExtraProperties.GENERIC_META_PREFIX.length());
+        if (key.startsWith(ExtraProperties.COMMON_META_PREFIX))
+            return key.substring(ExtraProperties.COMMON_META_PREFIX.length());
         return key;
     }
     
@@ -144,6 +149,7 @@ public class MetadataUtil {
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
+        rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
         return rename;
     }
 
@@ -173,9 +179,9 @@ public class MetadataUtil {
         generalKeys.add(Metadata.RESOURCE_NAME_KEY);
         generalKeys.add(Metadata.CONTENT_LENGTH);
         generalKeys.add(Metadata.EMBEDDED_RELATIONSHIP_ID);
-        generalKeys.add(TikaCoreProperties.TIKA_META_PREFIX);
         generalKeys.add(TikaCoreProperties.ORIGINAL_RESOURCE_NAME.getName());
         generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_WARNING.getName());
+        generalKeys.add(TikaCoreProperties.TIKA_META_EXCEPTION_EMBEDDED_STREAM.getName());
         generalKeys.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE);
         generalKeys.add(IndexerDefaultParser.ENCRYPTED_DOCUMENT);
         generalKeys.add(IndexerDefaultParser.PARSER_EXCEPTION);
@@ -242,7 +248,10 @@ public class MetadataUtil {
         props.add(TikaCoreProperties.TITLE);
         props.add(TikaCoreProperties.DESCRIPTION);
         props.add(TikaCoreProperties.PRINT_DATE);
-        props.add(TikaCoreProperties.EMBEDDED_RESOURCE_TYPE);
+        props.add(TikaCoreProperties.TRANSITION_KEYWORDS_TO_DC_SUBJECT);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_DESCRIPTION);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_DC_TITLE);
+        props.add(TikaCoreProperties.TRANSITION_SUBJECT_TO_OO_SUBJECT);
         props.add(IPTC.COPYRIGHT_OWNER_ID);
         props.add(IPTC.IMAGE_CREATOR_ID);
         props.add(IPTC.IMAGE_SUPPLIER_ID);
@@ -252,6 +261,59 @@ public class MetadataUtil {
         for (Property prop : props)
             map.put(prop.getName(), prop);
         return map;
+    }
+
+    private static Set<String> getCommonKeys() {
+        Set<String> props = new HashSet<String>();
+        /*
+         * Commented properties below are set only by 1 parser or rarely set by other
+         * parsers using Tika-1.27/iped-4.0.0, this can change in future releases.
+         */
+        props.add(TikaCoreProperties.CREATOR.getName());
+        props.add(TikaCoreProperties.CREATED.getName());
+        props.add(TikaCoreProperties.MODIFIED.getName());
+        props.add(TikaCoreProperties.COMMENTS.getName());
+        props.add(TikaCoreProperties.KEYWORDS.getName());
+
+        // set by PDF and rarely set by OpenOffice/DcXML parsers today
+        // props.add(TikaCoreProperties.FORMAT.getName());
+
+        props.add(TikaCoreProperties.MODIFIER.getName());
+        props.add(TikaCoreProperties.LANGUAGE.getName());
+
+        // set by Office and rarely set by DcXML/Iptc parsers today
+        // props.add(TikaCoreProperties.PUBLISHER.getName());
+
+        // below properties are rarely set by parsers
+        // props.add(TikaCoreProperties.IDENTIFIER.getName());
+        // props.add(TikaCoreProperties.CONTRIBUTOR.getName());
+        // props.add(TikaCoreProperties.COVERAGE.getName());
+        // props.add(TikaCoreProperties.RELATION.getName());
+        // props.add(TikaCoreProperties.RIGHTS.getName());
+        // props.add(TikaCoreProperties.SOURCE.getName());
+        // props.add(TikaCoreProperties.TYPE.getName());
+
+        props.add(TikaCoreProperties.TITLE.getName());
+        props.add(TikaCoreProperties.DESCRIPTION.getName());
+
+        // set only by Office parsers today
+        // props.add(TikaCoreProperties.PRINT_DATE.getName());
+
+        props.add(TikaCoreProperties.CREATOR_TOOL.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.METADATA_DATE.getName());
+
+        props.add(ExtraProperties.LOCATIONS);
+        props.add(TikaCoreProperties.ALTITUDE.getName());
+
+        // set only by PDFParser today
+        // props.add(TikaCoreProperties.RATING.getName());
+
+        // set by PDFParser and rarely set by OpenOffice parser today
+        // props.add(TikaCoreProperties.HAS_SIGNATURE.getName());
+
+        return props;
     }
 
     private static Set<String> getIgnoreKeys() {
@@ -299,8 +361,9 @@ public class MetadataUtil {
         removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
-        removeInvalidGPSMeta(metadata);
+        normalizeGPSMeta(metadata);
         normalizeCase(metadata);
+        prefixCommonMetadata(metadata);
         prefixAudioMetadata(metadata);
         prefixImageMetadata(metadata);
         prefixVideoMetadata(metadata);
@@ -339,22 +402,31 @@ public class MetadataUtil {
         }
     }
 
-    private static void removeInvalidGPSMeta(Metadata metadata) {
+    private static void normalizeGPSMeta(Metadata metadata) {
         String lat = metadata.get(Metadata.LATITUDE);
+        if (lat == null)
+            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
         String lon = metadata.get(Metadata.LONGITUDE);
-        boolean remove = false;
+        if (lon == null)
+            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
+        boolean invalid = lat == null || lon == null;
         try {
             if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
-                remove = true;
+                invalid = true;
             }
         } catch (NumberFormatException e) {
-            remove = true;
+            invalid = true;
         }
-        if (remove) {
-            metadata.remove(Metadata.LATITUDE.getName());
-            metadata.remove(Metadata.LONGITUDE.getName());
+        if (!invalid) {
+            metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+        } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
+        // always remove these, if valid, they were stored above
+        metadata.remove(Metadata.LATITUDE.getName());
+        metadata.remove(Metadata.LONGITUDE.getName());
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
@@ -495,6 +567,7 @@ public class MetadataUtil {
         }
     }
 
+    // used to prefix metadata keys with names already used by basic item properties
     private static void prefixBasicMetadata(Metadata metadata) {
         for (String key : metadata.names()) {
             if (BasicProps.SET.contains(key)) {
@@ -511,12 +584,26 @@ public class MetadataUtil {
         String[] keys = metadata.names();
         for (String key : keys) {
             if (generalKeys.contains(key) || key.toLowerCase().startsWith(prefix.toLowerCase())
-                    || key.startsWith(ExtraProperties.UFED_META_PREFIX))
+                    || key.startsWith(ExtraProperties.UFED_META_PREFIX)
+                    || key.startsWith(ExtraProperties.COMMON_META_PREFIX)
+                    || key.startsWith(TikaCoreProperties.TIKA_META_PREFIX))
                 continue;
             String[] values = metadata.getValues(key);
             metadata.remove(key);
             for (String val : values)
                 metadata.add(prefix + key, val);
+        }
+    }
+
+    private static void prefixCommonMetadata(Metadata metadata) {
+        for (String key : metadata.names()) {
+            if (commonKeys.contains(key) && !key.startsWith(ExtraProperties.COMMON_META_PREFIX)) {
+                String[] values = metadata.getValues(key);
+                metadata.remove(key);
+                for (String val : values) {
+                    metadata.add(ExtraProperties.COMMON_META_PREFIX + key, val);
+                }
+            }
         }
     }
 
