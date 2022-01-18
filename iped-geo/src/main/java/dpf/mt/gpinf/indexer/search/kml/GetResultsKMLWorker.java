@@ -83,17 +83,10 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             progress.setMaximum(results.getLength());
         }
 
-        String latKey = (ExtraProperties.COMMON_META_PREFIX + Metadata.LATITUDE.getName()).replace(":", "\\:");
-        String longKey = (ExtraProperties.COMMON_META_PREFIX + Metadata.LONGITUDE.getName()).replace(":", "\\:");
-        String range1 = ":[-90 TO 90]";
-        String range2 = ":[-180 TO 180]";
-
-        StringBuilder sb = new StringBuilder();
-        sb.append("(" + latKey + range1 + " && " + longKey + range2 + ") ");
-        sb.append("(" + ExtraProperties.LOCATIONS + ":*)");
+        String query = ExtraProperties.LOCATIONS.replace(":", "\\:") + ":*";
 
         /* nova query com apenas os itens que possuem georreferenciamento */
-        IIPEDSearcher searcher = app.createNewSearch(sb.toString());
+        IIPEDSearcher searcher = app.createNewSearch(query);
         IMultiSearchResult multiResult = searcher.multiSearch();
 
         kmlResult.gpsItems = new HashMap<>();
@@ -116,24 +109,27 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             int luceneId = app.getIPEDSource().getLuceneId(item);
             doc = app.getIPEDSource().getSearcher().doc(luceneId);
 
-            String lat = resolveLatitude(doc);
-            String longit = resolveLongitude(doc);
+            String lat;
+            String longit;
             String alt = resolveAltitude(doc);
 
             String[] locations = doc.getValues(ExtraProperties.LOCATIONS);
 
-            if (lat != null && longit != null) {
+            if (locations != null && locations.length == 1) {
+                String[] locs = locations[0].split(";"); //$NON-NLS-1$
+                lat = locs[0].trim();
+                longit = locs[1].trim();
                 generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
                 kmlResult.gpsItems.put(item, null);
 
-            } else if (locations != null) {
+            } else if (locations != null && locations.length > 1) {
                 int subitem = -1;
                 List<Integer> subitems = new ArrayList<>();
                 kmlResult.gpsItems.put(item, subitems);
                 for (String location : locations) {
                     String[] locs = location.split(";"); //$NON-NLS-1$
-                    lat = locs[0];
-                    longit = locs[1];
+                    lat = locs[0].trim();
+                    longit = locs[1].trim();
                     generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, ++subitem);
                     subitems.add(subitem);
                 }
@@ -252,17 +248,6 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<String, 
             return ""; //$NON-NLS-1$
         }
         return SimpleHTMLEncoder.htmlEncode(html);
-    }
-
-    static public String resolveLatitude(Document doc) {
-        String lat = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.LATITUDE.getName());
-        return lat;
-
-    }
-
-    static public String resolveLongitude(Document doc) {
-        String longit = doc.get(ExtraProperties.COMMON_META_PREFIX + Metadata.LONGITUDE.getName());
-        return longit;
     }
 
     static public String resolveAltitude(Document doc) {

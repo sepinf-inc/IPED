@@ -149,8 +149,6 @@ public class MetadataUtil {
         rename.put(ExtraProperties.IMAGE_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.IMAGE_META_PREFIX + "Height");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_WIDTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Width");
         rename.put(ExtraProperties.VIDEO_META_PREFIX + TIFF.IMAGE_LENGTH.getName(), ExtraProperties.VIDEO_META_PREFIX + "Height");
-        rename.put(ExtraProperties.UFED_META_PREFIX + "Latitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.LATITUDE.getName());
-        rename.put(ExtraProperties.UFED_META_PREFIX + "Longitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.LONGITUDE.getName());
         rename.put(ExtraProperties.UFED_META_PREFIX + "Altitude", ExtraProperties.COMMON_META_PREFIX + TikaCoreProperties.ALTITUDE.getName());
         return rename;
     }
@@ -306,8 +304,7 @@ public class MetadataUtil {
         // set only by PDFParser today
         // props.add(TikaCoreProperties.METADATA_DATE.getName());
 
-        props.add(TikaCoreProperties.LATITUDE.getName());
-        props.add(TikaCoreProperties.LONGITUDE.getName());
+        props.add(ExtraProperties.LOCATIONS);
         props.add(TikaCoreProperties.ALTITUDE.getName());
 
         // set only by PDFParser today
@@ -364,7 +361,7 @@ public class MetadataUtil {
         removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
-        removeInvalidGPSMeta(metadata);
+        normalizeGPSMeta(metadata);
         normalizeCase(metadata);
         prefixCommonMetadata(metadata);
         prefixAudioMetadata(metadata);
@@ -405,22 +402,31 @@ public class MetadataUtil {
         }
     }
 
-    private static void removeInvalidGPSMeta(Metadata metadata) {
+    private static void normalizeGPSMeta(Metadata metadata) {
         String lat = metadata.get(Metadata.LATITUDE);
+        if (lat == null)
+            lat = metadata.get(ExtraProperties.UFED_META_PREFIX + "Latitude");
         String lon = metadata.get(Metadata.LONGITUDE);
-        boolean remove = false;
+        if (lon == null)
+            lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
+        boolean invalid = lat == null || lon == null;
         try {
             if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
-                remove = true;
+                invalid = true;
             }
         } catch (NumberFormatException e) {
-            remove = true;
+            invalid = true;
         }
-        if (remove) {
-            metadata.remove(Metadata.LATITUDE.getName());
-            metadata.remove(Metadata.LONGITUDE.getName());
+        if (!invalid) {
+            metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);
+        } else {
             metadata.remove(Metadata.ALTITUDE.getName());
         }
+        // always remove these, if valid, they were stored above
+        metadata.remove(Metadata.LATITUDE.getName());
+        metadata.remove(Metadata.LONGITUDE.getName());
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Latitude");
+        metadata.remove(ExtraProperties.UFED_META_PREFIX + "Longitude");
     }
 
     private static void removeDuplicateValues(Metadata metadata) {
@@ -591,7 +597,7 @@ public class MetadataUtil {
 
     private static void prefixCommonMetadata(Metadata metadata) {
         for (String key : metadata.names()) {
-            if (commonKeys.contains(key)) {
+            if (commonKeys.contains(key) && !key.startsWith(ExtraProperties.COMMON_META_PREFIX)) {
                 String[] values = metadata.getValues(key);
                 metadata.remove(key);
                 for (String val : values) {

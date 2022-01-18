@@ -80,7 +80,7 @@ public class ExtraProperties {
 
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
-    public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    public static final String LOCATIONS = COMMON_META_PREFIX + "geo:locations"; //$NON-NLS-1$
 
     public static final String URL = "url"; //$NON-NLS-1$
 
