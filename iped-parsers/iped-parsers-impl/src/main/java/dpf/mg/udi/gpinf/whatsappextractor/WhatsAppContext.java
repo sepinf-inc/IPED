@@ -12,11 +12,14 @@ public class WhatsAppContext {
     private IItemBase item;
     private List<Chat> chalist = null;
 
+    private IItemBase mainDBItem;
+
 
     public WhatsAppContext(boolean isMainDB, IItemBase item) {
         this.setMainDB(isMainDB);
         this.setItem(item);
         this.setBackup(null);
+        this.setMainDBItem(null);
         
     }
 
@@ -50,5 +53,13 @@ public class WhatsAppContext {
 
     public void setBackup(Boolean isBackup) {
         this.isBackup = isBackup;
+    }
+
+    public IItemBase getMainDBItem() {
+        return mainDBItem;
+    }
+
+    public void setMainDBItem(IItemBase mainDBItem) {
+        this.mainDBItem = mainDBItem;
     }
 }
