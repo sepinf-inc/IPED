@@ -52,6 +52,7 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 import macee.core.Configurable;
 import repackaged.org.apache.http.HttpHost;
 import repackaged.org.apache.http.auth.AuthScope;
@@ -254,6 +255,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         properties.put(BasicProps.ID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTID, Collections.singletonMap("type", "keyword"));
         properties.put(BasicProps.PARENTIDs, Collections.singletonMap("type", "keyword"));
+        properties.put(ExtraProperties.LOCATIONS, Collections.singletonMap("type", "geo_point"));
 
         // mapping the parent-child relation
         /*
@@ -510,7 +512,13 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 builder.field(key, previewInDataSource);
 
             } else if (key != null) {
-                builder.array(key, item.getMetadata().getValues(key));
+                String[] values = item.getMetadata().getValues(key);
+                if (ExtraProperties.LOCATIONS.equals(key)) {
+                    for (int i = 0; i < values.length; i++) {
+                        values[i] = values[i].replace(';', ',');
+                    }
+                }
+                builder.array(key, values);
             }
         }
 
