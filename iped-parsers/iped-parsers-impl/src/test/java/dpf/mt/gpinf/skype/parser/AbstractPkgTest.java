@@ -216,11 +216,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public boolean isDuplicate() {
-                return false;
-            }
-
-            @Override
             public boolean isDir() {
                 return false;
             }
