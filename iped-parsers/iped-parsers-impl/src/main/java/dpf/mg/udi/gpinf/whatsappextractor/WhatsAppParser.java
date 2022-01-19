@@ -390,12 +390,15 @@ public class WhatsAppParser extends SQLite3DBParser {
         IItemBase DB = context.get(IItemBase.class);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
-        if (wcontext.isBackup()) {
+        if (wcontext.isBackup() != null && wcontext.isBackup()) {
             // already parsed
             return;
         }
         try {
         if(!wcontext.isMainDB()) {
+            if (wcontext.isBackup() != null && wcontext.isBackup()) {
+                return;
+            }
             if (wcontext.getChalist() == null) {
 
 
@@ -415,7 +418,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (mainDbFound.containsKey(wcontext.getItem().getDataSource().getUUID())) {
                 ChatMerge cm = new ChatMerge(mainDbFound.get(wcontext.getItem().getDataSource().getUUID()).getChalist(),
                         DB.getName());
-
                 if (cm.isBackup(wcontext.getChalist())) {
                     wcontext.setBackup(true);
                     return;
@@ -458,7 +460,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (other.getChalist() == null) {
                     other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
                 }
-                other.setBackup(cm.isBackup(other.getChalist()));
+                if (other.isBackup() == null) {
+                    other.setBackup(cm.isBackup(other.getChalist()));
+                }
                 if (other.isBackup()) {
                     // merge in the main chat list
                     int numMsgRecovered = cm.mergeChatList(other.getChalist());
