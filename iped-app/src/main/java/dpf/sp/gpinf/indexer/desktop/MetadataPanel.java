@@ -503,7 +503,8 @@ public class MetadataPanel extends JPanel
         numValues = reader.getNumericDocValues(field);
         numValuesSet = reader.getSortedNumericDocValues(field);
         docValues = reader.getSortedDocValues(field);
-        docValuesSet = reader.getSortedSetDocValues(field);
+        String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
+        docValuesSet = reader.getSortedSetDocValues(prefix + field);
         if (BasicProps.TIME_EVENT.equals(field)) {
             eventDocValuesSet = reader.getSortedSetDocValues(ExtraProperties.TIME_EVENT_GROUPS);
         }
