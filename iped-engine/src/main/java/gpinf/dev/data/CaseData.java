@@ -250,16 +250,16 @@ public class CaseData implements ICaseData {
     }
 
     private void computeGlobalId(IItem item) {
-        HashValue persistentId = new HashValue(Util.getPersistentId(item));
+        HashValue globalId = new HashValue(Util.getGlobalId(item));
         Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
                 .get(SkipCommitedTask.GLOBALID_ID_MAP);
         // changes id to previous processing id if using --continue
         if (globalToIdMap != null) {
-            Integer previousId = globalToIdMap.get(persistentId);
+            Integer previousId = globalToIdMap.get(globalId);
             if (previousId != null) {
                 item.setId(previousId.intValue());
             } else {
-                String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
+                String splittedTextId = Util.generateGlobalIdForTextFrag(Util.getGlobalId(item), 1);
                 previousId = globalToIdMap.get(new HashValue(splittedTextId));
                 if (previousId != null) {
                     item.setId(previousId.intValue());

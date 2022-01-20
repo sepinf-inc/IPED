@@ -38,7 +38,7 @@ import macee.core.Configurable;
  * Task to ignore already commited files into index. Commited containers without
  * all their subitems commited are not ignored to be processed again. Redefines
  * ids and parentIds of incomming items to be equal of commited items if they
- * have same persistentId.
+ * have same globalId.
  * 
  * @author Luis Nassif
  *
@@ -51,11 +51,11 @@ public class SkipCommitedTask extends AbstractTask {
 
     public static final String GLOBALID_ID_MAP = "GLOBALID_ID_MAP";
 
-    private static HashValue[] commitedPersistentIds;
+    private static HashValue[] commitedGlobalIds;
 
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
 
-    private static Map<HashValue, Integer> persistentToIdMap = new HashMap<>();
+    private static Map<HashValue, Integer> globalToIdMap = new HashMap<>();
 
     private static HashMap<String, String> prevRootNameToEvidenceUUID = new HashMap<>();
 
@@ -64,11 +64,11 @@ public class SkipCommitedTask extends AbstractTask {
     private static AtomicBoolean inited = new AtomicBoolean();
 
     public static boolean isAlreadyCommited(IItem item) {
-        if (commitedPersistentIds == null) {
+        if (commitedGlobalIds == null) {
             return false;
         }
-        HashValue persistentId = new HashValue(Util.getPersistentId(item));
-        return Arrays.binarySearch(commitedPersistentIds, persistentId) >= 0;
+        HashValue globalId = new HashValue(Util.getGlobalId(item));
+        return Arrays.binarySearch(commitedGlobalIds, globalId) >= 0;
     }
 
     @Override
@@ -107,16 +107,16 @@ public class SkipCommitedTask extends AbstractTask {
                 return;
             }
 
-            SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.PERSISTENT_ID);
+            SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
             int size = persistIds == null ? 0 : persistIds.getValueCount();
-            commitedPersistentIds = new HashValue[size];
-            for (int ord = 0; ord < commitedPersistentIds.length; ord++) {
-                String persistentId = persistIds.lookupOrd(ord).utf8ToString();
-                commitedPersistentIds[ord] = new HashValue(persistentId);
+            commitedGlobalIds = new HashValue[size];
+            for (int ord = 0; ord < commitedGlobalIds.length; ord++) {
+                String globalId = persistIds.lookupOrd(ord).utf8ToString();
+                commitedGlobalIds[ord] = new HashValue(globalId);
             }
-            // Arrays.sort(persistentIds);
+            // Arrays.sort(globalIds);
 
-            SortedDocValues persistentParents = aReader.getSortedDocValues(IndexItem.PARENT_PERSISTENT_ID);
+            SortedDocValues globalParents = aReader.getSortedDocValues(IndexItem.PARENT_GLOBAL_ID);
             SortedDocValues hasChildValues = aReader.getSortedDocValues(IndexItem.HASCHILD);
             SortedDocValues isDirValues = aReader.getSortedDocValues(IndexItem.ISDIR);
             SortedDocValues isRootValues = aReader.getSortedDocValues(IndexItem.ISROOT);
@@ -124,11 +124,11 @@ public class SkipCommitedTask extends AbstractTask {
             NumericDocValues prevParentIds = aReader.getNumericDocValues(IndexItem.PARENTID);
             NumericDocValues prevIds = aReader.getNumericDocValues(IndexItem.ID);
             for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-                String hashVal = persistentParents == null ? null : DocValuesUtil.getVal(persistentParents, doc);
+                String hashVal = globalParents == null ? null : DocValuesUtil.getVal(globalParents, doc);
                 if (hashVal != null && !hashVal.isEmpty()) {
                     HashValue persistParent = new HashValue(hashVal);
-                    if (prevParentIds != null && Arrays.binarySearch(commitedPersistentIds, persistParent) < 0) {
-                        persistentToIdMap.put(persistParent, DocValuesUtil.get(prevParentIds, doc).intValue());
+                    if (prevParentIds != null && Arrays.binarySearch(commitedGlobalIds, persistParent) < 0) {
+                        globalToIdMap.put(persistParent, DocValuesUtil.get(prevParentIds, doc).intValue());
                     }
                 }
                 boolean hasChild = hasChildValues != null && Boolean.valueOf(DocValuesUtil.getVal(hasChildValues, doc));
@@ -136,26 +136,26 @@ public class SkipCommitedTask extends AbstractTask {
                 boolean isRoot = isRootValues != null && Boolean.valueOf(DocValuesUtil.getVal(isRootValues, doc));
                 boolean isTexSplitted = hasSplittedText != null && Boolean.valueOf(DocValuesUtil.getVal(hasSplittedText, doc));
                 if (prevIds != null && persistIds != null && (hasChild || isDir || isRoot || isTexSplitted)) {
-                    HashValue persistentId = new HashValue(DocValuesUtil.getVal(persistIds, doc));
-                    persistentToIdMap.put(persistentId, DocValuesUtil.get(prevIds, doc).intValue());
+                    HashValue globalId = new HashValue(DocValuesUtil.getVal(persistIds, doc));
+                    globalToIdMap.put(globalId, DocValuesUtil.get(prevIds, doc).intValue());
                 }
             }
 
-            caseData.putCaseObject(GLOBALID_ID_MAP, persistentToIdMap);
+            caseData.putCaseObject(GLOBALID_ID_MAP, globalToIdMap);
 
             // reset doc values to iterate again
-            persistIds = aReader.getSortedDocValues(IndexItem.PERSISTENT_ID);
+            persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
             prevIds = aReader.getNumericDocValues(IndexItem.ID);
 
-            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_PERSISTENT_ID,
+            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_GLOBAL_ID,
                     ParsingTask.NUM_SUBITEMS);
-            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.PARENT_PERSISTENT_ID,
+            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.PARENT_GLOBAL_ID,
                     BaseCarveTask.NUM_CARVED_AND_FRAGS);
 
             caseData.putCaseObject(PARENTS_WITH_LOST_SUBITEMS, parentsWithLostSubitems);
 
         } catch (IndexNotFoundException e) {
-            commitedPersistentIds = new HashValue[0];
+            commitedGlobalIds = new HashValue[0];
         }
 
     }
@@ -179,7 +179,7 @@ public class SkipCommitedTask extends AbstractTask {
             int id = DocValuesUtil.get(ids, doc).intValue();
             int ord = DocValuesUtil.getOrd(parentContainers, doc);
             if (ord != -1 && !countedIds.get(id)) {
-                if (parentIdField == IndexItem.CONTAINER_PERSISTENT_ID || subitems == null
+                if (parentIdField == IndexItem.CONTAINER_GLOBAL_ID || subitems == null
                         || !Boolean.valueOf(DocValuesUtil.getVal(subitems, doc))) {
                     referencingSubitems[ord]++;
                 }
@@ -213,9 +213,9 @@ public class SkipCommitedTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        commitedPersistentIds = null;
+        commitedGlobalIds = null;
         parentsWithLostSubitems.clear();
-        persistentToIdMap.clear();
+        globalToIdMap.clear();
         prevRootNameToEvidenceUUID.clear();
     }
 
@@ -223,8 +223,8 @@ public class SkipCommitedTask extends AbstractTask {
     protected void process(IItem item) throws Exception {
 
         // must be calculated first, in all cases, to allow recovering in the future
-        HashValue persistentId = new HashValue(Util.getPersistentId(item));
-        Util.computeParentPersistentId(item);
+        HashValue globalId = new HashValue(Util.getGlobalId(item));
+        Util.computeParentGlobalId(item);
 
         if (!args.isContinue()) {
             return;
@@ -232,8 +232,8 @@ public class SkipCommitedTask extends AbstractTask {
 
         // ignore already commited items. If they are containers without all their
         // subitems commited, process again
-        if (Arrays.binarySearch(commitedPersistentIds, persistentId) >= 0) {
-            if (!parentsWithLostSubitems.contains(persistentId)) {
+        if (Arrays.binarySearch(commitedGlobalIds, globalId) >= 0) {
+            if (!parentsWithLostSubitems.contains(globalId)) {
                 item.setToIgnore(true);
                 return;
             }

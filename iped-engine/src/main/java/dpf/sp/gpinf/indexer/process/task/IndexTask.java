@@ -148,7 +148,7 @@ public class IndexTask extends AbstractTask {
         if (fragments == -1) {
             fragments = 1;
         }
-        String origPersistentId = Util.getPersistentId(evidence);
+        String origGlobalId = Util.getGlobalId(evidence);
         try {
             /**
              * breaks very large texts in separate documents to be indexed
@@ -159,8 +159,8 @@ public class IndexTask extends AbstractTask {
                 // and to reuse same frag id when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
 
-                String fragPersistId = Util.generatePersistentIdForTextFrag(origPersistentId, fragName);
-                evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, fragPersistId);
+                String fragPersistId = Util.generateGlobalIdForTextFrag(origGlobalId, fragName);
+                evidence.setExtraAttribute(IndexItem.GLOBAL_ID, fragPersistId);
 
                 if (fragments != 0) {
                     stats.incSplits();
@@ -189,7 +189,7 @@ public class IndexTask extends AbstractTask {
             else
                 throw e;
         } finally {
-            evidence.setExtraAttribute(IndexItem.PERSISTENT_ID, origPersistentId);
+            evidence.setExtraAttribute(IndexItem.GLOBAL_ID, origGlobalId);
             noCloseReader.reallyClose();
         }
 
