@@ -396,11 +396,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private synchronized void parseAllDBS(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                new ParsingEmbeddedDocumentExtractor(context));
-        if (!extractor.shouldParseEmbedded(metadata)) {
-            return;
-        }
+
         IItemBase i = context.get(IItemBase.class);
         WhatsAppContext wcontext = getContext(i);
         IItemBase DB = context.get(IItemBase.class);
@@ -447,6 +443,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             // if not a backup or main db not found create a report
             logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
 
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            if (!extractor.shouldParseEmbedded(metadata)) {
+                return;
+            }
             createReport(wcontext.getChalist(), searcher,
                     getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass()), handler, extractor,
                     getUserAccount(searcher, DB.getPath(), true));
@@ -490,6 +491,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
 
 
+            }
+
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            if (!extractor.shouldParseEmbedded(metadata)) {
+                return;
             }
 
             createReport(mainDb.getChalist(), searcher, contacts, handler, extractor, account);
