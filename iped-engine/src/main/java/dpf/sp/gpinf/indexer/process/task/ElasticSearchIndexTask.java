@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.elasticsearch.action.ActionListener;
 import org.elasticsearch.action.DocWriteRequest.OpType;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexRequest;
@@ -356,7 +357,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
             fragNum = 1;
         }
 
-        String parentId = Util.getGlobalId(item);
+        String globalId = Util.getGlobalId(item);
+
+        // used for parent items in elastic to store just metadata info
+        // evidence UUID is combined to produce an 'UUID' like ID for items in elastic
+        String parentId = DigestUtils.md5Hex(globalId + item.getDataSource().getUUID());
 
         try {
             // creates the father;
@@ -366,6 +371,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
             idToPath.put(parentId, item.getPath());
 
             do {
+                // used for children items in elastic to store text content
                 String contentGlobalId = Util.generateGlobalIdForTextFrag(parentId, fragNum);
 
                 // creates the json _source of the fragment
@@ -394,7 +400,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
             } while (!Thread.currentThread().isInterrupted() && fragReader.nextFragment());
 
         } finally {
-            item.setExtraAttribute(IndexItem.GLOBAL_ID, parentId);
             fragReader.close();
         }
 
