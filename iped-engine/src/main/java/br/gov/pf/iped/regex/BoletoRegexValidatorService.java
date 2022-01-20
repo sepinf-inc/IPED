@@ -8,7 +8,7 @@ public class BoletoRegexValidatorService extends AbstractDocRegexValidatorServic
 
     protected static final Pattern SEPARATORS = Pattern.compile("[^0-9xX]");
 
-    private static final String REGEX_NAME = "BOLETO";
+    private static final String REGEX_NAME = "BR_BOLETO";
 
     private static final int[] WEIGHTS = { 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4,
             3, 2, 9, 8, 7, 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };

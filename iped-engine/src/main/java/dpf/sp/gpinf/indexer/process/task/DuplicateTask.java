@@ -46,19 +46,20 @@ public class DuplicateTask extends AbstractTask {
     public void process(IItem evidence) {
 
         // Verificação de duplicados
+        boolean isDuplicate = false;
         IHashValue hashValue = evidence.getHashValue();
         if (hashValue != null) {
             synchronized (hashMap) {
                 if (!hashMap.containsKey(hashValue)) {
                     hashMap.put(hashValue, hashValue);
                 } else {
-                    evidence.setDuplicate(true);
+                    isDuplicate = true;
                 }
 
             }
         }
 
-        if (ignoreDuplicates && evidence.isDuplicate() && !evidence.isDir() && !evidence.isRoot()
+        if (ignoreDuplicates && isDuplicate && !evidence.isDir() && !evidence.isRoot()
                 && !caseData.isIpedReport()) {
             evidence.setToIgnore(true);
         }

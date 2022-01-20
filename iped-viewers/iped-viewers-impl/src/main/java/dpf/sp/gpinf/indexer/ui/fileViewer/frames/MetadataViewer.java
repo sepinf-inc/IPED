@@ -293,7 +293,6 @@ public abstract class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.ISDIR, item.isDir());
         fillProp(sb, BasicProps.HASCHILD, item.hasChildren());
         fillProp(sb, BasicProps.ISROOT, item.isRoot());
-        fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
         Arrays.sort(keys, comparator);

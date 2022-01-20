@@ -422,10 +422,6 @@ public class IndexItem extends BasicProps {
             doc.add(new SortedDocValuesField(HASH, new BytesRef(value)));
         }
 
-        value = Boolean.toString(evidence.isDuplicate());
-        doc.add(new StringField(DUPLICATE, value, Field.Store.YES));
-        doc.add(new SortedDocValuesField(DUPLICATE, new BytesRef(value)));
-
         value = Boolean.toString(evidence.isDeleted());
         doc.add(new StringField(DELETED, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(DELETED, new BytesRef(value)));

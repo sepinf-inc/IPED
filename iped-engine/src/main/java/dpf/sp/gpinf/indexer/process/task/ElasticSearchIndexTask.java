@@ -489,7 +489,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.CATEGORY, item.getCategorySet())
                 .field(BasicProps.CONTENTTYPE, item.getMediaType().toString()).field(BasicProps.HASH, item.getHash())
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())
-                .field(BasicProps.DUPLICATE, item.isDuplicate()).field(BasicProps.DELETED, item.isDeleted())
+                .field(BasicProps.DELETED, item.isDeleted())
                 .field(BasicProps.HASCHILD, item.hasChildren()).field(BasicProps.ISDIR, item.isDir())
                 .field(BasicProps.ISROOT, item.isRoot()).field(BasicProps.CARVED, item.isCarved())
                 .field(BasicProps.SUBITEM, item.isSubItem()).field(BasicProps.OFFSET, item.getFileOffset())

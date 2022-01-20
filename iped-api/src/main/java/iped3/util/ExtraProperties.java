@@ -60,6 +60,8 @@ public class ExtraProperties {
 
     public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
 
+    public static final String COMMON_META_PREFIX = "common:"; //$NON-NLS-1$
+
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$
@@ -78,7 +80,7 @@ public class ExtraProperties {
 
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
-    public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    public static final String LOCATIONS = COMMON_META_PREFIX + "geo:locations"; //$NON-NLS-1$
 
     public static final String URL = "url"; //$NON-NLS-1$
 

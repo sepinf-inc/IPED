@@ -150,16 +150,16 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("office:Template: Normal.dotm"));
             assertTrue(hts.contains("office:Word-Count: 504"));
             assertTrue(hts.contains("office:cp:revision: 5"));
-            assertTrue(hts.contains("office:dc:creator: Guilherme Andreúce Sobreira Monteiro"));
-            assertTrue(hts.contains("office:dcterms:created: 2021-04-08T17:03:00Z"));
-            assertTrue(hts.contains("office:dcterms:modified: 2021-04-09T12:25:00Z"));
+            assertTrue(hts.contains("common:dc:creator: Guilherme Andreúce Sobreira Monteiro"));
+            assertTrue(hts.contains("common:dcterms:created: 2021-04-08T17:03:00Z"));
+            assertTrue(hts.contains("common:dcterms:modified: 2021-04-09T12:25:00Z"));
             assertTrue(hts.contains("office:extended-properties:AppVersion: 12.0000"));
             assertTrue(hts.contains("office:extended-properties:Application: Microsoft Office Word"));
             assertTrue(hts.contains("office:extended-properties:DocSecurityString: None"));
             assertTrue(hts.contains("office:extended-properties:Template: Normal.dotm"));
             assertTrue(hts.contains("office:meta:character-count: 2724"));
             assertTrue(hts.contains("office:meta:character-count-with-spaces: 3222"));
-            assertTrue(hts.contains("office:meta:last-author: Guilherme Andreúce Sobreira Monteiro"));
+            assertTrue(hts.contains("common:meta:last-author: Guilherme Andreúce Sobreira Monteiro"));
             assertTrue(hts.contains("office:meta:line-count: 22"));
             assertTrue(hts.contains("office:meta:page-count: 1"));
             assertTrue(hts.contains("office:meta:paragraph-count: 6"));
@@ -169,7 +169,7 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts
                     .contains("Content-Type=application/vnd.openxmlformats-officedocument.wordprocessingml.document"));
             assertTrue(mts.contains("office:meta:character-count=2724"));
-            assertTrue(mts.contains("office:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
+            assertTrue(mts.contains("common:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
 
         } catch (Exception e) {
             System.out.println(e);
@@ -288,9 +288,9 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("pdf:created: 2017-08-29T19:12:20Z"));
             assertTrue(hts.contains(
                     "pdf:dc:format: application/pdf; version=\"1.7 Adobe Extension Level 8\" application/pdf; version=1.7"));
-            assertTrue(hts.contains("pdf:dc:language: en-US"));
-            assertTrue(hts.contains("pdf:dcterms:created: 2017-08-29T19:12:20Z"));
-            assertTrue(hts.contains("pdf:dcterms:modified: 2017-09-12T19:12:44Z"));
+            assertTrue(hts.contains("common:dc:language: en-US"));
+            assertTrue(hts.contains("common:dcterms:created: 2017-08-29T19:12:20Z"));
+            assertTrue(hts.contains("common:dcterms:modified: 2017-09-12T19:12:44Z"));
             assertTrue(hts.contains("pdf:docinfo:created: 2017-08-29T19:12:20Z"));
             assertTrue(hts.contains("pdf:docinfo:creator_tool: Adobe InDesign CC 2017 (Macintosh)"));
             assertTrue(hts.contains("pdf:docinfo:modified: 2017-09-12T19:12:44Z"));
@@ -304,7 +304,7 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(hts.contains("pdf:trapped: False"));
             assertTrue(hts.contains("pdf:unmappedUnicodeCharsPerPage: 0"));
             assertTrue(hts.contains("pdf:xmp:CreateDate: 2017-08-29T14:12:20Z"));
-            assertTrue(hts.contains("pdf:xmp:CreatorTool: Adobe InDesign CC 2017 (Macintosh)"));
+            assertTrue(hts.contains("common:xmp:CreatorTool: Adobe InDesign CC 2017 (Macintosh)"));
             assertTrue(hts.contains("pdf:xmp:MetadataDate: 2017-09-12T15:12:44Z"));
             assertTrue(hts.contains("pdf:xmp:ModifyDate: 2017-09-12T15:12:44Z"));
             assertTrue(hts.contains("pdf:xmpMM:DerivedFrom:DocumentID: xmp.did:f3bb53b2-ad53-4b82-8274-0773472726fc"));

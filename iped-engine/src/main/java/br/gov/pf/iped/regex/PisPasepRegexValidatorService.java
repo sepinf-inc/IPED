@@ -5,7 +5,7 @@ import java.util.List;
 
 public class PisPasepRegexValidatorService extends AbstractDocRegexValidatorService {
 
-    private static final String REGEX_NAME = "PISPASEP";
+    private static final String REGEX_NAME = "BR_PISPASEP";
     private static final int[] PIS_PASEP_WEIGHTS = { 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
 
     @Override

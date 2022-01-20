@@ -393,7 +393,7 @@ public class Manager {
     private void removeEvidence(String uuid) throws IOException {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE,
-                "WARN: removing evidence does NOT update duplicate flag, graph and internal storage for now!");
+                "WARN: removing evidence does NOT update graph and internal storage for now!");
         LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
         TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
         int prevDocs = writer.getDocStats().numDocs;

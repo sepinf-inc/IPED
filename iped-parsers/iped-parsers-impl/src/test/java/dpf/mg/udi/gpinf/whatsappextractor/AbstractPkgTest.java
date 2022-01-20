@@ -77,12 +77,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public boolean isDuplicate() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
             public boolean isDir() {
                 // TODO Auto-generated method stub
                 return false;
@@ -443,12 +437,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setDuplicate(boolean duplicate) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setDeleted(boolean deleted) {
                 // TODO Auto-generated method stub
 
@@ -765,12 +753,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public boolean isRoot() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isDuplicate() {
                 // TODO Auto-generated method stub
                 return false;
             }
