@@ -80,9 +80,9 @@ public class Statistics {
         return instance;
     }
 
-    public int getCarvedIgnoredNum(HashValue persistentId) {
+    public int getCarvedIgnoredNum(HashValue globalId) {
         synchronized (ignoredMap) {
-            return ignoredMap.getOrDefault(persistentId, 0);
+            return ignoredMap.getOrDefault(globalId, 0);
         }
     }
 
@@ -106,7 +106,7 @@ public class Statistics {
 
     public void incCarvedIgnored(IItem item) {
         this.incCorruptCarveIgnored();
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID));
         synchronized (ignoredMap) {
             Integer ignored = ignoredMap.getOrDefault(parentPersistId, 0);
             ignoredMap.put(parentPersistId, ++ignored);
@@ -114,7 +114,7 @@ public class Statistics {
     }
 
     public void resetCarvedIgnored(IItem item) {
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.GLOBAL_ID));
         synchronized (ignoredMap) {
             ignoredMap.remove(parentPersistId);
         }

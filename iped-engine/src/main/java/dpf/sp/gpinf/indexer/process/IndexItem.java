@@ -105,9 +105,9 @@ public class IndexItem extends BasicProps {
     public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
 
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
-    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
-    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
+    public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
+    public static final String PARENT_GLOBAL_ID = "parentGlobalId"; //$NON-NLS-1$
+    public static final String CONTAINER_GLOBAL_ID = "containerGlobalId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
