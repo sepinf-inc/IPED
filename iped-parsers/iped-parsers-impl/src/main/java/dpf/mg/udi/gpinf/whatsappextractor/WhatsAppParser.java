@@ -135,11 +135,15 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final String PERSISTENT_ID = "persistentId";
 
+    private static final String IS_BACKUP_FROM = "isBackupFrom";
+
     private static final HashMap<String, WhatsAppContext> dbsFounded = new HashMap<>();
 
     private static final void putDB(WhatsAppContext wcontext) {
+        synchronized (dbsFounded) {
+            dbsFounded.put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+        }
 
-        dbsFounded.put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
     }
 
     private static WhatsAppContext getContext(IItemBase item) {
@@ -336,13 +340,17 @@ public class WhatsAppParser extends SQLite3DBParser {
             e.printStackTrace();
             logger.error(e.toString());
         }
-        if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
-            mainDbFound.add(wcontext);
-            wcontext.setMainDB(true);
-            wcontext.setBackup(false);
-        }
 
+            if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
+                synchronized (mainDbFound) {
+                    mainDbFound.add(wcontext);
+                    wcontext.setMainDB(true);
+                    wcontext.setBackup(false);
+                }
+            }
         putDB(wcontext);
+
+
 
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
 
@@ -376,7 +384,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void addBackupMessage(WhatsAppContext item, IItemBase main, XHTMLContentHandler xhtml)
             throws SAXException {
         IItem i = (IItem) item.getItem();
-        i.setExtraAttribute("isBackupFrom", main.getExtraAttribute(PERSISTENT_ID).toString());
+        i.setExtraAttribute(IS_BACKUP_FROM, main.getExtraAttribute(PERSISTENT_ID).toString());
         xhtml.startDocument();
         xhtml.characters("Backup from " + main.getPath());
         xhtml.endDocument();

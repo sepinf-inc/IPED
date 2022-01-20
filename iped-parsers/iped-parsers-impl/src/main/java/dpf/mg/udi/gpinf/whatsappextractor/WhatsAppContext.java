@@ -7,7 +7,7 @@ import iped3.io.IItemBase;
 public class WhatsAppContext {
 
     private boolean isMainDB;
-    private Boolean isBackup = null;
+    private boolean isBackup;
 
     private IItemBase item;
     private List<Chat> chalist = null;
@@ -18,7 +18,7 @@ public class WhatsAppContext {
     public WhatsAppContext(boolean isMainDB, IItemBase item) {
         this.setMainDB(isMainDB);
         this.setItem(item);
-        this.setBackup(null);
+        this.setBackup(false);
         this.setMainDBItem(null);
         
     }
