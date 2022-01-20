@@ -40,6 +40,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class RowComparator implements Comparator<Integer> {
 
@@ -128,7 +129,8 @@ public class RowComparator implements Comparator<Integer> {
                 }
             }
             if (ndv == null && sndv == null) {
-                ssdv = atomicReader.getSortedSetDocValues(indexedField);
+                String prefix = ExtraProperties.LOCATIONS.equals(field) ? IndexItem.GEO_SSDV_PREFIX : "";
+                ssdv = atomicReader.getSortedSetDocValues(prefix + indexedField);
                 if (isCategory) {
                     localizedCategoryOrds = getLocalizedCategoryOrd(ssdv);
                 }
