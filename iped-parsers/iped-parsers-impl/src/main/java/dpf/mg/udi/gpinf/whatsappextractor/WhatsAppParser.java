@@ -346,7 +346,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
 
-        logger.info("hasChildren " + ((IItem) context.get(IItemBase.class)).getParentIds().toString()); //$NON-NLS-1$
 
     }
 
@@ -362,8 +361,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void findOtherDBS(IItemSearcher searcher, WhatsAppContext mainDbFound) {
-        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\""; //$NON-NLS-1$ //$NON-NLS-2$
+    private void findOtherDBS(IItemSearcher searcher) {
+        String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
+                + MSG_STORE_2 + "\"";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
             if (!dbsFounded.containsKey(it.getExtraAttribute(PERSISTENT_ID).toString())) {
@@ -442,7 +442,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         if (wcontext.isMainDB()) {
             WhatsAppContext mainDb = wcontext;
-            findOtherDBS(searcher, mainDb);
+            findOtherDBS(searcher);
             stream.skip(wcontext.getItem().getLength());
             WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDb.getItem().getPath(), searcher,
                     extFactory.getClass());
