@@ -1019,7 +1019,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         if (cnt > 0 && cnt <= 40) {
             galleryModel.setColumnCount(cnt);
             int colWidth = gallery.getWidth() / cnt;
-            gallery.setRowHeight(colWidth);
+            if (colWidth > 0)
+                gallery.setRowHeight(colWidth);
             int selRow = resultsTable.getSelectedRow();
             galleryModel.fireTableStructureChanged();
             if (selRow >= 0) {
