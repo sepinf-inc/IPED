@@ -204,8 +204,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         CreateIndexRequest request = new CreateIndexRequest(indexName);
         Builder builder = Settings.builder().put(MAX_FIELDS_KEY, elasticConfig.getMax_fields())
                 .put(INDEX_SHARDS_KEY, elasticConfig.getIndex_shards())
-                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas())
-                .put(IGNORE_MALFORMED, true);
+                .put(INDEX_REPLICAS_KEY, elasticConfig.getIndex_replicas()).put(IGNORE_MALFORMED, true);
 
         if (!elasticConfig.getIndex_policy().isEmpty()) {
             builder.put(INDEX_POLICY_KEY, elasticConfig.getIndex_policy());
@@ -496,11 +495,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.CATEGORY, item.getCategorySet())
                 .field(BasicProps.CONTENTTYPE, item.getMediaType().toString()).field(BasicProps.HASH, item.getHash())
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())
-                .field(BasicProps.DELETED, item.isDeleted())
-                .field(BasicProps.HASCHILD, item.hasChildren()).field(BasicProps.ISDIR, item.isDir())
-                .field(BasicProps.ISROOT, item.isRoot()).field(BasicProps.CARVED, item.isCarved())
-                .field(BasicProps.SUBITEM, item.isSubItem()).field(BasicProps.OFFSET, item.getFileOffset())
-                .field("extraAttributes", item.getExtraAttributeMap());
+                .field(BasicProps.DELETED, item.isDeleted()).field(BasicProps.HASCHILD, item.hasChildren())
+                .field(BasicProps.ISDIR, item.isDir()).field(BasicProps.ISROOT, item.isRoot())
+                .field(BasicProps.CARVED, item.isCarved()).field(BasicProps.SUBITEM, item.isSubItem())
+                .field(BasicProps.OFFSET, item.getFileOffset()).field("extraAttributes", item.getExtraAttributeMap());
 
         for (String key : getMetadataKeys(item)) {
             if (PREVIEW_IN_DATASOURCE.equals(key)) {
@@ -518,15 +516,17 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             } else if (key != null) {
                 String[] values = item.getMetadata().getValues(key);
-                List<float[]> locations = new ArrayList<>(values.length);
                 if (ExtraProperties.LOCATIONS.equals(key)) {
+                    List<float[]> locations = new ArrayList<>(values.length);
                     for (int i = 0; i < values.length; i++) {
-                        String[] coord=values[i].split(";");
+                        String[] coord = values[i].split(";");
                         float[] point = { Float.parseFloat(coord[0]), Float.parseFloat(coord[0]) };
                         locations.add(point);
                     }
+                    builder.array(key, locations.toArray());
+                } else {
+                    builder.array(key, values);
                 }
-                builder.array(key, locations.toArray());
             }
         }
 
