@@ -521,7 +521,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         gallery.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int colWidth = (int) gallery.getVisibleRect().getWidth() / galleryModel.colCount;
+                int colWidth = (int) gallery.getVisibleRect().getWidth() / getGalleryColCount();
                 if (colWidth > 0) {
                     gallery.setRowHeight(colWidth);
                 }
@@ -1010,21 +1010,28 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    private void updateGalleryColCount(int inc) {
-        int cnt = App.get().galleryModel.colCount + inc;
+    public int getGalleryColCount() {
+        return galleryModel.getColumnCount();
+    }
+
+    public void setGalleryColCount(int cnt) {
         if (cnt > 0 && cnt <= 40) {
-            App.get().galleryModel.colCount = cnt;
-            int colWidth = App.get().gallery.getWidth() / App.get().galleryModel.colCount;
-            App.get().gallery.setRowHeight(colWidth);
-            int selRow = App.get().resultsTable.getSelectedRow();
-            App.get().galleryModel.fireTableStructureChanged();
+            galleryModel.setColumnCount(cnt);
+            int colWidth = gallery.getWidth() / cnt;
+            gallery.setRowHeight(colWidth);
+            int selRow = resultsTable.getSelectedRow();
+            galleryModel.fireTableStructureChanged();
             if (selRow >= 0) {
-                int galleryRow = selRow / App.get().galleryModel.colCount;
-                int galleyCol = selRow % App.get().galleryModel.colCount;
-                App.get().gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
-                App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
+                int galleryRow = selRow / cnt;
+                int galleyCol = selRow % cnt;
+                gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
+                gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
             }
         }
+    }
+    
+    private void updateGalleryColCount(int inc) {
+        setGalleryColCount(getGalleryColCount() + inc);
     }
 
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {

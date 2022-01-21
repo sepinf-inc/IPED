@@ -66,7 +66,7 @@ public class GalleryModel extends AbstractTableModel {
      */
     private static final int MAX_TSK_POOL_SIZE = 20;
 
-    public int colCount = 10;
+    private int colCount = 10;
     private int thumbSize = 160;
     private int galleryThreads = 1;
     private boolean logRendering = false;
@@ -83,6 +83,10 @@ public class GalleryModel extends AbstractTableModel {
     @Override
     public int getColumnCount() {
         return colCount;
+    }
+
+    public void setColumnCount(int cnt) {
+        colCount = cnt;
     }
 
     @Override
@@ -335,5 +339,4 @@ public class GalleryModel extends AbstractTableModel {
         super.setValueAt(value, row, col);
         fireTableRowsUpdated(0, App.get().gallery.getRowCount() - 1);
     }
-
 }

@@ -144,7 +144,7 @@ public class GalleryCellEditor extends AbstractCellEditor implements TableCellEd
     public void actionPerformed(ActionEvent evt) {
 
         if (evt.getSource() == check) {
-            int idx = row * App.get().galleryModel.colCount + col;
+            int idx = row * App.get().getGalleryColCount() + col;
             App.get().resultsTable.setValueAt(check.isSelected(), idx, 1);
         }
 
