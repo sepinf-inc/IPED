@@ -71,6 +71,7 @@ public class AD1DataSourceReader extends DataSourceReader {
         rootItem.setLength(root.length());
         rootItem.setSumVolume(false);
         rootItem.setHash(""); //$NON-NLS-1$
+        rootItem.setIdInDataSource("");
 
         caseData.addItem(rootItem);
 

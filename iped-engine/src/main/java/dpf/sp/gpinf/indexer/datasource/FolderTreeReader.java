@@ -131,11 +131,15 @@ public class FolderTreeReader extends DataSourceReader {
         } else {
             File file = path.toFile();
             IItem item = new Item();
-            item.setName(file.getName());
+            item.setDataSource(dataSource);
+            item.setIdInDataSource(path.toString());
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
+                item.setParentIdInDataSource("");
+            } else {
+                item.setName(file.getName());
+                item.setParentIdInDataSource(path.getParent().toString());
             }
-            item.setDataSource(dataSource);
             try {
                 String relativePath = Util.getRelativePath(output, file);
                 item.setExportedFile(relativePath);
