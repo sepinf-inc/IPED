@@ -704,16 +704,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             exportToZip.setVisible(true);
         }
 
-        refazLayout(false);
-        PanelsLayout.load(dockingControl);
-
-        status = new JLabel(" "); //$NON-NLS-1$
-        this.appSearchParams.status = status;
-
-        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-        // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-        this.getContentPane().add(status, BorderLayout.PAGE_END);
-
         progressBar = new JProgressBar(0, 1);
         progressBar.setValue(0);
         progressBar.setString(Messages.getString("App.Wait")); //$NON-NLS-1$
@@ -726,6 +716,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dialogBar.setUndecorated(true);
         dialogBar.getContentPane().add(progressBar);
         appSearchParams.dialogBar = dialogBar;
+
+        
+        refazLayout(false);
+        PanelsLayout.load(dockingControl);
+
+        status = new JLabel(" "); //$NON-NLS-1$
+        this.appSearchParams.status = status;
+
+        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
+        // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+        this.getContentPane().add(status, BorderLayout.PAGE_END);
 
         appletListener = new AppListener();
         recursiveTreeList.addActionListener(treeListener);
