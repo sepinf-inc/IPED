@@ -123,6 +123,7 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
@@ -704,6 +705,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         refazLayout(false);
+        PanelsLayout.load(dockingControl);
 
         status = new JLabel(" "); //$NON-NLS-1$
         this.appSearchParams.status = status;
@@ -1167,6 +1169,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
+    public void savePanelLayout() {
+        PanelsLayout.save(dockingControl);
+    }
+
+    public void loadPanelLayout() {
+        PanelsLayout.load(dockingControl);
+    }
+    
     public void refazLayout(boolean remove) {
         if (!disposicaoVertical) {
             if (remove)
