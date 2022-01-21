@@ -414,7 +414,8 @@ public class MetadataUtil {
             try {
                 Float lati = Float.valueOf(lat);
                 Float longit = Float.valueOf(lon);
-                if ((lati < -90 || lati > 90 || longit < -180 || longit > 180) || (lati == 0.0 && longit == 0.0)) {
+                if ((lati < -90 || lati > 90 || longit < -180 || longit > 180 || Float.isNaN(lati)
+                        || Float.isNaN(longit)) || (lati == 0.0 && longit == 0.0)) {
                     invalid = true;
                 }
             } catch (NumberFormatException e) {
