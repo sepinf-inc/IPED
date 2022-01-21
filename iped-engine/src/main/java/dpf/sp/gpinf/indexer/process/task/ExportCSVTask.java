@@ -190,8 +190,8 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        String persistentId = Util.getPersistentId(evidence);
-        list.append("\"").append(persistentId).append("\"");
+        String globalId = Util.getGlobalId(evidence);
+        list.append("\"").append(globalId).append("\"");
 
         list.append("\r\n"); //$NON-NLS-1$
 

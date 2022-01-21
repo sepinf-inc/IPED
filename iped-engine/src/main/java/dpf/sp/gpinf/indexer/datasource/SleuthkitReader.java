@@ -1065,8 +1065,8 @@ public class SleuthkitReader extends DataSourceReader {
     private void setSubitemProperties(Item item) {
         item.setSubItem(true);
         item.setSubitemId(itemCount);
-        Util.generatePersistentId((String) parent.getExtraAttribute(IndexItem.PERSISTENT_ID), item);
-        item.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(parent));
+        Util.generateGlobalId((String) parent.getExtraAttribute(IndexItem.GLOBAL_ID), item);
+        item.setExtraAttribute(IndexItem.CONTAINER_GLOBAL_ID, Util.getGlobalId(parent));
     }
 
     private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {

@@ -51,6 +51,8 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LatLonDocValuesField;
+import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -68,7 +70,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -101,13 +102,12 @@ import jep.NDArray;
  */
 public class IndexItem extends BasicProps {
 
-    public static final String POSSIBLE_STR_DOCVALUES_PREFIX = "_str_";
-    public static final String POSSIBLE_NUM_DOCVALUES_PREFIX = "_num_";
+    public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
 
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
-    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
-    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
+    public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
+    public static final String PARENT_GLOBAL_ID = "parentGlobalId"; //$NON-NLS-1$
+    public static final String CONTAINER_GLOBAL_ID = "containerGlobalId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
@@ -596,7 +596,17 @@ public class IndexItem extends BasicProps {
     private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMultiValued,
             Set<TimeStampEvent> timeEventSet) {
 
-        if (oValue instanceof Date) {
+        if (key.equals(ExtraProperties.LOCATIONS)) {
+            String[] coords = oValue.toString().split(";");
+            double lat = Double.valueOf(coords[0].trim());
+            double lon = Double.valueOf(coords[1].trim());
+            doc.add(new LatLonPoint(key, lat, lon));
+            doc.add(new LatLonDocValuesField(key, lat, lon));
+            doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
+            // used to group values in metadata filter panel, sorting doesn't make sense
+            doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
+
+        } else if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
             if (!isMultiValued)

@@ -244,6 +244,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         rootItem = new Item();
         rootItem.setDataSource(evidenceSource);
+        rootItem.setIdInDataSource("");
         rootItem.setHasChildren(true);
         if (root.getName().endsWith(".ufdr")) {
             rootItem.setLength(root.length());
@@ -277,6 +278,7 @@ public class UfedXmlReader extends DataSourceReader {
         decodedFolder = new Item();
         decodedFolder.setName("_DecodedData"); //$NON-NLS-1$
         decodedFolder.setParent(rootItem);
+        decodedFolder.setIdInDataSource("");
         decodedFolder.setPath(rootItem.getPath() + "/" + decodedFolder.getName()); //$NON-NLS-1$
         decodedFolder.setIsDir(true);
         decodedFolder.setHasChildren(true);
@@ -451,6 +453,7 @@ public class UfedXmlReader extends DataSourceReader {
             parent.setIsDir(true);
             // parent.setLength(0L);
             parent.setHash(""); //$NON-NLS-1$
+            parent.setIdInDataSource("");
             parent.setParent(getParent(parentPath));
             parent.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
 
@@ -601,6 +604,8 @@ public class UfedXmlReader extends DataSourceReader {
             }
             if (item.getMetadata().get(UFED_ID) != null) {
                 item.setIdInDataSource(item.getMetadata().get(UFED_ID));
+            } else {
+                // item.setIdInDataSource("");
             }
         }
 
@@ -919,6 +924,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setName(name);
                     item.setParent(rootItem);
                     item.setPath(rootItem.getPath() + "/" + name);
+                    item.setIdInDataSource("");
                     item.setMediaType(MediaTypes.UFED_DEVICE_INFO);
                     createDeviceInfoPreview(item);
                     try {

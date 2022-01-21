@@ -1105,7 +1105,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parent.getPersistentId());
+        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parent.getGlobalId());
     }
 
     /**

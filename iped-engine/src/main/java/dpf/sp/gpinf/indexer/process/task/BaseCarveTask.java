@@ -166,7 +166,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentItem.setHasChildren(true);
 
-        Util.generatePersistentId(Util.getPersistentId(parentItem), carvedItem);
+        Util.generateGlobalId(Util.getGlobalId(parentItem), carvedItem);
     }
 
     // adiciona uma evidência já carveada por uma classe que implemente a interface
