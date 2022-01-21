@@ -300,14 +300,6 @@ public interface IItem extends IItemBase {
     void setDeleted(boolean deleted);
 
     /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    void setDuplicate(boolean duplicate);
-
-    /**
      * Define o caminho para o arquivo do item, no caso de processamento de pastas e
      * para subitens extraídos.
      *

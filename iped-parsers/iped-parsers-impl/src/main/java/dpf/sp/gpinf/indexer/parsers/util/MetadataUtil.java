@@ -410,12 +410,16 @@ public class MetadataUtil {
         if (lon == null)
             lon = metadata.get(ExtraProperties.UFED_META_PREFIX + "Longitude");
         boolean invalid = lat == null || lon == null;
-        try {
-            if (lat != null && Float.valueOf(lat) == 0.0 && lon != null && Float.valueOf(lon) == 0.0) {
+        if (!invalid) {
+            try {
+                Float lati = Float.valueOf(lat);
+                Float longit = Float.valueOf(lon);
+                if ((lati < -90 || lati > 90 || longit < -180 || longit > 180) || (lati == 0.0 && longit == 0.0)) {
+                    invalid = true;
+                }
+            } catch (NumberFormatException e) {
                 invalid = true;
             }
-        } catch (NumberFormatException e) {
-            invalid = true;
         }
         if (!invalid) {
             metadata.add(ExtraProperties.LOCATIONS, lat + ";" + lon);

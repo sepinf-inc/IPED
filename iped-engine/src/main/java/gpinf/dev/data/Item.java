@@ -184,8 +184,6 @@ public class Item implements ISleuthKitItem {
 
     private boolean timeOut = false;
 
-    private boolean duplicate = false;
-
     private boolean isSubItem = false, hasChildren = false;
 
     private boolean isDir = false, isRoot = false, sumVolume = true;
@@ -813,13 +811,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate() {
-        return duplicate;
-    }
-
-    /**
      * @return true se o item foi submetido a parsing
      */
     public boolean isParsed() {
@@ -951,16 +942,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setDeleted(boolean deleted) {
         this.deleted = deleted;
-    }
-
-    /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    public void setDuplicate(boolean duplicate) {
-        this.duplicate = duplicate;
     }
 
     /**
@@ -1124,7 +1105,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parent.getPersistentId());
+        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parent.getGlobalId());
     }
 
     /**

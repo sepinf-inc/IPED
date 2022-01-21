@@ -96,11 +96,6 @@ public interface IItemBase extends IStreamSource {
     public boolean isRoot();
 
     /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate();
-
-    /**
      * @return true se o parsing do item ocasionou timeout
      */
     public boolean isTimedOut();
