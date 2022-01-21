@@ -513,12 +513,15 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             } else if (key != null) {
                 String[] values = item.getMetadata().getValues(key);
+                List<float[]> locations = new ArrayList<>(values.length);
                 if (ExtraProperties.LOCATIONS.equals(key)) {
                     for (int i = 0; i < values.length; i++) {
-                        values[i] = values[i].replace(';', ',');
+                        String[] coord=values[i].split(";");
+                        float[] point = { Float.parseFloat(coord[0]), Float.parseFloat(coord[0]) };
+                        locations.add(point);
                     }
                 }
-                builder.array(key, values);
+                builder.array(key, locations.toArray());
             }
         }
 
