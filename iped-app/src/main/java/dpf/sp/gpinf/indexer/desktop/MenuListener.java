@@ -115,7 +115,7 @@ public class MenuListener implements ActionListener {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
-            App.get().refazLayout(true);
+            App.get().adjustLayout(true);
 
         } else if (e.getSource() == menu.savePanelsLayout) {
             App.get().savePanelLayout();

@@ -718,7 +718,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         appSearchParams.dialogBar = dialogBar;
 
         
-        refazLayout(false);
+        adjustLayout(false);
         PanelsLayout.load(dockingControl);
 
         status = new JLabel(" "); //$NON-NLS-1$
@@ -1185,9 +1185,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         PanelsLayout.load(dockingControl);
     }
     
-    public void refazLayout(boolean remove) {
+    public void adjustLayout(boolean isReset) {
         if (!disposicaoVertical) {
-            if (remove)
+            if (isReset)
                 removeAllDockables();
             createAllDockables();
 
@@ -1263,7 +1263,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(tableTabDock);
 
         } else {
-            if (remove)
+            if (isReset)
                 removeAllDockables();
             createAllDockables();
 
@@ -1339,14 +1339,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
         }
-
+        
         setupViewerDocks();
         viewerController.validateViewers();
+        
+        if (isReset)
+            setGalleryColCount(GalleryModel.defaultColCount);
     }
 
     public void alterarDisposicao() {
         disposicaoVertical = !disposicaoVertical;
-        refazLayout(true);
+        adjustLayout(true);
     }
 
     @Override

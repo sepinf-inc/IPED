@@ -66,7 +66,9 @@ public class GalleryModel extends AbstractTableModel {
      */
     private static final int MAX_TSK_POOL_SIZE = 20;
 
-    private int colCount = 10;
+    public static final int defaultColCount = 10;
+    
+    private int colCount = defaultColCount;
     private int thumbSize = 160;
     private int galleryThreads = 1;
     private boolean logRendering = false;
