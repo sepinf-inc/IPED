@@ -84,9 +84,6 @@ public class KMLResult {
             progress.setVisible();
         try {
             String kml = getKML.get();
-            if (showProgress && getKML.itemsWithGPS == 0)
-                JOptionPane.showMessageDialog(null, Messages.getString("KMLResult.NoGPSItem")); //$NON-NLS-1$
-
             return kml;
 
         } catch (InterruptedException | ExecutionException e) {

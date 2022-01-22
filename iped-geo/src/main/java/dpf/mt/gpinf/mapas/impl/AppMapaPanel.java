@@ -1,6 +1,7 @@
 package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,12 +11,16 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItemId;
 import iped3.desktop.GUIProvider;
@@ -41,6 +46,9 @@ public class AppMapaPanel extends JPanel {
 
     String tilesSourceURL = null, savedTilesSourceURL = null;
     private MapaPanelConfig mpConfig;
+    
+    private JLabel labelNoGPSItem;
+    
 
     public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -51,6 +59,13 @@ public class AppMapaPanel extends JPanel {
     }
 
     public void init() {
+        labelNoGPSItem = new JLabel(Messages.getString("KMLResult.NoGPSItem"));
+        labelNoGPSItem.setHorizontalAlignment(SwingConstants.CENTER);
+        labelNoGPSItem.setBackground(new Color(242, 242, 188));
+        labelNoGPSItem.setForeground(Color.black);
+        labelNoGPSItem.setOpaque(true);
+        labelNoGPSItem.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.gray, 1), BorderFactory.createEmptyBorder(4, 0, 4, 0)));
+        
         mcf = new MapaCanvasFactory(this);
 
         this.addMouseListener(new MouseListener() {
@@ -131,6 +146,8 @@ public class AppMapaPanel extends JPanel {
 
             browserCanvas = mcf.createMapCanvas(url);
 
+            labelNoGPSItem.setVisible(false);
+            this.add(labelNoGPSItem, BorderLayout.NORTH);
             this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
         }
     }
@@ -157,6 +174,7 @@ public class AppMapaPanel extends JPanel {
             String kml = ""; //$NON-NLS-1$
             try {
                 kmlResult = new KMLResult(resultsProvider, guiProvider);
+                labelNoGPSItem.setVisible(kmlResult.getGPSItems().isEmpty());
                 kml = kmlResult.getResultsKML();
                 browserCanvas.setKML(kml);
             } catch (IOException e1) {
