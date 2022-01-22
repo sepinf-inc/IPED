@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 
-import javax.swing.JOptionPane;
-
 import org.apache.commons.lang.ArrayUtils;
 
 import dpf.mt.gpinf.mapas.util.Messages;
@@ -30,6 +28,7 @@ public class KMLResult {
 
     GUIProvider guiProvider;
     IMultiSearchResultProvider app;
+    private int itemsWithGPS;
 
     public KMLResult(IMultiSearchResultProvider app, GUIProvider guiProvider) {
         this.guiProvider = guiProvider;
@@ -70,6 +69,10 @@ public class KMLResult {
 
         return kmlResult;
     }
+    
+    public int getItemsWithGPS() {
+        return itemsWithGPS;
+    }
 
     private String getResultsKML(String[] colunas, boolean showProgress) throws IOException {
 
@@ -84,6 +87,7 @@ public class KMLResult {
             progress.setVisible();
         try {
             String kml = getKML.get();
+            itemsWithGPS = getKML.itemsWithGPS;
             return kml;
 
         } catch (InterruptedException | ExecutionException e) {

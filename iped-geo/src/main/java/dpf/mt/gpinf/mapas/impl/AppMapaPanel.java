@@ -174,8 +174,8 @@ public class AppMapaPanel extends JPanel {
             String kml = ""; //$NON-NLS-1$
             try {
                 kmlResult = new KMLResult(resultsProvider, guiProvider);
-                labelNoGPSItem.setVisible(kmlResult.getGPSItems().isEmpty());
                 kml = kmlResult.getResultsKML();
+                labelNoGPSItem.setVisible(kmlResult.getItemsWithGPS() == 0);
                 browserCanvas.setKML(kml);
             } catch (IOException e1) {
                 e1.printStackTrace();
