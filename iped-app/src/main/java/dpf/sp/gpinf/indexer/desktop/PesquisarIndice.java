@@ -303,6 +303,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
                     App.get().resultsTable.getRowSorter().allRowsChanged();
                     App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+                    App.get().galleryModel.fireTableDataChanged();
                 } else {
                     App.get().resultsModel.fireTableDataChanged();
                     App.get().galleryModel.fireTableStructureChanged();

@@ -766,7 +766,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
-        gallery.repaint();
     }
     
     public void updateUI(boolean refresh) {
