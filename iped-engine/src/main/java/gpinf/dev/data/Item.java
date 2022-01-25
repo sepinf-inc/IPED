@@ -192,7 +192,7 @@ public class Item implements ISleuthKitItem {
 
     private boolean isDir = false, isRoot = false, sumVolume = true;
 
-    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false;
+    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false, allowGetId = false;
 
     /**
      * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
@@ -476,6 +476,15 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
+            if (!allowGetId) {
+                /**
+                 * id may change when resuming processing. Currently this could happen when
+                 * adding items to processing queue. So id can just be read after its value is
+                 * set to the previous processing id or if a previous id is not found.
+                 */
+                Exception e = new Exception("Cannot use ID before adding item to queue");
+                LOGGER.error("", e);
+            }
             synchronized (Counter.class) {
                 if (id == -1) {
                     id = getNextId();
@@ -483,6 +492,15 @@ public class Item implements ISleuthKitItem {
             }
         }
         return id;
+    }
+
+    /**
+     * Set to true if ID could be retrieved after being set to its final value.
+     * 
+     * @param allowGetId
+     */
+    public void setAllowGetId(boolean allowGetId) {
+        this.allowGetId = allowGetId;
     }
 
     /**
@@ -1135,6 +1153,11 @@ public class Item implements ISleuthKitItem {
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
         this.setParentIdInDataSource(parent.getIdInDataSource());
+        String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.GLOBAL_ID);
+        if (parentGlobalID == null) {
+            throw new RuntimeException("parentGlobalId of " + this.getPath() + " cannot be null");
+        }
+        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parentGlobalID);
     }
 
     public void setParent(ParentInfo parent) {

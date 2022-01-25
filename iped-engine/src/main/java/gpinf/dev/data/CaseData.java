@@ -245,7 +245,7 @@ public class CaseData implements ICaseData {
     private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
             throws InterruptedException {
 
-        computeGlobalId(item);
+        calcGlobalIDAndUpdateID(item);
 
         LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
         while (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
@@ -259,7 +259,13 @@ public class CaseData implements ICaseData {
         }
     }
 
-    private void computeGlobalId(IItem item) {
+    /**
+     * Computes globalID and reassign the item ID if it was mapped to a different ID
+     * in a previous processing, being resumed or restarted.
+     * 
+     * @param item
+     */
+    public void calcGlobalIDAndUpdateID(IItem item) {
         HashValue persistentId = new HashValue(Util.getPersistentId(item));
         Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
                 .get(SkipCommitedTask.GLOBALID_ID_MAP);
@@ -276,6 +282,7 @@ public class CaseData implements ICaseData {
                 }
             }
         }
+        ((Item) item).setAllowGetId(true);
     }
 
     public Integer changeToNextQueue() {
