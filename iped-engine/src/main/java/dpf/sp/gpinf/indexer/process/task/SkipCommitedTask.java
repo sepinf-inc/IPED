@@ -151,7 +151,10 @@ public class SkipCommitedTask extends AbstractTask {
 
     private void collectParentsWithoutAllSubitems(LeafReader aReader, SortedDocValues persistIds, NumericDocValues ids,
             String parentIdField, String subitemCountField) throws IOException {
+        
+        NumericDocValues fragNumNDV = aReader.getNumericDocValues(IndexTask.FRAG_NUM);
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
+
         if (parentContainers == null || persistIds == null || ids == null) {
             return;
         }
@@ -181,6 +184,12 @@ public class SkipCommitedTask extends AbstractTask {
         for (int doc = 0; doc < aReader.maxDoc(); doc++) {
             if (docsWithField.get(doc)) {
                 int subitemsCount = (int) numSubitems.get(doc);
+                // skip non last text fragments with subitems counter possibly populated
+                if (fragNumNDV != null) {
+                    Long fragNum = DocValuesUtil.get(fragNumNDV, doc);
+                    if (fragNum != null && fragNum > 0)
+                        continue;
+                }
                 BytesRef persistId = persistIds.get(doc);
                 int ord = parentContainers.lookupTerm(persistId);
                 int carvedIgnored = 0;
