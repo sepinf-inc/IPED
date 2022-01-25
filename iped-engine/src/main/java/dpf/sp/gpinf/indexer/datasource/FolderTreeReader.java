@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -103,9 +104,11 @@ public class FolderTreeReader extends DataSourceReader {
 
         List<Integer> parents;
         List<String> paths;
+        String parentGlobalID = null;
         if (parent != null) {
             parents = parent.getParentIds();
             parents.add(parent.getId());
+            parentGlobalID = (String) parent.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID);
 
             StringTokenizer stringTokenizer = new StringTokenizer(parent.getPath(), File.separator);
             paths = stringTokenizer.getTokenList();
@@ -113,11 +116,12 @@ public class FolderTreeReader extends DataSourceReader {
             parents = Collections.emptyList();
             paths = Collections.emptyList();
         }
-        transverse(file, parents, paths);
+        transverse(file, parents, paths, parentGlobalID);
     }
 
-    private void transverse(File file, List<Integer> parents, List<String> paths) throws IOException {
-        new FolderVisitor(parents, paths).walk(file);
+    private void transverse(File file, List<Integer> parents, List<String> paths, String parentGlobalID)
+            throws IOException {
+        new FolderVisitor(parents, paths, parentGlobalID).walk(file);
     }
 
     private IItem getEvidence(Path path, BasicFileAttributes attr) {
@@ -164,11 +168,16 @@ public class FolderTreeReader extends DataSourceReader {
 
         private LinkedList<Integer> parentIds;
         private LinkedList<String> paths;
+        private LinkedList<String> globalIDs;
 
-        public FolderVisitor(List<Integer> parentIds, List<String> paths) {
+        public FolderVisitor(List<Integer> parentIds, List<String> paths, String parentGlobalID) {
             super();
             this.parentIds = new LinkedList<>(parentIds);
             this.paths = new LinkedList<>(paths);
+            this.globalIDs = new LinkedList<>();
+            if (parentGlobalID != null) {
+                this.globalIDs.add(parentGlobalID);
+            }
         }
 
         public void walk(File file) throws IOException {
@@ -187,6 +196,7 @@ public class FolderTreeReader extends DataSourceReader {
                 if (!parentIds.isEmpty()) {
                     item.setParentId(parentIds.getLast());
                     item.addParentIds(parentIds);
+                    item.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, globalIDs.getLast());
 
                     if (parentIds.size() == 2) {
                         item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
@@ -221,6 +231,7 @@ public class FolderTreeReader extends DataSourceReader {
                     // with --continue
                     parentIds.addLast(item.getId());
                     paths.addLast(fileName);
+                    globalIDs.addLast((String) item.getExtraAttribute(IndexItem.GLOBAL_ID));
                 }
             }
 
@@ -241,6 +252,7 @@ public class FolderTreeReader extends DataSourceReader {
             if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
                 parentIds.pollLast();
                 paths.pollLast();
+                globalIDs.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
             }
 
@@ -252,6 +264,7 @@ public class FolderTreeReader extends DataSourceReader {
 
             parentIds.pollLast();
             paths.pollLast();
+            globalIDs.pollLast();
 
             if (exception != null) {
                 System.err.println(
