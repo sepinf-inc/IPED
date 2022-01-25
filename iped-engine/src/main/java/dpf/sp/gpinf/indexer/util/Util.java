@@ -168,14 +168,15 @@ public class Util {
     private static String generateTrackID(IItem item) {
         StringBuilder sb = new StringBuilder();
         String notFoundIn = " not found in ";
-        if (item.getIdInDataSource() != null) {
-            sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
-        } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
-            sb.append(IndexItem.ID_IN_SOURCE).append(((ISleuthKitItem) item).getSleuthId());
-        } else if (!item.isSubItem() && !item.isCarved() && !item.isQueueEnd()) {
-            throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
-        }
-        if (item.isCarved() || item.isSubItem()) {
+        if (!item.isCarved() && !item.isSubItem()) {
+            if (item.getIdInDataSource() != null) {
+                sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
+            } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
+                sb.append(IndexItem.ID_IN_SOURCE).append(((ISleuthKitItem) item).getSleuthId());
+            } else if (!item.isQueueEnd()) {
+                throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
+            }
+        } else {
             String parenttrackID = (String) item.getExtraAttribute(IndexItem.PARENT_TRACK_ID);
             if (parenttrackID != null) {
                 sb.append(IndexItem.PARENT_TRACK_ID).append(parenttrackID);
