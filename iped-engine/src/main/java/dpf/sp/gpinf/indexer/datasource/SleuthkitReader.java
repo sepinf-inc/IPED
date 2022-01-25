@@ -346,6 +346,7 @@ public class SleuthkitReader extends DataSourceReader {
             if (embeddedDisk) {
                 deviceName = parent.getName();
                 inheritedPath = Util.getParentPath(parent);
+                idTotrackIDMap.put(parent.getId(), (String) parent.getExtraAttribute(IndexItem.TRACK_ID));
             }
         }
 
