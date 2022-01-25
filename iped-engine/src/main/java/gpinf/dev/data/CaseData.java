@@ -235,7 +235,7 @@ public class CaseData implements ICaseData {
     private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
             throws InterruptedException {
 
-        calcGlobalIDAndUpdateID(item);
+        calctrackIDAndUpdateID(item);
 
         LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
         while (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
@@ -250,22 +250,22 @@ public class CaseData implements ICaseData {
     }
 
     /**
-     * Computes globalID and reassign the item ID if it was mapped to a different ID
+     * Computes trackID and reassign the item ID if it was mapped to a different ID
      * in a previous processing, being resumed or restarted.
      * 
      * @param item
      */
-    public void calcGlobalIDAndUpdateID(IItem item) {
-        HashValue globalId = new HashValue(Util.getGlobalId(item));
+    public void calctrackIDAndUpdateID(IItem item) {
+        HashValue trackID = new HashValue(Util.getTrackID(item));
         Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
-                .get(SkipCommitedTask.GLOBALID_ID_MAP);
+                .get(SkipCommitedTask.trackID_ID_MAP);
         // changes id to previous processing id if using --continue
         if (globalToIdMap != null) {
-            Integer previousId = globalToIdMap.get(globalId);
+            Integer previousId = globalToIdMap.get(trackID);
             if (previousId != null) {
                 item.setId(previousId.intValue());
             } else {
-                String splittedTextId = Util.generateGlobalIdForTextFrag(Util.getGlobalId(item), 1);
+                String splittedTextId = Util.generatetrackIDForTextFrag(Util.getTrackID(item), 1);
                 previousId = globalToIdMap.get(new HashValue(splittedTextId));
                 if (previousId != null) {
                     item.setId(previousId.intValue());

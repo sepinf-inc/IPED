@@ -573,7 +573,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash(""); //$NON-NLS-1$
 
-                    ((CaseData) caseData).calcGlobalIDAndUpdateID(parent);
+                    ((CaseData) caseData).calctrackIDAndUpdateID(parent);
                     item.setParent(parent);
                     if (!mergeInParentNode.contains(type))
                         parent.setHasChildren(true);

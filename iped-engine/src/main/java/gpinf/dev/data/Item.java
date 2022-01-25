@@ -1112,11 +1112,12 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.GLOBAL_ID);
-        if (parentGlobalID == null) {
-            throw new RuntimeException("parentGlobalId of " + this.getPath() + " cannot be null");
+        String parenttrackID = (String) parent.getExtraAttribute(IndexItem.TRACK_ID);
+        if (parenttrackID == null) {
+            throw new RuntimeException(IndexItem.TRACK_ID
+                    + " cannot be null. It is populated after enqueuing the item: " + parent.getPath());
         }
-        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parentGlobalID);
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
     }
 
     public void setParent(ParentInfo parent) {
@@ -1125,7 +1126,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parent.getGlobalId());
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parent.getTrackId());
     }
 
     /**

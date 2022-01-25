@@ -138,7 +138,7 @@ public class SleuthkitReader extends DataSourceReader {
     private int itemCount = 0;
     private volatile boolean decodingError = false;
 
-    private HashMap<Integer, String> idToGlobalIdMap = new HashMap<>();
+    private HashMap<Integer, String> idTotrackIDMap = new HashMap<>();
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
@@ -1066,17 +1066,17 @@ public class SleuthkitReader extends DataSourceReader {
     private void setSubitemProperties(Item item) {
         item.setSubItem(true);
         item.setSubitemId(itemCount);
-        item.setExtraAttribute(IndexItem.CONTAINER_GLOBAL_ID, Util.getGlobalId(parent));
+        item.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(parent));
     }
 
     private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {
-        // retrieve and store parentGlobalID explicitly before adding to queue
+        // retrieve and store parenttrackID explicitly before adding to queue
         if (!item.isRoot()) {
-            String parentGlobalID = idToGlobalIdMap.get(item.getParentId());
-            if (parentGlobalID != null) {
-                item.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parentGlobalID);
+            String parenttrackID = idTotrackIDMap.get(item.getParentId());
+            if (parenttrackID != null) {
+                item.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
             } else {
-                throw new RuntimeException("parentGlobalID must not be null: " + item.getPath() + " " + item.getName());
+                throw new RuntimeException(IndexItem.PARENT_TRACK_ID + " cannot be null: " + item.getPath());
             }
         }
 
@@ -1094,10 +1094,11 @@ public class SleuthkitReader extends DataSourceReader {
             }
 
         }
-        // store parents globalID after adding to queue (where it is computed and ID could be reassigned)
+        // store parents trackID after adding to queue (where it is computed and ID
+        // could be reassigned)
         if (item.hasChildren() || item.isDir() || item.isRoot()) {
-            String globalID = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
-            idToGlobalIdMap.put(item.getId(), globalID);
+            String trackID = (String) item.getExtraAttribute(IndexItem.TRACK_ID);
+            idTotrackIDMap.put(item.getId(), trackID);
         }
     }
 

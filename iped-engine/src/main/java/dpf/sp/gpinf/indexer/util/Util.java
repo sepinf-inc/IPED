@@ -131,21 +131,21 @@ public class Util {
         return path.substring(fromIndex, endIndex);
     }
 
-    public static String getGlobalId(IItem item) {
-        String id = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
+    public static String getTrackID(IItem item) {
+        String id = (String) item.getExtraAttribute(IndexItem.TRACK_ID);
         if (id == null) {
-            return generateGlobalId(item);
+            return generatetrackID(item);
         }
         return id;
     }
 
-    public static String generateGlobalIdForTextFrag(String globalId, int fragNum) {
+    public static String generatetrackIDForTextFrag(String trackID, int fragNum) {
         if (fragNum != 0) {
-            StringBuilder sb = new StringBuilder(globalId);
+            StringBuilder sb = new StringBuilder(trackID);
             sb.append("fragNum").append(fragNum);
-            globalId = DigestUtils.md5Hex(sb.toString());
+            trackID = DigestUtils.md5Hex(sb.toString());
         }
-        return globalId;
+        return trackID;
     }
 
     public static String getParentPath(IItem item) {
@@ -165,7 +165,7 @@ public class Util {
         System.out.println(DigestUtils.md5Hex(str));
     }
 
-    private static String generateGlobalId(IItem item) {
+    private static String generatetrackID(IItem item) {
         StringBuilder sb = new StringBuilder();
         String notFoundIn = " not found in ";
         if (item.getIdInDataSource() != null) {
@@ -176,11 +176,11 @@ public class Util {
             throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
         }
         if (item.isCarved() || item.isSubItem()) {
-            String parentGlobalId = (String) item.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID);
-            if (parentGlobalId != null) {
-                sb.append(IndexItem.PARENT_GLOBAL_ID).append(parentGlobalId);
+            String parenttrackID = (String) item.getExtraAttribute(IndexItem.PARENT_TRACK_ID);
+            if (parenttrackID != null) {
+                sb.append(IndexItem.PARENT_TRACK_ID).append(parenttrackID);
             } else {
-                throw new IllegalArgumentException(IndexItem.PARENT_GLOBAL_ID + notFoundIn + item.getPath());
+                throw new IllegalArgumentException(IndexItem.PARENT_TRACK_ID + notFoundIn + item.getPath());
             }
         }
         if (item.isSubItem()) {
@@ -204,7 +204,7 @@ public class Util {
             throw new IllegalArgumentException(IndexItem.PATH + notFoundIn + item.getPath());
         }
         String id = DigestUtils.md5Hex(sb.toString());
-        item.setExtraAttribute(IndexItem.GLOBAL_ID, id);
+        item.setExtraAttribute(IndexItem.TRACK_ID, id);
         return id;
     }
 

@@ -38,7 +38,7 @@ import macee.core.Configurable;
  * Task to ignore already commited files into index. Commited containers without
  * all their subitems commited are not ignored to be processed again. Redefines
  * ids and parentIds of incomming items to be equal of commited items if they
- * have same globalId.
+ * have same trackID.
  * 
  * @author Luis Nassif
  *
@@ -49,9 +49,9 @@ public class SkipCommitedTask extends AbstractTask {
 
     public static final String DATASOURCE_NAMES = "CMD_LINE_DATASOURCE_NAMES";
 
-    public static final String GLOBALID_ID_MAP = "GLOBALID_ID_MAP";
+    public static final String trackID_ID_MAP = "trackID_ID_MAP";
 
-    private static HashValue[] commitedGlobalIds;
+    private static HashValue[] commitedtrackIDs;
 
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
 
@@ -64,11 +64,11 @@ public class SkipCommitedTask extends AbstractTask {
     private static AtomicBoolean inited = new AtomicBoolean();
 
     public static boolean isAlreadyCommited(IItem item) {
-        if (commitedGlobalIds == null) {
+        if (commitedtrackIDs == null) {
             return false;
         }
-        HashValue globalId = new HashValue(Util.getGlobalId(item));
-        return Arrays.binarySearch(commitedGlobalIds, globalId) >= 0;
+        HashValue trackID = new HashValue(Util.getTrackID(item));
+        return Arrays.binarySearch(commitedtrackIDs, trackID) >= 0;
     }
 
     @Override
@@ -107,16 +107,16 @@ public class SkipCommitedTask extends AbstractTask {
                 return;
             }
 
-            SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
+            SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.TRACK_ID);
             int size = persistIds == null ? 0 : persistIds.getValueCount();
-            commitedGlobalIds = new HashValue[size];
-            for (int ord = 0; ord < commitedGlobalIds.length; ord++) {
-                String globalId = persistIds.lookupOrd(ord).utf8ToString();
-                commitedGlobalIds[ord] = new HashValue(globalId);
+            commitedtrackIDs = new HashValue[size];
+            for (int ord = 0; ord < commitedtrackIDs.length; ord++) {
+                String trackID = persistIds.lookupOrd(ord).utf8ToString();
+                commitedtrackIDs[ord] = new HashValue(trackID);
             }
-            // Arrays.sort(globalIds);
+            // Arrays.sort(trackIDs);
 
-            SortedDocValues globalParents = aReader.getSortedDocValues(IndexItem.PARENT_GLOBAL_ID);
+            SortedDocValues globalParents = aReader.getSortedDocValues(IndexItem.PARENT_TRACK_ID);
             SortedDocValues hasChildValues = aReader.getSortedDocValues(IndexItem.HASCHILD);
             SortedDocValues isDirValues = aReader.getSortedDocValues(IndexItem.ISDIR);
             SortedDocValues isRootValues = aReader.getSortedDocValues(IndexItem.ISROOT);
@@ -127,7 +127,7 @@ public class SkipCommitedTask extends AbstractTask {
                 String hashVal = globalParents == null ? null : DocValuesUtil.getVal(globalParents, doc);
                 if (hashVal != null && !hashVal.isEmpty()) {
                     HashValue persistParent = new HashValue(hashVal);
-                    if (prevParentIds != null && Arrays.binarySearch(commitedGlobalIds, persistParent) < 0) {
+                    if (prevParentIds != null && Arrays.binarySearch(commitedtrackIDs, persistParent) < 0) {
                         globalToIdMap.put(persistParent, DocValuesUtil.get(prevParentIds, doc).intValue());
                     }
                 }
@@ -136,20 +136,20 @@ public class SkipCommitedTask extends AbstractTask {
                 boolean isRoot = isRootValues != null && Boolean.valueOf(DocValuesUtil.getVal(isRootValues, doc));
                 boolean isTexSplitted = hasSplittedText != null && Boolean.valueOf(DocValuesUtil.getVal(hasSplittedText, doc));
                 if (prevIds != null && persistIds != null && (hasChild || isDir || isRoot || isTexSplitted)) {
-                    HashValue globalId = new HashValue(DocValuesUtil.getVal(persistIds, doc));
-                    globalToIdMap.put(globalId, DocValuesUtil.get(prevIds, doc).intValue());
+                    HashValue trackID = new HashValue(DocValuesUtil.getVal(persistIds, doc));
+                    globalToIdMap.put(trackID, DocValuesUtil.get(prevIds, doc).intValue());
                 }
             }
 
-            caseData.putCaseObject(GLOBALID_ID_MAP, globalToIdMap);
+            caseData.putCaseObject(trackID_ID_MAP, globalToIdMap);
 
-            collectParentsWithoutAllSubitems(aReader, IndexItem.CONTAINER_GLOBAL_ID, ParsingTask.NUM_SUBITEMS);
-            collectParentsWithoutAllSubitems(aReader, IndexItem.PARENT_GLOBAL_ID, BaseCarveTask.NUM_CARVED_AND_FRAGS);
+            collectParentsWithoutAllSubitems(aReader, IndexItem.CONTAINER_TRACK_ID, ParsingTask.NUM_SUBITEMS);
+            collectParentsWithoutAllSubitems(aReader, IndexItem.PARENT_TRACK_ID, BaseCarveTask.NUM_CARVED_AND_FRAGS);
 
             caseData.putCaseObject(PARENTS_WITH_LOST_SUBITEMS, parentsWithLostSubitems);
 
         } catch (IndexNotFoundException e) {
-            commitedGlobalIds = new HashValue[0];
+            commitedtrackIDs = new HashValue[0];
         }
 
     }
@@ -157,7 +157,7 @@ public class SkipCommitedTask extends AbstractTask {
     private void collectParentsWithoutAllSubitems(LeafReader aReader, String parentIdField, String subitemCountField)
             throws IOException {
         // reset doc values to iterate again
-        SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
+        SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.TRACK_ID);
         NumericDocValues ids = aReader.getNumericDocValues(IndexItem.ID);
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
 
@@ -177,7 +177,7 @@ public class SkipCommitedTask extends AbstractTask {
             int id = DocValuesUtil.get(ids, doc).intValue();
             int ord = DocValuesUtil.getOrd(parentContainers, doc);
             if (ord != -1 && !countedIds.get(id)) {
-                if (parentIdField == IndexItem.CONTAINER_GLOBAL_ID || subitems == null
+                if (parentIdField == IndexItem.CONTAINER_TRACK_ID || subitems == null
                         || !Boolean.valueOf(DocValuesUtil.getVal(subitems, doc))) {
                     referencingSubitems[ord]++;
                 }
@@ -211,7 +211,7 @@ public class SkipCommitedTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        commitedGlobalIds = null;
+        commitedtrackIDs = null;
         parentsWithLostSubitems.clear();
         globalToIdMap.clear();
         prevRootNameToEvidenceUUID.clear();
@@ -221,14 +221,14 @@ public class SkipCommitedTask extends AbstractTask {
     protected void process(IItem item) throws Exception {
 
         // must be calculated first, in all cases, to allow recovering in the future
-        HashValue globalId = new HashValue(Util.getGlobalId(item));
+        HashValue trackID = new HashValue(Util.getTrackID(item));
 
-        if (item.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID) == null && !item.isRoot()) {
+        if (item.getExtraAttribute(IndexItem.PARENT_TRACK_ID) == null && !item.isRoot()) {
             // this property is needed when resuming processing to get a previous parent id
             // referenced by subitems which parents were not commited, then when
             // reprocessing parents, their id can be updated to the previous value, so
             // parent-child relationships will be preserved.
-            throw new RuntimeException(IndexItem.PARENT_GLOBAL_ID + " must be stored for all items!");
+            throw new RuntimeException(IndexItem.PARENT_TRACK_ID + " must be stored for all items!");
         }
 
         if (!args.isContinue()) {
@@ -237,8 +237,8 @@ public class SkipCommitedTask extends AbstractTask {
 
         // ignore already commited items. If they are containers without all their
         // subitems commited, process again
-        if (Arrays.binarySearch(commitedGlobalIds, globalId) >= 0) {
-            if (!parentsWithLostSubitems.contains(globalId)) {
+        if (Arrays.binarySearch(commitedtrackIDs, trackID) >= 0) {
+            if (!parentsWithLostSubitems.contains(trackID)) {
                 item.setToIgnore(true);
                 return;
             }

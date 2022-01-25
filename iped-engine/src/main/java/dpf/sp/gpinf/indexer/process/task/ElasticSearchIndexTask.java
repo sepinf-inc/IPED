@@ -356,11 +356,11 @@ public class ElasticSearchIndexTask extends AbstractTask {
             fragNum = 1;
         }
 
-        String globalId = Util.getGlobalId(item);
+        String trackID = Util.getTrackID(item);
 
         // used for parent items in elastic to store just metadata info
         // evidence UUID is combined to produce an 'UUID' like ID for items in elastic
-        String parentId = DigestUtils.md5Hex(globalId + item.getDataSource().getUUID());
+        String parentId = DigestUtils.md5Hex(trackID + item.getDataSource().getUUID());
 
         try {
             // creates the father;
@@ -371,18 +371,18 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             do {
                 // used for children items in elastic to store text content
-                String contentGlobalId = Util.generateGlobalIdForTextFrag(parentId, fragNum);
+                String contenttrackID = Util.generatetrackIDForTextFrag(parentId, fragNum);
 
                 // creates the json _source of the fragment
-                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentGlobalId,
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contenttrackID,
                         fragNum--);
 
                 // creates the request
-                IndexRequest contentRequest = createIndexRequest(contentGlobalId, parentId, jsonContent);
+                IndexRequest contentRequest = createIndexRequest(contenttrackID, parentId, jsonContent);
 
                 bulkRequest.add(contentRequest);
 
-                idToPath.put(contentGlobalId, item.getPath());
+                idToPath.put(contenttrackID, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
@@ -538,7 +538,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private XContentBuilder getJsonFragmentBuilder(IItem item, Reader textReader, String parentID,
-            String contentGlobalId, int fragNum) throws IOException {
+            String contenttrackID, int fragNum) throws IOException {
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -549,7 +549,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
-                .field("contentGlobalId", contentGlobalId).field("fragNum", fragNum)
+                .field("contenttrackID", contenttrackID).field("fragNum", fragNum)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();

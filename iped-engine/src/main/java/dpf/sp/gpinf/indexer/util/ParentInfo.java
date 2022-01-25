@@ -9,7 +9,7 @@ public class ParentInfo {
 
     private IDataSource dataSource;
     private int id;
-    private String globalID;
+    private String trackID;
     private List<Integer> parentIds;
     private String path;
     private boolean isDeleted;
@@ -20,7 +20,7 @@ public class ParentInfo {
         this.parentIds = item.getParentIds();
         this.path = item.getPath();
         this.isDeleted = item.isDeleted();
-        this.globalID = Util.getGlobalId(item);
+        this.trackID = Util.getTrackID(item);
     }
 
     public IDataSource getDataSource() {
@@ -43,8 +43,8 @@ public class ParentInfo {
         return this.isDeleted;
     }
 
-    public String getGlobalId() {
-        return globalID;
+    public String getTrackId() {
+        return trackID;
     }
 
 }

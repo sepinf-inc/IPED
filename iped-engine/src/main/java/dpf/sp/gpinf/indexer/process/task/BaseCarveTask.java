@@ -129,7 +129,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
         ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
 
-        ((CaseData) caseData).calcGlobalIDAndUpdateID(offsetFile);
+        ((CaseData) caseData).calctrackIDAndUpdateID(offsetFile);
 
         worker.processNewItem(offsetFile, time);
     }
@@ -179,7 +179,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentItem.setHasChildren(true);
 
-        carvedItem.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, Util.getGlobalId(parentItem));
+        carvedItem.setExtraAttribute(IndexItem.PARENT_TRACK_ID, Util.getTrackID(parentItem));
     }
 
     // adiciona uma evidência já carveada por uma classe que implemente a interface
