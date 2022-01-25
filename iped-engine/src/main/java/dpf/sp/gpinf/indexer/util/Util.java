@@ -198,7 +198,11 @@ public class Util {
                 throw new IllegalArgumentException(BaseCarveTask.CARVED_ID + notFoundIn + item.getPath());
             }
         }
-        sb.append(IndexItem.PATH).append(item.getPath());
+        if (item.getPath() != null) {
+            sb.append(IndexItem.PATH).append(item.getPath());
+        } else {
+            throw new IllegalArgumentException(IndexItem.PATH + notFoundIn + item.getPath());
+        }
         String id = DigestUtils.md5Hex(sb.toString());
         item.setExtraAttribute(IndexItem.GLOBAL_ID, id);
         return id;
