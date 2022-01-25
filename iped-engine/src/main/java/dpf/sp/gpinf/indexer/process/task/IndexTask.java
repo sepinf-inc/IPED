@@ -13,10 +13,6 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.document.Field;
-import org.apache.lucene.document.SortedSetDocValuesField;
-import org.apache.lucene.document.TextField;
-import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.parser.ParseContext;
@@ -56,6 +52,7 @@ public class IndexTask extends AbstractTask {
     private static Logger LOGGER = LoggerFactory.getLogger(IndexTask.class);
     private static String TEXT_SIZES = IndexTask.class.getSimpleName() + "TEXT_SIZES"; //$NON-NLS-1$
     public static final String TEXT_SPLITTED = "textSplitted";
+    public static final String FRAG_NUM = "fragNum";
     public static final String extraAttrFilename = "extraAttributes.dat"; //$NON-NLS-1$
 
     private IndexerDefaultParser autoParser;
@@ -149,23 +146,27 @@ public class IndexTask extends AbstractTask {
             fragments = 1;
         }
         String origtrackID = Util.getTrackID(evidence);
+        boolean splitted = false;
         try {
             /**
              * breaks very large texts in separate documents to be indexed
              */
             do {
                 // use fragName = 1 for all frags, except last, to check if last frag was
-                // indexed
-                // and to reuse same frag id when continuing an aborted processing
+                // indexed and to reuse same frag ID when continuing an aborted processing
                 int fragName = (--fragments) == 0 ? 0 : 1;
 
                 String fragPersistId = Util.generatetrackIDForTextFrag(origtrackID, fragName);
                 evidence.setExtraAttribute(IndexItem.TRACK_ID, fragPersistId);
 
                 if (fragments != 0) {
+                    splitted = true;
                     stats.incSplits();
                     evidence.setExtraAttribute(TEXT_SPLITTED, Boolean.TRUE.toString());
                     LOGGER.info("{} Splitting text of {}", Thread.currentThread().getName(), evidence.getPath()); //$NON-NLS-1$
+                }
+                if (splitted) {
+                    evidence.setExtraAttribute(FRAG_NUM, fragments);
                 }
 
                 Document doc = IndexItem.Document(evidence, noCloseReader, output);

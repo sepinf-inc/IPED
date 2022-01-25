@@ -159,6 +159,7 @@ public class SkipCommitedTask extends AbstractTask {
         // reset doc values to iterate again
         SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.TRACK_ID);
         NumericDocValues ids = aReader.getNumericDocValues(IndexItem.ID);
+        NumericDocValues fragNumNDV = aReader.getNumericDocValues(IndexTask.FRAG_NUM);
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
 
         if (parentContainers == null || persistIds == null || ids == null) {
@@ -191,6 +192,12 @@ public class SkipCommitedTask extends AbstractTask {
             if (subitemsCount != null) {
                 if (!persistIds.advanceExact(doc))
                     continue;
+                // skip non last text fragments with subitems counter possibly populated
+                if (fragNumNDV != null) {
+                    Long fragNum = DocValuesUtil.get(fragNumNDV, doc);
+                    if (fragNum != null && fragNum > 0)
+                        continue;
+                }
                 BytesRef persistId = persistIds.lookupOrd(persistIds.ordValue());
                 int ord = parentContainers.lookupTerm(persistId);
                 int carvedIgnored = 0;

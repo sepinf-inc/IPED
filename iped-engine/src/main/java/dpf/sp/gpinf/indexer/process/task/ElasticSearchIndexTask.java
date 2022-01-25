@@ -547,7 +547,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
-                .field("contenttrackID", contenttrackID).field("fragNum", fragNum)
+                .field("contenttrackID", contenttrackID).field(IndexTask.FRAG_NUM, fragNum)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();
