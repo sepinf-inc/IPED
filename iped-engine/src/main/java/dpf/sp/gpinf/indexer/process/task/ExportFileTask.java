@@ -40,6 +40,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.Properties;
 import java.util.zip.Deflater;
 
@@ -112,6 +113,8 @@ public class ExportFileTask extends AbstractTask {
 
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
+    
+    private static AtomicInteger counter = new AtomicInteger();
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -470,8 +473,7 @@ public class ExportFileTask extends AbstractTask {
         }
 
         if (!computeHash) {
-            outputFile = new File(getSubDir(extractDir),
-                    Util.getValidFilename(Integer.toString(evidence.getId()) + ext));
+            outputFile = new File(getSubDir(extractDir), Util.getValidFilename(counter.getAndIncrement() + ext));
         } else if ((hash = evidence.getHash()) != null && !hash.isEmpty()) {
             outputFile = getHashFile(hash, ext);
             IHashValue hashVal = new HashValue(hash);
@@ -480,7 +482,7 @@ public class ExportFileTask extends AbstractTask {
             }
 
         } else {
-            outputFile = new File(extractDir, Util.getValidFilename("0" + Integer.toString(evidence.getId()) + ext)); //$NON-NLS-1$
+            outputFile = new File(extractDir, Util.getValidFilename("0" + counter.getAndIncrement() + ext)); //$NON-NLS-1$
         }
 
         boolean fileExists = false;
