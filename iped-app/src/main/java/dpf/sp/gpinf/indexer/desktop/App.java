@@ -532,6 +532,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
+        int largeColWidth = 4096; 
+        
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController(appSearchParams);
@@ -542,7 +544,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         hitsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(1500);
+        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(largeColWidth);
         hitsTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         hitsTable.setShowGrid(false);
 
@@ -553,7 +555,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         subItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         subItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -565,7 +567,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         duplicatesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         duplicatesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -578,7 +580,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         parentItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -589,7 +591,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         referencesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
