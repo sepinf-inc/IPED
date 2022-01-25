@@ -455,6 +455,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
             evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
         }
+        
+        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
+        }
 
     }
 
@@ -639,8 +643,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-            if (embeddedId != null)
-                idToItemMap.put(embeddedId, new ParentInfo(subItem));
 
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {
@@ -662,6 +664,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 } finally {
                     // despausa contador de timeout do pai somente após processar subitem
                     reader.setTimeoutPaused(false);
+
+                    // must do this after adding subitem to queue
+                    if (embeddedId != null) {
+                        idToItemMap.put(embeddedId, new ParentInfo(subItem));
+                    }
                 }
             }
 
