@@ -224,7 +224,14 @@ public class SkipCommitedTask extends AbstractTask {
 
         // must be calculated first, in all cases, to allow recovering in the future
         HashValue globalId = new HashValue(Util.getGlobalId(item));
-        Util.computeParentGlobalId(item);
+
+        if (item.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID) == null && !item.isRoot()) {
+            // this property is needed when resuming processing to get a previous parent id
+            // referenced by subitems which parents were not commited, then when
+            // reprocessing parents, their id can be updated to the previous value, so
+            // parent-child relationships will be preserved.
+            throw new RuntimeException(IndexItem.PARENT_GLOBAL_ID + " must be stored for all items!");
+        }
 
         if (!args.isContinue()) {
             return;
