@@ -26,8 +26,10 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -45,6 +47,8 @@ public abstract class BaseCarveTask extends AbstractTask {
 
     public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
     public static final String NUM_CARVED_AND_FRAGS = "numCarvedAndFrags";
+    public static final String NUM_CARVED = "numCarved";
+    public static final String CARVED_ID = "carvedId";
 
     protected static CarverConfiguration carverConfig = null;
 
@@ -106,7 +110,14 @@ public abstract class BaseCarveTask extends AbstractTask {
 
         if (offsetFile.isCarved()) {
             incItensCarved();
+            Integer numCarved = (Integer) parentEvidence.getExtraAttribute(NUM_CARVED);
+            if (numCarved == null) {
+                numCarved = 0;
+            }
+            offsetFile.setExtraAttribute(CARVED_ID, numCarved);
+            parentEvidence.setExtraAttribute(NUM_CARVED, numCarved + 1);
         }
+
         Number numSubitems = (Number) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
         if (numSubitems == null) {
             numSubitems = 0;
@@ -117,6 +128,8 @@ public abstract class BaseCarveTask extends AbstractTask {
         // processa no worker atual
         boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
         ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+
+        ((CaseData) caseData).calcGlobalIDAndUpdateID(offsetFile);
 
         worker.processNewItem(offsetFile, time);
     }
@@ -166,7 +179,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentItem.setHasChildren(true);
 
-        Util.generateGlobalId(Util.getGlobalId(parentItem), carvedItem);
+        carvedItem.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, Util.getGlobalId(parentItem));
     }
 
     // adiciona uma evidência já carveada por uma classe que implemente a interface
