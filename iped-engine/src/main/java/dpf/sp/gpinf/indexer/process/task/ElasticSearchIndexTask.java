@@ -356,11 +356,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             fragNum = 1;
         }
 
-        String trackID = Util.getTrackID(item);
-
         // used for parent items in elastic to store just metadata info
-        // evidence UUID is combined to produce an 'UUID' like ID for items in elastic
-        String parentId = DigestUtils.md5Hex(trackID + item.getDataSource().getUUID());
+        // globalID works like an 'UUID' and should be unique across cases
+        String parentId = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
 
         try {
             // creates the father;

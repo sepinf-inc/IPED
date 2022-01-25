@@ -134,7 +134,7 @@ public class Util {
     public static String getTrackID(IItem item) {
         String id = (String) item.getExtraAttribute(IndexItem.TRACK_ID);
         if (id == null) {
-            return generatetrackID(item);
+            return generateTrackID(item);
         }
         return id;
     }
@@ -165,7 +165,7 @@ public class Util {
         System.out.println(DigestUtils.md5Hex(str));
     }
 
-    private static String generatetrackID(IItem item) {
+    private static String generateTrackID(IItem item) {
         StringBuilder sb = new StringBuilder();
         String notFoundIn = " not found in ";
         if (item.getIdInDataSource() != null) {
@@ -203,9 +203,19 @@ public class Util {
         } else {
             throw new IllegalArgumentException(IndexItem.PATH + notFoundIn + item.getPath());
         }
-        String id = DigestUtils.md5Hex(sb.toString());
-        item.setExtraAttribute(IndexItem.TRACK_ID, id);
-        return id;
+        String trackId = DigestUtils.md5Hex(sb.toString());
+        item.setExtraAttribute(IndexItem.TRACK_ID, trackId);
+
+        // additionally compute a globalId see #784
+        if (item.getDataSource() != null) {
+            sb.append(BasicProps.EVIDENCE_UUID).append(item.getDataSource().getUUID());
+            String globalId = DigestUtils.md5Hex(sb.toString());
+            item.setExtraAttribute(IndexItem.GLOBAL_ID, globalId);
+        } else if (!item.isQueueEnd()) {
+            throw new RuntimeException(BasicProps.EVIDENCE_UUID + notFoundIn + item.getPath());
+        }
+
+        return trackId;
     }
 
     public static String readUTF8Content(File file) throws IOException {
