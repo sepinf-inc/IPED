@@ -30,6 +30,7 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -66,6 +67,7 @@ import dpf.sp.gpinf.indexer.util.UFDRInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZipFile4j;
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
@@ -96,6 +98,8 @@ public class UfedXmlReader extends DataSourceReader {
 
     private final Set<String> supportedApps = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
+
+    private static AtomicInteger counter = new AtomicInteger();
 
     File root, ufdrFile;
     ZipFile4j ufdr;
@@ -570,6 +574,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash(""); //$NON-NLS-1$
 
+                    ((CaseData) caseData).calcGlobalIDAndUpdateID(parent);
                     item.setParent(parent);
                     if (!mergeInParentNode.contains(type))
                         parent.setHasChildren(true);
@@ -795,7 +800,6 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 int numInstantMsgAttachs = 0;
                 if ("InstantMessage".equals(type)) {
-                    item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
                         item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
@@ -894,6 +898,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (!ignoreItems) {
                         // process seen attachments later
                         if (!seenAttachment) {
+                            processItem(item);
                             List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
                             if (seenAttachs != null && numInstantMsgAttachs > 1) {
                                 for (Item attach : seenAttachs) {
@@ -904,7 +909,6 @@ public class UfedXmlReader extends DataSourceReader {
                                         ESCAPED_UFED_ID + ":" + prevUfedId);
                                 caseData.incDiscoveredEvidences(-1);
                             }
-                            processItem(item);
                             seenAttachsPerId.remove(item.getId());
                         }
                     } else {
@@ -1140,7 +1144,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         private File createEmailPreview(Item email) {
-            File file = new File(output, "view/emails/view-" + email.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+            File file = new File(output, "view/emails/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
@@ -1216,7 +1220,7 @@ public class UfedXmlReader extends DataSourceReader {
                 updateName(contact, name);
             }
 
-            File file = new File(output, "view/contacts/view-" + contact.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+            File file = new File(output, "view/contacts/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
 
@@ -1307,7 +1311,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
             uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
 
-            File file = new File(output, "view/deviceInfo/view-" + deviceInfo.getId() + ".html");
+            File file = new File(output, "view/deviceInfo/view-" + counter.getAndIncrement() + ".html");
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
                 bw.write("<!DOCTYPE html>\n"
