@@ -102,26 +102,12 @@ public class FolderTreeReader extends DataSourceReader {
 
         rootFile = file;
 
-        List<Integer> parents;
-        List<String> paths;
-        String parentGlobalID = null;
-        if (parent != null) {
-            parents = parent.getParentIds();
-            parents.add(parent.getId());
-            parentGlobalID = (String) parent.getExtraAttribute(IndexItem.PARENT_GLOBAL_ID);
-
-            StringTokenizer stringTokenizer = new StringTokenizer(parent.getPath(), File.separator);
-            paths = stringTokenizer.getTokenList();
-        } else {
-            parents = Collections.emptyList();
-            paths = Collections.emptyList();
-        }
-        transverse(file, parents, paths, parentGlobalID);
+        transverse(file, parent);
     }
 
-    private void transverse(File file, List<Integer> parents, List<String> paths, String parentGlobalID)
+    private void transverse(File file, Item parent)
             throws IOException {
-        new FolderVisitor(parents, paths, parentGlobalID).walk(file);
+        new FolderVisitor(parent).walk(file);
     }
 
     private IItem getEvidence(Path path, BasicFileAttributes attr) {
@@ -164,17 +150,12 @@ public class FolderTreeReader extends DataSourceReader {
 
     class FolderVisitor implements FileVisitor<Path> {
 
-        private LinkedList<Integer> parentIds;
-        private LinkedList<String> paths;
-        private LinkedList<String> globalIDs;
+        private LinkedList<IItem> parents = new LinkedList<>();
 
-        public FolderVisitor(List<Integer> parentIds, List<String> paths, String parentGlobalID) {
+        public FolderVisitor(IItem parent) {
             super();
-            this.parentIds = new LinkedList<>(parentIds);
-            this.paths = new LinkedList<>(paths);
-            this.globalIDs = new LinkedList<>();
-            if (parentGlobalID != null) {
-                this.globalIDs.add(parentGlobalID);
+            if (parent != null) {
+                this.parents.add(parent);
             }
         }
 
@@ -191,12 +172,10 @@ public class FolderTreeReader extends DataSourceReader {
 
             IItem item = getEvidence(path, attr);
             if (item != null) {
-                if (!parentIds.isEmpty()) {
-                    item.setParentId(parentIds.getLast());
-                    item.addParentIds(parentIds);
-                    item.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, globalIDs.getLast());
+                if (!parents.isEmpty()) {
+                    item.setParent(parents.getLast());
 
-                    if (parentIds.size() == 2) {
+                    if (parents.size() == 2) {
                         item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
                     }
                 } else {
@@ -204,8 +183,8 @@ public class FolderTreeReader extends DataSourceReader {
                 }
 
                 String fileName = item.getName();
-                String evidencePath = paths.isEmpty() ? fileName
-                        : paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
+                String evidencePath = parents.isEmpty() ? fileName
+                        : parents.getLast().getPath() + File.separator + fileName;
                 item.setPath(evidencePath);
 
                 if (attr.isDirectory()) {
@@ -227,9 +206,7 @@ public class FolderTreeReader extends DataSourceReader {
                 if (attr.isDirectory()) {
                     // must getId() after caseData.addItem(), it could set item id to previous id
                     // with --continue
-                    parentIds.addLast(item.getId());
-                    paths.addLast(fileName);
-                    globalIDs.addLast((String) item.getExtraAttribute(IndexItem.GLOBAL_ID));
+                    parents.addLast(item);
                 }
             }
 
@@ -248,9 +225,7 @@ public class FolderTreeReader extends DataSourceReader {
             }
 
             if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
-                parentIds.pollLast();
-                paths.pollLast();
-                globalIDs.pollLast();
+                parents.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
             }
 
@@ -260,9 +235,7 @@ public class FolderTreeReader extends DataSourceReader {
         @Override
         public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-            parentIds.pollLast();
-            paths.pollLast();
-            globalIDs.pollLast();
+            parents.pollLast();
 
             if (exception != null) {
                 System.err.println(
