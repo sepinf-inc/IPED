@@ -193,31 +193,37 @@ public class ReferencesTableModel extends AbstractTableModel
         String edonkey = doc.get(HashTask.HASH.EDONKEY.toString());
         String hashes = Arrays.asList(md5, sha1, sha256, edonkey).stream().filter(a -> a != null)
                 .collect(Collectors.joining(" "));
-        String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
-        textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
-
-        try {
-            IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
-            results = task.luceneSearch();
-
-            final int length = results.getLength();
-
-            if (length > 0) {
-                SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                        App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
-                    }
-                });
-                refDoc = doc;
-            } else {
-                refDoc = null;
-            }
-
-        } catch (Exception e) {
+        
+        if (hashes.isEmpty()) {
             results = new LuceneSearchResult(0);
             refDoc = null;
-            e.printStackTrace();
+        } else {
+            String textQuery = ExtraProperties.LINKED_ITEMS + ":(" + hashes + ") ";
+            textQuery += ExtraProperties.SHARED_HASHES + ":(" + hashes + ")";
+    
+            try {
+                IPEDSearcher task = new IPEDSearcher(App.get().appCase, textQuery);
+                results = task.luceneSearch();
+    
+                final int length = results.getLength();
+    
+                if (length > 0) {
+                    SwingUtilities.invokeLater(new Runnable() {
+                        @Override
+                        public void run() {
+                            App.get().referencesDock.setTitleText(length + Messages.getString("ReferencesTab.Title"));
+                        }
+                    });
+                    refDoc = doc;
+                } else {
+                    refDoc = null;
+                }
+    
+            } catch (Exception e) {
+                results = new LuceneSearchResult(0);
+                refDoc = null;
+                e.printStackTrace();
+            }
         }
 
         fireTableDataChanged();
