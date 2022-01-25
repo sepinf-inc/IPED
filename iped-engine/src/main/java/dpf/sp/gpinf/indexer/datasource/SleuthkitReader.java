@@ -32,6 +32,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.TimeZone;
 import java.util.TreeSet;
@@ -136,6 +137,8 @@ public class SleuthkitReader extends DataSourceReader {
     private boolean embeddedDisk = false;
     private int itemCount = 0;
     private volatile boolean decodingError = false;
+
+    private HashMap<Integer, String> idToGlobalIdMap = new HashMap<>();
 
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
@@ -1065,11 +1068,20 @@ public class SleuthkitReader extends DataSourceReader {
     private void setSubitemProperties(Item item) {
         item.setSubItem(true);
         item.setSubitemId(itemCount);
-        Util.generateGlobalId((String) parent.getExtraAttribute(IndexItem.GLOBAL_ID), item);
         item.setExtraAttribute(IndexItem.CONTAINER_GLOBAL_ID, Util.getGlobalId(parent));
     }
 
     private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {
+        // retrieve and store parentGlobalID explicitly before adding to queue
+        if (!item.isRoot()) {
+            String parentGlobalID = idToGlobalIdMap.get(item.getParentId());
+            if (parentGlobalID != null) {
+                item.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parentGlobalID);
+            } else {
+                throw new RuntimeException("parentGlobalID must not be null: " + item.getPath() + " " + item.getName());
+            }
+        }
+
         if (embeddedDisk) {
             // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
             caseData.addItemFirstNonBlocking(item);
@@ -1083,6 +1095,11 @@ public class SleuthkitReader extends DataSourceReader {
                 caseData.addItemNonBlocking(item);
             }
 
+        }
+        // store parents globalID after adding to queue (where it is computed and ID could be reassigned)
+        if (item.hasChildren() || item.isDir() || item.isRoot()) {
+            String globalID = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
+            idToGlobalIdMap.put(item.getId(), globalID);
         }
     }
 
