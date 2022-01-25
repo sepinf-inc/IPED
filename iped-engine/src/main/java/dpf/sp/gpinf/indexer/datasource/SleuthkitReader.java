@@ -902,7 +902,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);
@@ -1049,7 +1048,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);

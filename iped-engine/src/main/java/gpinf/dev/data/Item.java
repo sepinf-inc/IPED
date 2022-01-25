@@ -224,8 +224,6 @@ public class Item implements ISleuthKitItem {
 
     private String idInDataSource;
 
-    private String parentIdInDataSource;
-
     private TikaInputStream tis;
 
     private byte[] thumb;
@@ -1114,7 +1112,6 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setParentIdInDataSource(parent.getIdInDataSource());
         String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.GLOBAL_ID);
         if (parentGlobalID == null) {
             throw new RuntimeException("parentGlobalId of " + this.getPath() + " cannot be null");
@@ -1357,14 +1354,6 @@ public class Item implements ISleuthKitItem {
 
     public void setIdInDataSource(String idInDataSource) {
         this.idInDataSource = idInDataSource;
-    }
-
-    public void setParentIdInDataSource(String string) {
-        this.parentIdInDataSource = string;
-    }
-
-    public String getParentIdInDataSource() {
-        return this.parentIdInDataSource;
     }
 
     @Override

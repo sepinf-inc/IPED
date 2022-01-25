@@ -137,10 +137,8 @@ public class FolderTreeReader extends DataSourceReader {
             item.setIdInDataSource(path.toString());
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
-                item.setParentIdInDataSource("");
             } else {
                 item.setName(file.getName());
-                item.setParentIdInDataSource(path.getParent().toString());
             }
             try {
                 String relativePath = Util.getRelativePath(output, file);
