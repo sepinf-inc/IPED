@@ -143,14 +143,8 @@ public class SkipCommitedTask extends AbstractTask {
 
             caseData.putCaseObject(GLOBALID_ID_MAP, globalToIdMap);
 
-            // reset doc values to iterate again
-            persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
-            prevIds = aReader.getNumericDocValues(IndexItem.ID);
-
-            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.CONTAINER_GLOBAL_ID,
-                    ParsingTask.NUM_SUBITEMS);
-            collectParentsWithoutAllSubitems(aReader, persistIds, prevIds, IndexItem.PARENT_GLOBAL_ID,
-                    BaseCarveTask.NUM_CARVED_AND_FRAGS);
+            collectParentsWithoutAllSubitems(aReader, IndexItem.CONTAINER_GLOBAL_ID, ParsingTask.NUM_SUBITEMS);
+            collectParentsWithoutAllSubitems(aReader, IndexItem.PARENT_GLOBAL_ID, BaseCarveTask.NUM_CARVED_AND_FRAGS);
 
             caseData.putCaseObject(PARENTS_WITH_LOST_SUBITEMS, parentsWithLostSubitems);
 
@@ -160,9 +154,13 @@ public class SkipCommitedTask extends AbstractTask {
 
     }
 
-    private void collectParentsWithoutAllSubitems(LeafReader aReader, SortedDocValues persistIds, NumericDocValues ids,
-            String parentIdField, String subitemCountField) throws IOException {
+    private void collectParentsWithoutAllSubitems(LeafReader aReader, String parentIdField, String subitemCountField)
+            throws IOException {
+        // reset doc values to iterate again
+        SortedDocValues persistIds = aReader.getSortedDocValues(IndexItem.GLOBAL_ID);
+        NumericDocValues ids = aReader.getNumericDocValues(IndexItem.ID);
         SortedDocValues parentContainers = aReader.getSortedDocValues(parentIdField);
+
         if (parentContainers == null || persistIds == null || ids == null) {
             return;
         }
@@ -189,8 +187,8 @@ public class SkipCommitedTask extends AbstractTask {
         }
 
         for (int doc = 0; doc < aReader.maxDoc(); doc++) {
-            int subitemsCount = DocValuesUtil.get(numSubitems, doc).intValue();
-            if (subitemsCount != -1) {
+            Long subitemsCount = DocValuesUtil.get(numSubitems, doc);
+            if (subitemsCount != null) {
                 if (!persistIds.advanceExact(doc))
                     continue;
                 BytesRef persistId = persistIds.lookupOrd(persistIds.ordValue());
