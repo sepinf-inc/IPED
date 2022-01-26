@@ -80,6 +80,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
+    
+    private static boolean isEnabled = false;
 
     private ElasticSearchTaskConfig elasticConfig;
 
@@ -103,7 +105,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return elasticConfig.isEnabled();
+        return isEnabled;
     }
 
     public List<Configurable<?>> getConfigurables() {
@@ -116,7 +118,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
-        if (!elasticConfig.isEnabled()) {
+        if (!(isEnabled = elasticConfig.isEnabled())) {
             return;
         }
 
@@ -279,9 +281,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     public static void commit() throws IOException, InterruptedException {
+        if (!isEnabled)
+            return;
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Commiting to ElasticSearch...");
         for (ElasticSearchIndexTask instance : taskInstances) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                    "Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
             LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
             instance.onCommit.set(true);
             instance.sendBulkRequest();
