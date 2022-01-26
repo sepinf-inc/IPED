@@ -242,10 +242,14 @@ public class SkipCommitedTask extends AbstractTask {
             return;
         }
 
-        // ignore already commited items. If they are containers without all their
-        // subitems commited, process again
+        // ignore already committed items. If they are containers without all their
+        // subitems committed, process again
         if (Arrays.binarySearch(commitedtrackIDs, trackID) >= 0) {
-            if (!parentsWithLostSubitems.contains(trackID)) {
+            // we must "remove" seen containers from set below. It is possible for the same
+            // container to be enqueued twice: if it is a subItem/carved of some allocated
+            // parent being processed again, coming from some datasource reader, AND if it
+            // was already committed, coming from the index.
+            if (!parentsWithLostSubitems.remove(trackID)) {
                 item.setToIgnore(true);
                 return;
             }
