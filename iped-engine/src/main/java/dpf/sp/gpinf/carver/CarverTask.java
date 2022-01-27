@@ -122,6 +122,8 @@ public class CarverTask extends BaseCarveTask {
                 type = registry.getSupertype(type);
             }
 
+            clearExtraAttributes(evidence);
+
             findSig(tis);
 
         } catch (Exception t) {

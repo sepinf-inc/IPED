@@ -112,6 +112,17 @@ public abstract class BaseCarveTask extends AbstractTask {
         return offsetFile;
     }
 
+    /**
+     * Used to clear counters added to extra attributes of parent items, needed when
+     * resuming processing, so those counters will start from zero.
+     * 
+     * @param parentFile
+     */
+    protected void clearExtraAttributes(IItem parentFile) {
+        parentFile.getExtraAttributeMap().remove(NUM_CARVED);
+        parentFile.getExtraAttributeMap().remove(NUM_CARVED_AND_FRAGS);
+    }
+
     protected void addOffsetFile(IItem offsetFile, IItem parentEvidence) {
 
         if (offsetFile.isCarved()) {
