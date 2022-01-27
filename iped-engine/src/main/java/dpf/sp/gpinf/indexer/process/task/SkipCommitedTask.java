@@ -52,6 +52,8 @@ public class SkipCommitedTask extends AbstractTask {
     private static HashValue[] commitedPersistentIds;
 
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
+    
+    private static Set<HashValue> removedParents = Collections.synchronizedSet(new TreeSet<>());
 
     private static Map<HashValue, Integer> persistentToIdMap = new HashMap<>();
 
@@ -212,8 +214,18 @@ public class SkipCommitedTask extends AbstractTask {
     public void finish() throws Exception {
         commitedPersistentIds = null;
         parentsWithLostSubitems.clear();
+        removedParents.clear();
         persistentToIdMap.clear();
         prevRootNameToEvidenceUUID.clear();
+    }
+
+    // Check again parents that are going to be processed in later processing queues
+    // to avoid ignoring them in a second pass in this task.
+    public static void checkAgainLaterProcessedParents(IItem item) {
+        HashValue trackID = new HashValue(Util.getPersistentId(item));
+        if (removedParents.remove(trackID)) {
+            parentsWithLostSubitems.add(trackID);
+        }
     }
 
     @Override
@@ -237,6 +249,8 @@ public class SkipCommitedTask extends AbstractTask {
             if (!parentsWithLostSubitems.remove(persistentId)) {
                 item.setToIgnore(true);
                 return;
+            } else {
+                removedParents.add(persistentId);
             }
         }
 

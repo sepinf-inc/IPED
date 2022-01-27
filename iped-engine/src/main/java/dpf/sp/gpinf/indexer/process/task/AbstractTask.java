@@ -201,6 +201,7 @@ public abstract class AbstractTask {
                 nextTask.processAndSendToNextTask(evidence);
             else {
                 evidence.dispose();
+                SkipCommitedTask.checkAgainLaterProcessedParents(evidence);
                 caseData.addItemToQueue(evidence, priority);
                 worker.itensBeingProcessed--;
             }
