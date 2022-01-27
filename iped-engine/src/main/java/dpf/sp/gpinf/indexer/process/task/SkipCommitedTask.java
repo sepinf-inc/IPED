@@ -18,7 +18,6 @@ import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.SortedDocValues;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
@@ -54,6 +53,8 @@ public class SkipCommitedTask extends AbstractTask {
     private static HashValue[] commitedtrackIDs;
 
     private static Set<HashValue> parentsWithLostSubitems = Collections.synchronizedSet(new TreeSet<>());
+
+    private static Set<HashValue> removedParents = Collections.synchronizedSet(new TreeSet<>());
 
     private static Map<HashValue, Integer> globalToIdMap = new HashMap<>();
 
@@ -220,8 +221,18 @@ public class SkipCommitedTask extends AbstractTask {
     public void finish() throws Exception {
         commitedtrackIDs = null;
         parentsWithLostSubitems.clear();
+        removedParents.clear();
         globalToIdMap.clear();
         prevRootNameToEvidenceUUID.clear();
+    }
+
+    // Check again parents that are going to be processed in later processing queues
+    // to avoid ignoring them in a second pass in this task.
+    public static void checkAgainLaterProcessedParents(IItem item) {
+        HashValue trackID = new HashValue(Util.getTrackID(item));
+        if (removedParents.remove(trackID)) {
+            parentsWithLostSubitems.add(trackID);
+        }
     }
 
     @Override
@@ -252,6 +263,8 @@ public class SkipCommitedTask extends AbstractTask {
             if (!parentsWithLostSubitems.remove(trackID)) {
                 item.setToIgnore(true);
                 return;
+            } else {
+                removedParents.add(trackID);
             }
         }
 
