@@ -534,6 +534,7 @@ public class Manager {
             public void run() {
                 try {
                     long start = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
 
@@ -554,6 +555,7 @@ public class Manager {
                     writer.commit();
 
                     long end = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
 
