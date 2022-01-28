@@ -33,7 +33,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -395,8 +397,11 @@ public class SleuthkitReader extends DataSourceReader {
                 // get permit before any DB changes and getting last obj ID
                 decodeImageSemaphore.acquire();
 
-                if (args.isContinue()) {
-                    deleteDatasource(image);
+                if (args.isContinue() && !embeddedDisk) {
+                    Long tskID = deleteDatasource(image);
+                    if (tskID != null) {
+                        removeDecodedRangeAfterId(tskID, output);
+                    }
                 }
 
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -478,7 +483,12 @@ public class SleuthkitReader extends DataSourceReader {
 
     }
     
-    private void deleteDatasource(File image) throws TskCoreException, SQLException {
+    /**
+     * Deleting previous incomplete TSK entries is needed when resuming processing,
+     * so items will get the same tskID, this is one of the requirements to
+     * recognize the same item between processings.
+     */
+    private Long deleteDatasource(File image) throws TskCoreException, SQLException {
         Long sourceId = null;
         for(Image img : sleuthCase.getImages()) {
             if(img.getName().equals(image.getName())) {
@@ -507,10 +517,32 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
         }
+        return sourceId;
     }
 
     public void read(File image) throws Exception {
         read(image, null);
+    }
+
+    private static synchronized void removeDecodedRangeAfterId(Long id, File output) {
+        File file = new File(output, RANGE_ID_FILE);
+        if (file.exists()) {
+            UTF8Properties props = new UTF8Properties();
+            try {
+                props.load(file);
+                Iterator<Entry<Object, Object>> iterator = props.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Entry<Object, Object> entry = iterator.next();
+                    if (Long.valueOf(entry.getValue().toString()) >= id) {
+                        iterator.remove();
+                    }
+                }
+                props.store(file);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     private static synchronized void saveDecodedRangeId(File image, Long start, Long last, File output) {
