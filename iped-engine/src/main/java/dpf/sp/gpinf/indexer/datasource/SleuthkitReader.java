@@ -102,8 +102,8 @@ public class SleuthkitReader extends DataSourceReader {
     private static boolean isTskPatched = false;
 
     private static ConcurrentHashMap<File, Long[]> idRangeMap = new ConcurrentHashMap<>();
-    private static volatile Thread waitLoadDbThread;
-    private static volatile Exception exception = null;
+    private static ConcurrentHashMap<File, Thread> waitLoadDbThread = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<File, Exception> exception = new ConcurrentHashMap<>();
 
     private static String[] TSK_CMD = { "tsk_loaddb", "-a", "-d", DB_NAME, IMG_NAME }; //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
@@ -314,7 +314,7 @@ public class SleuthkitReader extends DataSourceReader {
 
             Manager.getInstance().initSleuthkitServers();
 
-            Long[] range = getDecodedRangeId(image);
+            Long[] range = getDecodedRangeId(image, output);
             if (range != null && args.isContinue()) {
                 synchronized (idRangeMap) {
                     idRangeMap.put(image, range);
@@ -413,13 +413,13 @@ public class SleuthkitReader extends DataSourceReader {
                 readItensAdded(image);
 
             } catch (Exception e) {
-                if (waitLoadDbThread != null)
-                    waitLoadDbThread.interrupt();
+                if (waitLoadDbThread.get(image) != null)
+                    waitLoadDbThread.get(image).interrupt();
                 throw e;
             }
 
-        } else if (waitLoadDbThread != null)
-            waitLoadDbThread.join();
+        } else if (waitLoadDbThread.get(image) != null)
+            waitLoadDbThread.get(image).join();
 
     }
     
@@ -486,7 +486,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private synchronized void saveDecodedRangeId(File image, Long start, Long last) {
+    private static synchronized void saveDecodedRangeId(File image, Long start, Long last, File output) {
         File file = new File(output, RANGE_ID_FILE);
         UTF8Properties props = new UTF8Properties();
         try {
@@ -502,7 +502,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private synchronized Long[] getDecodedRangeId(File image) {
+    private static synchronized Long[] getDecodedRangeId(File image, File output) {
         File file = new File(output, RANGE_ID_FILE);
         if (file.exists()) {
             UTF8Properties props = new UTF8Properties();
@@ -539,11 +539,11 @@ public class SleuthkitReader extends DataSourceReader {
         try {
             lastId = sleuthCase.getLastObjectId();
         } catch (TskCoreException e) {
-            exception = e;
+            exception.put(image, e);
         }
 
         if (exit == 0 && lastId != null) {
-            saveDecodedRangeId(image, firstId, lastId);
+            saveDecodedRangeId(image, firstId, lastId, output);
         }
 
         synchronized (idRangeMap) {
@@ -555,12 +555,13 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void waitProcessInOtherThread(final Process process, final File image) {
 
-        waitLoadDbThread = new Thread() {
+        Thread t = new Thread() {
             public void run() {
                 waitProcess(process, image);
             }
         };
-        waitLoadDbThread.start();
+        waitLoadDbThread.put(image, t);
+        t.start();
     }
 
     /**
@@ -582,8 +583,8 @@ public class SleuthkitReader extends DataSourceReader {
 
             if (lastId == null) {
                 lastId = idRangeMap.get(file)[1];
-                if (exception != null) {
-                    throw exception;
+                if (exception.get(file) != null) {
+                    throw exception.get(file);
                 }
             }
             if (lastId != null) {
