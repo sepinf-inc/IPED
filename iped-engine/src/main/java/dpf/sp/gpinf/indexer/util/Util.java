@@ -168,7 +168,7 @@ public class Util {
     private static String generateTrackID(IItem item) {
         StringBuilder sb = new StringBuilder();
         String notFoundIn = " not found in ";
-        if (!item.isCarved() && !item.isSubItem()) {
+        if (!item.isCarved() && !item.isSubItem() && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null) {
             if (item.getIdInDataSource() != null) {
                 sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
             } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
