@@ -70,7 +70,7 @@ public class SignatureTask extends AbstractTask {
                     }
                 }
 
-                if (MediaTypes.RAW_IMAGE.equals(type)) {
+                if (MediaTypes.DISK_IMAGE.equals(type)) {
                     if(hasVHDFooter(evidence)) {
                         type = MediaTypes.VHD;
                     }
