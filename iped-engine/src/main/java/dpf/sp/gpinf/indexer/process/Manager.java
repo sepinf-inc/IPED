@@ -55,8 +55,10 @@ import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AdvancedIPEDConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
+import dpf.sp.gpinf.indexer.config.SleuthKitConfig;
 import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.process.task.ExportCSVTask;
 import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
@@ -229,6 +231,8 @@ public class Manager {
             if (!iniciarIndexacao())
                 return;
 
+            initSleuthkitServers();
+
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
             counter.start();
@@ -316,9 +320,14 @@ public class Manager {
         }
     }
 
-    public void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        if (!initSleuthkitServers.getAndSet(true)) {
-            SleuthkitClient.initSleuthkitServers(dbPath);
+    public synchronized void initSleuthkitServers() throws InterruptedException {
+        File tskDB = SleuthkitReader.getSleuthkitDB(output);
+        SleuthKitConfig tskConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
+                .findObjects(SleuthKitConfig.class).iterator().next();
+        if (tskDB.exists() && tskConfig.isRobustImageReading()) {
+            if (!initSleuthkitServers.getAndSet(true)) {
+                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+            }
         }
     }
 

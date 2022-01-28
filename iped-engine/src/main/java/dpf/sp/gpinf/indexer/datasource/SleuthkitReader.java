@@ -129,6 +129,10 @@ public class SleuthkitReader extends DataSourceReader {
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
 
+    public static File getSleuthkitDB(File output) {
+        return new File(output.getParent(), DB_NAME);
+    }
+
     public SleuthkitReader(ICaseData caseData, File output, boolean listOnly) {
         super(caseData, output, listOnly);
 
@@ -291,7 +295,7 @@ public class SleuthkitReader extends DataSourceReader {
             inheritedPath = parent.getPath();
         }
 
-        String dbPath = output.getParent() + File.separator + DB_NAME;
+        String dbPath = getSleuthkitDB(output).getAbsolutePath();
 
         if (listOnly) {
 
@@ -308,10 +312,7 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            SleuthKitConfig sleuthKitConfig = (SleuthKitConfig) ConfigurationManager.getInstance()
-                    .findObjects(SleuthKitConfig.class).iterator().next();
-            if (sleuthKitConfig.isRobustImageReading())
-                Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
+            Manager.getInstance().initSleuthkitServers();
 
             Long[] range = getDecodedRangeId(image);
             if (range != null && args.isContinue()) {
