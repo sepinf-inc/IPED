@@ -174,7 +174,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
-        if (conn == null) {
+        if (conn == null && transcriptConfig.isEnabled()) {
             createConnection();
         }
 
