@@ -194,13 +194,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                cmd[i] = cmd[i].replace("$OUTPUT", "\\\"$OUTPUT\\\"");
-            }
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getAbsolutePath());
+            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getName());
         }
         pb.command(cmd);
+        if (tmpFile.getParentFile() != null) {
+            pb.directory(tmpFile.getParentFile());
+        }
         pb.redirectErrorStream(true);
         Process p = pb.start();
         byte[] out = IOUtil.loadInputStream(p.getInputStream());
