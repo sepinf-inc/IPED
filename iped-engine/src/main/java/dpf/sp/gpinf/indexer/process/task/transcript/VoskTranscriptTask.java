@@ -20,6 +20,7 @@ import org.vosk.Recognizer;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 
 public class VoskTranscriptTask extends AbstractTranscriptTask {
 
@@ -43,11 +44,16 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
             if (langs.size() > 1) {
                 logger.error("Vosk transcription supports only 1 language, '{}' will be used.", langs.get(0));
             }
-            File modelDir = new File(Configuration.getInstance().appRoot, "models/vosk/" + langs.get(0));
-            if (!modelDir.exists() || !modelDir.isDirectory() || modelDir.listFiles().length == 0) {
-                logger.error("Invalid Vosk transcription model {}. English (en) will be used instead.",
-                        modelDir.getAbsolutePath());
-                modelDir = new File(Configuration.getInstance().appRoot, "models/vosk/en");
+            String language = langs.get(0);
+            File modelDir = new File(Configuration.getInstance().appRoot, "models/vosk/" + language);
+            if (!language.equals("en")
+                    && (!modelDir.exists() || !modelDir.isDirectory() || modelDir.listFiles().length == 0)) {
+                File enModelDir = new File(Configuration.getInstance().appRoot, "models/vosk/en");
+                if (enModelDir.exists() && enModelDir.isDirectory() && enModelDir.listFiles().length != 0) {
+                    logger.error("Invalid Vosk transcription model {}. English (en) will be used instead.",
+                            modelDir.getAbsolutePath());
+                    modelDir = enModelDir;
+                }
             }
             model = new Model(modelDir.getAbsolutePath());
         }
