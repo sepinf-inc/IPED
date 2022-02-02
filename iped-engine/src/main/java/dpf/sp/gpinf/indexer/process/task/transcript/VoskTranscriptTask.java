@@ -55,6 +55,15 @@ public class VoskTranscriptTask extends AbstractTranscriptTask {
                     modelDir = enModelDir;
                 }
             }
+            if (!modelDir.exists() || !modelDir.isDirectory() || modelDir.listFiles().length == 0) {
+                String msg = "Invalid Vosk transcription model: " + modelDir.getAbsolutePath();
+                if (hasIpedDatasource()) {
+                    transcriptConfig.setEnabled(false);
+                    logger.warn(msg);
+                    return;
+                }
+                throw new IPEDException(msg);
+            }
             model = new Model(modelDir.getAbsolutePath());
         }
 
