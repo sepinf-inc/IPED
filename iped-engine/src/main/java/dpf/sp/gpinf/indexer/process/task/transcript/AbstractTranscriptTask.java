@@ -211,6 +211,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return null;
         } else {
             LOGGER.debug(new String(out, StandardCharsets.UTF_8));
+            if (!tmpFile.exists()) {
+                LOGGER.warn("Conversion to wav failed, no wav generated: {} ", evidence.getPath());
+                return null;
+            }
+            if (tmpFile.length() == 0) {
+                tmpFile.delete();
+                LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", evidence.getPath());
+                return null;
+            }
         }
         return tmpFile;
     }
