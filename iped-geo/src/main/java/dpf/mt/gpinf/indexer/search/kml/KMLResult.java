@@ -23,12 +23,12 @@ import iped3.util.BasicProps;
 public class KMLResult {
     private static FileDialog fDialog;
 
-    protected Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
-    private String kmlResult;
+    private GUIProvider guiProvider;
+    private IMultiSearchResultProvider app;
 
-    GUIProvider guiProvider;
-    IMultiSearchResultProvider app;
-    private int itemsWithGPS;
+    private Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
+    private String kmlResult = "";
+    private int itemsWithGPS = 0;
 
     public KMLResult() {
     }
@@ -50,9 +50,10 @@ public class KMLResult {
         return this.kmlResult;
     }
 
-    public void setResultKML(String kml, int itemsWithGPS) {
+    public void setResultKML(String kml, int itemsWithGPS, Map<IItemId, List<Integer>> gpsItems) {
         this.kmlResult = kml;
         this.itemsWithGPS = itemsWithGPS;
+        this.gpsItems = gpsItems;
     }
 
     public void saveKML() {

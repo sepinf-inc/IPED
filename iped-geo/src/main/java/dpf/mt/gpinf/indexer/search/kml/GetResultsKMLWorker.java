@@ -5,6 +5,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TimeZone;
 import java.util.function.Consumer;
 
@@ -30,7 +31,6 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
     JProgressBar progress;
     int contSemCoordenadas = 0, itemsWithGPS = 0;
     Consumer<KMLResult> consumer;
-    KMLResult kmlResult;
 
     public GetResultsKMLWorker(IMultiSearchResultProvider app, String[] colunas, JProgressBar progress,
             Consumer<KMLResult> consumer) {
@@ -43,6 +43,13 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
     @Override
     public void done() {
         if (consumer != null) {
+            KMLResult kmlResult;
+            try {
+                kmlResult = this.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+                kmlResult = new KMLResult();
+            }
             consumer.accept(kmlResult);
         }
     }
@@ -50,7 +57,6 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
     @Override
     protected KMLResult doInBackground() throws Exception {
 
-        kmlResult = new KMLResult();
         StringBuilder tourPlayList = new StringBuilder(""); //$NON-NLS-1$
         StringBuilder kml = new StringBuilder(""); //$NON-NLS-1$
 
@@ -94,9 +100,9 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
         IIPEDSearcher searcher = app.createNewSearch(query);
         IMultiSearchResult multiResult = searcher.multiSearch();
 
-        kmlResult.gpsItems = new HashMap<>();
+        Map<IItemId, List<Integer>> gpsItems = new HashMap<>();
         for (IItemId item : multiResult.getIterator())
-            kmlResult.gpsItems.put(item, null);
+            gpsItems.put(item, null);
 
         for (int row = 0; row < results.getLength(); row++) {
 
@@ -106,7 +112,7 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
 
             IItemId item = results.getItem(app.getResultsTable().convertRowIndexToModel(row));
 
-            if (!kmlResult.gpsItems.containsKey(item))
+            if (!gpsItems.containsKey(item))
                 continue;
 
             int luceneId = app.getIPEDSource().getLuceneId(item);
@@ -123,12 +129,12 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
                 lat = locs[0].trim();
                 longit = locs[1].trim();
                 generateLocationKML(tourPlayList, kml, coluna, doc, df, row, item, lat, longit, alt, -1);
-                kmlResult.gpsItems.put(item, null);
+                gpsItems.put(item, null);
 
             } else if (locations != null && locations.length > 1) {
                 int subitem = -1;
                 List<Integer> subitems = new ArrayList<>();
-                kmlResult.gpsItems.put(item, subitems);
+                gpsItems.put(item, subitems);
                 for (String location : locations) {
                     String[] locs = location.split(";"); //$NON-NLS-1$
                     lat = locs[0].trim();
@@ -157,8 +163,8 @@ public class GetResultsKMLWorker extends iped3.desktop.CancelableWorker<KMLResul
         kml.append("</Document>"); //$NON-NLS-1$
         kml.append("</kml>"); //$NON-NLS-1$
 
-        kmlResult.setResultKML(kml.toString(), itemsWithGPS);
-
+        KMLResult kmlResult = new KMLResult();
+        kmlResult.setResultKML(kml.toString(), itemsWithGPS, gpsItems);
         return kmlResult;
 
     }
