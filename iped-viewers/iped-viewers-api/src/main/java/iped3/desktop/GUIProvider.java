@@ -1,6 +1,5 @@
 package iped3.desktop;
 
-import java.awt.Dialog;
 import java.awt.FileDialog;
 
 /*
@@ -10,9 +9,6 @@ import java.awt.FileDialog;
 public interface GUIProvider {
 
     FileDialog createFileDialog(String title, int mode);
-
-    ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
-            Dialog.ModalityType modal);
 
     IColumnsManager getColumnsManager();
 

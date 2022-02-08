@@ -1427,12 +1427,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
 
     @Override
-    public ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
-            Dialog.ModalityType modal) {
-        return new ProgressDialog(this, task, indeterminate, millisToPopup, modal);
-    }
-
-    @Override
     public IColumnsManager getColumnsManager() {
         return ColumnsManager.getInstance();
     }

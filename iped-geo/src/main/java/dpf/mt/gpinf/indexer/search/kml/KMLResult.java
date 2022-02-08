@@ -30,6 +30,9 @@ public class KMLResult {
     IMultiSearchResultProvider app;
     private int itemsWithGPS;
 
+    public KMLResult() {
+    }
+
     public KMLResult(IMultiSearchResultProvider app, GUIProvider guiProvider) {
         this.guiProvider = guiProvider;
         this.app = app;
@@ -37,6 +40,19 @@ public class KMLResult {
 
     public Map<IItemId, List<Integer>> getGPSItems() {
         return gpsItems;
+    }
+
+    public int getItemsWithGPS() {
+        return itemsWithGPS;
+    }
+
+    public String getKML() {
+        return this.kmlResult;
+    }
+
+    public void setResultKML(String kml, int itemsWithGPS) {
+        this.kmlResult = kml;
+        this.itemsWithGPS = itemsWithGPS;
     }
 
     public void saveKML() {
@@ -53,48 +69,15 @@ public class KMLResult {
                 w = new FileWriter(f);
                 String[] cols = guiProvider.getColumnsManager().getLoadedCols();
                 cols = (String[]) ArrayUtils.subarray(cols, 2, cols.length);
-                w.write(getResultsKML(cols, false));
+                GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(app, cols, null, null);
+                kmlWorker.execute();
+                w.write(kmlWorker.get().getKML());
                 w.close();
                 f = null;
-            } catch (IOException e) {
-                // TODO Auto-generated catch block
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
-    }
-
-    public String getResultsKML() throws IOException {
-        if (kmlResult == null)
-            kmlResult = getResultsKML(new String[] { BasicProps.ID }, true);
-
-        return kmlResult;
-    }
-    
-    public int getItemsWithGPS() {
-        return itemsWithGPS;
-    }
-
-    private String getResultsKML(String[] colunas, boolean showProgress) throws IOException {
-
-        ProgressDialog progress = null;
-        if (showProgress)
-            progress = guiProvider.createProgressDialog(null, false, 1000, ModalityType.APPLICATION_MODAL);
-
-        GetResultsKMLWorker getKML = new GetResultsKMLWorker(app, this, colunas, progress);
-        getKML.execute();
-
-        if (showProgress)
-            progress.setVisible();
-        try {
-            String kml = getKML.get();
-            itemsWithGPS = getKML.itemsWithGPS;
-            return kml;
-
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-        }
-        return ""; //$NON-NLS-1$
-
     }
 
     static public String converteCoordFormat(String coord) {
