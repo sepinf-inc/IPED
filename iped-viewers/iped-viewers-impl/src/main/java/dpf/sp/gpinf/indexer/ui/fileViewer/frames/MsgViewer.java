@@ -360,9 +360,10 @@ public class MsgViewer extends HtmlViewer {
                 ByteChunk byteChunk = att.getAttachData();
                 if (byteChunk != null) {
                     String fileExt = "";
-                    if (attachName != null && attachName.lastIndexOf(".") > -1)
+                    if (attachName != null && attachName.lastIndexOf(".") > -1) {
                         fileExt = attachName.substring(attachName.lastIndexOf("."));
-
+                        fileExt = IOUtil.getValidFilename(fileExt);
+                    }
                     File file = File.createTempFile("attach", fileExt);
                     FileUtils.writeByteArrayToFile(file, byteChunk.getValue());
                     file.deleteOnExit();
