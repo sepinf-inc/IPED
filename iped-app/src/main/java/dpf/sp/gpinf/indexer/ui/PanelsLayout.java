@@ -25,7 +25,7 @@ import dpf.sp.gpinf.indexer.desktop.App;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 
 public class PanelsLayout {
-    private static final File dir = new File(System.getProperty("user.home") + "/.iped");
+    private static final File dir = new File(System.getProperty("user.home"), ".iped");
     private static final File file = new File(dir, "PanelsLayout.dat");
     private static final File fileExt = new File(dir, "PanelsLayoutExt.dat");
 
@@ -99,7 +99,7 @@ public class PanelsLayout {
     public static boolean save(CControl control) {
         BufferedWriter out = null;
         try {
-            if (!dir.getParentFile().exists())
+            if (!dir.exists())
                 dir.mkdirs();
 
             control.write(file);
