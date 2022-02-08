@@ -311,12 +311,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setParentIdInDataSource(String string) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setParentId(Integer parentId) {
                 // TODO Auto-generated method stub
 
@@ -588,12 +582,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public List<Integer> getParentIds() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getParentIdInDataSource() {
                 // TODO Auto-generated method stub
                 return null;
             }

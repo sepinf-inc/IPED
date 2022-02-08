@@ -53,9 +53,11 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask;
@@ -235,6 +237,8 @@ public class Manager {
             if (!iniciarIndexacao())
                 return;
 
+            initSleuthkitServers();
+
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
             counter.start();
@@ -323,9 +327,13 @@ public class Manager {
         }
     }
 
-    public synchronized void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        if (!initSleuthkitServers.getAndSet(true)) {
-            SleuthkitClient.initSleuthkitServers(dbPath);
+    public synchronized void initSleuthkitServers() throws InterruptedException {
+        File tskDB = SleuthkitReader.getSleuthkitDB(output);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
+            if (!initSleuthkitServers.getAndSet(true)) {
+                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+            }
         }
     }
 
@@ -534,6 +542,7 @@ public class Manager {
             public void run() {
                 try {
                     long start = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
 
@@ -554,6 +563,7 @@ public class Manager {
                     writer.commit();
 
                     long end = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
 

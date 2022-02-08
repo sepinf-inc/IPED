@@ -32,7 +32,10 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.TimeZone;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
@@ -104,8 +107,8 @@ public class SleuthkitReader extends DataSourceReader {
     private static boolean isTskPatched = false;
 
     private static ConcurrentHashMap<File, Long[]> idRangeMap = new ConcurrentHashMap<>();
-    private static volatile Thread waitLoadDbThread;
-    private static volatile Exception exception = null;
+    private static ConcurrentHashMap<File, Thread> waitLoadDbThread = new ConcurrentHashMap<>();
+    private static ConcurrentHashMap<File, Exception> exception = new ConcurrentHashMap<>();
 
     // this guarantees just one producer populates the DB at a time (e.g. when
     // decoding embedded disks recursively)
@@ -137,10 +140,16 @@ public class SleuthkitReader extends DataSourceReader {
     private int itemCount = 0;
     private volatile boolean decodingError = false;
 
+    private HashMap<Integer, String> idTotrackIDMap = new HashMap<>();
+
     // Referência estática para a JVM não finalizar o objeto que será usado
     // futuramente
     // via referência interna ao JNI para acessar os itens do caso
     public static volatile SleuthkitCase sleuthCase;
+
+    public static File getSleuthkitDB(File output) {
+        return new File(output.getParent(), DB_NAME);
+    }
 
     public SleuthkitReader(boolean embeddedDisk, ICaseData caseData, File output) {
         this(caseData, output, false);
@@ -343,10 +352,11 @@ public class SleuthkitReader extends DataSourceReader {
             if (embeddedDisk) {
                 deviceName = parent.getName();
                 inheritedPath = Util.getParentPath(parent);
+                idTotrackIDMap.put(parent.getId(), (String) parent.getExtraAttribute(IndexItem.TRACK_ID));
             }
         }
 
-        String dbPath = output.getParent() + File.separator + DB_NAME;
+        String dbPath = getSleuthkitDB(output).getAbsolutePath();
 
         if (listOnly || embeddedDisk) {
 
@@ -367,11 +377,9 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
 
-            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-            if (fsConfig.isRobustImageReading()) {
-                Manager.getInstance().initSleuthkitServers(sleuthCase.getDbDirPath());
-            }
-            Long[] range = getDecodedRangeId(image);
+            Manager.getInstance().initSleuthkitServers();
+
+            Long[] range = getDecodedRangeId(image, output);
             if (range != null && args.isContinue()) {
                 synchronized (idRangeMap) {
                     idRangeMap.put(image, range);
@@ -391,8 +399,11 @@ public class SleuthkitReader extends DataSourceReader {
                 // get permit before any DB changes and getting last obj ID
                 decodeImageSemaphore.acquire();
 
-                if (args.isContinue()) {
-                    deleteDatasource(image);
+                if (args.isContinue() && !embeddedDisk) {
+                    Long tskID = deleteDatasource(image);
+                    if (tskID != null) {
+                        removeDecodedRangeAfterId(tskID, output);
+                    }
                 }
 
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
@@ -460,13 +471,13 @@ public class SleuthkitReader extends DataSourceReader {
                 readItensAdded(image);
 
             } catch (Exception e) {
-                if (waitLoadDbThread != null)
-                    waitLoadDbThread.interrupt();
+                if (waitLoadDbThread.get(image) != null)
+                    waitLoadDbThread.get(image).interrupt();
                 throw e;
             }
 
-        } else if (waitLoadDbThread != null)
-            waitLoadDbThread.join();
+        } else if (waitLoadDbThread.get(image) != null)
+            waitLoadDbThread.get(image).join();
 
         if (embeddedDisk) {
             embeddedDisksBeingDecoded.decrementAndGet();
@@ -474,7 +485,12 @@ public class SleuthkitReader extends DataSourceReader {
 
     }
     
-    private void deleteDatasource(File image) throws TskCoreException, SQLException {
+    /**
+     * Deleting previous incomplete TSK entries is needed when resuming processing,
+     * so items will get the same tskID, this is one of the requirements to
+     * recognize the same item between processings.
+     */
+    private Long deleteDatasource(File image) throws TskCoreException, SQLException {
         Long sourceId = null;
         for(Image img : sleuthCase.getImages()) {
             if(img.getName().equals(image.getName())) {
@@ -503,13 +519,35 @@ public class SleuthkitReader extends DataSourceReader {
                 }
             }
         }
+        return sourceId;
     }
 
     public void read(File image) throws Exception {
         read(image, null);
     }
 
-    private synchronized void saveDecodedRangeId(File image, Long start, Long last) {
+    private static synchronized void removeDecodedRangeAfterId(Long id, File output) {
+        File file = new File(output, RANGE_ID_FILE);
+        if (file.exists()) {
+            UTF8Properties props = new UTF8Properties();
+            try {
+                props.load(file);
+                Iterator<Entry<Object, Object>> iterator = props.entrySet().iterator();
+                while (iterator.hasNext()) {
+                    Entry<Object, Object> entry = iterator.next();
+                    if (Long.valueOf(entry.getValue().toString()) >= id) {
+                        iterator.remove();
+                    }
+                }
+                props.store(file);
+
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private static synchronized void saveDecodedRangeId(File image, Long start, Long last, File output) {
         File file = new File(output, RANGE_ID_FILE);
         UTF8Properties props = new UTF8Properties();
         try {
@@ -525,7 +563,7 @@ public class SleuthkitReader extends DataSourceReader {
         }
     }
 
-    private synchronized Long[] getDecodedRangeId(File image) {
+    private static synchronized Long[] getDecodedRangeId(File image, File output) {
         File file = new File(output, RANGE_ID_FILE);
         if (file.exists()) {
             UTF8Properties props = new UTF8Properties();
@@ -563,14 +601,14 @@ public class SleuthkitReader extends DataSourceReader {
         try {
             lastId = sleuthCase.getLastObjectId();
         } catch (TskCoreException e) {
-            exception = e;
+            exception.put(image, e);
         }
 
         // release permit after DB changes and getting last obj ID
         decodeImageSemaphore.release();
 
         if (exit == 0 && lastId != null) {
-            saveDecodedRangeId(image, firstId, lastId);
+            saveDecodedRangeId(image, firstId, lastId, output);
         }
 
         synchronized (idRangeMap) {
@@ -582,12 +620,13 @@ public class SleuthkitReader extends DataSourceReader {
 
     private void waitProcessInOtherThread(final Process process, final File image) {
 
-        waitLoadDbThread = new Thread() {
+        Thread t = new Thread() {
             public void run() {
                 waitProcess(process, image);
             }
         };
-        waitLoadDbThread.start();
+        waitLoadDbThread.put(image, t);
+        t.start();
     }
 
     /**
@@ -609,8 +648,8 @@ public class SleuthkitReader extends DataSourceReader {
 
             if (lastId == null) {
                 lastId = idRangeMap.get(file)[1];
-                if (exception != null) {
-                    throw exception;
+                if (exception.get(file) != null) {
+                    throw exception.get(file);
                 }
             }
             if (lastId != null) {
@@ -899,7 +938,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);
@@ -1046,7 +1084,6 @@ public class SleuthkitReader extends DataSourceReader {
             Integer parentId = sleuthIdToId.get(tskId - firstId.intValue());
             if (first) {
                 evidence.setParentId(parentId);
-                evidence.setParentIdInDataSource(String.valueOf(tskId));
                 first = false;
             }
             evidence.addParentId(parentId);
@@ -1065,11 +1102,20 @@ public class SleuthkitReader extends DataSourceReader {
     private void setSubitemProperties(Item item) {
         item.setSubItem(true);
         item.setSubitemId(itemCount);
-        Util.generateGlobalId((String) parent.getExtraAttribute(IndexItem.GLOBAL_ID), item);
-        item.setExtraAttribute(IndexItem.CONTAINER_GLOBAL_ID, Util.getGlobalId(parent));
+        item.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(parent));
     }
 
     private void addToProcessingQueue(ICaseData caseData, Item item) throws InterruptedException {
+        // retrieve and store parenttrackID explicitly before adding to queue
+        if (!item.isRoot()) {
+            String parenttrackID = idTotrackIDMap.get(item.getParentId());
+            if (parenttrackID != null) {
+                item.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
+            } else {
+                throw new RuntimeException(IndexItem.PARENT_TRACK_ID + " cannot be null: " + item.getPath());
+            }
+        }
+
         if (embeddedDisk) {
             // always add to queue to avoid deadlock if expanding many virtual disks simultaneously
             caseData.addItemFirstNonBlocking(item);
@@ -1083,6 +1129,12 @@ public class SleuthkitReader extends DataSourceReader {
                 caseData.addItemNonBlocking(item);
             }
 
+        }
+        // store parents trackID after adding to queue (where it is computed and ID
+        // could be reassigned)
+        if (item.hasChildren() || item.isDir() || item.isRoot()) {
+            String trackID = (String) item.getExtraAttribute(IndexItem.TRACK_ID);
+            idTotrackIDMap.put(item.getId(), trackID);
         }
     }
 

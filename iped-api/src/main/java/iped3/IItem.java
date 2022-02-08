@@ -99,8 +99,6 @@ public interface IItem extends IItemBase {
 
     ISeekableInputStreamFactory getInputStreamFactory();
 
-    String getParentIdInDataSource();
-
     /**
      * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
      *         foi exportado
@@ -504,8 +502,6 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
-
-    void setParentIdInDataSource(String string);
 
     void setThumb(byte[] thumb);
 
