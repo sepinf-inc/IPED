@@ -137,7 +137,6 @@ public class HtmlViewer extends Viewer {
                             if (enableProxy) {
                                 ProxySever.get().enable();
                             }
-                            webEngine.setUserStyleSheetLocation(UiUtil.getUIHtmlStyle());
                             webEngine.load(tmpFile.toURI().toURL().toString());
 
                         } else {

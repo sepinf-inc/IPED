@@ -1153,11 +1153,11 @@ public class Item implements ISleuthKitItem {
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
         this.setParentIdInDataSource(parent.getIdInDataSource());
-        String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.GLOBAL_ID);
+        String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.PERSISTENT_ID);
         if (parentGlobalID == null) {
             throw new RuntimeException("parentGlobalId of " + this.getPath() + " cannot be null");
         }
-        this.setExtraAttribute(IndexItem.PARENT_GLOBAL_ID, parentGlobalID);
+        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parentGlobalID);
     }
 
     public void setParent(ParentInfo parent) {

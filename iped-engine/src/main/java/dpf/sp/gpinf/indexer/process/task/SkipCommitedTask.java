@@ -183,13 +183,14 @@ public class SkipCommitedTask extends AbstractTask {
         }
 
         Bits docsWithField = aReader.getDocsWithField(subitemCountField);
+        Bits docsWithFrags = aReader.getDocsWithField(IndexTask.FRAG_NUM);
         for (int doc = 0; doc < aReader.maxDoc(); doc++) {
             if (docsWithField.get(doc)) {
                 int subitemsCount = (int) numSubitems.get(doc);
                 // skip non last text fragments with subitems counter possibly populated
-                if (fragNumNDV != null) {
-                    Long fragNum = DocValuesUtil.get(fragNumNDV, doc);
-                    if (fragNum != null && fragNum > 0)
+                if (fragNumNDV != null && docsWithFrags.get(doc)) {
+                    long fragNum = fragNumNDV.get(doc);
+                    if (fragNum > 0)
                         continue;
                 }
                 BytesRef persistId = persistIds.get(doc);
