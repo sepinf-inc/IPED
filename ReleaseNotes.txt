@@ -1,6 +1,7 @@
 10/02/2022: IPED-3.18.13
 News:
 #911: Support new Telegram version 8.4 (João Hauck)
+#910: Open attachments from EML/MSGViewer externally using detected extension (Luís Nassif)
 Fixes:
 #905: EMLViewer opens the wrong attachment when images are inlined [3.18.8 regression] (Luís Nassif)
 #921: Missing some metadata values when removing composite/duplicate keys (Luís Nassif)
