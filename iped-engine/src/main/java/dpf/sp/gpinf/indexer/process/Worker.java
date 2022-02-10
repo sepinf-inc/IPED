@@ -33,6 +33,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
 import iped3.ICaseData;
 import iped3.IItem;
 
@@ -212,6 +213,7 @@ public class Worker extends Thread {
         } // caso contrário processa o item no worker atual
         else {
             long t = System.nanoTime() / 1000;
+            ((CaseData) caseData).calcGlobalIDAndUpdateID(evidence);
             process(evidence);
             runningTask.addSubitemProcessingTime(System.nanoTime() / 1000 - t);
         }
