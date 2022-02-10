@@ -36,6 +36,7 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
@@ -50,6 +51,11 @@ import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
 
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
@@ -88,6 +94,7 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
+    private static final String MEDIA_RESULT_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaResult:"; //$NON-NLS-1$
 
     public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
@@ -731,6 +738,7 @@ public class UfedXmlReader extends DataSourceReader {
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
+                setMediaResult(item);
                 try {
                     caseData.addItem(item);
                 } catch (Exception e) {
@@ -1105,6 +1113,51 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
+        private void setMediaResult(Item item) {
+            String ufedId = item.getMetadata().get(UFED_ID);
+            if (ufedId == null) {
+                return;
+            }
+            MediaResults mediaResults = null;
+            String path = "MediaResults/" + ufedId + ".json";
+            if (ufdrFile == null) {
+                File file = new File(root, path);
+                if (!file.exists()) {
+                    return;
+                }
+                try (InputStream is = new FileInputStream(file)) {
+                    mediaResults = readMediaResults(is);
+                } catch (IOException e) {
+                    LOGGER.error("Error reading UFED mediaResult {}", e, path);
+                }
+            } else {
+                try {
+                    FileHeader zae = ufdr.getFileHeader(path);
+                    if (zae == null) {
+                        return;
+                    }
+                    try (InputStream is = ufdr.getInputStream(zae)) {
+                        mediaResults = readMediaResults(is);
+                    }
+                } catch (ZipException | IOException e) {
+                    LOGGER.error("Error reading UFDR mediaResult {}", e, path);
+                }
+            }
+            if (mediaResults != null) {
+                for (Category category : mediaResults.categories) {
+                    if (StringUtils.isNotBlank(category.value)) {
+                        item.getMetadata().add(MEDIA_RESULT_PREFIX + "category:" + category.value, Float.toString(category.score)); //$NON-NLS-1$
+                    }
+                }
+            }
+        }
+
+        private MediaResults readMediaResults(InputStream is) throws IOException {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectReader reader = objectMapper.readerFor(MediaResults.class);
+            return reader.readValue(is);
+        }
+
         private void updateName(IItem item, String newName) {
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
@@ -1387,6 +1440,25 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class MediaResults {
+
+        @JsonProperty("FileId")
+        private String fileId;
+
+        @JsonProperty("Categories")
+        private List<Category> categories;
+    }
+
+    private static class Category {
+
+        @JsonProperty("Value")
+        private String value;
+
+        @JsonProperty("Score")
+        private float score;
     }
 
     @Override
