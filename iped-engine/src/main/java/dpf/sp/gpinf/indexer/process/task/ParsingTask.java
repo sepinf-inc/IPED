@@ -530,7 +530,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 
-            Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
+            subItem.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parentInfo.getPersistentId());
             subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
 
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
