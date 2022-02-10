@@ -1,3 +1,18 @@
+10/02/2022: IPED-3.18.13
+News:
+#911: Support new Telegram version 8.4 (João Hauck)
+Fixes:
+#905: EMLViewer opens the wrong attachment when images are inlined [3.18.8 regression] (Luís Nassif)
+#921: Missing some metadata values when removing composite/duplicate keys (Luís Nassif)
+#792: Carved/Subitems may be added again to case when resuming processing with --continue (Luís Nassif)
+#941: Subitems or items from UFDR may point to inexistent parent when resuming processing (Luís Nassif)
+#894: Fix WhatsAppParser, SkypeParser, VCardParser and UFEDChatParser to encode untrusted strings (Luís Nassif & João Hauck)
+#892: Possible arbitrary JS code execution when viewing Telegram HTML reports (João Hauck & Luís Nassif)
+#895: HtmlViewer vulnerabilities in Windows and Linux (Luís Nassif)
+#942: Rare ConcurrentModificationException when making partial index commits (Luís Nassif)
+#954: EML/MSG emails with forbidden NTFS chars in attachment extension not rendered (Luís Nassif)
+#939: Exception when selecting an item without hash (Wladimir Leite)
+
 22/12/2021: IPED-3.18.12
 News:
 #887: Upgrade to Log4j-2.17.0 in 3.x branch (Luís Nassif)
