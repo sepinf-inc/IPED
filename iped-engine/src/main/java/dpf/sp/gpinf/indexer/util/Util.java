@@ -185,22 +185,21 @@ public class Util {
     public static String generatePersistentId(IItem item) {
         StringBuilder sb = new StringBuilder();
         String notFoundIn = " not found in ";
-        String parentPersistentId = (String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID);
-        boolean isSubItem = item.isSubItem() || item.isCarved() || item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) != null;
-        if (isSubItem) {
-            if (parentPersistentId != null) {
-                sb.append(parentPersistentId);
-            } else {
-                throw new IllegalArgumentException("To generate persistentId for carved/subitem, parent cannot be null.");
+        if (!item.isCarved() && !item.isSubItem() && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null) {
+            if (item.getIdInDataSource() != null) {
+                sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
+            } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
+                sb.append(IndexItem.ID_IN_SOURCE).append(((ISleuthKitItem) item).getSleuthId());
+            } else if (!item.isQueueEnd()) {
+                throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
             }
-        }
-        if (item.getIdInDataSource() != null) {
-            sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
-        } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
-            Object idInSource = item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null;
-            sb.append(IndexItem.ID_IN_SOURCE).append(idInSource);
-        } else if (!item.isQueueEnd() && !isSubItem) {
-            throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
+        } else {
+            String parenttrackID = (String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID);
+            if (parenttrackID != null) {
+                sb.append(IndexItem.PARENT_PERSISTENT_ID).append(parenttrackID);
+            } else {
+                throw new IllegalArgumentException(IndexItem.PARENT_PERSISTENT_ID + notFoundIn + item.getPath());
+            }
         }
         if (item.isSubItem()) {
             if (item.getSubitemId() != null) {
@@ -209,15 +208,23 @@ public class Util {
                 throw new IllegalArgumentException(IndexItem.SUBITEMID + notFoundIn + item.getPath());
             }
         }
+        if (item.isCarved()) {
+            Object carvedId = item.getExtraAttribute(BaseCarveTask.CARVED_ID);
+            if (carvedId != null) {
+                sb.append(BaseCarveTask.CARVED_ID).append(carvedId.toString());
+            } else {
+                throw new IllegalArgumentException(BaseCarveTask.CARVED_ID + notFoundIn + item.getPath());
+            }
+        }
         if (item.getPath() != null) {
             sb.append(IndexItem.PATH).append(item.getPath());
         } else {
             throw new IllegalArgumentException(IndexItem.PATH + notFoundIn + item.getPath());
         }
+        String trackId = DigestUtils.md5Hex(sb.toString());
+        item.setExtraAttribute(IndexItem.PERSISTENT_ID, trackId);
 
-        String id = DigestUtils.md5Hex(sb.toString());
-        item.setExtraAttribute(IndexItem.PERSISTENT_ID, id);
-        return id;
+        return trackId;
     }
 
     public static String readUTF8Content(File file) throws IOException {
