@@ -1155,7 +1155,7 @@ public class Item implements ISleuthKitItem {
         this.setParentIdInDataSource(parent.getIdInDataSource());
         String parentGlobalID = (String) parent.getExtraAttribute(IndexItem.PERSISTENT_ID);
         if (parentGlobalID == null) {
-            throw new RuntimeException("parentGlobalId of " + this.getPath() + " cannot be null");
+            LOGGER.error("parentGlobalId of " + this.getPath() + " cannot be null");
         }
         this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parentGlobalID);
     }
