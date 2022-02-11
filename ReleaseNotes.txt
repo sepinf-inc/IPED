@@ -1,4 +1,4 @@
-10/02/2022: IPED-3.18.13
+11/02/2022: IPED-3.18.13
 News:
 #911: Support new Telegram version 8.4 (João Hauck)
 #910: Open attachments from EML/MSGViewer externally using detected extension (Luís Nassif)
@@ -11,7 +11,10 @@ Fixes:
 #894: Fix WhatsAppParser, SkypeParser, VCardParser and UFEDChatParser to encode untrusted strings (Luís Nassif & João Hauck)
 #895: HtmlViewer vulnerabilities in Windows and Linux (Luís Nassif)
 #917: Some Telegram system messages were shown as different messages (João Hauck)
+#964: Automatic bookmarks for items shared by p2p applications may not be created (Luís Nassif)
 #942: Rare ConcurrentModificationException when making partial index commits (Luís Nassif)
+#962: Exception in image similarity search when some kinds of evidences are moved (Luís Nassif)
+#963: Clicking on carved item from moved local folder datasource doesn't ask for new folder location (Luís Nassif)
 #954: EML/MSG emails with forbidden NTFS chars in attachment extension not rendered (Luís Nassif)
 #939: Exception when selecting an item without hash (Wladimir Leite)
 
