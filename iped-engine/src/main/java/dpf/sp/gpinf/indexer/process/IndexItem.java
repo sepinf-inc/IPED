@@ -913,45 +913,44 @@ public class IndexItem extends BasicProps {
                 localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 evidence.setFile(localFile);
                 hasFile = true;
+            }
 
-            } else {
-                value = doc.get(IndexItem.SLEUTHID);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setSleuthId(Integer.valueOf(value));
-                    if (iCase.getSleuthCase() != null) {
-                        evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                    }
+            value = doc.get(IndexItem.SLEUTHID);
+            if (value != null && !value.isEmpty()) {
+                evidence.setSleuthId(Integer.valueOf(value));
+                if (iCase.getSleuthCase() != null) {
+                    evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
                 }
+            }
 
-                value = doc.get(IndexItem.ID_IN_SOURCE);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setIdInDataSource(value.trim());
-                }
-                if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                    if (sisf == null) {
-                        String className = doc.get(IndexItem.SOURCE_DECODER);
-                        Class<?> clazz = Class.forName(className);
-                        try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
-                            sisf = c.newInstance(absPath);
-                            if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                                IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                            }
-
-                        } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                            sisf = c.newInstance(URI.create(sourcePath));
-                        }
+            value = doc.get(IndexItem.ID_IN_SOURCE);
+            if (value != null && !value.isEmpty()) {
+                evidence.setIdInDataSource(value.trim());
+            }
+            if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                if (sisf == null) {
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    Class<?> clazz = Class.forName(className);
+                    try {
+                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                        Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
+                        sisf = c.newInstance(absPath);
                         if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            checkIfExistsAndAsk(sisf, outputBase);
+                            IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                         }
-                        inputStreamFactories.put(sourcePath, sisf);
+
+                    } catch (NoSuchMethodException e) {
+                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                        sisf = c.newInstance(URI.create(sourcePath));
                     }
-                    evidence.setInputStreamFactory(sisf);
+                    if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                        checkIfExistsAndAsk(sisf, outputBase);
+                    }
+                    inputStreamFactories.put(sourcePath, sisf);
                 }
+                evidence.setInputStreamFactory(sisf);
             }
 
             value = doc.get(IndexItem.TIMEOUT);
