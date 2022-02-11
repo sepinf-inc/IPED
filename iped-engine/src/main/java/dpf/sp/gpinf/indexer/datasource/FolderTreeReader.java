@@ -25,6 +25,7 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
 import java.util.Collections;
@@ -132,16 +133,19 @@ public class FolderTreeReader extends DataSourceReader {
             File file = path.toFile();
             IItem item = new Item();
             item.setDataSource(dataSource);
-            item.setIdInDataSource(path.toString());
+            String relativePath = rootFile.toPath().relativize(path).toString();
+            item.setIdInDataSource(relativePath);
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
                 item.setParentIdInDataSource("");
             } else {
                 item.setName(file.getName());
-                item.setParentIdInDataSource(path.getParent().toString());
+                Path parent = Paths.get(relativePath).getParent();
+                String parentPath = parent != null ? parent.toString() : "";
+                item.setParentIdInDataSource(parentPath);
             }
             try {
-                String relativePath = Util.getRelativePath(output, file);
+                relativePath = Util.getRelativePath(output, file);
                 item.setExportedFile(relativePath);
                 item.setFile(file);
             } catch (InvalidPathException e) {
