@@ -793,7 +793,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
 
         if (SimilarImagesFilterActions.isFeatureEnabled()) {
-            CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
+            final CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
                     IconUtil.getIcon("find", resPath));
             galleryTabDock.addAction(butSimSearch);
             galleryTabDock.addSeparator();
@@ -808,18 +808,26 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     if (e.getValueIsAdjusting()) {
                         return;
                     }
-                    boolean enabled = false;
-                    int selIdx = resultsTable.getSelectedRow();
-                    if (selIdx != -1) {
-                        IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-                        if (itemId != null) {
-                            IItem item = appCase.getItemByItemId(itemId);
-                            if (item != null) {
-                                enabled = item.getImageSimilarityFeatures() != null;
+                    butSimSearch.setEnabled(false);
+                    final int selIdx = resultsTable.getSelectedRow();
+                    // running in EDT can cause deadlock in UI if evidence was moved because this
+                    // thread can block when entering the static synchronized method
+                    // IndexItem.checkIfEvidenceFolderExists() called before by a worker thread
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            if (selIdx != -1) {
+                                IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                                if (itemId != null) {
+                                    IItem item = appCase.getItemByItemId(itemId);
+                                    if (item != null) {
+                                        boolean enabled = item.getImageSimilarityFeatures() != null;
+                                        butSimSearch.setEnabled(enabled);
+                                    }
+                                }
                             }
                         }
-                    }
-                    butSimSearch.setEnabled(enabled);
+                    }.start();
                 }
             });
         }
