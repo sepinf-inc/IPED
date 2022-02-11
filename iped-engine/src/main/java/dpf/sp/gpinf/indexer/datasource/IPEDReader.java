@@ -528,8 +528,12 @@ public class IPEDReader extends DataSourceReader {
                 value = doc.get(IndexItem.EXPORT);
                 if (value != null && !value.isEmpty()) {
                     File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value);
-                    localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
-                    evidence.setFile(localFile);
+                    if (!ipedCase.isReport()) {
+                        localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
+                    }
+                    if (localFile.exists()) {
+                        evidence.setFile(localFile);
+                    }
                 }
 
                 value = doc.get(IndexItem.SLEUTHID);

@@ -910,9 +910,13 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
                 File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
-                evidence.setFile(localFile);
-                hasFile = true;
+                if (!iCase.isReport()) {
+                    localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
+                }
+                if (localFile.exists()) {
+                    evidence.setFile(localFile);
+                    hasFile = true;
+                }
             }
 
             value = doc.get(IndexItem.SLEUTHID);
@@ -1077,7 +1081,7 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static void synchronized checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
         Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
@@ -1119,19 +1123,25 @@ public class IndexItem extends BasicProps {
         return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
     }
 
-    public static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
-            throws IOException {
+    public static synchronized File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir) throws IOException {
         if (localFile.exists()) {
             return localFile;
         }
-        String origPath = evidence.getPath().replace('\\', File.separatorChar).replace('/', File.separatorChar);
-        int idx = origPath.indexOf(File.separatorChar, 1);
-        String pathSuffix = "";
-        if (idx != -1) {
-            pathSuffix = origPath.substring(idx + 1);
-        }
         String localPath = localFile.getCanonicalPath();
-        if (localPath.endsWith(pathSuffix)) {
+        String pathSuffix = "";
+        boolean found = false;
+        int tries = 0;
+        do {
+            String origPath = ++tries == 1 ? evidence.getPath() : Util.getParentPath(evidence);
+            origPath = origPath.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+            int idx = origPath.indexOf(File.separatorChar, 1);
+            if (idx != -1) {
+                pathSuffix = origPath.substring(idx + 1);
+            }
+            found = localPath.endsWith(pathSuffix);
+        } while (!found && tries < 2);
+
+        if (found) {
             String evidenceFolderStr = localPath.substring(0, localPath.lastIndexOf(pathSuffix));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
