@@ -1081,7 +1081,8 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static void synchronized checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static synchronized void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir)
+            throws IOException {
         Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
