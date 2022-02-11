@@ -120,14 +120,15 @@ public class FolderTreeReader extends DataSourceReader {
             File file = path.toFile();
             IItem item = new Item();
             item.setDataSource(dataSource);
-            item.setIdInDataSource(path.toString());
+            String relativePath = rootFile.toPath().relativize(path).toString();
+            item.setIdInDataSource(relativePath);
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
             } else {
                 item.setName(file.getName());
             }
             try {
-                String relativePath = Util.getRelativePath(output, file);
+                relativePath = Util.getRelativePath(output, file);
                 item.setExportedFile(relativePath);
                 item.setFile(file);
             } catch (InvalidPathException e) {
