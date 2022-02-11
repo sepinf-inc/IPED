@@ -165,7 +165,7 @@ public class Util {
         return id;
     }
 
-    private static String getParentPath(IItem item) {
+    public static String getParentPath(IItem item) {
         String path = item.getPath();
         int end = path.length() - item.getName().length() - 1;
         if (end <= 0)
