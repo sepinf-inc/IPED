@@ -126,7 +126,7 @@ public class P2PBookmarker {
                     ids.add(result.getId(j));
 
                 ipedSrc.getMarcadores().addLabel(ids, labelId);
-                ipedSrc.getMarcadores().saveState();
+                ipedSrc.getMarcadores().saveState(true);
             }
         } catch (Exception e1) {
             e1.printStackTrace();
