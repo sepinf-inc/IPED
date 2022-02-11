@@ -527,42 +527,40 @@ public class IPEDReader extends DataSourceReader {
                     File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value);
                     localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
                     evidence.setFile(localFile);
+                }
+
+                value = doc.get(IndexItem.SLEUTHID);
+                if (value != null && !value.isEmpty()) {
+                    evidence.setSleuthId(Integer.valueOf(value));
+                    if (ipedCase.getSleuthCase() != null) {
+                        evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
+                    }
+                }
+                if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                    evidence.setIdInDataSource(value.trim());
+                }
+                if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                    String relPath = doc.get(IndexItem.SOURCE_PATH);
+                    Path absPath = Util.getResolvedFile(basePath, relPath).toPath();
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
+                    if (sisf == null) {
+                        String className = doc.get(IndexItem.SOURCE_DECODER);
+                        Class<?> clazz = Class.forName(className);
+                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                        sisf = c.newInstance(absPath);
+                        if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                            IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
+                        }
+                        inputStreamFactories.put(absPath, sisf);
+                    }
+                    evidence.setInputStreamFactory(sisf);
+
+                } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
+                    evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
 
                 } else {
-                    value = doc.get(IndexItem.SLEUTHID);
-                    if (value != null && !value.isEmpty()) {
-                        evidence.setSleuthId(Integer.valueOf(value));
-                        if (ipedCase.getSleuthCase() != null) {
-                            evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                        }
-                    }
-                    if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
-                        evidence.setIdInDataSource(value.trim());
-                    }
-                    if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                        String relPath = doc.get(IndexItem.SOURCE_PATH);
-                        Path absPath = Util.getResolvedFile(basePath, relPath).toPath();
-                        SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
-                        if (sisf == null) {
-                            String className = doc.get(IndexItem.SOURCE_DECODER);
-                            Class<?> clazz = Class.forName(className);
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            sisf = c.newInstance(absPath);
-                            if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
-                                IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
-                            }
-                            inputStreamFactories.put(absPath, sisf);
-                        }
-                        evidence.setInputStreamFactory(sisf);
-
-                    } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
-                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
-
-                    } else {
-                        if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
-                            evidence.setInputStreamFactory(
-                                    new MetadataInputStreamFactory(evidence.getMetadata(), true));
-                        }
+                    if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
+                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));
                     }
                 }
             } else {

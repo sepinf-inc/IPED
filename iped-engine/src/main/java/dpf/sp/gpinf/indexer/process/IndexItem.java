@@ -759,36 +759,35 @@ public class IndexItem extends BasicProps {
                 localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 evidence.setFile(localFile);
                 hasFile = true;
+            }
 
-            } else {
-                value = doc.get(IndexItem.SLEUTHID);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setSleuthId(Integer.valueOf(value));
-                    if (iCase.getSleuthCase() != null) {
-                        evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                    }
+            value = doc.get(IndexItem.SLEUTHID);
+            if (value != null && !value.isEmpty()) {
+                evidence.setSleuthId(Integer.valueOf(value));
+                if (iCase.getSleuthCase() != null) {
+                    evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
                 }
+            }
 
-                value = doc.get(IndexItem.ID_IN_SOURCE);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setIdInDataSource(value.trim());
-                }
-                if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                    String relPath = doc.get(IndexItem.SOURCE_PATH);
-                    Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
-                    if (sisf == null) {
-                        String className = doc.get(IndexItem.SOURCE_DECODER);
-                        Class<?> clazz = Class.forName(className);
-                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        sisf = c.newInstance(absPath);
-                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            checkIfExistsAndAsk(sisf, outputBase);
-                        }
-                        inputStreamFactories.put(absPath, sisf);
+            value = doc.get(IndexItem.ID_IN_SOURCE);
+            if (value != null && !value.isEmpty()) {
+                evidence.setIdInDataSource(value.trim());
+            }
+            if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                String relPath = doc.get(IndexItem.SOURCE_PATH);
+                Path absPath = Util.getResolvedFile(outputBase.getParent(), relPath).toPath();
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
+                if (sisf == null) {
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    Class<?> clazz = Class.forName(className);
+                    Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                    sisf = c.newInstance(absPath);
+                    if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                        checkIfExistsAndAsk(sisf, outputBase);
                     }
-                    evidence.setInputStreamFactory(sisf);
+                    inputStreamFactories.put(absPath, sisf);
                 }
+                evidence.setInputStreamFactory(sisf);
             }
 
             value = doc.get(IndexItem.TIMEOUT);
