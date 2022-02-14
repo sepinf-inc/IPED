@@ -23,7 +23,6 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -39,7 +38,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
@@ -51,6 +53,8 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
@@ -63,24 +67,28 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
 import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.CategoryConfig;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Category;
+import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
 import macee.core.Configurable;
+import iped3.util.BasicProps;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -118,7 +126,8 @@ public class ExportFileTask extends AbstractTask {
     private static File subDir;
 
     private static boolean computeHash = false;
-    private File extractDir;
+    private static File extractDir;
+
     private HashMap<IHashValue, IHashValue> hashMap;
     private List<String> noContentLabels;
     private ExportByCategoriesConfig exportByCategories;
@@ -139,11 +148,11 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void setExtractLocation() {
-        if (output != null) {
+        if (output != null && extractDir == null) {
             if (caseData.containsReport()) {
-                this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+                extractDir = new File(output.getParentFile(), EXTRACT_DIR);
             } else {
-                this.extractDir = new File(output, SUBITEM_DIR);
+                extractDir = new File(output, SUBITEM_DIR);
             }
         }
         HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
@@ -729,6 +738,39 @@ public class ExportFileTask extends AbstractTask {
                 }
             }
         }
+    }
+
+    public static void deleteIgnoredSubitems(ICaseData caseData, File output) throws Exception {
+        if (caseData.isIpedReport() || !caseData.containsReport()) {
+            return;
+        }
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
+            if (extractDir != null && extractDir.exists()) {
+                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Deleting ignored subitems from FS...");
+                LOGGER.info("Deleting ignored subitems from FS...");
+                int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
+                LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
+            }
+        }
+    }
+
+    private static int deleteIgnoredSubitemsFromFS(SortedDocValues sdv, Path root, File file) throws IOException {
+        int deleted = 0;
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File f : files) {
+                deleted += deleteIgnoredSubitemsFromFS(sdv, root, f);
+            }
+        } else {
+            String exportPath = root.relativize(file.toPath()).toString();
+            if (sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
+                if (file.delete()) {
+                    deleted++;
+                }
+            }
+        }
+        return deleted;
     }
 
 }
