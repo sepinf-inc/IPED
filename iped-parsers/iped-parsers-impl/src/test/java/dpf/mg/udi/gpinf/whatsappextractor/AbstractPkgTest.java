@@ -437,12 +437,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setDeleteFile(boolean deleteFile) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setDataSource(IDataSource evidence) {
                 // TODO Auto-generated method stub
 
