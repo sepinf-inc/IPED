@@ -270,7 +270,7 @@ public class ExportFileTask extends AbstractTask {
                 && (evidence.isToExtract() || isToBeExtracted(evidence) || !isAutomaticExportEnabled())) {
 
             evidence.setToExtract(true);
-            if (!doNotExport(evidence) && !MinIOTask.isTaskEnabled()) {
+            if (!doNotExport(evidence)) {
                 renameToHash(evidence);
             } else {
                 // just clear path to be indexed, continues to point to file for processing
@@ -410,16 +410,6 @@ public class ExportFileTask extends AbstractTask {
                 }
             }
 
-        }
-        if (hash != null && !hash.isEmpty() && !hash.equalsIgnoreCase(evidence.getIdInDataSource())
-                && evidence.getInputStreamFactory() instanceof SQLiteInputStreamFactory) {
-            SQLiteInputStreamFactory sisf = (SQLiteInputStreamFactory) evidence.getInputStreamFactory();
-            try {
-                sisf.renameToHash(evidence.getIdInDataSource(), hash);
-                evidence.setIdInDataSource(hash);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
         }
 
     }
@@ -593,21 +583,13 @@ public class ExportFileTask extends AbstractTask {
             hash = DigestUtils.md5(new ByteArrayInputStream(buf, 0, len));
         }
         int k = getStorageSuffix(hash);
-        String id;
         boolean alreadyInDB = false;
-        // uses id instead of hash if subitems could be ignored and deleted, to not
-        // delete content referenced by other items with same hash
-        if (evidence.isSubItem() && !caseData.isIpedReport() && (MinIOTask.isTaskEnabled() || caseData.containsReport()
-                || DuplicateTask.isIgnoreDuplicatesEnabled())) {
-            id = Integer.toString(counter.getAndIncrement());
-        } else {
-            id = hashString != null ? hashString : new HashValue(hash).toString();
-            try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
-                ps.setString(1, id);
-                ResultSet rs = ps.executeQuery();
-                if (rs.next()) {
-                    alreadyInDB = true;
-                }
+        String id = hashString != null ? hashString : new HashValue(hash).toString();
+        try (PreparedStatement ps = storageCon.get(output).get(k).prepareStatement(CHECK_HASH)) {
+            ps.setString(1, id);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                alreadyInDB = true;
             }
         }
         if (!alreadyInDB) {
@@ -644,10 +626,6 @@ public class ExportFileTask extends AbstractTask {
 
         private static final String SELECT_DATA = "SELECT data FROM t1 WHERE id=?;";
 
-        private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
-
-        private static final String RENAME_ID = "UPDATE t1 SET id=? WHERE id=?;";
-
         private Connection conn;
 
         public SQLiteInputStreamFactory(Path datasource) {
@@ -665,29 +643,6 @@ public class ExportFileTask extends AbstractTask {
             // and files which content was not exported to report will not trigger a dialog
             // asking for datasource path
             return false;
-        }
-
-        public void renameToHash(String identifier, String hash) throws IOException {
-            try (PreparedStatement ps = conn.prepareStatement(RENAME_ID)) {
-                ps.setString(1, hash);
-                ps.setString(2, identifier);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                if (e.toString().contains("UNIQUE")) {
-                    deleteItemInDataSource(identifier);
-                } else
-                    throw new IOException(e);
-            }
-        }
-
-        @Override
-        public void deleteItemInDataSource(String identifier) throws IOException {
-            try (PreparedStatement ps = conn.prepareStatement(CLEAR_DATA)) {
-                ps.setString(1, identifier);
-                ps.executeUpdate();
-            } catch (SQLException e) {
-                throw new IOException(e);
-            }
         }
 
         @Override
