@@ -1,9 +1,11 @@
-11/02/2022: IPED-3.18.13
+14/02/2022: IPED-3.18.13
 News:
 #911: Support new Telegram version 8.4 (João Hauck)
+#341: Delete ignored subitem data from SQLite containers (Luís Nassif)
 #910: Open attachments from EML/MSGViewer externally using detected extension (Luís Nassif)
 Fixes:
 #905: EMLViewer opens the wrong attachment when images are inlined [3.18.8 regression] (Luís Nassif)
+#965: Some carved files from ignored subitems could not be processed/exported when using blind or similar profiles (Luís Nassif)
 #921: Missing some metadata values when removing composite/duplicate keys (Luís Nassif)
 #941: Subitems or items from UFDR may point to inexistent parent when resuming processing (Luís Nassif)
 #792: Carved/Subitems may be added again to case when resuming processing with --continue (Luís Nassif)
