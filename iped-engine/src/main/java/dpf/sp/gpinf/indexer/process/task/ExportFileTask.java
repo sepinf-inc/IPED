@@ -34,14 +34,17 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
@@ -64,16 +67,17 @@ import org.sqlite.SQLiteConfig.Pragma;
 import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
-import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
-import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
-import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.WorkerProvider;
+import dpf.sp.gpinf.indexer.config.CategoryConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
+import dpf.sp.gpinf.indexer.config.ExportByCategoriesConfig;
+import dpf.sp.gpinf.indexer.config.ExportByKeywordsConfig;
 import dpf.sp.gpinf.indexer.config.HashTaskConfig;
 import dpf.sp.gpinf.indexer.config.HtmlReportTaskConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
@@ -87,8 +91,8 @@ import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
-import macee.core.Configurable;
 import iped3.util.BasicProps;
+import macee.core.Configurable;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -116,6 +120,10 @@ public class ExportFileTask extends AbstractTask {
     private static final String INSERT_DATA = "INSERT INTO t1(id, data) VALUES(?,?) ON CONFLICT(id) DO UPDATE SET data=? WHERE data IS NULL;";
 
     private static final String CHECK_HASH = "SELECT id FROM t1 WHERE id=? AND data IS NOT NULL;";
+    
+    private static final String SELECT_IDS_WITH_DATA = "SELECT id FROM t1 WHERE data IS NOT NULL;";
+
+    private static final String CLEAR_DATA = "UPDATE t1 SET data=NULL WHERE id=?;";
 
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
@@ -717,14 +725,13 @@ public class ExportFileTask extends AbstractTask {
     public void finish() throws Exception {
         hashMap.clear();
         if (storageCon.get(output) != null) {
-            int i = 0;
-            for (Connection con : storageCon.get(output).values()) {
+            for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
+                Connection con = entry.getValue();
                 if (con != null && !con.isClosed() && !con.getAutoCommit()) {
                     con.commit();
                     con.close();
-                    LOGGER.info("Closed connection to storage " + i);
+                    LOGGER.info("Closed connection to storage " + entry.getKey());
                 }
-                i++;
             }
             storageCon.remove(output);
         }
@@ -752,6 +759,14 @@ public class ExportFileTask extends AbstractTask {
                 int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
                 LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
             }
+            if (storage.get(output) != null && !storage.get(output).isEmpty()) {
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        "Deleting ignored subitems from storages...");
+                LOGGER.info("Deleting ignored subitems from storages...");
+                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
+                int deleted = deleteIgnoredSubitemsFromStorage(sdv, output);
+                LOGGER.info("Deleted ignored subitems from storages count: {}", deleted);
+            }
         }
     }
 
@@ -771,6 +786,53 @@ public class ExportFileTask extends AbstractTask {
             }
         }
         return deleted;
+    }
+    
+    private static int deleteIgnoredSubitemsFromStorage(SortedDocValues sdv, File output) throws SQLException {
+        final AtomicInteger deleted = new AtomicInteger();
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+        // connections were closed in finish(), open them again
+        configureSQLiteStorage(output);
+        for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
+            Integer storage = entry.getKey();
+            Connection con = entry.getValue();
+            futures.add(executor.submit(new Runnable() {
+                @Override
+                public void run() {
+                    try (PreparedStatement ps = con.prepareStatement(SELECT_IDS_WITH_DATA);
+                            PreparedStatement ps2 = con.prepareStatement(CLEAR_DATA);
+                            Statement ps3 = con.createStatement()) {
+                        LOGGER.info("Deleting subitems from storage {}", storage);
+                        ResultSet rs = ps.executeQuery();
+                        while (rs.next()) {
+                            String id = rs.getString(1);
+                            if (sdv.lookupTerm(new BytesRef(id)) < 0) {
+                                ps2.setString(1, id);
+                                ps2.executeUpdate();
+                                deleted.incrementAndGet();
+                            }
+                        }
+                        con.commit();
+                        con.setAutoCommit(true);
+                        LOGGER.info("Running VACUUM on storage {}", storage);
+                        ps3.executeUpdate("VACUUM");
+                        LOGGER.info("Closing storage {}", storage);
+                        con.close();
+                    } catch (SQLException | IOException e1) {
+                        throw new RuntimeException(e1);
+                    }
+                }
+            }));
+        }
+        for (Future<?> future : futures) {
+            try {
+                future.get();
+            } catch (InterruptedException | ExecutionException e) {
+                LOGGER.error("Error deleting ignored subitems.", e);
+            }
+        }
+        return deleted.intValue();
     }
 
 }
