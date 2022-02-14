@@ -751,14 +751,13 @@ public class ExportFileTask extends AbstractTask {
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
             if (extractDir != null && extractDir.exists()) {
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Deleting ignored subitems from FS...");
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems1"));
                 LOGGER.info("Deleting ignored subitems from FS...");
                 int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
                 LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
             }
             if (storage.get(output) != null && !storage.get(output).isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
-                        "Deleting ignored subitems from storages...");
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems2"));
                 LOGGER.info("Deleting ignored subitems from storages...");
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
                 int deleted = deleteIgnoredSubitemsFromStorage(sdv, output);
