@@ -129,6 +129,8 @@ public class ExportFileTask extends AbstractTask {
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
     private static AtomicInteger counter = new AtomicInteger();
+    
+    private static ArrayList<IHashValue> noContentHashes = new ArrayList<>();
 
     public static int subDirCounter = 0, itensExtracted = 0;
     private static File subDir;
@@ -290,10 +292,19 @@ public class ExportFileTask extends AbstractTask {
             if (!doNotExport(evidence)) {
                 renameToHash(evidence);
             } else {
-                // just clear path to be indexed, continues to point to file for processing
+                // clear path to be not indexed, continuing to point to File for processing,
+                // this also makes subitems without 'export' property to be deleted later
                 evidence.setExportedFile(null);
-                // TODO delete content of subitems in sqlite storages configured to be not
-                // exported using -nocontent
+
+                // store references to -nocontent items to be deleted from sqlite storages
+                IHashValue hashValue = evidence.getHashValue();
+                if (hashValue != null) {
+                    synchronized (hashMap) {
+                        // this uses less memory reusing a previous stored reference
+                        hashValue = hashMap.get(hashValue);
+                        noContentHashes.add(hashValue);
+                    }
+                }
             }
             incItensExtracted();
         }
@@ -794,6 +805,7 @@ public class ExportFileTask extends AbstractTask {
         ExecutorService executor = Executors.newFixedThreadPool(4);
         // connections were closed in finish(), open them again
         configureSQLiteStorage(output);
+        Collections.sort(noContentHashes);
         for (Entry<Integer, Connection> entry : storageCon.get(output).entrySet()) {
             Integer storage = entry.getKey();
             Connection con = entry.getValue();
@@ -807,7 +819,8 @@ public class ExportFileTask extends AbstractTask {
                         ResultSet rs = ps.executeQuery();
                         while (rs.next()) {
                             String id = rs.getString(1);
-                            if (sdv.lookupTerm(new BytesRef(id)) < 0) {
+                            if (sdv.lookupTerm(new BytesRef(id)) < 0
+                                    || Collections.binarySearch(noContentHashes, new HashValue(id)) >= 0) {
                                 ps2.setString(1, id);
                                 ps2.executeUpdate();
                                 deleted.incrementAndGet();
