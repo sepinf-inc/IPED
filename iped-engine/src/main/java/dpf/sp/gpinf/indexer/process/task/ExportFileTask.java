@@ -123,7 +123,7 @@ public class ExportFileTask extends AbstractTask {
     
     private static final String SELECT_IDS_WITH_DATA = "SELECT id FROM t1 WHERE data IS NOT NULL;";
 
-    private static final String CLEAR_DATA = "UPDATE t1 SET data=NULL WHERE id=?;";
+    private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
 
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
