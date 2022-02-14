@@ -274,7 +274,8 @@ public class ExportFileTask extends AbstractTask {
             } else {
                 // just clear path to be indexed, continues to point to file for processing
                 evidence.setExportedFile(null);
-                evidence.setDeleteFile(true);
+                // TODO delete content of subitems in sqlite storages configured to be not
+                // exported using -nocontent
             }
             incItensExtracted();
         }

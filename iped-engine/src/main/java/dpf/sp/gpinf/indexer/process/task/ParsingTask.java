@@ -717,7 +717,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (zipBombException != null) {
             // dispose now because this item will not be added to processing queue
             if (subItem.hasFile()) {
-                subItem.setDeleteFile(true);
                 subItem.dispose();
             }
             throw zipBombException;

@@ -192,19 +192,8 @@ public class Item implements ISleuthKitItem {
 
     private boolean isDir = false, isRoot = false, sumVolume = true;
 
-    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false, allowGetId = false;
+    private boolean toIgnore = false, addToCase = true, isToExtract = false, allowGetId = false;
 
-    /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    public void setDeleteFile(boolean deleteFile) {
-        this.deleteFile = deleteFile;
-    }
 
     private boolean carved = false;
 
@@ -296,22 +285,6 @@ public class Item implements ISleuthKitItem {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
-            try {
-                if (file != null && file.exists() && isNotHashId(file.getName()) && !file.delete()) {
-                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
-                }
-            } catch (IOException e) {
-                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
-            }
-        }
-    }
-
-    private boolean isNotHashId(String id) {
-        int idx = id.indexOf('.');
-        if (idx != -1)
-            id = id.substring(0, idx);
-        return id.length() != 32 && id.length() != 40 && id.length() != 64;
     }
 
     /**
