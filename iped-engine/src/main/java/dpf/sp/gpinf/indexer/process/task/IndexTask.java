@@ -97,6 +97,7 @@ public class IndexTask extends AbstractTask {
                     ((ISleuthKitItem) evidence).setSleuthId(null);
                 }
                 evidence.setExportedFile(null);
+                evidence.setIdInDataSource(null);
                 evidence.setExtraAttribute(IndexItem.TREENODE, "true"); //$NON-NLS-1$
                 evidence.getCategorySet().clear();
             } else {
