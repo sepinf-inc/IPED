@@ -24,7 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -40,8 +39,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.Map.Entry;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
@@ -52,6 +52,8 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.index.SortedDocValues;
+import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.slf4j.Logger;
@@ -62,20 +64,24 @@ import org.sqlite.SQLiteConfig.SynchronousMode;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Messages;
+import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IPEDConfig;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
 import iped3.sleuthkit.ISleuthKitItem;
+import iped3.util.BasicProps;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos
@@ -107,14 +113,15 @@ public class ExportFileTask extends AbstractTask {
     private static File subDir;
 
     private static boolean computeHash = false;
-    private File extractDir;
-    private HashMap<IHashValue, IHashValue> hashMap;
-    private List<String> noContentLabels;
+    private static File extractDir;
 
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
     
     private static AtomicInteger counter = new AtomicInteger();
+
+    private HashMap<IHashValue, IHashValue> hashMap;
+    private List<String> noContentLabels;
 
     public ExportFileTask() {
         ExportFolder.setExportPath(EXTRACT_DIR);
@@ -129,11 +136,11 @@ public class ExportFileTask extends AbstractTask {
     }
 
     private void setExtractLocation() {
-        if (output != null) {
+        if (output != null && extractDir == null) {
             if (caseData.containsReport()) {
-                this.extractDir = new File(output.getParentFile(), EXTRACT_DIR);
+                extractDir = new File(output.getParentFile(), EXTRACT_DIR);
             } else {
-                this.extractDir = new File(output, SUBITEM_DIR);
+                extractDir = new File(output, SUBITEM_DIR);
             }
         }
         IPEDConfig ipedConfig = (IPEDConfig) ConfigurationManager.getInstance().findObjects(IPEDConfig.class).iterator()
@@ -715,6 +722,39 @@ public class ExportFileTask extends AbstractTask {
                 }
             }
         }
+    }
+
+    public static void deleteIgnoredSubitems(ICaseData caseData, File output) throws Exception {
+        if (caseData.isIpedReport() || (!hasCategoryToExtract() && !RegexTask.isExtractByKeywordsOn())) {
+            return;
+        }
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
+            if (extractDir != null && extractDir.exists()) {
+                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Deleting ignored subitems from FS...");
+                LOGGER.info("Deleting ignored subitems from FS...");
+                int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
+                LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
+            }
+        }
+    }
+
+    private static int deleteIgnoredSubitemsFromFS(SortedDocValues sdv, Path root, File file) {
+        int deleted = 0;
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            for (File f : files) {
+                deleted += deleteIgnoredSubitemsFromFS(sdv, root, f);
+            }
+        } else {
+            String exportPath = root.relativize(file.toPath()).toString();
+            if (sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
+                if (file.delete()) {
+                    deleted++;
+                }
+            }
+        }
+        return deleted;
     }
 
 }

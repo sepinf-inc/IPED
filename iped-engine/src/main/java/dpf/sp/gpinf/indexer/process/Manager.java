@@ -257,6 +257,8 @@ public class Manager {
 
         removeEmptyTreeNodes();
 
+        ExportFileTask.deleteIgnoredSubitems(caseData, output);
+
         new P2PBookmarker(caseData).createBookmarksForSharedFiles(output.getParentFile());
 
         updateImagePaths();
