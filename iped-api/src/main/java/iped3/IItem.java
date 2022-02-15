@@ -280,16 +280,6 @@ public interface IItem extends IItemBase {
     void setDataSource(IDataSource evidence);
 
     /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    void setDeleteFile(boolean deleteFile);
-
-    /**
      * Define se o item é apagado
      *
      * @param deleted

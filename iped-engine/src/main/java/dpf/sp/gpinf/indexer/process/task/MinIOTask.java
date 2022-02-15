@@ -260,12 +260,6 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
-        if (item.isSubItem()) {
-            // deletes local sqlite content after sent to minio
-            item.setDeleteFile(true);
-            ((Item) item).dispose(false);
-        }
-
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFile(null);

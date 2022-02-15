@@ -170,12 +170,12 @@ public abstract class BaseCarveTask extends AbstractTask {
         if (parentItem.getIdInDataSource() != null) {
             carvedItem.setIdInDataSource(parentItem.getIdInDataSource());
             carvedItem.setInputStreamFactory(parentItem.getInputStreamFactory());
-
-        } else if (parentItem instanceof ISleuthKitItem && ((ISleuthKitItem) parentItem).getSleuthFile() != null) {
+        }
+        if (parentItem instanceof ISleuthKitItem && ((ISleuthKitItem) parentItem).getSleuthFile() != null) {
             carvedItem.setSleuthFile(((ISleuthKitItem) parentItem).getSleuthFile());
             carvedItem.setSleuthId(((ISleuthKitItem) parentItem).getSleuthId());
-
-        } else {
+        }
+        if (parentItem.getFile() != null) {
             carvedItem.setFile(parentItem.getFile());
             carvedItem.setExportedFile(parentItem.getExportedFile());
         }

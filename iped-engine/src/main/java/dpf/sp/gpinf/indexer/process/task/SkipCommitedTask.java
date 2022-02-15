@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexNotFoundException;
@@ -49,6 +51,8 @@ public class SkipCommitedTask extends AbstractTask {
     public static final String DATASOURCE_NAMES = "CMD_LINE_DATASOURCE_NAMES";
 
     public static final String trackID_ID_MAP = "trackID_ID_MAP";
+
+    private static Logger logger = LogManager.getLogger(SkipCommitedTask.class);
 
     private static HashValue[] commitedtrackIDs;
 
@@ -148,6 +152,9 @@ public class SkipCommitedTask extends AbstractTask {
             collectParentsWithoutAllSubitems(aReader, IndexItem.PARENT_TRACK_ID, BaseCarveTask.NUM_CARVED_AND_FRAGS);
 
             caseData.putCaseObject(PARENTS_WITH_LOST_SUBITEMS, parentsWithLostSubitems);
+
+            logger.info("Commited items: {}", commitedtrackIDs.length);
+            logger.info("Parents with lost subitems: {}", parentsWithLostSubitems.size());
 
         } catch (IndexNotFoundException e) {
             commitedtrackIDs = new HashValue[0];

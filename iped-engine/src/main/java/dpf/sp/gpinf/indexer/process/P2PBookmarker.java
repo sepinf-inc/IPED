@@ -80,6 +80,9 @@ public class P2PBookmarker {
                 Document doc = ipedSrc.getReader().document(luceneId);
                 String mediaType = doc.get(IndexItem.CONTENTTYPE);
                 P2PProgram program = p2pPrograms.get(mediaType);
+                if (program == null) {
+                    continue;
+                }
                 String[] sharedItems = doc.getValues(ExtraProperties.SHARED_HASHES);
                 boolean isHash = true;
                 if (sharedItems.length == 0) {
@@ -126,7 +129,7 @@ public class P2PBookmarker {
                     ids.add(result.getId(j));
 
                 ipedSrc.getMarcadores().addLabel(ids, labelId);
-                ipedSrc.getMarcadores().saveState();
+                ipedSrc.getMarcadores().saveState(true);
             }
         } catch (Exception e1) {
             e1.printStackTrace();
