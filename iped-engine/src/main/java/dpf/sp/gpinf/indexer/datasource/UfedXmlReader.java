@@ -94,7 +94,10 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String AVATAR_PATH_META = ExtraProperties.UFED_META_PREFIX + "contactphoto_extracted_path"; //$NON-NLS-1$
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
-    private static final String MEDIA_RESULT_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaResult:"; //$NON-NLS-1$
+
+    private static final Property MEDIA_CLASSES_META = Property.internalTextBag(ExtraProperties.UFED_META_PREFIX + "mediaClasses"); //$NON-NLS-1$
+    private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
+    private static final float MEDIA_CLASSES_THRESHOLD = 50.0f;
 
     public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
@@ -1143,12 +1146,20 @@ public class UfedXmlReader extends DataSourceReader {
                     LOGGER.error("Error reading UFDR mediaResult {}", e, path);
                 }
             }
-            if (mediaResults != null) {
-                for (Category category : mediaResults.categories) {
-                    if (StringUtils.isNotBlank(category.value)) {
-                        item.getMetadata().add(MEDIA_RESULT_PREFIX + "category:" + category.value, Float.toString(category.score)); //$NON-NLS-1$
-                    }
-                }
+            if (mediaResults != null && mediaResults.categories != null) {
+
+                // set scores
+                mediaResults.categories.stream() //
+                        .filter(cat -> StringUtils.isNotBlank(cat.value)) //
+                        .forEach(cat -> item.getMetadata().set(MEDIA_CLASSES_SCORE_PREFIX + cat.value, Float.toString(cat.score)));
+
+                // set high scored classes
+                String[] classes = mediaResults.categories.stream() //
+                        .filter(cat -> StringUtils.isNotBlank(cat.value))
+                        .filter(cat -> cat.score >= MEDIA_CLASSES_THRESHOLD) //
+                        .map(cat -> cat.value) //
+                        .toArray(String[]::new);
+                item.getMetadata().set(MEDIA_CLASSES_META, classes);
             }
         }
 
