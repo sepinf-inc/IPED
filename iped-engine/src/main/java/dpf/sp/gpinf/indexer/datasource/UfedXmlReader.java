@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -95,7 +96,7 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
-    private static final Property MEDIA_CLASSES_META = Property.internalTextBag(ExtraProperties.UFED_META_PREFIX + "mediaClasses"); //$NON-NLS-1$
+    private static final String MEDIA_CLASSES_PROPERTY = ExtraProperties.UFED_META_PREFIX + "mediaClasses"; //$NON-NLS-1$
     private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
     private static final float MEDIA_CLASSES_THRESHOLD = 50.0f;
 
@@ -1131,7 +1132,7 @@ public class UfedXmlReader extends DataSourceReader {
                 try (InputStream is = new FileInputStream(file)) {
                     mediaResults = readMediaResults(is);
                 } catch (IOException e) {
-                    LOGGER.error("Error reading UFED mediaResult {}", e, path);
+                    LOGGER.warn("Error reading UFED mediaResult {}: {}", path, e.toString());
                 }
             } else {
                 try {
@@ -1143,7 +1144,7 @@ public class UfedXmlReader extends DataSourceReader {
                         mediaResults = readMediaResults(is);
                     }
                 } catch (ZipException | IOException e) {
-                    LOGGER.error("Error reading UFDR mediaResult {}", e, path);
+                    LOGGER.warn("Error reading UFDR mediaResult {}: {}", path, e.toString());
                 }
             }
             if (mediaResults != null && mediaResults.categories != null) {
@@ -1151,15 +1152,15 @@ public class UfedXmlReader extends DataSourceReader {
                 // set scores
                 mediaResults.categories.stream() //
                         .filter(cat -> StringUtils.isNotBlank(cat.value)) //
-                        .forEach(cat -> item.getMetadata().set(MEDIA_CLASSES_SCORE_PREFIX + cat.value, Float.toString(cat.score)));
+                        .forEach(cat -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + cat.value, cat.score));
 
                 // set high scored classes
-                String[] classes = mediaResults.categories.stream() //
+                List<String> classes = mediaResults.categories.stream() //
                         .filter(cat -> StringUtils.isNotBlank(cat.value))
                         .filter(cat -> cat.score >= MEDIA_CLASSES_THRESHOLD) //
                         .map(cat -> cat.value) //
-                        .toArray(String[]::new);
-                item.getMetadata().set(MEDIA_CLASSES_META, classes);
+                        .collect(Collectors.toList());
+                item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
             }
         }
 
