@@ -12,6 +12,8 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.DirectoryReader;
@@ -48,6 +50,8 @@ public class SkipCommitedTask extends AbstractTask {
     public static final String DATASOURCE_NAMES = "CMD_LINE_DATASOURCE_NAMES";
 
     public static final String GLOBALID_ID_MAP = "GLOBALID_ID_MAP";
+
+    private static Logger logger = LogManager.getLogger(SkipCommitedTask.class);
 
     private static HashValue[] commitedPersistentIds;
 
@@ -144,6 +148,9 @@ public class SkipCommitedTask extends AbstractTask {
                     BaseCarveTask.NUM_CARVED_AND_FRAGS);
 
             caseData.putCaseObject(PARENTS_WITH_LOST_SUBITEMS, parentsWithLostSubitems);
+
+            logger.info("Commited items: {}", commitedPersistentIds.length);
+            logger.info("Parents with lost subitems: {}", parentsWithLostSubitems.size());
 
         } catch (IndexNotFoundException e) {
             commitedPersistentIds = new HashValue[0];

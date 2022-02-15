@@ -410,9 +410,9 @@ public class Manager {
 
     private boolean iniciarIndexacao() throws Exception {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        LOGGER.info("Creating index..."); //$NON-NLS-1$
 
         boolean newIndex = !indexDir.exists();
+        LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
         
