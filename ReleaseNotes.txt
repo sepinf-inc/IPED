@@ -1,4 +1,4 @@
-14/02/2022: IPED-3.18.13
+15/02/2022: IPED-3.18.13
 News:
 #911: Support new Telegram version 8.4 (João Hauck)
 #341: Delete ignored subitem data from SQLite containers (Luís Nassif)
@@ -14,7 +14,8 @@ Fixes:
 #895: HtmlViewer vulnerabilities in Windows and Linux (Luís Nassif)
 #917: Some Telegram system messages were shown as different messages (João Hauck)
 #964: Automatic bookmarks for items shared by p2p applications may not be created (Luís Nassif)
-#942: Rare ConcurrentModificationException when making partial index commits (Luís Nassif)
+#942: Rare aborting ConcurrentModificationException when making partial index commits (Luís Nassif)
+#967: Rare aborting ConcurrentModificationException when resuming processing (Luís Nassif)
 #962: Exception in image similarity search when some kinds of evidences are moved (Luís Nassif)
 #963: Clicking on carved item from moved local folder datasource doesn't ask for new folder location (Luís Nassif)
 #954: EML/MSG emails with forbidden NTFS chars in attachment extension not rendered (Luís Nassif)
