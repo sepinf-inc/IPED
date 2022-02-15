@@ -151,7 +151,7 @@ public class IPEDReader extends DataSourceReader {
             indexDir = ipedCase.getIndex();
 
             BooleanQuery parents = new BooleanQuery();
-            for (HashValue persistentId : parentsWithLostSubitems) {
+            for (HashValue persistentId : parentsWithLostSubitems.toArray(new HashValue[0])) {
                 TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
                 parents.add(tq, Occur.SHOULD);
             }
