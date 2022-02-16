@@ -67,6 +67,7 @@ import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -99,6 +100,7 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String MEDIA_CLASSES_PROPERTY = ExtraProperties.UFED_META_PREFIX + "mediaClasses"; //$NON-NLS-1$
     private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
     private static final float MEDIA_CLASSES_THRESHOLD = 50.0f;
+    private static final double MISSING_FRAME_SCORE = 49.99f;
 
     public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
@@ -1147,18 +1149,55 @@ public class UfedXmlReader extends DataSourceReader {
                     LOGGER.warn("Error reading UFDR mediaResult {}: {}", path, e.toString());
                 }
             }
-            if (mediaResults != null && mediaResults.categories != null) {
+            if (mediaResults != null) {
 
+                HashMap<String, Float> finalScorePerCat = new HashMap<>();
+
+                // collect scores for videos
+                if (mediaResults.classifications != null) {
+                    final AtomicInteger numFrames = new AtomicInteger();
+                    HashMap<String, List<Double>> scoresPerCat = new HashMap<>();
+                    mediaResults.classifications.stream().forEach(classification -> {
+                        numFrames.incrementAndGet();
+                        if (classification.categories != null) {
+                            for (Category cat : classification.categories) {
+                                if (StringUtils.isNotBlank(cat.value)) {
+                                    List<Double> scores = scoresPerCat.get(cat.value);
+                                    if (scores == null) {
+                                        scores = new ArrayList<>();
+                                        scoresPerCat.put(cat.value, scores);
+                                    }
+                                    scores.add((double) cat.score);
+                                }
+                            }
+                        }
+                    });
+
+                    // combine frames scores
+                    scoresPerCat.entrySet().stream().forEach(entry -> {
+                        // add missing frames scores, PA just stores a frame score if it is >= 50
+                        // not the ideal solution...
+                        while (entry.getValue().size() < numFrames.get()) {
+                            entry.getValue().add(MISSING_FRAME_SCORE);
+                        }
+                        finalScorePerCat.put(entry.getKey(), (float) DIETask.videoScore(entry.getValue()));
+                    });
+
+                // collect scores for images
+                } else if (mediaResults.categories != null){
+                    mediaResults.categories.stream() //
+                            .filter(cat -> StringUtils.isNotBlank(cat.value)) //
+                            .forEach(cat -> finalScorePerCat.put(cat.value, cat.score));
+                }
+                
                 // set scores
-                mediaResults.categories.stream() //
-                        .filter(cat -> StringUtils.isNotBlank(cat.value)) //
-                        .forEach(cat -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + cat.value, cat.score));
+                finalScorePerCat.entrySet().stream()
+                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
 
                 // set high scored classes
-                List<String> classes = mediaResults.categories.stream() //
-                        .filter(cat -> StringUtils.isNotBlank(cat.value))
-                        .filter(cat -> cat.score >= MEDIA_CLASSES_THRESHOLD) //
-                        .map(cat -> cat.value) //
+                List<String> classes = finalScorePerCat.entrySet().stream()
+                        .filter(entry -> entry.getValue() >= MEDIA_CLASSES_THRESHOLD)
+                        .map(entry -> entry.getKey())
                         .collect(Collectors.toList());
                 item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
             }
@@ -1460,8 +1499,21 @@ public class UfedXmlReader extends DataSourceReader {
         @JsonProperty("FileId")
         private String fileId;
 
+        @JsonProperty("Classifications")
+        private List<Classification> classifications;
+
         @JsonProperty("Categories")
         private List<Category> categories;
+    }
+
+    private static class Classification {
+
+        @JsonProperty("FrameOffsetMilliseconds")
+        private long frameMilliseconds;
+
+        @JsonProperty("Categories")
+        private List<Category> categories;
+
     }
 
     private static class Category {

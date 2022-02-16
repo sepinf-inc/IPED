@@ -280,7 +280,7 @@ public class DIETask extends AbstractTask {
      * Combine the score of each video frame into a single score. 
      * It uses a weighted average, with higher weights for higher scores.
      */
-    private double videoScore(List<Double> p) {
+    public static double videoScore(List<Double> p) {
         Collections.sort(p);
         Collections.reverse(p);
         double weight = 1;
