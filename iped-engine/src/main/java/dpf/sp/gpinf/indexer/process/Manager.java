@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,6 +82,8 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
+import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 
 /**
@@ -234,8 +237,14 @@ public class Manager {
         }
 
         try {
-            if (!iniciarIndexacao())
+            openIndex();
+
+            if (args.getEvidenceToRemove() != null) {
+                removeEvidence(args.getEvidenceToRemove());
                 return;
+            }
+
+            initWorkers();
 
             initSleuthkitServers();
 
@@ -400,11 +409,28 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String uuid) throws IOException {
+    private void removeEvidence(String uuid) throws IOException, SQLException {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE,
-                "WARN: removing evidence does NOT update graph and internal storage for now!");
+        LOGGER.log(CONSOLE, "WARN: removing evidence does NOT update graph and internal storage for now!");
         LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
+
+        // remove from TSK DB
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            String query = BasicProps.EVIDENCE_UUID + ":\"" + uuid + "\" AND " + BasicProps.ISROOT + ":true";
+            IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
+            SearchResult result = searcher.search();
+            if (result.getLength() == 0) {
+                Files.createFile(getFinishedFileFlag(output).toPath());
+                throw new IPEDException("Evidence with UUID=" + uuid + " not found!");
+            }
+            Integer tskID = ((ISleuthKitItem) ipedCase.getItemByID(result.getId(0))).getSleuthId();
+            if (tskID != null) {
+                LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
+                SleuthkitReader.deleteImageInfo(tskID, output);
+            }
+        }
+
+        // remove from items from index
         TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
         int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
@@ -412,9 +438,11 @@ public class Manager {
         int deletes = prevDocs - writer.getDocStats().numDocs;
         LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
         writer.close();
+
+        Files.createFile(getFinishedFileFlag(output).toPath());
     }
 
-    private boolean iniciarIndexacao() throws Exception {
+    private void openIndex() throws IOException {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         boolean newIndex = !indexDir.exists();
@@ -437,10 +465,9 @@ public class Manager {
             loadExistingData();
         }
 
-        if (args.getEvidenceToRemove() != null) {
-            removeEvidence(args.getEvidenceToRemove());
-            return false;
-        }
+    }
+
+    private void initWorkers() throws Exception {
 
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
@@ -454,8 +481,6 @@ public class Manager {
         }
 
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
-
-        return true;
     }
 
     private void monitorarIndexacao() throws Exception {
