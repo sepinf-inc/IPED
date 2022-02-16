@@ -50,7 +50,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
 
-    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified name")
     private String evidenceToRemove;
 
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "

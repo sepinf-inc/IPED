@@ -409,21 +409,24 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String uuid) throws IOException, SQLException {
+    private void removeEvidence(String evidenceName) throws IOException, SQLException {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE, "WARN: removing evidence does NOT update graph and internal storage for now!");
-        LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
+        LOGGER.log(CONSOLE, "Removing evidence {} from index...", evidenceName);
 
         // remove from TSK DB
+        String evidenceUUID;
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
-            String query = BasicProps.EVIDENCE_UUID + ":\"" + uuid + "\" AND " + BasicProps.ISROOT + ":true";
+            String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
             SearchResult result = searcher.search();
             if (result.getLength() == 0) {
                 Files.createFile(getFinishedFileFlag(output).toPath());
-                throw new IPEDException("Evidence with UUID=" + uuid + " not found!");
+                throw new IPEDException("Evidence " + evidenceName + " not found!");
             }
-            Integer tskID = ((ISleuthKitItem) ipedCase.getItemByID(result.getId(0))).getSleuthId();
+            Item item = (Item) ipedCase.getItemByID(result.getId(0));
+            evidenceUUID = item.getDataSource().getUUID();
+            Integer tskID = item.getSleuthId();
             if (tskID != null) {
                 LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
                 SleuthkitReader.deleteImageInfo(tskID, output);
@@ -431,7 +434,7 @@ public class Manager {
         }
 
         // remove from items from index
-        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
+        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, evidenceUUID));
         int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
         writer.commit();
