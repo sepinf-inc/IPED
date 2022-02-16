@@ -522,6 +522,20 @@ public class SleuthkitReader extends DataSourceReader {
         return sourceId;
     }
 
+    /**
+     * Deletes basic info about an added image from TSK DB. Not all references are
+     * deleted for now.
+     */
+    public static void deleteImageInfo(Integer tskID, File moduleDir) throws SQLException {
+        try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + getSleuthkitDB(moduleDir));
+                Statement st = conn.createStatement()) {
+            st.executeUpdate("DELETE FROM tsk_files WHERE data_source_obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM data_source_info WHERE obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM tsk_image_info WHERE obj_id == '" + tskID + "';");
+            st.executeUpdate("DELETE FROM tsk_image_names WHERE obj_id == '" + tskID + "';");
+        }
+    }
+
     public void read(File image) throws Exception {
         read(image, null);
     }
