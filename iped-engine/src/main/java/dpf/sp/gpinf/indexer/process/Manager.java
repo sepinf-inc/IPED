@@ -446,7 +446,7 @@ public class Manager {
     }
 
     private void openIndex() throws IOException {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.OpeningIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         boolean newIndex = !indexDir.exists();
         LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());

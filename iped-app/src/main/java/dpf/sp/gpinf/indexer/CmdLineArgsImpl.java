@@ -380,6 +380,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
         }
 
+        if (evidenceToRemove != null) {
+            this.nogui = true;
+        }
+
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
                 IndexFiles.getInstance().dataSource.add(dataSource);
