@@ -1154,7 +1154,7 @@ public class UfedXmlReader extends DataSourceReader {
                 HashMap<String, Float> finalScorePerCat = new HashMap<>();
 
                 // collect scores for videos
-                if (mediaResults.classifications != null) {
+                if (mediaResults.classifications != null && !mediaResults.classifications.isEmpty()) {
                     final AtomicInteger numFrames = new AtomicInteger();
                     HashMap<String, List<Double>> scoresPerCat = new HashMap<>();
                     mediaResults.classifications.stream().forEach(classification -> {
