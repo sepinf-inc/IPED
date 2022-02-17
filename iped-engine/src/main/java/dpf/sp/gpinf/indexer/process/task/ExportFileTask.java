@@ -773,8 +773,7 @@ public class ExportFileTask extends AbstractTask {
             if (storage.get(output) != null && !storage.get(output).isEmpty()) {
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems2"));
                 LOGGER.info("Deleting ignored subitems from storages...");
-                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
-                int deleted = deleteIgnoredSubitemsFromStorage(sdv, output);
+                int deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
                 LOGGER.info("Deleted ignored subitems from storages count: {}", deleted);
             }
         }
@@ -798,7 +797,7 @@ public class ExportFileTask extends AbstractTask {
         return deleted;
     }
     
-    private static int deleteIgnoredSubitemsFromStorage(SortedDocValues sdv, File output) throws SQLException {
+    private static int deleteIgnoredSubitemsFromStorage(IPEDSource ipedCase, File output) throws SQLException {
         final AtomicInteger deleted = new AtomicInteger();
         ArrayList<Future<?>> futures = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -815,10 +814,11 @@ public class ExportFileTask extends AbstractTask {
                             PreparedStatement ps2 = con.prepareStatement(CLEAR_DATA);
                             Statement ps3 = con.createStatement()) {
                         LOGGER.info("Deleting subitems from storage {}", storage);
+                        SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
                         ResultSet rs = ps.executeQuery();
                         while (rs.next()) {
                             String id = rs.getString(1);
-                            if (sdv.lookupTerm(new BytesRef(id)) < 0
+                            if (sdv == null || sdv.lookupTerm(new BytesRef(id)) < 0
                                     || Collections.binarySearch(noContentHashes, new HashValue(id)) >= 0) {
                                 ps2.setString(1, id);
                                 ps2.executeUpdate();
