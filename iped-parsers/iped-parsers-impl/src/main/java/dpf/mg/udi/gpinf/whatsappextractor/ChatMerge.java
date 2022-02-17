@@ -1,5 +1,6 @@
 package dpf.mg.udi.gpinf.whatsappextractor;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -38,6 +39,12 @@ public class ChatMerge {
     public ChatMerge(List<Chat> main, String dbname) {
         this.main = main;
         this.dbname = dbname;
+        for (Chat c : main) {
+            // new instance to avoid threading issues
+            List<Message> messages = new ArrayList<Message>(c.getMessages());
+            Collections.sort(messages, cmpMessage);
+            c.setMessages(messages);
+        }
     }
 
     public boolean isBackup(List<Chat> backup) {
@@ -60,7 +67,6 @@ public class ChatMerge {
 
 
     private boolean hasCompatibleMessage(List<Message> backup, List<Message> main) {
-        Collections.sort(main, cmpMessage);
         int maxMsgsToCheck = 10;
         for (int i = 0; i < backup.size(); i += Math.max(1, backup.size() / maxMsgsToCheck)) {
             int idx = Collections.binarySearch(main, backup.get(i), cmpMessage);
@@ -95,10 +101,8 @@ public class ChatMerge {
 
     }
 
-    public int mergeMessageList(List<Message> main, List<Message> backup) {
+    private int mergeMessageList(List<Message> main, List<Message> backup) {
         int tot_rec = 0;
-
-        Collections.sort(main, cmpMessage);
         int indexmain = 0;
         for (Message m : backup) {
 
