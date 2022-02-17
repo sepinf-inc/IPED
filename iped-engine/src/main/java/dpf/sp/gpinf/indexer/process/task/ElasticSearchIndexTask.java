@@ -361,7 +361,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         // used for parent items in elastic to store just metadata info
         // globalID works like an 'UUID' and should be unique across cases
-        String parentId = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
+        String parentId = (String) item.getExtraAttribute(ExtraProperties.GLOBAL_ID);
 
         try {
             // creates the father;

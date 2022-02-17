@@ -132,21 +132,19 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static List<WhatsAppContext> mainDbFound = new ArrayList<>();
 
-    private static final String PERSISTENT_ID = "persistentId";
-
     private static final String IS_BACKUP_FROM = "isBackupFrom";
 
-    private static final HashMap<String, WhatsAppContext> dbsFounded = new HashMap<>();
+    private static final HashMap<Integer, WhatsAppContext> dbsFound = new HashMap<>();
 
     private static final void putDB(WhatsAppContext wcontext) {
-        synchronized (dbsFounded) {
-            dbsFounded.put(wcontext.getItem().getExtraAttribute(PERSISTENT_ID).toString(), wcontext);
+        synchronized (dbsFound) {
+            dbsFound.put(wcontext.getItem().getId(), wcontext);
         }
 
     }
 
     private static WhatsAppContext getContext(IItemBase item) {
-        return dbsFounded.get(item.getExtraAttribute(PERSISTENT_ID).toString());
+        return dbsFound.get(item.getId());
     }
 
 
@@ -376,7 +374,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 + MSG_STORE_2 + "\"";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
-            if (!dbsFounded.containsKey(it.getExtraAttribute(PERSISTENT_ID).toString())) {
+            if (!dbsFound.containsKey(it.getId())) {
                 WhatsAppContext wcontext = new WhatsAppContext(false, it);
                 putDB(wcontext);
             }
@@ -386,7 +384,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void addBackupMessage(WhatsAppContext item, IItemBase main, XHTMLContentHandler xhtml)
             throws SAXException {
         IItem i = (IItem) item.getItem();
-        i.setExtraAttribute(IS_BACKUP_FROM, main.getExtraAttribute(PERSISTENT_ID).toString());
+        i.setExtraAttribute(IS_BACKUP_FROM, main.getExtraAttribute(ExtraProperties.GLOBAL_ID).toString());
         xhtml.startDocument();
         xhtml.characters("Backup from " + main.getPath());
         xhtml.endDocument();
@@ -459,7 +457,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 WAAccount account = getUserAccount(searcher, mainDb.getItem().getPath(),
                         extFactory instanceof ExtractorAndroidFactory);
-                List<WhatsAppContext> dbs = new ArrayList<>(dbsFounded.values());
+                List<WhatsAppContext> dbs = new ArrayList<>(dbsFound.values());
                 Collections.sort(dbs, new Comparator<WhatsAppContext>() {
                     @Override
                     public int compare(WhatsAppContext o1, WhatsAppContext o2) {

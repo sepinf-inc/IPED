@@ -14,6 +14,8 @@ import org.apache.tika.metadata.Property;
  */
 public class ExtraProperties {
 
+    public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
+
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
     public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$

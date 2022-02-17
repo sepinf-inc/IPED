@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
+import iped3.util.ExtraProperties;
 
 public class Util {
 
@@ -211,7 +212,7 @@ public class Util {
         if (item.getDataSource() != null) {
             sb.append(BasicProps.EVIDENCE_UUID).append(item.getDataSource().getUUID());
             String globalId = DigestUtils.md5Hex(sb.toString());
-            item.setExtraAttribute(IndexItem.GLOBAL_ID, globalId);
+            item.setExtraAttribute(ExtraProperties.GLOBAL_ID, globalId);
         } else if (!item.isQueueEnd()) {
             throw new RuntimeException(BasicProps.EVIDENCE_UUID + notFoundIn + item.getPath());
         }
