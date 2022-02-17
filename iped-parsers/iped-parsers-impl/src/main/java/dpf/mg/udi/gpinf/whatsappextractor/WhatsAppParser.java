@@ -129,18 +129,14 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
     private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
-    private static String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
-    private static List<WhatsAppContext> mainDbFound = new ArrayList<>();
-
+    private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static final String IS_BACKUP_FROM = "isBackupFrom";
 
-    private static final HashMap<Integer, WhatsAppContext> dbsFound = new HashMap<>();
+    private static final Map<Integer, WhatsAppContext> dbsFound = new ConcurrentHashMap<>();
+    private static List<WhatsAppContext> mainDbFound = Collections.synchronizedList(new ArrayList<>());
 
     private static final void putDB(WhatsAppContext wcontext) {
-        synchronized (dbsFound) {
-            dbsFound.put(wcontext.getItem().getId(), wcontext);
-        }
-
+        dbsFound.put(wcontext.getItem().getId(), wcontext);
     }
 
     private static WhatsAppContext getContext(IItemBase item) {
@@ -342,19 +338,13 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
 
         if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
-            synchronized (mainDbFound) {
-                mainDbFound.add(wcontext);
-                wcontext.setMainDB(true);
-                wcontext.setBackup(false);
-            }
+            wcontext.setMainDB(true);
+            wcontext.setBackup(false);
+            mainDbFound.add(wcontext);
         }
         putDB(wcontext);
 
-
-
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
-
-
     }
 
     private List<Chat> extractChatList(WhatsAppContext wcontext, ExtractorFactory extFactory, Metadata metadata,
@@ -422,7 +412,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
 
                 }
-                for (WhatsAppContext main : mainDbFound) {
+                for (WhatsAppContext main : mainDbFound.toArray(new WhatsAppContext[0])) {
 
                     ChatMerge cm = new ChatMerge(main.getChalist(), DB.getName());
                     if (cm.isBackup(wcontext.getChalist())) {
