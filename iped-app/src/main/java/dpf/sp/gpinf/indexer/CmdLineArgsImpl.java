@@ -50,7 +50,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = { "-o", "-output" }, description = "output folder", order = 2)
     private File outputDir;
 
-    @Parameter(names = { "-remove" }, description = "removes the evidence with specified UUID")
+    @Parameter(names = { "-remove" }, description = "removes the evidence with specified name")
     private String evidenceToRemove;
 
     @Parameter(names = { "-l", "-keywordlist" }, description = "line file with keywords to be imported into case. "
@@ -378,6 +378,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
+        }
+
+        if (evidenceToRemove != null) {
+            this.nogui = true;
         }
 
         if (this.datasources != null) {

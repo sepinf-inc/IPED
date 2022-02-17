@@ -23,11 +23,15 @@ public class SelectImagePathWithDialog implements Runnable {
     }
 
     public File askImagePathInGUI() {
-        try {
-            SwingUtilities.invokeAndWait(this);
+        if (SwingUtilities.isEventDispatchThread()) {
+            run();
+        } else {
+            try {
+                SwingUtilities.invokeAndWait(this);
 
-        } catch (Exception e) {
-            e.printStackTrace();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return newImage;
     }

@@ -75,8 +75,8 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
         if (!syncingSelectedItems) {
             syncingSelectedItems = true;
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
-            int galleryRow = resultTableLeadSelIdx / App.get().galleryModel.colCount;
-            int galleyCol = resultTableLeadSelIdx % App.get().galleryModel.colCount;
+            int galleryRow = resultTableLeadSelIdx / App.get().getGalleryColCount();
+            int galleyCol = resultTableLeadSelIdx % App.get().getGalleryColCount();
             App.get().gallery.scrollRectToVisible(App.get().gallery.getCellRect(galleryRow, galleyCol, false));
 
             App.get().gallery.clearSelection();

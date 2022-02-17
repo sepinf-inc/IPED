@@ -111,6 +111,8 @@ public class CarverTask extends BaseCarveTask {
                 type = MediaTypes.getParentType(type);
             }
 
+            clearExtraAttributes(evidence);
+
             findSig(tis);
 
         } catch (Exception t) {

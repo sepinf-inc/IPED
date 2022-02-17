@@ -333,6 +333,7 @@ public class EmailViewer extends HtmlViewer {
             String fileExt = ""; //$NON-NLS-1$
             if (attachName != null && attachName.lastIndexOf(".") > -1) { //$NON-NLS-1$
                 fileExt = attachName.substring(attachName.lastIndexOf(".")); //$NON-NLS-1$
+                fileExt = IOUtil.getValidFilename(fileExt);
             }
 
             attach = File.createTempFile("attach", fileExt); //$NON-NLS-1$

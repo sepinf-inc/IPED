@@ -115,8 +115,14 @@ public class MenuListener implements ActionListener {
             App.get().alterarDisposicao();
 
         } else if (e.getSource() == menu.layoutPadrao) {
-            App.get().refazLayout(true);
+            App.get().adjustLayout(true);
 
+        } else if (e.getSource() == menu.savePanelsLayout) {
+            App.get().savePanelLayout();
+
+        } else if (e.getSource() == menu.loadPanelsLayout) {
+            App.get().loadPanelLayout();
+            
         } else if (e.getSource() == menu.marcarSelecionados) {
             MarcadoresController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
@@ -292,7 +298,7 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.aumentarGaleria) {
 
             SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"),
-                    Messages.getString("MenuListener.Cols"), App.get().galleryModel.colCount, 1, 40);
+                    Messages.getString("MenuListener.Cols"), App.get().galleryModel.getColumnCount(), 1, 40);
             dialog.addChangeListener(new SpinnerListener());
             dialog.setVisible(true);
 
@@ -440,19 +446,8 @@ public class MenuListener implements ActionListener {
 
         @Override
         public void stateChanged(ChangeEvent evt) {
-
-            App.get().galleryModel.colCount = (Integer) ((JSpinner) evt.getSource()).getValue();
-            int colWidth = (int) App.get().gallery.getWidth() / App.get().galleryModel.colCount;
-            App.get().gallery.setRowHeight(colWidth);
-            int selRow = App.get().resultsTable.getSelectedRow();
-            App.get().galleryModel.fireTableStructureChanged();
-            if (selRow >= 0) {
-                int galleryRow = selRow / App.get().galleryModel.colCount;
-                int galleyCol = selRow % App.get().galleryModel.colCount;
-                App.get().gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
-                App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
-            }
-
+            int cnt = (Integer) ((JSpinner) evt.getSource()).getValue();
+            App.get().setGalleryColCount(cnt);
         }
 
     }

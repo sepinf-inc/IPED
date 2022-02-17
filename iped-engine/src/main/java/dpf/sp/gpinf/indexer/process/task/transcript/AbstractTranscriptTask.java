@@ -11,6 +11,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.SystemUtils;
@@ -54,6 +56,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
     private static boolean ffmpegDetected = false;
 
     protected AudioTranscriptConfig transcriptConfig;
+    
+    // Variables to store some statistics
+    private static final AtomicLong wavTime = new AtomicLong();
+    private static final AtomicLong transcriptionTime = new AtomicLong();
+    private static final AtomicInteger wavSuccess = new AtomicInteger();
+    private static final AtomicInteger wavFail = new AtomicInteger();
+    private static final AtomicInteger transcriptionSuccess = new AtomicInteger();
+    private static final AtomicInteger transcriptionFail = new AtomicInteger();
+    private static final AtomicLong transcriptionChars = new AtomicLong();
 
     private Connection conn;
 
@@ -174,7 +185,7 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
 
         transcriptConfig = configurationManager.findObject(AudioTranscriptConfig.class);
 
-        if (conn == null) {
+        if (conn == null && transcriptConfig.isEnabled()) {
             createConnection();
         }
 
@@ -194,13 +205,13 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             cmd[0] = cmd[0].replace("mplayer", Configuration.getInstance().appRoot + "/" + mplayerWin);
         }
         for (int i = 0; i < cmd.length; i++) {
-            if (SystemUtils.IS_OS_WINDOWS) {
-                cmd[i] = cmd[i].replace("$OUTPUT", "\\\"$OUTPUT\\\"");
-            }
             cmd[i] = cmd[i].replace("$INPUT", input.getAbsolutePath());
-            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getAbsolutePath());
+            cmd[i] = cmd[i].replace("$OUTPUT", tmpFile.getName());
         }
         pb.command(cmd);
+        if (tmpFile.getParentFile() != null) {
+            pb.directory(tmpFile.getParentFile());
+        }
         pb.redirectErrorStream(true);
         Process p = pb.start();
         byte[] out = IOUtil.loadInputStream(p.getInputStream());
@@ -211,6 +222,15 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return null;
         } else {
             LOGGER.debug(new String(out, StandardCharsets.UTF_8));
+            if (!tmpFile.exists()) {
+                LOGGER.warn("Conversion to wav failed, no wav generated: {} ", evidence.getPath());
+                return null;
+            }
+            if (tmpFile.length() == 0) {
+                tmpFile.delete();
+                LOGGER.warn("Conversion to wav failed, empty wav generated: {} ", evidence.getPath());
+                return null;
+            }
         }
         return tmpFile;
     }
@@ -220,6 +240,28 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
         if (conn != null) {
             conn.close();
             conn = null;
+        }
+        
+        long totWavConversions = wavSuccess.longValue() + wavFail.longValue();
+        if (totWavConversions != 0) {
+            LOGGER.info("Total conversions to WAV: " + totWavConversions);
+            LOGGER.info("Successful conversions to WAV: " + wavSuccess.intValue());
+            LOGGER.info("Failed conversions to WAV: " + wavFail.intValue());
+            LOGGER.info("Average conversion to WAV time (ms/audio): " + (wavTime.longValue() / totWavConversions));
+            wavSuccess.set(0);
+            wavFail.set(0);
+        }
+
+        long totTranscriptions = transcriptionSuccess.longValue() + transcriptionFail.longValue();
+        if (totTranscriptions != 0) {
+            LOGGER.info("Total transcriptions: " + totTranscriptions);
+            LOGGER.info("Successful transcriptions: " + transcriptionSuccess.intValue());
+            LOGGER.info("Failed transcriptions: " + transcriptionFail.intValue());
+            LOGGER.info("Total transcription output characters: " + transcriptionChars.longValue());
+            LOGGER.info(
+                    "Average transcription time (ms/audio): " + (transcriptionTime.longValue() / totTranscriptions));
+            transcriptionSuccess.set(0);
+            transcriptionFail.set(0);
         }
     }
 
@@ -241,18 +283,30 @@ public abstract class AbstractTranscriptTask extends AbstractTask {
             return;
         }
 
+        long t = System.currentTimeMillis();
         File tempWav = getWavFile(evidence);
+        wavTime.addAndGet(System.currentTimeMillis() - t);
         if (tempWav == null) {
+            wavFail.incrementAndGet();
             return;
         }
+        wavSuccess.incrementAndGet();
 
         try {
             this.evidence = evidence;
+            t = System.currentTimeMillis();
             TextAndScore result = transcribeWav(tempWav);
+            transcriptionTime.addAndGet(System.currentTimeMillis() - t);
             if (result != null) {
                 evidence.getMetadata().set(ExtraProperties.CONFIDENCE_ATTR, Double.toString(result.score));
                 evidence.getMetadata().set(ExtraProperties.TRANSCRIPT_ATTR, result.text);
                 storeTextInDb(evidence.getHash(), result.text, result.score);
+                transcriptionSuccess.incrementAndGet();
+                if (result.text != null) {
+                    transcriptionChars.addAndGet(result.text.length());
+                }
+            } else {
+                transcriptionFail.incrementAndGet();
             }
 
         } finally {

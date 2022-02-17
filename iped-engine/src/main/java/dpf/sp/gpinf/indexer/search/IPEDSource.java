@@ -249,6 +249,10 @@ public class IPEDSource implements Closeable, IIPEDSource {
         ids = new int[reader.maxDoc()];
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
+        if (ndv == null) {
+            // no items in index
+            return;
+        }
 
         int i;
         while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {

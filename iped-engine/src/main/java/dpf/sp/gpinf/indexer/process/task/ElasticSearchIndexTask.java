@@ -80,6 +80,8 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     public static final String PREVIEW_IN_DATASOURCE = "previewInDataSource";
     public static final String KEY_VAL_SEPARATOR = ":";
+    
+    private static boolean isEnabled = false;
 
     private ElasticSearchTaskConfig elasticConfig;
 
@@ -103,7 +105,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
     @Override
     public boolean isEnabled() {
-        return elasticConfig.isEnabled();
+        return isEnabled;
     }
 
     public List<Configurable<?>> getConfigurables() {
@@ -116,7 +118,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
         taskInstances.add(this);
         elasticConfig = configurationManager.findObject(ElasticSearchTaskConfig.class);
 
-        if (!elasticConfig.isEnabled()) {
+        if (!(isEnabled = elasticConfig.isEnabled())) {
             return;
         }
 
@@ -279,9 +281,10 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     public static void commit() throws IOException, InterruptedException {
+        if (!isEnabled)
+            return;
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Commiting to ElasticSearch...");
         for (ElasticSearchIndexTask instance : taskInstances) {
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", //$NON-NLS-1$ //$NON-NLS-2$
-                    "Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$
             LOGGER.info("Commiting Worker-" + instance.worker.id + " ElasticSearchTask..."); //$NON-NLS-1$ //$NON-NLS-2$
             instance.onCommit.set(true);
             instance.sendBulkRequest();
@@ -356,11 +359,9 @@ public class ElasticSearchIndexTask extends AbstractTask {
             fragNum = 1;
         }
 
-        String globalId = Util.getGlobalId(item);
-
         // used for parent items in elastic to store just metadata info
-        // evidence UUID is combined to produce an 'UUID' like ID for items in elastic
-        String parentId = DigestUtils.md5Hex(globalId + item.getDataSource().getUUID());
+        // globalID works like an 'UUID' and should be unique across cases
+        String parentId = (String) item.getExtraAttribute(IndexItem.GLOBAL_ID);
 
         try {
             // creates the father;
@@ -371,18 +372,18 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
             do {
                 // used for children items in elastic to store text content
-                String contentGlobalId = Util.generateGlobalIdForTextFrag(parentId, fragNum);
+                String contenttrackID = Util.generatetrackIDForTextFrag(parentId, fragNum);
 
                 // creates the json _source of the fragment
-                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contentGlobalId,
+                XContentBuilder jsonContent = getJsonFragmentBuilder(item, fragReader, parentId, contenttrackID,
                         fragNum--);
 
                 // creates the request
-                IndexRequest contentRequest = createIndexRequest(contentGlobalId, parentId, jsonContent);
+                IndexRequest contentRequest = createIndexRequest(contenttrackID, parentId, jsonContent);
 
                 bulkRequest.add(contentRequest);
 
-                idToPath.put(contentGlobalId, item.getPath());
+                idToPath.put(contenttrackID, item.getPath());
 
                 LOGGER.debug("Added to bulk request {}", item.getPath());
 
@@ -538,7 +539,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
     }
 
     private XContentBuilder getJsonFragmentBuilder(IItem item, Reader textReader, String parentID,
-            String contentGlobalId, int fragNum) throws IOException {
+            String contenttrackID, int fragNum) throws IOException {
 
         XContentBuilder builder = XContentFactory.jsonBuilder();
 
@@ -549,7 +550,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
 
         builder.startObject().field(BasicProps.EVIDENCE_UUID, item.getDataSource().getUUID())
                 .field(BasicProps.ID, item.getId()).field("document_content", document_content)
-                .field("contentGlobalId", contentGlobalId).field("fragNum", fragNum)
+                .field("contenttrackID", contenttrackID).field(IndexTask.FRAG_NUM, fragNum)
                 .field(BasicProps.CONTENT, getStringFromReader(textReader));
 
         return builder.endObject();

@@ -99,8 +99,6 @@ public interface IItem extends IItemBase {
 
     ISeekableInputStreamFactory getInputStreamFactory();
 
-    String getParentIdInDataSource();
-
     /**
      * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
      *         foi exportado
@@ -280,16 +278,6 @@ public interface IItem extends IItemBase {
     void setCreationDate(Date creationDate);
 
     void setDataSource(IDataSource evidence);
-
-    /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    void setDeleteFile(boolean deleteFile);
 
     /**
      * Define se o item é apagado
@@ -504,8 +492,6 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
-
-    void setParentIdInDataSource(String string);
 
     void setThumb(byte[] thumb);
 

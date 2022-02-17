@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
@@ -101,23 +102,12 @@ public class FolderTreeReader extends DataSourceReader {
 
         rootFile = file;
 
-        List<Integer> parents;
-        List<String> paths;
-        if (parent != null) {
-            parents = parent.getParentIds();
-            parents.add(parent.getId());
-
-            StringTokenizer stringTokenizer = new StringTokenizer(parent.getPath(), File.separator);
-            paths = stringTokenizer.getTokenList();
-        } else {
-            parents = Collections.emptyList();
-            paths = Collections.emptyList();
-        }
-        transverse(file, parents, paths);
+        transverse(file, parent);
     }
 
-    private void transverse(File file, List<Integer> parents, List<String> paths) throws IOException {
-        new FolderVisitor(parents, paths).walk(file);
+    private void transverse(File file, Item parent)
+            throws IOException {
+        new FolderVisitor(parent).walk(file);
     }
 
     private IItem getEvidence(Path path, BasicFileAttributes attr) {
@@ -130,16 +120,15 @@ public class FolderTreeReader extends DataSourceReader {
             File file = path.toFile();
             IItem item = new Item();
             item.setDataSource(dataSource);
-            item.setIdInDataSource(path.toString());
+            String relativePath = rootFile.toPath().relativize(path).toString();
+            item.setIdInDataSource(relativePath);
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
-                item.setParentIdInDataSource("");
             } else {
                 item.setName(file.getName());
-                item.setParentIdInDataSource(path.getParent().toString());
             }
             try {
-                String relativePath = Util.getRelativePath(output, file);
+                relativePath = Util.getRelativePath(output, file);
                 item.setExportedFile(relativePath);
                 item.setFile(file);
             } catch (InvalidPathException e) {
@@ -162,13 +151,13 @@ public class FolderTreeReader extends DataSourceReader {
 
     class FolderVisitor implements FileVisitor<Path> {
 
-        private LinkedList<Integer> parentIds;
-        private LinkedList<String> paths;
+        private LinkedList<IItem> parents = new LinkedList<>();
 
-        public FolderVisitor(List<Integer> parentIds, List<String> paths) {
+        public FolderVisitor(IItem parent) {
             super();
-            this.parentIds = new LinkedList<>(parentIds);
-            this.paths = new LinkedList<>(paths);
+            if (parent != null) {
+                this.parents.add(parent);
+            }
         }
 
         public void walk(File file) throws IOException {
@@ -184,11 +173,10 @@ public class FolderTreeReader extends DataSourceReader {
 
             IItem item = getEvidence(path, attr);
             if (item != null) {
-                if (!parentIds.isEmpty()) {
-                    item.setParentId(parentIds.getLast());
-                    item.addParentIds(parentIds);
+                if (!parents.isEmpty()) {
+                    item.setParent(parents.getLast());
 
-                    if (parentIds.size() == 2) {
+                    if (parents.size() == 2) {
                         item.setExtraAttribute(ExtraProperties.DATASOURCE_READER, this.getClass().getSimpleName());
                     }
                 } else {
@@ -196,8 +184,8 @@ public class FolderTreeReader extends DataSourceReader {
                 }
 
                 String fileName = item.getName();
-                String evidencePath = paths.isEmpty() ? fileName
-                        : paths.stream().collect(Collectors.joining(File.separator)) + File.separator + fileName;
+                String evidencePath = parents.isEmpty() ? fileName
+                        : parents.getLast().getPath() + File.separator + fileName;
                 item.setPath(evidencePath);
 
                 if (attr.isDirectory()) {
@@ -219,8 +207,7 @@ public class FolderTreeReader extends DataSourceReader {
                 if (attr.isDirectory()) {
                     // must getId() after caseData.addItem(), it could set item id to previous id
                     // with --continue
-                    parentIds.addLast(item.getId());
-                    paths.addLast(fileName);
+                    parents.addLast(item);
                 }
             }
 
@@ -239,8 +226,7 @@ public class FolderTreeReader extends DataSourceReader {
             }
 
             if (attr.isSymbolicLink() || attr.isOther()) { // pula links simbólicos e NTFS junctions
-                parentIds.pollLast();
-                paths.pollLast();
+                parents.pollLast();
                 return FileVisitResult.SKIP_SUBTREE;
             }
 
@@ -250,8 +236,7 @@ public class FolderTreeReader extends DataSourceReader {
         @Override
         public FileVisitResult postVisitDirectory(Path path, IOException exception) throws IOException {
 
-            parentIds.pollLast();
-            paths.pollLast();
+            parents.pollLast();
 
             if (exception != null) {
                 System.err.println(
