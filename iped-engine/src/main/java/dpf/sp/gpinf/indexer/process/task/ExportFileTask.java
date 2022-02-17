@@ -56,6 +56,7 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TemporaryResources;
@@ -157,9 +158,9 @@ public class ExportFileTask extends AbstractTask {
         return itensExtracted;
     }
 
-    private void setExtractLocation() {
+    private static void setExtractLocation(ICaseData caseData, File output) {
         if (output != null && extractDir == null) {
-            if (caseData.containsReport()) {
+            if (caseData.containsReport() || new File(output.getParentFile(), EXTRACT_DIR).exists()) {
                 extractDir = new File(output.getParentFile(), EXTRACT_DIR);
             } else {
                 extractDir = new File(output, SUBITEM_DIR);
@@ -167,7 +168,7 @@ public class ExportFileTask extends AbstractTask {
         }
         HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
                 .findObject(HtmlReportTaskConfig.class);
-        if (!caseData.containsReport() || !htmlReportConfig.isEnabled()) {
+        if (!caseData.containsReport() || new File(output, STORAGE_PREFIX).exists() || !htmlReportConfig.isEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
@@ -379,7 +380,7 @@ public class ExportFileTask extends AbstractTask {
     private File getHashFile(String hash, String ext) {
         String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext); //$NON-NLS-1$ //$NON-NLS-2$
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
         return new File(extractDir, path);
     }
@@ -499,7 +500,7 @@ public class ExportFileTask extends AbstractTask {
         }
 
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
 
         if (!computeHash) {
@@ -759,10 +760,18 @@ public class ExportFileTask extends AbstractTask {
     }
 
     public static void deleteIgnoredSubitems(ICaseData caseData, File output) throws Exception {
-        if (caseData.isIpedReport() || !caseData.containsReport()) {
+        deleteIgnoredSubitems(caseData, output, false, null);
+    }
+
+    public static void deleteIgnoredSubitems(ICaseData caseData, File output, boolean removingEvidence,
+            IndexWriter writer) throws Exception {
+        if (!removingEvidence && (caseData.isIpedReport() || !caseData.containsReport())) {
             return;
         }
-        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
+        if (removingEvidence) {
+            setExtractLocation(caseData, output);
+        }
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             if (extractDir != null && extractDir.exists()) {
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems1"));

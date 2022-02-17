@@ -409,9 +409,9 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String evidenceName) throws IOException, SQLException {
+    private void removeEvidence(String evidenceName) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE, "WARN: removing evidence does NOT update graph and internal storage for now!");
+        LOGGER.log(CONSOLE, "WARNING: removing evidence does NOT update graph for now!");
         LOGGER.log(CONSOLE, "Removing evidence {} from index...", evidenceName);
 
         // remove from TSK DB
@@ -440,6 +440,10 @@ public class Manager {
         writer.commit();
         int deletes = prevDocs - writer.getDocStats().numDocs;
         LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+
+        // remove item data from storage or file system
+        ExportFileTask.deleteIgnoredSubitems(caseData, output, true, writer);
+
         writer.close();
 
         Files.createFile(getFinishedFileFlag(output).toPath());
