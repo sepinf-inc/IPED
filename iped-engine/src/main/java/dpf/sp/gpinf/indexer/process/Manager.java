@@ -414,8 +414,9 @@ public class Manager {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
         LOGGER.log(CONSOLE, "Removing evidence {} from index...", evidenceName);
 
-        // remove from TSK DB
+        // query evidenceUUID and tskID
         String evidenceUUID;
+        Integer tskID;
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
@@ -426,11 +427,7 @@ public class Manager {
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
             evidenceUUID = item.getDataSource().getUUID();
-            Integer tskID = item.getSleuthId();
-            if (tskID != null) {
-                LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
-                SleuthkitReader.deleteImageInfo(tskID, output);
-            }
+            tskID = item.getSleuthId();
         }
 
         // remove from items from index
@@ -441,6 +438,12 @@ public class Manager {
         writer.commit();
         int deletes = prevDocs - writer.getDocStats().numDocs;
         LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+
+        // remove evidence from TSK DB
+        if (tskID != null) {
+            LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
+            SleuthkitReader.deleteImageInfo(tskID, output);
+        }
 
         // remove item data from storage or file system
         ExportFileTask.deleteIgnoredSubitems(caseData, output, true, writer);
