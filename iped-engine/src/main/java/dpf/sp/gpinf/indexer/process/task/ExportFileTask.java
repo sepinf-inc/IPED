@@ -56,6 +56,7 @@ import org.apache.commons.compress.compressors.gzip.GzipParameters;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 import org.apache.lucene.analysis.miscellaneous.ASCIIFoldingFilter;
+import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.util.BytesRef;
 import org.apache.tika.io.TemporaryResources;
@@ -157,9 +158,9 @@ public class ExportFileTask extends AbstractTask {
         return itensExtracted;
     }
 
-    private void setExtractLocation() {
+    private static void setExtractLocation(ICaseData caseData, File output) {
         if (output != null && extractDir == null) {
-            if (caseData.containsReport()) {
+            if (caseData.containsReport() || new File(output.getParentFile(), EXTRACT_DIR).exists()) {
                 extractDir = new File(output.getParentFile(), EXTRACT_DIR);
             } else {
                 extractDir = new File(output, SUBITEM_DIR);
@@ -167,7 +168,7 @@ public class ExportFileTask extends AbstractTask {
         }
         HtmlReportTaskConfig htmlReportConfig = ConfigurationManager.get()
                 .findObject(HtmlReportTaskConfig.class);
-        if (!caseData.containsReport() || !htmlReportConfig.isEnabled()) {
+        if (!caseData.containsReport() || new File(output, STORAGE_PREFIX).exists() || !htmlReportConfig.isEnabled()) {
             if (storageCon.get(output) == null) {
                 configureSQLiteStorage(output);
             }
@@ -379,7 +380,7 @@ public class ExportFileTask extends AbstractTask {
     private File getHashFile(String hash, String ext) {
         String path = hash.charAt(0) + "/" + hash.charAt(1) + "/" + Util.getValidFilename(hash + ext); //$NON-NLS-1$ //$NON-NLS-2$
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
         return new File(extractDir, path);
     }
@@ -499,7 +500,7 @@ public class ExportFileTask extends AbstractTask {
         }
 
         if (extractDir == null) {
-            setExtractLocation();
+            setExtractLocation(caseData, output);
         }
 
         if (!computeHash) {
@@ -758,24 +759,33 @@ public class ExportFileTask extends AbstractTask {
         }
     }
 
-    public static void deleteIgnoredSubitems(ICaseData caseData, File output) throws Exception {
-        if (caseData.isIpedReport() || !caseData.containsReport()) {
+    public static void deleteIgnoredItemData(ICaseData caseData, File output) throws Exception {
+        deleteIgnoredItemData(caseData, output, false, null);
+    }
+
+    public static void deleteIgnoredItemData(ICaseData caseData, File output, boolean removingEvidence,
+            IndexWriter writer) throws Exception {
+        if (!removingEvidence && (caseData.isIpedReport() || !caseData.containsReport())) {
             return;
         }
-        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile())) {
+        if (removingEvidence) {
+            setExtractLocation(caseData, output);
+        }
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             if (extractDir != null && extractDir.exists()) {
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems1"));
-                LOGGER.info("Deleting ignored subitems from FS...");
-                int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
-                LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData1"));
+                Integer deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData1").replace("{}", deleted.toString()));
             }
             if (storage.get(output) != null && !storage.get(output).isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems2"));
-                LOGGER.info("Deleting ignored subitems from storages...");
-                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
-                int deleted = deleteIgnoredSubitemsFromStorage(sdv, output);
-                LOGGER.info("Deleted ignored subitems from storages count: {}", deleted);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData2"));
+                Integer deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData2").replace("{}", deleted.toString()));
             }
         }
     }
@@ -798,7 +808,7 @@ public class ExportFileTask extends AbstractTask {
         return deleted;
     }
     
-    private static int deleteIgnoredSubitemsFromStorage(SortedDocValues sdv, File output) throws SQLException {
+    private static int deleteIgnoredSubitemsFromStorage(IPEDSource ipedCase, File output) throws SQLException {
         final AtomicInteger deleted = new AtomicInteger();
         ArrayList<Future<?>> futures = new ArrayList<>();
         ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -814,11 +824,12 @@ public class ExportFileTask extends AbstractTask {
                     try (PreparedStatement ps = con.prepareStatement(SELECT_IDS_WITH_DATA);
                             PreparedStatement ps2 = con.prepareStatement(CLEAR_DATA);
                             Statement ps3 = con.createStatement()) {
-                        LOGGER.info("Deleting subitems from storage {}", storage);
+                        LOGGER.info("Deleting data from storage {}", storage);
+                        SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
                         ResultSet rs = ps.executeQuery();
                         while (rs.next()) {
                             String id = rs.getString(1);
-                            if (sdv.lookupTerm(new BytesRef(id)) < 0
+                            if (sdv == null || sdv.lookupTerm(new BytesRef(id)) < 0
                                     || Collections.binarySearch(noContentHashes, new HashValue(id)) >= 0) {
                                 ps2.setString(1, id);
                                 ps2.executeUpdate();
@@ -841,7 +852,7 @@ public class ExportFileTask extends AbstractTask {
             try {
                 future.get();
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.error("Error deleting ignored subitems.", e);
+                LOGGER.error("Error deleting data from storage.", e);
             }
         }
         return deleted.intValue();
