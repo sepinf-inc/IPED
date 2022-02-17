@@ -80,8 +80,12 @@ public class GraphServiceImpl implements GraphService {
             Result result = graphDB.execute(
                     "MATCH (n) RETURN id(n) as id, size((n)--()) as degree ORDER BY degree DESC LIMIT " + maxNodes);
             while (result.hasNext()) {
-                Long id = (Long) result.next().get("id");
-                ids.add(id);
+                Map<String, Object> map = result.next();
+                Long id = (Long) map.get("id");
+                Long degree = (Long) map.get("degree");
+                if (degree > 0) {
+                    ids.add(id);
+                }
             }
             tx.success();
 
