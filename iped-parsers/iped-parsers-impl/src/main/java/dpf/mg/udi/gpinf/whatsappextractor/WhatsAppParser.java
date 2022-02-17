@@ -307,7 +307,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             } catch (Exception e) {
                 sqliteParser.parse(tis, handler, metadata, context);
-                throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
+                if (e instanceof TikaException)
+                    throw (TikaException) e;
+                else
+                    throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
 
             } finally {
                 tmp.dispose();
@@ -333,8 +336,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             wcontext.setChalist(parser.extractChatList(wcontext, extFactory, metadata, context, contacts, account));
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.error(e.toString());
+            if (e instanceof TikaException)
+                throw (TikaException) e;
+            else
+                throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
         }
 
         if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
@@ -393,8 +398,6 @@ public class WhatsAppParser extends SQLite3DBParser {
         try {
             if (!wcontext.isMainDB()) {
 
-
-
                 if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
                     // already parsed by the mainDB
                     addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
@@ -422,8 +425,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 new XHTMLContentHandler(handler, metadata));
                         return;
                     }
-
-
 
                 }
                 // if not a backup or main db not found create a report
@@ -476,7 +477,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                         logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
                     }
 
-
                 }
 
                 EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
@@ -488,12 +488,11 @@ public class WhatsAppParser extends SQLite3DBParser {
                 createReport(mainDb.getChalist(), searcher, contacts, handler, extractor, account);
             }
         } catch (Exception e) {
-
-            e.printStackTrace();
-            logger.error(e.toString());
+            if (e instanceof TikaException)
+                throw (TikaException) e;
+            else
+                throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
         }
-
-
 
     }
 
