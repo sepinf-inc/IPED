@@ -379,7 +379,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void addBackupMessage(WhatsAppContext item, IItemBase main, XHTMLContentHandler xhtml)
             throws SAXException {
         IItem i = (IItem) item.getItem();
-        i.setExtraAttribute(IS_BACKUP_FROM, main.getExtraAttribute(ExtraProperties.GLOBAL_ID).toString());
+        i.getMetadata().set(IS_BACKUP_FROM, main.getExtraAttribute(ExtraProperties.GLOBAL_ID).toString());
         xhtml.startDocument();
         xhtml.characters("Backup from " + main.getPath());
         xhtml.endDocument();
