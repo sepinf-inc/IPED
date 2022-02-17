@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,6 +46,8 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 
+import br.gov.pf.labld.graph.GraphService;
+import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -83,7 +84,6 @@ import iped3.IItem;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 
 /**
@@ -411,7 +411,6 @@ public class Manager {
 
     private void removeEvidence(String evidenceName) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE, "WARNING: removing evidence does NOT update graph for now!");
         LOGGER.log(CONSOLE, "Removing evidence {} from index...", evidenceName);
 
         // remove from TSK DB
@@ -434,6 +433,7 @@ public class Manager {
         }
 
         // remove from items from index
+        LOGGER.log(CONSOLE, "Deleting items from index...");
         TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, evidenceUUID));
         int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
@@ -445,6 +445,23 @@ public class Manager {
         ExportFileTask.deleteIgnoredSubitems(caseData, output, true, writer);
 
         writer.close();
+
+        // removes graph connections from evidence
+        LOGGER.log(CONSOLE, "Deleting connections from graph...");
+        GraphService graphService = null;
+        try {
+            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+            graphService.start(new File(output, GraphTask.DB_PATH));
+            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+
+        } finally {
+            if (graphService != null) {
+                graphService.stop();
+            }
+        }
+
+        // TODO delete relationships from graph source CSVs
 
         Files.createFile(getFinishedFileFlag(output).toPath());
     }
