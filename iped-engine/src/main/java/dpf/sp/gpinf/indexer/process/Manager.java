@@ -274,7 +274,7 @@ public class Manager {
 
         removeEmptyTreeNodes();
 
-        ExportFileTask.deleteIgnoredSubitems(caseData, output);
+        ExportFileTask.deleteIgnoredItemData(caseData, output);
 
         new P2PBookmarker(caseData).createBookmarksForSharedFiles(output.getParentFile());
 
@@ -412,7 +412,7 @@ public class Manager {
 
     private void removeEvidence(String evidenceName) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE, "Removing evidence {} from index...", evidenceName);
+        LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
 
         // query evidenceUUID and tskID
         String evidenceUUID;
@@ -423,7 +423,7 @@ public class Manager {
             SearchResult result = searcher.search();
             if (result.getLength() == 0) {
                 Files.createFile(getFinishedFileFlag(output).toPath());
-                throw new IPEDException("Evidence " + evidenceName + " not found!");
+                throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
             evidenceUUID = item.getDataSource().getUUID();
@@ -437,7 +437,7 @@ public class Manager {
         writer.deleteDocuments(query);
         writer.commit();
         int deletes = prevDocs - writer.getDocStats().numDocs;
-        LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+        LOGGER.log(CONSOLE, "Deleted {} raw documents from index.", deletes);
 
         // remove evidence from TSK DB
         if (tskID != null) {
@@ -446,7 +446,7 @@ public class Manager {
         }
 
         // remove item data from storage or file system
-        ExportFileTask.deleteIgnoredSubitems(caseData, output, true, writer);
+        ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
 
         writer.close();
 

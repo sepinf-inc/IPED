@@ -759,11 +759,11 @@ public class ExportFileTask extends AbstractTask {
         }
     }
 
-    public static void deleteIgnoredSubitems(ICaseData caseData, File output) throws Exception {
-        deleteIgnoredSubitems(caseData, output, false, null);
+    public static void deleteIgnoredItemData(ICaseData caseData, File output) throws Exception {
+        deleteIgnoredItemData(caseData, output, false, null);
     }
 
-    public static void deleteIgnoredSubitems(ICaseData caseData, File output, boolean removingEvidence,
+    public static void deleteIgnoredItemData(ICaseData caseData, File output, boolean removingEvidence,
             IndexWriter writer) throws Exception {
         if (!removingEvidence && (caseData.isIpedReport() || !caseData.containsReport())) {
             return;
@@ -774,16 +774,18 @@ public class ExportFileTask extends AbstractTask {
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             if (extractDir != null && extractDir.exists()) {
                 SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems1"));
-                LOGGER.info("Deleting ignored subitems from FS...");
-                int deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
-                LOGGER.info("Deleted ignored subitems from FS count: {}", deleted);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData1"));
+                Integer deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData1").replace("{}", deleted.toString()));
             }
             if (storage.get(output) != null && !storage.get(output).isEmpty()) {
-                WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("ExportFileTask.DeletingSubitems2"));
-                LOGGER.info("Deleting ignored subitems from storages...");
-                int deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
-                LOGGER.info("Deleted ignored subitems from storages count: {}", deleted);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletingData2"));
+                Integer deleted = deleteIgnoredSubitemsFromStorage(ipedCase, output);
+                WorkerProvider.getInstance().firePropertyChange("mensagem", "",
+                        Messages.getString("ExportFileTask.DeletedData2").replace("{}", deleted.toString()));
             }
         }
     }
@@ -822,7 +824,7 @@ public class ExportFileTask extends AbstractTask {
                     try (PreparedStatement ps = con.prepareStatement(SELECT_IDS_WITH_DATA);
                             PreparedStatement ps2 = con.prepareStatement(CLEAR_DATA);
                             Statement ps3 = con.createStatement()) {
-                        LOGGER.info("Deleting subitems from storage {}", storage);
+                        LOGGER.info("Deleting data from storage {}", storage);
                         SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
                         ResultSet rs = ps.executeQuery();
                         while (rs.next()) {
@@ -850,7 +852,7 @@ public class ExportFileTask extends AbstractTask {
             try {
                 future.get();
             } catch (InterruptedException | ExecutionException e) {
-                LOGGER.error("Error deleting ignored subitems.", e);
+                LOGGER.error("Error deleting data from storage.", e);
             }
         }
         return deleted.intValue();
