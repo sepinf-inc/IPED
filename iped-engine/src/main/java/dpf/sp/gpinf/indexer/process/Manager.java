@@ -46,6 +46,7 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 
+import br.gov.pf.labld.graph.GraphFileWriter;
 import br.gov.pf.labld.graph.GraphService;
 import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
@@ -461,7 +462,11 @@ public class Manager {
             }
         }
 
-        // TODO delete relationships from graph source CSVs
+        // Delete relations from graph source CSV
+        LOGGER.log(CONSOLE, "Deleting connections from graph CSVs...");
+        int deletions = GraphFileWriter.removeDeletedRelationships(evidenceUUID,
+                new File(output, GraphTask.GENERATED_PATH));
+        LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
         Files.createFile(getFinishedFileFlag(output).toPath());
     }
