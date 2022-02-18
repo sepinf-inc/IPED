@@ -426,6 +426,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         });
 
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
+        
+        if (wcontext == null) {
+            // MakePreviewTask enters here for main dbs and backups without main db
+            return;
+        }
 
         try {
             WAContactsDirectory contacts = getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass());
@@ -437,9 +442,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             List<Chat> dbChatList = wcontext.getChalist();
 
             if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
-                // already merged by loop below
+                // MakePreviewTask enters here later for backups, output preview message
                 addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
-                backupsMerged.incrementAndGet();
                 return;
             }
 
@@ -467,9 +471,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
 
                 if (cm.isBackup(other.getChalist())) {
-                    other.setBackup(true);
-                    other.setMainDBItem(mainDb.getItem());
-
                     if (wcontext == mainDb) {
                         // merge backup in the main chat list
                         int numMsgRecovered = cm.mergeChatList(other.getChalist());
@@ -478,6 +479,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                         dbChatList = mainDBChatList;
                     }
                     if (wcontext == other) {
+                        other.setBackup(true);
+                        other.setMainDBItem(mainDb.getItem());
                         // output from which main DB is this backup from
                         addBackupMessage(wcontext, wcontext.getMainDBItem(),
                                 new XHTMLContentHandler(handler, metadata));
@@ -487,15 +490,15 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
             }
 
-            if (!wcontext.isMainDB() && !wcontext.isBackup()) {
-                // if this is a "backup" but its main db was not found
-                logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
-            }
-
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             if (!extractor.shouldParseEmbedded(metadata)) {
                 return;
+            }
+
+            if (!wcontext.isMainDB() && !wcontext.isBackup()) {
+                // if this is a "backup" but its main db was not found
+                logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
             }
 
             // create report for main dbs and backups which main db was not found
@@ -511,9 +514,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                 throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
         } finally {
             if (dbsFound.size() == backupsMerged.get() + dbsSearchedForAndAdded) {
-                // just merged backups left in map, clear all
+                // just merged backups left in map, clear all remaining heavy data
                 logger.info("Clearing remaining whatsapp decoded data from cache.");
-                dbsFound.clear();
+                dbsFound.values().stream().forEach(wacontext -> wacontext.getChalist().clear());
             }
         }
 
