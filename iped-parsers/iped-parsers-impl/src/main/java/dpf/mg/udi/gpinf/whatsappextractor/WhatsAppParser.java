@@ -32,11 +32,13 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -134,7 +136,10 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final Map<Integer, WhatsAppContext> dbsFound = new ConcurrentHashMap<>();
 
+    private static final AtomicInteger backupsMerged = new AtomicInteger();
+
     private static boolean dbsSearchedFor = false;
+    private static int dbsSearchedForAndAdded = 0;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
             WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
@@ -342,13 +347,13 @@ public class WhatsAppParser extends SQLite3DBParser {
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
     }
 
-    private static void checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
+    private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
         if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
             wcontext.setMainDB(true);
             wcontext.setBackup(false);
         }
-        dbsFound.putIfAbsent(item.getId(), wcontext);
+        return dbsFound.putIfAbsent(item.getId(), wcontext) == null;
     }
 
     private List<Chat> extractChatList(WhatsAppContext wcontext, ExtractorFactory extFactory, Metadata metadata,
@@ -372,7 +377,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
             WhatsAppContext wcontext = new WhatsAppContext(false, it);
-            checkIfIsMainDBAndStore(wcontext);
+            if (checkIfIsMainDBAndStore(wcontext)) {
+                dbsSearchedForAndAdded++;
+            }
         }
         dbsSearchedFor = true;
     }
@@ -432,6 +439,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
                 // already merged by loop below
                 addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
+                backupsMerged.incrementAndGet();
                 return;
             }
 
@@ -473,6 +481,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         // output from which main DB is this backup from
                         addBackupMessage(wcontext, wcontext.getMainDBItem(),
                                 new XHTMLContentHandler(handler, metadata));
+                        backupsMerged.incrementAndGet();
                         return;
                     }
                 }
@@ -492,12 +501,20 @@ public class WhatsAppParser extends SQLite3DBParser {
             // create report for main dbs and backups which main db was not found
             createReport(dbChatList, searcher, contacts, handler, extractor, account);
 
+            // and free memory used by main dbs and backups which main db was not found
+            dbsFound.remove(DB.getId());
 
         } catch (Exception e) {
             if (e instanceof TikaException)
                 throw (TikaException) e;
             else
                 throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
+        } finally {
+            if (dbsFound.size() == backupsMerged.get() + dbsSearchedForAndAdded) {
+                // just merged backups left in map, clear all
+                logger.info("Clearing remaining whatsapp decoded data from cache.");
+                dbsFound.clear();
+            }
         }
 
     }
