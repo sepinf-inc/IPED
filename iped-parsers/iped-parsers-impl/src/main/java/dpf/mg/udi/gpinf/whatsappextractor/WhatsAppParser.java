@@ -398,6 +398,18 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
 
+        List<WhatsAppContext> dbsFoundList = new ArrayList<>(dbsFound.values());
+
+        // this is used to sort backups by decreasing modifiedDate (from name) order, so
+        // the most recent backup will be used when merging if a missing chat/message is
+        // found, giving a better idea about when the user deleted the chat/message
+        Collections.sort(dbsFoundList, new Comparator<WhatsAppContext>() {
+            @Override
+            public int compare(WhatsAppContext o1, WhatsAppContext o2) {
+                return -o1.getItem().getName().compareTo(o2.getItem().getName());
+            }
+        });
+
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
 
         try {
@@ -405,91 +417,73 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             WAAccount account = getUserAccount(searcher, DB.getPath(), extFactory instanceof ExtractorAndroidFactory);
 
-            if (!wcontext.isMainDB()) {
+            stream.skip(wcontext.getItem().getLength());
 
-                if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
-                    // already parsed by the mainDB
-                    addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
-                    return;
+            List<Chat> dbChatList = wcontext.getChalist();
+
+            if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
+                // already merged by loop below
+                addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
+                return;
+            }
+
+            for (WhatsAppContext db : dbsFoundList) {
+                // skip current DB
+                if (db.getItem().getId() == wcontext.getItem().getId()) {
+                    continue;
+                }
+                WhatsAppContext mainDb;
+                WhatsAppContext other;
+
+                if (wcontext.isMainDB() && !db.isMainDB()) {
+                    mainDb = wcontext;
+                    other = db;
+                } else if (!wcontext.isMainDB() && db.isMainDB()) {
+                    mainDb = db;
+                    other = wcontext;
+                } else {
+                    // skip if both are mainDB or if both are backups
+                    continue;
                 }
 
-                for (WhatsAppContext main : dbsFound.values().toArray(new WhatsAppContext[0])) {
-                    // skip backups and current DB
-                    if (!main.isMainDB() || main.getItem().getId() == wcontext.getItem().getId()) {
-                        continue;
+                // new instance to avoid threading issues
+                List<Chat> mainDBChatList = new ArrayList<Chat>(mainDb.getChalist());
+                ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
+
+                if (cm.isBackup(other.getChalist())) {
+                    other.setBackup(true);
+                    other.setMainDBItem(mainDb.getItem());
+
+                    if (wcontext == mainDb) {
+                        // merge backup in the main chat list
+                        int numMsgRecovered = cm.mergeChatList(other.getChalist());
+                        logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
+                        dbChatList = mainDBChatList;
                     }
-
-                    // new instance to avoid threading issues
-                    List<Chat> mainDBChatList = new ArrayList<Chat>(main.getChalist());
-
-                    ChatMerge cm = new ChatMerge(mainDBChatList, DB.getName());
-                    if (cm.isBackup(wcontext.getChalist())) {
-                        wcontext.setBackup(true);
-                        wcontext.setMainDBItem(main.getItem());
+                    if (wcontext == other) {
+                        // output from which main DB is this backup from
                         addBackupMessage(wcontext, wcontext.getMainDBItem(),
                                 new XHTMLContentHandler(handler, metadata));
                         return;
                     }
-
                 }
-                // if not a backup or main db not found create a report
+            }
+
+            if (!wcontext.isMainDB() && !wcontext.isBackup()) {
+                // if this is a "backup" but its main db was not found
                 logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
-
-                EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                        new ParsingEmbeddedDocumentExtractor(context));
-                if (!extractor.shouldParseEmbedded(metadata)) {
-                    return;
-                }
-                createReport(wcontext.getChalist(), searcher, contacts, handler, extractor, account);
-
             }
-            if (wcontext.isMainDB()) {
-                WhatsAppContext mainDb = wcontext;
 
-                stream.skip(mainDb.getItem().getLength());
-
-                List<WhatsAppContext> dbsFoundList = new ArrayList<>(dbsFound.values());
-
-                // this is used to sort backups by decreasing modifiedDate (from name) order, so
-                // the most recent backup will be used when merging if a missing chat/message is
-                // found, giving a better idea about when the user deleted the chat/message
-                Collections.sort(dbsFoundList, new Comparator<WhatsAppContext>() {
-                    @Override
-                    public int compare(WhatsAppContext o1, WhatsAppContext o2) {
-                        return -o1.getItem().getName().compareTo(o2.getItem().getName());
-                    }
-                });
-
-                // new instance to avoid threading issues
-                List<Chat> mainDBChatList = new ArrayList<Chat>(mainDb.getChalist());
-
-                for (WhatsAppContext other : dbsFoundList) {
-                    // skip main dbs and current DB
-                    if (other.isMainDB() || other.getItem().getId() == mainDb.getItem().getId()) {
-                        continue;
-                    }
-
-                    ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
-                    if (cm.isBackup(other.getChalist())) {
-
-                        other.setMainDBItem(mainDb.getItem());
-                        other.setBackup(true);
-
-                        // merge in the main chat list
-                        int numMsgRecovered = cm.mergeChatList(other.getChalist());
-                        logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
-                    }
-
-                }
-
-                EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
-                        new ParsingEmbeddedDocumentExtractor(context));
-                if (!extractor.shouldParseEmbedded(metadata)) {
-                    return;
-                }
-
-                createReport(mainDBChatList, searcher, contacts, handler, extractor, account);
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            if (!extractor.shouldParseEmbedded(metadata)) {
+                return;
             }
+
+            // create report for main dbs and backups which main db was not found
+            createReport(dbChatList, searcher, contacts, handler, extractor, account);
+
+
         } catch (Exception e) {
             if (e instanceof TikaException)
                 throw (TikaException) e;
