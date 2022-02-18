@@ -458,6 +458,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         // merge backup in the main chat list
                         int numMsgRecovered = cm.mergeChatList(other.getChalist());
                         logger.info("Recovered {} messages from {}", numMsgRecovered, other.getItem().getPath()); //$NON-NLS-1$
+                        mainDb.setChalist(mainDBChatList);
                         dbChatList = mainDBChatList;
                     }
                     if (wcontext == other) {
