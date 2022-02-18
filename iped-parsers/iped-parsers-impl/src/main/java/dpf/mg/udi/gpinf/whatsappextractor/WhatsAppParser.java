@@ -134,6 +134,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final Map<Integer, WhatsAppContext> dbsFound = new ConcurrentHashMap<>();
 
+    private static boolean dbsSearchedFor = false;
+
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
             WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
 
@@ -340,7 +342,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
     }
 
-    private void checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
+    private static void checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
         if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
             wcontext.setMainDB(true);
@@ -361,7 +363,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void findOtherDBS(IItemSearcher searcher) {
+    private static synchronized void findOtherDBS(IItemSearcher searcher) {
+        if (dbsSearchedFor) {
+            return;
+        }
         String query = BasicProps.CONTENTTYPE + ":\"" + MSG_STORE + "\" OR " + BasicProps.CONTENTTYPE + ":\"" //$NON-NLS-1$ //$NON-NLS-2$
                 + MSG_STORE_2 + "\"";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
@@ -369,6 +374,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             WhatsAppContext wcontext = new WhatsAppContext(false, it);
             checkIfIsMainDBAndStore(wcontext);
         }
+        dbsSearchedFor = true;
     }
 
     private void addBackupMessage(WhatsAppContext item, IItemBase main, XHTMLContentHandler xhtml)
