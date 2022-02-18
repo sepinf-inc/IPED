@@ -197,7 +197,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
                 if (mergeDbs)
-                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory(), this);
+                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
                 else
                     parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
@@ -316,8 +316,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private static void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
-            ParseContext context, ExtractorFactory extFactory, WhatsAppParser parser) throws IOException, SAXException,
+    private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException,
             TikaException {
         String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
 
@@ -325,13 +325,13 @@ public class WhatsAppParser extends SQLite3DBParser {
 
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            WAContactsDirectory contacts = parser.getWAContactsDirectoryForPath(wcontext.getItem().getPath(), searcher,
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(wcontext.getItem().getPath(), searcher,
                     extFactory.getClass());
 
-            WAAccount account = parser.getUserAccount(searcher, wcontext.getItem().getPath(),
+            WAAccount account = getUserAccount(searcher, wcontext.getItem().getPath(),
                     extFactory instanceof ExtractorAndroidFactory);
 
-            wcontext.setChalist(parser.extractChatList(wcontext, extFactory, metadata, context, contacts, account));
+            wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
         } catch (Exception e) {
             if (e instanceof TikaException)
                 throw (TikaException) e;
@@ -386,9 +386,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
 
-        IItemBase i = context.get(IItemBase.class);
-        WhatsAppContext wcontext = getContext(i);
         IItemBase DB = context.get(IItemBase.class);
+        WhatsAppContext wcontext = getContext(DB);
 
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
