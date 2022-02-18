@@ -133,18 +133,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final String IS_BACKUP_FROM = "isBackupFrom";
 
     private static final Map<Integer, WhatsAppContext> dbsFound = new ConcurrentHashMap<>();
-    private static List<WhatsAppContext> mainDbFound = Collections.synchronizedList(new ArrayList<>());
-
-    private static final void putDB(WhatsAppContext wcontext) {
-        dbsFound.put(wcontext.getItem().getId(), wcontext);
-    }
-
-    private static WhatsAppContext getContext(IItemBase item) {
-        return dbsFound.get(item.getId());
-    }
-
-
-    private boolean mergeDbs = false;
 
     private static Set<MediaType> SUPPORTED_TYPES = MediaType.set(MSG_STORE, WA_DB, CHAT_STORAGE, CONTACTS_V2,
             WA_USER_XML, WA_USER_PLIST, MSG_STORE_2);
@@ -152,6 +140,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final Map<String, WAContactsDirectory> contactsDirectoriesMap = new ConcurrentHashMap<>();
 
     private SQLite3Parser sqliteParser = new SQLite3Parser();
+
+    private boolean mergeDbs = false;
 
     private boolean extractMessages = true;
 
@@ -316,12 +306,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
-            ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException,
-            TikaException {
-        String dbName = metadata.get(Metadata.RESOURCE_NAME_KEY);
-
-        WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
+    private void parseDB(WhatsAppContext wcontext, Metadata metadata, ParseContext context, ExtractorFactory extFactory)
+            throws IOException, SAXException, TikaException {
 
         try {
             IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -339,14 +325,28 @@ public class WhatsAppParser extends SQLite3DBParser {
                 throw new TikaException("WAExtractorException Exception", e); //$NON-NLS-1$
         }
 
-        if (!MSGSTORE_BKP.matcher(dbName).find() && !wcontext.getItem().getPath().contains(MSGSTORE_CRYPTO)) {
-            wcontext.setMainDB(true);
-            wcontext.setBackup(false);
-            mainDbFound.add(wcontext);
-        }
-        putDB(wcontext);
+    }
+
+    private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
+            ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException,
+            TikaException {
+
+        WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
+
+        parseDB(wcontext, metadata, context, extFactory);
+
+        checkIfIsMainDBAndStore(wcontext);
 
         metadata.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, MSG_STORE_2.toString());
+    }
+
+    private void checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
+        IItemBase item = wcontext.getItem();
+        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
+            wcontext.setMainDB(true);
+            wcontext.setBackup(false);
+        }
+        dbsFound.putIfAbsent(item.getId(), wcontext);
     }
 
     private List<Chat> extractChatList(WhatsAppContext wcontext, ExtractorFactory extFactory, Metadata metadata,
@@ -366,10 +366,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 + MSG_STORE_2 + "\"";
         List<IItemBase> result = dpf.sp.gpinf.indexer.parsers.util.Util.getItems(query, searcher);
         for (IItemBase it : result) {
-            if (!dbsFound.containsKey(it.getId())) {
-                WhatsAppContext wcontext = new WhatsAppContext(false, it);
-                putDB(wcontext);
-            }
+            WhatsAppContext wcontext = new WhatsAppContext(false, it);
+            checkIfIsMainDBAndStore(wcontext);
         }
     }
 
@@ -385,13 +383,28 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void mergeParsedDBsAndOutputResults(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-
         IItemBase DB = context.get(IItemBase.class);
-        WhatsAppContext wcontext = getContext(DB);
-
         IItemSearcher searcher = context.get(IItemSearcher.class);
 
+        // this call is needed when processing was stopped and is being resumed, so DBs
+        // list and parsing results won't be on memory yet
+        findOtherDBS(searcher);
+
+        // parse DBs found above
+        for (WhatsAppContext wcontext : dbsFound.values().toArray(new WhatsAppContext[0])) {
+            if (wcontext.getChalist() == null) {
+                // if not parsed yet, parse the DB here
+                parseDB(wcontext, metadata, context, extFactory);
+            }
+        }
+
+        WhatsAppContext wcontext = dbsFound.get(DB.getId());
+
         try {
+            WAContactsDirectory contacts = getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass());
+
+            WAAccount account = getUserAccount(searcher, DB.getPath(), extFactory instanceof ExtractorAndroidFactory);
+
             if (!wcontext.isMainDB()) {
 
                 if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
@@ -399,18 +412,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                     addBackupMessage(wcontext, wcontext.getMainDBItem(), new XHTMLContentHandler(handler, metadata));
                     return;
                 }
-                if (wcontext.getChalist() == null) {
-                    // if not parsed yet, parse the DB here
-                    IItemBase item = wcontext.getItem();
-                    WAContactsDirectory contacts = getWAContactsDirectoryForPath(item.getPath(), searcher,
-                            extFactory.getClass());
 
-                    WAAccount account = getUserAccount(searcher, item.getPath(),
-                            extFactory instanceof ExtractorAndroidFactory);
-
-                    wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
-                }
-                for (WhatsAppContext main : mainDbFound.toArray(new WhatsAppContext[0])) {
+                for (WhatsAppContext main : dbsFound.values().toArray(new WhatsAppContext[0])) {
+                    // skip backups and current DB
+                    if (!main.isMainDB() || main.getItem().getId() == wcontext.getItem().getId()) {
+                        continue;
+                    }
 
                     // new instance to avoid threading issues
                     List<Chat> mainDBChatList = new ArrayList<Chat>(main.getChalist());
@@ -433,29 +440,20 @@ public class WhatsAppParser extends SQLite3DBParser {
                 if (!extractor.shouldParseEmbedded(metadata)) {
                     return;
                 }
-                createReport(wcontext.getChalist(), searcher,
-                        getWAContactsDirectoryForPath(DB.getPath(), searcher, extFactory.getClass()), handler,
-                        extractor, getUserAccount(searcher, DB.getPath(), true));
+                createReport(wcontext.getChalist(), searcher, contacts, handler, extractor, account);
+
             }
             if (wcontext.isMainDB()) {
                 WhatsAppContext mainDb = wcontext;
 
-                // this call is needed when processing was stopped and is being resumed, so DBs
-                // list and parsing results won't be on memory
-                findOtherDBS(searcher);
+                stream.skip(mainDb.getItem().getLength());
 
-                stream.skip(wcontext.getItem().getLength());
-                WAContactsDirectory contacts = getWAContactsDirectoryForPath(mainDb.getItem().getPath(), searcher,
-                        extFactory.getClass());
-
-                WAAccount account = getUserAccount(searcher, mainDb.getItem().getPath(),
-                        extFactory instanceof ExtractorAndroidFactory);
-                List<WhatsAppContext> dbs = new ArrayList<>(dbsFound.values());
+                List<WhatsAppContext> dbsFoundList = new ArrayList<>(dbsFound.values());
 
                 // this is used to sort backups by decreasing modifiedDate (from name) order, so
                 // the most recent backup will be used when merging if a missing chat/message is
                 // found, giving a better idea about when the user deleted the chat/message
-                Collections.sort(dbs, new Comparator<WhatsAppContext>() {
+                Collections.sort(dbsFoundList, new Comparator<WhatsAppContext>() {
                     @Override
                     public int compare(WhatsAppContext o1, WhatsAppContext o2) {
                         return -o1.getItem().getName().compareTo(o2.getItem().getName());
@@ -465,21 +463,16 @@ public class WhatsAppParser extends SQLite3DBParser {
                 // new instance to avoid threading issues
                 List<Chat> mainDBChatList = new ArrayList<Chat>(mainDb.getChalist());
 
-                for (WhatsAppContext other : dbs) {
-                    // skip main dbs
-                    if (other.isMainDB()) {
+                for (WhatsAppContext other : dbsFoundList) {
+                    // skip main dbs and current DB
+                    if (other.isMainDB() || other.getItem().getId() == mainDb.getItem().getId()) {
                         continue;
-                    }
-                    if (other.getChalist() == null) {
-                        // if not parsed yet, parse the DB here
-                        other.setChalist(extractChatList(other, extFactory, metadata, context, contacts, account));
                     }
 
                     ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
                     if (cm.isBackup(other.getChalist())) {
 
                         other.setMainDBItem(mainDb.getItem());
-
                         other.setBackup(true);
 
                         // merge in the main chat list
