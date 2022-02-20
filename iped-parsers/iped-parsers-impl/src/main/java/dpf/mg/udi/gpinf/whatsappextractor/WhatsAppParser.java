@@ -309,6 +309,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             } finally {
                 tmp.dispose();
+                Message.closeStaticResources();
             }
         }
     }
@@ -517,6 +518,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 // just merged backups left in map, clear all remaining heavy data
                 logger.info("Clearing remaining whatsapp decoded data from cache.");
                 dbsFound.values().stream().forEach(wacontext -> wacontext.getChalist().clear());
+                Message.closeStaticResources();
             }
         }
 
