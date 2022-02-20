@@ -270,6 +270,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                             cache);
                 }
             }
+            // clear heavy items references (possibly with thumbs loaded)
+            c.getMessages().stream().forEach(m -> m.setMediaItem(null));
         }
     }
 
