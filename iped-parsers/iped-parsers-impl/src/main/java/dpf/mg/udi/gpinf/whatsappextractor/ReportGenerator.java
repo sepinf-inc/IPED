@@ -384,8 +384,9 @@ public class ReportGenerator {
                         thumb = message.getThumbData();
 
                         if (mediaItem != null) { // media file found
-                            if (thumb == null)
-                                thumb = mediaItem.getThumb();
+                            byte[] generatedThumb = mediaItem.getThumb();
+                            if (generatedThumb != null)
+                                thumb = generatedThumb;
 
                             if (message.getMessageType() == MessageType.AUDIO_MESSAGE
                                     || message.getMessageType() == MessageType.VIDEO_MESSAGE
