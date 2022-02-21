@@ -260,12 +260,16 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void parseWhatsAppAccount(InputStream is, ParseContext context, ContentHandler handler, boolean isAndroid)
-            throws SAXException, IOException {
+            throws SAXException, IOException, TikaException {
         WAAccount account = null;
         if (isAndroid)
             account = WAAccount.getFromAndroidXml(is);
         else
             account = WAAccount.getFromIOSPlist(is);
+
+        if (account == null) {
+            throw new TikaException("Corrupted WA account file.");
+        }
 
         Metadata meta = new Metadata();
         meta.set(IndexerDefaultParser.INDEXER_CONTENT_TYPE, WHATSAPP_ACCOUNT.toString());
@@ -313,7 +317,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 WAAccount account = isAndroid ? WAAccount.getFromAndroidXml(is) : WAAccount.getFromIOSPlist(is);
                 if (account != null)
                     return account;
-            } catch (IOException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
