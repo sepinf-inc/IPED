@@ -100,29 +100,7 @@ public class ExtractorAndroid extends Extractor {
     }
 
     private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-        // adds all contacts that sent at least one message
-        for(Message m:c.getMessages()) {
-            if (m.getRemoteResource() != null)
-                c.getGroupmembers().add(contacts.getContact(m.getRemoteResource()));
-        }
-        // adds all contacts which is a member of the group now
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
-            stmt.setString(1, c.getRemote().getFullId());
-            try (ResultSet rs = stmt.executeQuery()) {
-
-                while (rs.next()) {
-                    String memberId = rs.getString("member");
-                    if (!memberId.trim().isEmpty()) {
-                        c.getGroupmembers().add(contacts.getContact(memberId));
-                    }
-                }
-
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new WAExtractorException(ex);
-        }
-
+        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
     }
 
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {
