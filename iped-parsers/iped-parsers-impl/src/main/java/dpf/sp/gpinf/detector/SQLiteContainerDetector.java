@@ -256,7 +256,7 @@ public class SQLiteContainerDetector implements Detector {
 
     private Set<String> detectColumnNames(Connection conn, String tableName) throws SQLException {
         Set<String> columns = new HashSet<>();
-        try (PreparedStatement ps = conn.prepareStatement("select name FROM PRAGMA_TABLE_INFO('?')")) {
+        try (PreparedStatement ps = conn.prepareStatement("select name FROM PRAGMA_TABLE_INFO(?)")) {
             ps.setString(1, tableName);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) {
