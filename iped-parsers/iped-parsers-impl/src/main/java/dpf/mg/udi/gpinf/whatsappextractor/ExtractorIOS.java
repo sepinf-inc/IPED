@@ -84,7 +84,7 @@ public class ExtractorIOS extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn);
+                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
             }
@@ -93,27 +93,6 @@ public class ExtractorIOS extends Extractor {
         }
 
         return list;
-    }
-
-    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-
-        try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
-            stmt.setString(1, c.getRemote().getFullId());
-            try (ResultSet rs = stmt.executeQuery()) {
-
-                while (rs.next()) {
-                    String memberId = rs.getString("member");
-                    if (!memberId.trim().isEmpty()) {
-                        c.getGroupmembers().add(contacts.getContact(memberId));
-                    }
-                }
-
-            }
-        } catch (SQLException ex) {
-            ex.printStackTrace();
-            throw new WAExtractorException(ex);
-        }
-
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat) throws SQLException {

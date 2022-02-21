@@ -32,7 +32,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -255,6 +254,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     for (WAContact member : c.getGroupmembers()) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
                     }
+                    // string formatted as {creator's phone number}-{creation time}@g.us
+                    chatMetadata.add(ExtraProperties.GROUP_ID, c.getRemote().getFullId());
                 } else {
                     if (c.getRemote() != null) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(c.getRemote(), cache));
