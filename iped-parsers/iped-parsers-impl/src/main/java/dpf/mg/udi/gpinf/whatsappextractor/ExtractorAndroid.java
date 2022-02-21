@@ -100,7 +100,12 @@ public class ExtractorAndroid extends Extractor {
     }
 
     private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-
+        // adds all contacts that sent at least one message
+        for(Message m:c.getMessages()) {
+            if (m.getRemoteResource() != null)
+                c.getGroupmembers().add(contacts.getContact(m.getRemoteResource()));
+        }
+        // adds all contacts which is a member of the group now
         try (PreparedStatement stmt = conn.prepareStatement(SELECT_GROUP_MEMBERS)) {
             stmt.setString(1, c.getRemote().getFullId());
             try (ResultSet rs = stmt.executeQuery()) {
@@ -385,6 +390,7 @@ public class ExtractorAndroid extends Extractor {
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
 
+    // to address a field must use ` instead of '
     private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
 
 }
