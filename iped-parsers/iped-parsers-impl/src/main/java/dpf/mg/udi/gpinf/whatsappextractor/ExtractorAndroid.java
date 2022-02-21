@@ -87,7 +87,7 @@ public class ExtractorAndroid extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c.getRemote(), c.isGroupChat()));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn);
+                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
 
@@ -97,10 +97,6 @@ public class ExtractorAndroid extends Extractor {
         }
 
         return list;
-    }
-
-    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
     }
 
     private boolean databaseHasSortTimestamp(Connection conn) throws SQLException {

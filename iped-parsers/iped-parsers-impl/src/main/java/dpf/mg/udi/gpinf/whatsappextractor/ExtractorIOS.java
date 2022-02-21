@@ -84,7 +84,7 @@ public class ExtractorIOS extends Extractor {
                 for (Chat c : list) {
                     c.setMessages(extractMessages(conn, c));
                     if (c.isGroupChat()) {
-                        setGroupMembers(c, conn);
+                        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
                     }
                 }
             }
@@ -93,12 +93,6 @@ public class ExtractorIOS extends Extractor {
         }
 
         return list;
-    }
-
-    private void setGroupMembers(Chat c, Connection conn) throws WAExtractorException {
-
-        setGroupMembers(c, conn, SELECT_GROUP_MEMBERS);
-
     }
 
     private List<Message> extractMessages(Connection conn, Chat chat) throws SQLException {
