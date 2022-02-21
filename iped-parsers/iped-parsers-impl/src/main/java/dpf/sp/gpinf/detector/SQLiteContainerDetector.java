@@ -209,7 +209,7 @@ public class SQLiteContainerDetector implements Detector {
 
         if (tableNames.contains("message") && tableNames.contains("chat") && tableNames.contains("chat_message_join")
                 && tableNames.contains("chat_handle_join")) {
-            return MediaType.application("x-ios-backup-messages-db");
+            return MediaType.application("x-ios-backup-sms-db");
         }
 
         if (tableNames.contains("ABPerson") && tableNames.contains("ABMultiValue")

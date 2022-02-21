@@ -1213,7 +1213,7 @@
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
     
-    <mime-type type="application/x-ios-backup-messages-db">
+    <mime-type type="application/x-ios-backup-sms-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
     

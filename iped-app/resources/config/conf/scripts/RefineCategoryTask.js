@@ -144,7 +144,7 @@ function process(e){
 		e.addCategory("iPhone Backup");
 		
 	if (mime.equals("application/x-ios-backup-manifest-db") ||
-		mime.equals("application/x-ios-backup-messages-db") ||
+		mime.equals("application/x-ios-backup-sms-db") ||
 		mime.equals("application/x-ios-backup-addressbook-db") ||
 		mime.equals("application/x-ios-backup-calllog-db") ||
 		mime.equals("application/x-ios-backup-voicemail-db") ||
