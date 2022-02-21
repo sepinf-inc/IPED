@@ -385,6 +385,6 @@ public class ExtractorAndroid extends Extractor {
     private static final String VERIFY_THUMBS_TABLE_EXISTS = "SELECT name FROM sqlite_master " //$NON-NLS-1$
             + "WHERE type='table' AND name='message_thumbnails'"; //$NON-NLS-1$
 
-    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where 'group'=?"; //$NON-NLS-1$
+    private static final String SELECT_GROUP_MEMBERS = "select gjid as 'group', jid as member FROM group_participants where `group`=?"; //$NON-NLS-1$
 
 }
