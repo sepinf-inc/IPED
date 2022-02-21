@@ -1207,6 +1207,46 @@
     
     <mime-type type="message/x-jabber-message">
         <sub-class-of type="message/x-chat-message"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-ios-backup-manifest-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-messages-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-addressbook-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-voicemail-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-oldnotes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-notes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-webhistory-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-photos-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-backup-calendar-db">
+        <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
  
 </mime-info>
