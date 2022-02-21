@@ -143,6 +143,22 @@ function process(e){
 		)
 		e.addCategory("iPhone Backup");
 		
+	if (mime.equals("application/x-ios-backup-manifest-db"))
+		e.addCategory("iPhone Backup");
+	
+	if (mime.equals("application/x-ios-sms-db") ||
+		mime.equals("application/x-ios-addressbook-db") ||
+		mime.equals("application/x-ios-calllog-db") ||
+		mime.equals("application/x-ios-voicemail-db") ||
+		mime.equals("application/x-ios-oldnotes-db") ||
+		mime.equals("application/x-ios-notes-db") ||
+		mime.equals("application/x-ios-webhistory-db") ||
+		mime.equals("application/x-ios-photos-db") ||
+		mime.equals("application/x-ios-calendar-db") ||
+		mime.equals("application/x-ios-locations-db")
+		){
+		e.addCategory("Databases");
+	}
 	
 	
 	//Torchat Install files
