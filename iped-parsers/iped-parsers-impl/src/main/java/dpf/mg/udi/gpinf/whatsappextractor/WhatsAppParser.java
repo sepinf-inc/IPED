@@ -254,6 +254,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     for (WAContact member : c.getGroupmembers()) {
                         chatMetadata.add(ExtraProperties.PARTICIPANTS, formatContact(member, cache));
                     }
+                    // string formatted as {creator's phone number}-{creation time}@g.us
                     chatMetadata.add(ExtraProperties.GROUP_ID, c.getRemote().getFullId());
                 } else {
                     if (c.getRemote() != null) {
