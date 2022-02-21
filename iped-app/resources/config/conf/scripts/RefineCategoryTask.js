@@ -139,7 +139,8 @@ function process(e){
 		(path.indexOf("/appdata/roaming/apple computer/mobilesync/backup") > -1)||
 		(path.indexOf("/appdata/roaming/apple computer/mobilesyncbackup") > -1)||
 		(path.indexOf("/biblioteca/suporte a aplicativos/mobilesync/backup") > -1)||
-		(path.indexOf("/library/application support/mobilesync/backup") > -1)
+		(path.indexOf("/library/application support/mobilesync/backup") > -1) ||
+		(path.indexOf("/apple/mobilesync/backup") > -1)
 		)
 		e.addCategory("iPhone Backup");
 		

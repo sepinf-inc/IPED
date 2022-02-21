@@ -186,6 +186,7 @@ public class FolderTreeReader extends DataSourceReader {
                 String fileName = item.getName();
                 String evidencePath = parents.isEmpty() ? fileName
                         : parents.getLast().getPath() + File.separator + fileName;
+                evidencePath = evidencePath.replace(File.separatorChar, '/');
                 item.setPath(evidencePath);
 
                 if (attr.isDirectory()) {
