@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -107,14 +108,14 @@ public class SQLiteContainerDetector implements Detector {
             while (rs.next())
                 tableNames.add(rs.getString(1));
 
-            return detectTableNames(tableNames);
+            return detectTableNames(conn, tableNames);
 
         } catch (SQLException ex) {
             return SQLITE_MIME;
         }
     }
 
-    private MediaType detectTableNames(Set<String> tableNames) {
+    private MediaType detectTableNames(Connection conn, Set<String> tableNames) throws SQLException {
 
         if (tableNames.contains("messagesv12") && //$NON-NLS-1$
                 tableNames.contains("profilecachev8") && //$NON-NLS-1$
@@ -197,8 +198,81 @@ public class SQLiteContainerDetector implements Detector {
                 && tableNames.contains("ft41") && tableNames.contains("t18"))
             return TelegramParser.TELEGRAM_DB_IOS;
 
+        // iOS backups databases below
+
+        if (tableNames.contains("Files") && tableNames.contains("Properties")) {
+            Set<String> cols = detectColumnNames(conn, "Files");
+            if (cols.contains("fileID") && cols.contains("relativePath") && cols.contains("domain")) {
+                return MediaType.application("x-ios-backup-manifest-db");
+            }
+        }
+
+        if (tableNames.contains("message") && tableNames.contains("chat") && tableNames.contains("chat_message_join")
+                && tableNames.contains("chat_handle_join")) {
+            return MediaType.application("x-ios-sms-db");
+        }
+
+        if (tableNames.contains("ABPerson") && tableNames.contains("ABMultiValue")
+                && tableNames.contains("ABPersonFullTextSearch_content")) {
+            return MediaType.application("x-ios-addressbook-db");
+        }
+
+        if (tableNames.contains("call") && tableNames.contains("_SqliteDatabaseProperties")) {
+            Set<String> cols = detectColumnNames(conn, "call");
+            if (cols.contains("address") && cols.contains("date") && cols.contains("duration")) {
+                return MediaType.application("x-ios-calllog-db");
+            }
+        }
+
+        if (tableNames.contains("ZCALLDBPROPERTIES") && tableNames.contains("ZCALLRECORD")) {
+            return MediaType.application("x-ios8-calllog-db");
+        }
+
+        if (tableNames.contains("voicemail")) {
+            Set<String> cols = detectColumnNames(conn, "voicemail");
+            if (cols.contains("remote_uid") && cols.contains("date") && cols.contains("duration")) {
+                return MediaType.application("x-ios-voicemail-db");
+            }
+        }
+
+        if (tableNames.contains("ZNOTE") && tableNames.contains("ZNOTEBODY")) {
+            return MediaType.application("x-ios-oldnotes-db");
+        }
+
+        if (tableNames.contains("ZICCLOUDSTATE") && tableNames.contains("ZICCLOUDSYNCINGOBJECT")) {
+            return MediaType.application("x-ios-notes-db");
+        }
+
+        if (tableNames.contains("ZALBUMLIST") && tableNames.contains("ZGENERICALBUM")) {
+            return MediaType.application("x-ios-photos-db");
+        }
+
+        if (tableNames.contains("Calendar") && tableNames.contains("CalendarChanges")
+                && tableNames.contains("CalendarItem")) {
+            return MediaType.application("x-ios-calendar-db");
+        }
+
+        if (tableNames.contains("Fences") && tableNames.contains("Vertices")) {
+            Set<String> cols = detectColumnNames(conn, "Fences");
+            if (cols.contains("Latitude") && cols.contains("Longitude")) {
+                return MediaType.application("x-ios-locations-db");
+            }
+        }
+
         return SQLITE_MIME;
 
+    }
+
+    private Set<String> detectColumnNames(Connection conn, String tableName) throws SQLException {
+        Set<String> columns = new HashSet<>();
+        try (PreparedStatement ps = conn.prepareStatement("select name FROM PRAGMA_TABLE_INFO(?)")) {
+            ps.setString(1, tableName);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                columns.add(rs.getString(1));
+            }
+        }
+        return columns;
     }
 
 }
