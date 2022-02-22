@@ -158,7 +158,10 @@
         
         <!--parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
-        <parser class="org.gagravarr.tika.VorbisParser"></parser-->
+        <parser class="org.gagravarr.tika.VorbisParser"></parser>
+        <parser class="org.gagravarr.tika.OpusParser"></parser>
+        <parser class="org.gagravarr.tika.SpeexParser"></parser>
+        <parser class="org.gagravarr.tika.TheoraParser"></parser>-->
         
         
         <!--
