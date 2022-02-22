@@ -329,9 +329,30 @@ public class IPEDSource implements Closeable, IIPEDSource {
         CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
         Category root = config.getConfiguration().clone();
         // root.setName(rootName);
-        filterEmptyCategories(root, getLeafCategories(root));
+        ArrayList<Category> leafs = getLeafCategories(root);
+        leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));
+        filterEmptyCategories(root, leafs);
         countNumItems(root);
         categoryTree = root;
+    }
+
+    private boolean checkAndAddMissingCategory(Category root, Category leaf) {
+        boolean found = false;
+        if (leaf.getName().equals(root.getName())) {
+            found = true;
+        } else {
+            for (Category child : root.getChildren()) {
+                if (checkAndAddMissingCategory(child, leaf)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found && root.getParent() == null) {
+            leaf.setParent(root);
+            root.getChildren().add(leaf);
+        }
+        return found;
     }
 
     private ArrayList<Category> getLeafCategories(Category root) {
