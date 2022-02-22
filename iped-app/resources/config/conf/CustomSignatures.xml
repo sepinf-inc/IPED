@@ -1225,6 +1225,10 @@
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
     
+    <mime-type type="application/x-ios8-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
     <mime-type type="application/x-ios-voicemail-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>

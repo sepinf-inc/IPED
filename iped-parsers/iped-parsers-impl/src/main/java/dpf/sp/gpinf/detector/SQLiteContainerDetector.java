@@ -217,8 +217,15 @@ public class SQLiteContainerDetector implements Detector {
             return MediaType.application("x-ios-addressbook-db");
         }
 
+        if (tableNames.contains("call") && tableNames.contains("_SqliteDatabaseProperties")) {
+            Set<String> cols = detectColumnNames(conn, "call");
+            if (cols.contains("address") && cols.contains("date") && cols.contains("duration")) {
+                return MediaType.application("x-ios-calllog-db");
+            }
+        }
+
         if (tableNames.contains("ZCALLDBPROPERTIES") && tableNames.contains("ZCALLRECORD")) {
-            return MediaType.application("x-ios-calllog-db");
+            return MediaType.application("x-ios8-calllog-db");
         }
 
         if (tableNames.contains("voicemail")) {

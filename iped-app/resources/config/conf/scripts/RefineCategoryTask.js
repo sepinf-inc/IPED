@@ -150,6 +150,7 @@ function process(e){
 	if (mime.equals("application/x-ios-sms-db") ||
 		mime.equals("application/x-ios-addressbook-db") ||
 		mime.equals("application/x-ios-calllog-db") ||
+		mime.equals("application/x-ios8-calllog-db") ||
 		mime.equals("application/x-ios-voicemail-db") ||
 		mime.equals("application/x-ios-oldnotes-db") ||
 		mime.equals("application/x-ios-notes-db") ||
