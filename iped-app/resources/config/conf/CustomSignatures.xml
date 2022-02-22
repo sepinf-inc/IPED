@@ -1241,10 +1241,6 @@
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
     
-    <mime-type type="application/x-ios-webhistory-db">
-        <sub-class-of type="application/x-sqlite3"/>
-    </mime-type>
-    
     <mime-type type="application/x-ios-photos-db">
         <sub-class-of type="application/x-sqlite3"/>
     </mime-type>

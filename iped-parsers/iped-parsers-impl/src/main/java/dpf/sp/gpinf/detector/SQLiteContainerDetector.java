@@ -243,11 +243,6 @@ public class SQLiteContainerDetector implements Detector {
             return MediaType.application("x-ios-notes-db");
         }
 
-        if (tableNames.contains("history_items") && tableNames.contains("history_visits")
-                && tableNames.contains("history_tombstones")) {
-            return MediaType.application("x-ios-webhistory-db");
-        }
-
         if (tableNames.contains("ZALBUMLIST") && tableNames.contains("ZGENERICALBUM")) {
             return MediaType.application("x-ios-photos-db");
         }

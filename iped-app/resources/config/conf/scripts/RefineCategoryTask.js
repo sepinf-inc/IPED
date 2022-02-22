@@ -154,7 +154,6 @@ function process(e){
 		mime.equals("application/x-ios-voicemail-db") ||
 		mime.equals("application/x-ios-oldnotes-db") ||
 		mime.equals("application/x-ios-notes-db") ||
-		mime.equals("application/x-ios-webhistory-db") ||
 		mime.equals("application/x-ios-photos-db") ||
 		mime.equals("application/x-ios-calendar-db") ||
 		mime.equals("application/x-ios-locations-db")
