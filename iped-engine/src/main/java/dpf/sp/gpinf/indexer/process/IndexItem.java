@@ -52,6 +52,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.KnnVectorField;
 import org.apache.lucene.document.LatLonDocValuesField;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
@@ -654,8 +655,15 @@ public class IndexItem extends BasicProps {
 
         } else if (oValue instanceof NDArray) {
             byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
+            int suffix = 0;
+            // KnnVectorField is not multivalued, must use other key if it exists
+            String knnKey = key;
+            while (doc.getField(knnKey) != null) {
+                knnKey = key + (++suffix);
+            }
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
+            doc.add(new KnnVectorField(knnKey, convNDArrayToFloatArray((NDArray) oValue)));
 
         } else {
             // value is typed as string
@@ -679,6 +687,18 @@ public class IndexItem extends BasicProps {
             buffer.putDouble(value);
         }
         return buffer.array();
+    }
+
+    public static final float[] convNDArrayToFloatArray(NDArray nd) {
+        return convDoubleToFloatArray((double[]) nd.getData());
+    }
+
+    public static final float[] convDoubleToFloatArray(double[] array) {
+        float[] result = new float[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = (float) array[i];
+        }
+        return result;
     }
 
     private static void addMetadataToDoc(Document doc, Metadata metadata, Set<TimeStampEvent> timeEventSet) {
