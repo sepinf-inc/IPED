@@ -16,6 +16,7 @@ import java.util.Set;
 
 import javax.swing.UIManager;
 
+import org.apache.commons.codec.binary.Hex;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
 
@@ -306,22 +307,26 @@ public abstract class MetadataViewer extends Viewer {
     private void fillProp(StringBuilder sb, String key, Object value) {
         if (value != null && !value.toString().isEmpty()) {
             sb.append("<tr><td class=\"s1\">" + LocalizedProperties.getLocalizedField(key) + "</td>"); //$NON-NLS-1$ //$NON-NLS-2$
-            if (isNumeric(key)) {
-                if (value instanceof Number) {
-                    value = df.format(Double.valueOf(((Number) value).doubleValue()));
-                } else if (value instanceof Collection) {
-                    ArrayList<Object> formattedVals = new ArrayList<>();
-                    for (Object v : (Collection) value) {
-                        if (v instanceof Number) {
-                            v = df.format(Double.valueOf(((Number) v).doubleValue()));
-                        }
-                        formattedVals.add(v);
-                    }
-                    value = formattedVals;
+            if (value instanceof Collection) {
+                ArrayList<Object> formattedVals = new ArrayList<>();
+                for (Object v : (Collection) value) {
+                    formattedVals.add(format(v));
                 }
+                value = formattedVals;
+            } else {
+                value = format(value);
             }
             sb.append("<td class=\"s2\">" + SimpleHTMLEncoder.htmlEncode(value.toString()) + "</td></tr>"); //$NON-NLS-1$ //$NON-NLS-2$
         }
+    }
+
+    private String format(Object value) {
+        if (value instanceof Number) {
+            return df.format(Double.valueOf(((Number) value).doubleValue()));
+        } else if (value instanceof byte[]) {
+            return new String(Hex.encodeHex((byte[]) value));
+        }
+        return value.toString();
     }
 
     @Override
