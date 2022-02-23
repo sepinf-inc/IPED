@@ -137,7 +137,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
     // a global hashmap to prevent redownload files;
-    private static final Map<String, IItem> hashesDownloaded = new ConcurrentHashMap<>();
+    private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
 
     private static final boolean FALLBACK_DOWNLOAD_FILES = true;
 
@@ -231,9 +231,11 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context) throws Exception {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
+        AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context,
+                    DOWNLOADED_FILES);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -292,6 +294,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             // clear heavy items references (possibly with thumbs loaded)
             c.getMessages().stream().forEach(m -> m.setMediaItem(null));
         }
+        if (DOWNLOADED_FILES.get() > 0) {
+            logger.info("Downloaded {} files from {}", DOWNLOADED_FILES.get(), dbPath.getName());
+        }
+
     }
 
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -1064,7 +1070,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
-            ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context) {
+            ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
+            AtomicInteger DOWNLOADED_FILES) {
 
         if (searcher == null) {
             return;
@@ -1087,9 +1094,17 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (count > 0) {
             listsToProcess.add(messagesToProcess);
         }
-        AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
+
+        ExecutorService e = Executors.newFixedThreadPool(POOL_SIZE);
         for (List<Message> listToProcess : listsToProcess) {
-            searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context, DOWNLOADED_FILES);
+            searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context, DOWNLOADED_FILES,
+                    e);
+        }
+        try {
+            e.awaitTermination(500 + listsToProcess.size() * 20, TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e1) {
+            // TODO Auto-generated catch block
+            e1.printStackTrace(System.out);
         }
     }
 
@@ -1107,7 +1122,8 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context, AtomicInteger DOWNLOADED_FILES) {
+            EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context, AtomicInteger DOWNLOADED_FILES,
+            ExecutorService executor) {
 
         Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
         Map<Pair<String, Long>, List<Message>> fileNameAndSizeToSearchFor = new HashMap<>();
@@ -1281,17 +1297,24 @@ public class WhatsAppParser extends SQLite3DBParser {
                 
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
                 le.extractLinks();
-                ExecutorService e = Executors.newFixedThreadPool(POOL_SIZE);
+                try {
+                    le.close();
+                } catch (Exception ex) {
+                    // TODO: handle exception
+                }
+
 
                 for (LinkDownloader ld : le.getLinks()) {
-
+                    if (ld == null || ld.getHash() == null) {
+                        continue;
+                    }
                     Runnable r = new Runnable() {
 
                         @Override
                         public void run() {
                             IItem item = null;
 
-                            if (hashesDownloaded.containsKey(ld.getHash()))
+                            if (ld == null || ld.getHash() == null || hashesDownloaded.containsKey(ld.getHash()))
                                 return;
                             try (TemporaryResources tmp = new TemporaryResources()) {
 
@@ -1323,7 +1346,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
 
                                 if (item != null) {
-                                    hashesDownloaded.putIfAbsent(ld.getHash(), item);
+                                    synchronized (hashesDownloaded) {
+                                        hashesDownloaded.putIfAbsent(ld.getHash(), item);
+                                    }
                                     for (int i = 0; i < 5 && item.getExtraAttribute("ended") == null; i++) {
                                         try {
                                             item.wait(1000);
@@ -1338,7 +1363,11 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                             } catch (URLnotFound ex) {
                                 // save that this hash is not available
-                                hashesDownloaded.putIfAbsent(ld.getHash(), null);
+                                synchronized (hashesDownloaded) {
+                                    // ConcurrentHashMap does not support null
+                                    hashesDownloaded.putIfAbsent(ld.getHash(), null);
+                                }
+                                
 
                             } catch (Exception e) {
                                 // TODO: handle exception
@@ -1350,20 +1379,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                         }
                     };
 
-                    e.submit(r);
+                    executor.execute(r);
 
                 }
-                try {
-                    e.awaitTermination(500 + le.getLinks().size() * 20, TimeUnit.MILLISECONDS);
-                } catch (InterruptedException e1) {
-                    // TODO Auto-generated catch block
-                    e1.printStackTrace(System.out);
-                }
-                try {
-                    le.close();
-                } catch (Exception ex) {
-                    // TODO: handle exception
-                }
+
 
             }
         }

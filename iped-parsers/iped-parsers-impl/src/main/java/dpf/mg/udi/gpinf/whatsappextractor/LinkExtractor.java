@@ -212,7 +212,7 @@ public class LinkExtractor {
                 }
 
                 LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
-                if (ld.getFileName() != null)
+                if (ld.getHash() != null && ld.getFileName() != null)
                     links.add(ld);
             }
         } catch (Exception e) {
