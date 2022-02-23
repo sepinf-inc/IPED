@@ -11,6 +11,7 @@ import java.util.List;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.util.FixedBitSet;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import iped3.IItem;
@@ -24,7 +25,7 @@ public class SimilarFacesSearch {
 
     private static float minimumScore = DEFAULT_MIN_SCORE;
 
-    private static int MAX_KNN_RESULTS = 1000;
+    private static int KNN_BATCH = 1000;
 
     private IPEDMultiSource ipedCase;
     private float[] refSimilarityFeatures;
@@ -74,11 +75,22 @@ public class SimilarFacesSearch {
     private void score(MultiSearchResult result) throws IOException {
 
         LeafReader leafReader = ipedCase.getLeafReader();
-        TopDocs topDocs = leafReader.searchNearestVectors(FACE_FEATURES, refSimilarityFeatures, MAX_KNN_RESULTS, null);
         HashMap<Integer, Float> topDocsMap = new HashMap<>();
-        for (ScoreDoc doc : topDocs.scoreDocs) {
-            topDocsMap.put(doc.doc, convertLuceneScoreToFinalScore(doc.score));
+        FixedBitSet bits = new FixedBitSet(leafReader.maxDoc());
+        bits.set(0, bits.length());
+        loop: while (true) {
+            TopDocs topDocs = leafReader.searchNearestVectors(FACE_FEATURES, refSimilarityFeatures, KNN_BATCH, bits);
+            for (ScoreDoc doc : topDocs.scoreDocs) {
+                float finalScore = convertLuceneScoreToFinalScore(doc.score);
+                if (finalScore >= minimumScore) {
+                    topDocsMap.put(doc.doc, finalScore);
+                    bits.clear(doc.doc);
+                } else {
+                    break loop;
+                }
+            }
         }
+
         for (int i = 0; i < result.getLength(); i++) {
             int luceneId = ipedCase.getLuceneId(result.getItem(i));
             Float score = topDocsMap.get(luceneId);
