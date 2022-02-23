@@ -23,8 +23,12 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.lucene.index.*;
 import org.apache.lucene.index.MultiDocValues.MultiSortedDocValues;
+import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
+import org.apache.lucene.search.TotalHits;
+import org.apache.lucene.search.TotalHits.Relation;
 import org.apache.lucene.util.Bits;
+import org.apache.lucene.util.FixedBitSet;
 import org.apache.lucene.util.Version;
 
 /**
@@ -310,8 +314,33 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
 
     @Override
     public TopDocs searchNearestVectors(String field, float[] target, int k, Bits acceptDocs) throws IOException {
-        // TODO implement this method properly when we start to index feature vectors
-        // using Lucene
-        throw new UnsupportedOperationException("Not implemented yet.");
+        ensureOpen();
+        int size = in.leaves().size();
+        TopDocs[] docsPerLeaf = new TopDocs[size];
+        for (int i = 0; i < size; i++) {
+            LeafReaderContext context = in.leaves().get(i);
+            final LeafReader reader = context.reader();
+            final FieldInfo fieldInfo = reader.getFieldInfos().fieldInfo(field);
+            if (fieldInfo == null || !fieldInfo.hasVectorValues()) {
+                docsPerLeaf[i] = new TopDocs(new TotalHits(0, Relation.EQUAL_TO), new ScoreDoc[0]);
+                continue;
+            }
+
+            FixedBitSet leafBits = null;
+            if (acceptDocs != null) {
+                leafBits = new FixedBitSet(reader.maxDoc());
+                for (int j = 0; k < leafBits.length(); j++) {
+                    if (acceptDocs.get(context.docBase + j)) {
+                        leafBits.set(j);
+                    }
+                }
+            }
+
+            docsPerLeaf[i] = reader.searchNearestVectors(field, target, k, leafBits);
+            for (ScoreDoc doc : docsPerLeaf[i].scoreDocs) {
+                doc.doc += context.docBase;
+            }
+        }
+        return TopDocs.merge(k, docsPerLeaf);
     }
 }
