@@ -329,7 +329,7 @@ public final class SlowCompositeReaderWrapper extends LeafReader {
             FixedBitSet leafBits = null;
             if (acceptDocs != null) {
                 leafBits = new FixedBitSet(reader.maxDoc());
-                for (int j = 0; k < leafBits.length(); j++) {
+                for (int j = 0; j < leafBits.length(); j++) {
                     if (acceptDocs.get(context.docBase + j)) {
                         leafBits.set(j);
                     }
