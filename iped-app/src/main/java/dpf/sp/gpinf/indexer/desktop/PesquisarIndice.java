@@ -43,7 +43,6 @@ import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
-import dpf.sp.gpinf.indexer.search.SimilarImagesSearch;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import iped3.IItemId;
 import iped3.desktop.CancelableWorker;
@@ -130,19 +129,6 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             boolQuery.add(result, Occur.MUST);
             result = boolQuery.build();
             numFilters++;
-        }
-
-        if (App.get().similarImagesQueryRefItem != null) {
-/*            Query similarImagesQuery = new SimilarImagesSearch()
-                    .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
-            if (similarImagesQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                boolQuery.add(result, Occur.MUST);
-                boolQuery.add(similarImagesQuery, Occur.MUST);
-                result = boolQuery.build();*/
-                searcher.setNoScoring(true);
-                numFilters++;
-//            }
         }
 
         return result;
@@ -234,7 +220,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 }
 
                 if (App.get().similarImagesQueryRefItem != null) {
-                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
+                    new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
                     result = ImageSimilarityLowScoreFilter.filter(result);
                 }
 
