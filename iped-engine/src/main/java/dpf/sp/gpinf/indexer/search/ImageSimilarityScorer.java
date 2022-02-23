@@ -15,6 +15,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
+import org.apache.lucene.util.FixedBitSet;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
@@ -62,6 +63,11 @@ public class ImageSimilarityScorer {
      */
     private static final int maxResults = 100000;
     
+    /**
+     * Search batch size, max results returned for each search.
+     */
+    private static final int searchBatch = 1000;
+
     private final IPEDSource ipedCase;
     private final MultiSearchResult result;
     private final byte[] refSimilarityFeatures;
@@ -86,33 +92,45 @@ public class ImageSimilarityScorer {
         }
         LeafReader leafReader = ipedCase.getLeafReader();
         float[] floatFeatures = IndexItem.castByteArrayToFloatArray(refSimilarityFeatures);
-        TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, maxResults, null);
-        HashMap<Integer, Float> topDocsMap = new HashMap<>();
 
-        // topDocs.scoreDocs are returned in descending score order
-        for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
-            float distance = SimilarFacesSearch.convertLuceneScoreToSquareDist(scoreDoc.score);
-            float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
-            if (distance < 0.001) {
-                String refHash = refItem.getHash();
-                if (refHash != null) {
-                    try {
-                        Document doc = leafReader.document(scoreDoc.doc);
-                        String currHash = doc.get(BasicProps.HASH);
-                        if (refHash.equals(currHash)) {
-                            score = identicalScore;
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        break;
-                    }
-                }
-            }
-            if (score < minScore) {
+        HashMap<Integer, Float> topDocsMap = new HashMap<>();
+        FixedBitSet bits = new FixedBitSet(leafReader.maxDoc());
+        bits.set(0, bits.length());
+
+        loop: while (true) {
+            // topDocs.scoreDocs are returned in descending score order
+            TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, searchBatch, bits);
+            if (topDocs.scoreDocs.length == 0) {
                 break;
             }
-            topDocsMap.put(scoreDoc.doc, score);
+            for (ScoreDoc scoreDoc : topDocs.scoreDocs) {
+                float distance = SimilarFacesSearch.convertLuceneScoreToSquareDist(scoreDoc.score);
+                float score = Math.max(0, 100 - distance * distToScoreMult / refSimilarityFeatures.length);
+                if (distance < 0.001) {
+                    String refHash = refItem.getHash();
+                    if (refHash != null) {
+                        try {
+                            Document doc = leafReader.document(scoreDoc.doc);
+                            String currHash = doc.get(BasicProps.HASH);
+                            if (refHash.equals(currHash)) {
+                                score = identicalScore;
+                            }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
+                if (score < minScore) {
+                    break loop;
+                }
+                topDocsMap.put(scoreDoc.doc, score);
+                if (topDocsMap.size() == maxResults) {
+                    break loop;
+                }
+                bits.clear(scoreDoc.doc);
+            }
         }
+
         for (int i = 0; i < result.getLength(); i++) {
             int luceneId = ipedCase.getLuceneId(result.getItem(i));
             Float score = topDocsMap.get(luceneId);
