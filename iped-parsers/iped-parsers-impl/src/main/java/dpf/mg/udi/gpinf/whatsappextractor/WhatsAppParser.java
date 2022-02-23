@@ -136,7 +136,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
     // a global hashmap to prevent redownload files;
-    private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
+    private static final Map<String, IItem> hashesDownloaded = new ConcurrentHashMap<>();
 
     private static final boolean FALLBACK_DOWNLOAD_FILES = true;
 
@@ -1289,9 +1289,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                         public void run() {
                             IItem item = null;
 
+                            if (hashesDownloaded.containsKey(ld.getHash()))
+                                return;
                             try (TemporaryResources tmp = new TemporaryResources()) {
 
-                                // TODO Auto-generated method stub
                                 File f = tmp.createTemporaryFile(), fout = tmp.createTemporaryFile();
 
                                 ld.downloadUsingStream(f);

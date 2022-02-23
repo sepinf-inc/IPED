@@ -21,6 +21,10 @@ public class LinkDownloader {
     private byte[] iv;
     private String hash;
 
+    public String getUrl() {
+        return urlStr;
+    }
+
     public String getFileName() {
         return fileName;
     }
