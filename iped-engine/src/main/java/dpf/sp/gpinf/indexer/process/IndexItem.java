@@ -655,14 +655,13 @@ public class IndexItem extends BasicProps {
 
         } else if (oValue instanceof NDArray) {
             byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
+            doc.add(new StoredField(key, byteArray));
             int suffix = 0;
             // KnnVectorField is not multivalued, must use other key if it exists
             String knnKey = key;
             while (doc.getField(knnKey) != null) {
                 knnKey = key + (++suffix);
             }
-            doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
-            doc.add(new StoredField(key, byteArray));
             doc.add(new KnnVectorField(knnKey, convNDArrayToFloatArray((NDArray) oValue)));
 
         } else {
