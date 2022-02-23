@@ -63,11 +63,17 @@ public class SimilarFacesSearch {
         return Math.max(0, (1 - (float) Math.sqrt(squaredDist)) * 100);
     }
 
-    private static final float convertLuceneScoreToFinalScore(float luceneScore) {
-        // inverts the formula taken from
-        // https://github.com/apache/lucene/blob/releases/lucene/9.0.0/lucene/core/src/java/org/apache/lucene/index/VectorSimilarityFunction.java
-        float squareDistance = (1f / luceneScore) - 1;
+    /**
+     * Inverts the formula taken from
+     * https://github.com/apache/lucene/blob/releases/lucene/9.0.0/lucene/core/src/java/org/apache/lucene/index/VectorSimilarityFunction.java
+     * 
+     */
+    public static final float convertLuceneScoreToSquareDist(float luceneScore) {
+        return (1f / luceneScore) - 1;
+    }
 
+    private static final float convertLuceneScoreToFinalScore(float luceneScore) {
+        float squareDistance = convertLuceneScoreToSquareDist(luceneScore);
         return squaredDistToScore(squareDistance);
     }
 
