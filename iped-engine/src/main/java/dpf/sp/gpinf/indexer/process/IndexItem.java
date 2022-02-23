@@ -458,8 +458,7 @@ public class IndexItem extends BasicProps {
         if (similarityFeatures != null) {
             doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
             doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
-                    similarityFeatures[2], similarityFeatures[3]));
+            doc.add(new KnnVectorField(SIMILARITY_FEATURES, castByteArrayToFloatArray(similarityFeatures)));
         }
 
         long off = evidence.getFileOffset();
@@ -686,6 +685,14 @@ public class IndexItem extends BasicProps {
             buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    public static final float[] castByteArrayToFloatArray(byte[] array) {
+        float[] result = new float[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = (float) array[i];
+        }
+        return result;
     }
 
     public static final float[] convNDArrayToFloatArray(NDArray nd) {
