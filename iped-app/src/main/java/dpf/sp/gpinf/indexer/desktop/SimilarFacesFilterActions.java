@@ -258,7 +258,8 @@ public class SimilarFacesFilterActions {
                 List<NDArray> faces = (List<NDArray>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
 
                 if (faces != null && faces.size() > 0) {
-                    return IndexItem.convNDArrayToByteArray(faces.get(0));
+                    float[] array = IndexItem.convNDArrayToFloatArray(faces.get(0));
+                    return IndexItem.convFloatArrayToByteArray(array);
                 } else {
                     throw new Exception(Messages.getString("FaceSimilarity.ExternalFaceNotFound"));
                 }
