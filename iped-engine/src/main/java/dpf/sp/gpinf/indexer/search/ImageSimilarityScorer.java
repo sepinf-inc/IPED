@@ -50,8 +50,18 @@ public class ImageSimilarityScorer {
      */
     private static final int maxTop = 2000;
     private static final int rangeCheck = 100;
-    private float cut = 1;
-
+    
+    /**
+     * Minimum score to accept an image (below that it won't be included in the
+     * results).
+     */
+    private float minScore = 1;
+    
+    /**
+     * Maximum number of results returned.
+     */
+    private static final int maxResults = 100000;
+    
     private final IPEDSource ipedCase;
     private final MultiSearchResult result;
     private final byte[] refSimilarityFeatures;
@@ -76,7 +86,7 @@ public class ImageSimilarityScorer {
         }
         LeafReader leafReader = ipedCase.getLeafReader();
         float[] floatFeatures = IndexItem.castByteArrayToFloatArray(refSimilarityFeatures);
-        TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, maxTop, null);
+        TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, maxResults, null);
         HashMap<Integer, Float> topDocsMap = new HashMap<>();
 
         // topDocs.scoreDocs are returned in descending score order
@@ -98,11 +108,10 @@ public class ImageSimilarityScorer {
                     }
                 }
             }
-            if (score > cut) {
-                topDocsMap.put(scoreDoc.doc, score);
-            } else {
+            if (score < minScore) {
                 break;
             }
+            topDocsMap.put(scoreDoc.doc, score);
         }
         for (int i = 0; i < result.getLength(); i++) {
             int luceneId = ipedCase.getLuceneId(result.getItem(i));
@@ -121,6 +130,9 @@ public class ImageSimilarityScorer {
     private void organizeTopResults() {
 
         sortTopResults();
+        if (topResults.size() > maxTop) {
+            topResults.subList(maxTop, topResults.size()).clear();
+        }
         
         BinaryDocValues similarityFeaturesValues = null;
         try {
