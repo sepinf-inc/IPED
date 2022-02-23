@@ -280,7 +280,7 @@ public class DIETask extends AbstractTask {
      * Combine the score of each video frame into a single score. 
      * It uses a weighted average, with higher weights for higher scores.
      */
-    private double videoScore(List<Double> p) {
+    public static double videoScore(List<Double> p) {
         Collections.sort(p);
         Collections.reverse(p);
         double weight = 1;
@@ -325,7 +325,8 @@ public class DIETask extends AbstractTask {
      */
 
     private static boolean isAnimationImage(IItem item) {
-        return item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+        return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
     }
 
     /**

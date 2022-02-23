@@ -124,7 +124,7 @@ public class ThemeManager {
     }
 
     private static File getSelectedThemeFile() {
-        return new File(System.getProperty("user.home") + "/.indexador/theme.dat");
+        return new File(System.getProperty("user.home") + "/.iped/theme.dat");
     }
 
     private Theme loadThemeOption() {

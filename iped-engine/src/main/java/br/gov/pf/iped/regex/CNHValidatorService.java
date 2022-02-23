@@ -9,7 +9,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorServic
 
 public class CNHValidatorService extends BasicAbstractRegexValidatorService {
 
-    private static final String REGEX_NAME = "CNH";
+    private static final String REGEX_NAME = "BR_CNH";
 
     protected static final Pattern NON_DIGIT = Pattern.compile("[^0-9]");
 

@@ -309,7 +309,11 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     public void compressGeneratedCSVFiles() throws IOException {
-        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+        compressGeneratedCSVFiles(this.root);
+    }
+
+    private static void compressGeneratedCSVFiles(File root) throws IOException {
+        Arrays.asList(root.listFiles()).stream().forEach(f -> {
             File gzip = new File(f.getAbsolutePath() + ".gzip");
             try (GZIPOutputStream gzos = new GZIPOutputStream(
                     Files.newOutputStream(gzip.toPath(), StandardOpenOption.CREATE))) {
@@ -322,7 +326,11 @@ public class GraphFileWriter implements Closeable, Flushable {
     }
 
     public void uncompressPreviousCSVFiles() {
-        Arrays.asList(root.listFiles()).parallelStream().forEach(f -> {
+        uncompressPreviousCSVFiles(this.root);
+    }
+
+    private static void uncompressPreviousCSVFiles(File root) {
+        Arrays.asList(root.listFiles()).stream().forEach(f -> {
             int idx = f.getAbsolutePath().lastIndexOf(".gzip");
             if (idx != -1) {
                 File csv = new File(f.getAbsolutePath().substring(0, idx));
@@ -336,11 +344,39 @@ public class GraphFileWriter implements Closeable, Flushable {
         });
     }
 
+    public static int removeDeletedRelationships(String evidenceUUID, File csvRoot) throws IOException {
+        if (!csvRoot.exists()) {
+            return 0;
+        }
+        int deleted = 0;
+        uncompressPreviousCSVFiles(csvRoot);
+        for (File f : csvRoot.listFiles()) {
+            if (f.getName().startsWith(REL_CSV_PREFIX) && f.getName().endsWith(".csv")) {
+                File dest = new File(f.getAbsolutePath() + ".tmp");
+                try (BufferedReader reader = Files.newBufferedReader(f.toPath());
+                        Writer writer = Files.newBufferedWriter(dest.toPath())) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (!line.contains(evidenceUUID)) {
+                            writer.write(line);
+                            writer.write("\r\n");
+                        } else {
+                            deleted++;
+                        }
+                    }
+                }
+                Files.move(dest.toPath(), f.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            }
+        }
+        compressGeneratedCSVFiles(csvRoot);
+        return deleted;
+    }
+
     // TODO improve to merge duplicate nodes instead of just skip
     public static void prepareMultiCaseCSVs(File output, List<File> csvParents) throws IOException {
         AtomicInteger subDir = new AtomicInteger(-1);
         Set<String> ids = Collections.synchronizedSet(new HashSet<>());
-        csvParents.parallelStream().forEach(parent -> {
+        csvParents.stream().forEach(parent -> {
             int num = subDir.incrementAndGet();
             try {
                 File[] subFiles = parent.listFiles();

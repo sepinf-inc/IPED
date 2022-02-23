@@ -121,7 +121,7 @@ import iped3.io.SeekableInputStream;
 
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
-    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
+    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".iped"
             + File.separator + "iped.hvp";
 
     private CodeArea codeArea;

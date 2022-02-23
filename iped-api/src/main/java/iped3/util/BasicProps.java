@@ -30,7 +30,6 @@ public class BasicProps {
     public static final String SUBITEM = "subitem"; //$NON-NLS-1$
     public static final String SUBITEMID = "subitemId"; //$NON-NLS-1$
     public static final String OFFSET = "offset"; //$NON-NLS-1$
-    public static final String DUPLICATE = "duplicate"; //$NON-NLS-1$
     public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
     public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
@@ -71,7 +70,6 @@ public class BasicProps {
         basicProps.add(SUBITEM);
         basicProps.add(SUBITEMID);
         basicProps.add(OFFSET);
-        basicProps.add(DUPLICATE);
         basicProps.add(TIMEOUT);
         basicProps.add(CONTENTTYPE);
         basicProps.add(TREENODE);

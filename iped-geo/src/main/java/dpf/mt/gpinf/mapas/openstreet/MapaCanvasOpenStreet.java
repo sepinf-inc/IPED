@@ -1,8 +1,6 @@
 package dpf.mt.gpinf.mapas.openstreet;
 
 import java.awt.Component;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.HashMap;
@@ -11,7 +9,6 @@ import org.apache.commons.io.IOUtils;
 
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
 import dpf.sp.gpinf.indexer.util.UiUtil;
-import dpf.sp.gpinf.network.util.ProxySever;
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
@@ -25,7 +22,7 @@ import javafx.scene.web.WebEvent;
 import javafx.scene.web.WebView;
 import netscape.javascript.JSObject;
 
-public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMotionListener {
+public class MapaCanvasOpenStreet extends AbstractMapaCanvas {
 
     WebView browser;
     WebEngine webEngine = null;
@@ -39,7 +36,6 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
 
     public MapaCanvasOpenStreet() {
         this.jfxPanel = new JFXPanel();
-        this.jfxPanel.addMouseMotionListener(this);
 
         Platform.runLater(new Runnable() {
             public void run() {
@@ -72,14 +68,6 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
 
                 webEngine = browser.getEngine();
                 webEngine.setJavaScriptEnabled(true);
-                com.sun.javafx.webkit.WebConsoleListener
-                        .setDefaultListener(new com.sun.javafx.webkit.WebConsoleListener() {
-                            @Override
-                            public void messageAdded(WebView webView, String message, int lineNumber, String sourceId) {
-                                System.out.println(
-                                        "From webview: " + message + " [" + sourceId + " - " + lineNumber + "]");
-                            }
-                        });
                 webEngine.setOnError(new EventHandler<WebErrorEvent>() {
                     public void handle(WebErrorEvent event) {
                         System.out.println("Error:" + event.getMessage()); //$NON-NLS-1$
@@ -129,7 +117,6 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
 
         Platform.runLater(new Runnable() {
             public void run() {
-                ProxySever.get().disable();
                 webEngine.loadContent(html);
                 jfxPanel.invalidate();
             }
@@ -263,16 +250,6 @@ public class MapaCanvasOpenStreet extends AbstractMapaCanvas implements MouseMot
                 }
             }
         });
-    }
-
-    @Override
-    public void mouseDragged(MouseEvent e) {
-        ProxySever.get().disable();
-    }
-
-    @Override
-    public void mouseMoved(MouseEvent e) {
-        ProxySever.get().disable();
     }
 
 }

@@ -78,18 +78,32 @@
     	<magic priority="60">
       		<match value="ftypheic" type="string" offset="4"/>
       		<match value="ftypheix" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heic"/>
+  	</mime-type>
+  	
+	<mime-type type="image/heic-sequence">
+    	<magic priority="60">
       		<match value="ftyphevc" type="string" offset="4"/>
       		<match value="ftyphevx" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heic"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
   	
   	<mime-type type="image/heif">
     	<magic priority="60">
       		<match value="ftypmif1" type="string" offset="4"/>
+    	</magic>
+    	<sub-class-of type="application/octet-stream"/>
+    	<glob pattern="*.heif"/>
+  	</mime-type>
+
+  	<mime-type type="image/heif-sequence">
+    	<magic priority="60">
       		<match value="ftypmsf1" type="string" offset="4"/>
     	</magic>
-    	<glob pattern="*.heif"/>
+    	<sub-class-of type="application/octet-stream"/>
   	</mime-type>
 
 	<mime-type type="application/x-dbf">
@@ -571,6 +585,7 @@
     </mime-type>
     
     <mime-type type="application/x-vdi">
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vdi"/>
     </mime-type>
     
@@ -578,6 +593,7 @@
         <magic priority="50">
             <match value="vhdxfile" type="string" offset="0"/>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vhdx"/>
     </mime-type>
     
@@ -635,30 +651,26 @@
         <sub-class-of type="application/x-ewf-image"/>
         <glob pattern="*.e01"/>
     </mime-type>
-        
-    <mime-type type="application/x-raw-image">
-        <_comment>RAW disk images</_comment>
-        <_comment>This priority must be equal to x-vmdk</_comment>
+    
+    <mime-type type="application/x-disk-image">
+        <_comment>Generic disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
                 <match value="0x0000" type="string" offset="444"/>
                 <match value="0x5A5A" type="string" offset="444"/>
             </match>
         </magic>
+    </mime-type>
+        
+    <mime-type type="application/x-raw-image">
+        <_comment>RAW disk images</_comment>
         <sub-class-of type="application/x-disk-image"/>
-        <glob pattern="*.dd"/>
-        <glob pattern="*.000"/>
-        <glob pattern="*.001"/>
+        <!--dd/001 extensions are omitted to avoid classification based on generic exts-->
     </mime-type>
     
     <mime-type type="application/x-vmdk">
         <_comment>This priority must be equal to x-raw-image</_comment>
-        <magic priority="30">
-            <match value="0x55AA" type="string" offset="510">
-                <match value="0x0000" type="string" offset="444"/>
-                <match value="0x5A5A" type="string" offset="444"/>
-            </match>
-        </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.vmdk"/>
     </mime-type>
     
@@ -675,6 +687,7 @@
                 <match value="0x0000" type="string" offset="5"/>
             </match>
         </magic>
+        <sub-class-of type="application/x-disk-image"/>
         <glob pattern="*.wim"/>
     </mime-type>
     
@@ -1194,6 +1207,50 @@
     
     <mime-type type="message/x-jabber-message">
         <sub-class-of type="message/x-chat-message"/>
+    </mime-type>    
+    
+    <mime-type type="application/x-ios-backup-manifest-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-sms-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-addressbook-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios8-calllog-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-voicemail-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-oldnotes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-notes-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-photos-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-calendar-db">
+        <sub-class-of type="application/x-sqlite3"/>
+    </mime-type>
+    
+    <mime-type type="application/x-ios-locations-db">
+        <sub-class-of type="application/x-sqlite3"/>
     </mime-type>
  
 </mime-info>

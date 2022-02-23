@@ -187,7 +187,8 @@ public class ViewerController {
     public boolean validateViewer(Viewer viewer) {
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
-                if (officeViewer != null && viewersRepository.getCurrentViewer().equals(officeViewer)) {
+                if (officeViewer != null && viewersRepository.getCurrentViewer() != null
+                        && viewersRepository.getCurrentViewer().equals(officeViewer)) {
                     new Thread() {
                         public void run() {
                             officeViewer.constructLOFrame();

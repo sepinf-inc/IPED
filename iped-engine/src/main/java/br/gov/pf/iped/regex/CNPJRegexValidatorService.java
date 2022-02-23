@@ -5,7 +5,7 @@ import java.util.List;
 
 public class CNPJRegexValidatorService extends AbstractDocRegexValidatorService {
 
-    private static final String REGEX_NAME = "CNPJ";
+    private static final String REGEX_NAME = "BR_CNPJ";
     private static final int[] CNPJ_WEIGHTS = { 6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2 };
 
     @Override

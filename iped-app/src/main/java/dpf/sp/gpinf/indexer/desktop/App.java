@@ -123,6 +123,7 @@ import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
@@ -520,7 +521,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         gallery.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentResized(ComponentEvent e) {
-                int colWidth = (int) gallery.getVisibleRect().getWidth() / galleryModel.colCount;
+                int colWidth = (int) gallery.getVisibleRect().getWidth() / getGalleryColCount();
                 if (colWidth > 0) {
                     gallery.setRowHeight(colWidth);
                 }
@@ -531,6 +532,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             }
         });
 
+        int largeColWidth = 4096; 
+        
         appGraphAnalytics = new AppGraphAnalytics();
 
         viewerController = new ViewerController(appSearchParams);
@@ -541,7 +544,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         hitsTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         hitsTable.getColumnModel().getColumn(0).setPreferredWidth(50);
         hitsTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
-        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(1500);
+        hitsTable.getColumnModel().getColumn(1).setPreferredWidth(largeColWidth);
         hitsTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
         hitsTable.setShowGrid(false);
 
@@ -552,7 +555,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         subItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         subItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         subItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        subItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         subItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         subItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         subItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -564,7 +567,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         duplicatesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         duplicatesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         duplicatesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        duplicatesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         duplicatesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         duplicatesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         duplicatesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -577,7 +580,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         parentItemTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         parentItemTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         parentItemTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        parentItemTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         parentItemTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         parentItemTable.setDefaultRenderer(String.class, new TableCellRenderer());
         parentItemTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -588,7 +591,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         referencesTable.getColumnModel().getColumn(0).setPreferredWidth(40);
         referencesTable.getColumnModel().getColumn(1).setPreferredWidth(20);
-        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(1500);
+        referencesTable.getColumnModel().getColumn(2).setPreferredWidth(largeColWidth);
         referencesTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         referencesTable.setDefaultRenderer(String.class, new TableCellRenderer());
         referencesTable.getTableHeader().setPreferredSize(new Dimension(0, 0));
@@ -614,27 +617,23 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         categoriesPanel = new JScrollPane(categoryTree);
         bookmarksPanel = new JScrollPane(bookmarksTree);
 
-        boolean isFTKReport = new File(casesPathFile, "indexador/data/containsFTKReport.flag").exists(); //$NON-NLS-1$
+        recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
+        recursiveTreeList.setSelected(true);
 
-        if (!isFTKReport) {
-            recursiveTreeList = new JCheckBox(Messages.getString("App.RecursiveListing")); //$NON-NLS-1$
-            recursiveTreeList.setSelected(true);
+        tree = new JTree(new Object[0]);
+        tree.setRootVisible(true);
+        tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        treeListener = new TreeListener();
+        tree.addTreeSelectionListener(treeListener);
+        tree.addTreeExpansionListener(treeListener);
+        tree.addMouseListener(treeListener);
 
-            tree = new JTree(new Object[0]);
-            tree.setRootVisible(true);
-            tree.setMaximumSize(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE));
-            treeListener = new TreeListener();
-            tree.addTreeSelectionListener(treeListener);
-            tree.addTreeExpansionListener(treeListener);
-            tree.addMouseListener(treeListener);
+        evidencePanel = new JPanel(new BorderLayout());
+        evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
+        evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
 
-            evidencePanel = new JPanel(new BorderLayout());
-            evidencePanel.add(recursiveTreeList, BorderLayout.NORTH);
-            evidencePanel.add(new JScrollPane(tree), BorderLayout.CENTER);
-
-            // treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null,
-            // evidencePanel, null, 2); //$NON-NLS-1$
-        }
+        // treeTab.insertTab(Messages.getString("TreeViewModel.RootName"), null,
+        // evidencePanel, null, 2);
 
         dockingControl.setTheme(ThemeMap.KEY_ECLIPSE_THEME);
 
@@ -707,15 +706,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             exportToZip.setVisible(true);
         }
 
-        refazLayout(false);
-
-        status = new JLabel(" "); //$NON-NLS-1$
-        this.appSearchParams.status = status;
-
-        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
-        // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
-        this.getContentPane().add(status, BorderLayout.PAGE_END);
-
         progressBar = new JProgressBar(0, 1);
         progressBar.setValue(0);
         progressBar.setString(Messages.getString("App.Wait")); //$NON-NLS-1$
@@ -729,10 +719,19 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dialogBar.getContentPane().add(progressBar);
         appSearchParams.dialogBar = dialogBar;
 
+        
+        adjustLayout(false);
+        PanelsLayout.load(dockingControl);
+
+        status = new JLabel(" "); //$NON-NLS-1$
+        this.appSearchParams.status = status;
+
+        this.getContentPane().add(topPanel, BorderLayout.PAGE_START);
+        // this.getContentPane().add(treeSplitPane, BorderLayout.CENTER);
+        this.getContentPane().add(status, BorderLayout.PAGE_END);
+
         appletListener = new AppListener();
-        if (!isFTKReport) {
-            recursiveTreeList.addActionListener(treeListener);
-        }
+        recursiveTreeList.addActionListener(treeListener);
         termo.addActionListener(appletListener);
         filtro.addActionListener(appletListener);
         filterDuplicates.addActionListener(appletListener);
@@ -769,7 +768,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         // filtro.addMouseListener(appletListener);
         // filtro.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
-        gallery.repaint();
     }
     
     public void updateUI(boolean refresh) {
@@ -826,7 +824,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         });
 
         if (SimilarImagesFilterActions.isFeatureEnabled()) {
-            CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
+            final CButton butSimSearch = new CButton(Messages.getString("MenuClass.FindSimilarImages"),
                     IconUtil.getToolbarIcon("find", resPath));
             galleryTabDock.addAction(butSimSearch);
             galleryTabDock.addSeparator();
@@ -841,18 +839,26 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                     if (e.getValueIsAdjusting()) {
                         return;
                     }
-                    boolean enabled = false;
-                    int selIdx = resultsTable.getSelectedRow();
-                    if (selIdx != -1) {
-                        IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
-                        if (itemId != null) {
-                            IItem item = appCase.getItemByItemId(itemId);
-                            if (item != null) {
-                                enabled = item.getImageSimilarityFeatures() != null;
+                    butSimSearch.setEnabled(false);
+                    final int selIdx = resultsTable.getSelectedRow();
+                    // running in EDT can cause deadlock in UI if evidence was moved because this
+                    // thread can block when entering the static synchronized method
+                    // IndexItem.checkIfEvidenceFolderExists() called before by a worker thread
+                    new Thread() {
+                        @Override
+                        public void run() {
+                            if (selIdx != -1) {
+                                IItemId itemId = ipedResult.getItem(resultsTable.convertRowIndexToModel(selIdx));
+                                if (itemId != null) {
+                                    IItem item = appCase.getItemByItemId(itemId);
+                                    if (item != null) {
+                                        boolean enabled = item.getImageSimilarityFeatures() != null;
+                                        butSimSearch.setEnabled(enabled);
+                                    }
+                                }
                             }
                         }
-                    }
-                    butSimSearch.setEnabled(enabled);
+                    }.start();
                 }
             });
         }
@@ -1014,21 +1020,29 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    private void updateGalleryColCount(int inc) {
-        int cnt = App.get().galleryModel.colCount + inc;
+    public int getGalleryColCount() {
+        return galleryModel.getColumnCount();
+    }
+
+    public void setGalleryColCount(int cnt) {
         if (cnt > 0 && cnt <= 40) {
-            App.get().galleryModel.colCount = cnt;
-            int colWidth = App.get().gallery.getWidth() / App.get().galleryModel.colCount;
-            App.get().gallery.setRowHeight(colWidth);
-            int selRow = App.get().resultsTable.getSelectedRow();
-            App.get().galleryModel.fireTableStructureChanged();
+            galleryModel.setColumnCount(cnt);
+            int colWidth = gallery.getWidth() / cnt;
+            if (colWidth > 0)
+                gallery.setRowHeight(colWidth);
+            int selRow = resultsTable.getSelectedRow();
+            galleryModel.fireTableStructureChanged();
             if (selRow >= 0) {
-                int galleryRow = selRow / App.get().galleryModel.colCount;
-                int galleyCol = selRow % App.get().galleryModel.colCount;
-                App.get().gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
-                App.get().gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
+                int galleryRow = selRow / cnt;
+                int galleyCol = selRow % cnt;
+                gallery.getSelectionModel().setSelectionInterval(galleryRow, galleryRow);
+                gallery.getColumnModel().getSelectionModel().setSelectionInterval(galleyCol, galleyCol);
             }
         }
+    }
+    
+    private void updateGalleryColCount(int inc) {
+        setGalleryColCount(getGalleryColCount() + inc);
     }
 
     private ResultSetViewerConfiguration getResultSetViewerConfiguration() {
@@ -1173,9 +1187,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
     }
 
-    public void refazLayout(boolean remove) {
+    public void savePanelLayout() {
+        PanelsLayout.save(dockingControl);
+    }
+
+    public void loadPanelLayout() {
+        PanelsLayout.load(dockingControl);
+    }
+    
+    public void adjustLayout(boolean isReset) {
         if (!disposicaoVertical) {
-            if (remove)
+            if (isReset)
                 removeAllDockables();
             createAllDockables();
 
@@ -1251,7 +1273,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(tableTabDock);
 
         } else {
-            if (remove)
+            if (isReset)
                 removeAllDockables();
             createAllDockables();
 
@@ -1327,14 +1349,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             selectDockableTab(bookmarksTabDock);
             selectDockableTab(tableTabDock);
         }
-
+        
         setupViewerDocks();
         viewerController.validateViewers();
+        
+        if (isReset)
+            setGalleryColCount(GalleryModel.defaultColCount);
     }
 
     public void alterarDisposicao() {
         disposicaoVertical = !disposicaoVertical;
-        refazLayout(true);
+        adjustLayout(true);
     }
 
     @Override
@@ -1407,12 +1432,6 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     @Override
     public FileDialog createFileDialog(String title, int mode) {
         return new FileDialog(this, title, mode);
-    }
-
-    @Override
-    public ProgressDialog createProgressDialog(CancelableWorker task, boolean indeterminate, long millisToPopup,
-            Dialog.ModalityType modal) {
-        return new ProgressDialog(this, task, indeterminate, millisToPopup, modal);
     }
 
     @Override

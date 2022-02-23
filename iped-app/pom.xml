@@ -72,9 +72,9 @@
                                 <artifactItem>
                                     <groupId>java</groupId>
                                     <artifactId>jre</artifactId>
-                                    <version>1.8.0_152</version>
+                                    <version>11.0.13</version>
                                     <type>zip</type>
-                                    <overWrite>true</overWrite>
+                                    <overWrite>false</overWrite>
                                     <outputDirectory>${release.dir}</outputDirectory>
                                 </artifactItem>
                             </artifactItems>
@@ -262,7 +262,7 @@
                                 <artifactItem>
                                     <groupId>org.imagemagick</groupId>
                                     <artifactId>imagemagick-zip</artifactId>
-                                    <version>7.0.8-14.1</version>
+                                    <version>7.1.0-q8-x64</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${tools.dir}</outputDirectory>
@@ -454,7 +454,7 @@
                                 <artifactItem>
                                     <groupId>dpf.ap</groupId>
     								<artifactId>telegram-decoder-impl</artifactId>
-    								<version>1.0.5-SNAPSHOT</version>
+    								<version>1.0.6-SNAPSHOT</version>
                                     <type>jar</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${plugin.dir}</outputDirectory>

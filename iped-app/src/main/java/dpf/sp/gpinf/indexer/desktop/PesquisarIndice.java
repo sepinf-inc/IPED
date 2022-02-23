@@ -123,15 +123,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
             numFilters++;
         }
 
-        if (!App.get().appCase.isFTKReport()) {
-            Query treeQuery = App.get().treeListener.getQuery();
-            if (treeQuery != null) {
-                BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
-                boolQuery.add(treeQuery, Occur.MUST);
-                boolQuery.add(result, Occur.MUST);
-                result = boolQuery.build();
-                numFilters++;
-            }
+        Query treeQuery = App.get().treeListener.getQuery();
+        if (treeQuery != null) {
+            BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
+            boolQuery.add(treeQuery, Occur.MUST);
+            boolQuery.add(result, Occur.MUST);
+            result = boolQuery.build();
+            numFilters++;
         }
 
         if (App.get().similarImagesQueryRefItem != null) {
@@ -305,6 +303,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 if (App.get().ipedResult.getLength() < 1 << 24 && App.get().resultsTable.getRowSorter() != null) {
                     App.get().resultsTable.getRowSorter().allRowsChanged();
                     App.get().resultsTable.getRowSorter().setSortKeys(App.get().resultSortKeys);
+                    App.get().galleryModel.fireTableDataChanged();
                 } else {
                     App.get().resultsModel.fireTableDataChanged();
                     App.get().galleryModel.fireTableStructureChanged();

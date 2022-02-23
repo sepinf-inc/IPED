@@ -80,9 +80,9 @@ public class Statistics {
         return instance;
     }
 
-    public int getCarvedIgnoredNum(HashValue persistentId) {
+    public int getCarvedIgnoredNum(HashValue trackId) {
         synchronized (ignoredMap) {
-            return ignoredMap.getOrDefault(persistentId, 0);
+            return ignoredMap.getOrDefault(trackId, 0);
         }
     }
 
@@ -106,7 +106,7 @@ public class Statistics {
 
     public void incCarvedIgnored(IItem item) {
         this.incCorruptCarveIgnored();
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_TRACK_ID));
         synchronized (ignoredMap) {
             Integer ignored = ignoredMap.getOrDefault(parentPersistId, 0);
             ignoredMap.put(parentPersistId, ++ignored);
@@ -114,7 +114,7 @@ public class Statistics {
     }
 
     public void resetCarvedIgnored(IItem item) {
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.TRACK_ID));
         synchronized (ignoredMap) {
             ignoredMap.remove(parentPersistId);
         }
@@ -243,10 +243,6 @@ public class Statistics {
         LOGGER.info("Total Carved Items: {}", BaseCarveTask.getItensCarved()); //$NON-NLS-1$
         LOGGER.info("Carved Ignored (corrupted): {}", carvedIgnored); //$NON-NLS-1$
         LOGGER.info("Ignored Items: {}", ignored); //$NON-NLS-1$
-
-        if (caseData.getAlternativeFiles() > 0) {
-            LOGGER.info("Processed {} item previews instead of original ones.", caseData.getAlternativeFiles()); //$NON-NLS-1$
-        }
 
         IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir));
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;

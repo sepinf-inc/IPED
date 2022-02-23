@@ -188,8 +188,10 @@ public class GeofileParser extends AbstractParser {
                 lat = coords[0].y;
                 alt = coords[0].z;
 
-                kmeta.set(Metadata.LATITUDE, lat);
-                kmeta.set(Metadata.LONGITUDE, lon);
+                if (lat != null && lat != 0.0 && lon != null && lon != 0.0) {
+                    kmeta.set(ExtraProperties.LOCATIONS, lat + ";" + lon);
+                }
+
                 if (alt != null) {
                     kmeta.set(Metadata.ALTITUDE, alt);
                 }

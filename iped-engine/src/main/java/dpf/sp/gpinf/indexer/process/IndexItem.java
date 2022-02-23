@@ -29,6 +29,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -51,6 +52,8 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.LatLonDocValuesField;
+import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
 import org.apache.lucene.document.NumericDocValuesField;
 import org.apache.lucene.document.SortedDocValuesField;
@@ -68,7 +71,6 @@ import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.TikaCoreProperties;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.utils.DateUtils;
-import org.sleuthkit.datamodel.SleuthkitCase;
 
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
@@ -101,14 +103,13 @@ import jep.NDArray;
  */
 public class IndexItem extends BasicProps {
 
-    public static final String POSSIBLE_STR_DOCVALUES_PREFIX = "_str_";
-    public static final String POSSIBLE_NUM_DOCVALUES_PREFIX = "_num_";
+    public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
 
-    public static final String FTKID = "ftkId"; //$NON-NLS-1$
     public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-    public static final String PERSISTENT_ID = "persistentId"; //$NON-NLS-1$
-    public static final String PARENT_PERSISTENT_ID = "parentPersistentId"; //$NON-NLS-1$
-    public static final String CONTAINER_PERSISTENT_ID = "parentContainerPersistentId"; //$NON-NLS-1$
+
+    public static final String TRACK_ID = "trackId"; //$NON-NLS-1$
+    public static final String PARENT_TRACK_ID = "parentTrackId"; //$NON-NLS-1$
+    public static final String CONTAINER_TRACK_ID = "containerTrackId"; //$NON-NLS-1$
 
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
@@ -161,7 +162,6 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        BasicProps.SET.add(FTKID);
         BasicProps.SET.add(SLEUTHID);
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
@@ -225,7 +225,8 @@ public class IndexItem extends BasicProps {
     public static void saveMetadataTypes(File confDir) throws IOException {
         File metadataTypesFile = new File(confDir, attrTypesFilename);
         UTF8Properties props = new UTF8Properties();
-        for (Entry<String, Class<?>> e : typesMap.entrySet()) {
+        for (Object o : typesMap.entrySet().toArray()) {
+            Entry<String, Class<?>> e = (Entry<String, Class<?>>) o;
             props.setProperty(e.getKey(), e.getValue().getCanonicalName());
         }
         props.store(metadataTypesFile);
@@ -269,16 +270,9 @@ public class IndexItem extends BasicProps {
         doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
         doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-        Integer intVal = evidence.getFtkID();
-        if (intVal != null) {
-            doc.add(new IntPoint(FTKID, intVal));
-            doc.add(new StoredField(FTKID, intVal));
-            doc.add(new NumericDocValuesField(FTKID, intVal));
-        }
-
         if (evidence instanceof ISleuthKitItem) {
             ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
-            intVal = sevidence.getSleuthId();
+            Integer intVal = sevidence.getSleuthId();
             if (intVal != null) {
                 doc.add(new IntPoint(SLEUTHID, intVal));
                 doc.add(new StoredField(SLEUTHID, intVal));
@@ -303,7 +297,7 @@ public class IndexItem extends BasicProps {
             doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
         }
 
-        intVal = evidence.getSubitemId();
+        Integer intVal = evidence.getSubitemId();
         if (intVal != null) {
             doc.add(new IntPoint(SUBITEMID, intVal));
             doc.add(new StoredField(SUBITEMID, intVal));
@@ -325,7 +319,6 @@ public class IndexItem extends BasicProps {
             value = ""; //$NON-NLS-1$
         }
         Field nameField = new TextField(NAME, value, Field.Store.YES);
-        nameField.setBoost(1000.0f);
         doc.add(nameField);
         doc.add(new SortedDocValuesField(NAME, new BytesRef(normalize(value))));
 
@@ -432,10 +425,6 @@ public class IndexItem extends BasicProps {
             doc.add(new SortedDocValuesField(HASH, new BytesRef(value)));
         }
 
-        value = Boolean.toString(evidence.isDuplicate());
-        doc.add(new StringField(DUPLICATE, value, Field.Store.YES));
-        doc.add(new SortedDocValuesField(DUPLICATE, new BytesRef(value)));
-
         value = Boolean.toString(evidence.isDeleted());
         doc.add(new StringField(DELETED, value, Field.Store.YES));
         doc.add(new SortedDocValuesField(DELETED, new BytesRef(value)));
@@ -489,11 +478,11 @@ public class IndexItem extends BasicProps {
             if (entry.getValue() instanceof Collection) {
                 for (Object val : (Collection<?>) entry.getValue()) {
                     typesMap.putIfAbsent(entry.getKey(), val.getClass());
-                    addExtraAttributeToDoc(doc, entry.getKey(), val, false, true, timeEventSet);
+                    addExtraAttributeToDoc(doc, entry.getKey(), val, true, timeEventSet);
                 }
             } else {
                 typesMap.putIfAbsent(entry.getKey(), entry.getValue().getClass());
-                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, false, timeEventSet);
+                addExtraAttributeToDoc(doc, entry.getKey(), entry.getValue(), false, timeEventSet);
             }
         }
 
@@ -607,19 +596,20 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isPossibleType,
-            boolean isMultiValued, Set<TimeStampEvent> timeEventSet) {
-        boolean isString = false;
+    private static void addExtraAttributeToDoc(Document doc, String key, Object oValue, boolean isMultiValued,
+            Set<TimeStampEvent> timeEventSet) {
 
-        /*
-         * utilizar docvalue de outro tipo com mesmo nome provoca erro, entao usamos um
-         * prefixo no nome para diferenciar
-         */
-        String keyPrefix = ""; //$NON-NLS-1$
-        if (isPossibleType) {
-            keyPrefix = POSSIBLE_NUM_DOCVALUES_PREFIX;
-        }
-        if (oValue instanceof Date) {
+        if (key.equals(ExtraProperties.LOCATIONS)) {
+            String[] coords = oValue.toString().split(";");
+            double lat = Double.valueOf(coords[0].trim());
+            double lon = Double.valueOf(coords[1].trim());
+            doc.add(new LatLonPoint(key, lat, lon));
+            doc.add(new LatLonDocValuesField(key, lat, lon));
+            doc.add(new StringField(key, oValue.toString(), Field.Store.YES));
+            // used to group values in metadata filter panel, sorting doesn't make sense
+            doc.add(new SortedSetDocValuesField(GEO_SSDV_PREFIX + key, new BytesRef(oValue.toString())));
+
+        } else if (oValue instanceof Date) {
             String value = DateUtils.formatDate((Date) oValue);
             doc.add(new Field(key, value, dateField));
             if (!isMultiValued)
@@ -658,10 +648,9 @@ public class IndexItem extends BasicProps {
             doc.add(new DoublePoint(key, (Double) oValue));
             doc.add(new StoredField(key, (Double) oValue));
             if (!isMultiValued)
-                doc.add(new DoubleDocValuesField(keyPrefix + key, (Double) oValue));
+                doc.add(new DoubleDocValuesField(key, (Double) oValue));
             else
-                doc.add(new SortedNumericDocValuesField(keyPrefix + key,
-                        NumericUtils.doubleToSortableLong((Double) oValue)));
+                doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
             byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
@@ -669,25 +658,16 @@ public class IndexItem extends BasicProps {
             doc.add(new StoredField(key, byteArray));
 
         } else {
-            isString = true;
-        }
-
-        if (isString) {
-            doc.add(new Field(key, oValue.toString(), storedTokenizedNoNormsField));
-        }
-
-        if (isPossibleType || isString) {
+            // value is typed as string
             String value = oValue.toString();
+            doc.add(new Field(key, value, storedTokenizedNoNormsField));
             if (value.length() > MAX_DOCVALUE_SIZE) {
                 value = value.substring(0, MAX_DOCVALUE_SIZE);
             }
-            if (isPossibleType) {
-                keyPrefix = POSSIBLE_STR_DOCVALUES_PREFIX;
-            }
             if (!isMultiValued)
-                doc.add(new SortedDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedDocValuesField(key, new BytesRef(normalize(value))));
             else
-                doc.add(new SortedSetDocValuesField(keyPrefix + key, new BytesRef(normalize(value))));
+                doc.add(new SortedSetDocValuesField(key, new BytesRef(normalize(value))));
         }
 
     }
@@ -759,14 +739,9 @@ public class IndexItem extends BasicProps {
                         throw new ParseException("Not a date", 0);
                 }
             } catch (NumberFormatException | ParseException e) {
-                if (newtypesMap.containsKey(key)) {
-                    // prev guessed type was wrong, fallback to string
-                    type = setAndGetType(key, String.class);
-                } else {
-                    // value doesn't match built-in type, store value in other field as string
-                    key += ":string";
-                    type = String.class;
-                }
+                // value doesn't match built-in/guessed type, store value in other field as string
+                key += ":string";
+                type = null;
             }
         }
 
@@ -774,7 +749,7 @@ public class IndexItem extends BasicProps {
             type = setAndGetType(key, String.class);
         }
 
-        addExtraAttributeToDoc(doc, key, oValue, newtypesMap.containsKey(key), isMultiValued, timeEventSet);
+        addExtraAttributeToDoc(doc, key, oValue, isMultiValued, timeEventSet);
     }
 
     private static Class<?> setAndGetType(String key, Class<?> type) {
@@ -934,45 +909,51 @@ public class IndexItem extends BasicProps {
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
                 File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
-                evidence.setFile(localFile);
-                hasFile = true;
-
-            } else {
-                value = doc.get(IndexItem.SLEUTHID);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setSleuthId(Integer.valueOf(value));
-                    if (iCase.getSleuthCase() != null) {
-                        evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                    }
+                if (!iCase.isReport()) {
+                    localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 }
-
-                value = doc.get(IndexItem.ID_IN_SOURCE);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setIdInDataSource(value.trim());
+                if (localFile.exists()) {
+                    evidence.setFile(localFile);
+                    hasFile = true;
                 }
-                if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                    if (sisf == null) {
-                        String className = doc.get(IndexItem.SOURCE_DECODER);
-                        Class<?> clazz = Class.forName(className);
-                        try {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
-                            sisf = c.newInstance(absPath);
+            }
 
-                        } catch (NoSuchMethodException e) {
-                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                            sisf = c.newInstance(URI.create(sourcePath));
-                        }
+            value = doc.get(IndexItem.SLEUTHID);
+            if (value != null && !value.isEmpty()) {
+                evidence.setSleuthId(Integer.valueOf(value));
+                if (iCase.getSleuthCase() != null) {
+                    evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
+                }
+            }
+
+            value = doc.get(IndexItem.ID_IN_SOURCE);
+            if (value != null && !value.isEmpty()) {
+                evidence.setIdInDataSource(value.trim());
+            }
+            if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                if (sisf == null) {
+                    String className = doc.get(IndexItem.SOURCE_DECODER);
+                    Class<?> clazz = Class.forName(className);
+                    try {
+                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                        Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
+                        sisf = c.newInstance(absPath);
                         if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            checkIfExistsAndAsk(sisf, outputBase);
+                            IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                         }
-                        inputStreamFactories.put(sourcePath, sisf);
+
+                    } catch (NoSuchMethodException e) {
+                        Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                        sisf = c.newInstance(URI.create(sourcePath));
                     }
-                    evidence.setInputStreamFactory(sisf);
+                    if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
+                        checkIfExistsAndAsk(sisf, outputBase);
+                    }
+                    inputStreamFactories.put(sourcePath, sisf);
                 }
+                evidence.setInputStreamFactory(sisf);
             }
 
             value = doc.get(IndexItem.TIMEOUT);
@@ -1099,7 +1080,8 @@ public class IndexItem extends BasicProps {
 
     }
 
-    private static void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir) throws IOException {
+    public static synchronized void checkIfExistsAndAsk(SeekableInputStreamFactory sisf, File caseModuleDir)
+            throws IOException {
         Path path = Paths.get(sisf.getDataSourceURI());
         if (path != null && !Files.exists(path)) {
             Path newPath = loadDataSourcePath(caseModuleDir, path);
@@ -1141,16 +1123,26 @@ public class IndexItem extends BasicProps {
         return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
     }
 
-    private static File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir)
-            throws IOException {
-        if (evidence.isSubItem())
+    public static synchronized File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir) throws IOException {
+        if (localFile.exists()) {
             return localFile;
-        Path path = localFile.toPath();
-        Path pathSuffix = Paths.get(evidence.getPath());
-        if (pathSuffix.getNameCount() > 1)
-            pathSuffix = pathSuffix.subpath(1, pathSuffix.getNameCount());
-        if (path.endsWith(pathSuffix)) {
-            String evidenceFolderStr = path.toString().substring(0, path.toString().lastIndexOf(pathSuffix.toString()));
+        }
+        String localPath = localFile.getCanonicalPath();
+        String pathSuffix = "";
+        boolean found = false;
+        int tries = 0;
+        do {
+            String origPath = ++tries == 1 ? evidence.getPath() : Util.getParentPath(evidence);
+            origPath = origPath.replace('\\', File.separatorChar).replace('/', File.separatorChar);
+            int idx = origPath.indexOf(File.separatorChar, 1);
+            if (idx != -1) {
+                pathSuffix = origPath.substring(idx + 1);
+            }
+            found = localPath.endsWith(pathSuffix);
+        } while (!found && tries < 2);
+
+        if (found) {
+            String evidenceFolderStr = localPath.substring(0, localPath.lastIndexOf(pathSuffix));
             File evidenceFolder = new File(evidenceFolderStr);
             File mappedFolder = localEvidenceMap.get(evidenceFolder);
             if (mappedFolder == null) {
@@ -1170,7 +1162,7 @@ public class IndexItem extends BasicProps {
                 }
                 localEvidenceMap.put(evidenceFolder, mappedFolder);
             }
-            localFile = new File(mappedFolder, pathSuffix.toString());
+            localFile = new File(mappedFolder, pathSuffix);
         }
         return localFile;
     }

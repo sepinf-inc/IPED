@@ -122,4 +122,28 @@ public class WAContact {
     public void setAvatarPath(String avatarPath) {
         this.avatarPath = avatarPath;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        // If the object is compared with itself then return true 
+        if (o == this) {
+            return true;
+        }
+ 
+        if (o == null || !(o instanceof WAContact)) {
+            return false;
+        }
+         
+        WAContact c = (WAContact) o;
+         
+
+        return this.getFullId().equals(c.getFullId());
+
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getFullId().hashCode();
+    }
+
 }

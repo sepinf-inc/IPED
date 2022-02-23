@@ -11,37 +11,41 @@ import org.apache.lucene.index.SortedDocValues;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
+import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import iped3.IItemId;
 import iped3.search.IMultiSearchResult;
 
 public class DynamicDuplicateFilter {
 
-    private static SortedDocValues docValues;
-
     private static IPEDMultiSource ipedCase;
 
     private BitSet ordSet = new BitSet(1 << 23);
 
-    public DynamicDuplicateFilter(IPEDMultiSource ipedSource) throws IOException {
+    public DynamicDuplicateFilter(IPEDMultiSource ipedSource) {
         if (ipedCase != ipedSource) {
             ipedCase = ipedSource;
-            LeafReader reader = ipedCase.getLeafReader();
-            docValues = reader.getSortedDocValues(IndexItem.HASH);
         }
     }
 
-    public MultiSearchResult filter(IMultiSearchResult result) {
+    public MultiSearchResult filter(IMultiSearchResult result) throws IOException {
+
+        LeafReader reader = ipedCase.getLeafReader();
+        SortedDocValues docValues = reader.getSortedDocValues(IndexItem.HASH);
 
         ArrayList<IItemId> filteredItems = new ArrayList<IItemId>();
         ArrayList<Float> scores = new ArrayList<Float>();
         int i = 0;
         boolean filterOrdZero = false;
-        if (!docValues.lookupOrd(0).utf8ToString().isEmpty()) {
-            filterOrdZero = true;
+        try {
+            if (!docValues.lookupOrd(0).utf8ToString().isEmpty()) {
+                filterOrdZero = true;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         for (IItemId item : result.getIterator()) {
             int docId = ipedCase.getLuceneId(item);
-            int ord = docValues.getOrd(docId);
+            int ord = DocValuesUtil.getOrd(docValues, docId);
             if (ord < 0 || !ordSet.get(ord)) {
                 filteredItems.add(item);
                 scores.add(result.getScore(i));

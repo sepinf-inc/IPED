@@ -128,8 +128,6 @@ public class Item implements ISleuthKitItem {
 
     private int id = -1;
 
-    private Integer ftkID;
-
     private Integer parentId;
 
     private Integer subitemId;
@@ -186,25 +184,11 @@ public class Item implements ISleuthKitItem {
 
     private boolean timeOut = false;
 
-    private boolean duplicate = false;
-
     private boolean isSubItem = false, hasChildren = false;
 
     private boolean isDir = false, isRoot = false, sumVolume = true;
 
-    private boolean toIgnore = false, addToCase = true, isToExtract = false, deleteFile = false;
-
-    /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    public void setDeleteFile(boolean deleteFile) {
-        this.deleteFile = deleteFile;
-    }
+    private boolean toIgnore = false, addToCase = true, isToExtract = false, allowGetId = false;
 
     private boolean carved = false;
 
@@ -227,8 +211,6 @@ public class Item implements ISleuthKitItem {
     private Integer sleuthId;
 
     private String idInDataSource;
-
-    private String parentIdInDataSource;
 
     private TikaInputStream tis;
 
@@ -296,25 +278,6 @@ public class Item implements ISleuthKitItem {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (isSubItem && (toIgnore || !addToCase || deleteFile)) {
-            try {
-                if (file != null && file.exists() && isNotHashId(file.getName()) && !file.delete()) {
-                    throw new IOException("Fail to delete file " + file.getAbsolutePath());
-                }
-                if (inputStreamFactory != null && idInDataSource != null && isNotHashId(idInDataSource)) {
-                    inputStreamFactory.deleteItemInDataSource(idInDataSource);
-                }
-            } catch (IOException e) {
-                LOGGER.warn("Error deleting ignored content of " + getPath(), e); //$NON-NLS-1$
-            }
-        }
-    }
-
-    private boolean isNotHashId(String id) {
-        int idx = id.indexOf('.');
-        if (idx != -1)
-            id = id.substring(0, idx);
-        return id.length() != 32 && id.length() != 40 && id.length() != 64;
     }
 
     /**
@@ -449,14 +412,6 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    public Integer getFtkID() {
-        return ftkID;
-    }
-
-    /**
-     *
      * @return o hash do arquivo, caso existente.
      */
     public String getHash() {
@@ -479,6 +434,15 @@ public class Item implements ISleuthKitItem {
      */
     public int getId() {
         if (id == -1) {
+            if (!allowGetId) {
+                /**
+                 * id may change when resuming processing. Currently this could happen when
+                 * adding items to processing queue. So id can just be read after its value is
+                 * set to the previous processing id or if a previous id is not found.
+                 */
+                Exception e = new Exception("Cannot use ID before adding item to queue");
+                LOGGER.error("", e);
+            }
             synchronized (Counter.class) {
                 if (id == -1) {
                     id = getNextId();
@@ -486,6 +450,15 @@ public class Item implements ISleuthKitItem {
             }
         }
         return id;
+    }
+
+    /**
+     * Set to true if ID could be retrieved after being set to its final value.
+     * 
+     * @param allowGetId
+     */
+    public void setAllowGetId(boolean allowGetId) {
+        this.allowGetId = allowGetId;
     }
 
     /**
@@ -527,8 +500,7 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId() {
         return parentId;
@@ -824,13 +796,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate() {
-        return duplicate;
-    }
-
-    /**
      * @return true se o item foi submetido a parsing
      */
     public boolean isParsed() {
@@ -965,16 +930,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    public void setDuplicate(boolean duplicate) {
-        this.duplicate = duplicate;
-    }
-
-    /**
      * Define o caminho para o arquivo do item, no caso de processamento de pastas e
      * para subitens extraídos.
      *
@@ -1026,16 +981,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setFileOffset(long fileOffset) {
         this.startOffset = fileOffset;
-    }
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    public void setFtkID(Integer ftkID) {
-        this.ftkID = ftkID;
     }
 
     /**
@@ -1136,7 +1081,12 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setParentIdInDataSource(parent.getIdInDataSource());
+        String parenttrackID = (String) parent.getExtraAttribute(IndexItem.TRACK_ID);
+        if (parenttrackID == null) {
+            throw new RuntimeException(IndexItem.TRACK_ID
+                    + " cannot be null. It is populated after enqueuing the item: " + parent.getPath());
+        }
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parenttrackID);
     }
 
     public void setParent(ParentInfo parent) {
@@ -1145,7 +1095,7 @@ public class Item implements ISleuthKitItem {
         this.addParentIds(parent.getParentIds());
         this.addParentId(parentId);
         this.setDataSource(parent.getDataSource());
-        this.setExtraAttribute(IndexItem.PARENT_PERSISTENT_ID, parent.getPersistentId());
+        this.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parent.getTrackId());
     }
 
     /**
@@ -1374,14 +1324,6 @@ public class Item implements ISleuthKitItem {
 
     public void setIdInDataSource(String idInDataSource) {
         this.idInDataSource = idInDataSource;
-    }
-
-    public void setParentIdInDataSource(String string) {
-        this.parentIdInDataSource = string;
-    }
-
-    public String getParentIdInDataSource() {
-        return this.parentIdInDataSource;
     }
 
     @Override

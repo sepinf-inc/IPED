@@ -12,8 +12,6 @@ public interface CmdLineArgs {
 
     File getOutputDir();
 
-    File getReportDir();
-
     File getPalavrasChave();
 
     List<String> getOcr();

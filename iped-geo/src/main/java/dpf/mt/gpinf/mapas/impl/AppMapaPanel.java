@@ -1,6 +1,7 @@
 package dpf.mt.gpinf.mapas.impl;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -9,23 +10,31 @@ import java.awt.event.MouseListener;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.function.Consumer;
 
+import javax.swing.BorderFactory;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
+import dpf.mt.gpinf.indexer.search.kml.GetResultsKMLWorker;
 import dpf.mt.gpinf.indexer.search.kml.KMLResult;
 import dpf.mt.gpinf.mapas.AbstractMapaCanvas;
+import dpf.mt.gpinf.mapas.util.Messages;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItemId;
 import iped3.desktop.GUIProvider;
 import iped3.search.IMultiSearchResultProvider;
+import iped3.util.BasicProps;
 
 /* 
  * Classe que controla a integração da classe App com a classe MapaCanvas
  */
 
-public class AppMapaPanel extends JPanel {
+public class AppMapaPanel extends JPanel implements Consumer<KMLResult> {
 
     IMultiSearchResultProvider resultsProvider;
     GUIProvider guiProvider;
@@ -41,6 +50,8 @@ public class AppMapaPanel extends JPanel {
 
     String tilesSourceURL = null, savedTilesSourceURL = null;
     private MapaPanelConfig mpConfig;
+    
+    private JProgressBar gpsProgressBar;
 
     public AppMapaPanel(IMultiSearchResultProvider resultsProvider, GUIProvider guiProvider) {
         this.resultsProvider = resultsProvider;
@@ -51,6 +62,11 @@ public class AppMapaPanel extends JPanel {
     }
 
     public void init() {
+        gpsProgressBar = new JProgressBar();
+        gpsProgressBar.setOpaque(true);
+        gpsProgressBar.setStringPainted(true);
+        gpsProgressBar.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(Color.gray, 1), BorderFactory.createEmptyBorder(4, 0, 4, 0)));
+        
         mcf = new MapaCanvasFactory(this);
 
         this.addMouseListener(new MouseListener() {
@@ -131,6 +147,8 @@ public class AppMapaPanel extends JPanel {
 
             browserCanvas = mcf.createMapCanvas(url);
 
+            gpsProgressBar.setVisible(false);
+            this.add(gpsProgressBar, BorderLayout.NORTH);
             this.add(browserCanvas.getContainer(), BorderLayout.CENTER);
         }
     }
@@ -154,19 +172,29 @@ public class AppMapaPanel extends JPanel {
         }
 
         if (mapaDesatualizado && (resultsProvider.getResults().getLength() > 0)) {
-            String kml = ""; //$NON-NLS-1$
-            try {
-                kmlResult = new KMLResult(resultsProvider, guiProvider);
-                kml = kmlResult.getResultsKML();
-                browserCanvas.setKML(kml);
-            } catch (IOException e1) {
-                e1.printStackTrace();
-            } finally {
-                mapaDesatualizado = false;
-            }
+            gpsProgressBar.setString(Messages.getString("KMLResult.LoadingGPSData") + "..."); //$NON-NLS-1$ //$NON-NLS-2$
+            gpsProgressBar.setValue(0);
+            gpsProgressBar.setVisible(true);
+
+            String[] cols = new String[] { BasicProps.ID };
+            GetResultsKMLWorker kmlWorker = new GetResultsKMLWorker(resultsProvider, cols, gpsProgressBar, this);
+            kmlWorker.execute();
+
         } else {
             browserCanvas.redesenha();
         }
+    }
+
+    @Override
+    public void accept(KMLResult kmlResult) {
+        if (kmlResult.getItemsWithGPS() == 0) {
+            gpsProgressBar.setValue(0);
+            gpsProgressBar.setString(Messages.getString("KMLResult.NoGPSItem"));
+        } else {
+            gpsProgressBar.setVisible(false);
+        }
+        browserCanvas.setKML(kmlResult.getKML());
+        mapaDesatualizado = false;
     }
 
     public void redesenha() {
@@ -202,4 +230,5 @@ public class AppMapaPanel extends JPanel {
     public IMultiSearchResultProvider getResultsProvider() {
         return resultsProvider;
     }
+
 }

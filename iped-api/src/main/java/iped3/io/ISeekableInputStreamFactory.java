@@ -9,8 +9,4 @@ public interface ISeekableInputStreamFactory {
 
     public URI getDataSourceURI();
 
-    public default void deleteItemInDataSource(String identifier) throws IOException {
-        // do nothing by default
-    }
-
 }

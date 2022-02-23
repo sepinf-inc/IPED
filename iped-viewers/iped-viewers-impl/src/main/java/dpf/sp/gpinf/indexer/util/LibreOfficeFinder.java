@@ -26,7 +26,7 @@ public class LibreOfficeFinder {
 
     private static File getWinLOTarget() {
         String userHome = System.getProperty("user.home"); //$NON-NLS-1$
-        File path = new File(userHome + "/.indexador/" + targetName); //$NON-NLS-1$
+        File path = new File(userHome + "/.iped/" + targetName); //$NON-NLS-1$
         if (!path.exists()) {
             path = new File(userHome + "/AppData/Local/iped/" + targetName); //$NON-NLS-1$ //$NON-NLS-2$
         }

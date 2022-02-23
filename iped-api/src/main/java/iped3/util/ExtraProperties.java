@@ -14,6 +14,8 @@ import org.apache.tika.metadata.Property;
  */
 public class ExtraProperties {
 
+    public static final String GLOBAL_ID = "globalId"; //$NON-NLS-1$
+
     public static final String TIKA_PARSER_USED = "X-Parsed-By"; //$NON-NLS-1$
 
     public static final String DATASOURCE_READER = "X-Reader"; //$NON-NLS-1$
@@ -40,6 +42,8 @@ public class ExtraProperties {
 
     public static final String PARTICIPANTS = "Participants";
 
+    public static final String GROUP_ID = "GroupID";
+
     public static final String CHAT_RECOVERED = "ChatRecovered";
 
     public static final String MESSAGE_BODY = MESSAGE_PREFIX + "Body"; //$NON-NLS-1$
@@ -60,6 +64,8 @@ public class ExtraProperties {
 
     public static final String GENERIC_META_PREFIX = "meta:"; //$NON-NLS-1$
 
+    public static final String COMMON_META_PREFIX = "common:"; //$NON-NLS-1$
+
     public static final String AUDIO_META_PREFIX = "audio:"; //$NON-NLS-1$
 
     public static final String IMAGE_META_PREFIX = "image:"; //$NON-NLS-1$
@@ -78,7 +84,7 @@ public class ExtraProperties {
 
     public static final String PARENT_VIRTUAL_ID = "parentVirtualIdentifier"; //$NON-NLS-1$
 
-    public static final String LOCATIONS = "locations"; //$NON-NLS-1$
+    public static final String LOCATIONS = COMMON_META_PREFIX + "geo:locations"; //$NON-NLS-1$
 
     public static final String URL = "url"; //$NON-NLS-1$
 

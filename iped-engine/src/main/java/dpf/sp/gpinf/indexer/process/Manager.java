@@ -46,6 +46,9 @@ import org.apache.lucene.search.MatchAllDocsQuery;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.store.Directory;
 
+import br.gov.pf.labld.graph.GraphFileWriter;
+import br.gov.pf.labld.graph.GraphService;
+import br.gov.pf.labld.graph.GraphServiceFactoryImpl;
 import br.gov.pf.labld.graph.GraphTask;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.Configuration;
@@ -53,10 +56,11 @@ import dpf.sp.gpinf.indexer.WorkerProvider;
 import dpf.sp.gpinf.indexer.analysis.AppAnalyzer;
 import dpf.sp.gpinf.indexer.config.AnalysisConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.config.FileSystemConfig;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
-import dpf.sp.gpinf.indexer.datasource.FTK3ReportReader;
 import dpf.sp.gpinf.indexer.datasource.ItemProducer;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.io.ParsingReader;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.ElasticSearchIndexTask;
@@ -80,6 +84,7 @@ import iped3.ICaseData;
 import iped3.IItem;
 import iped3.search.IItemSearcher;
 import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
 import iped3.util.BasicProps;
 
 /**
@@ -91,7 +96,7 @@ import iped3.util.BasicProps;
  * permitindo que seja estimado o progresso e término do processamento.
  *
  * O produtor obtém os itens a partir de uma fonte de dados específica
- * (relatório do FTK, diretório, imagem), inserindo-os numa fila de
+ * (relatório do UFED, diretório, imagem), inserindo-os numa fila de
  * processamento com tamanho limitado (para limitar o uso de memória).
  *
  * Os consumidores (workers) retiram os itens da fila e são responsáveis pelo
@@ -233,8 +238,16 @@ public class Manager {
         }
 
         try {
-            if (!iniciarIndexacao())
+            openIndex();
+
+            if (args.getEvidenceToRemove() != null) {
+                removeEvidence(args.getEvidenceToRemove());
                 return;
+            }
+
+            initWorkers();
+
+            initSleuthkitServers();
 
             // apenas conta o número de arquivos a indexar
             counter = new ItemProducer(this, caseData, true, sources, output);
@@ -260,6 +273,8 @@ public class Manager {
         filtrarPalavrasChave();
 
         removeEmptyTreeNodes();
+
+        ExportFileTask.deleteIgnoredItemData(caseData, output);
 
         new P2PBookmarker(caseData).createBookmarksForSharedFiles(output.getParentFile());
 
@@ -324,9 +339,13 @@ public class Manager {
         }
     }
 
-    public synchronized void initSleuthkitServers(final String dbPath) throws InterruptedException {
-        if (!initSleuthkitServers.getAndSet(true)) {
-            SleuthkitClient.initSleuthkitServers(dbPath);
+    public synchronized void initSleuthkitServers() throws InterruptedException {
+        File tskDB = SleuthkitReader.getSleuthkitDB(output);
+        FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
+        if (tskDB.exists() && fsConfig.isRobustImageReading()) {
+            if (!initSleuthkitServers.getAndSet(true)) {
+                SleuthkitClient.initSleuthkitServers(tskDB.getParent());
+            }
         }
     }
 
@@ -391,25 +410,75 @@ public class Manager {
         return conf;
     }
 
-    private void removeEvidence(String uuid) throws IOException {
+    private void removeEvidence(String evidenceName) throws Exception {
         Level CONSOLE = Level.getLevel("MSG"); //$NON-NLS-1$
-        LOGGER.log(CONSOLE,
-                "WARN: removing evidence does NOT update duplicate flag, graph and internal storage for now!");
-        LOGGER.log(CONSOLE, "Removing evidence with UUID {} from index...", uuid);
-        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, uuid));
-        int prevDocs = writer.numDocs();
+        LOGGER.log(CONSOLE, "Removing evidence '{}' from case...", evidenceName);
+
+        // query evidenceUUID and tskID
+        String evidenceUUID;
+        Integer tskID;
+        try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
+            String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
+            IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
+            SearchResult result = searcher.search();
+            if (result.getLength() == 0) {
+                Files.createFile(getFinishedFileFlag(output).toPath());
+                throw new IPEDException("Evidence name '" + evidenceName + "' not found!");
+            }
+            Item item = (Item) ipedCase.getItemByID(result.getId(0));
+            evidenceUUID = item.getDataSource().getUUID();
+            tskID = item.getSleuthId();
+        }
+
+        // remove from items from index
+        LOGGER.log(CONSOLE, "Deleting items from index...");
+        TermQuery query = new TermQuery(new Term(BasicProps.EVIDENCE_UUID, evidenceUUID));
+        int prevDocs = writer.getDocStats().numDocs;
         writer.deleteDocuments(query);
         writer.commit();
-        int deletes = prevDocs - writer.numDocs();
-        LOGGER.log(CONSOLE, "Deleted about {} raw documents from index.", deletes);
+        int deletes = prevDocs - writer.getDocStats().numDocs;
+        LOGGER.log(CONSOLE, "Deleted {} raw documents from index.", deletes);
+
+        // remove evidence from TSK DB
+        if (tskID != null) {
+            LOGGER.log(CONSOLE, "Deleting image reference from TSK DB...");
+            SleuthkitReader.deleteImageInfo(tskID, output);
+        }
+
+        // remove item data from storage or file system
+        ExportFileTask.deleteIgnoredItemData(caseData, output, true, writer);
+
         writer.close();
+
+        // removes graph connections from evidence
+        LOGGER.log(CONSOLE, "Deleting connections from graph...");
+        GraphService graphService = null;
+        try {
+            graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
+            graphService.start(new File(output, GraphTask.DB_PATH));
+            int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
+            LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
+
+        } finally {
+            if (graphService != null) {
+                graphService.stop();
+            }
+        }
+
+        // Delete relations from graph source CSV
+        LOGGER.log(CONSOLE, "Deleting connections from graph CSVs...");
+        int deletions = GraphFileWriter.removeDeletedRelationships(evidenceUUID,
+                new File(output, GraphTask.GENERATED_PATH));
+        LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
+
+        Files.createFile(getFinishedFileFlag(output).toPath());
     }
 
-    private boolean iniciarIndexacao() throws Exception {
-        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CreatingIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-        LOGGER.info("Creating index..."); //$NON-NLS-1$
+    private void openIndex() throws IOException {
+        WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.OpeningIndex")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
 
         boolean newIndex = !indexDir.exists();
+        LOGGER.info((newIndex ? "Creating" : "Opening") + " index: {}", indexDir.getAbsoluteFile());
         Directory directory = ConfiguredFSDirectory.open(indexDir);
         IndexWriterConfig config = getIndexWriterConfig();
         
@@ -428,10 +497,9 @@ public class Manager {
             loadExistingData();
         }
 
-        if (args.getEvidenceToRemove() != null) {
-            removeEvidence(args.getEvidenceToRemove());
-            return false;
-        }
+    }
+
+    private void initWorkers() throws Exception {
 
         workers = new Worker[localConfig.getNumThreads()];
         for (int k = 0; k < workers.length; k++) {
@@ -445,8 +513,6 @@ public class Manager {
         }
 
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
-
-        return true;
     }
 
     private void monitorarIndexacao() throws Exception {
@@ -535,6 +601,7 @@ public class Manager {
             public void run() {
                 try {
                     long start = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitStarted"));
                     LOGGER.info("Prepare commit started...");
                     writer.prepareCommit();
 
@@ -555,6 +622,7 @@ public class Manager {
                     writer.commit();
 
                     long end = System.currentTimeMillis() / 1000;
+                    WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Manager.CommitFinished"));
                     LOGGER.info("Commit finished in " + (end - start) + "s");
                     partialCommitsTime.addAndGet(end - start);
 
@@ -628,10 +696,6 @@ public class Manager {
 
         if (caseData.containsReport()) {
             new File(output, "data/containsReport.flag").createNewFile(); //$NON-NLS-1$
-        }
-
-        if (FTK3ReportReader.wasExecuted) {
-            new File(output, "data/containsFTKReport.flag").createNewFile(); //$NON-NLS-1$
         }
 
     }

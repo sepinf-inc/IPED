@@ -56,12 +56,11 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
 /**
- * Parser padrão do Indexador. Como o AutoDetectParser, detecta o tipo do
- * arquivo e delega o parsing para o parser apropriado. Porém aproveita o
- * CONTENT_TYPE caso informado via metadados, evitando nova detecção. Além disso
- * utiliza o RawStringParser como fallback ou no caso de alguma Exceção durante
- * o parsing padrão. Finalmente, escreve os metadados ao final (inclusive de
- * subitens).
+ * Parser padrão do IPED. Como o AutoDetectParser, detecta o tipo do arquivo e
+ * delega o parsing para o parser apropriado. Porém aproveita o CONTENT_TYPE
+ * caso informado via metadados, evitando nova detecção. Além disso utiliza o
+ * RawStringParser como fallback ou no caso de alguma Exceção durante o parsing
+ * padrão. Finalmente, escreve os metadados ao final (inclusive de subitens).
  */
 public class IndexerDefaultParser extends CompositeParser {
 

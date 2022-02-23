@@ -147,12 +147,12 @@
         <dependency>
             <groupId>dpf.ap</groupId>
             <artifactId>telegram-decoder-api</artifactId>
-            <version>1.0.2-SNAPSHOT</version>
+            <version>1.0.3-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>dpf.ap</groupId>
             <artifactId>telegram-decoder-impl</artifactId>
-            <version>1.0.5-SNAPSHOT</version>
+            <version>1.0.6-SNAPSHOT</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -165,6 +165,11 @@
             <artifactId>java-dbx</artifactId>
             <version>${java.dbx.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>github.sepinf</groupId>
+            <artifactId>png-reader</artifactId>
+            <version>jdk11+28-p1</version>
         </dependency>
     </dependencies>
     

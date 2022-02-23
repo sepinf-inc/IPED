@@ -64,7 +64,7 @@ public class FilterManager implements ActionListener, ListSelectionListener {
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".txt"; //$NON-NLS-1$
-        return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+        return new File(System.getProperty("user.home") + "/.iped/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private static class FilterComparator implements Comparator<String> {

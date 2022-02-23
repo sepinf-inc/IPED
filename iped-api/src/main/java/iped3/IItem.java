@@ -99,8 +99,6 @@ public interface IItem extends IItemBase {
 
     ISeekableInputStreamFactory getInputStreamFactory();
 
-    String getParentIdInDataSource();
-
     /**
      * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
      *         foi exportado
@@ -140,12 +138,6 @@ public interface IItem extends IItemBase {
      *         reports e processamentos de pastas.
      */
     String getFileToIndex();
-
-    /**
-     *
-     * @return o id do item no FTK3+ no caso de reports
-     */
-    Integer getFtkID();
 
     IHashValue getHashValue();
 
@@ -288,30 +280,12 @@ public interface IItem extends IItemBase {
     void setDataSource(IDataSource evidence);
 
     /**
-     * Configura deleção posterior do arquivo. Por ex, subitem que deva ser
-     * processado e incluído no relatório, porém sem ter seu conteúdo exportado (ex:
-     * gera thumb do vídeo e dps deleta o vídeo)
-     *
-     * @param deleteFile
-     *            se deve ser deletado ao não
-     */
-    void setDeleteFile(boolean deleteFile);
-
-    /**
      * Define se o item é apagado
      *
      * @param deleted
      *            se é apagado
      */
     void setDeleted(boolean deleted);
-
-    /**
-     * Define se o item é duplicado
-     *
-     * @param duplicate
-     *            se é duplicado
-     */
-    void setDuplicate(boolean duplicate);
 
     /**
      * Define o caminho para o arquivo do item, no caso de processamento de pastas e
@@ -357,14 +331,6 @@ public interface IItem extends IItemBase {
      *            offset do item
      */
     void setFileOffset(long fileOffset);
-
-    /**
-     * Define o id do FTK3+, em casos de report
-     *
-     * @param ftkID
-     *            id do FTK
-     */
-    void setFtkID(Integer ftkID);
 
     /**
      * Define se o item tem filhos, como subitens ou itens de carving
@@ -526,8 +492,6 @@ public interface IItem extends IItemBase {
     void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory);
 
     void setIdInDataSource(String string);
-
-    void setParentIdInDataSource(String string);
 
     void setThumb(byte[] thumb);
 

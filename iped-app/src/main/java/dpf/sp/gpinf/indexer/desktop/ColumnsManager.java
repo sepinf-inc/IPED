@@ -79,6 +79,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
 
     public static final String[] groupNames = { Messages.getString("ColumnsManager.Basic"),
             Messages.getString("ColumnsManager.HashDB"), Messages.getString("ColumnsManager.Advanced"), //$NON-NLS-2$ //$NON-NLS-2$
+            Messages.getString("ColumnsManager.Common"), // $NON-NLS-2$
             Messages.getString("ColumnsManager.Message"), Messages.getString("ColumnsManager.Audio"), //$NON-NLS-2$
             Messages.getString("ColumnsManager.Image"), Messages.getString("ColumnsManager.Video"), //$NON-NLS-1$
             Messages.getString("ColumnsManager.PDF"), Messages.getString("ColumnsManager.Office"), //$NON-NLS-1$ //$NON-NLS-2$
@@ -93,7 +94,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         if (locale != null && !locale.equals("pt-BR")) //$NON-NLS-1$
             name += "-" + locale; //$NON-NLS-1$
         name += ".dat"; //$NON-NLS-1$
-        return new File(System.getProperty("user.home") + "/.indexador/" + name); //$NON-NLS-1$ //$NON-NLS-2$
+        return new File(System.getProperty("user.home") + "/.iped/" + name); //$NON-NLS-1$ //$NON-NLS-2$
     }
 
     private static final String[] defaultFields = { ResultTableModel.SCORE_COL, ResultTableModel.BOOKMARK_COL,
@@ -101,7 +102,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.MODIFIED, IndexItem.ACCESSED, IndexItem.CHANGED, IndexItem.TIMESTAMP, IndexItem.TIME_EVENT,
             IndexItem.HASH, IndexItem.PATH };
 
-    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE, IndexItem.DUPLICATE,
+    private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
             IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
             IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
@@ -343,68 +344,6 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         }.start();
     }
 
-    private Set<String> getUsedCols2(ProgressDialog progress) {
-
-        progress.setMaximum(indexFields.length);
-
-        Collator collator = Collator.getInstance();
-        collator.setStrength(Collator.PRIMARY);
-        TreeSet<String> dinamicFields = new TreeSet<>(collator);
-
-        int[] docs = new int[App.get().ipedResult.getLength()];
-        int i = 0;
-        for (IItemId item : App.get().ipedResult.getIterator())
-            docs[i++] = App.get().appCase.getLuceneId(item);
-        Arrays.sort(docs);
-
-        int[] docBases = new int[App.get().appCase.getReader().leaves().size() + 1];
-        for (i = 0; i < docBases.length - 1; i++)
-            docBases[i] = App.get().appCase.getReader().leaves().get(i).docBase;
-        docBases[docBases.length - 1] = Integer.MAX_VALUE;
-
-        int p = 0;
-        for (String field : indexFields) {
-            if (progress.isCanceled())
-                return null;
-            try {
-                int baseOrd = 0;
-                int MAX_ITEMS_TO_CHECK = 50;
-                int interval = docs.length / MAX_ITEMS_TO_CHECK;
-                if (interval == 0)
-                    interval = 1;
-                LeafReader reader = null;
-                Bits bits0 = null, bits1 = null, bits2 = null;
-                for (i = 0; i < docs.length; i += interval) {
-                    while (docs[i] >= docBases[baseOrd + 1]) {
-                        baseOrd++;
-                        reader = null;
-                    }
-                    if (reader == null) {
-                        reader = App.get().appCase.getReader().leaves().get(baseOrd).reader();
-                        bits0 = reader.getDocsWithField(field);
-                        bits1 = reader.getDocsWithField(IndexItem.POSSIBLE_NUM_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                        bits2 = reader.getDocsWithField(IndexItem.POSSIBLE_STR_DOCVALUES_PREFIX + field); // $NON-NLS-1$
-                    }
-                    int doc = docs[i] - docBases[baseOrd];
-                    if ((bits2 != null && bits2.get(doc)) || (bits1 != null && bits1.get(doc))
-                            || (bits0 != null && bits0.get(doc))) {
-                        dinamicFields.add(field);
-                        break;
-                    }
-                }
-                // t1 += System.currentTimeMillis() - tb;
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            progress.setProgress(++p);
-        }
-        // System.out.println("t0 = " + t0);
-        // System.out.println("t1 = " + t1);
-
-        return dinamicFields;
-    }
-
     private Set<String> getUsedCols(ProgressDialog progress) {
 
         Collator collator = Collator.getInstance();
@@ -591,6 +530,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> ufedFields = new ArrayList<String>();
         ArrayList<String> hashDbFields = new ArrayList<String>();
         ArrayList<String> emailFields = new ArrayList<String>();
+        ArrayList<String> commonFields = new ArrayList<String>();
 
         for (String f : allExtraAttrs) {
             if (f.startsWith(RegexTask.REGEX_PREFIX))
@@ -623,10 +563,13 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
                 ufedFields.add(f);
             else if (f.startsWith(Message.MESSAGE_PREFIX) || ExtraProperties.EMAIL_BASIC_PROPS.contains(f))
                 emailFields.add(f);
+            else if (f.startsWith(ExtraProperties.COMMON_META_PREFIX))
+                commonFields.add(f);
         }
 
         String[][] customGroups = new String[][] { defaultFields.clone(), hashDbFields.toArray(new String[0]),
-                extraAttrs.toArray(new String[0]), emailFields.toArray(new String[0]),
+                extraAttrs.toArray(new String[0]), commonFields.toArray(new String[0]),
+                emailFields.toArray(new String[0]),
                 audioFields.toArray(new String[0]), imageFields.toArray(new String[0]),
                 videoFields.toArray(new String[0]), pdfFields.toArray(new String[0]),
                 officeFields.toArray(new String[0]), htmlFields.toArray(new String[0]),

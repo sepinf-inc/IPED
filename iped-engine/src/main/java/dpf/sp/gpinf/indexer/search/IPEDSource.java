@@ -1,7 +1,7 @@
 /*
  * Copyright 2012-2014, Luis Filipe da Cruz Nassif
  * 
- * This file is part of Indexador e Processador de EvidÃƒÂªncias Digitais (IPED).
+ * This file is part of Indexador e Processador de Evidências Digitais (IPED).
  *
  * IPED is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -46,6 +46,7 @@ import org.apache.lucene.index.SortedDocValues;
 import org.apache.lucene.index.Terms;
 import org.apache.lucene.index.TermsEnum;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.DocIdSetIterator;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.store.Directory;
 import org.sleuthkit.datamodel.SleuthkitCase;
@@ -83,7 +84,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     private static Logger LOGGER = LoggerFactory.getLogger(IPEDSource.class);
 
     public static final String INDEX_DIR = "index"; //$NON-NLS-1$
-    public static final String MODULE_DIR = "indexador"; //$NON-NLS-1$
+    public static final String MODULE_DIR = "iped"; //$NON-NLS-1$
     public static final String SLEUTH_DB = "sleuth.db"; //$NON-NLS-1$
     public static final String PREV_TEMP_INFO_PATH = "data/prevTempDir.txt"; //$NON-NLS-1$
 
@@ -129,7 +130,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     Set<String> evidenceUUIDs = new HashSet<String>();
 
-    boolean isFTKReport = false, isReport = false;
+    boolean isReport = false;
 
     public static File getTempDirInfoFile(File moduleDir) {
         return new File(moduleDir, IPEDSource.PREV_TEMP_INFO_PATH);
@@ -173,7 +174,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
         try {
             Configuration.getInstance().loadConfigurables(moduleDir.getAbsolutePath(), true);
 
-            isFTKReport = new File(moduleDir, "data/containsFTKReport.flag").exists(); //$NON-NLS-1$
             isReport = new File(moduleDir, "data/containsReport.flag").exists(); //$NON-NLS-1$
 
             File sleuthFile = new File(casePath, SLEUTH_DB);
@@ -249,9 +249,14 @@ public class IPEDSource implements Closeable, IIPEDSource {
         ids = new int[reader.maxDoc()];
 
         NumericDocValues ndv = atomicReader.getNumericDocValues(IndexItem.ID);
+        if (ndv == null) {
+            // no items in index
+            return;
+        }
 
-        for (int i = 0; i < reader.maxDoc(); i++) {
-            ids[i] = (int) ndv.get(i);
+        int i;
+        while ((i = ndv.nextDoc()) != DocIdSetIterator.NO_MORE_DOCS) {
+            ids[i] = (int) ndv.longValue();
             if (ids[i] > lastId)
                 lastId = ids[i];
         }
@@ -310,10 +315,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     }
 
     private void loadLeafCategories() throws IOException {
-        Fields fields = atomicReader.fields();
-        if (fields == null)
-            return;
-        Terms terms = fields.terms(IndexItem.CATEGORY);
+        Terms terms = atomicReader.terms(IndexItem.CATEGORY);
         if (terms == null)
             return;
         TermsEnum termsEnum = terms.iterator();
@@ -327,9 +329,30 @@ public class IPEDSource implements Closeable, IIPEDSource {
         CategoryConfig config = ConfigurationManager.get().findObject(CategoryConfig.class);
         Category root = config.getConfiguration().clone();
         // root.setName(rootName);
-        filterEmptyCategories(root, getLeafCategories(root));
+        ArrayList<Category> leafs = getLeafCategories(root);
+        leafs.stream().forEach(l -> checkAndAddMissingCategory(root, l));
+        filterEmptyCategories(root, leafs);
         countNumItems(root);
         categoryTree = root;
+    }
+
+    private boolean checkAndAddMissingCategory(Category root, Category leaf) {
+        boolean found = false;
+        if (leaf.getName().equals(root.getName())) {
+            found = true;
+        } else {
+            for (Category child : root.getChildren()) {
+                if (checkAndAddMissingCategory(child, leaf)) {
+                    found = true;
+                    break;
+                }
+            }
+        }
+        if (!found && root.getParent() == null) {
+            leaf.setParent(root);
+            root.getChildren().add(leaf);
+        }
+        return found;
     }
 
     private ArrayList<Category> getLeafCategories(Category root) {
@@ -697,10 +720,6 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     public int getLastId() {
         return lastId;
-    }
-
-    public boolean isFTKReport() {
-        return isFTKReport;
     }
 
     public boolean isReport() {

@@ -77,12 +77,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public boolean isDuplicate() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
             public boolean isDir() {
                 // TODO Auto-generated method stub
                 return false;
@@ -317,12 +311,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setParentIdInDataSource(String string) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setParentId(Integer parentId) {
                 // TODO Auto-generated method stub
 
@@ -413,12 +401,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setFtkID(Integer ftkID) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setFileOffset(long fileOffset) {
                 // TODO Auto-generated method stub
 
@@ -449,19 +431,7 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setDuplicate(boolean duplicate) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setDeleted(boolean deleted) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void setDeleteFile(boolean deleteFile) {
                 // TODO Auto-generated method stub
 
             }
@@ -611,12 +581,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public String getParentIdInDataSource() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public List<String> getLabels() {
                 // TODO Auto-generated method stub
                 return null;
@@ -636,12 +600,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public IHashValue getHashValue() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Integer getFtkID() {
                 // TODO Auto-generated method stub
                 return null;
             }
@@ -777,12 +735,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public boolean isRoot() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isDuplicate() {
                 // TODO Auto-generated method stub
                 return false;
             }

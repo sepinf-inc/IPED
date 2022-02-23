@@ -96,8 +96,6 @@ public interface CaseItem {
 
     boolean isSubItem();
 
-    boolean isDuplicate();
-
     boolean hasExtractedText();
 
     boolean isEncrypted();
