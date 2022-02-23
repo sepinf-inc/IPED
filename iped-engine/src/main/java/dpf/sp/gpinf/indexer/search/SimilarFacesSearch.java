@@ -78,15 +78,30 @@ public class SimilarFacesSearch {
         HashMap<Integer, Float> topDocsMap = new HashMap<>();
         FixedBitSet bits = new FixedBitSet(leafReader.maxDoc());
         bits.set(0, bits.length());
+        int faceNumber = 0;
         loop: while (true) {
-            TopDocs topDocs = leafReader.searchNearestVectors(FACE_FEATURES, refSimilarityFeatures, KNN_BATCH, bits);
+            String field = faceNumber == 0 ? FACE_FEATURES : FACE_FEATURES + faceNumber;
+            if (leafReader.getFieldInfos().fieldInfo(field) == null) {
+                break;
+            }
+            TopDocs topDocs = leafReader.searchNearestVectors(field, refSimilarityFeatures, KNN_BATCH, bits);
+            if (topDocs.scoreDocs.length == 0) {
+                faceNumber++;
+                bits.set(0, bits.length());
+                continue;
+            }
             for (ScoreDoc doc : topDocs.scoreDocs) {
                 float finalScore = convertLuceneScoreToFinalScore(doc.score);
                 if (finalScore >= minimumScore) {
-                    topDocsMap.put(doc.doc, finalScore);
+                    Float otherFaceScore = topDocsMap.get(doc.doc);
+                    if (otherFaceScore == null || otherFaceScore < finalScore) {
+                        topDocsMap.put(doc.doc, finalScore);
+                    }
                     bits.clear(doc.doc);
                 } else {
-                    break loop;
+                    faceNumber++;
+                    bits.set(0, bits.length());
+                    continue loop;
                 }
             }
         }
