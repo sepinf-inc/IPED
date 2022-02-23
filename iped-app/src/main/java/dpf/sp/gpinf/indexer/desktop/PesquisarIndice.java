@@ -223,11 +223,13 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 if (App.get().similarImagesQueryRefItem != null) {
                     new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
                     result = ImageSimilarityLowScoreFilter.filter(result);
+                    numFilters++;
                 }
 
                 if (App.get().similarFacesRefItem != null) {
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
+                    numFilters++;
                 }
 
                 if (App.get().timelineListener.isTimelineViewEnabled()) {
