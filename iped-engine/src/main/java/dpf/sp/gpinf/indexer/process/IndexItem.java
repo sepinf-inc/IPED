@@ -654,7 +654,8 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
-            byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
+            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+            byte[] byteArray = convFloatArrayToByteArray(floatArray);
             int suffix = 0;
             // KnnVectorField is not multivalued, must use other key if it exists
             String knnKey = key;
@@ -663,7 +664,7 @@ public class IndexItem extends BasicProps {
             }
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
-            doc.add(new KnnVectorField(knnKey, convNDArrayToFloatArray((NDArray) oValue)));
+            doc.add(new KnnVectorField(knnKey, floatArray));
 
         } else {
             // value is typed as string
@@ -680,11 +681,10 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static final byte[] convNDArrayToByteArray(NDArray nd) {
-        double[] array = (double[]) nd.getData();
-        ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
-        for (double value : array) {
-            buffer.putDouble(value);
+    public static final byte[] convFloatArrayToByteArray(float[] array) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 * array.length);
+        for (float value : array) {
+            buffer.putFloat(value);
         }
         return buffer.array();
     }
