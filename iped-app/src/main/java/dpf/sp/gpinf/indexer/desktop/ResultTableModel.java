@@ -37,6 +37,7 @@ import javax.swing.table.TableColumn;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
@@ -274,6 +275,16 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
             
+            if (values.length == 0) {
+                BytesRef[] bytes = doc.getBinaryValues(field);
+                if (bytes.length > 0) {
+                    values = new String[bytes.length];
+                    for (int i = 0; i < bytes.length; i++) {
+                        values[i] = bytes[i].toString();
+                    }
+                }
+            }
+
             if (LocalizedProperties.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
                 for (int i = 0; i < values.length; i++) {
                     values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
