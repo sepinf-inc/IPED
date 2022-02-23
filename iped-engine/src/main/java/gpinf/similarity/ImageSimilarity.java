@@ -3,30 +3,24 @@ package gpinf.similarity;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.image.DataBufferByte;
 import java.awt.image.DataBufferInt;
 import java.util.Arrays;
 
 public class ImageSimilarity {
     public static final int maxDim = 160;
 
-    private static final int numFeatures = 1044;
+    private static final int numFeatures = 1024;
     private static final int maxPixels = maxDim * maxDim;
     private static final int trimTolerance = 16;
     private static final short[] sqrt = new short[1 << 20];
     private static final double power = 0.3;
     private final int[][] hist = new int[2][512];
-    private final int[][] histEdge = new int[2][8];
     private final int[] pixels = new int[maxPixels];
-    private final byte[] gray = new byte[maxPixels];
-    private final int[] edges = new int[maxPixels];
-    private final int[][] channelCount = new int[4][256];
+    private final int[][] channelCount = new int[3][256];
     private final int[] cc0 = channelCount[0];
     private final int[] cc1 = channelCount[1];
     private final int[] cc2 = channelCount[2];
-    private final int[] cc3 = channelCount[3];
     private final BufferedImage auxColorImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_INT_BGR);
-    private final BufferedImage auxGrayImg = new BufferedImage(maxDim, maxDim, BufferedImage.TYPE_BYTE_GRAY);
     private int w, h;
 
     static {
@@ -49,12 +43,10 @@ public class ImageSimilarity {
         trimBorders();
         if (w <= 2 || h <= 2)
             return null;
-        calcEdges();
         for (int i = 0; i < 2; i++) {
             Arrays.fill(hist[i], 0);
-            Arrays.fill(histEdge[i], 0);
         }
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 3; i++) {
             Arrays.fill(channelCount[i], 0);
         }
         int cut = w * h * 63 / 64;
@@ -71,7 +63,6 @@ public class ImageSimilarity {
                 cc0[bb]++;
                 cc1[gg]++;
                 cc2[rr]++;
-                cc3[gray[off] & 255]++;
                 bb >>>= 5;
                 rr >>>= 5;
                 gg >>>= 5;
@@ -87,38 +78,14 @@ public class ImageSimilarity {
                         }
                     }
                 }
-                int ee = edges[off] >>> 6;
-                hr = histEdge[reg];
-                for (int i = Math.max(0, ee - 1); i < 8 && i <= ee + 1; i++) {
-                    hr[i] += 2 - Math.abs(i - ee);
-                }
             }
         }
         byte[] features = new byte[numFeatures];
         int total = (w - 2) * (h - 2);
-        for (int i = 0; i < 4; i++) {
-            int[] cci = channelCount[i];
-            int sum = 0;
-            for (int j = 0; j < 256; j++) {
-                if (((sum += cci[j]) << 1) >= total) {
-                    features[i] = (byte) (j - 128);
-                    break;
-                }
-            }
-        }
-        int idx = 4;
+        int idx = 0;
         double m = 64 / Math.pow(total * 4, power);
         for (int i = 0; i < hist.length; i++) {
             int[] hi = hist[i];
-            for (int j = 0; j < hi.length; j++, idx++) {
-                int v = hi[j];
-                if (v > 0)
-                    features[idx] = range(Math.pow(v, power) * m);
-            }
-        }
-        m = 64 / Math.pow(total, power);
-        for (int i = 0; i < histEdge.length; i++) {
-            int[] hi = histEdge[i];
             for (int j = 0; j < hi.length; j++, idx++) {
                 int v = hi[j];
                 if (v > 0)
@@ -139,9 +106,7 @@ public class ImageSimilarity {
 
     private void getPixels(BufferedImage img) {
         Graphics2D gColor = auxColorImg.createGraphics();
-        Graphics2D gGray = auxGrayImg.createGraphics();
         gColor.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
-        gGray.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
         if (w > maxDim || h > maxDim) {
             if (w > h) {
                 h = h * maxDim / w;
@@ -151,23 +116,18 @@ public class ImageSimilarity {
                 h = maxDim;
             }
             gColor.drawImage(img, 0, 0, w, h, null);
-            gGray.drawImage(img, 0, 0, w, h, null);
         } else {
             gColor.drawImage(img, 0, 0, null);
-            gGray.drawImage(img, 0, 0, null);
         }
         gColor.dispose();
         int[] dataColor = ((DataBufferInt) auxColorImg.getRaster().getDataBuffer()).getData();
-        byte[] dataGray = ((DataBufferByte) auxGrayImg.getRaster().getDataBuffer()).getData();
         if (w == maxDim) {
             System.arraycopy(dataColor, 0, pixels, 0, w * h);
-            System.arraycopy(dataGray, 0, gray, 0, w * h);
         } else {
             int y0 = 0;
             int y1 = 0;
             for (int y = 0; y < h; y++, y0 += maxDim, y1 += w) {
                 System.arraycopy(dataColor, y0, pixels, y1, w);
-                System.arraycopy(dataGray, y0, gray, y1, w);
             }
         }
     }
@@ -256,7 +216,6 @@ public class ImageSimilarity {
                 for (int x = x0; x < x1; x++) {
                     int off = y * w + x;
                     pixels[pos] = pixels[off];
-                    gray[pos] = gray[off];
                     pos++;
                 }
             }
@@ -265,37 +224,9 @@ public class ImageSimilarity {
         }
     }
 
-    private void calcEdges() {
-        for (int y = 1; y < h - 1; y++) {
-            int off = y * w + 1;
-            int p1 = gray[off - 1 - w] & 255;
-            int p2 = gray[off - 1] & 255;
-            int p3 = gray[off - 1 + w] & 255;
-            int p4 = gray[off - w] & 255;
-            int p5 = gray[off] & 255;
-            int p6 = gray[off + w] & 255;
-            for (int x = 1; x < w - 1; x++, off++) {
-                int p7 = gray[off + 1 - w] & 255;
-                int p8 = gray[off + 1] & 255;
-                int p9 = gray[off + 1 + w] & 255;
-                int vv = p1 + (p4 << 1) + p7 - p3 - (p6 << 1) - p9;
-                int hh = p1 + (p2 << 1) + p3 - p7 - (p8 << 1) - p9;
-                int vert = Math.min(999, Math.abs(vv));
-                int horiz = Math.min(999, Math.abs(hh));
-                edges[off] = sqrt[(vert << 10) | horiz];
-                p1 = p4;
-                p2 = p5;
-                p3 = p6;
-                p4 = p7;
-                p5 = p8;
-                p6 = p9;
-            }
-        }
-    }
-
     public static int distance(byte[] a, byte[] b) {
         int distance = 0;
-        for (int i = 4; i < a.length; i++) {
+        for (int i = 0; i < a.length; i++) {
             int d = a[i] - b[i];
             distance += d * d;
         }
@@ -304,7 +235,7 @@ public class ImageSimilarity {
 
     public static int distance(byte[] a, byte[] b, int cut) {
         int distance = 0;
-        for (int i = 4; i < a.length && distance < cut;) {
+        for (int i = 0; i < a.length && distance < cut;) {
             int d = a[i] - b[i++];
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
