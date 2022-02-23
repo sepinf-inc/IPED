@@ -6,6 +6,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.security.DigestInputStream;
 import java.security.MessageDigest;
@@ -46,11 +47,33 @@ public class LinkDownloader {
         return null;
     }
 
+    class URLnotFound extends IOException {
+        public URLnotFound() {
+            super("URL not found");
+        }
+    }
+
     public void downloadUsingStream(File tmp) throws IOException {
-
+        int status=-1;
         URL url = new URL(urlStr);
-        FileUtils.copyURLToFile(url, tmp, 500, 50);
-
+        HttpURLConnection connection=null;
+        try {
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setConnectTimeout(150);
+            connection.setReadTimeout(150);
+            connection.setRequestMethod("HEAD");
+            status=connection.getResponseCode();
+        } catch (IOException e) {
+            status=-1;
+        }finally {
+            if (connection != null)
+                connection.disconnect();
+        }
+        if (status == 200) {
+            FileUtils.copyURLToFile(url, tmp, 500, 500);
+        } else {
+            throw new URLnotFound();
+        }
     }
 
     public LinkDownloader(String url, String ext, String hash, byte[] cipherKey, byte[] iv) {

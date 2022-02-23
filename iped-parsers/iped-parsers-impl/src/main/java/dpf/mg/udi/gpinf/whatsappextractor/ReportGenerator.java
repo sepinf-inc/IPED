@@ -160,20 +160,6 @@ public class ReportGenerator {
             WAContactsDirectory contactsDirectory,
             WAAccount account) {
 
-        if (message.isDownloaded()) {
-            int i = 0;
-            // retry 5 times
-            while (message.getMediaItem().getExtraAttribute("ended") == null && i++ < 5) {
-                try {
-                    message.getMediaItem().wait(1000);
-                } catch (Exception e) {
-                    // TODO Auto-generated catch block
-                }
-
-            }
-
-        }
-
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {

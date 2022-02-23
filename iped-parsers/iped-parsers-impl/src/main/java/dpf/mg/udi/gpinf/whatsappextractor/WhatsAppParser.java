@@ -64,6 +64,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.mg.udi.gpinf.vcardparser.VCardParser;
+import dpf.mg.udi.gpinf.whatsappextractor.LinkDownloader.URLnotFound;
 import dpf.mg.udi.gpinf.whatsappextractor.Message.MessageType;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.jdbc.SQLite3DBParser;
@@ -146,7 +147,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final Map<Integer, WhatsAppContext> dbsFound = new ConcurrentHashMap<>();
 
-    private int DOWNLOADED_FILES = 0;
+
 
     private static final int POOL_SIZE = 20;
 
@@ -1086,9 +1087,9 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (count > 0) {
             listsToProcess.add(messagesToProcess);
         }
-
+        AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
         for (List<Message> listToProcess : listsToProcess) {
-            searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context);
+            searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context, DOWNLOADED_FILES);
         }
     }
 
@@ -1106,7 +1107,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context) {
+            EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context, AtomicInteger DOWNLOADED_FILES) {
 
         Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
         Map<Pair<String, Long>, List<Message>> fileNameAndSizeToSearchFor = new HashMap<>();
@@ -1277,6 +1278,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         // if download files from the internet is allowed
         if (FALLBACK_DOWNLOAD_FILES) {
             if (!hashesToSearchFor.isEmpty()) {
+                
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
                 le.extractLinks();
                 ExecutorService e = Executors.newFixedThreadPool(POOL_SIZE);
@@ -1304,40 +1306,39 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 Metadata DownloadMetadata = new Metadata();
 
                                 DownloadMetadata.set("downloaded", "true");
-                                synchronized (this) {
-                                    DownloadMetadata.set(TikaCoreProperties.TITLE,
-                                            "dowloaded_item_" + (++DOWNLOADED_FILES));
 
-                                    extractor.parseEmbedded(new FileInputStream(fout), handler, DownloadMetadata,
-                                            false);
+                                DownloadMetadata.set(TikaCoreProperties.TITLE,
+                                        "dowloaded_item_" + DOWNLOADED_FILES.incrementAndGet());
+                                FileInputStream out = new FileInputStream(fout);
+                                extractor.parseEmbedded(out, handler, DownloadMetadata, false);
+                                
+                                EmbeddedItem container = context.get(EmbeddedItem.class);
 
-                                    EmbeddedItem container = context.get(EmbeddedItem.class);
+                                item = (IItem) container.getObj();
+                                item.setExtraAttribute("sha-256", ld.getHash());
+                                item.setExtraAttribute("downloaded", true);
 
-                                    item = (IItem) container.getObj();
-                                    item.setExtraAttribute("sha-256", ld.getHash());
-                                    item.setExtraAttribute("downloaded", true);
+                                List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
-                                    List<Message> messageList = hashesToSearchFor.get(ld.getHash());
+                                setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
 
-                                    setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
-
-
-
-
-                                    synchronized (hashesDownloaded) {
-                                        if (hashesDownloaded.get(ld.getHash()) == null && item != null) {
-                                            hashesDownloaded.put(ld.getHash(), item);
+                                if (item != null) {
+                                    hashesDownloaded.putIfAbsent(ld.getHash(), item);
+                                    for (int i = 0; i < 5 && item.getExtraAttribute("ended") == null; i++) {
+                                        try {
+                                            item.wait(1000);
+                                        } catch (Exception e) {
+                                            // TODO Auto-generated catch block
                                         }
+
                                     }
-                                }
-                                // save that this hash is not available
-                                synchronized (hashesDownloaded) {
-                                    if (!hashesDownloaded.containsKey(ld.getHash())) {
-                                        hashesDownloaded.put(ld.getHash(), null);
-                                    }
+                                    out.close();
                                 }
 
-                            } catch (IOException ex) {
+
+                            } catch (URLnotFound ex) {
+                                // save that this hash is not available
+                                hashesDownloaded.putIfAbsent(ld.getHash(), null);
 
                             } catch (Exception e) {
                                 // TODO: handle exception
