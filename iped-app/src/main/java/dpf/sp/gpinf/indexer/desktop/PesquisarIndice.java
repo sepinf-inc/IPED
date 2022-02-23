@@ -133,16 +133,16 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
         }
 
         if (App.get().similarImagesQueryRefItem != null) {
-            Query similarImagesQuery = new SimilarImagesSearch()
+/*            Query similarImagesQuery = new SimilarImagesSearch()
                     .getQueryForSimilarImages(App.get().similarImagesQueryRefItem);
             if (similarImagesQuery != null) {
                 BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
                 boolQuery.add(result, Occur.MUST);
                 boolQuery.add(similarImagesQuery, Occur.MUST);
-                result = boolQuery.build();
+                result = boolQuery.build();*/
                 searcher.setNoScoring(true);
                 numFilters++;
-            }
+//            }
         }
 
         return result;
