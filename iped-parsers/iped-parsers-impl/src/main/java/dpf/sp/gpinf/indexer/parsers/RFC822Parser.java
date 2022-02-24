@@ -136,6 +136,8 @@ public class RFC822Parser extends AbstractParser {
             } else {
                 throw new TikaException("Failed to parse an email message", e); //$NON-NLS-1$
             }
+        } finally {
+            metadata.set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, mch.attachmentCount);
         }
     }
 
@@ -155,6 +157,7 @@ public class RFC822Parser extends AbstractParser {
         private boolean inPart = false, textBody, htmlBody, isAttach;
         private ParsingEmbeddedDocumentExtractor embeddedParser;
         private MimeStreamParser parser;
+        private int attachmentCount = 0;
 
         MailContentHandler(MimeStreamParser parser, XHTMLContentHandler xhtml, Metadata metadata, ParseContext context,
                 boolean strictParsing) {
@@ -209,8 +212,11 @@ public class RFC822Parser extends AbstractParser {
 
             try {
                 if (isAttach) {
-                    if (extractor.shouldParseEmbedded(submd))
+                    if (extractor.shouldParseEmbedded(submd)) {
+                        attachmentCount++;
+                        submd.set(ExtraProperties.MESSAGE_IS_ATTACHMENT, Boolean.TRUE.toString());
                         extractor.parseEmbedded(is, handler, submd, true);
+                    }
                 } else {
                     if (metadata.get(ExtraProperties.MESSAGE_BODY) == null) {
                         BufferedInputStream bis = new BufferedInputStream(is, 1024 * 1024);
@@ -273,7 +279,7 @@ public class RFC822Parser extends AbstractParser {
                     }
                 } else if (fieldname.equalsIgnoreCase("Subject")) { //$NON-NLS-1$
                     String subject = decodeIfUtf8(((UnstructuredField) parsedField).getValue());
-                    // metadata.set(TikaCoreProperties.TITLE, subject);
+                    metadata.set(TikaCoreProperties.TITLE, subject);
                     metadata.set(ExtraProperties.MESSAGE_SUBJECT, subject);
 
                 } else if (fieldname.equalsIgnoreCase("To")) { //$NON-NLS-1$
@@ -412,12 +418,16 @@ public class RFC822Parser extends AbstractParser {
             if (toField.isValidField()) {
                 AddressList addressList = toField.getAddressList();
                 for (int i = 0; i < addressList.size(); ++i) {
-                    metadata.add(metadataField, decodeIfUtf8(getDisplayString(addressList.get(i))));
+                    String recipient = decodeIfUtf8(getDisplayString(addressList.get(i)));
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             } else {
                 String to = stripOutFieldPrefix(field, addressListType);
                 for (String eachTo : to.split(",")) { //$NON-NLS-1$
-                    metadata.add(metadataField, decodeIfUtf8(eachTo.trim()));
+                    String recipient = decodeIfUtf8(eachTo.trim());
+                    metadata.add(metadataField, recipient);
+                    MetadataUtil.fillRecipientAddress(metadata, recipient);
                 }
             }
         }

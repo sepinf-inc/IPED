@@ -103,18 +103,9 @@ public class ItemNodeGenerator {
         nodeProperties.put("name", evidence.getName());
         nodeProperties.put("path", evidence.getPath());
 
-        Object category = evidence.getTempAttribute(BasicProps.CATEGORY);
-        if (category == null) {
-            if (!evidence.getCategorySet().isEmpty()) {
-                category = evidence.getCategorySet().iterator().next();
-            }
-        }
-
-        String categoryValue;
-        if (category != null) {
-            categoryValue = category.toString();
-        } else {
-            categoryValue = null;
+        String categoryValue = null;
+        if (!evidence.getCategorySet().isEmpty()) {
+            categoryValue = evidence.getCategorySet().iterator().next();
         }
         nodeProperties.put("category", categoryValue);
 

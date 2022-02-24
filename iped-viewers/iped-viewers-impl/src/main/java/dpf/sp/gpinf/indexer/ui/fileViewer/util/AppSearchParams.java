@@ -29,6 +29,7 @@ public class AppSearchParams {
     public Query query = null;
     public String HIGHLIGHT_START_TAG = null;
     public String HIGHLIGHT_END_TAG = null;
+    public String FONT_START_TAG = null;
     public Object autoParser = null;
     public JTabbedPane tabbedHits = null;
     public HitsTable hitsTable = null;

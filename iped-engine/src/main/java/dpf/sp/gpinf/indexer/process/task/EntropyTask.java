@@ -13,7 +13,7 @@ import macee.core.Configurable;
 
 public class EntropyTask extends AbstractTask {
 
-    private static final String COMPRESS_RATIO = RawStringParser.COMPRESS_RATIO;
+    public static final String COMPRESS_RATIO = RawStringParser.COMPRESS_RATIO;
 
     public static final String ENABLE_PARAM = "entropyTest"; //$NON-NLS-1$
 
@@ -46,13 +46,6 @@ public class EntropyTask extends AbstractTask {
 
         if (!isEnabled() || !evidence.isToAddToCase())
             return;
-
-        String ratio = evidence.getMetadata().get(COMPRESS_RATIO);
-        if (ratio != null) {
-            evidence.getMetadata().remove(COMPRESS_RATIO);
-            evidence.setExtraAttribute(COMPRESS_RATIO, Double.valueOf(ratio));
-            return;
-        }
 
         if (evidence.getMediaType().equals(BaseCarveTask.UNALLOCATED_MIMETYPE)
                 || Boolean.TRUE.equals(evidence.getExtraAttribute(ThumbTask.HAS_THUMB)))

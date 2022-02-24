@@ -44,7 +44,6 @@ public class AppAnalyzer {
         analyzerPerField.put(LocalizedProperties.getLocalizedField(IndexItem.CATEGORY),
                 new StandardASCIIAnalyzer(true));
         analyzerPerField.put(IndexItem.ID, new KeywordAnalyzer());
-        analyzerPerField.put(IndexItem.FTKID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.PARENTID, new KeywordAnalyzer());
         analyzerPerField.put(IndexItem.EVIDENCE_UUID, new KeywordAnalyzer());
         analyzerPerField.put(UfedXmlReader.UFED_ID, new KeywordAnalyzer());

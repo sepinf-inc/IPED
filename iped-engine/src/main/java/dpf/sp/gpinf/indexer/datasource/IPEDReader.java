@@ -58,6 +58,7 @@ import dpf.sp.gpinf.indexer.process.task.HashDBLookupTask;
 import dpf.sp.gpinf.indexer.process.task.HashTask;
 import dpf.sp.gpinf.indexer.process.task.LedCarveTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
+import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.Marcadores;
@@ -113,7 +114,7 @@ public class IPEDReader extends DataSourceReader {
         return name.endsWith(Marcadores.EXT);
     }
 
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
 
         Logger.getLogger("org.sleuthkit").setLevel(Level.SEVERE); //$NON-NLS-1$
 
@@ -128,6 +129,7 @@ public class IPEDReader extends DataSourceReader {
         LedCarveTask.setEnabled(false);
         HashDBLookupTask.setEnabled(false);
         DIETask.setEnabled(false);
+        QRCodeTask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
         if (deviceName.endsWith(Marcadores.EXT)) {
@@ -139,11 +141,9 @@ public class IPEDReader extends DataSourceReader {
             IMultiMarcadores mm = (IMultiMarcadores) obj;
             for (IMarcadores m : mm.getSingleBookmarks())
                 processBookmark(m);
-        } else
+        } else {
             processBookmark((IMarcadores) obj);
-
-        return 0;
-
+        }
     }
 
     public void read(Set<HashValue> parentsWithLostSubitems, Manager manager) throws Exception {
@@ -154,8 +154,8 @@ public class IPEDReader extends DataSourceReader {
             indexDir = ipedCase.getIndex();
 
             BooleanQuery.Builder parents = new BooleanQuery.Builder();
-            for (HashValue persistentId : parentsWithLostSubitems) {
-                TermQuery tq = new TermQuery(new Term(IndexItem.PERSISTENT_ID, persistentId.toString().toLowerCase()));
+            for (HashValue trackID : parentsWithLostSubitems.toArray(new HashValue[0])) {
+                TermQuery tq = new TermQuery(new Term(IndexItem.TRACK_ID, trackID.toString().toLowerCase()));
                 parents.add(tq, Occur.SHOULD);
             }
             BooleanQuery.Builder subitems = new BooleanQuery.Builder();
@@ -527,45 +527,53 @@ public class IPEDReader extends DataSourceReader {
             if (!treeNode) {
                 value = doc.get(IndexItem.EXPORT);
                 if (value != null && !value.isEmpty()) {
-                    evidence.setFile(Util.getResolvedFile(basePath, value));
-                } else {
-                    value = doc.get(IndexItem.SLEUTHID);
-                    if (value != null && !value.isEmpty()) {
-                        evidence.setSleuthId(Integer.valueOf(value));
-                        if (ipedCase.getSleuthCase() != null) {
-                            evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                        }
+                    File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value);
+                    if (!ipedCase.isReport()) {
+                        localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
                     }
-                    if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
-                        evidence.setIdInDataSource(value.trim());
+                    if (localFile.exists()) {
+                        evidence.setFile(localFile);
                     }
-                    if (doc.get(IndexItem.SOURCE_PATH) != null) {
-                        String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                        SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
-                        if (sisf == null) {
-                            String className = doc.get(IndexItem.SOURCE_DECODER);
-                            Class<?> clazz = Class.forName(className);
-                            try {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                                Path absPath = Util.getResolvedFile(basePath, sourcePath).toPath();
-                                sisf = c.newInstance(absPath);
+                }
 
-                            } catch (NoSuchMethodException e) {
-                                Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                                sisf = c.newInstance(URI.create(sourcePath));
+                value = doc.get(IndexItem.SLEUTHID);
+                if (value != null && !value.isEmpty()) {
+                    evidence.setSleuthId(Integer.valueOf(value));
+                    if (ipedCase.getSleuthCase() != null) {
+                        evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
+                    }
+                }
+                if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
+                    evidence.setIdInDataSource(value.trim());
+                }
+                if (doc.get(IndexItem.SOURCE_PATH) != null) {
+                    String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                    if (sisf == null) {
+                        String className = doc.get(IndexItem.SOURCE_DECODER);
+                        Class<?> clazz = Class.forName(className);
+                        try {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
+                            Path absPath = Util.getResolvedFile(basePath, sourcePath).toPath();
+                            sisf = c.newInstance(absPath);
+                            if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                                IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
                             }
-                            inputStreamFactories.put(sourcePath, sisf);
-                        }
-                        evidence.setInputStreamFactory(sisf);
 
-                    } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
-                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
-
-                    } else {
-                        if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
-                            evidence.setInputStreamFactory(
-                                    new MetadataInputStreamFactory(evidence.getMetadata(), true));
+                        } catch (NoSuchMethodException e) {
+                            Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
+                            sisf = c.newInstance(URI.create(sourcePath));
                         }
+                        inputStreamFactories.put(sourcePath, sisf);
+                    }
+                    evidence.setInputStreamFactory(sisf);
+
+                } else if (evidence.getMediaType().toString().contains(UfedXmlReader.UFED_MIME_PREFIX)) {
+                    evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata()));
+
+                } else {
+                    if (MediaTypes.isMetadataEntryType(evidence.getMediaType())) {
+                        evidence.setInputStreamFactory(new MetadataInputStreamFactory(evidence.getMetadata(), true));
                     }
                 }
             } else {

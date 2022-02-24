@@ -51,7 +51,8 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     protected void process(IItem evidence) throws Exception {
 
         if (evidence.getLength() != null && evidence.getLength() >= splitConfig.getMinItemSizeToFragment()
-                && (!ParsingTask.hasSpecificParser(autoParser, evidence) || evidence.isTimedOut())
+                && ((!ParsingTask.hasSpecificParser(autoParser, evidence)
+                        && !EmbeddedDiskProcessTask.isSupported(evidence)) || evidence.isTimedOut())
                 && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
                         || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
 

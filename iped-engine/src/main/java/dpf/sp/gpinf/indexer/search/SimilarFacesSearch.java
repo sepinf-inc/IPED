@@ -82,19 +82,24 @@ public class SimilarFacesSearch {
                         }
                         IItemId itemId = result.getItem(i);
                         int luceneId = ipedCase.getLuceneId(itemId);
-                        similarityFeaturesValues.setDocument(luceneId);
                         long ordinal;
                         float score = 0;
-                        while ((ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
-                            BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
-                            double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
-                            float squaredDist = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
-                            if (squaredDist <= minDistSquared) {
-                                score = squaredDistToScore(squaredDist);
-                                break;
+                        try {
+                            boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
+                            while (hasVal && (ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
+                                BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
+                                double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
+                                float squaredDist = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
+                                if (squaredDist <= minDistSquared) {
+                                    score = squaredDistToScore(squaredDist);
+                                    break;
+                                }
                             }
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        } finally {
+                            result.setScore(i, score);
                         }
-                        result.setScore(i, score);
                     }
                 }
             }).start();

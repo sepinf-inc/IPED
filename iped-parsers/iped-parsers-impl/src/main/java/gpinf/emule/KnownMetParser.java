@@ -62,7 +62,7 @@ public class KnownMetParser {
         return l;
     }
 
-    private static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
+    public static int parseEntry(KnownMetEntry entry, int offset, byte[] b) {
         int pos = offset;
         long ms = toInt(b, pos) * 1000L;
         if (ms < dataMin || ms > dataMax)
@@ -75,15 +75,15 @@ public class KnownMetParser {
 
         String hash = toHex(b, pos, 16);
         if (hash == null)
-            return 0;
+            return -1;
         entry.setHash(hash);
         pos += 16;
         if (DEBUG)
             System.err.println("      Hash=" + hash); //$NON-NLS-1$
 
         int numParts = toSmall(b, pos);
-        if (numParts > 1024 || numParts < 0)
-            return 0;
+        if (numParts > 4096 || numParts < 0)
+            return -2;
 
         if (DEBUG)
             System.err.println("      Parts=" + numParts); //$NON-NLS-1$
@@ -91,10 +91,16 @@ public class KnownMetParser {
         pos += 16 * numParts;
 
         int numTags = toInt(b, pos);
-        if (numTags < 0 || numTags > 255)
-            return 0;
+        if (numTags < 0 || numTags > 1024)
+            return -3;
         if (DEBUG)
             System.err.println("      Tags=" + numTags); //$NON-NLS-1$
+
+        // For some files numTags is zero (or one), but the parser will try to read at least 
+        // the first two tags, which should be the file name and its size. 
+        if (numTags < 2)
+            numTags = 2;
+        
         pos += 4;
         if (numTags > 0 && DEBUG)
             System.err.println();
@@ -130,11 +136,11 @@ public class KnownMetParser {
             } else if (tagType == 2) {
                 int slen = toSmall(b, pos);
                 if (slen < 0 || slen > 1024)
-                    return 0;
+                    return -4;
                 pos += 2;
                 strVal = toStr(b, pos, slen);
                 if (strVal == null)
-                    return 0;
+                    return -5;
                 pos += slen;
                 if (DEBUG)
                     System.err.println("          Str=" + strVal); //$NON-NLS-1$
@@ -163,7 +169,7 @@ public class KnownMetParser {
             } else {
                 if (DEBUG)
                     System.err.println("TagType desconhecido = " + tagType); //$NON-NLS-1$
-                return 0;
+                return -6;
             }
             if (DEBUG)
                 System.err.println();
@@ -212,7 +218,7 @@ public class KnownMetParser {
             }
         }
         if (entry.getName() == null)
-            return 0;
+            return -7;
         return pos - offset;
     }
 
@@ -256,11 +262,75 @@ public class KnownMetParser {
         return sb.toString();
     }
 
-    private static final String toStr(byte[] b, int offset, int length) {
-        if (offset + length >= b.length)
+    public static final String toStr(byte[] b, int offset, int length) {
+        if (offset + length > b.length)
             return null;
-        if (toByte(b, offset) == 0xEF && toByte(b, offset + 1) == 0xBB && toByte(b, offset + 2) == 0xBF)
-            return new String(b, offset + 3, length - 3, Charset.forName("UTF-8")); //$NON-NLS-1$
-        return new String(b, offset, length, Charset.forName("ISO8859_1")); //$NON-NLS-1$
+        if (toByte(b, offset) == 0xEF && toByte(b, offset + 1) == 0xBB && toByte(b, offset + 2) == 0xBF) {
+            Charset utf8 = Charset.forName("UTF-8");
+            StringBuilder sb = new StringBuilder();
+            int last = offset + 3;
+            for (int i = offset + 3; i < offset + length; i++) {
+                int a0 = toByte(b, i);
+                if (a0 == 0xcc && toByte(b, i + 1) == 0x81 && i > offset + 3) {
+                    char a = (char) toByte(b, i - 1);
+                    char v = 0;
+                    if (a == 'a')
+                        v = 'á';
+                    else if (a == 'e')
+                        v = 'é';
+                    else if (a == 'i')
+                        v = 'í';
+                    else if (a == 'o')
+                        v = 'ó';
+                    else if (a == 'u')
+                        v = 'ú';
+                    else if (a == 'c')
+                        v = 'ç';
+                    else if (a == 'A')
+                        v = 'Á';
+                    else if (a == 'E')
+                        v = 'É';
+                    else if (a == 'I')
+                        v = 'Í';
+                    else if (a == 'O')
+                        v = 'Ó';
+                    else if (a == 'U')
+                        v = 'Ú';
+                    else if (a == 'C')
+                        v = 'Ç';
+                    if (v != 0) {
+                        sb.append(new String(b, last, i - last - 1, utf8));
+                        sb.append(v);
+                        i++;
+                        last = i + 1;
+                    }
+                } else if (a0 == 0xC3) {
+                    int ignore = 1;
+                    for (int j = i + 1; j < offset + length; j++) {
+                        int a2 = toByte(b, j + 1);
+                        if (a2 == 0xC2) {
+                            ignore++;
+                            continue;
+                        }
+                        int a1 = toByte(b, j);
+                        if (a1 == 0x82 || a1 == 0x83 || a1 == 0xC2 || a1 == 0xC3 || a1 == 0xC6 || a1 == 0x92
+                                || a1 == 0x3F) {
+                            ignore++;
+                            continue;
+                        }
+                        if (ignore >= 3) {
+                            sb.append(new String(b, last, i - last, utf8));
+                            sb.append(new String(new byte[] { (byte) a0, (byte) a1 }, utf8));
+                            i = j;
+                            last = i + 1;
+                        }
+                        break;
+                    }
+                }
+            }
+            sb.append(new String(b, last, offset + length - last, utf8));
+            return sb.toString();
+        }
+        return new String(b, offset, length, Charset.forName("ISO8859_1"));
     }
 }

@@ -732,7 +732,7 @@ class Photo implements PhotoData {
     }
 
     @Override
-    public int getSize() {
+    public long getSize() {
 
         return size;
     }

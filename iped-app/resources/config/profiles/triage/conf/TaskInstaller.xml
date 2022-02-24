@@ -25,10 +25,12 @@
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
     
+    <task class="dpf.sp.gpinf.indexer.process.task.QRCodeTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.regex.RegexTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.LanguageDetectTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.NamedEntityTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ExportFileTask"></task>
+    <task class="dpf.sp.gpinf.indexer.process.task.EmbeddedDiskProcessTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.DocThumbTask"></task>

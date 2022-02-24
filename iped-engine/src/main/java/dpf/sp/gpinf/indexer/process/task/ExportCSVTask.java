@@ -134,7 +134,14 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        value = evidence.getHash();
+        value = (String) evidence.getExtraAttribute(HashTask.HASH.MD5.toString());
+        if (value == null) {
+            value = ""; //$NON-NLS-1$
+        }
+        list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
+        list.append(SEPARATOR);
+
+        value = (String) evidence.getExtraAttribute(HashTask.HASH.SHA1.toString());
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
@@ -183,8 +190,8 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        String persistentId = Util.getPersistentId(evidence);
-        list.append("\"").append(persistentId).append("\"");
+        String trackID = Util.getTrackID(evidence);
+        list.append("\"").append(trackID).append("\"");
 
         list.append("\r\n"); //$NON-NLS-1$
 
@@ -247,12 +254,12 @@ public class ExportCSVTask extends AbstractTask {
                 String line = null;
                 boolean header = true;
                 while ((line = reader.readLine()) != null) {
-                    HashValue globalId = null;
+                    HashValue trackID = null;
                     if (!header) {
                         int idx = line.lastIndexOf(SEPARATOR + "\"");
-                        globalId = new HashValue(line.substring(idx + 2, line.length() - 1));
+                        trackID = new HashValue(line.substring(idx + 2, line.length() - 1));
                     }
-                    if (header || added.add(globalId)) {
+                    if (header || added.add(trackID)) {
                         writer.write(line);
                         writer.write("\r\n");
                     }

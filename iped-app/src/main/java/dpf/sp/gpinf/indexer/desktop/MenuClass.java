@@ -52,7 +52,8 @@ public class MenuClass extends JPopupMenu {
             navigateToParent, exportTerms, gerenciarFiltros, gerenciarColunas, exportCheckedToZip,
             exportCheckedTreeToZip, exportTree, exportTreeChecked, similarDocs, openViewfile, createReport,
             resetColLayout, lastColLayout, saveColLayout, addToGraph, navigateToParentChat, pinFirstColumns,
-            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView;
+            similarImagesCurrent, similarImagesExternal, similarFacesCurrent, similarFacesExternal, toggleTimelineView,
+            uiZoom, savePanelsLayout, loadPanelsLayout;
 
     MenuListener menuListener = new MenuListener(this);
     boolean isTreeMenu;
@@ -190,18 +191,33 @@ public class MenuClass extends JPopupMenu {
         toggleTimelineView.addActionListener(menuListener);
         this.add(toggleTimelineView);
 
+        JMenu layoutAppearance = new JMenu(Messages.getString("MenuClass.LayoutAppearance")); //$NON-NLS-1$
+        this.add(layoutAppearance);
+        
         layoutPadrao = new JMenuItem(Messages.getString("MenuClass.ResetLayout")); //$NON-NLS-1$
         layoutPadrao.addActionListener(menuListener);
-        this.add(layoutPadrao);
+        layoutAppearance.add(layoutPadrao);
+
+        savePanelsLayout = new JMenuItem(Messages.getString("MenuClass.SavePanelsLayout")); //$NON-NLS-1$
+        savePanelsLayout.addActionListener(menuListener);
+        layoutAppearance.add(savePanelsLayout);
+        
+        loadPanelsLayout = new JMenuItem(Messages.getString("MenuClass.LoadPanelsLayout")); //$NON-NLS-1$
+        loadPanelsLayout.addActionListener(menuListener);
+        layoutAppearance.add(loadPanelsLayout);
 
         disposicao = new JMenuItem(Messages.getString("MenuClass.ChangeLayout")); //$NON-NLS-1$
         disposicao.addActionListener(menuListener);
-        this.add(disposicao);
+        layoutAppearance.add(disposicao);
         
+        aumentarGaleria = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
+        aumentarGaleria.addActionListener(menuListener);
+        layoutAppearance.add(aumentarGaleria);
+
         List<Theme> themes = ThemeManager.getInstance().getThemes();
         if (themes.size() > 1) {
             submenu = new JMenu(Messages.getString("MenuClass.ColorTheme")); //$NON-NLS-1$
-            this.add(submenu);
+            layoutAppearance.add(submenu);
             for (Theme theme : themes) {
                 JRadioButtonMenuItem themeItem = new JRadioButtonMenuItem(theme.getName(), theme.equals(ThemeManager.getInstance().getCurrentTheme()));
                 submenu.add(themeItem);
@@ -213,21 +229,19 @@ public class MenuClass extends JPopupMenu {
             }
         }
         
+        uiZoom = new JMenuItem(Messages.getString("MenuClass.UiZoom")); //$NON-NLS-1$
+        uiZoom.addActionListener(menuListener);
+        layoutAppearance.add(uiZoom);
+
         copiarPreview = new JMenuItem(Messages.getString("MenuClass.CopyViewerImage")); //$NON-NLS-1$
         copiarPreview.addActionListener(menuListener);
         this.add(copiarPreview);
 
-        aumentarGaleria = new JMenuItem(Messages.getString("MenuClass.ChangeGalleryColCount")); //$NON-NLS-1$
-        aumentarGaleria.addActionListener(menuListener);
-        this.add(aumentarGaleria);
-
         this.addSeparator();
 
-        if (!App.get().appCase.isFTKReport()) {
-            navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
-            navigateToParent.addActionListener(menuListener);
-            this.add(navigateToParent);
-        }
+        navigateToParent = new JMenuItem(Messages.getString("MenuClass.GoToParent")); //$NON-NLS-1$
+        navigateToParent.addActionListener(menuListener);
+        this.add(navigateToParent);
 
         navigateToParentChat = new JMenuItem(Messages.getString("MenuClass.GoToChat")); //$NON-NLS-1$
         navigateToParentChat.addActionListener(menuListener);

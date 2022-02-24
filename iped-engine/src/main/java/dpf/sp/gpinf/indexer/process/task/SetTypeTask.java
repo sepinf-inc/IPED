@@ -1,15 +1,17 @@
 package dpf.sp.gpinf.indexer.process.task;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
-import org.apache.tika.config.TikaConfig;
+import org.apache.tika.exception.TikaException;
 import org.apache.tika.mime.MediaType;
-import org.apache.tika.mime.MimeTypeException;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
+import dpf.sp.gpinf.indexer.parsers.util.Util;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.IItem;
+import iped3.util.ExtraProperties;
 import macee.core.Configurable;
 
 /**
@@ -19,7 +21,7 @@ import macee.core.Configurable;
  */
 public class SetTypeTask extends AbstractTask {
 
-    private TikaConfig tikaConfig;
+    public static final String EXT_MISMATCH = "extMismatch"; //$NON-NLS-1$
 
     @Override
     public void process(IItem evidence) throws Exception {
@@ -34,41 +36,23 @@ public class SetTypeTask extends AbstractTask {
                 ext = ext.substring(1);
             }
             evidence.setType(new GenericFileType(ext));
+            Boolean isDecodedData = (Boolean) evidence.getExtraAttribute(ExtraProperties.DECODED_DATA);
+            if (isDecodedData == null || !isDecodedData) {
+                evidence.setExtraAttribute(EXT_MISMATCH, !ext.equals(evidence.getExt()));
+            }
         }
 
     }
 
-    public String getExtBySig(IItem evidence) {
+    private String getExtBySig(IItem evidence) throws TikaException, IOException {
 
-        String ext = ""; //$NON-NLS-1$
-        String ext1 = "." + evidence.getExt(); //$NON-NLS-1$
+        String origExt = evidence.getExt();
+        if (!origExt.isEmpty()) {
+            origExt = "." + origExt;
+        }
         MediaType mediaType = evidence.getMediaType();
-        if (!mediaType.equals(MediaType.OCTET_STREAM)) {
-            try {
-                do {
-                    boolean first = true;
-                    for (String ext2 : tikaConfig.getMimeRepository().forName(mediaType.toString()).getExtensions()) {
-                        if (first) {
-                            ext = ext2;
-                            first = false;
-                        }
-                        if (ext2.equals(ext1)) {
-                            ext = ext1;
-                            break;
-                        }
-                    }
-
-                } while (ext.isEmpty() && !MediaType.OCTET_STREAM
-                        .equals((mediaType = tikaConfig.getMediaTypeRegistry().getSupertype(mediaType))));
-            } catch (MimeTypeException e) {
-            }
-        }
-
-        if (ext.isEmpty() || ext.equals(".txt")) { //$NON-NLS-1$
-            ext = ext1;
-        }
-
-        return ext.toLowerCase();
+        String ext = Util.getTrueExtension(origExt, mediaType);
+        return ext;
 
     }
 
@@ -79,7 +63,6 @@ public class SetTypeTask extends AbstractTask {
 
     @Override
     public void init(ConfigurationManager configurationManager) throws Exception {
-        tikaConfig = TikaConfig.getDefaultConfig();
     }
 
     @Override

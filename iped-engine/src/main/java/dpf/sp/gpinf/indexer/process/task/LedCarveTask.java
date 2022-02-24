@@ -30,6 +30,7 @@ import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped3.IItem;
+import iped3.util.MediaTypes;
 import macee.core.Configurable;
 
 public class LedCarveTask extends BaseCarveTask {
@@ -86,7 +87,7 @@ public class LedCarveTask extends BaseCarveTask {
 
     private static HashDBDataSource hashDBDataSource;
 
-    private static final String cachePath = System.getProperty("user.home") + "/.indexador/ledcarve.cache";
+    private static final String cachePath = System.getProperty("user.home") + "/.iped/ledcarve.cache";
 
     @Override
     public boolean isEnabled() {
@@ -248,8 +249,12 @@ public class LedCarveTask extends BaseCarveTask {
     }
 
     private static boolean isAcceptedType(MediaType mediaType) {
-        return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE) || mediaType.getBaseType().equals(mtPageFile) || mediaType.getBaseType().equals(mtDiskImage) || mediaType.getBaseType().equals(mtUnknown) || mediaType.getBaseType().equals(mtVdi) || mediaType.getBaseType().equals(mtVhd)
-                || mediaType.getBaseType().equals(mtVhdx) || mediaType.getBaseType().equals(mtVmdk) || mediaType.getBaseType().equals(mtVolumeShadow);
+        return mediaType.getBaseType().equals(UNALLOCATED_MIMETYPE)
+                || mediaType.getBaseType().equals(MediaType.OCTET_STREAM)
+                || mediaType.getBaseType().equals(MediaTypes.VDI)
+                || mediaType.getBaseType().equals(MediaTypes.VHDX)
+                || mediaType.getBaseType().equals(mtPageFile)
+                || mediaType.getBaseType().equals(mtVolumeShadow);
     }
 
     private boolean writeCache(File hashDBFile) {

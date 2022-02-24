@@ -267,6 +267,7 @@ public abstract class MetadataViewer extends Viewer {
         sb.append("<tr><th colspan=2>" + Messages.getString("MetadataViewer.BasicProps") + "</th></tr>"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
+        fillProp(sb, BasicProps.EXT, item.getExt());
         fillProp(sb, BasicProps.TYPE, item.getTypeExt());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
@@ -292,7 +293,6 @@ public abstract class MetadataViewer extends Viewer {
         fillProp(sb, BasicProps.ISDIR, item.isDir());
         fillProp(sb, BasicProps.HASCHILD, item.hasChildren());
         fillProp(sb, BasicProps.ISROOT, item.isRoot());
-        fillProp(sb, BasicProps.DUPLICATE, item.isDuplicate());
         fillProp(sb, BasicProps.TIMEOUT, item.isTimedOut());
         String[] keys = item.getExtraAttributeMap().keySet().toArray(new String[0]);
         Arrays.sort(keys, comparator);

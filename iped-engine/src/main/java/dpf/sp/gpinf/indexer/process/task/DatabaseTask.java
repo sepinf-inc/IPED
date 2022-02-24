@@ -58,7 +58,6 @@ public class DatabaseTask extends AbstractTask {
                 + "ISROOT        BOOLEAN," //$NON-NLS-1$
                 + "ISDIR         BOOLEAN," //$NON-NLS-1$
                 + "ISDELETED     BOOLEAN," //$NON-NLS-1$
-                + "ISDUPLICATE   BOOLEAN," //$NON-NLS-1$
                 + "TIMEOUT       BOOLEAN," //$NON-NLS-1$
                 + "MODIFIED      TEXT, " //$NON-NLS-1$
                 + "CREATED       TEXT, " //$NON-NLS-1$
@@ -112,7 +111,6 @@ public class DatabaseTask extends AbstractTask {
                     + (e.isRoot() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isDir() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isDeleted() ? 1 : 0) + "," //$NON-NLS-1$
-                    + (e.isDuplicate() ? 1 : 0) + "," //$NON-NLS-1$
                     + (e.isTimedOut() ? 1 : 0) + ",\'" //$NON-NLS-1$
                     + e.getModDate() + "\',\'" //$NON-NLS-1$
                     + e.getCreationDate() + "\',\'" //$NON-NLS-1$

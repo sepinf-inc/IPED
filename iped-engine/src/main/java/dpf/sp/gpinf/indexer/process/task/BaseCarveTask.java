@@ -26,8 +26,10 @@ import java.util.Set;
 import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
+import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.Util;
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -42,15 +44,11 @@ public abstract class BaseCarveTask extends AbstractTask {
     public static MediaType UNALLOCATED_MIMETYPE = MediaTypes.UNALLOCATED;
     protected static MediaType mtPageFile = MediaType.application("x-pagefile"); //$NON-NLS-1$
     protected static MediaType mtVolumeShadow = MediaType.application("x-volume-shadow"); //$NON-NLS-1$
-    protected static MediaType mtDiskImage = MediaType.application("x-disk-image"); //$NON-NLS-1$
-    protected static MediaType mtVmdk = MediaType.application("x-vmdk"); //$NON-NLS-1$
-    protected static MediaType mtVhd = MediaType.application("x-vhd"); //$NON-NLS-1$
-    protected static MediaType mtVhdx = MediaType.application("x-vhdx"); //$NON-NLS-1$
-    protected static MediaType mtVdi = MediaType.application("x-vdi"); //$NON-NLS-1$
-    protected static MediaType mtUnknown = MediaType.application("octet-stream"); //$NON-NLS-1$
 
     public static final String FILE_FRAGMENT = "fileFragment"; //$NON-NLS-1$
     public static final String NUM_CARVED_AND_FRAGS = "numCarvedAndFrags";
+    public static final String NUM_CARVED = "numCarved";
+    public static final String CARVED_ID = "carvedId";
 
     protected static CarverConfiguration carverConfig = null;
 
@@ -108,11 +106,29 @@ public abstract class BaseCarveTask extends AbstractTask {
         return offsetFile;
     }
 
+    /**
+     * Used to clear counters added to extra attributes of parent items, needed when
+     * resuming processing, so those counters will start from zero.
+     * 
+     * @param parentFile
+     */
+    protected void clearExtraAttributes(IItem parentFile) {
+        parentFile.getExtraAttributeMap().remove(NUM_CARVED);
+        parentFile.getExtraAttributeMap().remove(NUM_CARVED_AND_FRAGS);
+    }
+
     protected void addOffsetFile(IItem offsetFile, IItem parentEvidence) {
 
         if (offsetFile.isCarved()) {
             incItensCarved();
+            Integer numCarved = (Integer) parentEvidence.getExtraAttribute(NUM_CARVED);
+            if (numCarved == null) {
+                numCarved = 0;
+            }
+            offsetFile.setExtraAttribute(CARVED_ID, numCarved);
+            parentEvidence.setExtraAttribute(NUM_CARVED, numCarved + 1);
         }
+
         Number numSubitems = (Number) parentEvidence.getExtraAttribute(NUM_CARVED_AND_FRAGS);
         if (numSubitems == null) {
             numSubitems = 0;
@@ -123,6 +139,8 @@ public abstract class BaseCarveTask extends AbstractTask {
         // processa no worker atual
         boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
         ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
+
+        ((CaseData) caseData).calctrackIDAndUpdateID(offsetFile);
 
         worker.processNewItem(offsetFile, time);
     }
@@ -152,12 +170,12 @@ public abstract class BaseCarveTask extends AbstractTask {
         if (parentItem.getIdInDataSource() != null) {
             carvedItem.setIdInDataSource(parentItem.getIdInDataSource());
             carvedItem.setInputStreamFactory(parentItem.getInputStreamFactory());
-
-        } else if (parentItem instanceof ISleuthKitItem && ((ISleuthKitItem) parentItem).getSleuthFile() != null) {
+        }
+        if (parentItem instanceof ISleuthKitItem && ((ISleuthKitItem) parentItem).getSleuthFile() != null) {
             carvedItem.setSleuthFile(((ISleuthKitItem) parentItem).getSleuthFile());
             carvedItem.setSleuthId(((ISleuthKitItem) parentItem).getSleuthId());
-
-        } else {
+        }
+        if (parentItem.getFile() != null) {
             carvedItem.setFile(parentItem.getFile());
             carvedItem.setExportedFile(parentItem.getExportedFile());
         }
@@ -172,7 +190,7 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentItem.setHasChildren(true);
 
-        Util.generatePersistentId(Util.getPersistentId(parentItem), carvedItem);
+        carvedItem.setExtraAttribute(IndexItem.PARENT_TRACK_ID, Util.getTrackID(parentItem));
     }
 
     // adiciona uma evidência já carveada por uma classe que implemente a interface

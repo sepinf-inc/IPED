@@ -112,7 +112,10 @@ public class Configuration {
         System.setProperty(IConfigurationDirectory.IPED_CONF_PATH, configPath);
 
         properties.load(new File(appRoot, LOCAL_CONFIG));
-        properties.load(new File(configPath, CONFIG_FILE));
+        File mainConfig = new File(configPath, CONFIG_FILE);
+        if (mainConfig.exists()) {
+            properties.load(mainConfig);
+        }
     }
 
     public void loadNativeLibs() throws IOException {
@@ -140,8 +143,14 @@ public class Configuration {
     }
 
     private void addProfileToConfigDirectory(ConfigurationDirectory configDirectory, File profile) {
-        configDirectory.addPath(new File(profile, CONFIG_FILE).toPath());
-        configDirectory.addPath(new File(profile, CONF_DIR).toPath());
+        File mainConfig = new File(profile, CONFIG_FILE);
+        if (mainConfig.exists()) {
+            configDirectory.addPath(mainConfig.toPath());
+        }
+        File configDir = new File(profile, CONF_DIR);
+        if (configDir.exists()) {
+            configDirectory.addPath(configDir.toPath());
+        }
     }
 
     public void loadConfigurables(String configPathStr, boolean loadAll) throws IOException {

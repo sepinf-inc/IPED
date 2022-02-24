@@ -14,6 +14,7 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Shape;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
@@ -60,6 +61,7 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
@@ -106,9 +108,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
-import dpf.sp.gpinf.indexer.util.UiUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
+import dpf.sp.gpinf.indexer.util.UiUtil;
 import iped3.io.IStreamSource;
 import iped3.io.SeekableInputStream;
 
@@ -119,7 +121,7 @@ import iped3.io.SeekableInputStream;
 
 public class HexViewerPlus extends Viewer implements KeyListener, MouseListener {
 
-    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".indexador"
+    private static String defaultSettingsPath = System.getProperty("user.home") + File.separator + ".iped"
             + File.separator + "iped.hvp";
 
     private CodeArea codeArea;
@@ -213,9 +215,9 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
                 boolean ignoreCaseSearch, JLabel resultSearch, int max_hits) throws Exception;
     }
 
-    public HexViewerPlus(HexSearcher hexSearcher) {
+    public HexViewerPlus(Window owner, HexSearcher hexSearcher) {
 
-        super(new GridBagLayout());
+        super(owner, new GridBagLayout());
 
         this.hexSearcher = hexSearcher;
 
@@ -792,7 +794,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
     public void dialogOpcoes() {
 
-        dialogOpcoes = new JDialog();
+        dialogOpcoes = new JDialog(getOwner());
+        dialogOpcoes.setResizable(false);
         dialogOpcoes.setModal(true);
         dialogOpcoes.setTitle(Messages.getString("HexViewerPlus.settings") + " - " + appName);
         dialogOpcoes.setBounds(0, 0, 810, 600);
@@ -1892,7 +1895,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
     public void dialogSelecionar() {
 
-        dialogSelecionar = new JDialog();
+        dialogSelecionar = new JDialog(getOwner());
+        dialogSelecionar.setResizable(false);
         dialogSelecionar.setModal(true);
         dialogSelecionar.setTitle(Messages.getString("HexViewerPlus.selectBlock") + " - " + appName);
         dialogSelecionar.setBounds(0, 0, 550, 240);
@@ -2107,7 +2111,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
     public void dialogIrParaResultado() {
 
-        dialogIrParaResultado = new JDialog();
+        dialogIrParaResultado = new JDialog(getOwner());
+        dialogIrParaResultado.setResizable(false);
         dialogIrParaResultado.setModal(true);
         dialogIrParaResultado.setTitle(Messages.getString("HexViewerPlus.goToHit") + " - " + appName);
         dialogIrParaResultado.setBounds(0, 0, 530, 170);
@@ -2199,7 +2204,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
     public void dialogIrParaEndereco() {
 
-        dialogIrParaEndereco = new JDialog();
+        dialogIrParaEndereco = new JDialog(getOwner());
+        dialogIrParaEndereco.setResizable(false);
         dialogIrParaEndereco.setModal(true);
         dialogIrParaEndereco.setTitle(Messages.getString("HexViewerPlus.goToPosition") + " - " + appName);
         dialogIrParaEndereco.setBounds(0, 0, 530, 240);
@@ -2361,7 +2367,8 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
 
     public void dialogPesquisar() {
 
-        dialogPesquisar = new JDialog();
+        dialogPesquisar = new JDialog(getOwner());
+        dialogPesquisar.setResizable(false);
         dialogPesquisar.setModal(true);
         dialogPesquisar.setTitle(Messages.getString("HexViewerPlus.search") + " - " + appName);
         dialogPesquisar.setBounds(0, 0, 570, 300);
@@ -2597,7 +2604,6 @@ public class HexViewerPlus extends Viewer implements KeyListener, MouseListener 
         });
 
     }
-
 }
 
 class HVPComboField extends JComboBox {

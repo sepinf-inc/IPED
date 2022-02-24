@@ -56,4 +56,6 @@ public interface GraphService {
 
     List<Long> getMoreConnectedNodes(int maxNodes);
 
+    int deleteRelationshipsFromDatasource(String evidenceUUID);
+
 }

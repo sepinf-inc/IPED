@@ -30,11 +30,14 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.lucene.queryparser.flexible.standard.QueryParserUtil;
 import org.apache.tika.metadata.Message;
 import org.apache.tika.metadata.Property;
@@ -50,14 +53,21 @@ import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectReader;
+
 import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
+import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.parsers.util.PhoneParsingConfig;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.DIETask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -66,6 +76,7 @@ import dpf.sp.gpinf.indexer.util.UFDRInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UFEDXMLWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import dpf.sp.gpinf.indexer.util.ZipFile4j;
+import gpinf.dev.data.CaseData;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
@@ -86,6 +97,11 @@ public class UfedXmlReader extends DataSourceReader {
     private static final String ATTACH_PATH_META = ExtraProperties.UFED_META_PREFIX + "attachment_extracted_path"; //$NON-NLS-1$
     private static final String EMAIL_ATTACH_KEY = ExtraProperties.UFED_META_PREFIX + "email_attach_names"; //$NON-NLS-1$
 
+    private static final String MEDIA_CLASSES_PROPERTY = ExtraProperties.UFED_META_PREFIX + "mediaClasses"; //$NON-NLS-1$
+    private static final String MEDIA_CLASSES_SCORE_PREFIX = ExtraProperties.UFED_META_PREFIX + "mediaClassScore:"; //$NON-NLS-1$
+    private static final float MEDIA_CLASSES_THRESHOLD = 50.0f;
+    private static final double MISSING_FRAME_SCORE = 49.99f;
+
     public static final String UFED_ID = ExtraProperties.UFED_META_PREFIX + "id"; //$NON-NLS-1$
     public static final String UFED_MIME_PREFIX = MediaTypes.UFED_MIME_PREFIX;
     public static final String UFED_EMAIL_MIME = MediaTypes.UFED_EMAIL_MIME.toString();
@@ -96,6 +112,8 @@ public class UfedXmlReader extends DataSourceReader {
 
     private final Set<String> supportedApps = new HashSet<String>(
             Arrays.asList(WhatsAppParser.WHATSAPP, TelegramParser.TELEGRAM));
+
+    private static AtomicInteger counter = new AtomicInteger();
 
     File root, ufdrFile;
     ZipFile4j ufdr;
@@ -177,9 +195,8 @@ public class UfedXmlReader extends DataSourceReader {
     }
 
     @Override
-    public int read(File root) throws Exception {
+    public void read(File root) throws Exception {
         read(root, null);
-        return 0;
     }
 
     @Override
@@ -244,6 +261,7 @@ public class UfedXmlReader extends DataSourceReader {
 
         rootItem = new Item();
         rootItem.setDataSource(evidenceSource);
+        rootItem.setIdInDataSource("");
         rootItem.setHasChildren(true);
         if (root.getName().endsWith(".ufdr")) {
             rootItem.setLength(root.length());
@@ -277,6 +295,7 @@ public class UfedXmlReader extends DataSourceReader {
         decodedFolder = new Item();
         decodedFolder.setName("_DecodedData"); //$NON-NLS-1$
         decodedFolder.setParent(rootItem);
+        decodedFolder.setIdInDataSource("");
         decodedFolder.setPath(rootItem.getPath() + "/" + decodedFolder.getName()); //$NON-NLS-1$
         decodedFolder.setIsDir(true);
         decodedFolder.setHasChildren(true);
@@ -451,6 +470,7 @@ public class UfedXmlReader extends DataSourceReader {
             parent.setIsDir(true);
             // parent.setLength(0L);
             parent.setHash(""); //$NON-NLS-1$
+            parent.setIdInDataSource("");
             parent.setParent(getParent(parentPath));
             parent.setExtraAttribute(ExtraProperties.DATASOURCE_READER, UfedXmlReader.class.getSimpleName());
 
@@ -566,6 +586,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setInputStreamFactory(new MetadataInputStreamFactory(item.getMetadata()));
                     item.setHash(""); //$NON-NLS-1$
 
+                    ((CaseData) caseData).calctrackIDAndUpdateID(parent);
                     item.setParent(parent);
                     if (!mergeInParentNode.contains(type))
                         parent.setHasChildren(true);
@@ -601,6 +622,8 @@ public class UfedXmlReader extends DataSourceReader {
             }
             if (item.getMetadata().get(UFED_ID) != null) {
                 item.setIdInDataSource(item.getMetadata().get(UFED_ID));
+            } else {
+                // item.setIdInDataSource("");
             }
         }
 
@@ -721,6 +744,7 @@ public class UfedXmlReader extends DataSourceReader {
 
             } else if (qName.equals("file")) { //$NON-NLS-1$
                 itemSeq.remove(itemSeq.size() - 1);
+                setMediaResult(item);
                 try {
                     caseData.addItem(item);
                 } catch (Exception e) {
@@ -789,7 +813,6 @@ public class UfedXmlReader extends DataSourceReader {
                 }
                 int numInstantMsgAttachs = 0;
                 if ("InstantMessage".equals(type)) {
-                    item.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(item.getId()));
                     numInstantMsgAttachs = this.numAttachments;
                     if (numInstantMsgAttachs > 0) {
                         item.setMediaType(MediaTypes.UFED_MESSAGE_ATTACH_MIME);
@@ -888,6 +911,7 @@ public class UfedXmlReader extends DataSourceReader {
                     if (!ignoreItems) {
                         // process seen attachments later
                         if (!seenAttachment) {
+                            processItem(item);
                             List<Item> seenAttachs = seenAttachsPerId.get(item.getId());
                             if (seenAttachs != null && numInstantMsgAttachs > 1) {
                                 for (Item attach : seenAttachs) {
@@ -898,7 +922,6 @@ public class UfedXmlReader extends DataSourceReader {
                                         ESCAPED_UFED_ID + ":" + prevUfedId);
                                 caseData.incDiscoveredEvidences(-1);
                             }
-                            processItem(item);
                             seenAttachsPerId.remove(item.getId());
                         }
                     } else {
@@ -919,6 +942,7 @@ public class UfedXmlReader extends DataSourceReader {
                     item.setName(name);
                     item.setParent(rootItem);
                     item.setPath(rootItem.getPath() + "/" + name);
+                    item.setIdInDataSource("");
                     item.setMediaType(MediaTypes.UFED_DEVICE_INFO);
                     createDeviceInfoPreview(item);
                     try {
@@ -1095,6 +1119,96 @@ public class UfedXmlReader extends DataSourceReader {
             }
         }
 
+        private void setMediaResult(Item item) {
+            String ufedId = item.getMetadata().get(UFED_ID);
+            if (ufedId == null) {
+                return;
+            }
+            MediaResults mediaResults = null;
+            String path = "MediaResults/" + ufedId + ".json";
+            if (ufdrFile == null) {
+                File file = new File(root, path);
+                if (!file.exists()) {
+                    return;
+                }
+                try (InputStream is = new FileInputStream(file)) {
+                    mediaResults = readMediaResults(is);
+                } catch (IOException e) {
+                    LOGGER.warn("Error reading UFED mediaResult {}: {}", path, e.toString());
+                }
+            } else {
+                try {
+                    FileHeader zae = ufdr.getFileHeader(path);
+                    if (zae == null) {
+                        return;
+                    }
+                    try (InputStream is = ufdr.getInputStream(zae)) {
+                        mediaResults = readMediaResults(is);
+                    }
+                } catch (ZipException | IOException e) {
+                    LOGGER.warn("Error reading UFDR mediaResult {}: {}", path, e.toString());
+                }
+            }
+            if (mediaResults != null) {
+
+                HashMap<String, Float> finalScorePerCat = new HashMap<>();
+
+                // collect scores for videos
+                if (mediaResults.classifications != null && !mediaResults.classifications.isEmpty()) {
+                    final AtomicInteger numFrames = new AtomicInteger();
+                    HashMap<String, List<Double>> scoresPerCat = new HashMap<>();
+                    mediaResults.classifications.stream().forEach(classification -> {
+                        numFrames.incrementAndGet();
+                        if (classification.categories != null) {
+                            for (Category cat : classification.categories) {
+                                if (StringUtils.isNotBlank(cat.value)) {
+                                    List<Double> scores = scoresPerCat.get(cat.value);
+                                    if (scores == null) {
+                                        scores = new ArrayList<>();
+                                        scoresPerCat.put(cat.value, scores);
+                                    }
+                                    scores.add((double) cat.score);
+                                }
+                            }
+                        }
+                    });
+
+                    // combine frames scores
+                    scoresPerCat.entrySet().stream().forEach(entry -> {
+                        // add missing frames scores, PA just stores a frame score if it is >= 50
+                        // not the ideal solution...
+                        while (entry.getValue().size() < numFrames.get()) {
+                            entry.getValue().add(MISSING_FRAME_SCORE);
+                        }
+                        finalScorePerCat.put(entry.getKey(), (float) DIETask.videoScore(entry.getValue()));
+                    });
+
+                // collect scores for images
+                } else if (mediaResults.categories != null){
+                    mediaResults.categories.stream() //
+                            .filter(cat -> StringUtils.isNotBlank(cat.value)) //
+                            .forEach(cat -> finalScorePerCat.put(cat.value, cat.score));
+                }
+                
+                // set scores
+                finalScorePerCat.entrySet().stream()
+                        .forEach(e -> item.setExtraAttribute(MEDIA_CLASSES_SCORE_PREFIX + e.getKey(), e.getValue()));
+
+                // set high scored classes
+                List<String> classes = finalScorePerCat.entrySet().stream()
+                        .filter(entry -> entry.getValue() >= MEDIA_CLASSES_THRESHOLD)
+                        .map(entry -> entry.getKey())
+                        .collect(Collectors.toList());
+                item.setExtraAttribute(MEDIA_CLASSES_PROPERTY, classes);
+            }
+        }
+
+        private MediaResults readMediaResults(InputStream is) throws IOException {
+            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectReader reader = objectMapper.readerFor(MediaResults.class);
+            return reader.readValue(is);
+        }
+
         private void updateName(IItem item, String newName) {
             // prevents error DocValuesField is too large
             int maxNameSize = 4096;
@@ -1133,7 +1247,7 @@ public class UfedXmlReader extends DataSourceReader {
         }
 
         private File createEmailPreview(Item email) {
-            File file = new File(output, "view/emails/view-" + email.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+            File file = new File(output, "view/emails/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
                 bw.write("<!DOCTYPE html>\n" //$NON-NLS-1$
@@ -1164,6 +1278,12 @@ public class UfedXmlReader extends DataSourceReader {
                     }
                 }
 
+                for (String prop : Arrays.asList(Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC)) {
+                    for (String val : email.getMetadata().getValues(prop)) {
+                        MetadataUtil.fillRecipientAddress(email.getMetadata(), val);
+                    }
+                }
+
                 String[] attachNames = email.getMetadata().getValues(EMAIL_ATTACH_KEY);
                 if (attachNames != null && attachNames.length > 0) {
                     bw.write("<b>" + Messages.getString("UfedXmlReader.Attachments") + " (" + attachNames.length //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
@@ -1172,6 +1292,7 @@ public class UfedXmlReader extends DataSourceReader {
                         bw.write(SimpleHTMLEncoder.htmlEncode(attach) + "<br>"); //$NON-NLS-1$
                     }
                 }
+                email.getMetadata().set(ExtraProperties.MESSAGE_ATTACHMENT_COUNT, attachNames.length);
 
                 bw.write("<hr>"); //$NON-NLS-1$
 
@@ -1209,7 +1330,7 @@ public class UfedXmlReader extends DataSourceReader {
                 updateName(contact, name);
             }
 
-            File file = new File(output, "view/contacts/view-" + contact.getId() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
+            File file = new File(output, "view/contacts/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) { //$NON-NLS-1$
 
@@ -1300,7 +1421,7 @@ public class UfedXmlReader extends DataSourceReader {
             }
             uniqueDeviceInfo.add(deviceInfoData.get(deviceInfoData.size() - 1));
 
-            File file = new File(output, "view/deviceInfo/view-" + deviceInfo.getId() + ".html");
+            File file = new File(output, "view/deviceInfo/view-" + counter.getAndIncrement() + ".html");
             file.getParentFile().mkdirs();
             try (BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), "UTF-8"))) {
                 bw.write("<!DOCTYPE html>\n"
@@ -1370,6 +1491,38 @@ public class UfedXmlReader extends DataSourceReader {
 
         }
 
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private static class MediaResults {
+
+        @JsonProperty("FileId")
+        private String fileId;
+
+        @JsonProperty("Classifications")
+        private List<Classification> classifications;
+
+        @JsonProperty("Categories")
+        private List<Category> categories;
+    }
+
+    private static class Classification {
+
+        @JsonProperty("FrameOffsetMilliseconds")
+        private long frameMilliseconds;
+
+        @JsonProperty("Categories")
+        private List<Category> categories;
+
+    }
+
+    private static class Category {
+
+        @JsonProperty("Value")
+        private String value;
+
+        @JsonProperty("Score")
+        private float score;
     }
 
     @Override

@@ -13,6 +13,7 @@ exportFileProps = true
 processFileSignatures = false
 enableFileParsing = true
 expandContainers = false
+processEmbeddedDisks = false
 enableRegexSearch = true
 enableAutomaticExportFiles = false
 enableLanguageDetect = false

@@ -21,8 +21,7 @@ public interface IItemBase extends IStreamSource {
 
     /**
      *
-     * @return o id do item pai. Tem o nome do caso prefixado no caso de reports do
-     *         FTK3+
+     * @return o id do item pai.
      */
     public Integer getParentId();
 
@@ -95,11 +94,6 @@ public interface IItemBase extends IStreamSource {
      * @return true se é um item raiz
      */
     public boolean isRoot();
-
-    /**
-     * @return true se o item é uma duplicata de outro, baseado no hash
-     */
-    public boolean isDuplicate();
 
     /**
      * @return true se o parsing do item ocasionou timeout

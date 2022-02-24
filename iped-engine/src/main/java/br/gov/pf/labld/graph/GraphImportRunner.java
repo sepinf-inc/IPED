@@ -79,7 +79,7 @@ public class GraphImportRunner {
         args.add("-cp");
         try {
             URL url = ImportTool.class.getProtectionDomain().getCodeSource().getLocation();
-            args.add(new File(url.toURI()).getAbsolutePath());
+            args.add(new File(url.toURI()).getParentFile().getAbsolutePath() + "/*");
         } catch (URISyntaxException e1) {
             throw new IOException(e1);
         }

@@ -138,7 +138,7 @@ public class Worker extends Thread {
     }
 
     /**
-     * Alguns itens ainda não tem um File setado, como report do FTK1.
+     * Check if the item points to an exported File if it exists.
      *
      * @param evidence
      */
@@ -215,7 +215,7 @@ public class Worker extends Thread {
         // Se a fila está pequena, enfileira
         if (time == ProcessTime.LATER
                 || (time == ProcessTime.AUTO && caseData.getItemQueue().size() < 10 * manager.getWorkers().length)) {
-            caseData.getItemQueue().addFirst(evidence);
+            caseData.addItemFirstNonBlocking(evidence);
         } // caso contrário processa o item no worker atual
         else {
             long t = System.nanoTime() / 1000;

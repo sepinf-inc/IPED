@@ -20,7 +20,6 @@ package dpf.sp.gpinf.indexer.parsers;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -69,13 +68,14 @@ public class EmptyVideoParser extends AbstractParser {
         return SUPPORTED_TYPES;
     }
 
-    // Teste
-    public static void main(String[] args) {
-        EmptyVideoParser parser = new EmptyVideoParser();
-        Set<MediaType> types = parser.getSupportedTypes(null);
-        for (MediaType type : types)
-            System.out.println(type.getBaseType());
-    }
+// commenting this section. Tests are made using JUnit now.
+// Teste
+//    public static void main(String[] args) {
+//        EmptyVideoParser parser = new EmptyVideoParser();
+//        Set<MediaType> types = parser.getSupportedTypes(null);
+//        for (MediaType type : types)
+//            System.out.println(type.getBaseType());
+//    }
 
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)

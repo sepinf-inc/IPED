@@ -55,7 +55,7 @@ public class IpedCaseReader extends DataSourceReader {
     }
 
     @Override
-    public int read(File file) throws Exception {
+    public void read(File file) throws Exception {
 
         IpedCase ipedCase = IpedCase.loadFrom(file);
         caseData.putCaseObject(IpedCase.class.getName(), ipedCase);
@@ -89,7 +89,6 @@ public class IpedCaseReader extends DataSourceReader {
                 }
             }
         }
-        return 0;
     }
 
     private List<Item> createRootEvidences(IpedCase ipedCase, Item caseEvidence) {

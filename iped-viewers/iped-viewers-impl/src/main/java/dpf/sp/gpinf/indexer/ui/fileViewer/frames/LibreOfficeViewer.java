@@ -96,7 +96,7 @@ public class LibreOfficeViewer extends Viewer {
     private JPanel noaPanel;
     private String nativelib, pathLO;
 
-    private static String userProfileBase = "$SYSUSERCONFIG/.indexador/libreoffice6/profile"; //$NON-NLS-1$
+    private static String userProfileBase = "$SYSUSERCONFIG/.iped/libreoffice6/profile"; //$NON-NLS-1$
     private static String RESTART_MSG = Messages.getString("LibreOfficeViewer.RestartingViewer"); //$NON-NLS-1$
     private static int XLS_LENGTH_TO_COPY = 20_000_000;
 
@@ -167,7 +167,7 @@ public class LibreOfficeViewer extends Viewer {
         edtMonitor = monitorEventThreadBlocking();
 
         try {
-            blankDoc = File.createTempFile("indexador", ".doc"); //$NON-NLS-1$ //$NON-NLS-2$
+            blankDoc = File.createTempFile("iped", ".doc"); //$NON-NLS-1$ //$NON-NLS-2$
             blankDoc.deleteOnExit();
             document = officeApplication.getDocumentService().constructNewHiddenDocument(IDocument.WRITER);
             document.getPersistenceService().store(blankDoc.getAbsolutePath());
@@ -240,9 +240,8 @@ public class LibreOfficeViewer extends Viewer {
     public void constructLOFrame() {
         try {
             if (!System.getProperty("os.name").startsWith("Windows")
-                    && !"gtk".equals(System.getenv("SAL_USE_VCLPLUGIN")))
-                LOGGER.error(
-                        "LibreOffice viewer may not work properly. Install libreoffice-gtk2 and set environment var SAL_USE_VCLPLUGIN='gtk'");
+                    && !"gen".equals(System.getenv("SAL_USE_VCLPLUGIN")))
+                LOGGER.error("LibreOffice viewer may not work properly. Set environment var SAL_USE_VCLPLUGIN='gen'");
 
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -507,7 +506,7 @@ public class LibreOfficeViewer extends Viewer {
                 if (tempFile != null) {
                     tempFile.delete();
                 }
-                tempFile = File.createTempFile("indexador-", ext); //$NON-NLS-1$
+                tempFile = File.createTempFile("iped-", ext); //$NON-NLS-1$
                 tempFile.deleteOnExit();
                 IOUtil.copiaArquivo(lastFile, tempFile);
                 lastFile = tempFile;

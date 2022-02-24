@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.util.List;
 
 import dpf.sp.gpinf.indexer.parsers.util.Messages;
+import dpf.sp.gpinf.indexer.util.SimpleHTMLEncoder;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 
@@ -39,6 +40,11 @@ public class ReportGenerator {
     private boolean firstFragment = true;
     private int currentMsg = 0;
 
+
+    private String creatSpanTag(String text) {
+        return "<span class=\"tooltiptext\">" + SimpleHTMLEncoder.htmlEncode(text) + "</span>";
+    }
+
     ReportGenerator(IItemSearcher s) {
         this.searcher = s;
     }
@@ -51,7 +57,7 @@ public class ReportGenerator {
         if (s == null || s.isEmpty()) {
             return "-";
         }
-        return s;
+        return SimpleHTMLEncoder.htmlEncode(s.trim());
     }
 
     public byte[] genarateContactHtml(Contact contact) {
@@ -167,7 +173,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
@@ -181,8 +187,8 @@ public class ReportGenerator {
                     .getSourceFileIfExists(message.getMediaFile());
 
             img.setAtribute("title", "Video");
-            img.setAtribute("data-src1", reportSource);
-            img.setAtribute("data-src2", originalSource);
+            img.setAtribute("data-src1", format(reportSource));
+            img.setAtribute("data-src2", format(originalSource));
             img.setAtribute("class", img.getAtribute("class") + " iped-video");
 
             link.getInner().add(img);
@@ -211,7 +217,7 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
@@ -223,10 +229,10 @@ public class ReportGenerator {
                     .getSourceFileIfExists(message.getMediaFile());
 
             if (reportSource != null) {
-                img.setAtribute("data-src1", reportSource);
+                img.setAtribute("data-src1", format(reportSource));
             }
             if (originalSource != null) {
-                img.setAtribute("data-src2", originalSource);
+                img.setAtribute("data-src2", format(originalSource));
             }
             img.setAtribute("class", "audioImg iped-audio");
 
@@ -258,14 +264,14 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
-            link.setAtribute("href", ref);
+            link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "imageImg");
 
@@ -291,14 +297,14 @@ public class ReportGenerator {
             TagHtml div = new TagHtml("div");
             if (message.getMediaComment() != null) {
                 div.setAtribute("class", "tooltip");
-                div.getInner().add("<span class=\"tooltiptext\">" + message.getMediaComment() + "</span>");
+                div.getInner().add(creatSpanTag(message.getMediaComment()));
             }
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
             String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
                     message.getMediaExtension(), message.getMediaFile());
-            link.setAtribute("href", ref);
+            link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "attachImg");
 
@@ -340,10 +346,10 @@ public class ReportGenerator {
         Contact contact = message.getFrom();
         if (contact != null) {
             out.println("<span style=\"font-family: 'Roboto-Medium'; color: #b4c74b;\">" //$NON-NLS-1$
-                    + contact + "</span><br/>"); //$NON-NLS-1$
+                    + format(contact.toString()) + "</span><br/>"); //$NON-NLS-1$
         }
         if (message.getType() != null && !message.getType().isEmpty()) {
-            out.print(message.getType() + "<br>");
+            out.print(format(message.getType()) + "<br>");
         }
         if (message.getMediaMime() != null) {
             if (message.getMediaMime().equals("geo")) {
@@ -363,7 +369,7 @@ public class ReportGenerator {
 
         }
         if (message.getData() != null) {
-            out.print(message.getData()); // $NON-NLS-1$
+            out.print(format(message.getData()));
         }
 
         out.println("<br/>");

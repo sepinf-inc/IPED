@@ -19,6 +19,20 @@
 
 <properties>
 
+    <detectors>		
+        <!-- custom detectors from Tika -->
+        <detector class="org.apache.tika.detect.OverrideDetector"></detector>
+        <detector class="org.apache.tika.parser.microsoft.POIFSContainerDetector"></detector>
+        <detector class="org.apache.tika.parser.pkg.ZipContainerDetector"></detector>
+        <detector class="org.apache.tika.parser.apple.BPListDetector"></detector>
+        <!-- custom detectors from IPED -->
+        <detector class="dpf.sp.gpinf.detector.SQLiteContainerDetector"></detector>
+        <!-- other custom detectors -->
+        <detector class="org.gagravarr.tika.OggDetector"></detector>
+        <!-- default Tika detector -->
+        <detector class="org.apache.tika.mime.MimeTypes"></detector>
+    </detectors>
+
     <parsers>
         <!--parser class="dpf.sp.gpinf.indexer.parsers.external.CompositeExternalParser"></parser-->
         
@@ -144,7 +158,10 @@
         
         <!--parser class="org.gagravarr.tika.FlacParser"></parser>
         <parser class="org.gagravarr.tika.OggParser"></parser>
-        <parser class="org.gagravarr.tika.VorbisParser"></parser-->
+        <parser class="org.gagravarr.tika.VorbisParser"></parser>
+        <parser class="org.gagravarr.tika.OpusParser"></parser>
+        <parser class="org.gagravarr.tika.SpeexParser"></parser>
+        <parser class="org.gagravarr.tika.TheoraParser"></parser>-->
         
         
         <!--
@@ -196,7 +213,9 @@
         
         <parser class="dpf.sp.gpinf.indexer.parsers.MultipleParser">
             <mime>image/heic</mime>
+            <mime>image/heif</mime>
             <mime>image/heic-sequence</mime>
+            <mime>image/heif-sequence</mime>
             <params>
                 <param name="parserName" type="string">HeicParser</param>
                 <param name="parsers" type="string">dpf.sp.gpinf.indexer.parsers.OCRParser;org.apache.tika.parser.image.HeifParser</param>
@@ -264,6 +283,7 @@
             <mime-exclude>image/svg+xml</mime-exclude>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.RFC822Parser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.MSGParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MSAccessParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.MboxParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.IncrediMailParser"></parser>
@@ -300,6 +320,7 @@
         </parser>
         
         <parser class="dpf.sp.gpinf.indexer.parsers.KnownMetParser"></parser>
+        <parser class="dpf.sp.gpinf.indexer.parsers.PartMetParser"></parser>
         <parser class="gpinf.emule.PreferencesDatParser"></parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.AresParser"></parser>
         <parser class="dpf.mg.udi.gpinf.shareazaparser.ShareazaSearchesDatParser"></parser>

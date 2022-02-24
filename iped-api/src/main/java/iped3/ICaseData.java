@@ -31,6 +31,12 @@ public interface ICaseData extends Serializable {
      */
     void addItem(IItem item) throws InterruptedException;
 
+    void addItemFirst(IItem item) throws InterruptedException;
+
+    void addItemNonBlocking(IItem item);
+
+    void addItemFirstNonBlocking(IItem item);
+
     void addItemToQueue(IItem item, int queuePriority) throws InterruptedException;
 
     /**
@@ -47,8 +53,6 @@ public interface ICaseData extends Serializable {
      * @return true se o caso contém um report
      */
     boolean containsReport();
-
-    int getAlternativeFiles();
 
     /**
      * Obtém lista de bookmarks.
@@ -103,8 +107,6 @@ public interface ICaseData extends Serializable {
      * @return lista não modificável de grupo de arquivos por data.
      */
     List<IFileGroup> getTimeGroups();
-
-    void incAlternativeFiles(int inc);
 
     void incDiscoveredEvidences(int inc);
 

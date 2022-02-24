@@ -100,6 +100,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
+import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
@@ -428,6 +429,16 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             evidence.setHasChildren(true);
         }
 
+        String compressRatio = evidence.getMetadata().get(EntropyTask.COMPRESS_RATIO);
+        if (compressRatio != null) {
+            evidence.getMetadata().remove(EntropyTask.COMPRESS_RATIO);
+            evidence.setExtraAttribute(EntropyTask.COMPRESS_RATIO, Double.valueOf(compressRatio));
+        }
+        
+        if (MediaTypes.isInstanceOf(evidence.getMediaType(), MediaTypes.UFED_MESSAGE_MIME)) {
+            evidence.getMetadata().set(ExtraProperties.PARENT_VIEW_POSITION, String.valueOf(evidence.getId()));
+        }
+
     }
 
     @Override
@@ -498,8 +509,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setSubitemId(itemInfo.getChild());
             context.set(EmbeddedItem.class, new EmbeddedItem(subItem));
 
-            Util.generatePersistentId(parentInfo.getPersistentId(), subItem);
-            subItem.setExtraAttribute(IndexItem.CONTAINER_PERSISTENT_ID, Util.getPersistentId(evidence));
+            subItem.setExtraAttribute(IndexItem.PARENT_TRACK_ID, parentInfo.getTrackId());
+            subItem.setExtraAttribute(IndexItem.CONTAINER_TRACK_ID, Util.getTrackID(evidence));
 
             String embeddedPath = subitemPath.replace(firstParentPath + ">>", ""); //$NON-NLS-1$ //$NON-NLS-2$
             char[] nameChars = (embeddedPath + "\n\n").toCharArray(); //$NON-NLS-1$
@@ -521,6 +532,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // root has children
             evidence.setHasChildren(true);
 
+            // protection for future concurrent access, see #794
+            metadata = new SyncMetadata(metadata);
             subItem.setMetadata(metadata);
 
             boolean updateInputStream = false;
@@ -558,7 +571,8 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setHash(metadata.get(BasicProps.HASH));
             metadata.remove(BasicProps.HASH);
 
-            if (metadata.get(ExtraProperties.PST_EMAIL_HAS_ATTACHS) != null)
+            Integer attachCount = metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT);
+            if (attachCount != null && attachCount > 0)
                 subItem.setHasChildren(true);
 
             // indica se o conteiner tem subitens (mais específico que filhos genéricos)
@@ -581,6 +595,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             if (metadata.get(ExtraProperties.DELETED) != null) {
                 metadata.remove(ExtraProperties.DELETED);
                 subItem.setDeleted(true);
+            }
+
+            if (Boolean.valueOf(metadata.get(ExtraProperties.DECODED_DATA))) {
+                subItem.setExtraAttribute(ExtraProperties.DECODED_DATA, true);
+                metadata.remove(ExtraProperties.DECODED_DATA);
             }
 
             // causa problema de subitens corrompidos de zips carveados serem apagados,
@@ -609,8 +628,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             // subitem is populated, store its info now
             String embeddedId = metadata.get(ExtraProperties.ITEM_VIRTUAL_ID);
             metadata.remove(ExtraProperties.ITEM_VIRTUAL_ID);
-            if (embeddedId != null)
-                idToItemMap.put(embeddedId, new ParentInfo(subItem));
 
             // pausa contagem de timeout do pai antes de extrair e processar subitem
             if (reader.setTimeoutPaused(true)) {
@@ -640,6 +657,11 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
                 } finally {
                     // despausa contador de timeout do pai somente após processar subitem
                     reader.setTimeoutPaused(false);
+
+                    // must do this after adding subitem to queue
+                    if (embeddedId != null) {
+                        idToItemMap.put(embeddedId, new ParentInfo(subItem));
+                    }
                 }
             }
 
@@ -688,7 +710,6 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
         if (zipBombException != null) {
             // dispose now because this item will not be added to processing queue
             if (subItem.hasFile()) {
-                subItem.setDeleteFile(true);
                 subItem.dispose();
             }
             throw zipBombException;

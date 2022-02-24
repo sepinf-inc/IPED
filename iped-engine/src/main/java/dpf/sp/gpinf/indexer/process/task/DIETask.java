@@ -209,7 +209,8 @@ public class DIETask extends AbstractTask {
 
         try {
             long t = System.currentTimeMillis();
-            if (isImageType(evidence.getMediaType())) {
+            boolean isAnimationImage = isAnimationImage(evidence);
+            if (isImageType(evidence.getMediaType()) && !isAnimationImage) {
                 if (evidence.getExtraAttribute(ImageThumbTask.THUMB_TIMEOUT) != null) return;
 
                 //For images call the detection method passing the thumb image
@@ -232,7 +233,7 @@ public class DIETask extends AbstractTask {
                 t = System.currentTimeMillis() - t;
                 totalImagesTime.addAndGet(t);
 
-            } else if (isVideoType(evidence.getMediaType())) {
+            } else if (isVideoType(evidence.getMediaType()) || isAnimationImage) {
                 Short prevResult = null;
                 synchronized (videoResults) {
                     prevResult = videoResults.get(evidence.getHash());
@@ -279,7 +280,7 @@ public class DIETask extends AbstractTask {
      * Combine the score of each video frame into a single score. 
      * It uses a weighted average, with higher weights for higher scores.
      */
-    private double videoScore(List<Double> p) {
+    public static double videoScore(List<Double> p) {
         Collections.sort(p);
         Collections.reverse(p);
         double weight = 1;
@@ -318,6 +319,16 @@ public class DIETask extends AbstractTask {
         return mediaType.getType().equals("image"); //$NON-NLS-1$
     }
     
+    /**
+     * Check if the item is a multiple frame image. Just works after VideoTahumbTask
+     * is executed.
+     */
+
+    private static boolean isAnimationImage(IItem item) {
+        return VideoThumbTask.isImageSequence(item.getMediaType().toString()) ||
+                item.getMetadata().get(VideoThumbTask.ANIMATION_FRAMES_PROP) != null;
+    }
+
     /**
      * Check if the evidence is a video.
      */

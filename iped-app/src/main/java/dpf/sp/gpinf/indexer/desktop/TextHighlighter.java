@@ -20,6 +20,7 @@ package dpf.sp.gpinf.indexer.desktop;
 
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.tokenattributes.OffsetAttribute;
+import org.apache.lucene.search.Query;
 import org.apache.lucene.search.highlight.Encoder;
 import org.apache.lucene.search.highlight.Fragmenter;
 import org.apache.lucene.search.highlight.Highlighter;
@@ -37,11 +38,12 @@ public class TextHighlighter {
     public static TextFragment[] getHighlightedFrags(boolean breakOnNewLine, String text, String fieldName,
             int fragmentSize) throws Exception {
 
-        if (text == null) {
+        Query query = App.get().getQuery();
+        if (text == null || query == null) {
             return new TextFragment[0];
         }
         TokenStream stream = TokenSources.getTokenStream(fieldName, text, App.get().appCase.getAnalyzer());
-        QueryScorer scorer = new QueryScorer(App.get().getQuery(), fieldName);
+        QueryScorer scorer = new QueryScorer(query, fieldName);
         Fragmenter fragmenter;
         SimpleHTMLFormatter formatter = new SimpleHTMLFormatter(App.get().getParams().HIGHLIGHT_START_TAG,
                 App.get().getParams().HIGHLIGHT_END_TAG);

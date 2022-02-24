@@ -2,23 +2,20 @@ package dpf.sp.gpinf.indexer.analysis;
 
 import org.apache.lucene.analysis.util.CharTokenizer;
 
-/*
- * Tokenizador que divide o texto em caracteres diferentes de letras e números.
- * Também converte os caracteres para minúsculas.
- * Assim a indexação tem comportamento similar ao FTK
+/**
+ * Tokenizer that returns alphanumeric and optional custom configured chars as
+ * tokens. Other chars are considered text separators.
+ * 
  */
 public class LetterDigitTokenizer extends CharTokenizer {
-
-    private final boolean convertCharsToLowerCase;
 
     private final int[] extraCodePoints;
 
     /**
      * Construct a new LetterTokenizer.
      */
-    public LetterDigitTokenizer(boolean convertCharsToLowerCase, int[] extraCodePoints) {
+    public LetterDigitTokenizer(int[] extraCodePoints) {
         super();
-        this.convertCharsToLowerCase = convertCharsToLowerCase;
         this.extraCodePoints = extraCodePoints;
     }
 
@@ -56,18 +53,6 @@ public class LetterDigitTokenizer extends CharTokenizer {
         }
 
         return false;
-    }
-
-    /**
-     * Converts char to lower case {@link Character#toLowerCase(char)}.
-     */
-    @Override
-    protected int normalize(int c) {
-        if (convertCharsToLowerCase) {
-            return Character.toLowerCase(c);
-        } else {
-            return c;
-        }
     }
 
 }

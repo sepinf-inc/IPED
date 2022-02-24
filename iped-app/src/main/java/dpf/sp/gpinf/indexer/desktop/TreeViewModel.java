@@ -117,10 +117,7 @@ public class TreeViewModel implements TreeModel {
 
         private void listSubItens(Document doc) {
 
-            String parentId = doc.get(IndexItem.FTKID);
-            if (parentId == null) {
-                parentId = doc.get(IndexItem.ID);
-            }
+            String parentId = doc.get(IndexItem.ID);
 
             String sourceUUID = doc.get(IndexItem.EVIDENCE_UUID);
             String textQuery = IndexItem.PARENTID + ":" + parentId + " && " + IndexItem.EVIDENCE_UUID + ":" //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$

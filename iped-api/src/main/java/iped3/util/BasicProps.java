@@ -10,6 +10,7 @@ public class BasicProps {
     public static final String PARENTIDs = "parentIds"; //$NON-NLS-1$
     public static final String EVIDENCE_UUID = "evidenceUUID"; //$NON-NLS-1$
     public static final String NAME = "name"; //$NON-NLS-1$
+    public static final String EXT = "ext"; //$NON-NLS-1$
     public static final String TYPE = "type"; //$NON-NLS-1$
     public static final String LENGTH = "size"; //$NON-NLS-1$
     public static final String CREATED = "created"; //$NON-NLS-1$
@@ -29,7 +30,6 @@ public class BasicProps {
     public static final String SUBITEM = "subitem"; //$NON-NLS-1$
     public static final String SUBITEMID = "subitemId"; //$NON-NLS-1$
     public static final String OFFSET = "offset"; //$NON-NLS-1$
-    public static final String DUPLICATE = "duplicate"; //$NON-NLS-1$
     public static final String TIMEOUT = "timeout"; //$NON-NLS-1$
     public static final String CONTENTTYPE = "contentType"; //$NON-NLS-1$
     public static final String TREENODE = "treeNode"; //$NON-NLS-1$
@@ -50,6 +50,7 @@ public class BasicProps {
         basicProps.add(PARENTIDs);
         basicProps.add(EVIDENCE_UUID);
         basicProps.add(NAME);
+        basicProps.add(EXT);
         basicProps.add(TYPE);
         basicProps.add(LENGTH);
         basicProps.add(CREATED);
@@ -69,7 +70,6 @@ public class BasicProps {
         basicProps.add(SUBITEM);
         basicProps.add(SUBITEMID);
         basicProps.add(OFFSET);
-        basicProps.add(DUPLICATE);
         basicProps.add(TIMEOUT);
         basicProps.add(CONTENTTYPE);
         basicProps.add(TREENODE);

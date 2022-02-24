@@ -6,7 +6,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -71,8 +70,6 @@ public class CaseData implements ICaseData {
 
     private int discoveredEvidences = 0;
 
-    private int alternativeFiles = 0;
-
     /**
      * @return retorna o volume de dados descobertos até o momento
      */
@@ -108,14 +105,6 @@ public class CaseData implements ICaseData {
 
     public void setIpedReport(boolean ipedReport) {
         this.ipedReport = ipedReport;
-    }
-
-    synchronized public void incAlternativeFiles(int inc) {
-        alternativeFiles += inc;
-    }
-
-    synchronized public int getAlternativeFiles() {
-        return alternativeFiles;
     }
 
     synchronized public void incDiscoveredEvidences(int inc) {
@@ -210,37 +199,80 @@ public class CaseData implements ICaseData {
      *            arquivo a ser adicionado
      * @throws InterruptedException
      */
+    @Override
     public void addItem(IItem item) throws InterruptedException {
-        computeGlobalId(item);
-        addItemToQueue(item, 0);
+        addItemToQueue(item, currentQueuePriority, false, true);
     }
 
+    @Override
+    public void addItemFirst(IItem item) throws InterruptedException {
+        addItemToQueue(item, currentQueuePriority, true, true);
+    }
+
+    @Override
+    public void addItemNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, currentQueuePriority, false, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void addItemFirstNonBlocking(IItem item) {
+        try {
+            addItemToQueue(item, currentQueuePriority, true, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
     public void addItemToQueue(IItem item, int queuePriority) throws InterruptedException {
+        addItemToQueue(item, queuePriority, false, false);
+    }
+
+    private void addItemToQueue(IItem item, int queuePriority, boolean addFirst, boolean blockIfFull)
+            throws InterruptedException {
+
+        calctrackIDAndUpdateID(item);
+
         LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
-        while (queuePriority == 0 && queue.size() >= maxQueueSize) {
+        while (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
             Thread.sleep(1000);
         }
 
-        queue.put(item);
+        if (addFirst) {
+            queue.addFirst(item);
+        } else {
+            queue.addLast(item);
+        }
     }
 
-    private void computeGlobalId(IItem item) {
-        HashValue persistentId = new HashValue(Util.getPersistentId(item));
+    /**
+     * Computes trackID and reassign the item ID if it was mapped to a different ID
+     * in a previous processing, being resumed or restarted.
+     * 
+     * @param item
+     */
+    public void calctrackIDAndUpdateID(IItem item) {
+        HashValue trackID = new HashValue(Util.getTrackID(item));
         Map<HashValue, Integer> globalToIdMap = (Map<HashValue, Integer>) objectMap
-                .get(SkipCommitedTask.GLOBALID_ID_MAP);
+                .get(SkipCommitedTask.trackID_ID_MAP);
         // changes id to previous processing id if using --continue
         if (globalToIdMap != null) {
-            Integer previousId = globalToIdMap.get(persistentId);
+            Integer previousId = globalToIdMap.get(trackID);
             if (previousId != null) {
                 item.setId(previousId.intValue());
             } else {
-                String splittedTextId = Util.generatePersistentIdForTextFrag(Util.getPersistentId(item), 1);
+                String splittedTextId = Util.generatetrackIDForTextFrag(Util.getTrackID(item), 1);
                 previousId = globalToIdMap.get(new HashValue(splittedTextId));
                 if (previousId != null) {
                     item.setId(previousId.intValue());
                 }
             }
         }
+        ((Item) item).setAllowGetId(true);
     }
 
     public Integer changeToNextQueue() {

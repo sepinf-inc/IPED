@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+        <title>Bezeichnung der Organisation</title>
+        <link rel="stylesheet" type="text/css" href="res/estilo.css" />
+        <link rel="stylesheet" type="text/css" href="res/info.css" />
+    </head>
+    <body>
+        <div id="conteudo" align="center">
+            <table class="info">
+                <tr>
+                    <td valign="middle" class="SmallText3" align="center" colspan="2"><b>%HEADER%</b><br /></td>
+				</tr>	
+                <tr><td valign="top" class="SmallText3" width = "1%"><b>Bericht</b></td><td align="left" valign="middle" class="MainBodyText"><b>%REPORT%</b></td></tr>
+                <tr><td valign="top" class="SmallText3" width = "1%"><b>Datum</b></td><td align="left" valign="middle" class="MainBodyText">%REPORT_DATE%</td></tr>
+				<tr><td valign="top" class="SmallText3" width = "1%"><b>Titel</b></td><td align="left" valign="middle" class="MainBodyText">%TITLE%</td></tr>
+
+                <tr><td valign="top" class="SmallText3" width = "1%"><b>Ermittler</b></td><td align="left" valign="middle" class="MainBodyText">
+                        %EXAMINERS%
+                    </td></tr>
+
+                <tr><td valign="top" class="SmallText3" width = "1%"><b>Vorgangsreferenz</b></td><td align="left" valign="middle" class="MainBodyText">
+                        <b>%INVESTIGATION%</b><br>
+                        %REQUEST_DOC% vom %REQUEST_DATE%<br>
+                        angefordert von %REQUESTER%<br>
+                        Fallnummer des Labors %RECORD% vom %RECORD_DATE%<br>
+                    </td></tr>
+
+                <tr>
+                    <td valign="top" class="SmallText3" width = "1%"><b>Analysierte Beweise</b></td>
+                    <td align="left" valign="middle" class="MainBodyText">
+                        %EVIDENCE%
+                    </td>
+                </tr>
+
+                </tr>
+
+            </table>
+        </div>
+    </body>
+</html>

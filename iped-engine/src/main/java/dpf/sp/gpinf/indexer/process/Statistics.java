@@ -32,6 +32,7 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
@@ -79,9 +80,9 @@ public class Statistics {
         return instance;
     }
 
-    public int getCarvedIgnoredNum(HashValue persistentId) {
+    public int getCarvedIgnoredNum(HashValue trackId) {
         synchronized (ignoredMap) {
-            return ignoredMap.getOrDefault(persistentId, 0);
+            return ignoredMap.getOrDefault(trackId, 0);
         }
     }
 
@@ -105,7 +106,7 @@ public class Statistics {
 
     public void incCarvedIgnored(IItem item) {
         this.incCorruptCarveIgnored();
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PARENT_TRACK_ID));
         synchronized (ignoredMap) {
             Integer ignored = ignoredMap.getOrDefault(parentPersistId, 0);
             ignoredMap.put(parentPersistId, ++ignored);
@@ -113,7 +114,7 @@ public class Statistics {
     }
 
     public void resetCarvedIgnored(IItem item) {
-        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.PERSISTENT_ID));
+        HashValue parentPersistId = new HashValue((String) item.getExtraAttribute(IndexItem.TRACK_ID));
         synchronized (ignoredMap) {
             ignoredMap.remove(parentPersistId);
         }
@@ -243,10 +244,6 @@ public class Statistics {
         LOGGER.info("Carved Ignored (corrupted): {}", carvedIgnored); //$NON-NLS-1$
         LOGGER.info("Ignored Items: {}", ignored); //$NON-NLS-1$
 
-        if (caseData.getAlternativeFiles() > 0) {
-            LOGGER.info("Processed {} item previews instead of original ones.", caseData.getAlternativeFiles()); //$NON-NLS-1$
-        }
-
         IndexReader reader = DirectoryReader.open(ConfiguredFSDirectory.open(indexDir));
         int indexed = reader.numDocs() - getSplits() - previousIndexedFiles;
         reader.close();
@@ -280,9 +277,8 @@ public class Statistics {
            * " itens de " + extracted);
            */
 
-        if (this.getIoErrors() > activeFiles * IO_ERROR_RATE_TO_WARN)
-            LOGGER.error(
-                    "Alert: Errors while reading " + getIoErrors() + " items! Maybe the datasource was unavailable!"); //$NON-NLS-1$ //$NON-NLS-2$
+        if (this.getIoErrors() > processed * IO_ERROR_RATE_TO_WARN)
+            LOGGER.error("Warning: IO Errors happened while reading {} items from {}!", getIoErrors(), processed); //$NON-NLS-1$
     }
 
     public void printSystemInfo() throws Exception {
@@ -316,16 +312,14 @@ public class Statistics {
 
         int minMemPerThread = 200;
         if (maxMemory / localConfig.getNumThreads() < minMemPerThread) {
-            String memoryAlert = Messages.getString("Statistics.LowMemory.1") + minMemPerThread //$NON-NLS-1$
-                    + Messages.getString("Statistics.LowMemory.2") + Messages.getString("Statistics.LowMemory.3") //$NON-NLS-1$ //$NON-NLS-2$
-                    + Messages.getString("Statistics.LowMemory.4") + Messages.getString("Statistics.LowMemory.5") //$NON-NLS-1$ //$NON-NLS-2$
-                    + Messages.getString("Statistics.LowMemory.6"); //$NON-NLS-1$
+            String memoryAlert = Messages.getString("Statistics.LowMemory.Msg").replace("{}", //$NON-NLS-1$
+                    Integer.toString(minMemPerThread));
             CmdLineArgs cmdArgs = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             if (!cmdArgs.isNogui()) {
                 JOptionPane.showMessageDialog(null, memoryAlert, Messages.getString("Statistics.LowMemory.Title"), //$NON-NLS-1$
                         JOptionPane.WARNING_MESSAGE);
             }
-            throw new Exception(memoryAlert);
+            throw new IPEDException(memoryAlert);
         }
 
     }
