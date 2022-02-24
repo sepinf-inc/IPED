@@ -24,7 +24,8 @@ public class SimilarFacesSearch {
 
     private static float minimumScore = DEFAULT_MIN_SCORE;
 
-    private static int KNN_BATCH = 1000;
+    // see https://github.com/sepinf-inc/IPED/pull/980 for this choice
+    private static int KNN_BATCH = 100000;
 
     private IPEDMultiSource ipedCase;
     private float[] refSimilarityFeatures;
