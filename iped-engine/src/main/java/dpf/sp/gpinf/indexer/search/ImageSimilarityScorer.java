@@ -16,6 +16,8 @@ import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TopDocs;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.FixedBitSet;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
@@ -25,6 +27,9 @@ import iped3.IItemId;
 import iped3.util.BasicProps;
 
 public class ImageSimilarityScorer {
+
+    private static final Logger logger = LoggerFactory.getLogger(ImageSimilarityScorer.class);
+
     /**
      * Constant used in the conversion from the raw squared distance (>=0, in an
      * arbitrary scale) of the reference image to the actual score (used to sort the
@@ -64,9 +69,10 @@ public class ImageSimilarityScorer {
     private static final int maxResults = 100000;
     
     /**
-     * Search batch size, max results returned for each search.
+     * Search batch size, max results returned for each search. Equal to maxResults for now,
+     * see https://github.com/sepinf-inc/IPED/pull/980 for the explanation.
      */
-    private static final int searchBatch = 1000;
+    private static final int searchBatchSize = maxResults;
 
     private final IPEDSource ipedCase;
     private final MultiSearchResult result;
@@ -90,6 +96,10 @@ public class ImageSimilarityScorer {
         if (len == 0 || refSimilarityFeatures == null) {
             return;
         }
+
+        logger.info("Starting similar image search...");
+        long t = System.currentTimeMillis();
+
         LeafReader leafReader = ipedCase.getLeafReader();
         float[] floatFeatures = IndexItem.castByteArrayToFloatArray(refSimilarityFeatures);
 
@@ -99,7 +109,7 @@ public class ImageSimilarityScorer {
 
         loop: while (true) {
             // topDocs.scoreDocs are returned in descending score order
-            TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, searchBatch, bits);
+            TopDocs topDocs = leafReader.searchNearestVectors(BasicProps.SIMILARITY_FEATURES, floatFeatures, searchBatchSize, bits);
             if (topDocs.scoreDocs.length == 0) {
                 break;
             }
@@ -143,6 +153,9 @@ public class ImageSimilarityScorer {
         }
 
         organizeTopResults();
+
+        t = System.currentTimeMillis() - t;
+        logger.info("Similar image search took {}ms to find {} images", t, topDocsMap.size());
     }
 
     private void organizeTopResults() {
