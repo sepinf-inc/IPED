@@ -17,8 +17,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
+import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TemporaryResources;
@@ -29,7 +29,6 @@ import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
-import gpinf.dev.data.Item;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
 import io.minio.MakeBucketArgs;
@@ -79,13 +78,13 @@ public class MinIOTask extends AbstractTask {
     private MinioClient minioClient;
     private MinIOInputInputStreamFactory inputStreamFactory;
 
-    private static long tarMaxLength = 0;
-    private static long tarMaxFiles = 0;
+    private static long zipMaxSize = 1024 * 1024;
+    private static long zipMaxFiles = 10000;
     private TemporaryResources tmp = null;
-    private TarArchiveOutputStream out = null;
-    private File tarfile = null;
-    private long tarLength = 0;
-    private long tarFiles = 0;
+    private ZipArchiveOutputStream out = null;
+    private File zipfile = null;
+    private long zipLength = 0;
+    private long zipFiles = 0;
     private HashSet<IItem> queue = new HashSet<>();
     private boolean sendQueue = false;
 
@@ -99,9 +98,6 @@ public class MinIOTask extends AbstractTask {
         }
 
         String server = minIOConfig.getHost() + ":" + minIOConfig.getPort();
-
-        tarMaxLength = minIOConfig.getTarMaxLength();
-        tarMaxFiles = minIOConfig.getTarMaxFiles();
 
         // case name is default bucket name
         if (bucket == null) {
@@ -166,25 +162,25 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     public void finish() throws Exception {
-        flushTarFile();
+        flushZipFile();
     }
 
-    private void flushTarFile() throws Exception {
-        if (tarfile != null) {
-            logger.info("Flushing MinIOTask " + worker.id + " Sending tar containing " + tarFiles + " files");
-            sendTarFile();
+    private void flushZipFile() throws Exception {
+        if (zipfile != null) {
+            logger.info("Flushing MinIOTask " + worker.id + " Sending zip containing " + zipFiles + " files");
+            sendZipFile();
         }
     }
 
 
 
-    private void insertInTarFile(String bucketPath, long length, InputStream is, IItem i, boolean preview)
+    private String insertInZipFile(String hash, long length, InputStream is, IItem i, boolean preview)
             throws Exception {
         if (out == null) {
-            tarLength = 0;
+            zipLength = 0;
             tmp = new TemporaryResources();
-            tarfile = tmp.createTemporaryFile();
-            out = new TarArchiveOutputStream(new FileOutputStream(tarfile));
+            zipfile = tmp.createTemporaryFile();
+            out = new ZipArchiveOutputStream(new FileOutputStream(zipfile));
         }
 
         // insert into the queue of files waiting to be sent
@@ -192,10 +188,10 @@ public class MinIOTask extends AbstractTask {
             queue.add(i);
         }
 
-        tarFiles++;
-        tarLength += length;
+        zipFiles++;
+        zipLength += length;
 
-        TarArchiveEntry entry = new TarArchiveEntry(bucketPath);
+        ZipArchiveEntry entry = new ZipArchiveEntry(hash);
         byte[] coppied = IOUtils.toByteArray(is);
         entry.setSize(coppied.length);
         out.putArchiveEntry(entry);
@@ -204,11 +200,13 @@ public class MinIOTask extends AbstractTask {
 
         out.closeArchiveEntry();
 
+        return zipfile.getName().replace(".tmp", ".zip") + "/" + hash;
+
     }
 
 
 
-    private String insertWithTar(IItem i, String hash, InputStream is, long length, String mediatype, boolean preview)
+    private String insertWithZip(IItem i, String hash, InputStream is, long length, String mediatype, boolean preview)
             throws Exception {
 
         String bucketPath = buildPath(hash);
@@ -217,22 +215,20 @@ public class MinIOTask extends AbstractTask {
             bucketPath = "preview/" + hash;
         }
         String fullPath = bucket + "/" + bucketPath;
+
         // if empty or already exists do not continue
         if (length <= 0) {
-
-            return fullPath;
+            return null;
         }
        
         if (checkIfExists(bucketPath)) {
             return fullPath;
         }
 
-        // if files are greater than 20% of tarMaxLength send directly
-        if (length > tarMaxLength * 0.2) {
+        if (length > zipMaxSize) {
             insertItem(hash, is, length, mediatype, bucketPath);
         } else {
-
-            insertInTarFile(bucketPath, length, is, i, preview);
+            fullPath = bucket + "/" + insertInZipFile(bucketPath, length, is, i, preview);
 
         }
 
@@ -242,16 +238,16 @@ public class MinIOTask extends AbstractTask {
 
 
 
-    private void sendTarFile() throws Exception {
+    private void sendZipFile() throws Exception {
         out.close();
 
-        if (tarFiles > 0) {
-            try (InputStream fi = new BufferedInputStream(new FileInputStream(tarfile))) {
+        if (zipFiles > 0) {
+            try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
 
                 ObjectWriteResponse aux = minioClient.putObject(
-                        PutObjectArgs.builder().bucket(bucket).object(tarfile.getName().replace(".tmp", ".tar"))
-                                .stream(fi, tarfile.length(), Math.max(tarfile.length(), 1024 * 1024 * 5))
-                                .userMetadata(Collections.singletonMap("snowball-auto-extract", "true")).build());
+                        PutObjectArgs.builder().bucket(bucket).object(zipfile.getName().replace(".tmp", ".zip"))
+                                .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
+                                .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
 
             }
         }
@@ -259,14 +255,14 @@ public class MinIOTask extends AbstractTask {
         sendQueue = true;
 
         tmp.close();
-        tarFiles = 0;
-        tarLength = 0;
+        zipFiles = 0;
+        zipLength = 0;
         out = null;
         tmp = null;
-        tarfile = null;
+        zipfile = null;
     }
 
-    private void sendTarItemsToNextTask() throws Exception {
+    private void sendZipItemsToNextTask() throws Exception {
         for (IItem i : queue) {
             super.sendToNextTask(i);
         }
@@ -333,10 +329,10 @@ public class MinIOTask extends AbstractTask {
 
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
-        // if queue contains the item it will be sent when the tarfile is sent;
+        // if queue contains the item it will be sent when the zipfile is sent;
         if (!queue.contains(item)) {
             if (item.isQueueEnd() && !queue.isEmpty()) {
-                flushTarFile();
+                flushZipFile();
             }
 
             super.sendToNextTask(item);
@@ -344,7 +340,7 @@ public class MinIOTask extends AbstractTask {
         }
 
         if (sendQueue) {
-            sendTarItemsToNextTask();
+            sendZipItemsToNextTask();
         }
 
     }
@@ -353,7 +349,7 @@ public class MinIOTask extends AbstractTask {
     protected void process(IItem item) throws Exception {
 
         if (item.isQueueEnd()) {
-            flushTarFile();
+            flushZipFile();
             return;
         }
 
@@ -365,7 +361,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertWithTar(item, hash, new BufferedInputStream(item.getStream()), is.size(),
+            String fullPath = insertWithZip(item, hash, new BufferedInputStream(item.getStream()), is.size(),
                     item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
@@ -376,7 +372,7 @@ public class MinIOTask extends AbstractTask {
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
             try (InputStream is = new FileInputStream(item.getViewFile())) {
-                String fullPath = insertWithTar(item, hash, new FileInputStream(item.getViewFile()),
+                String fullPath = insertWithZip(item, hash, new FileInputStream(item.getViewFile()),
                         item.getViewFile().length(), getMimeType(item.getViewFile().getName()), true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
@@ -391,9 +387,9 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
-        if (tarLength > tarMaxLength || tarFiles >= tarMaxFiles) {
+        if (zipFiles >= zipMaxFiles) {
 
-            sendTarFile();
+            sendZipFile();
         }
 
     }
