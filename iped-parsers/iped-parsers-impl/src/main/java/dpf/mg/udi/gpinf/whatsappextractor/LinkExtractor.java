@@ -17,6 +17,7 @@ import java.util.HashSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.macs.HMac;
@@ -157,65 +158,60 @@ public class LinkExtractor {
         return aux;
     }
 
-    public synchronized void extractLinks() {
+    public void extractLinks() throws SQLException, DecoderException {
 
         if (con == null) {
             return;
         }
 
-        try {
-
-            StringBuilder base64Hashes = null;
-            for (String hash : hashes) {
-                hash = Base64.getEncoder().encodeToString(Hex.decodeHex(hash));
-
-                if (base64Hashes == null) {
-                    base64Hashes = new StringBuilder();
-                } else {
-                    base64Hashes.append(",");
-
-                }
-                base64Hashes.append('"').append(hash).append('"');
+        StringBuilder base64Hashes = null;
+        for (String hash : hashes) {
+            hash = Base64.getEncoder().encodeToString(Hex.decodeHex(hash));
+            if (base64Hashes == null) {
+                base64Hashes = new StringBuilder();
+            } else {
+                base64Hashes.append(",");
             }
-            PreparedStatement stmt = con.prepareStatement(sql_android.replaceAll("\\?", base64Hashes.toString()));
-            // stmt.setCharacterStream(1, new StringReader(base64Hashes.toString()));
-
-            ResultSet rs = stmt.executeQuery();
-            while (rs.next()) {
-                String link = rs.getString("url");
-                String hash = rs.getString("hash");
-
-                String decoded = new String(Hex.encodeHex(Base64.getDecoder().decode(hash), false));
-                if (!hashes.contains(decoded)) {
-                    continue;
-                }
-                String tipo = rs.getString("tipo");
-                if (tipo == null) {
-                    continue;
-                }
-                mediaType = tipo;
-                if (tipo.indexOf("/") >= 0) {
-                    mediaType = tipo.substring(0, tipo.indexOf("/"));
-                }
-                mediaType = capitalize(mediaType).trim();
-                mediaType = "WhatsApp " + mediaType + " Keys";
-
-                tipo = tipo.substring(tipo.indexOf("/") + 1);
-
-                byte[] rawData = rs.getBytes("data");
-                byte[] cipherkey = getCipherKey(rawData);
-                byte[] iv = getIV(rawData);
-                if (cipherkey == null || iv == null) {
-                    tot++;
-                }
-
-                LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
-                if (ld.getHash() != null && ld.getFileName() != null)
-                    links.add(ld);
-            }
-        } catch (Exception e) {
-            e.printStackTrace(System.out);
+            base64Hashes.append('"').append(hash).append('"');
         }
+        PreparedStatement stmt = con.prepareStatement(sql_android.replaceAll("\\?", base64Hashes.toString()));
+        // stmt.setCharacterStream(1, new StringReader(base64Hashes.toString()));
+
+        ResultSet rs = stmt.executeQuery();
+        while (rs.next()) {
+            String link = rs.getString("url");
+            String hash = rs.getString("hash");
+
+            String decoded = new String(Hex.encodeHex(Base64.getDecoder().decode(hash), false));
+            if (!hashes.contains(decoded)) {
+                continue;
+            }
+            String tipo = rs.getString("tipo");
+            if (tipo == null) {
+                continue;
+            }
+            mediaType = tipo;
+            if (tipo.indexOf("/") >= 0) {
+                mediaType = tipo.substring(0, tipo.indexOf("/"));
+            }
+            mediaType = capitalize(mediaType).trim();
+            mediaType = "WhatsApp " + mediaType + " Keys";
+
+            tipo = tipo.substring(tipo.indexOf("/") + 1);
+
+            byte[] rawData = rs.getBytes("data");
+            byte[] cipherkey = getCipherKey(rawData);
+            byte[] iv = getIV(rawData);
+            if (cipherkey == null || iv == null) {
+                tot++;
+            }
+
+            LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
+            if (ld.getHash() != null && ld.getFileName() != null) {
+                links.add(ld);
+            }
+        }
+
     }
 
     public void close() throws SQLException {

@@ -54,18 +54,18 @@ public class LinkDownloader {
     }
 
     public void downloadUsingStream(File tmp) throws IOException {
-        int status=-1;
+        int status = -1;
         URL url = new URL(urlStr);
-        HttpURLConnection connection=null;
+        HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(150);
             connection.setReadTimeout(150);
             connection.setRequestMethod("HEAD");
-            status=connection.getResponseCode();
+            status = connection.getResponseCode();
         } catch (IOException e) {
-            status=-1;
-        }finally {
+            status = -1;
+        } finally {
             if (connection != null)
                 connection.disconnect();
         }
