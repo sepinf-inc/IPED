@@ -208,11 +208,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 parseWhatsAppAccount(stream, context, handler, true);
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
-            } else if (mimetype.equals(MSG_STORE.toString())) {
-                if (mergeDbs)
-                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
-                else
-                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
+            } else if (mimetype.equals(MSG_STORE.toString())) {    
+                parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
@@ -354,6 +351,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     extFactory instanceof ExtractorAndroidFactory);
 
             wcontext.setChalist(extractChatList(wcontext, extFactory, metadata, context, contacts, account));
+            
         } catch (Exception e) {
             if (e instanceof TikaException)
                 throw (TikaException) e;
@@ -370,6 +368,19 @@ public class WhatsAppParser extends SQLite3DBParser {
         WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
 
         parseDB(wcontext, metadata, context, extFactory);
+        if (FALLBACK_DOWNLOAD_FILES) {
+            EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                    new ParsingEmbeddedDocumentExtractor(context));
+            IItemSearcher searcher = context.get(IItemSearcher.class);
+            AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
+            for (Chat c : wcontext.getChalist()) {
+                searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,wcontext.getItem().getFile() , context,
+                        DOWNLOADED_FILES);
+            }
+            if (DOWNLOADED_FILES.get() > 0) {
+                logger.info("Downloaded {} files from {}", DOWNLOADED_FILES.get(), wcontext.getItem().getName());
+            }
+        }
 
         checkIfIsMainDBAndStore(wcontext);
 
@@ -470,6 +481,16 @@ public class WhatsAppParser extends SQLite3DBParser {
             stream.skip(wcontext.getItem().getLength());
 
             List<Chat> dbChatList = wcontext.getChalist();
+            // if merge is not enable create a report for every db
+            if (!mergeDbs) {
+                TikaInputStream tis = TikaInputStream.get(stream, tmp);
+                EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
+                        new ParsingEmbeddedDocumentExtractor(context));
+                createReport(dbChatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
+
+                dbsFound.remove(DB.getId());
+                return;
+            }
 
             if (wcontext.isBackup() && wcontext.getMainDBItem() != null) {
                 // MakePreviewTask enters here later for backups, output preview message
@@ -1348,14 +1369,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 if (item != null) {
                                     synchronized (hashesDownloaded) {
                                         hashesDownloaded.putIfAbsent(ld.getHash(), item);
-                                    }
-                                    for (int i = 0; i < 5 && item.getExtraAttribute("ended") == null; i++) {
-                                        try {
-                                            item.wait(1000);
-                                        } catch (Exception e) {
-                                            // TODO Auto-generated catch block
-                                        }
-
                                     }
                                     out.close();
                                 }

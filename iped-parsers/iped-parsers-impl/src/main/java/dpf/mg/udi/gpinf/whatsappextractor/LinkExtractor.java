@@ -175,9 +175,7 @@ public class LinkExtractor {
                     base64Hashes.append(",");
 
                 }
-                base64Hashes.append('"');
-                base64Hashes.append(hash);
-                base64Hashes.append('"');
+                base64Hashes.append('"').append(hash).append('"');
             }
             PreparedStatement stmt = con.prepareStatement(sql_android.replaceAll("\\?", base64Hashes.toString()));
             // stmt.setCharacterStream(1, new StringReader(base64Hashes.toString()));
