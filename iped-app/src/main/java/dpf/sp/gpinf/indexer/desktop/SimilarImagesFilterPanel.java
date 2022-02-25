@@ -20,18 +20,14 @@ import iped3.IItem;
 public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListener {
     private static final long serialVersionUID = -6323740427378842045L;
     private BufferedImage img;
-    private String refName;
-    private boolean isRefExternal;
+    protected String refName;
+    protected boolean isRefExternal;
     private int xc;
 
     public SimilarImagesFilterPanel() {
         setPreferredSize(new Dimension(50, 32));
         setMinimumSize(getPreferredSize());
         setMaximumSize(getPreferredSize());
-        String removeMsg = Messages.getString("ImageSimilarity.RemoveFilter");
-        String tooltipTitle = Messages.getString("ImageSimilarity.FilterTipTitle");
-        String tooltipDescInternal = Messages.getString("ImageSimilarity.FilterTipInternal");
-        String tooltipDescExternal = Messages.getString("ImageSimilarity.FilterTipExternal");
         addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent e) {
                 clearFilterAndUpdate();
@@ -40,14 +36,28 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
         addMouseMotionListener(new MouseMotionAdapter() {
             public void mouseMoved(MouseEvent e) {
                 if (e.getX() < xc) {
-                    setToolTipText("<HTML>" + tooltipTitle + "<br>"
-                            + (isRefExternal ? tooltipDescExternal : tooltipDescInternal) + ": <b>" + refName
-                            + "</b></HTML>");
+                    setToolTipText(getDefaultToolTip());
                 } else {
-                    setToolTipText(removeMsg);
+                    setToolTipText(getRemoveToolTip());
                 }
             }
         });
+    }
+
+    protected String getDefaultToolTip() {
+        String tooltipTitle = Messages.getString("ImageSimilarity.FilterTipTitle");
+        String tooltipDescInternal = Messages.getString("ImageSimilarity.FilterTipInternal");
+        String tooltipDescExternal = Messages.getString("ImageSimilarity.FilterTipExternal");
+        return buildDefaultToolTip(tooltipTitle, tooltipDescInternal, tooltipDescExternal);
+    }
+
+    protected String buildDefaultToolTip(String tooltipTitle, String tooltipDescInternal, String tooltipDescExternal) {
+        return "<HTML>" + tooltipTitle + "<br>" + (isRefExternal ? tooltipDescExternal : tooltipDescInternal) + ": <b>"
+                + refName + "</b></HTML>";
+    }
+
+    protected String getRemoveToolTip() {
+        return Messages.getString("ImageSimilarity.RemoveFilter");
     }
 
     public void setCurrentItem(IItem currentItem, boolean external) {
