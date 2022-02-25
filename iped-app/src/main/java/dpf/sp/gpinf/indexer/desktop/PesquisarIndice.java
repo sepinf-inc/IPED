@@ -39,6 +39,7 @@ import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;

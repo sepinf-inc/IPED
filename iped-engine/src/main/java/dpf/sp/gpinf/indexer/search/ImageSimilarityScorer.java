@@ -1,4 +1,4 @@
-package dpf.sp.gpinf.indexer.desktop;
+package dpf.sp.gpinf.indexer.search;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -14,8 +14,6 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
-import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
