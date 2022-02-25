@@ -55,6 +55,9 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
             if (!multiCaseGraphPath.getParentFile().exists() && !multiCaseGraphPath.getParentFile().mkdirs()) {
                 multiCaseGraphPath = new File(System.getProperty("java.io.basetmpdir"), suffix);
             }
+            if (multiCaseGraphPath.exists() && !new File(multiCaseGraphPath.getParentFile(), "generated").exists()) {
+                IOUtil.deleteDirectory(multiCaseGraphPath, false);
+            }
             createMultiCaseGraph(cases, multiCaseGraphPath);
             if (multiCaseGraphPath.exists()) {
                 loaded = initGraphService(multiCaseGraphPath);
