@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.config.MinIOConfig;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
+import io.minio.GetObjectArgs;
 import io.minio.MakeBucketArgs;
 import io.minio.MinioClient;
 import io.minio.ObjectStat;
@@ -523,7 +524,8 @@ public class MinIOTask extends AbstractTask {
 
         private InputStream getInputStream(long pos) throws IOException {
             try {
-                return minioClient.getObject(bucket, id, pos);
+                return minioClient.getObject(GetObjectArgs.builder().bucket(bucket).object(bucket).offset(pos)
+                        .extraHeaders(Collections.singletonMap("X-Minio-Extract", "true")).build());
 
             } catch (InvalidKeyException | ErrorResponseException | InsufficientDataException | InternalException
                     | InvalidBucketNameException | InvalidResponseException | NoSuchAlgorithmException | ServerException
