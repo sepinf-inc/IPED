@@ -47,7 +47,14 @@ public class ImageSimilarityScorer {
      */
     private static final int maxTop = 2000;
     private static final int rangeCheck = 100;
-    private float cut = 1;
+
+    /**
+     * Minimum score to accept an image (below that it won't be included in the
+     * results).
+     */
+    private static final float minScore = 1;
+
+    private float cut = minScore;
 
     private final IPEDSource ipedCase;
     private final MultiSearchResult result;
