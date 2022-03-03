@@ -62,8 +62,11 @@ public class GraphTask extends AbstractTask {
     private static final Logger logger = LoggerFactory.getLogger(GraphTask.class);
 
     public static final String DB_NAME = "graph.db";
-    public static final String DB_PATH = "neo4j/databases";
-    public static final String GENERATED_PATH = "neo4j/generated";
+    public static final String DB_HOME_DIR = "neo4j";
+    public static final String DB_DATA_DIR = "data";
+    public static final String DB_DATA_PATH = DB_HOME_DIR + "/" + DB_DATA_DIR;
+    public static final String CSVS_DIR = "csv";
+    public static final String CSVS_PATH = DB_HOME_DIR + "/" + CSVS_DIR;
     public static final String RELATIONSHIP_ID = "relId";
     public static final String RELATIONSHIP_SOURCE = "dataSource";
 
@@ -115,7 +118,7 @@ public class GraphTask extends AbstractTask {
             configuration = config.getConfiguration();
 
             if (graphFileWriter == null) {
-                graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
+                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH),
                         configuration.getDefaultEntity());
 
                 if (configuration.getProcessProximityRelationships() && caseData.isIpedReport()) {
@@ -126,12 +129,12 @@ public class GraphTask extends AbstractTask {
 
             CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
             if (args.isAppendIndex() || args.isRestart() || args.isContinue()) {
-                File graphDbOutput = new File(output, GraphTask.DB_PATH);
-                if (graphDbOutput.exists()) {
+                File graphDataDir = new File(output, DB_DATA_PATH);
+                if (graphDataDir.exists()) {
                     // TODO test if LOAD CSV Cypher command is faster than rebuilding all database
                     // from scratch with bulk import tool
                     try {
-                        IOUtil.deleteDirectory(graphDbOutput, false);
+                        IOUtil.deleteDirectory(graphDataDir, false);
                     } catch (IOException e) {
                         throw new IPEDException("Error appending to graph database, currently it can't be in use!");
                     }
@@ -151,10 +154,10 @@ public class GraphTask extends AbstractTask {
     private void finishGraphGeneration() throws IOException {
         WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Generating graph database...");
         logger.info("Generating graph database...");
-        File graphDbOutput = new File(output, GraphTask.DB_PATH);
-        File graphDbGenerated = new File(output, GraphTask.GENERATED_PATH);
+        File graphDbHome = new File(output, DB_HOME_DIR);
+        File graphCSVs = new File(output, CSVS_PATH);
         GraphGenerator graphGenerator = new GraphGenerator();
-        graphGenerator.generate(graphDbOutput, graphDbGenerated);
+        graphGenerator.generate(graphDbHome, graphCSVs);
         logger.info("Generating graph database finished.");
     }
 
@@ -167,17 +170,17 @@ public class GraphTask extends AbstractTask {
             logger.info("Finishing graph CSVs finished.");
             if (caseData.isIpedReport()) {
                 File prevCaseModuleDir = (File) caseData.getCaseObject(IPEDReader.ORIG_CASE_MODULE_DIR);
-                File prevCSVRoot = new File(prevCaseModuleDir, GraphTask.GENERATED_PATH);
+                File prevCSVRoot = new File(prevCaseModuleDir, CSVS_PATH);
                 if (prevCSVRoot.exists() && prevCSVRoot.isDirectory()) {
                     for (File file : prevCSVRoot.listFiles()) {
-                        File target = new File(output, GraphTask.GENERATED_PATH + "/" + file.getName());
+                        File target = new File(output, CSVS_PATH + "/" + file.getName());
                         if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
                                 || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
                             IOUtil.copiaArquivo(file, target);
                         }
                     }
                 }
-                graphFileWriter = new GraphFileWriter(new File(output, GENERATED_PATH),
+                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH),
                         configuration.getDefaultEntity());
                 graphFileWriter.close();
             }
