@@ -455,7 +455,7 @@ public class Manager {
         GraphService graphService = null;
         try {
             graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.start(new File(output, GraphTask.DB_PATH));
+            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
             int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
             LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
 
@@ -468,7 +468,7 @@ public class Manager {
         // Delete relations from graph source CSV
         LOGGER.log(CONSOLE, "Deleting connections from graph CSVs...");
         int deletions = GraphFileWriter.removeDeletedRelationships(evidenceUUID,
-                new File(output, GraphTask.GENERATED_PATH));
+                new File(output, GraphTask.CSVS_PATH));
         LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
         Files.createFile(getFinishedFileFlag(output).toPath());
