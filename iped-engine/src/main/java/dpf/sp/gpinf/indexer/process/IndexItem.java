@@ -130,7 +130,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean collectMetaTypes = false;
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
@@ -928,7 +928,7 @@ public class IndexItem extends BasicProps {
             File outputBase = iCase.getModuleDir();
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
-                File localFile = Util.getResolvedFile(outputBase.getParent(), value);
+                File localFile = Util.getResolvedFile(outputBase.getParent(), value).toFile();
                 if (!iCase.isReport()) {
                     localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 }
@@ -952,26 +952,23 @@ public class IndexItem extends BasicProps {
             }
             if (doc.get(IndexItem.SOURCE_PATH) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath);
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
                 if (sisf == null) {
                     String className = doc.get(IndexItem.SOURCE_DECODER);
                     Class<?> clazz = Class.forName(className);
                     try {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
                         sisf = c.newInstance(absPath);
-                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                        }
 
                     } catch (NoSuchMethodException e) {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                        sisf = c.newInstance(URI.create(sourcePath));
+                        sisf = c.newInstance(absPath.toUri());
                     }
                     if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                        checkIfExistsAndAsk(sisf, outputBase);
+                        checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                     }
-                    inputStreamFactories.put(sourcePath, sisf);
+                    inputStreamFactories.put(absPath, sisf);
                 }
                 evidence.setInputStreamFactory(sisf);
             }
@@ -1140,7 +1137,7 @@ public class IndexItem extends BasicProps {
         String path = props.getProperty(oldPath.toString());
         if (path == null)
             return null;
-        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
+        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path);
     }
 
     public static synchronized File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir) throws IOException {

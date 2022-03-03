@@ -235,15 +235,10 @@ public class Util {
                 || file.getAbsolutePath().toLowerCase().startsWith("/dev/"); //$NON-NLS-1$
     }
 
-    public static File getResolvedFile(String prefix, String suffix) {
-        suffix = suffix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-        File file = new File(suffix);
-        if (file.isAbsolute())
-            return file;
-        else {
-            prefix = prefix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-            return new File(prefix, suffix);
-        }
+    public static Path getResolvedFile(String prefix, String suffix) {
+        Path first = Paths.get(prefix);
+        Path other = Paths.get(suffix);
+        return first.resolve(other);
     }
 
     public static String getRelativePath(File baseFile, URI uri) {

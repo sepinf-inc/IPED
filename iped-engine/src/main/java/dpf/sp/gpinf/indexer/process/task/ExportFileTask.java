@@ -126,6 +126,7 @@ public class ExportFileTask extends AbstractTask {
 
     private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
 
+    // maps below are used to track different storages/connections in multicases
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
