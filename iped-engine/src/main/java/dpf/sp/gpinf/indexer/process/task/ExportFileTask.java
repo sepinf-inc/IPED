@@ -800,7 +800,7 @@ public class ExportFileTask extends AbstractTask {
             }
         } else {
             String exportPath = root.relativize(file.toPath()).toString();
-            if (sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
+            if (sdv == null || sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
                 if (file.delete()) {
                     deleted++;
                 }
