@@ -198,11 +198,11 @@ public class GraphFileWriter implements Closeable, Flushable {
         File dataFile = out.getOutput();
         writer.write("--");
         writer.write(type);
-        writer.write(" \"");
-        writer.write(headerFile.getAbsolutePath());
+        writer.write("=");
+        writer.write(headerFile.getName());
         writer.write(",");
-        writer.write(dataFile.getAbsolutePath());
-        writer.write("\"\r\n");
+        writer.write(dataFile.getName());
+        writer.write("\r\n");
     }
 
     private File writeHeaderFile(CSVWriter out) throws IOException {
@@ -408,7 +408,7 @@ public class GraphFileWriter implements Closeable, Flushable {
                 }
                 File importArgs = new File(output, num + "/" + ARG_FILE_NAME);
                 String args = new String(Files.readAllBytes(importArgs.toPath()), StandardCharsets.UTF_8);
-                args = args.replace(getPathPrefix(args, parent), importArgs.getParentFile().getAbsolutePath());
+                args = args.replace("=", "=" + num + "/").replace(",", "," + num + "/");
                 Files.write(importArgs.toPath(), args.getBytes(StandardCharsets.UTF_8),
                         StandardOpenOption.TRUNCATE_EXISTING);
 
@@ -416,17 +416,6 @@ public class GraphFileWriter implements Closeable, Flushable {
                 throw new RuntimeException(e);
             }
         });
-    }
-
-    private static String getPathPrefix(String args, File parent) {
-        String[] lines = args.split("\n");
-        for (String line : lines) {
-            int start = line.indexOf("\"") + 1;
-            int end = line.indexOf(".csv,", start) + 4;
-            Path path = Paths.get(line.substring(start, end));
-            return path.getParent().toString();
-        }
-        return parent.getAbsolutePath();
     }
 
     public void writeCreateRelationship(Label label1, String idProperty1, Object propertyValue1, Label label2,
