@@ -27,7 +27,7 @@ public abstract class AbstractSearchLinksQuery implements SearchLinksQuery {
         try {
             tx = graphDB.beginTx();
 
-            Result result = graphDB.execute(getQuery(), params);
+            Result result = tx.execute(getQuery(), params);
             ResourceIterator<Path> resourceIterator = result.columnAs("path");
 
             boolean continueQuery = true;
@@ -36,7 +36,7 @@ public abstract class AbstractSearchLinksQuery implements SearchLinksQuery {
                 continueQuery = listener.pathFound(path);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
