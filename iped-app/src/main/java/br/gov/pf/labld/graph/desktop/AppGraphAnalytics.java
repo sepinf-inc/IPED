@@ -37,8 +37,8 @@ import org.kharon.StageMode;
 import org.kharon.layout.HistoryEnabledLayout;
 import org.kharon.layout.graphviz.GraphVizAlgorithm;
 import org.kharon.renderers.Renderers;
+import org.neo4j.graphdb.Entity;
 import org.neo4j.graphdb.Path;
-import org.neo4j.graphdb.PropertyContainer;
 import org.neo4j.graphdb.Relationship;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -749,7 +749,7 @@ public class AppGraphAnalytics extends JPanel implements ClearFilterListener {
 
             org.neo4j.graphdb.Node startNode = path.startNode();
             org.neo4j.graphdb.Node currentStart = startNode;
-            for (PropertyContainer propertyContainer : path) {
+            for (Entity propertyContainer : path) {
                 AppGraphAnalytics.this.graphStatusBar.increaseProgress(10);
                 if (propertyContainer instanceof org.neo4j.graphdb.Relationship) {
 
