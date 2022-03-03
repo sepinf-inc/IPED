@@ -599,27 +599,25 @@ public class GraphServiceImpl implements GraphService {
     @Override
     public int deleteRelationshipsFromDatasource(String evidenceUUID) {
         Transaction tx = null;
-        int deletions = 0;
+        long deletions = 0;
         try {
             tx = graphDB.beginTx();
 
             HashMap<String, Object> parameters = new HashMap<>(1);
             parameters.put("param", evidenceUUID);
-            Result result = graphDB.execute(
-                    "MATCH ()-[r]-() WHERE r." + GraphTask.RELATIONSHIP_SOURCE + " = $param RETURN DISTINCT r",
+            Result result = tx.execute("MATCH ()-[r]-() WHERE r." + GraphTask.RELATIONSHIP_SOURCE
+                    + " = $param WITH DISTINCT r as dr DELETE dr RETURN count(dr) as size",
                     parameters);
 
-            while (result.hasNext()) {
-                Relationship edge = (Relationship) result.next().get("r");
-                edge.delete();
-                deletions++;
+            if (result.hasNext()) {
+                deletions += (Long) result.next().get("size");
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
-        return deletions;
+        return (int) deletions;
     }
 
 }
