@@ -96,9 +96,9 @@ public abstract class Viewer {
         return MediaTypes.getParentType(mediaType);
     }
 
-    /*
-     * Método de inicialização do visualizador, possivelmente lenta, para ser
-     * chamado fora da thread de eventos.
+    /**
+     * Viewer lazy initialization method. Can be used to start heavy objects or
+     * components. Must be called outside EDT to not block the UI.
      */
     abstract public void init();
 
