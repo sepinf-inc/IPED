@@ -24,7 +24,7 @@ public class SimilarFacesSearch {
     private static float minDistSquared = DEFAULT_MIN_DISTANCE * DEFAULT_MIN_DISTANCE;
 
     private IPEDMultiSource ipedCase;
-    private double[] refSimilarityFeatures;
+    private float[] refSimilarityFeatures;
 
     public SimilarFacesSearch(IPEDSource ipedCase, IItem refImage) {
         this.ipedCase = ipedCase instanceof IPEDMultiSource ? (IPEDMultiSource) ipedCase
@@ -88,7 +88,7 @@ public class SimilarFacesSearch {
                             boolean hasVal = similarityFeaturesValues.advanceExact(luceneId);
                             while (hasVal && (ordinal = similarityFeaturesValues.nextOrd()) != SortedSetDocValues.NO_MORE_ORDS) {
                                 BytesRef bytesRef = similarityFeaturesValues.lookupOrd(ordinal);
-                                double[] currentFeatures = convToDoubleVec(bytesRef.bytes);
+                                float[] currentFeatures = convToFloatVec(bytesRef.bytes);
                                 float squaredDist = distance(refSimilarityFeatures, currentFeatures, minDistSquared);
                                 if (squaredDist <= minDistSquared) {
                                     score = squaredDistToScore(squaredDist);
@@ -122,40 +122,40 @@ public class SimilarFacesSearch {
 
     }
 
-    private static double[] convToDoubleVec(byte[] bytes) {
-        double[] result = new double[bytes.length / 8];
+    private static float[] convToFloatVec(byte[] bytes) {
+        float[] result = new float[bytes.length / 4];
         ByteBuffer bb = ByteBuffer.wrap(bytes);
         for (int i = 0; i < result.length; i++) {
-            result[i] = bb.getDouble();
+            result[i] = bb.getFloat();
         }
         return result;
     }
 
-    public static float distance(double[] a, double[] b, float cut) {
-        double distance = 0;
+    public static float distance(float[] a, float[] b, float cut) {
+        float distance = 0;
         for (int i = 0; i < a.length && distance <= cut;) {
-            double d = a[i] - b[i++];
+            float d = a[i] - b[i++];
             distance += d * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d + (d = a[i] - b[i++]) * d;
         }
         return (float) distance;
     }
 
-    private static double[] getFirstFace(IItem refImage) {
+    private static float[] getFirstFace(IItem refImage) {
         Object value = refImage.getExtraAttribute(FACE_FEATURES);
         if (value instanceof Collection)
             // get first face in image
             value = ((Collection) value).iterator().next();
-        return convToDoubleVec((byte[]) value);
+        return convToFloatVec((byte[]) value);
     }
 
     public static List<String> getMatchLocations(IItem refImage, IItem item){
         ArrayList<String> matchLocations = new ArrayList<>();
         Object location = item.getExtraAttribute(SimilarFacesSearch.FACE_LOCATIONS);
         if (location instanceof List) {
-            double[] ref = getFirstFace(refImage);
+            float[] ref = getFirstFace(refImage);
             List<byte[]> features = (List<byte[]>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
             for (int i = 0; i < ((List) location).size(); i++) {
-                double[] face = convToDoubleVec(features.get(i));
+                float[] face = convToFloatVec(features.get(i));
                 if (distance(ref, face, minDistSquared) <= minDistSquared) {
                     matchLocations.add((String) ((List) location).get(i));
                 }

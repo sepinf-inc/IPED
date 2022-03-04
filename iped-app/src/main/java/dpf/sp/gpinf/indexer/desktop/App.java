@@ -752,6 +752,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         clearAllFilters.addClearListener(appletListener);
         clearAllFilters.addClearListener(appGraphAnalytics);
         clearAllFilters.addClearListener(similarImageFilterPanel);
+        clearAllFilters.addClearListener(similarFacesFilterPanel);
         clearAllFilters.addClearListener(timelineListener);
 
         hitsTable.getSelectionModel().addListSelectionListener(new HitsTableListener(TextViewer.font));

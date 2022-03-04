@@ -39,6 +39,7 @@ import br.gov.pf.labld.graph.desktop.FilterSelectedEdges;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ImageSimilarityLowScoreFilter;
+import dpf.sp.gpinf.indexer.search.ImageSimilarityScorer;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
@@ -234,13 +235,22 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                 }
 
                 if (App.get().similarImagesQueryRefItem != null) {
-                    new ImageSimilarityScorer(result, App.get().similarImagesQueryRefItem).score();
+                    LOGGER.info("Starting similar image search...");
+                    long t = System.currentTimeMillis();
+                    new ImageSimilarityScorer(App.get().appCase, result, App.get().similarImagesQueryRefItem).score();
                     result = ImageSimilarityLowScoreFilter.filter(result);
+                    t = System.currentTimeMillis() - t;
+                    LOGGER.info("Similar image search took {}ms to find {} images", t, result.getLength());
                 }
 
                 if (App.get().similarFacesRefItem != null) {
+                    LOGGER.info("Starting similar face search...");
+                    long t = System.currentTimeMillis();
                     SimilarFacesSearch sfs = new SimilarFacesSearch(App.get().appCase, App.get().similarFacesRefItem);
                     result = sfs.filter(result);
+                    numFilters++;
+                    t = System.currentTimeMillis() - t;
+                    LOGGER.info("Similar face search took {}ms to find {} faces", t, result.getLength());
                 }
 
                 if (App.get().timelineListener.isTimelineViewEnabled()) {

@@ -52,6 +52,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.KnnVectorField;
 import org.apache.lucene.document.LatLonDocValuesField;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
@@ -129,7 +130,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean collectMetaTypes = false;
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
@@ -653,9 +654,17 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
-            byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
+            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+            byte[] byteArray = convFloatArrayToByteArray(floatArray);
+            int suffix = 0;
+            // KnnVectorField is not multivalued, must use other key if it exists
+            String knnKey = key;
+            while (doc.getField(knnKey) != null) {
+                knnKey = key + (++suffix);
+            }
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
+            doc.add(new KnnVectorField(knnKey, floatArray));
 
         } else {
             // value is typed as string
@@ -672,13 +681,24 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static final byte[] convNDArrayToByteArray(NDArray nd) {
-        double[] array = (double[]) nd.getData();
-        ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
-        for (double value : array) {
-            buffer.putDouble(value);
+    public static final byte[] convFloatArrayToByteArray(float[] array) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 * array.length);
+        for (float value : array) {
+            buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    public static final float[] convNDArrayToFloatArray(NDArray nd) {
+        return convDoubleToFloatArray((double[]) nd.getData());
+    }
+
+    public static final float[] convDoubleToFloatArray(double[] array) {
+        float[] result = new float[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = (float) array[i];
+        }
+        return result;
     }
 
     private static void addMetadataToDoc(Document doc, Metadata metadata, Set<TimeStampEvent> timeEventSet) {
@@ -908,7 +928,7 @@ public class IndexItem extends BasicProps {
             File outputBase = iCase.getModuleDir();
             value = doc.get(IndexItem.EXPORT);
             if (value != null && !value.isEmpty()) {
-                File localFile = Util.getResolvedFile(outputBase.getParent(), value);
+                File localFile = Util.getResolvedFile(outputBase.getParent(), value).toFile();
                 if (!iCase.isReport()) {
                     localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
                 }
@@ -932,26 +952,23 @@ public class IndexItem extends BasicProps {
             }
             if (doc.get(IndexItem.SOURCE_PATH) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath);
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
                 if (sisf == null) {
                     String className = doc.get(IndexItem.SOURCE_DECODER);
                     Class<?> clazz = Class.forName(className);
                     try {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
                         sisf = c.newInstance(absPath);
-                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                        }
 
                     } catch (NoSuchMethodException e) {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                        sisf = c.newInstance(URI.create(sourcePath));
+                        sisf = c.newInstance(absPath.toUri());
                     }
                     if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                        checkIfExistsAndAsk(sisf, outputBase);
+                        checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                     }
-                    inputStreamFactories.put(sourcePath, sisf);
+                    inputStreamFactories.put(absPath, sisf);
                 }
                 evidence.setInputStreamFactory(sisf);
             }
@@ -1120,7 +1137,7 @@ public class IndexItem extends BasicProps {
         String path = props.getProperty(oldPath.toString());
         if (path == null)
             return null;
-        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
+        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path);
     }
 
     public static synchronized File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir) throws IOException {

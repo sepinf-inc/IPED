@@ -93,7 +93,7 @@ public class IPEDReader extends DataSourceReader {
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
 
-    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
 
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
@@ -527,7 +527,7 @@ public class IPEDReader extends DataSourceReader {
             if (!treeNode) {
                 value = doc.get(IndexItem.EXPORT);
                 if (value != null && !value.isEmpty()) {
-                    File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value);
+                    File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value).toFile();
                     if (!ipedCase.isReport()) {
                         localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
                     }
@@ -548,23 +548,23 @@ public class IPEDReader extends DataSourceReader {
                 }
                 if (doc.get(IndexItem.SOURCE_PATH) != null) {
                     String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                    SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
+                    Path absPath = Util.getResolvedFile(basePath, sourcePath);
+                    SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
                     if (sisf == null) {
                         String className = doc.get(IndexItem.SOURCE_DECODER);
                         Class<?> clazz = Class.forName(className);
                         try {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                            Path absPath = Util.getResolvedFile(basePath, sourcePath).toPath();
                             sisf = c.newInstance(absPath);
-                            if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
-                                IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
-                            }
 
                         } catch (NoSuchMethodException e) {
                             Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                            sisf = c.newInstance(URI.create(sourcePath));
+                            sisf = c.newInstance(absPath.toUri());
                         }
-                        inputStreamFactories.put(sourcePath, sisf);
+                        if (!ipedCase.isReport() && sisf.checkIfDataSourceExists()) {
+                            IndexItem.checkIfExistsAndAsk(sisf, ipedCase.getModuleDir());
+                        }
+                        inputStreamFactories.put(absPath, sisf);
                     }
                     evidence.setInputStreamFactory(sisf);
 
