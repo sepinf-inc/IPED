@@ -68,6 +68,10 @@ public class IcePDFViewer extends Viewer {
         // pode provocar crash da jvm
         // System.setProperty("org.icepdf.core.awtFontLoading", "true");
 
+        this.labelMsg = new JLabel(Messages.getString("PDFViewer.OpenError"), JLabel.CENTER);
+        this.labelMsg.setVisible(false);
+        this.labelMsg.setPreferredSize(new Dimension(0, 50));
+
     }
 
     @Override
@@ -109,42 +113,36 @@ public class IcePDFViewer extends Viewer {
                 }
             }
         };
-        pdfController.setIsEmbeddedComponent(true);
-        pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
 
-        PropertiesManager propManager = PropertiesManager.getInstance();
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
-        propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
-        // propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_UTILITY, "false");
-        // propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_PAGENAV, "true");
-        // propManager.set("application.showLocalStorageDialogs", "NO");
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                @Override
+                public void run() {
+                    pdfController.setIsEmbeddedComponent(true);
+                    pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
+                    pdfController.getDocumentViewController().setAnnotationCallback(
+                            new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
 
-        // final SwingViewBuilder factory = new SwingViewBuilder(pdfController,
-        // propManager, null, false, SwingViewBuilder.TOOL_BAR_STYLE_FIXED, null,
-        // viewMode, fitMode);
-        final SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+                    PropertiesManager propManager = PropertiesManager.getInstance();
+                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
+                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
+                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
+                    propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
+                    propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
+                    propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
 
-        pdfController.getDocumentViewController().setAnnotationCallback(
-                new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
+                    SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+                    viewerPanel = factory.buildViewerPanel();
 
-        final JPanel panel = this.getPanel();
-        labelMsg = new JLabel(Messages.getString("PDFViewer.OpenError"), JLabel.CENTER);
-        labelMsg.setVisible(false);
-        labelMsg.setPreferredSize(new Dimension(0, 50));
-
-        SwingUtilities.invokeLater(new Runnable() {
-            @Override
-            public void run() {
-                viewerPanel = factory.buildViewerPanel();
-                panel.add(labelMsg, BorderLayout.NORTH);
-                panel.add(viewerPanel, BorderLayout.CENTER);
-                panel.setMinimumSize(new Dimension());
-            }
-        });
+                    JPanel panel = IcePDFViewer.this.getPanel();
+                    panel.add(labelMsg, BorderLayout.NORTH);
+                    panel.add(viewerPanel, BorderLayout.CENTER);
+                    panel.setMinimumSize(new Dimension());
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
 
     }
 
