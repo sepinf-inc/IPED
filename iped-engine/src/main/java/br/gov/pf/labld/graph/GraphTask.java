@@ -48,6 +48,7 @@ import dpf.sp.gpinf.indexer.parsers.OutlookPSTParser;
 import dpf.sp.gpinf.indexer.parsers.ufed.UfedMessage;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexHits;
+import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
@@ -166,11 +167,11 @@ public class GraphTask extends AbstractTask {
         if (graphFileWriter != null) {
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Finishing graph CSVs...");
             logger.info("Finishing graph CSVs...");
-            graphFileWriter.close(caseData.isIpedReport());
-            logger.info("Finishing graph CSVs finished.");
-            if (caseData.isIpedReport()) {
-                File prevCaseModuleDir = (File) caseData.getCaseObject(IPEDReader.ORIG_CASE_MODULE_DIR);
-                File prevCSVRoot = new File(prevCaseModuleDir, CSVS_PATH);
+            List<File> srcCases = (List<File>) caseData.getCaseObject(IPEDReader.REPORTING_CASES);
+            // TODO merge multicase nodes, copying nodes from single case reports for now
+            if (caseData.isIpedReport() && srcCases != null && srcCases.size() == 1) {
+                graphFileWriter.close(true);
+                File prevCSVRoot = new File(srcCases.get(0), IPEDSource.MODULE_DIR + "/" + CSVS_PATH);
                 if (prevCSVRoot.exists() && prevCSVRoot.isDirectory()) {
                     for (File file : prevCSVRoot.listFiles()) {
                         File target = new File(output, CSVS_PATH + "/" + file.getName());
@@ -180,10 +181,12 @@ public class GraphTask extends AbstractTask {
                         }
                     }
                 }
-                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH),
-                        configuration.getDefaultEntity());
+                graphFileWriter = new GraphFileWriter(new File(output, CSVS_PATH), configuration.getDefaultEntity());
+                graphFileWriter.close();
+            } else {
                 graphFileWriter.close();
             }
+            logger.info("Finishing graph CSVs finished.");
             finishGraphGeneration();
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", "Compressing graph CSVs...");
             logger.info("Compressing graph CSVs...");
