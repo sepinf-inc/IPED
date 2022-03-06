@@ -338,7 +338,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private boolean checkAndAddMissingCategory(Category root, Category leaf) {
         boolean found = false;
-        if (leaf.getName().equals(root.getName())) {
+        if (leaf.getName().equalsIgnoreCase(root.getName())) {
             found = true;
         } else {
             for (Category child : root.getChildren()) {
