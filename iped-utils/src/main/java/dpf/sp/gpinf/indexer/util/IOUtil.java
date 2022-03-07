@@ -178,6 +178,22 @@ public class IOUtil {
         }
     }
 
+    /**
+     * A more reliable method to test for write permissions. See the details on
+     * https://github.com/sepinf-inc/IPED/issues/996
+     */
+    public static boolean canWrite(File file) {
+        if (!file.exists()) {
+            return false;
+        }
+        try (FileOutputStream fos = new FileOutputStream(file, true)) {
+            return true;
+
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public static void closeQuietly(Closeable in) {
         try {
             if (in != null)
