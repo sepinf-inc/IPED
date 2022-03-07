@@ -394,6 +394,8 @@ public class UfedXmlReader extends DataSourceReader {
                 "Organization", //$NON-NLS-1$
                 "UserID", //$NON-NLS-1$
                 "ContactPhoto", //$NON-NLS-1$
+                "ForwardedMessageData", //$NON-NLS-1$
+                "ReplyMessageData", //$NON-NLS-1$
                 "StreetAddress" //$NON-NLS-1$
         ));
 
@@ -902,9 +904,20 @@ public class UfedXmlReader extends DataSourceReader {
                         }
                     } else if ("StreetAddress".equals(type)) { //$NON-NLS-1$
                         for (String meta : item.getMetadata().names()) {
+                            if (meta.equals(ExtraProperties.UFED_META_PREFIX + "id"))
+                                continue;
                             String[] vals = item.getMetadata().getValues(meta);
                             for (String val : vals)
                                 parentItem.getMetadata().add(meta, val);
+                        }
+                    } else if ("ForwardedMessageData".equals(type) || "ReplyMessageData".equals(type)) {
+                        for (String meta : item.getMetadata().names()) {
+                            if (meta.equals(ExtraProperties.UFED_META_PREFIX + "id"))
+                                continue;
+                            String[] vals = item.getMetadata().getValues(meta);
+                            for (String val : vals) {
+                                parentItem.getMetadata().add(meta, val);
+                            }
                         }
                     }
                 } else {
