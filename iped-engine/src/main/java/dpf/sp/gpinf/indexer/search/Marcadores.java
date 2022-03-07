@@ -398,7 +398,7 @@ public class Marcadores implements Serializable, IMarcadores {
     @Override
     public void saveState(boolean synchronous) {
         try {
-            if (stateFile.canWrite() || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
+            if (IOUtil.canWrite(stateFile) || (!stateFile.exists() && IOUtil.canCreateFile(stateFile.getParentFile())))
                 saveState(stateFile, synchronous);
             else
                 saveState(cookie, synchronous);

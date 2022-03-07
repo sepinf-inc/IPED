@@ -138,7 +138,7 @@ class LoadGraphDatabaseWorker extends SwingWorker<Void, Void> {
                 AppGraphAnalytics.LOGGER.error("Graph database not found: " + dbFile.getAbsolutePath());
                 return false;
             }
-            if (!dbFile.canWrite() || !IOUtil.canCreateFile(dbFile)) {
+            if (!IOUtil.canWrite(dbFile) || !IOUtil.canCreateFile(dbFile)) {
                 dbFile = copyToTempFolder(dbFile);
             }
             graphService.start(dbFile);
