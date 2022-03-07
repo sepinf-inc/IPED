@@ -159,7 +159,7 @@ public class AppMain {
                 logParent = casesPathFile.getParentFile();
 
             File logFile = new File(logParent, appLogFileName).getCanonicalFile();
-            if ((logFile.exists() && !logFile.canWrite()) || !IOUtil.canCreateFile(logFile.getParentFile())) {
+            if ((logFile.exists() && !IOUtil.canWrite(logFile)) || !IOUtil.canCreateFile(logFile.getParentFile())) {
                 logFile = new File(System.getProperty("java.io.tmpdir"), appLogFileName);
             }
             LogConfiguration logConfiguration = null;

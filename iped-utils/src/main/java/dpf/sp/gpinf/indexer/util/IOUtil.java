@@ -178,6 +178,23 @@ public class IOUtil {
         }
     }
 
+    /**
+     * A more reliable method than File.canWrite() to test for write permissions.
+     * It's slower because the implementation opens a file handler internally. See
+     * more details on https://github.com/sepinf-inc/IPED/issues/996
+     */
+    public static boolean canWrite(File file) {
+        if (!file.exists()) {
+            return false;
+        }
+        try (FileOutputStream fos = new FileOutputStream(file, true)) {
+            return true;
+
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
     public static void closeQuietly(Closeable in) {
         try {
             if (in != null)

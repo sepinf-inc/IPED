@@ -87,8 +87,6 @@ import iped3.util.MediaTypes;
  */
 public class IPEDReader extends DataSourceReader {
 
-    // TODO remove line below and always use REPORTING_CASES
-    public static final String ORIG_CASE_MODULE_DIR = "originalCaseModuleDir";
     public static final String REPORTING_CASES = "reporting_cases";
 
     private static org.slf4j.Logger LOGGER = LoggerFactory.getLogger(IPEDReader.class);
@@ -177,7 +175,6 @@ public class IPEDReader extends DataSourceReader {
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
         basePath = indexDir.getParentFile().getParentFile().getAbsolutePath();
-        caseData.putCaseObject(ORIG_CASE_MODULE_DIR, indexDir.getParentFile());
         if(!listOnly) {
             List<File> reportingCases = (List<File>) caseData.getCaseObject(REPORTING_CASES);
             if (reportingCases == null) {

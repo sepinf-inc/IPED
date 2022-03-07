@@ -104,7 +104,6 @@ public class Category implements Serializable, Comparable<Category> {
         if (this.parent == null)
             return name;
         String name = CategoryLocalization.getInstance().getLocalizedCategory(this.name);
-        name = adjustCase(name);
         if (numItems == -1) {
             return name + " (...)"; //$NON-NLS-1$
         } else {
@@ -123,18 +122,6 @@ public class Category implements Serializable, Comparable<Category> {
             clone.children.add(newChild);
         }
         return clone;
-    }
-
-    private String adjustCase(String cat) {
-        StringBuilder str = new StringBuilder();
-        for (String s : cat.split(" ")) //$NON-NLS-1$
-            if (s.length() == 3)
-                str.append(s.toUpperCase() + " "); //$NON-NLS-1$
-            else if (s.length() > 3)
-                str.append(s.substring(0, 1).toUpperCase() + s.substring(1) + " "); //$NON-NLS-1$
-            else
-                str.append(s + " "); //$NON-NLS-1$
-        return str.toString().trim();
     }
 
 }
