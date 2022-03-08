@@ -9,7 +9,6 @@ import java.util.Set;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
 
 import org.icepdf.core.pobjects.Catalog;
 import org.icepdf.core.pobjects.Document;
@@ -58,6 +57,8 @@ public class IcePDFViewer extends Viewer {
 
     public IcePDFViewer() {
         super(new BorderLayout());
+        long t = System.currentTimeMillis();
+
         isToolbarVisible = true;
 
         // System.setProperty("org.icepdf.core.imageReference", "scaled"); //$NON-NLS-1$
@@ -72,78 +73,71 @@ public class IcePDFViewer extends Viewer {
         this.labelMsg.setVisible(false);
         this.labelMsg.setPreferredSize(new Dimension(0, 50));
 
+        new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
+
+        pdfController = new SwingController() {
+            // Override openDocument, to avoid opening dialog messages
+            public void openDocument(String pathname) {
+                if (pathname != null && pathname.length() > 0) {
+                    try {
+                        closeDocument();
+                        setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
+                        document = new Document();
+                        setupSecurityHandler(document, documentViewController.getSecurityCallback());
+                        document.setFile(pathname);
+                        commonNewDocumentHandling(pathname);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+
+            public void closeDocument() {
+                try {
+                    if (document != null) {
+                        super.closeDocument();
+                    }
+                } catch (Exception e) {
+                }
+            }
+
+            public void setToolBarVisible(boolean isVisible) {
+                if (document != null) {
+                    try {
+                        super.setToolBarVisible(isVisible);
+                    } catch (Exception e) {
+                    }
+                }
+            }
+        };
+
+        pdfController.setIsEmbeddedComponent(true);
+        pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
+        pdfController.getDocumentViewController().setAnnotationCallback(
+                new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
+
+        PropertiesManager propManager = PropertiesManager.getInstance();
+        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
+        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
+        propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
+        propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
+        propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
+        propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
+
+        SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
+        viewerPanel = factory.buildViewerPanel();
+
+        JPanel panel = this.getPanel();
+        panel.add(labelMsg, BorderLayout.NORTH);
+        panel.add(viewerPanel, BorderLayout.CENTER);
+        panel.setMinimumSize(new Dimension());
+
+        LOGGER.info("{} took {}ms to be initialized.", this.getClass().getSimpleName(), System.currentTimeMillis() - t);
+
     }
 
     @Override
     public void init() {
-
-        new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
-
-        try {
-            SwingUtilities.invokeAndWait(new Runnable() {
-                @Override
-                public void run() {
-                    pdfController = new SwingController() {
-                        // Override openDocument, to avoid opening dialog messages
-                        public void openDocument(String pathname) {
-                            if (pathname != null && pathname.length() > 0) {
-                                try {
-                                    closeDocument();
-                                    setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
-                                    document = new Document();
-                                    setupSecurityHandler(document, documentViewController.getSecurityCallback());
-                                    document.setFile(pathname);
-                                    commonNewDocumentHandling(pathname);
-                                } catch (Exception e) {
-                                }
-                            }
-                        }
-
-                        public void closeDocument() {
-                            try {
-                                if (document != null) {
-                                    super.closeDocument();
-                                }
-                            } catch (Exception e) {
-                            }
-                        }
-
-                        public void setToolBarVisible(boolean isVisible) {
-                            if (document != null) {
-                                try {
-                                    super.setToolBarVisible(isVisible);
-                                } catch (Exception e) {
-                                }
-                            }
-                        }
-                    };
-
-                    pdfController.setIsEmbeddedComponent(true);
-                    pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
-                    pdfController.getDocumentViewController().setAnnotationCallback(
-                            new org.icepdf.ri.common.MyAnnotationCallback(pdfController.getDocumentViewController()));
-
-                    PropertiesManager propManager = PropertiesManager.getInstance();
-                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ANNOTATION, "false"); //$NON-NLS-1$
-                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_TOOL, "false"); //$NON-NLS-1$
-                    propManager.set(PropertiesManager.PROPERTY_SHOW_TOOLBAR_ZOOM, "true"); //$NON-NLS-1$
-                    propManager.set(PropertiesManager.PROPERTY_SHOW_STATUSBAR, "false"); //$NON-NLS-1$
-                    propManager.set(PropertiesManager.PROPERTY_HIDE_UTILITYPANE, "true"); //$NON-NLS-1$
-                    propManager.set(PropertiesManager.PROPERTY_DEFAULT_PAGEFIT, Integer.toString(fitMode));
-
-                    SwingViewBuilder factory = new SwingViewBuilder(pdfController, viewMode, fitMode);
-                    viewerPanel = factory.buildViewerPanel();
-
-                    JPanel panel = IcePDFViewer.this.getPanel();
-                    panel.add(labelMsg, BorderLayout.NORTH);
-                    panel.add(viewerPanel, BorderLayout.CENTER);
-                    panel.setMinimumSize(new Dimension());
-                }
-            });
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-
+        // no op
     }
 
     @Override
