@@ -79,45 +79,45 @@ public class IcePDFViewer extends Viewer {
 
         new File(System.getProperties().getProperty("user.home"), ".icesoft/icepdf-viewer").mkdirs(); //$NON-NLS-1$ //$NON-NLS-2$
 
-        pdfController = new SwingController() {
-            // Override openDocument, to avoid opening dialog messages
-            public void openDocument(String pathname) {
-                if (pathname != null && pathname.length() > 0) {
-                    try {
-                        closeDocument();
-                        setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
-                        document = new Document();
-                        setupSecurityHandler(document, documentViewController.getSecurityCallback());
-                        document.setFile(pathname);
-                        commonNewDocumentHandling(pathname);
-                    } catch (Exception e) {
-                    }
-                }
-            }
-
-            public void closeDocument() {
-                try {
-                    if (document != null) {
-                        super.closeDocument();
-                    }
-                } catch (Exception e) {
-                }
-            }
-
-            public void setToolBarVisible(boolean isVisible) {
-                if (document != null) {
-                    try {
-                        super.setToolBarVisible(isVisible);
-                    } catch (Exception e) {
-                    }
-                }
-            }
-        };
-
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
                 public void run() {
+                    pdfController = new SwingController() {
+                        // Override openDocument, to avoid opening dialog messages
+                        public void openDocument(String pathname) {
+                            if (pathname != null && pathname.length() > 0) {
+                                try {
+                                    closeDocument();
+                                    setDisplayTool(DocumentViewModelImpl.DISPLAY_TOOL_WAIT);
+                                    document = new Document();
+                                    setupSecurityHandler(document, documentViewController.getSecurityCallback());
+                                    document.setFile(pathname);
+                                    commonNewDocumentHandling(pathname);
+                                } catch (Exception e) {
+                                }
+                            }
+                        }
+
+                        public void closeDocument() {
+                            try {
+                                if (document != null) {
+                                    super.closeDocument();
+                                }
+                            } catch (Exception e) {
+                            }
+                        }
+
+                        public void setToolBarVisible(boolean isVisible) {
+                            if (document != null) {
+                                try {
+                                    super.setToolBarVisible(isVisible);
+                                } catch (Exception e) {
+                                }
+                            }
+                        }
+                    };
+
                     pdfController.setIsEmbeddedComponent(true);
                     pdfController.getDocumentViewController().getViewContainer().setFocusable(false);
                     pdfController.getDocumentViewController().setAnnotationCallback(
