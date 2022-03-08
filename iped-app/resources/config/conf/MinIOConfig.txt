@@ -11,8 +11,6 @@ host = http://HPW06
 # Port where MinIO is listening
 port = 9000
 
-# max number of files in a tar for bulk requests
-tarMaxFiles = 1000
+# max size (bytes) of files to be included in the zip file
+zipFilesMaxSize = 0
 
-# max length of the tar file in Mb
-tarMaxLength = 10

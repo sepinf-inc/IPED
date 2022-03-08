@@ -13,14 +13,13 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     private static final String HOST_KEY = "host";
     private static final String PORT_KEY = "port";
 
-    private static final String TAR_MAX_FILES = "tarMaxFiles";
-    private static final String TAR_MAX_LENGTH = "tarMaxLength";
+    private static final String ZIP_FILES_MAX_SIZE = "zipFilesMaxSize";
 
     private boolean enabled;
     private String host;
     private String port;
 
-    private long tarMaxFiles, tarMaxLength;
+    private long zipFilesMaxSize;
 
     @Override
     public boolean isEnabled() {
@@ -40,13 +39,6 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         return port;
     }
 
-    public long getTarMaxFiles() {
-        return tarMaxFiles;
-    }
-
-    public long getTarMaxLength() {
-        return tarMaxLength;
-    }
 
     @Override
     public void processProperties(UTF8Properties properties) {
@@ -54,8 +46,7 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
         enabled = Boolean.valueOf(properties.getProperty(ENABLE_KEY).trim());
         host = properties.getProperty(HOST_KEY).trim();
         port = properties.getProperty(PORT_KEY).trim();
-        tarMaxFiles = Long.parseLong(properties.getProperty(TAR_MAX_FILES));
-        tarMaxLength = (long) (1024 * 1024 * Double.parseDouble(properties.getProperty(TAR_MAX_LENGTH)));
+        setZipFilesMaxSize(Long.parseLong(properties.getProperty(ZIP_FILES_MAX_SIZE)));
 
     }
 
@@ -68,5 +59,14 @@ public class MinIOConfig extends AbstractTaskPropertiesConfig {
     public String getTaskConfigFileName() {
         return CONFIG_FILE;
     }
+
+    public long getZipFilesMaxSize() {
+        return zipFilesMaxSize;
+    }
+
+    public void setZipFilesMaxSize(long zipFilesMaxSize) {
+        this.zipFilesMaxSize = zipFilesMaxSize;
+    }
+
 
 }
