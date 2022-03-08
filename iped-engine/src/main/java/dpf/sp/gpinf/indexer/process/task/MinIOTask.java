@@ -383,7 +383,6 @@ public class MinIOTask extends AbstractTask {
         }
 
         if (zipFiles >= zipMaxFiles || zipLength >= zipMaxSize) {
-            System.out.println("enviou");
             sendZipFile();
         }
 
