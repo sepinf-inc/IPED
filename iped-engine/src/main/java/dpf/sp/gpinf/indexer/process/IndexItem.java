@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -80,6 +79,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
@@ -130,7 +130,7 @@ public class IndexItem extends BasicProps {
 
     private static volatile boolean collectMetaTypes = false;
 
-    private static Map<Path, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
+    private static Map<String, SeekableInputStreamFactory> inputStreamFactories = new ConcurrentHashMap<>();
     private static Map<File, File> localEvidenceMap = new ConcurrentHashMap<>();
 
     private static Map<String, Class<?>> typesMap = Collections
@@ -950,25 +950,27 @@ public class IndexItem extends BasicProps {
             if (value != null && !value.isEmpty()) {
                 evidence.setIdInDataSource(value.trim());
             }
-            if (doc.get(IndexItem.SOURCE_PATH) != null) {
+            if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
-                Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath);
-                SeekableInputStreamFactory sisf = inputStreamFactories.get(absPath);
+                String className = doc.get(IndexItem.SOURCE_DECODER);
+                if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
+                    sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
+                }
+                SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                 if (sisf == null) {
-                    String className = doc.get(IndexItem.SOURCE_DECODER);
                     Class<?> clazz = Class.forName(className);
                     try {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        sisf = c.newInstance(absPath);
+                        sisf = c.newInstance(Path.of(sourcePath));
 
                     } catch (NoSuchMethodException e) {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
-                        sisf = c.newInstance(absPath.toUri());
+                        sisf = c.newInstance(URI.create(sourcePath));
                     }
                     if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
                         checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                     }
-                    inputStreamFactories.put(absPath, sisf);
+                    inputStreamFactories.put(sourcePath, sisf);
                 }
                 evidence.setInputStreamFactory(sisf);
             }
