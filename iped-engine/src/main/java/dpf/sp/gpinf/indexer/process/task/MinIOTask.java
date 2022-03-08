@@ -16,11 +16,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
+import org.apache.poi.util.IOUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
@@ -29,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.MinIOConfig;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import io.minio.BucketExistsArgs;
 import io.minio.ErrorCode;
@@ -183,13 +185,14 @@ public class MinIOTask extends AbstractTask {
 
 
 
-    private String insertInZipFile(String hash, long length, InputStream is, IItem i, boolean preview)
+    private String insertInZipFile(String hash, long length, SeekableInputStream is, IItem i, boolean preview)
             throws Exception {
         if (out == null) {
             zipLength = 0;
             tmp = new TemporaryResources();
             zipfile = tmp.createTemporaryFile();
             out = new ZipArchiveOutputStream(new FileOutputStream(zipfile));
+            out.setLevel(Deflater.NO_COMPRESSION);
         }
 
         // insert into the queue of files waiting to be sent
@@ -199,14 +202,10 @@ public class MinIOTask extends AbstractTask {
 
         zipFiles++;
         zipLength += length;
-
         ZipArchiveEntry entry = new ZipArchiveEntry(hash);
-        byte[] coppied = IOUtils.toByteArray(is);
-        entry.setSize(coppied.length);
+        entry.setSize(is.size());
         out.putArchiveEntry(entry);
-        out.write(coppied);
-        // IOUtils.copy(coppied, out);
-
+        IOUtils.copy(is, out);
         out.closeArchiveEntry();
 
         return getZipName() + "/" + hash;
@@ -215,7 +214,8 @@ public class MinIOTask extends AbstractTask {
 
 
 
-    private String insertWithZip(IItem i, String hash, InputStream is, long length, String mediatype, boolean preview)
+    private String insertWithZip(IItem i, String hash, SeekableInputStream is, long length, String mediatype,
+            boolean preview)
             throws Exception {
 
         String bucketPath = buildPath(hash);
@@ -369,7 +369,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertWithZip(item, hash, new BufferedInputStream(item.getStream()), is.size(),
+            String fullPath = insertWithZip(item, hash, is, is.size(),
                     item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
@@ -379,14 +379,14 @@ public class MinIOTask extends AbstractTask {
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
         }
         if (item.getViewFile() != null && item.getViewFile().length() > 0) {
-            try (InputStream is = new FileInputStream(item.getViewFile())) {
-                String fullPath = insertWithZip(item, hash, new FileInputStream(item.getViewFile()),
-                        item.getViewFile().length(), getMimeType(item.getViewFile().getName()), true);
+            try (SeekableFileInputStream is = new SeekableFileInputStream(item.getViewFile())) {
+                String mime = getMimeType(item.getViewFile().getName());
+                String fullPath = insertWithZip(item, hash, is, is.size(), mime, true);
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
-                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + getMimeType(item.getViewFile().getName()));
+                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
                 }
             } catch (Exception e) {
                 // TODO: handle exception
