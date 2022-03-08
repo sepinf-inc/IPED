@@ -183,8 +183,6 @@ public class MinIOTask extends AbstractTask {
         return DigestUtils.md5Hex(zipfile.getName()).toUpperCase() + ".zip";
     }
 
-
-
     private String insertInZipFile(String hash, long length, SeekableInputStream is, IItem i, boolean preview)
             throws Exception {
         if (out == null) {
@@ -212,11 +210,8 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-
-
     private String insertWithZip(IItem i, String hash, SeekableInputStream is, long length, String mediatype,
-            boolean preview)
-            throws Exception {
+            boolean preview) throws Exception {
 
         String bucketPath = buildPath(hash);
         // if preview saves in a preview folder
@@ -229,7 +224,7 @@ public class MinIOTask extends AbstractTask {
         if (length <= 0) {
             return null;
         }
-       
+
         if (checkIfExists(bucketPath)) {
             return fullPath;
         }
@@ -244,16 +239,13 @@ public class MinIOTask extends AbstractTask {
 
     }
 
-
-
     private void sendZipFile() throws Exception {
         out.close();
 
         if (zipFiles > 0) {
             try (InputStream fi = new BufferedInputStream(new FileInputStream(zipfile))) {
-                ObjectWriteResponse aux = minioClient.putObject(
-                        PutObjectArgs.builder().bucket(bucket)
-                                .object("/zips/" + getZipName())
+                ObjectWriteResponse aux = minioClient
+                        .putObject(PutObjectArgs.builder().bucket(bucket).object("/zips/" + getZipName())
                                 .userMetadata(Collections.singletonMap("x-minio-extrac", "true"))
                                 .stream(fi, zipfile.length(), Math.max(zipfile.length(), 1024 * 1024 * 5)).build());
 
@@ -275,7 +267,7 @@ public class MinIOTask extends AbstractTask {
             super.sendToNextTask(i);
         }
         queue.clear();
-        sendQueue=false;
+        sendQueue = false;
     }
 
     private boolean checkIfExists(String hash) throws Exception {
@@ -291,14 +283,12 @@ public class MinIOTask extends AbstractTask {
             }
         }
 
-
         return exists;
     }
 
-
     private void insertItem(String hash, InputStream is, long length, String mediatype, String bucketPath)
             throws Exception {
-       
+
         // create directory structure
         if (FOLDER_LEVELS > 0) {
             String folder = bucketPath.substring(0, FOLDER_LEVELS * 2);
@@ -309,8 +299,6 @@ public class MinIOTask extends AbstractTask {
         try {
             minioClient.putObject(PutObjectArgs.builder().bucket(bucket).object(bucketPath).stream(is, length, -1)
                     .contentType(mediatype).build());
-
-
 
         } catch (Exception e) {
             throw new Exception("Error when uploading object ", e);
@@ -369,8 +357,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertWithZip(item, hash, is, is.size(),
-                    item.getMediaType().toString(), false);
+            String fullPath = insertWithZip(item, hash, is, is.size(), item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);
             }
@@ -385,8 +372,8 @@ public class MinIOTask extends AbstractTask {
                 if (fullPath != null) {
                     item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
                             "idInDataSource" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + fullPath);
-                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE, "type"
-                            + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
+                    item.getMetadata().add(ElasticSearchIndexTask.PREVIEW_IN_DATASOURCE,
+                            "type" + ElasticSearchIndexTask.KEY_VAL_SEPARATOR + mime);
                 }
             } catch (Exception e) {
                 // TODO: handle exception
@@ -481,6 +468,10 @@ public class MinIOTask extends AbstractTask {
             return pos;
         }
 
+        /*
+         * TODO try to update the minioclient to query the size instead of downloading
+         * the entire file
+         */
         @Override
         public long size() throws IOException {
             if (size == null) {
@@ -493,7 +484,7 @@ public class MinIOTask extends AbstractTask {
                             tot = is.skip(is.available());
                         }
                     }
-                    
+
                 } else {
                     try {
                         size = minioClient
