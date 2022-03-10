@@ -37,8 +37,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.util.Bits;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,7 +101,7 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.HASH, IndexItem.PATH };
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
-            IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
+            IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
             IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
