@@ -19,10 +19,9 @@
 package dpf.sp.gpinf.indexer.desktop;
 
 import java.awt.Dialog.ModalityType;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,6 +39,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
 import iped3.sleuthkit.ISleuthKitItem;
@@ -88,18 +88,20 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
                 e.printStackTrace();
             }
         } else {
-            String moduleDir = App.get().appCase.getAtomicSourceBySourceId(0).getModuleDir().getAbsolutePath();
+            File caseDir = App.get().appCase.getAtomicSourceBySourceId(0).getCaseDir();
             doc = new Document();
             doc.add(new StoredField(IndexItem.ID, 0));
             doc.add(new StoredField(IndexItem.NAME, "Help")); //$NON-NLS-1$
             doc.add(new StoredField(IndexItem.CONTENTTYPE, MediaType.TEXT_HTML.toString()));
 
             String locale = System.getProperty(iped3.util.Messages.LOCALE_SYS_PROP);
-            String helpPath = moduleDir + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
-            if (!Files.exists(Paths.get(helpPath))) {
-                helpPath = moduleDir + "/help/Help.htm"; // $NON-NLS-1$
+            String helpPath = IPEDSource.MODULE_DIR + "/help/Help_" + locale + ".htm"; // $NON-NLS-1$ // $NON-NLS-2$
+            if (!new File(caseDir, helpPath).exists()) {
+                helpPath = IPEDSource.MODULE_DIR + "/help/Help.htm"; // $NON-NLS-1$
             }
-            doc.add(new StoredField(IndexItem.EXPORT, helpPath));
+            doc.add(new StoredField(IndexItem.ID_IN_SOURCE, helpPath));
+            doc.add(new StoredField(IndexItem.SOURCE_DECODER, FileInputStreamFactory.class.getName()));
+            doc.add(new StoredField(IndexItem.SOURCE_PATH, caseDir.getAbsolutePath()));
             doc.add(new StoredField(IndexItem.PATH, helpPath));
         }
     }
