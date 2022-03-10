@@ -28,11 +28,14 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import iped3.datasource.IDataSource;
 import iped3.io.IItemBase;
+import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 public abstract class AbstractPkgTest extends TestCase {
+
+    protected File searchFile;
     protected ParseContext telegramContext;
     protected EmbeddedTelegramParser telegramtracker;
     protected ParseContext telegramUserContext;
@@ -207,12 +210,6 @@ public abstract class AbstractPkgTest extends TestCase {
                             }
 
                             @Override
-                            public boolean hasFile() {
-                                // TODO Auto-generated method stub
-                                return true;
-                            }
-
-                            @Override
                             public boolean hasChildren() {
                                 // TODO Auto-generated method stub
                                 return false;
@@ -239,7 +236,7 @@ public abstract class AbstractPkgTest extends TestCase {
                             @Override
                             public File getTempFile() throws IOException {
                                 // TODO Auto-generated method stub
-                                return getFile();
+                                return searchFile;
                             }
 
                             @Override
@@ -309,12 +306,6 @@ public abstract class AbstractPkgTest extends TestCase {
                             }
 
                             @Override
-                            public File getFile() {
-                                // TODO Auto-generated method stub
-                                return new File("src/test/resources/test-files/testFile");
-                            }
-
-                            @Override
                             public Map<String, Object> getExtraAttributeMap() {
                                 // TODO Auto-generated method stub
                                 return null;
@@ -364,6 +355,18 @@ public abstract class AbstractPkgTest extends TestCase {
 
                             @Override
                             public Date getChangeDate() {
+                                // TODO Auto-generated method stub
+                                return null;
+                            }
+
+                            @Override
+                            public String getIdInDataSource() {
+                                // TODO Auto-generated method stub
+                                return null;
+                            }
+
+                            @Override
+                            public ISeekableInputStreamFactory getInputStreamFactory() {
                                 // TODO Auto-generated method stub
                                 return null;
                             }
