@@ -209,7 +209,7 @@ public class MinIOTask extends AbstractTask {
         if (!preview) {
             queue.put(i.getId(), new QueueItem(i, fullpath));
         } else if (!queue.containsKey(i.getId())) {
-            queue.put(i.getId(), new QueueItem(i, null));
+            queue.put(i.getId(), null);
         }
 
         zipFiles++;
@@ -281,8 +281,10 @@ public class MinIOTask extends AbstractTask {
 
     private void sendZipItemsToNextTask() throws Exception {
         for (QueueItem i : queue.values()) {
-            updateDataSource(i.item, i.fullpath);
-            super.sendToNextTask(i.item);
+            if (i != null) {
+                updateDataSource(i.item, i.fullpath);
+                super.sendToNextTask(i.item);
+            }
         }
         queue.clear();
         sendQueue = false;
@@ -344,7 +346,7 @@ public class MinIOTask extends AbstractTask {
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
         // if queue contains the item it will be sent when the zipfile is sent;
-        if (!queue.containsKey(item.getId())) {
+        if (queue.get(item.getId()) != null) {
             if (item.isQueueEnd() && !queue.isEmpty()) {
                 flushZipFile();
             }
