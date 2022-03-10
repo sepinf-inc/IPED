@@ -100,12 +100,6 @@ public interface IItem extends IItemBase {
     ISeekableInputStreamFactory getInputStreamFactory();
 
     /**
-     * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
-     *         foi exportado
-     */
-    String getExportedFile();
-
-    /**
      * Módulos de processamento podem setar atributos extras no item para armazenar
      * o resultado do processamento
      *
@@ -131,13 +125,6 @@ public interface IItem extends IItemBase {
      *         -1 se o item não é proveniente de carving.
      */
     long getFileOffset();
-
-    /**
-     *
-     * @return o caminho para o arquivo do item. Diferente de vazio apenas em
-     *         reports e processamentos de pastas.
-     */
-    String getFileToIndex();
 
     IHashValue getHashValue();
 
@@ -288,15 +275,6 @@ public interface IItem extends IItemBase {
     void setDeleted(boolean deleted);
 
     /**
-     * Define o caminho para o arquivo do item, no caso de processamento de pastas e
-     * para subitens extraídos.
-     *
-     * @param exportedFile
-     *            caminho para o arquivo do item
-     */
-    void setExportedFile(String exportedFile);
-
-    /**
      * Define a extensão do item.
      *
      * @param ext
@@ -315,14 +293,6 @@ public interface IItem extends IItemBase {
     void setExtraAttribute(String key, Object value);
 
     void setTempAttribute(String key, Object value);
-
-    /**
-     * Define o arquivo referente ao item, caso existente
-     *
-     * @param file
-     *            arquivo referente ao item
-     */
-    void setFile(File file);
 
     /**
      * Define o offset onde itens de carving são encontrados no item pai
@@ -446,10 +416,6 @@ public interface IItem extends IItemBase {
     void setSubItem(boolean isSubItem);
 
     void setSumVolume(boolean sumVolume);
-
-    void setTempFile(File tempFile);
-
-    void setTempStartOffset(long tempStartOffset);
 
     /**
      * @param timeOut
