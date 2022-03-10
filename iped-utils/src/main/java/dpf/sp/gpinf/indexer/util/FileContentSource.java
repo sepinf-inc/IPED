@@ -26,7 +26,7 @@ public class FileContentSource implements IStreamSource {
     }
 
     @Override
-    public File getFile() {
+    public File getTempFile() {
         return file;
     }
 
