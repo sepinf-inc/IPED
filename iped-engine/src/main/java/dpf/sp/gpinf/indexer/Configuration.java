@@ -147,6 +147,10 @@ public class Configuration {
         if (mainConfig.exists()) {
             configDirectory.addPath(mainConfig.toPath());
         }
+        File localConfig = new File(profile, LOCAL_CONFIG);
+        if (localConfig.exists()) {
+            configDirectory.addPath(localConfig.toPath());
+        }
         File configDir = new File(profile, CONF_DIR);
         if (configDir.exists()) {
             configDirectory.addPath(configDir.toPath());
