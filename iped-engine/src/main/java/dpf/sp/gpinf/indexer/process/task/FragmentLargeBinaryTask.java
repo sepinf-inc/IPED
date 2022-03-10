@@ -54,7 +54,7 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
                 && ((!ParsingTask.hasSpecificParser(autoParser, evidence)
                         && !EmbeddedDiskProcessTask.isSupported(evidence)) || evidence.isTimedOut())
                 && (((evidence instanceof ISleuthKitItem) && ((ISleuthKitItem) evidence).getSleuthFile() != null)
-                        || evidence.getFile() != null || evidence.getInputStreamFactory() != null)) {
+                        || evidence.getInputStreamFactory() != null)) {
 
             int fragNum = 0;
             int fragSize = splitConfig.getItemFragmentSize();

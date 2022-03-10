@@ -262,8 +262,6 @@ public class MinIOTask extends AbstractTask {
     private void updateDataSource(IItem item, String id) {
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setFileOffset(-1);
     }
 

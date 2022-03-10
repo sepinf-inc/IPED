@@ -100,7 +100,6 @@ public class DatabaseTask extends AbstractTask {
                     + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
                     + e.getCategories() + "\',\'" //$NON-NLS-1$
                     + e.getPath() + "\',\'" //$NON-NLS-1$
-                    + e.getExportedFile() + "\',\'" //$NON-NLS-1$
                     + e.getHash() + "\',\'" //$NON-NLS-1$
                     + e.getMediaType().getBaseType() + "\'," //$NON-NLS-1$
                     + e.getLength() + "," //$NON-NLS-1$
