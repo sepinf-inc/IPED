@@ -12,7 +12,7 @@ import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -21,7 +21,7 @@ import java.util.zip.Deflater;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream;
-import org.apache.poi.util.IOUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.tika.Tika;
 import org.apache.tika.io.TemporaryResources;
 import org.slf4j.Logger;
@@ -90,7 +90,18 @@ public class MinIOTask extends AbstractTask {
     private File zipfile = null;
     private long zipLength = 0;
     private long zipFiles = 0;
-    private HashSet<IItem> queue = new HashSet<>();
+    
+    
+    private static class QueueItem {
+        public IItem item = null;
+        public String fullpath = null;
+        public QueueItem(IItem i, String fullpath) {
+            this.item = i;
+            this.fullpath = fullpath;
+        }
+    }
+    
+    private HashMap<Integer, QueueItem> queue = new HashMap<>();
     private boolean sendQueue = false;
 
     @Override
@@ -192,11 +203,15 @@ public class MinIOTask extends AbstractTask {
             out = new ZipArchiveOutputStream(new FileOutputStream(zipfile));
             out.setLevel(Deflater.NO_COMPRESSION);
         }
+        String fullpath=bucket + "/zips/" +getZipName() + "/" + hash;
 
         // insert into the queue of files waiting to be sent
         if (!preview) {
-            queue.add(i);
+            queue.put(i.getId(), new QueueItem(i,fullpath));
+        } else if (!queue.containsKey(i.getId())) {
+            queue.put(i.getId(), new QueueItem(i, null));
         }
+
 
         zipFiles++;
         zipLength += length;
@@ -206,7 +221,7 @@ public class MinIOTask extends AbstractTask {
         IOUtils.copy(is, out);
         out.closeArchiveEntry();
 
-        return getZipName() + "/" + hash;
+        return fullpath;
 
     }
 
@@ -231,8 +246,11 @@ public class MinIOTask extends AbstractTask {
 
         if (length > zipFilesMaxSize) {
             insertItem(hash, is, length, mediatype, bucketPath);
+            if (!preview) {
+                updateDataSource(i, fullPath);
+            }
         } else {
-            fullPath = bucket + "/zips/" + insertInZipFile(hash, length, is, i, preview);
+            fullPath = insertInZipFile(hash, length, is, i, preview);
         }
 
         return fullPath;
@@ -263,8 +281,9 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void sendZipItemsToNextTask() throws Exception {
-        for (IItem i : queue) {
-            super.sendToNextTask(i);
+        for (QueueItem i : queue.values()) {
+            updateDataSource(i.item, i.fullpath);
+            super.sendToNextTask(i.item);
         }
         queue.clear();
         sendQueue = false;
@@ -326,7 +345,7 @@ public class MinIOTask extends AbstractTask {
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
         // if queue contains the item it will be sent when the zipfile is sent;
-        if (!queue.contains(item)) {
+        if (!queue.containsKey(item.getId())) {
             if (item.isQueueEnd() && !queue.isEmpty()) {
                 flushZipFile();
             }
@@ -357,10 +376,7 @@ public class MinIOTask extends AbstractTask {
             return;
 
         try (SeekableInputStream is = item.getStream()) {
-            String fullPath = insertWithZip(item, hash, is, is.size(), item.getMediaType().toString(), false);
-            if (fullPath != null) {
-                updateDataSource(item, fullPath);
-            }
+            insertWithZip(item, hash, is, is.size(), item.getMediaType().toString(), false);
         } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
@@ -402,6 +418,9 @@ public class MinIOTask extends AbstractTask {
     }
 
     private void updateDataSource(IItem item, String id) {
+        if (id == null || item == null) {
+            return;
+        }
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
         item.setFile(null);
