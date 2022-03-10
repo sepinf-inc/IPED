@@ -349,7 +349,7 @@ public class HTMLReportTask extends AbstractTask {
 
         ReportEntry reg = new ReportEntry();
         reg.name = evidence.getName();
-        reg.export = evidence.getExportedFile();
+        reg.export = evidence.getIdInDataSource();
         reg.isImage = ImageThumbTask.isImageType(evidence.getMediaType());
         reg.isVideo = VideoThumbTask.isVideoType(evidence.getMediaType());
         reg.length = evidence.getLength();
