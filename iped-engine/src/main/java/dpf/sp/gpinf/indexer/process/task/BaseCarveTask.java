@@ -175,15 +175,12 @@ public abstract class BaseCarveTask extends AbstractTask {
             carvedItem.setSleuthFile(((ISleuthKitItem) parentItem).getSleuthFile());
             carvedItem.setSleuthId(((ISleuthKitItem) parentItem).getSleuthId());
         }
-        if (parentItem.getFile() != null) {
-            carvedItem.setFile(parentItem.getFile());
-            carvedItem.setExportedFile(parentItem.getExportedFile());
-        }
+
         // optimization to not create more temp files
         if (parentItem.hasTmpFile()) {
             try {
-                carvedItem.setFile(parentItem.getTempFile());
-                carvedItem.setTempStartOffset(offset);
+                carvedItem.setParentTmpFile(parentItem.getTempFile());
+                carvedItem.setParentOffset(offset);
             } catch (IOException e) {
                 // ignore
             }
