@@ -10,6 +10,6 @@ public interface IStreamSource {
 
     public SeekableByteChannel getSeekableByteChannel() throws IOException;
 
-    public File getFile();
+    public File getTempFile() throws IOException;
 
 }
