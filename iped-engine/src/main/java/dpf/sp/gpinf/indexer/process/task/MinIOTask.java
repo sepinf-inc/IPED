@@ -90,17 +90,17 @@ public class MinIOTask extends AbstractTask {
     private File zipfile = null;
     private long zipLength = 0;
     private long zipFiles = 0;
-    
-    
+
     private static class QueueItem {
         public IItem item = null;
         public String fullpath = null;
+
         public QueueItem(IItem i, String fullpath) {
             this.item = i;
             this.fullpath = fullpath;
         }
     }
-    
+
     private HashMap<Integer, QueueItem> queue = new HashMap<>();
     private boolean sendQueue = false;
 
@@ -203,15 +203,14 @@ public class MinIOTask extends AbstractTask {
             out = new ZipArchiveOutputStream(new FileOutputStream(zipfile));
             out.setLevel(Deflater.NO_COMPRESSION);
         }
-        String fullpath=bucket + "/zips/" +getZipName() + "/" + hash;
+        String fullpath = bucket + "/zips/" + getZipName() + "/" + hash;
 
         // insert into the queue of files waiting to be sent
         if (!preview) {
-            queue.put(i.getId(), new QueueItem(i,fullpath));
+            queue.put(i.getId(), new QueueItem(i, fullpath));
         } else if (!queue.containsKey(i.getId())) {
             queue.put(i.getId(), new QueueItem(i, null));
         }
-
 
         zipFiles++;
         zipLength += length;
