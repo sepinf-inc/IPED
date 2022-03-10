@@ -27,11 +27,12 @@ import java.util.Set;
 import dpf.ap.gpinf.interfacetelegram.MessageInterface;
 import dpf.ap.gpinf.interfacetelegram.PhotoData;
 import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup;
+import iped3.io.IItemBase;
 
 public class Message implements MessageInterface {
     private long id;
     private String mediaHash = null;
-    private String mediaFile = null;
+    private IItemBase mediaItem = null;
     private String mediaName = null;
     private String mediaExt = null;
     private String mediaComment = null;
@@ -71,11 +72,19 @@ public class Message implements MessageInterface {
     }
 
     public String getMediaFile() {
-        return mediaFile;
+        throw new UnsupportedOperationException("Use getMediaItem() instead");
     }
 
     public void setMediaFile(String mediaFile) {
-        this.mediaFile = mediaFile;
+        throw new UnsupportedOperationException("Use setMediaItem() instead");
+    }
+
+    public IItemBase getMediaItem() {
+        return this.mediaItem;
+    }
+
+    public void setMediaItem(IItemBase mediaItem) {
+        this.mediaItem = mediaItem;
     }
 
     public boolean isFromMe() {

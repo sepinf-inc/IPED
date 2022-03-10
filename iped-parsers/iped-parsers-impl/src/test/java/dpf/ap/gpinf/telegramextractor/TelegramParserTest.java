@@ -1,5 +1,6 @@
 package dpf.ap.gpinf.telegramextractor;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import org.apache.tika.exception.TikaException;
@@ -27,6 +28,7 @@ public class TelegramParserTest extends AbstractPkgTest {
         parser.setEnabledForUfdr(true);
         parser.getSupportedTypes(telegramContext);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-telegram-db");
+        this.searchFile = new File("src/test/resources/test-files/testFile");
         try (InputStream stream = getStream("test-files/test_telegramCache4.db")) {
             parser.parse(stream, handler, metadata, telegramContext);
 
