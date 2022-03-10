@@ -523,17 +523,6 @@ public class IPEDReader extends DataSourceReader {
             }
 
             if (!treeNode) {
-                value = doc.get(IndexItem.EXPORT);
-                if (value != null && !value.isEmpty()) {
-                    File localFile = Util.getResolvedFile(ipedCase.getModuleDir().getParent(), value).toFile();
-                    if (!ipedCase.isReport()) {
-                        localFile = IndexItem.checkIfEvidenceFolderExists(evidence, localFile, ipedCase.getModuleDir());
-                    }
-                    if (localFile.exists()) {
-                        evidence.setFile(localFile);
-                    }
-                }
-
                 value = doc.get(IndexItem.SLEUTHID);
                 if (value != null && !value.isEmpty()) {
                     evidence.setSleuthId(Integer.valueOf(value));
@@ -542,7 +531,7 @@ public class IPEDReader extends DataSourceReader {
                     }
                 }
                 if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
-                    evidence.setIdInDataSource(value.trim());
+                    evidence.setIdInDataSource(value);
                 }
                 if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
                     String sourcePath = doc.get(IndexItem.SOURCE_PATH);
