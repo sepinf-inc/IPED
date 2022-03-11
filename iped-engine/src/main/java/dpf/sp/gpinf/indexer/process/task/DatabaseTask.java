@@ -9,7 +9,6 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import macee.core.Configurable;
 
 public class DatabaseTask extends AbstractTask {
@@ -95,7 +94,6 @@ public class DatabaseTask extends AbstractTask {
             sql.append("(" //$NON-NLS-1$
                     + e.getId() + "," //$NON-NLS-1$
                     + e.getParentId() + "," //$NON-NLS-1$
-                    + ((e instanceof ISleuthKitItem) ? ((ISleuthKitItem) e).getSleuthId() : null) + ",\'" //$NON-NLS-1$
                     + e.getName() + "\',\'" //$NON-NLS-1$
                     + e.getType().getLongDescr() + "\',\'" //$NON-NLS-1$
                     + e.getCategories() + "\',\'" //$NON-NLS-1$

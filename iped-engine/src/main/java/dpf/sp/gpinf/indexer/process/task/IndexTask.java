@@ -35,7 +35,6 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import macee.core.Configurable;
 
 /**
@@ -79,9 +78,6 @@ public class IndexTask extends AbstractTask {
     public static void configureTreeNodeAttributes(IItem item) {
         if (item.isSubItem()) {
             item.dispose();
-        }
-        if (item instanceof ISleuthKitItem) {
-            ((ISleuthKitItem) item).setSleuthId(null);
         }
         item.setIdInDataSource(null);
         item.setInputStreamFactory(null);

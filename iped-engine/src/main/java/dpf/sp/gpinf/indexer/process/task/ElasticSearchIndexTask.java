@@ -51,7 +51,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import macee.core.Configurable;
@@ -481,8 +480,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.ID, item.getId()).field("document_content", "document")
                 .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
-                .field(IndexItem.SLEUTHID,
-                        item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
                 .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
                 .field(IndexItem.SOURCE_DECODER,
