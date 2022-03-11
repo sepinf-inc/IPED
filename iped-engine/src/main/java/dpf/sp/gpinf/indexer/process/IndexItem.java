@@ -95,7 +95,6 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import jep.NDArray;
@@ -107,8 +106,6 @@ import jep.NDArray;
 public class IndexItem extends BasicProps {
 
     public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
-
-    public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
 
     public static final String TRACK_ID = "trackId"; //$NON-NLS-1$
     public static final String PARENT_TRACK_ID = "parentTrackId"; //$NON-NLS-1$
@@ -166,7 +163,6 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        BasicProps.SET.add(SLEUTHID);
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
         BasicProps.SET.add(SOURCE_DECODER);
@@ -275,16 +271,6 @@ public class IndexItem extends BasicProps {
         doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
         if (evidence.getTempAttribute(IGNORE_CONTENT_REF) == null) {
-            if (evidence instanceof ISleuthKitItem) {
-                ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
-                Integer intVal = sevidence.getSleuthId();
-                if (intVal != null) {
-                    doc.add(new IntPoint(SLEUTHID, intVal));
-                    doc.add(new StoredField(SLEUTHID, intVal));
-                    doc.add(new NumericDocValuesField(SLEUTHID, intVal));
-                }
-            }
-
             String value = evidence.getIdInDataSource();
             if (value != null) {
                 doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
@@ -920,14 +906,6 @@ public class IndexItem extends BasicProps {
 
             File outputBase = iCase.getModuleDir();
 
-            value = doc.get(IndexItem.SLEUTHID);
-            if (value != null && !value.isEmpty()) {
-                evidence.setSleuthId(Integer.valueOf(value));
-                if (iCase.getSleuthCase() != null) {
-                    evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                }
-            }
-
             value = doc.get(IndexItem.ID_IN_SOURCE);
             if (value != null) {
                 evidence.setIdInDataSource(value);
@@ -1002,7 +980,7 @@ public class IndexItem extends BasicProps {
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
 
-                    if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getSleuthId() == null && evidence.getIdInDataSource() == null)) {
+                    if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
                         evidence.setIdInDataSource("");
                         evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
                         evidence.setTempFile(viewFile);
