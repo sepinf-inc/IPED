@@ -24,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.net.URI;
+import java.nio.file.Paths;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -76,8 +78,10 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Manager;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
+import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
@@ -85,7 +89,7 @@ import gpinf.dev.data.Item;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
+import iped3.io.SeekableInputStream;
 import iped3.util.BasicProps;
 import iped3.util.MediaTypes;
 
@@ -941,10 +945,8 @@ public class SleuthkitReader extends DataSourceReader {
         }
 
         evidence.setHasChildren(absFile.hasChildren());
-        if (evidence instanceof ISleuthKitItem) {
-            ((ISleuthKitItem) evidence).setSleuthFile(absFile);
-            ((ISleuthKitItem) evidence).setSleuthId((int) absFile.getId());
-        }
+        evidence.setIdInDataSource(Long.toString(absFile.getId()));
+        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, absFile));
 
         boolean first = true;
         Integer tskId = (int) absFile.getId();
@@ -1090,7 +1092,9 @@ public class SleuthkitReader extends DataSourceReader {
 
         // evidence.setSleuthFile(content);
         evidence.setHash(""); //$NON-NLS-1$
-        evidence.setSleuthId((int) content.getId());
+        evidence.setIdInDataSource(Long.toString(content.getId()));
+        // below is used to don't process images, partitions or file systems raw data
+        evidence.setInputStreamFactory(new SleuthkitInputStreamFactory(sleuthCase, null));
 
         boolean first = true;
         Integer tskId = (int) content.getId();
