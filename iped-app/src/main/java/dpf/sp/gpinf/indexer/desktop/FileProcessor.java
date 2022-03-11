@@ -40,9 +40,9 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ImageViewer;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import iped3.IItem;
 import iped3.desktop.CancelableWorker;
-import iped3.sleuthkit.ISleuthKitItem;
 
 public class FileProcessor extends CancelableWorker<Void, Void> implements IFileProcessor {
     private static Logger LOGGER = LoggerFactory.getLogger(FileProcessor.class);
@@ -179,10 +179,8 @@ public class FileProcessor extends CancelableWorker<Void, Void> implements IFile
     }
 
     private void waitSleuthkitInit(final IItem item) {
-        if (item instanceof ISleuthKitItem) {
-            ISleuthKitItem sitem = (ISleuthKitItem) item;
-            if (sitem.getSleuthFile() == null)
-                return;
+        if (!(item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory)) {
+            return;
         }
         if (!tskDataSourceInited.contains(item.getDataSource().getUUID())) {
             tskDataSourceInited.add(item.getDataSource().getUUID());
