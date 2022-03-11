@@ -523,13 +523,6 @@ public class IPEDReader extends DataSourceReader {
             }
 
             if (!treeNode) {
-                value = doc.get(IndexItem.SLEUTHID);
-                if (value != null && !value.isEmpty()) {
-                    evidence.setSleuthId(Integer.valueOf(value));
-                    if (ipedCase.getSleuthCase() != null) {
-                        evidence.setSleuthFile(ipedCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                    }
-                }
                 if ((value = doc.get(IndexItem.ID_IN_SOURCE)) != null) {
                     evidence.setIdInDataSource(value);
                 }
