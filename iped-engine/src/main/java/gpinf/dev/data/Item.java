@@ -54,7 +54,6 @@ import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
-import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -67,7 +66,7 @@ import iped3.sleuthkit.ISleuthKitItem;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class Item implements ISleuthKitItem {
+public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
 
@@ -200,11 +199,7 @@ public class Item implements ISleuthKitItem {
 
     private TemporaryResources tmpResources = new TemporaryResources();
 
-    private Content sleuthFile;
-
     private long startOffset = -1, parentOffset = -1;
-
-    private Integer sleuthId;
 
     private String idInDataSource;
 
@@ -542,22 +537,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     *
-     * @return o objeto do Sleuthkit que representa o item
-     */
-    public Content getSleuthFile() {
-        return sleuthFile;
-    }
-
-    /**
-     *
-     * @return o id do item no Sleuthkit
-     */
-    public Integer getSleuthId() {
-        return sleuthId;
-    }
-
-    /**
      * @return InputStream com o conteúdo do arquivo.
      */
     public SeekableInputStream getStream() throws IOException {
@@ -593,18 +572,8 @@ public class Item implements ISleuthKitItem {
 
         SeekableInputStream stream = null;
 
-        if (inputStreamFactory != null && idInDataSource != null)
+        if (inputStreamFactory != null && idInDataSource != null) {
             stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
-
-        if (stream == null && sleuthFile != null) {
-            SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-            if (sleuthcase == null || !fsConfig.isRobustImageReading()) {
-                stream = new SleuthkitInputStream(sleuthFile);
-            } else {
-                SleuthkitClient sleuthProcess = SleuthkitClient.get();
-                stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
-            }
         }
 
         if (stream != null && startOffset != -1) {
@@ -1088,22 +1057,6 @@ public class Item implements ISleuthKitItem {
      */
     public void setRoot(boolean isRoot) {
         this.isRoot = isRoot;
-    }
-
-    /**
-     * @param sleuthFile
-     *            objeto que representa o item no sleuthkit
-     */
-    public void setSleuthFile(Content sleuthFile) {
-        this.sleuthFile = sleuthFile;
-    }
-
-    /**
-     * @param sleuthId
-     *            id do item no sleuthkit
-     */
-    public void setSleuthId(Integer sleuthId) {
-        this.sleuthId = sleuthId;
     }
 
     /**
