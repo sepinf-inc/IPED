@@ -346,7 +346,7 @@ public class MinIOTask extends AbstractTask {
     @Override
     protected void sendToNextTask(IItem item) throws Exception {
         // if queue contains the item it will be sent when the zipfile is sent;
-        if (queue.get(item.getId()) != null) {
+        if (queue.get(item.getId()) == null) {
             if (item.isQueueEnd() && !queue.isEmpty()) {
                 flushZipFile();
             }
