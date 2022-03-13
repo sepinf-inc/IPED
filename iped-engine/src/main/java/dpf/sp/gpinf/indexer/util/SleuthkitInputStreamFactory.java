@@ -13,6 +13,7 @@ import org.sqlite.SQLiteException;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
+import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import iped3.io.SeekableInputStream;
 
 public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
@@ -77,7 +78,7 @@ public class SleuthkitInputStreamFactory extends SeekableInputStreamFactory {
         FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
         long tskId = Long.valueOf(identifier);
         Content tskContent = getContentById(tskId);
-        if (!fsConfig.isRobustImageReading()) {
+        if (SleuthkitReader.sleuthCase == null || !fsConfig.isRobustImageReading()) {
             return new SleuthkitInputStream(tskContent);
         } else {
             SleuthkitClient sleuthProcess = SleuthkitClient.get();
