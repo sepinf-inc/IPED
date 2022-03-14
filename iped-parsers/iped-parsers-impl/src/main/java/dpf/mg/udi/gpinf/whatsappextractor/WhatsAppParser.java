@@ -364,7 +364,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context, WAContactsDirectory contacts, WAAccount account)
             throws WAExtractorException, IOException {
         try (TemporaryResources tmp = new TemporaryResources()) {
-            TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getStream(), tmp);
+            TikaInputStream tis = TikaInputStream.get(wcontext.getItem().getSeekableInputStream(), tmp);
             File tempFile = tis.getFile();
             extFactory.setConnectionParams(tis, metadata, context, this);
             Extractor waExtractor = extFactory.createMessageExtractor(tempFile, contacts, account);
@@ -1231,7 +1231,7 @@ public class WhatsAppParser extends SQLite3DBParser {
      * @return
      */
     private boolean itemStreamEndsWithZeros(IItemBase item, long mediaSize) {
-        try (SeekableInputStream sis = item.getStream()) {
+        try (SeekableInputStream sis = item.getSeekableInputStream()) {
             sis.seek(mediaSize);
             byte[] bytes = new byte[15];
             int read = org.apache.commons.io.IOUtils.read(sis, bytes);

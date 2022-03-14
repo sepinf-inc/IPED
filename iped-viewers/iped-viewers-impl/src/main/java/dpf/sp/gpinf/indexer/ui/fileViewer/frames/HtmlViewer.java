@@ -151,7 +151,7 @@ public class HtmlViewer extends Viewer {
     }
 
     private File getTempFile(IStreamSource content) {
-        try (InputStream in = content.getStream()) {
+        try (InputStream in = content.getSeekableInputStream()) {
             File tmpFile = File.createTempFile("iped", ".html");
             Files.copy(in, tmpFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
             tmpFile.deleteOnExit();

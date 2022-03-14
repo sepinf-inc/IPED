@@ -6,7 +6,7 @@ import java.nio.channels.SeekableByteChannel;
 
 public interface IStreamSource {
 
-    public SeekableInputStream getStream() throws IOException;
+    public SeekableInputStream getSeekableInputStream() throws IOException;
 
     public SeekableByteChannel getSeekableByteChannel() throws IOException;
 

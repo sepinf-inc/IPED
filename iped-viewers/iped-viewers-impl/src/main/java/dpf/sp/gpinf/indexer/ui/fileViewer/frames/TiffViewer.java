@@ -145,7 +145,7 @@ public class TiffViewer extends ImageViewer {
                 if (!content.equals(currentContent))
                     return;
                 try {
-                    is = currentContent.getStream();
+                    is = currentContent.getSeekableInputStream();
                     iis = ImageIO.createImageInputStream(is);
                     reader = ImageIO.getImageReaders(iis).next();
                     reader.setInput(iis, false, true);

@@ -293,7 +293,7 @@ public class Item implements IItem {
             }
         }
 
-        return new BufferedInputStream(getStream(), len);
+        return new BufferedInputStream(getSeekableInputStream(), len);
     }
 
     /**
@@ -539,7 +539,8 @@ public class Item implements IItem {
     /**
      * @return InputStream com o conteúdo do arquivo.
      */
-    public SeekableInputStream getStream() throws IOException {
+    @Override
+    public SeekableInputStream getSeekableInputStream() throws IOException {
 
         // block 1 (referenciado abaixo)
         if (tmpFile == null && tis != null && tis.hasFile()) {
@@ -588,7 +589,7 @@ public class Item implements IItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
-        return new SeekableByteChannelImpl(this.getStream());
+        return new SeekableByteChannelImpl(this.getSeekableInputStream());
     }
 
     /**
@@ -598,6 +599,7 @@ public class Item implements IItem {
      * @return um arquivo temporário com o conteúdo do item.
      * @throws IOException
      */
+    @Override
     public File getTempFile() throws IOException {
         if (IOUtil.hasFile(this)) {
             return IOUtil.getFile(this);

@@ -162,7 +162,7 @@ public abstract class AbstractPkgTest extends TestCase {
                         return new IItemBase() {
 
                             @Override
-                            public SeekableInputStream getStream() throws IOException {
+                            public SeekableInputStream getSeekableInputStream() throws IOException {
                                 // TODO Auto-generated method stub
                                 return null;
                             }

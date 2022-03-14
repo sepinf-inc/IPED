@@ -112,7 +112,7 @@ public class SignatureTask extends AbstractTask {
         if (item.getLength() == null) {
             return false;
         }
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             is.seek(item.getLength() - 512);
             byte[] cookie = IOUtils.readFully(is, 9);
             if ("conectix".equals(new String(cookie, 0, 8, StandardCharsets.ISO_8859_1))

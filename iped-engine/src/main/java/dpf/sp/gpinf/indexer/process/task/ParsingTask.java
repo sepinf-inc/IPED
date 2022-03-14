@@ -608,7 +608,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             subItem.setSubItem(true);
             subItem.setSumVolume(false);
 
-            InputStream is = !updateInputStream ? inputStream : subItem.getStream();
+            InputStream is = !updateInputStream ? inputStream : subItem.getSeekableInputStream();
             try {
                 ExportFileTask extractor = new ExportFileTask();
                 extractor.setWorker(worker);

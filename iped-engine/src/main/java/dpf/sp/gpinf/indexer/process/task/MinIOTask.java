@@ -218,7 +218,7 @@ public class MinIOTask extends AbstractTask {
         if (hash == null || hash.isEmpty() || item.getLength() == null || item.getLength() <= 0)
             return;
 
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             String fullPath = insertItem(hash, new BufferedInputStream(is), is.size(), item.getMediaType().toString(), false);
             if (fullPath != null) {
                 updateDataSource(item, fullPath);

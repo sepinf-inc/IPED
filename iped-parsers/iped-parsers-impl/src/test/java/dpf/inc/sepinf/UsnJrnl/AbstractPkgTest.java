@@ -198,7 +198,7 @@ public abstract class AbstractPkgTest extends TestCase {
         IItemBase item = new IItemBase() {
 
             @Override
-            public SeekableInputStream getStream() throws IOException {
+            public SeekableInputStream getSeekableInputStream() throws IOException {
                 return new SeekableFileInputStream(file);
             }
 

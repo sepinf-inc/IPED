@@ -165,7 +165,7 @@ public interface IItem extends IItemBase {
      * @return InputStream com o conteúdo do arquivo.
      */
     @Override
-    SeekableInputStream getStream() throws IOException;
+    SeekableInputStream getSeekableInputStream() throws IOException;
 
     /**
      * Usado em módulos que só possam processar um File e não um InputStream. Pode
