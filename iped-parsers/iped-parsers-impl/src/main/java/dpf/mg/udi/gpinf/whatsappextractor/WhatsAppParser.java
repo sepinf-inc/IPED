@@ -410,7 +410,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
         if (wcontext != null && wcontext.getChalist() == null) {
             // if not parsed yet, parse the DB here
-            parseDB(wcontext, metadata, context, extFactory);
+            synchronized (wcontext) {
+                if (wcontext.getChalist() == null) {
+                    parseDB(wcontext, metadata, context, extFactory);
+                }
+            }
         }
 
         // parse DBs found above
