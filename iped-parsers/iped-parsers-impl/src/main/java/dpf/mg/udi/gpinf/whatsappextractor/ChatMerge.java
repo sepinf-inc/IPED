@@ -48,6 +48,9 @@ public class ChatMerge {
     }
 
     public boolean isBackup(List<Chat> backup) {
+        if (backup == null) {
+            return false;
+        }
         int indexmain = 0;
         int totchats = 0;
         for (Chat c : backup) {

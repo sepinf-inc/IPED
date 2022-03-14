@@ -129,7 +129,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
 
-    private static Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
+    private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
     private static final String IS_BACKUP_FROM = "isBackupFrom";
 
@@ -407,12 +407,25 @@ public class WhatsAppParser extends SQLite3DBParser {
         // list and parsing results won't be on memory yet
         findOtherDBS(searcher);
 
+        WhatsAppContext wcontext = dbsFound.get(DB.getId());
+        if (wcontext != null && wcontext.getChalist() == null) {
+            // if not parsed yet, parse the DB here
+            parseDB(wcontext, metadata, context, extFactory);
+        }
+
         // parse DBs found above
-        for (WhatsAppContext wcontext : dbsFound.values().toArray(new WhatsAppContext[0])) {
-            synchronized (wcontext) {
-                if (wcontext.getChalist() == null) {
+        for (WhatsAppContext other : dbsFound.values().toArray(new WhatsAppContext[0])) {
+            if (other == wcontext)
+                continue;
+            synchronized (other) {
+                if (other.getChalist() == null) {
                     // if not parsed yet, parse the DB here
-                    parseDB(wcontext, metadata, context, extFactory);
+                    try {
+                        parseDB(other, metadata, context, extFactory);
+                    } catch (Exception e) {
+                        logger.warn("could not parse DB {}", other.getItem().getName());
+                        // TODO: handle exception
+                    }
                 }
             }
         }
@@ -429,7 +442,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         });
 
-        WhatsAppContext wcontext = dbsFound.get(DB.getId());
         
         if (wcontext == null) {
             // MakePreviewTask enters here for main dbs and backups without main db
