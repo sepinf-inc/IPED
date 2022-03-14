@@ -200,6 +200,8 @@ public class SleuthkitReader extends DataSourceReader {
             switch (ext) {
                 case "e01":
                     return MediaTypes.E01_IMAGE;
+                case "ex01":
+                    return MediaTypes.EX01_IMAGE;
                 case "vmdk":
                     return MediaTypes.VMDK;
                 case "vhd":
