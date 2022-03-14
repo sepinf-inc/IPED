@@ -148,8 +148,10 @@ public class SleuthkitReader extends DataSourceReader {
         return name.endsWith(".000") //$NON-NLS-1$
                 || name.endsWith(".001") //$NON-NLS-1$
                 || name.endsWith(".e01") //$NON-NLS-1$
+                || name.endsWith(".ex01") //$NON-NLS-1$
                 || name.endsWith(".aff") //$NON-NLS-1$
                 || name.endsWith(".l01") //$NON-NLS-1$
+                || name.endsWith(".lx01") //$NON-NLS-1$
                 || name.endsWith(".dd") //$NON-NLS-1$
                 || name.endsWith(".vmdk") //$NON-NLS-1$
                 || name.endsWith(".vhd") //$NON-NLS-1$
