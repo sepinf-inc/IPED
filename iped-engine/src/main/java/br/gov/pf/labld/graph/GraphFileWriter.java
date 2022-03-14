@@ -611,8 +611,8 @@ public class GraphFileWriter implements Closeable, Flushable {
                 }
             }
             line.append("\r\n");
-            if (!isNodeWriter || prevNodeRecords.add(line.toString())) {
-                synchronized (this) {
+            synchronized (this) {
+                if (!isNodeWriter || prevNodeRecords.add(line.toString())) {
                     sb.append(line);
                 }
             }
