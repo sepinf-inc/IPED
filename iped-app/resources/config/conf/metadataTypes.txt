@@ -4115,6 +4115,7 @@ twitter:card = java.lang.String
 twitter:description = java.lang.String
 twitter:image:src = java.lang.String
 twitter:title = java.lang.String
+ufed:Data = java.lang.String
 ufed:extractionId = java.lang.Integer
 ufed:labels = java.lang.String
 ufed:msgChildIds = java.lang.Integer
