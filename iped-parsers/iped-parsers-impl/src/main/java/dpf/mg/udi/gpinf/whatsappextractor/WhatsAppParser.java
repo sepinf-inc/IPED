@@ -415,7 +415,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         WhatsAppContext wcontext = dbsFound.get(DB.getId());
         if (wcontext != null && wcontext.getChalist() == null) {
             // if not parsed yet, parse the DB here
-            parseDB(wcontext, metadata, context, extFactory);
+            synchronized (wcontext) {
+                if (wcontext.getChalist() == null) {
+                    parseDB(wcontext, metadata, context, extFactory);
+                }
+            }
         }
 
         // parse DBs found above
@@ -428,8 +432,9 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
-                        logger.warn("could not parse DB {}", other.getItem().getName());
-                        // TODO: handle exception
+                        logger.warn("Could not parse DB {} ({} bytes): {}", other.getItem().getPath(),
+                                other.getItem().getLength(), e.toString());
+                        logger.debug("", e);
                     }
                 }
             }

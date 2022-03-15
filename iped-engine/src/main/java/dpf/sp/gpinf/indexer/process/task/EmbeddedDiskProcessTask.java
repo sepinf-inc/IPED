@@ -41,7 +41,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static Set<MediaType> supportedMimes = MediaType.set(MediaTypes.VMDK, MediaTypes.VMDK_DATA,
             MediaTypes.VMDK_DESCRIPTOR, MediaTypes.VHD, MediaTypes.RAW_IMAGE, MediaTypes.EWF_IMAGE,
-            MediaTypes.E01_IMAGE);
+            MediaTypes.E01_IMAGE, MediaTypes.EWF2_IMAGE, MediaTypes.EX01_IMAGE);
 
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
@@ -78,6 +78,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_IMAGE.equals(item.getMediaType())
+                || MediaTypes.EX01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.RAW_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DESCRIPTOR.equals(item.getMediaType());
     }
@@ -111,6 +112,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
 
         } else if (MediaTypes.EWF_IMAGE.equals(item.getMediaType())
+                || MediaTypes.EWF2_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DATA.equals(item.getMediaType())) {
             // export e01/vmdk parts to process them later
             exportItem(item);
