@@ -39,6 +39,7 @@ import org.apache.tika.parser.EmptyParser;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.ParserDecorator;
+import org.apache.tika.parser.csv.TextAndCSVParser;
 import org.apache.tika.parser.txt.TXTParser;
 import org.apache.tika.sax.ContentHandlerDecorator;
 import org.apache.tika.sax.SecureContentHandler;
@@ -54,6 +55,7 @@ import dpf.sp.gpinf.indexer.parsers.util.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
+import iped3.util.MediaTypes;
 
 /**
  * Parser padrão do IPED. Como o AutoDetectParser, detecta o tipo do arquivo e
@@ -158,7 +160,8 @@ public class IndexerDefaultParser extends CompositeParser {
     }
 
     public static boolean isSpecificParser(Parser parser) {
-        if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser)
+        if (parser instanceof RawStringParser || parser instanceof TXTParser || parser instanceof EmptyParser
+                || parser instanceof TextAndCSVParser)
             return false;
         else
             return true;
