@@ -614,6 +614,10 @@
         <magic priority="50">
             <match value="0x5646090D0AFF00" type="string" offset="1"/>
         </magic>
+        <_comment>EX01 disk images</_comment>
+        <magic priority="50">
+            <match value="0x455646320D0A8100" type="string" offset="0"/>
+        </magic>
         <_comment>RAW disk images</_comment>
         <magic priority="30">
             <match value="0x55AA" type="string" offset="510">
