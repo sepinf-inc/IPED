@@ -205,6 +205,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(MSG_STORE_2.toString())) {
                 mergeParsedDBsAndOutputResults(stream, handler, metadata, context, new ExtractorAndroidFactory());
             }
+        } catch (Exception e) {
+            // log all whatsapp exceptions
+            e.printStackTrace();
+            throw e;
         }
 
     }
@@ -353,7 +357,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
-        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
+        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
+                && wcontext.getChalist() != null) {
             wcontext.setMainDB(true);
             wcontext.setBackup(false);
         }
@@ -488,7 +493,10 @@ public class WhatsAppParser extends SQLite3DBParser {
                 }
 
                 // new instance to avoid threading issues
-                List<Chat> mainDBChatList = new ArrayList<Chat>(mainDb.getChalist());
+                List<Chat> mainDBChatList = new ArrayList<Chat>();
+                if (mainDb.getChalist() != null) {
+                    mainDBChatList.addAll(mainDb.getChalist());
+                }
                 ChatMerge cm = new ChatMerge(mainDBChatList, other.getItem().getName());
 
                 if (cm.isBackup(other.getChalist())) {
@@ -537,7 +545,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (dbsFound.size() == backupsMerged.get() + dbsSearchedForAndAdded) {
                 // just merged backups left in map, clear all remaining heavy data
                 logger.info("Clearing remaining whatsapp decoded data from cache.");
-                dbsFound.values().stream().forEach(wacontext -> wacontext.getChalist().clear());
+                dbsFound.values().stream().filter(wacontext -> wacontext.getChalist() != null)
+                        .forEach(wacontext -> wacontext.getChalist().clear());
                 Message.closeStaticResources();
             }
         }
