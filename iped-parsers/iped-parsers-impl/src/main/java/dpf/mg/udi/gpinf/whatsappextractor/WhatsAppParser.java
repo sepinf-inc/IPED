@@ -432,6 +432,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
+                        other.setMainDB(false);
+                        other.setBackup(false);
                         logger.warn("Could not parse DB {} ({} bytes): {}", other.getItem().getPath(),
                                 other.getItem().getLength(), e.toString());
                         logger.debug("", e);
