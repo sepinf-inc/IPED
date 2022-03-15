@@ -65,7 +65,7 @@
     {"name": "Image Disks", "categories":[
       {"name": "ISO disks", "mimes": ["application/x-iso9660-image", "application/x-udf-image"]},
       {"name": "Virtual disks", "mimes": ["application/x-wim-image", "application/x-vmdk", "application/x-vhd", "application/x-vdi", "application/x-vhdx"]},
-      {"name": "Other disks", "mimes": ["application/x-raw-image", "application/x-e01-image"]}
+      {"name": "Other disks", "mimes": ["application/x-disk-image"]}
     ]},
     {"name": "Brazilian Software", "categories":[
       {"name": "Internal Revenue of Brazil", "categories":[

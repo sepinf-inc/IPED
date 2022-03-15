@@ -71,6 +71,7 @@ public class MimeTypesProcessingOrder {
         
         // support for embedded splited image formats
         mediaTypes.put(MediaTypes.E01_IMAGE, 1);
+        mediaTypes.put(MediaTypes.EX01_IMAGE, 1);
         mediaTypes.put(MediaTypes.RAW_IMAGE, 1);
         mediaTypes.put(MediaTypes.VMDK_DESCRIPTOR, 1);
 
