@@ -1,3 +1,21 @@
+15/03/2022: IPED-3.18.14
+News:
+#995:  Upgrade to LIBEWF-20201230: partial Ex01 and Lx01 support (Luís Nassif)
+Fixes:
+#1001: TextViewer not displaying final text fragments of files [3.18.8 regression] (Luís Nassif)
+#973:  Group participants aren't being extracted [regression 3.18.9] (João Hauck)
+#997:  Messages from chats decoded from UFDRs may be duplicated and shown as attachments in preview [since 3.18-beta] (Luís Nassif)
+#986:  Graph in multicases not generated when cases/multicase.txt parent folder is writeable [regression 3.18.5] (Luís Nassif)
+#993:  Excessive memory consumption processing large E01 images (Wladimir Leite, Luís Nassif & André Berenguel)
+#996:  Bookmarks not saved in user local temp if case is on network and readonly using ACLs (Luís Nassif)
+#1005: Query parsing fails if there is an odd number of “ (0x93) chars in the query string (Luís Nassif)
+#991:  Graph creation in reports generated from multicases can fail (Luís Nassif)
+#1004: Similar image search filter panel not rendering selected external image (Luís Nassif)
+#1008: Random aborting ClassCastException in GraphTask (Luís Nassif)
+#989:  Rare ClassCastException when opening GUI (Luís Nassif)
+#970:  Graphs with zero or few connections could render disconnected nodes initially (Luís Nassif)
+#976:  NPE when parsing corrupted WhatsApp android account xml (Luís Nassif)
+
 15/02/2022: IPED-3.18.13
 News:
 #911: Support new Telegram version 8.4 (João Hauck)
