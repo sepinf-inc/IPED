@@ -357,8 +357,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static boolean checkIfIsMainDBAndStore(WhatsAppContext wcontext) {
         IItemBase item = wcontext.getItem();
-        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)
-                && wcontext.getChalist() != null) {
+        if (!MSGSTORE_BKP.matcher(item.getName()).find() && !item.getPath().contains(MSGSTORE_CRYPTO)) {
             wcontext.setMainDB(true);
             wcontext.setBackup(false);
         }
@@ -432,6 +431,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                     try {
                         parseDB(other, metadata, context, extFactory);
                     } catch (Exception e) {
+                        other.setMainDB(false);
+                        other.setBackup(false);
                         logger.warn("Could not parse DB {} ({} bytes): {}", other.getItem().getPath(),
                                 other.getItem().getLength(), e.toString());
                         logger.debug("", e);
