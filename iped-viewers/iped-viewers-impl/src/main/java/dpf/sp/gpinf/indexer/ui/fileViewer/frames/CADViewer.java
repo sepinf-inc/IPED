@@ -108,7 +108,7 @@ public class CADViewer extends Viewer {
 
         // create temp file here to not block EDT
         if (content != null) {
-            try (InputStream in = content.getStream()) {
+            try (InputStream in = content.getSeekableInputStream()) {
                 // put file in temp
                 temp = File.createTempFile("IPED", ".dwg", null);
                 temp.deleteOnExit();

@@ -29,7 +29,7 @@ public class SQLiteCarver extends AbstractCarver {
     public long getLengthFromHit(IItem parentEvidence, Hit header) throws IOException {
         SeekableInputStream is = null;
         try {
-            is = parentEvidence.getStream();
+            is = parentEvidence.getSeekableInputStream();
             byte[] data = new byte[2];
             is.seek(header.getOffset() + 16);
             int i = 0, off = 0;
@@ -78,7 +78,7 @@ public class SQLiteCarver extends AbstractCarver {
 
         SeekableInputStream is = null;
         try {
-            is = parentEvidence.getStream();
+            is = parentEvidence.getSeekableInputStream();
             byte[] formatWriteVersion = new byte[1];
             byte[] formatReadVersion = new byte[1];
             byte[] unusedPageBytes = new byte[1];

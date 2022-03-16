@@ -63,6 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.search.QueryBuilder;
+import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import dpf.sp.gpinf.indexer.ui.controls.HintTextField;
 import dpf.sp.gpinf.indexer.ui.controls.HoverButton;
 import dpf.sp.gpinf.indexer.util.IconUtil;
@@ -412,7 +413,9 @@ public class MetadataPanel extends JPanel
             fields = fields.stream().map(f -> LocalizedProperties.getLocalizedField(f)).collect(Collectors.toList());
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
-                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL))
+                if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL)
+                        || f.startsWith(BasicProps.SIMILARITY_FEATURES)
+                        || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))
                     props.addItem(f);

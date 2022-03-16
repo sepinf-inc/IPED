@@ -248,17 +248,13 @@
         <dependency>
             <groupId>org.neo4j</groupId>
             <artifactId>neo4j</artifactId>
-            <version>3.5.30</version>
+            <version>4.4.4</version>
             <exclusions>
-        		<exclusion>
-          			<groupId>org.apache.lucene</groupId>
-    				<artifactId>lucene-codecs</artifactId>
-        		</exclusion>
-        		<exclusion>
-          			<groupId>jdk.tools</groupId>
-                    <artifactId>jdk.tools</artifactId>
-        		</exclusion>
-        	</exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-nop</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 		<dependency>
 			<groupId>org.bouncycastle</groupId>

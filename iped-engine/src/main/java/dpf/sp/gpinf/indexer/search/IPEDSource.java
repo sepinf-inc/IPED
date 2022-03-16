@@ -338,7 +338,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
 
     private boolean checkAndAddMissingCategory(Category root, Category leaf) {
         boolean found = false;
-        if (leaf.getName().equals(root.getName())) {
+        if (leaf.getName().equalsIgnoreCase(root.getName())) {
             found = true;
         } else {
             for (Category child : root.getChildren()) {
@@ -582,7 +582,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
     File tmpCaseFile = null;
 
     private void testCanWriteToCase(File sleuthFile) throws TskCoreException, IOException {
-        if (tmpCaseFile == null && (!sleuthFile.canWrite() || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
+        if (tmpCaseFile == null && (!IOUtil.canWrite(sleuthFile) || !IOUtil.canCreateFile(sleuthFile.getParentFile()))) {
             tmpCaseFile = File.createTempFile("sleuthkit-", ".db"); //$NON-NLS-1$ //$NON-NLS-2$
             tmpCaseFile.deleteOnExit();
             // causes "case is closed" error in some cases

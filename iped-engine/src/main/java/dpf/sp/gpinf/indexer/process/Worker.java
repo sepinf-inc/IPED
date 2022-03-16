@@ -138,20 +138,6 @@ public class Worker extends Thread {
     }
 
     /**
-     * Check if the item points to an exported File if it exists.
-     *
-     * @param evidence
-     */
-    private void checkFile(IItem evidence) {
-        String filePath = evidence.getFileToIndex();
-        if (evidence.getFile() == null && !filePath.isEmpty()) {
-            File file = Util.getResolvedFile(baseFilePath, filePath);
-            evidence.setFile(file);
-            evidence.setLength(file.length());
-        }
-    }
-
-    /**
      * Processa o item em todas as tarefas instaladas. Caso ocorra exceção não
      * esperada, armazena exceção para abortar processamento.
      *
@@ -168,8 +154,6 @@ public class Worker extends Thread {
         try {
 
             LOGGER.debug("{} Processing {} ({} bytes)", getName(), evidence.getPath(), evidence.getLength()); //$NON-NLS-1$
-
-            checkFile(evidence);
 
             // Loop principal que executa cada tarefa de processamento
             /*

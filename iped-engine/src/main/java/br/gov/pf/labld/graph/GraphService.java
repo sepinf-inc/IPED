@@ -19,7 +19,7 @@ public interface GraphService {
 
     GraphDatabaseService getGraphDb();
 
-    File getDbFile();
+    File getDbHome();
 
     void getEdges(String[] ids, EdgeQueryListener listener);
 

@@ -37,8 +37,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumn;
 
 import org.apache.lucene.document.Document;
-import org.apache.lucene.index.LeafReader;
-import org.apache.lucene.util.Bits;
 import org.apache.tika.metadata.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -103,8 +101,8 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
             IndexItem.HASH, IndexItem.PATH };
 
     private static final String[] extraFields = { IndexItem.CARVED, IndexItem.CONTENTTYPE,
-            IndexItem.EXPORT, IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
-            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.SLEUTHID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
+            IndexItem.HASCHILD, IndexItem.ID, IndexItem.ISDIR, IndexItem.ISROOT, IndexItem.PARENTID,
+            IndexItem.PARENTIDs, IndexItem.SUBITEMID, IndexItem.ID_IN_SOURCE, IndexItem.SOURCE_PATH,
             IndexItem.SOURCE_DECODER, IndexItem.SUBITEM, IndexItem.TIMEOUT, IndexItem.TREENODE, IndexItem.EVIDENCE_UUID,
             IndexerDefaultParser.PARSER_EXCEPTION, OCRParser.OCR_CHAR_COUNT, ExtraProperties.CSAM_HASH_HITS,
             ExtraProperties.P2P_REGISTRY_COUNT, ExtraProperties.SHARED_HASHES, ExtraProperties.SHARED_ITEMS,
@@ -579,13 +577,12 @@ public class ColumnsManager implements ActionListener, Serializable, IColumnsMan
         ArrayList<String> otherFields = new ArrayList<String>();
         for (String f : indexFields) {
             boolean insertField = true;
-            for (int i = 0; i < customGroups.length; i++)
+            for (int i = 0; i < customGroups.length; i++) {
                 if (Arrays.asList(customGroups[i]).contains(f)) {
                     insertField = false;
                     break;
                 }
-            if (f.startsWith(BasicProps.SIMILARITY_FEATURES))
-                continue;
+            }
             if (insertField)
                 otherFields.add(f);
         }

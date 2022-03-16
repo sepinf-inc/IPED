@@ -38,6 +38,7 @@ import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
@@ -53,7 +54,6 @@ import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
-import iped3.sleuthkit.ISleuthKitItem;
 
 /**
  * Classe que define um arquivo de evidência, que é um arquivo do caso,
@@ -66,7 +66,7 @@ import iped3.sleuthkit.ISleuthKitItem;
  * @author Wladimir Leite (GPINF/SP)
  * @author Nassif (GPINF/SP)
  */
-public class Item implements ISleuthKitItem {
+public class Item implements IItem {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Item.class);
 
@@ -167,11 +167,6 @@ public class Item implements ISleuthKitItem {
     private Long length;
 
     /**
-     * Nome e caminho relativo que o arquivo foi exportado.
-     */
-    private String exportedFile;
-
-    /**
      * Nome e caminho relativo que o arquivo para visualização.
      */
     private File viewFile;
@@ -200,15 +195,11 @@ public class Item implements ISleuthKitItem {
 
     private IHashValue hashValue;
 
-    private File file, tmpFile;
+    private File tmpFile, parentTmpFile;
 
     private TemporaryResources tmpResources = new TemporaryResources();
 
-    private Content sleuthFile;
-
-    private long startOffset = -1, tempStartOffset = -1;
-
-    private Integer sleuthId;
+    private long startOffset = -1, parentOffset = -1;
 
     private String idInDataSource;
 
@@ -302,7 +293,7 @@ public class Item implements ISleuthKitItem {
             }
         }
 
-        return new BufferedInputStream(getStream(), len);
+        return new BufferedInputStream(getSeekableInputStream(), len);
     }
 
     /**
@@ -334,14 +325,6 @@ public class Item implements ISleuthKitItem {
      */
     public Date getCreationDate() {
         return creationDate;
-    }
-
-    /**
-     * @return nome e caminho relativo ao caso com que o arquivo de evidência em si
-     *         foi exportado
-     */
-    public String getExportedFile() {
-        return exportedFile;
     }
 
     /**
@@ -380,34 +363,11 @@ public class Item implements ISleuthKitItem {
 
     /**
      *
-     * @return o arquivo com o conteúdo do item. Retorna não nulo apenas em
-     *         processamentos de pastas, reports e no caso de subitens de
-     *         containers. Consulte {@link #getTempFile()}} e {@link #getStream()}
-     */
-    public File getFile() {
-        return file;
-    }
-
-    /**
-     *
      * @return o offset no item pai da onde o item foi recuperado (carving). Retorna
      *         -1 se o item não é proveniente de carving.
      */
     public long getFileOffset() {
         return startOffset;
-    }
-
-    /**
-     *
-     * @return o caminho para o arquivo do item. Diferente de vazio apenas em
-     *         reports e processamentos de pastas.
-     */
-    public String getFileToIndex() {
-        if (exportedFile != null) {
-            return exportedFile.trim();
-        } else {
-            return ""; //$NON-NLS-1$
-        }
     }
 
     /**
@@ -577,28 +537,10 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     *
-     * @return o objeto do Sleuthkit que representa o item
-     */
-    public Content getSleuthFile() {
-        return sleuthFile;
-    }
-
-    /**
-     *
-     * @return o id do item no Sleuthkit
-     */
-    public Integer getSleuthId() {
-        return sleuthId;
-    }
-
-    /**
      * @return InputStream com o conteúdo do arquivo.
      */
-    public SeekableInputStream getStream() throws IOException {
-        if (startOffset == -1 && file != null && file.isFile()) {
-            return new SeekableFileInputStream(file);
-        }
+    @Override
+    public SeekableInputStream getSeekableInputStream() throws IOException {
 
         // block 1 (referenciado abaixo)
         if (tmpFile == null && tis != null && tis.hasFile()) {
@@ -610,42 +552,29 @@ public class Item implements ISleuthKitItem {
                 return new SeekableFileInputStream(tmpFile);
 
                 // workaround para itens com erro de parsing cujo tmpFile foi setado por block1
-                // acima ao
-                // chamar getStream() antes de rodar strings e dps apagado ao fechar stream dps
-                // do parsing
+                // acima ao chamar getStream() antes de rodar strings e dps apagado ao fechar
+                // stream dps do parsing
             } catch (IOException fnfe) {
                 tmpFile = null;
             }
         }
 
-        SeekableInputStream stream = null;
-        if (file != null && file.isFile()) {
+        // optimization for carved files
+        if (parentTmpFile != null && parentOffset != -1) {
             try {
-                stream = new SeekableFileInputStream(file);
-
-                if (tempStartOffset != -1) {
-                    return new LimitedSeekableInputStream(stream, tempStartOffset, length);
-                }
+                return new LimitedSeekableInputStream(new SeekableFileInputStream(parentTmpFile), parentOffset, length);
 
                 // workaround para itens carveados apontando para tmpFile do pai que foi apagado
                 // Sometimes NPE is thrown, needs investigation...
             } catch (IOException | NullPointerException e) {
-                file = null;
+                parentTmpFile = null;
             }
         }
 
-        if (stream == null && inputStreamFactory != null)
-            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
+        SeekableInputStream stream = null;
 
-        if (stream == null && sleuthFile != null) {
-            SleuthkitCase sleuthcase = SleuthkitReader.sleuthCase;
-            FileSystemConfig fsConfig = ConfigurationManager.get().findObject(FileSystemConfig.class);
-            if (sleuthcase == null || !fsConfig.isRobustImageReading()) {
-                stream = new SleuthkitInputStream(sleuthFile);
-            } else {
-                SleuthkitClient sleuthProcess = SleuthkitClient.get();
-                stream = sleuthProcess.getInputStream((int) sleuthFile.getId(), path);
-            }
+        if (inputStreamFactory != null && idInDataSource != null) {
+            stream = inputStreamFactory.getSeekableInputStream(idInDataSource);
         }
 
         if (stream != null && startOffset != -1) {
@@ -660,7 +589,7 @@ public class Item implements ISleuthKitItem {
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
-        return new SeekableByteChannelImpl(this.getStream());
+        return new SeekableByteChannelImpl(this.getSeekableInputStream());
     }
 
     /**
@@ -670,9 +599,10 @@ public class Item implements ISleuthKitItem {
      * @return um arquivo temporário com o conteúdo do item.
      * @throws IOException
      */
+    @Override
     public File getTempFile() throws IOException {
-        if (startOffset == -1 && file != null) {
-            return file;
+        if (IOUtil.hasFile(this)) {
+            return IOUtil.getFile(this);
         }
         if (tmpFile == null) {
             if (tis != null && tis.hasFile()) {
@@ -707,10 +637,6 @@ public class Item implements ISleuthKitItem {
         return tmpFile != null;
     }
 
-    public boolean hasFile() {
-        return startOffset == -1 && file != null;
-    }
-
     /**
      *
      * @return um TikaInputStream com o conteúdo do arquivo
@@ -718,7 +644,8 @@ public class Item implements ISleuthKitItem {
      */
     public TikaInputStream getTikaStream() throws IOException {
 
-        if (startOffset == -1 && file != null && file.isFile()) {
+        File file = null;
+        if (IOUtil.hasFile(this) && (file = IOUtil.getFile(this)).isFile()) {
             tis = TikaInputStream.get(file);
         } else {
             if (tmpFile == null && tis != null && tis.hasFile()) {
@@ -735,7 +662,6 @@ public class Item implements ISleuthKitItem {
                 tis = TikaInputStream.get(getBufferedStream());
             }
         }
-
         tmpResources.addResource(tis);
         return tis;
     }
@@ -930,17 +856,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * Define o caminho para o arquivo do item, no caso de processamento de pastas e
-     * para subitens extraídos.
-     *
-     * @param exportedFile
-     *            caminho para o arquivo do item
-     */
-    public void setExportedFile(String exportedFile) {
-        this.exportedFile = exportedFile;
-    }
-
-    /**
      * Define a extensão do item.
      *
      * @param ext
@@ -961,16 +876,6 @@ public class Item implements ISleuthKitItem {
     public void setExtraAttribute(String key, Object value) {
         this.extraAttributes.put(key, value);
         extraAttributeSet.add(key);
-    }
-
-    /**
-     * Define o arquivo referente ao item, caso existente
-     *
-     * @param file
-     *            arquivo referente ao item
-     */
-    public void setFile(File file) {
-        this.file = file;
     }
 
     /**
@@ -1157,22 +1062,6 @@ public class Item implements ISleuthKitItem {
     }
 
     /**
-     * @param sleuthFile
-     *            objeto que representa o item no sleuthkit
-     */
-    public void setSleuthFile(Content sleuthFile) {
-        this.sleuthFile = sleuthFile;
-    }
-
-    /**
-     * @param sleuthId
-     *            id do item no sleuthkit
-     */
-    public void setSleuthId(Integer sleuthId) {
-        this.sleuthId = sleuthId;
-    }
-
-    /**
      * @param isSubItem
      *            se o item é um subitem
      */
@@ -1266,8 +1155,16 @@ public class Item implements ISleuthKitItem {
         this.sumVolume = sumVolume;
     }
 
-    public void setTempStartOffset(long tempStartOffset) {
-        this.tempStartOffset = tempStartOffset;
+    public boolean hasParentTmpFile() {
+        return parentTmpFile != null && parentOffset != -1;
+    }
+
+    public void setParentTmpFile(File parentTmpFile) {
+        this.parentTmpFile = parentTmpFile;
+    }
+
+    public void setParentOffset(long parentOffset) {
+        this.parentOffset = parentOffset;
     }
 
     public Metadata getMetadata() {
@@ -1336,14 +1233,10 @@ public class Item implements ISleuthKitItem {
     }
 
     public Object getTempAttribute(String key) {
-        synchronized (tempAttributes) {
-            return tempAttributes.get(key);
-        }
+        return tempAttributes.get(key);
     }
 
     public void setTempAttribute(String key, Object value) {
-        synchronized (tempAttributes) {
-            tempAttributes.put(key, value);
-        }
+        tempAttributes.put(key, value);
     }
 }

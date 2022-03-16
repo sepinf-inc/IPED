@@ -301,7 +301,12 @@ public class LibreOfficeViewer extends Viewer {
 
     @Override
     public void loadFile(final IStreamSource content, final String contentType, final Set<String> highlightTerms) {
-        final File file = content != null ? content.getFile() : null;
+        File file = null;
+        try {
+            file = content != null ? content.getTempFile() : null;
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         lastFile = file;
         lastContentType = contentType;
         lastHighlightTerms = highlightTerms;

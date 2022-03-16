@@ -29,7 +29,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -52,6 +51,7 @@ import org.apache.lucene.document.FieldType;
 import org.apache.lucene.document.FloatDocValuesField;
 import org.apache.lucene.document.FloatPoint;
 import org.apache.lucene.document.IntPoint;
+import org.apache.lucene.document.KnnVectorField;
 import org.apache.lucene.document.LatLonDocValuesField;
 import org.apache.lucene.document.LatLonPoint;
 import org.apache.lucene.document.LongPoint;
@@ -75,10 +75,13 @@ import org.apache.tika.utils.DateUtils;
 import dpf.sp.gpinf.indexer.analysis.FastASCIIFoldingFilter;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
+import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
@@ -92,7 +95,6 @@ import gpinf.dev.filetypes.GenericFileType;
 import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import jep.NDArray;
@@ -105,12 +107,11 @@ public class IndexItem extends BasicProps {
 
     public static final String GEO_SSDV_PREFIX = "geo_ssdv_";
 
-    public static final String SLEUTHID = "sleuthId"; //$NON-NLS-1$
-
     public static final String TRACK_ID = "trackId"; //$NON-NLS-1$
     public static final String PARENT_TRACK_ID = "parentTrackId"; //$NON-NLS-1$
     public static final String CONTAINER_TRACK_ID = "containerTrackId"; //$NON-NLS-1$
 
+    public static final String IGNORE_CONTENT_REF = "ignoreContentRef"; //$NON-NLS-1$
     public static final String ID_IN_SOURCE = "idInDataSource"; //$NON-NLS-1$
     public static final String SOURCE_PATH = "dataSourcePath"; //$NON-NLS-1$
     public static final String SOURCE_DECODER = "dataSourceDecoder"; //$NON-NLS-1$
@@ -162,7 +163,6 @@ public class IndexItem extends BasicProps {
         // ocrCharCount is already copied to an extra attribute
         ignoredMetadata.add(OCRParser.OCR_CHAR_COUNT);
 
-        BasicProps.SET.add(SLEUTHID);
         BasicProps.SET.add(ID_IN_SOURCE);
         BasicProps.SET.add(SOURCE_PATH);
         BasicProps.SET.add(SOURCE_DECODER);
@@ -270,31 +270,24 @@ public class IndexItem extends BasicProps {
         doc.add(new StringField(EVIDENCE_UUID, evidence.getDataSource().getUUID(), Field.Store.YES));
         doc.add(new SortedDocValuesField(EVIDENCE_UUID, new BytesRef(evidence.getDataSource().getUUID())));
 
-        if (evidence instanceof ISleuthKitItem) {
-            ISleuthKitItem sevidence = (ISleuthKitItem) evidence;
-            Integer intVal = sevidence.getSleuthId();
-            if (intVal != null) {
-                doc.add(new IntPoint(SLEUTHID, intVal));
-                doc.add(new StoredField(SLEUTHID, intVal));
-                doc.add(new NumericDocValuesField(SLEUTHID, intVal));
+        if (evidence.getTempAttribute(IGNORE_CONTENT_REF) == null) {
+            String value = evidence.getIdInDataSource();
+            if (value != null) {
+                doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
+                doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
             }
-        }
+            if (evidence.getInputStreamFactory() != null
+                    && evidence.getInputStreamFactory().getDataSourceURI() != null) {
+                URI uri = evidence.getInputStreamFactory().getDataSourceURI();
+                value = Util.getRelativePath(output, uri);
 
-        String value = evidence.getIdInDataSource();
-        if (value != null) {
-            doc.add(new StringField(ID_IN_SOURCE, value, Field.Store.YES));
-            doc.add(new SortedDocValuesField(ID_IN_SOURCE, new BytesRef(value)));
-        }
-        if (evidence.getInputStreamFactory() != null && evidence.getInputStreamFactory().getDataSourceURI() != null) {
-            URI uri = evidence.getInputStreamFactory().getDataSourceURI();
-            value = Util.getRelativePath(output, uri);
+                doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
+                doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
 
-            doc.add(new StringField(SOURCE_PATH, value, Field.Store.YES));
-            doc.add(new SortedDocValuesField(SOURCE_PATH, new BytesRef(value)));
-
-            value = evidence.getInputStreamFactory().getClass().getName();
-            doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
-            doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+                value = evidence.getInputStreamFactory().getClass().getName();
+                doc.add(new StringField(SOURCE_DECODER, value, Field.Store.YES));
+                doc.add(new SortedDocValuesField(SOURCE_DECODER, new BytesRef(value)));
+            }
         }
 
         Integer intVal = evidence.getSubitemId();
@@ -314,7 +307,7 @@ public class IndexItem extends BasicProps {
         doc.add(new Field(PARENTIDs, evidence.getParentIdsString(), storedTokenizedNoNormsField));
         doc.add(new SortedDocValuesField(PARENTIDs, new BytesRef(evidence.getParentIdsString())));
 
-        value = evidence.getName();
+        String value = evidence.getName();
         if (value == null) {
             value = ""; //$NON-NLS-1$
         }
@@ -396,9 +389,6 @@ public class IndexItem extends BasicProps {
             value = value.substring(0, MAX_DOCVALUE_SIZE);
         }
         doc.add(new SortedDocValuesField(PATH, new BytesRef(normalize(value))));
-
-        doc.add(new Field(EXPORT, evidence.getFileToIndex(), storedTokenizedNoNormsField));
-        doc.add(new SortedDocValuesField(EXPORT, new BytesRef(evidence.getFileToIndex())));
 
         for (String val : evidence.getCategorySet()) {
             doc.add(new Field(CATEGORY, val, storedTokenizedNoNormsField));
@@ -653,9 +643,17 @@ public class IndexItem extends BasicProps {
                 doc.add(new SortedNumericDocValuesField(key, NumericUtils.doubleToSortableLong((Double) oValue)));
 
         } else if (oValue instanceof NDArray) {
-            byte[] byteArray = convNDArrayToByteArray((NDArray) oValue);
+            float[] floatArray = convNDArrayToFloatArray((NDArray) oValue);
+            byte[] byteArray = convFloatArrayToByteArray(floatArray);
+            int suffix = 0;
+            // KnnVectorField is not multivalued, must use other key if it exists
+            String knnKey = key;
+            while (doc.getField(knnKey) != null) {
+                knnKey = key + (++suffix);
+            }
             doc.add(new SortedSetDocValuesField(key, new BytesRef(byteArray)));
             doc.add(new StoredField(key, byteArray));
+            doc.add(new KnnVectorField(knnKey, floatArray));
 
         } else {
             // value is typed as string
@@ -672,13 +670,24 @@ public class IndexItem extends BasicProps {
 
     }
 
-    public static final byte[] convNDArrayToByteArray(NDArray nd) {
-        double[] array = (double[]) nd.getData();
-        ByteBuffer buffer = ByteBuffer.allocate(8 * array.length);
-        for (double value : array) {
-            buffer.putDouble(value);
+    public static final byte[] convFloatArrayToByteArray(float[] array) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 * array.length);
+        for (float value : array) {
+            buffer.putFloat(value);
         }
         return buffer.array();
+    }
+
+    public static final float[] convNDArrayToFloatArray(NDArray nd) {
+        return convDoubleToFloatArray((double[]) nd.getData());
+    }
+
+    public static final float[] convDoubleToFloatArray(double[] array) {
+        float[] result = new float[array.length];
+        for (int i = 0; i < array.length; i++) {
+            result[i] = (float) array[i];
+        }
+        return result;
     }
 
     private static void addMetadataToDoc(Document doc, Metadata metadata, Set<TimeStampEvent> timeEventSet) {
@@ -824,16 +833,7 @@ public class IndexItem extends BasicProps {
     public static IItem getItem(Document doc, IPEDSource iCase, boolean viewItem) {
 
         try {
-            Item evidence = new Item() {
-                public File getFile() {
-                    try {
-                        return getTempFile();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        return null;
-                    }
-                }
-            };
+            Item evidence = new Item();
 
             evidence.setName(doc.get(IndexItem.NAME));
 
@@ -904,52 +904,31 @@ public class IndexItem extends BasicProps {
                 evidence.setMediaType(MediaType.parse(value));
             }
 
-            boolean hasFile = false;
             File outputBase = iCase.getModuleDir();
-            value = doc.get(IndexItem.EXPORT);
-            if (value != null && !value.isEmpty()) {
-                File localFile = Util.getResolvedFile(outputBase.getParent(), value);
-                if (!iCase.isReport()) {
-                    localFile = checkIfEvidenceFolderExists(evidence, localFile, outputBase);
-                }
-                if (localFile.exists()) {
-                    evidence.setFile(localFile);
-                    hasFile = true;
-                }
-            }
-
-            value = doc.get(IndexItem.SLEUTHID);
-            if (value != null && !value.isEmpty()) {
-                evidence.setSleuthId(Integer.valueOf(value));
-                if (iCase.getSleuthCase() != null) {
-                    evidence.setSleuthFile(iCase.getSleuthCase().getContentById(Long.valueOf(value)));
-                }
-            }
 
             value = doc.get(IndexItem.ID_IN_SOURCE);
-            if (value != null && !value.isEmpty()) {
-                evidence.setIdInDataSource(value.trim());
+            if (value != null) {
+                evidence.setIdInDataSource(value);
             }
-            if (doc.get(IndexItem.SOURCE_PATH) != null) {
+            if (doc.get(IndexItem.SOURCE_PATH) != null && doc.get(IndexItem.SOURCE_DECODER) != null) {
                 String sourcePath = doc.get(IndexItem.SOURCE_PATH);
+                String className = doc.get(IndexItem.SOURCE_DECODER);
+                if (!MinIOInputInputStreamFactory.class.getName().equals(className)) {
+                    sourcePath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toString();
+                }
                 SeekableInputStreamFactory sisf = inputStreamFactories.get(sourcePath);
                 if (sisf == null) {
-                    String className = doc.get(IndexItem.SOURCE_DECODER);
                     Class<?> clazz = Class.forName(className);
                     try {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(Path.class);
-                        Path absPath = Util.getResolvedFile(outputBase.getParent(), sourcePath).toPath();
-                        sisf = c.newInstance(absPath);
-                        if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                            IndexItem.checkIfExistsAndAsk(sisf, iCase.getModuleDir());
-                        }
+                        sisf = c.newInstance(Path.of(sourcePath));
 
                     } catch (NoSuchMethodException e) {
                         Constructor<SeekableInputStreamFactory> c = (Constructor) clazz.getConstructor(URI.class);
                         sisf = c.newInstance(URI.create(sourcePath));
                     }
                     if (!iCase.isReport() && sisf.checkIfDataSourceExists()) {
-                        checkIfExistsAndAsk(sisf, outputBase);
+                        checkIfExistsAndAsk(sisf, iCase.getModuleDir());
                     }
                     inputStreamFactories.put(sourcePath, sisf);
                 }
@@ -1001,9 +980,9 @@ public class IndexItem extends BasicProps {
                 if (viewFile != null) {
                     evidence.setViewFile(viewFile);
 
-                    if (viewItem
-                            || (!hasFile && evidence.getSleuthId() == null && evidence.getIdInDataSource() == null)) {
-                        evidence.setFile(viewFile);
+                    if (viewItem || (!IOUtil.hasFile(evidence) && evidence.getIdInDataSource() == null)) {
+                        evidence.setIdInDataSource("");
+                        evidence.setInputStreamFactory(new FileInputStreamFactory(viewFile.toPath()));
                         evidence.setTempFile(viewFile);
                         evidence.setMediaType(null);
                     }
@@ -1089,7 +1068,7 @@ public class IndexItem extends BasicProps {
                 sisf.setDataSourceURI(newPath.toUri());
                 return;
             }
-            SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(path.toFile());
+            SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(path.toFile(), true);
             File newDataSource = siwd.askImagePathInGUI();
             if (newDataSource != null) {
                 sisf.setDataSourceURI(newDataSource.toPath().toUri());
@@ -1120,51 +1099,7 @@ public class IndexItem extends BasicProps {
         String path = props.getProperty(oldPath.toString());
         if (path == null)
             return null;
-        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path).toPath();
-    }
-
-    public static synchronized File checkIfEvidenceFolderExists(Item evidence, File localFile, File caseModuleDir) throws IOException {
-        if (localFile.exists()) {
-            return localFile;
-        }
-        String localPath = localFile.getCanonicalPath();
-        String pathSuffix = "";
-        boolean found = false;
-        int tries = 0;
-        do {
-            String origPath = ++tries == 1 ? evidence.getPath() : Util.getParentPath(evidence);
-            origPath = origPath.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-            int idx = origPath.indexOf(File.separatorChar, 1);
-            if (idx != -1) {
-                pathSuffix = origPath.substring(idx + 1);
-            }
-            found = localPath.endsWith(pathSuffix);
-        } while (!found && tries < 2);
-
-        if (found) {
-            String evidenceFolderStr = localPath.substring(0, localPath.lastIndexOf(pathSuffix));
-            File evidenceFolder = new File(evidenceFolderStr);
-            File mappedFolder = localEvidenceMap.get(evidenceFolder);
-            if (mappedFolder == null) {
-                if (evidenceFolder.exists()) {
-                    mappedFolder = evidenceFolder;
-                } else {
-                    Path newPath = loadDataSourcePath(caseModuleDir, evidenceFolder.toPath());
-                    if (newPath != null && Files.exists(newPath)) {
-                        mappedFolder = newPath.toFile();
-                    } else {
-                        SelectImagePathWithDialog siwd = new SelectImagePathWithDialog(evidenceFolder, true);
-                        mappedFolder = siwd.askImagePathInGUI();
-                        if (mappedFolder != null) {
-                            saveDataSourcePath(caseModuleDir, evidenceFolder.toPath(), mappedFolder.toPath());
-                        }
-                    }
-                }
-                localEvidenceMap.put(evidenceFolder, mappedFolder);
-            }
-            localFile = new File(mappedFolder, pathSuffix);
-        }
-        return localFile;
+        return Util.getResolvedFile(caseModuleDir.getParentFile().toPath().toString(), path);
     }
 
     public static Object getCastedValue(Class<?> c, IndexableField f) throws ParseException {

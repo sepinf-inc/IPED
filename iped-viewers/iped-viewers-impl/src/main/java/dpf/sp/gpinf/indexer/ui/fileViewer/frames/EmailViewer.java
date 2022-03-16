@@ -113,7 +113,7 @@ public class EmailViewer extends HtmlViewer {
 
         TikaInputStream tagged = null;
         try {
-            InputStream stream = content.getStream();
+            InputStream stream = content.getSeekableInputStream();
             if (content instanceof IItemBase
                     && RFC822Parser.RFC822_MAC_MIME.equals(((IItemBase) content).getMediaType())) {
                 mch.isOutlookMacMail = true;

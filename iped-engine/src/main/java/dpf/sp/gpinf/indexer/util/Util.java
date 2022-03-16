@@ -61,7 +61,6 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -172,8 +171,6 @@ public class Util {
         if (!item.isCarved() && !item.isSubItem() && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null) {
             if (item.getIdInDataSource() != null) {
                 sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
-            } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
-                sb.append(IndexItem.ID_IN_SOURCE).append(((ISleuthKitItem) item).getSleuthId());
             } else if (!item.isQueueEnd()) {
                 throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
             }
@@ -235,15 +232,10 @@ public class Util {
                 || file.getAbsolutePath().toLowerCase().startsWith("/dev/"); //$NON-NLS-1$
     }
 
-    public static File getResolvedFile(String prefix, String suffix) {
-        suffix = suffix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-        File file = new File(suffix);
-        if (file.isAbsolute())
-            return file;
-        else {
-            prefix = prefix.replace('\\', File.separatorChar).replace('/', File.separatorChar);
-            return new File(prefix, suffix);
-        }
+    public static Path getResolvedFile(String prefix, String suffix) {
+        Path first = Paths.get(prefix);
+        Path other = Paths.get(suffix);
+        return first.resolve(other);
     }
 
     public static String getRelativePath(File baseFile, URI uri) {

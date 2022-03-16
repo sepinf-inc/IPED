@@ -9,4 +9,8 @@ public interface ISeekableInputStreamFactory {
 
     public URI getDataSourceURI();
 
+    public default boolean returnsEmptyInputStream() {
+        return false;
+    }
+
 }

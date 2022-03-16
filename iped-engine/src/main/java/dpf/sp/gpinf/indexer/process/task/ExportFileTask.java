@@ -80,6 +80,7 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.util.ExportFolder;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
@@ -91,8 +92,6 @@ import iped3.IHashValue;
 import iped3.IItem;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
-import iped3.sleuthkit.ISleuthKitItem;
-import iped3.util.BasicProps;
 import macee.core.Configurable;
 
 /**
@@ -126,6 +125,7 @@ public class ExportFileTask extends AbstractTask {
 
     private static final String CLEAR_DATA = "DELETE FROM t1 WHERE id=?;";
 
+    // maps below are used to track different storages/connections in multicases
     private static HashMap<File, HashMap<Integer, File>> storage = new HashMap<>();
     private static HashMap<File, HashMap<Integer, Connection>> storageCon = new HashMap<>();
 
@@ -272,10 +272,7 @@ public class ExportFileTask extends AbstractTask {
 
             evidence.setToExtract(true);
             if (doNotExport(evidence)) {
-                if (evidence instanceof ISleuthKitItem) {
-                    ((ISleuthKitItem) evidence).setSleuthId(null);
-                }
-                evidence.setExportedFile(null);
+                evidence.setTempAttribute(IndexItem.IGNORE_CONTENT_REF, "true");
 
             } else if (!MinIOTask.isTaskEnabled() || caseData.isIpedReport()) {
                 extract(evidence);
@@ -295,7 +292,7 @@ public class ExportFileTask extends AbstractTask {
             } else {
                 // clear path to be not indexed, continuing to point to File for processing,
                 // this also makes subitems without 'export' property to be deleted later
-                evidence.setExportedFile(null);
+                evidence.setTempAttribute(IndexItem.IGNORE_CONTENT_REF, "true");
 
                 // store references to -nocontent items to be deleted from sqlite storages
                 IHashValue hashValue = evidence.getHashValue();
@@ -388,8 +385,8 @@ public class ExportFileTask extends AbstractTask {
     public void renameToHash(IItem evidence) {
 
         String hash = evidence.getHash();
-        if (hash != null && !hash.isEmpty() && evidence.getFile() != null) {
-            File file = evidence.getFile();
+        if (hash != null && !hash.isEmpty() && IOUtil.hasFile(evidence)) {
+            File file = IOUtil.getFile(evidence);
             String ext = evidence.getType().getLongDescr();
             if (evidence.getLength() == null || evidence.getLength() == 0) {
                 ext = "";
@@ -426,7 +423,7 @@ public class ExportFileTask extends AbstractTask {
                             }
                         } else {
                             LOGGER.warn("{} Error renaming to hash: {}", Thread.currentThread().getName(), //$NON-NLS-1$
-                                    evidence.getFileToIndex());
+                                    file.getAbsolutePath());
                             e.printStackTrace();
                         }
                     }
@@ -445,8 +442,8 @@ public class ExportFileTask extends AbstractTask {
 
     private void changeTargetFile(IItem evidence, File file) {
         String relativePath = Util.getRelativePath(output, file);
-        evidence.setExportedFile(relativePath);
-        evidence.setFile(file);
+        evidence.setIdInDataSource(relativePath);
+        evidence.setInputStreamFactory(new FileInputStreamFactory(output.getParentFile().toPath()));
         evidence.setFileOffset(-1);
         file.setReadOnly();
     }
@@ -639,8 +636,6 @@ public class ExportFileTask extends AbstractTask {
         evidence.setIdInDataSource(id);
         evidence.setInputStreamFactory(
                 new SQLiteInputStreamFactory(storage.get(output).get(k).toPath(), storageCon.get(output).get(k)));
-        evidence.setExportedFile(null);
-        evidence.setFile(null);
         evidence.setFileOffset(-1);
         evidence.setLength((long) len);
     }
@@ -773,7 +768,7 @@ public class ExportFileTask extends AbstractTask {
         }
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             if (extractDir != null && extractDir.exists()) {
-                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(BasicProps.EXPORT);
+                SortedDocValues sdv = ipedCase.getAtomicReader().getSortedDocValues(IndexItem.ID_IN_SOURCE);
                 WorkerProvider.getInstance().firePropertyChange("mensagem", "",
                         Messages.getString("ExportFileTask.DeletingData1"));
                 Integer deleted = deleteIgnoredSubitemsFromFS(sdv, output.getParentFile().toPath(), extractDir);
@@ -799,7 +794,7 @@ public class ExportFileTask extends AbstractTask {
             }
         } else {
             String exportPath = root.relativize(file.toPath()).toString();
-            if (sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
+            if (sdv == null || sdv.lookupTerm(new BytesRef(exportPath)) < 0) {
                 if (file.delete()) {
                     deleted++;
                 }

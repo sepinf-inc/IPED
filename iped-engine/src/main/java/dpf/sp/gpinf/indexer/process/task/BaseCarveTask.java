@@ -32,7 +32,6 @@ import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.MediaTypes;
 
 /**
@@ -171,19 +170,12 @@ public abstract class BaseCarveTask extends AbstractTask {
             carvedItem.setIdInDataSource(parentItem.getIdInDataSource());
             carvedItem.setInputStreamFactory(parentItem.getInputStreamFactory());
         }
-        if (parentItem instanceof ISleuthKitItem && ((ISleuthKitItem) parentItem).getSleuthFile() != null) {
-            carvedItem.setSleuthFile(((ISleuthKitItem) parentItem).getSleuthFile());
-            carvedItem.setSleuthId(((ISleuthKitItem) parentItem).getSleuthId());
-        }
-        if (parentItem.getFile() != null) {
-            carvedItem.setFile(parentItem.getFile());
-            carvedItem.setExportedFile(parentItem.getExportedFile());
-        }
+
         // optimization to not create more temp files
         if (parentItem.hasTmpFile()) {
             try {
-                carvedItem.setFile(parentItem.getTempFile());
-                carvedItem.setTempStartOffset(offset);
+                carvedItem.setParentTmpFile(parentItem.getTempFile());
+                carvedItem.setParentOffset(offset);
             } catch (IOException e) {
                 // ignore
             }

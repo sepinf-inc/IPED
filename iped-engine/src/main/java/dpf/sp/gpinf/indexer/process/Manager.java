@@ -77,6 +77,7 @@ import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
@@ -416,7 +417,7 @@ public class Manager {
 
         // query evidenceUUID and tskID
         String evidenceUUID;
-        Integer tskID;
+        Integer tskID = null;
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
@@ -427,7 +428,9 @@ public class Manager {
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
             evidenceUUID = item.getDataSource().getUUID();
-            tskID = item.getSleuthId();
+            if (item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory) {
+                tskID = Integer.valueOf(item.getIdInDataSource());
+            }
         }
 
         // remove from items from index
@@ -455,7 +458,7 @@ public class Manager {
         GraphService graphService = null;
         try {
             graphService = GraphServiceFactoryImpl.getInstance().getGraphService();
-            graphService.start(new File(output, GraphTask.DB_PATH));
+            graphService.start(new File(output, GraphTask.DB_HOME_DIR));
             int deletions = graphService.deleteRelationshipsFromDatasource(evidenceUUID);
             LOGGER.log(CONSOLE, "Deleted {} graph connections.", deletions);
 
@@ -468,7 +471,7 @@ public class Manager {
         // Delete relations from graph source CSV
         LOGGER.log(CONSOLE, "Deleting connections from graph CSVs...");
         int deletions = GraphFileWriter.removeDeletedRelationships(evidenceUUID,
-                new File(output, GraphTask.GENERATED_PATH));
+                new File(output, GraphTask.CSVS_PATH));
         LOGGER.log(CONSOLE, "Deleted {} CSV connections.", deletions);
 
         Files.createFile(getFinishedFileFlag(output).toPath());

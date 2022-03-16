@@ -42,6 +42,9 @@ import javax.swing.JOptionPane;
 
 import org.slf4j.LoggerFactory;
 
+import iped3.IItem;
+import iped3.io.IItemBase;
+
 public class IOUtil {
 
     private static final Set<String> DANGEROUS_EXTS = new HashSet<>(Arrays.asList("0XE", "73K", "89K", "8CK", "A6P",
@@ -171,6 +174,23 @@ public class IOUtil {
             File test = File.createTempFile("writeTest", null, dir); //$NON-NLS-1$
             test.deleteOnExit();
             test.delete();
+            return true;
+
+        } catch (IOException e) {
+            return false;
+        }
+    }
+
+    /**
+     * A more reliable method than File.canWrite() to test for write permissions.
+     * It's slower because the implementation opens a file handler internally. See
+     * more details on https://github.com/sepinf-inc/IPED/issues/996
+     */
+    public static boolean canWrite(File file) {
+        if (!file.exists()) {
+            return false;
+        }
+        try (FileOutputStream fos = new FileOutputStream(file, true)) {
             return true;
 
         } catch (IOException e) {
@@ -353,5 +373,18 @@ public class IOUtil {
             buf[i + 3] = (byte) (v >>> 0);
         }
         os.write(buf);
+    }
+
+    public static boolean hasFile(IItemBase item) {
+        return item.getInputStreamFactory() instanceof FileInputStreamFactory
+                && (!(item instanceof IItem) || ((IItem) item).getFileOffset() == -1);
+    }
+
+    public static File getFile(IItemBase item) {
+        if (hasFile(item)) {
+            FileInputStreamFactory fisf = ((FileInputStreamFactory) item.getInputStreamFactory());
+            return fisf.getPath(item.getIdInDataSource()).toFile();
+        }
+        return null;
     }
 }

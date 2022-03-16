@@ -37,6 +37,7 @@ import javax.swing.table.TableColumn;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.SortedNumericDocValues;
 import org.apache.lucene.search.highlight.TextFragment;
+import org.apache.lucene.util.BytesRef;
 
 import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
@@ -252,14 +253,12 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
 
-            SortedNumericDocValues sndv = App.get().appCase.getLeafReader().getSortedNumericDocValues(field);
-
             boolean isNumeric = IndexItem.isNumeric(field);
 
             String[] values = doc.getValues(field);
             if (values.length > 1) {
                 boolean sorted = false;
-                if (isNumeric && sndv != null) {
+                if (isNumeric) {
                     try {
                         Arrays.sort(values, new Comparator<String>() {
                             @Override
@@ -276,6 +275,16 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                 }
             }
             
+            if (values.length == 0) {
+                BytesRef[] bytes = doc.getBinaryValues(field);
+                if (bytes.length > 0) {
+                    values = new String[bytes.length];
+                    for (int i = 0; i < bytes.length; i++) {
+                        values[i] = bytes[i].toString();
+                    }
+                }
+            }
+
             if (LocalizedProperties.getLocalizedField(BasicProps.CATEGORY).equalsIgnoreCase(getColumnName(col))) {
                 for (int i = 0; i < values.length; i++) {
                     values[i] = CategoryLocalization.getInstance().getLocalizedCategory(values[i]);
@@ -284,15 +293,9 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < values.length; i++) {
-                try {
-                    // do not use scientific notation for longs
-                    Double d = Double.valueOf(values[i]);
-                    if (d.doubleValue() == d.longValue()) {
-                        values[i] = Long.toString(d.longValue());
-                    }
-                } catch (NumberFormatException e) {
+                if (isNumeric) {
+                    values[i] = numberFormat.format(Double.valueOf(values[i]));
                 }
-
                 sb.append(values[i]);
                 if (i != values.length - 1) {
                     if (i == 9) {
@@ -321,10 +324,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
                     // e.printStackTrace();
                 }
 
-            if (IndexItem.isNumeric(field)) {
-                value = numberFormat.format(Double.valueOf(value));
-
-            } else if (field.equals(IndexItem.NAME)) {
+            if (field.equals(IndexItem.NAME)) {
                 TextFragment[] fragments = TextHighlighter.getHighlightedFrags(false, value, field, 0);
                 if (fragments[0].getScore() > 0) {
                     StringBuilder s = new StringBuilder();

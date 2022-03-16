@@ -41,6 +41,7 @@ import org.xml.sax.SAXException;
 import dpf.sp.gpinf.indexer.config.AbstractTaskPropertiesConfig;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.TaskInstallerConfig;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.parsers.util.IgnoreContentHandler;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
@@ -101,7 +102,8 @@ public class SimilarFacesFilterActions {
             if (file != null) {
                 app.similarFacesRefItem = new Item();
                 app.similarFacesRefItem.setName(file.getName());
-                app.similarFacesRefItem.setFile(file);
+                app.similarFacesRefItem.setIdInDataSource("");
+                app.similarFacesRefItem.setInputStreamFactory(new FileInputStreamFactory(file.toPath()));
 
                 // populates tif orientation if rotated
                 try (BufferedInputStream bis = new BufferedInputStream(Files.newInputStream(file.toPath()))) {
@@ -247,7 +249,7 @@ public class SimilarFacesFilterActions {
                 // populate info used by task
                 item.setMediaType(MediaType.image("unknown"));
                 item.setExtraAttribute(ImageThumbTask.HAS_THUMB, true);
-                item.setHash(DigestUtils.md5Hex(Files.readAllBytes(item.getFile().toPath())));
+                item.setHash(DigestUtils.md5Hex(Files.readAllBytes(item.getTempFile().toPath())));
 
                 task.process(item);
                 // TODO enable when queue end is handled
@@ -258,7 +260,8 @@ public class SimilarFacesFilterActions {
                 List<NDArray> faces = (List<NDArray>) item.getExtraAttribute(SimilarFacesSearch.FACE_FEATURES);
 
                 if (faces != null && faces.size() > 0) {
-                    return IndexItem.convNDArrayToByteArray(faces.get(0));
+                    float[] array = IndexItem.convNDArrayToFloatArray(faces.get(0));
+                    return IndexItem.convFloatArrayToByteArray(array);
                 } else {
                     throw new Exception(Messages.getString("FaceSimilarity.ExternalFaceNotFound"));
                 }

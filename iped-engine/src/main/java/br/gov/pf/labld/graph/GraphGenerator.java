@@ -81,10 +81,10 @@ public class GraphGenerator {
 
             for (String stmt : config.getPostGenerationStatements()) {
                 LOGGER.info("Running {}", stmt);
-                graphDB.execute(stmt);
+                tx.execute(stmt);
             }
 
-            tx.success();
+            tx.commit();
         } finally {
             tx.close();
         }
@@ -124,7 +124,7 @@ public class GraphGenerator {
         try {
             tx = graphDB.beginTx();
 
-            Result result = graphDB.execute(query);
+            Result result = tx.execute(query);
             Node currentContact = null;
             String currentName = null;
             Map<Long, Node> inputs = new HashMap<>();
@@ -139,7 +139,7 @@ public class GraphGenerator {
                 Node contact = (Node) cols.get("con");
 
                 if (currentContact != null && contact.getId() != currentContact.getId()) {
-                    Node newGroup = graphDB.createNode(DynLabel.label("CONTACT_GROUP"));
+                    Node newGroup = tx.createNode(DynLabel.label("CONTACT_GROUP"));
                     newGroup.setProperty("name", currentName);
                     newGroup.setProperty("isGroup", true);
 
@@ -185,7 +185,7 @@ public class GraphGenerator {
                 }
             }
 
-            tx.success();
+            tx.commit();
             LOGGER.info("Grouped " + count + " " + label + " contacts.");
         } finally {
             tx.close();

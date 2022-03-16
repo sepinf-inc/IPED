@@ -16,17 +16,17 @@ public class FileContentSource implements IStreamSource {
     }
 
     @Override
-    public SeekableInputStream getStream() throws IOException {
+    public SeekableInputStream getSeekableInputStream() throws IOException {
         return new SeekableFileInputStream(file);
     }
 
     @Override
     public SeekableByteChannel getSeekableByteChannel() throws IOException {
-        return new SeekableByteChannelImpl(getStream());
+        return new SeekableByteChannelImpl(getSeekableInputStream());
     }
 
     @Override
-    public File getFile() {
+    public File getTempFile() {
         return file;
     }
 
