@@ -28,7 +28,6 @@ public class TelegramParserTest extends AbstractPkgTest {
         parser.setEnabledForUfdr(true);
         parser.getSupportedTypes(telegramContext);
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-telegram-db");
-        this.searchFile = new File("src/test/resources/test-files/testFile");
         try (InputStream stream = getStream("test-files/test_telegramCache4.db")) {
             parser.parse(stream, handler, metadata, telegramContext);
 
@@ -88,8 +87,6 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("2021-06-09T01:34:33Z", telegramtracker.messagedate.get(1));
             assertEquals("2019-04-23T18:40:10Z", telegramtracker.messagedate.get(150));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -117,8 +114,6 @@ public class TelegramParserTest extends AbstractPkgTest {
             assertEquals("5561986143035", telegramusertracker.userphone.get(0));
             assertEquals("guileb", telegramusertracker.useraccount.get(0));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
