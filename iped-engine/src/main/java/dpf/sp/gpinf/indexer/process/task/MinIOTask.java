@@ -238,6 +238,7 @@ public class MinIOTask extends AbstractTask {
         }
 
         if (checkIfExists(bucketPath)) {
+            updateDataSource(i, fullPath);
             return fullPath;
         }
 
