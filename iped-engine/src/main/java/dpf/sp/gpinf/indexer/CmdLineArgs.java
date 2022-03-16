@@ -58,4 +58,6 @@ public interface CmdLineArgs {
 
     public String getEvidenceToRemove();
 
+    boolean isDownloadInternetData();
+
 }

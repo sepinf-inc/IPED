@@ -127,6 +127,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     public static final String SHA256_ENABLED_SYSPROP = "IsSha256Enabled"; //$NON-NLS-1$
 
+    public static final String DOWNLOAD_MEDIA_FILES_PROP = "downloadWhatsAppMediaProp";
+
     private static final AtomicBoolean sha256Checked = new AtomicBoolean();
 
     // workaround to show message type before caption (values are shown in sort
@@ -139,8 +141,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     // a global hashmap to prevent redownload files;
     private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
-
-    private static final boolean FALLBACK_DOWNLOAD_FILES = false;
 
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
@@ -185,6 +185,10 @@ public class WhatsAppParser extends SQLite3DBParser {
         this.mergeDbs = mergeDbs;
     }
 
+    private boolean isDownloadMediaFilesEnabled() {
+        return Boolean.valueOf(System.getProperty(DOWNLOAD_MEDIA_FILES_PROP));
+    }
+
     @Override
     public void parse(InputStream stream, ContentHandler handler, Metadata metadata, ParseContext context)
             throws IOException, SAXException, TikaException {
@@ -205,7 +209,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
-                if (mergeDbs || FALLBACK_DOWNLOAD_FILES)
+                if (mergeDbs || isDownloadMediaFilesEnabled())
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
                 else
                     parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
@@ -388,7 +392,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         WhatsAppContext wcontext = new WhatsAppContext(false, context.get(IItemBase.class));
 
         parseDB(wcontext, metadata, context, extFactory);
-        if (FALLBACK_DOWNLOAD_FILES) {
+        if (isDownloadMediaFilesEnabled()) {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             IItemSearcher searcher = context.get(IItemSearcher.class);
@@ -1341,7 +1345,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
         // if download files from the internet is allowed
-        if (FALLBACK_DOWNLOAD_FILES) {
+        if (isDownloadMediaFilesEnabled()) {
             if (!hashesToSearchFor.isEmpty()) {
 
                 LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
