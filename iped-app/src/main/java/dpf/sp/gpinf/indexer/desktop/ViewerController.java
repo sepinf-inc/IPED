@@ -342,7 +342,7 @@ public class ViewerController {
                 if (tika == null) {
                     tika = new Tika();
                 }
-                viewType = tika.detect(viewFile.getFile());
+                viewType = tika.detect(viewFile.getTempFile());
                 return;
             } catch (IOException e) {
                 e.printStackTrace();

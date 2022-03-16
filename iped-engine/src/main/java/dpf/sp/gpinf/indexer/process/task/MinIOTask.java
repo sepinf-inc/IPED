@@ -377,8 +377,9 @@ public class MinIOTask extends AbstractTask {
         if (hash == null || hash.isEmpty() || item.getLength() == null)
             return;
 
-        try (SeekableInputStream is = item.getStream()) {
+        try (SeekableInputStream is = item.getSeekableInputStream()) {
             insertWithZip(item, hash, is, is.size(), item.getMediaType().toString(), false);
+
         } catch (Exception e) {
             // TODO: handle exception
             logger.error(e.getMessage() + "File " + item.getPath() + " (" + item.getLength() + " bytes)", e);
@@ -425,8 +426,6 @@ public class MinIOTask extends AbstractTask {
         }
         item.setInputStreamFactory(inputStreamFactory);
         item.setIdInDataSource(id);
-        item.setFile(null);
-        item.setExportedFile(null);
         item.setFileOffset(-1);
     }
 

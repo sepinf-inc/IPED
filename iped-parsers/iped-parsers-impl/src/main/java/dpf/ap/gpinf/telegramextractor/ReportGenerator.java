@@ -184,7 +184,7 @@ public class ReportGenerator {
             String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
                     message.getMediaExtension());
             String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
-                    .getSourceFileIfExists(message.getMediaFile());
+                    .getSourceFileIfExists(message.getMediaItem()).orElse("");
 
             img.setAtribute("title", "Video");
             img.setAtribute("data-src1", format(reportSource));
@@ -226,7 +226,7 @@ public class ReportGenerator {
             String reportSource = dpf.sp.gpinf.indexer.parsers.util.Util.getExportPath(message.getMediaHash(),
                     message.getMediaExtension());
             String originalSource = dpf.sp.gpinf.indexer.parsers.util.Util
-                    .getSourceFileIfExists(message.getMediaFile());
+                    .getSourceFileIfExists(message.getMediaItem()).orElse(null);
 
             if (reportSource != null) {
                 img.setAtribute("data-src1", format(reportSource));
@@ -269,8 +269,7 @@ public class ReportGenerator {
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
-                    message.getMediaExtension(), message.getMediaFile());
+            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaItem());
             link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "imageImg");
@@ -302,8 +301,7 @@ public class ReportGenerator {
 
             TagHtml link = new TagHtml("a");
             link.setAtribute("onclick", "app.open('hash:" + message.getMediaHash() + "')");
-            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaHash(),
-                    message.getMediaExtension(), message.getMediaFile());
+            String ref = dpf.sp.gpinf.indexer.parsers.util.Util.getReportHref(message.getMediaItem());
             link.setAtribute("href", format(ref));
 
             TagHtml img = getThumbTag(message, "attachImg");

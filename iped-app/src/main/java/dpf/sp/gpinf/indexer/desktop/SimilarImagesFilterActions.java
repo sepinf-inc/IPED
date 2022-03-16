@@ -78,6 +78,7 @@ public class SimilarImagesFilterActions {
                     img = ImageUtil.getSubSampledImage(is, ImageSimilarity.maxDim * sampleFactor,
                             ImageSimilarity.maxDim * sampleFactor);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 } finally {
                     IOUtil.closeQuietly(is);
                 }
@@ -89,6 +90,7 @@ public class SimilarImagesFilterActions {
                         }
                         img = externalImageConverter.getImage(is, ImageSimilarity.maxDim, false, file.length());
                     } catch (Exception e) {
+                        e.printStackTrace();
                     } finally {
                         IOUtil.closeQuietly(is);
                     }
@@ -99,6 +101,7 @@ public class SimilarImagesFilterActions {
                     try {
                         ImageIO.write(img, "jpg", baos);
                     } catch (Exception e) {
+                        e.printStackTrace();
                     }
                     app.similarImagesQueryRefItem = new Item();
                     app.similarImagesQueryRefItem.setName(file.getName());

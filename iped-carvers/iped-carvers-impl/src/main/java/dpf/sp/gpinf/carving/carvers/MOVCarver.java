@@ -81,7 +81,7 @@ public class MOVCarver extends AbstractCarver {
         long atomStart = header.getOffset();
         SeekableInputStream is = null;
         try {
-            is = parentEvidence.getStream();
+            is = parentEvidence.getSeekableInputStream();
             byte[] data = new byte[4];
             while (true) {
                 is.seek(atomStart + 4);

@@ -61,7 +61,6 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.task.BaseCarveTask;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 
@@ -172,8 +171,6 @@ public class Util {
         if (!item.isCarved() && !item.isSubItem() && item.getExtraAttribute(BaseCarveTask.FILE_FRAGMENT) == null) {
             if (item.getIdInDataSource() != null) {
                 sb.append(IndexItem.ID_IN_SOURCE).append(item.getIdInDataSource());
-            } else if (item instanceof ISleuthKitItem && ((ISleuthKitItem) item).getSleuthId() != null) {
-                sb.append(IndexItem.ID_IN_SOURCE).append(((ISleuthKitItem) item).getSleuthId());
             } else if (!item.isQueueEnd()) {
                 throw new IllegalArgumentException(IndexItem.ID_IN_SOURCE + notFoundIn + item.getPath());
             }

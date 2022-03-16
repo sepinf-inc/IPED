@@ -23,26 +23,20 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.UserPrincipal;
-import java.util.Collections;
 import java.util.Date;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
-import org.apache.commons.text.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.util.Util;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
 import iped3.ICaseData;
@@ -55,8 +49,9 @@ public class FolderTreeReader extends DataSourceReader {
 
     public static final String FS_OWNER = "fileSystemOwner"; //$NON-NLS-1$
 
-    private Pattern excludePattern;
+    private FileInputStreamFactory inputStreamFactory;
 
+    private Pattern excludePattern;
     private File rootFile;
     private String evidenceName;
     private CmdLineArgs args;
@@ -101,6 +96,7 @@ public class FolderTreeReader extends DataSourceReader {
         }
 
         rootFile = file;
+        inputStreamFactory = new FileInputStreamFactory(rootFile.toPath());
 
         transverse(file, parent);
     }
@@ -122,17 +118,11 @@ public class FolderTreeReader extends DataSourceReader {
             item.setDataSource(dataSource);
             String relativePath = rootFile.toPath().relativize(path).toString();
             item.setIdInDataSource(relativePath);
+            item.setInputStreamFactory(inputStreamFactory);
             if (file.equals(rootFile)) {
                 item.setName(evidenceName);
             } else {
                 item.setName(file.getName());
-            }
-            try {
-                relativePath = Util.getRelativePath(output, file);
-                item.setExportedFile(relativePath);
-                item.setFile(file);
-            } catch (InvalidPathException e) {
-                LOGGER.error("File content will not be processed " + e.toString()); //$NON-NLS-1$
             }
 
             if (args.isAddowner())

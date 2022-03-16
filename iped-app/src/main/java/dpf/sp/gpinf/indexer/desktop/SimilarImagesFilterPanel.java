@@ -72,12 +72,14 @@ public class SimilarImagesFilterPanel extends JPanel implements ClearFilterListe
                 try {
                     img = ImageIO.read(bais);
                 } catch (Exception e) {
+                    e.printStackTrace();
                 }
             }
         }
         repaint();
     }
 
+    @Override
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         if (img != null) {

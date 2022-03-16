@@ -100,7 +100,7 @@ public class MsgViewer extends HtmlViewer {
             tmpFile = File.createTempFile("emailHtmlFile", ".html");
             tmpFile.deleteOnExit();
 
-            createEmailHtml(content.getFile(), tmpFile);
+            createEmailHtml(content.getTempFile(), tmpFile);
 
         } catch (Exception e) {
             e.printStackTrace();

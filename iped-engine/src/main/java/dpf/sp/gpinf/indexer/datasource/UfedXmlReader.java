@@ -62,6 +62,7 @@ import dpf.ap.gpinf.telegramextractor.TelegramParser;
 import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
@@ -118,6 +119,7 @@ public class UfedXmlReader extends DataSourceReader {
     File root, ufdrFile;
     ZipFile4j ufdr;
     UFDRInputStreamFactory uisf;
+    FileInputStreamFactory fisf, previewFisf;
     IItem rootItem;
     IItem decodedFolder;
     HashMap<String, IItem> pathToParent = new HashMap<>();
@@ -1071,7 +1073,7 @@ public class UfedXmlReader extends DataSourceReader {
             File file = null;
             try {
                 file = File.createTempFile("CellularUsage", "db");
-                try (InputStream is = item.getStream()) {
+                try (InputStream is = item.getSeekableInputStream()) {
                     Files.copy(is, file.toPath(), StandardCopyOption.REPLACE_EXISTING);
                 }
                 try (Connection conn = DriverManager.getConnection("jdbc:sqlite:" + file.getAbsolutePath());
@@ -1107,10 +1109,12 @@ public class UfedXmlReader extends DataSourceReader {
                 ufdrPathToUfedId.put(path, ufedId);
             }
             if (ufdrFile == null) {
+                if (fisf == null) {
+                    fisf = new FileInputStreamFactory(root.toPath());
+                }
+                item.setInputStreamFactory(fisf);
+                item.setIdInDataSource(path);
                 File file = new File(root, path);
-                String relativePath = Util.getRelativePath(output, file);
-                item.setExportedFile(relativePath);
-                item.setFile(file);
                 item.setLength(file.length());
             } else {
                 if (uisf == null) {
@@ -1259,6 +1263,13 @@ public class UfedXmlReader extends DataSourceReader {
             return sb.toString();
         }
 
+        private FileInputStreamFactory getPreviewInputStreamFactory() {
+            if (previewFisf == null) {
+                previewFisf = new FileInputStreamFactory(output.getParentFile().toPath());
+            }
+            return previewFisf;
+        }
+
         private File createEmailPreview(Item email) {
             File file = new File(output, "view/emails/view-" + counter.getAndIncrement() + ".html"); //$NON-NLS-1$ //$NON-NLS-2$
             file.getParentFile().mkdirs();
@@ -1324,10 +1335,9 @@ public class UfedXmlReader extends DataSourceReader {
             }
             email.setMediaType(MediaType.parse(UFED_EMAIL_MIME));
             String relativePath = Util.getRelativePath(output, file);
-            email.setExportedFile(relativePath);
-            email.setFile(file);
+            email.setIdInDataSource(relativePath);
+            email.setInputStreamFactory(getPreviewInputStreamFactory());
             email.setLength(file.length());
-            email.setInputStreamFactory(null);
             email.setHash(null);
 
             return file;
@@ -1404,10 +1414,9 @@ public class UfedXmlReader extends DataSourceReader {
                 e.printStackTrace();
             }
             String relativePath = Util.getRelativePath(output, file);
-            contact.setExportedFile(relativePath);
-            contact.setFile(file);
+            contact.setIdInDataSource(relativePath);
+            contact.setInputStreamFactory(getPreviewInputStreamFactory());
             contact.setLength(file.length());
-            contact.setInputStreamFactory(null);
             contact.setHash(null);
 
             return file;
@@ -1471,10 +1480,9 @@ public class UfedXmlReader extends DataSourceReader {
                 e.printStackTrace();
             }
             String relativePath = Util.getRelativePath(output, file);
-            deviceInfo.setExportedFile(relativePath);
-            deviceInfo.setFile(file);
+            deviceInfo.setIdInDataSource(relativePath);
+            deviceInfo.setInputStreamFactory(getPreviewInputStreamFactory());
             deviceInfo.setLength(file.length());
-            deviceInfo.setInputStreamFactory(null);
             deviceInfo.setHash(null);
             return file;
         }

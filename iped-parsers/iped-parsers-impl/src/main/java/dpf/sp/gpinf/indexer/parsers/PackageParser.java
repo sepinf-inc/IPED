@@ -275,7 +275,7 @@ public class PackageParser extends AbstractParser {
         } catch (IOException e) {
             IStreamSource streamFactory = context.get(IStreamSource.class);
             if (streamFactory != null) {
-                return streamFactory.getStream();
+                return streamFactory.getSeekableInputStream();
             }
             throw new IOException("Fail to create a new InputStream: no IStreamSource in context");
         }

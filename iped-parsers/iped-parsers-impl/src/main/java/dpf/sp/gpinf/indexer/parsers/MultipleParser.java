@@ -104,7 +104,7 @@ public class MultipleParser extends AbstractParser {
                     if (tempPath != null) {
                         tis = TikaInputStream.get(tempPath);
                     } else {
-                        tis = TikaInputStream.get(source.getStream());
+                        tis = TikaInputStream.get(source.getSeekableInputStream());
                     }
                     firstTis = false;
                 }

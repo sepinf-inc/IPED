@@ -386,9 +386,7 @@ public class Extractor {
                 message.setMediaHash(item.getHash());
                 message.setThumb(item.getThumb());
                 message.setMediaExtension(item.getTypeExt());
-                if (item.hasFile()) {
-                    message.setMediaFile(item.getFile().getAbsolutePath());
-                }
+                message.setMediaItem(item);
                 message.setMediaComment(query);
                 break;
             }
@@ -406,9 +404,7 @@ public class Extractor {
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
                 message.setMediaExtension(r.getTypeExt());
-                if (r.hasFile()) {
-                    message.setMediaFile(r.getFile().getAbsolutePath());
-                }
+                message.setMediaItem(r);
                 message.setMediaComment(query);
             }
         }
@@ -424,9 +420,7 @@ public class Extractor {
                 message.setMediaHash(r.getHash());
                 message.setMediaName(r.getName());
                 message.setMediaExtension(r.getTypeExt());
-                if (r.hasFile()) {
-                    message.setMediaFile(r.getFile().getAbsolutePath());
-                }
+                message.setMediaItem(r);
                 message.setMediaComment(query);
             }
         }

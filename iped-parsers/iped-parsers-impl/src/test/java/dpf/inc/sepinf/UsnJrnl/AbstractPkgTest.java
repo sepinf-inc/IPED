@@ -31,6 +31,7 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.datasource.IDataSource;
 import iped3.io.IItemBase;
+import iped3.io.ISeekableInputStreamFactory;
 import iped3.io.SeekableInputStream;
 import iped3.search.IItemSearcher;
 
@@ -197,7 +198,7 @@ public abstract class AbstractPkgTest extends TestCase {
         IItemBase item = new IItemBase() {
 
             @Override
-            public SeekableInputStream getStream() throws IOException {
+            public SeekableInputStream getSeekableInputStream() throws IOException {
                 return new SeekableFileInputStream(file);
             }
 
@@ -233,11 +234,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public boolean isCarved() {
-                return false;
-            }
-
-            @Override
-            public boolean hasFile() {
                 return false;
             }
 
@@ -319,11 +315,6 @@ public abstract class AbstractPkgTest extends TestCase {
             @Override
             public String getHash() {
                 return getHash();
-            }
-
-            @Override
-            public File getFile() {
-                return file;
             }
 
             @Override
@@ -543,6 +534,16 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public Date getChangeDate() {
+                return null;
+            }
+
+            @Override
+            public String getIdInDataSource() {
+                return null;
+            }
+
+            @Override
+            public ISeekableInputStreamFactory getInputStreamFactory() {
                 return null;
             }
         };

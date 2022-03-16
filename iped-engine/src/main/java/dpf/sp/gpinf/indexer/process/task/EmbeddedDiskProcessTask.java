@@ -20,6 +20,8 @@ import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
@@ -142,8 +144,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private File exportItem(IItemBase item) throws IOException {
         File imageFile = null;
-        if (item.hasFile()) {
-            imageFile = item.getFile();
+        if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
+            imageFile = IOUtil.getFile((IItem) item);
         } else {
             File exportDir = new File(new File(this.output, outputFolder), item.getParentId().toString());
             exportDir.mkdirs();
