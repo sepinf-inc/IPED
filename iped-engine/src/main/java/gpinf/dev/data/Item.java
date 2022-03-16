@@ -1155,6 +1155,10 @@ public class Item implements IItem {
         this.sumVolume = sumVolume;
     }
 
+    public boolean hasParentTmpFile() {
+        return parentTmpFile != null && parentOffset != -1;
+    }
+
     public void setParentTmpFile(File parentTmpFile) {
         this.parentTmpFile = parentTmpFile;
     }

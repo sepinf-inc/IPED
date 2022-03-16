@@ -11,6 +11,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
+import gpinf.dev.data.Item;
 import iped3.IItem;
 import macee.core.Configurable;
 
@@ -60,7 +61,9 @@ public class TempFileTask extends AbstractTask {
         if (indexTempOnSSD && len != null
                 && len <= MAX_TEMPFILE_LEN /* && evidence.getPath().toLowerCase().contains(".e01/vol_vol") */) {
             try {
-                if (!IOUtil.hasFile(evidence) && !evidence.isSubItem()) {
+                if (!IOUtil.hasFile(evidence) && !evidence.isSubItem()
+                // skip carved items pointing to parent temp file
+                        && (!(evidence instanceof Item) || !((Item) evidence).hasParentTmpFile())) {
                     evidence.getTempFile();
                 }
             } catch (IOException e) {
