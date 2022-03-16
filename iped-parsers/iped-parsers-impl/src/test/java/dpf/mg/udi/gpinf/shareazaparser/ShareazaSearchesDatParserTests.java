@@ -37,8 +37,6 @@ public class ShareazaSearchesDatParserTests extends TestCase {
             assertTrue(hts.contains("ed2kftp://7191240@91.208.184.143:4232/4d29a8f82cfca1f5f987de6f16714a61/4753906/"));
             assertEquals("application/x-shareaza-searches-dat", metadata.get(Metadata.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

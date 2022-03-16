@@ -109,8 +109,6 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
             assertEquals("USN journal Entry 6098963040", usntracker.title.get(3083));
             assertEquals("USN journal Entry 6098963120", usntracker.title.get(3084));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -192,8 +190,6 @@ public class UsnJrnlParserTest extends AbstractPkgTest {
             assertEquals("USN journal Entry 6098963040", usntracker.title.get(3083));
             assertEquals("USN journal Entry 6098963120", usntracker.title.get(3084));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

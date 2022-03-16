@@ -44,8 +44,6 @@ public class OutlookDBXParserTest extends AbstractPkgTest {
             assertEquals("374D80B040F4BC91C18C3E93BDBB75B3", tracker.itensmd5.get(366));
             assertEquals("EEB1A3B43E62771DA5B6141BC9633497", tracker.itensmd5.get(367));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

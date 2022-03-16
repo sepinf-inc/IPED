@@ -55,8 +55,6 @@ public class SkypeParserTest extends AbstractPkgTest {
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segments"));
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_content"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -96,8 +94,6 @@ public class SkypeParserTest extends AbstractPkgTest {
             assertTrue(mts.contains("database:table_name=Participants"));
             assertTrue(mts.contains("Content-Type=application/sqlite-skype"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

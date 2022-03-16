@@ -34,8 +34,6 @@ public class ImageParserTest extends TestCase {
             assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
             assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -55,8 +53,6 @@ public class ImageParserTest extends TestCase {
             assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
             assertEquals("8 8 8", metadata.get(Metadata.BITS_PER_SAMPLE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -74,8 +70,6 @@ public class ImageParserTest extends TestCase {
             assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
             assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -93,8 +87,6 @@ public class ImageParserTest extends TestCase {
             assertEquals("512", metadata.get(Metadata.IMAGE_LENGTH));
             assertEquals("512", metadata.get(Metadata.IMAGE_WIDTH));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -109,8 +101,6 @@ public class ImageParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_lenaJp2.jp2")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -128,8 +118,6 @@ public class ImageParserTest extends TestCase {
             assertEquals("342", metadata.get(Metadata.IMAGE_LENGTH));
             assertEquals("500", metadata.get(Metadata.IMAGE_WIDTH));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

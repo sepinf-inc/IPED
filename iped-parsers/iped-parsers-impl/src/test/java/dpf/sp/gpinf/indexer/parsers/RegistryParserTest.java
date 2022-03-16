@@ -44,8 +44,6 @@ public class RegistryParserTest {
             assertTrue(hts.contains("Version=9.0.0.0"));
             assertTrue(hts.contains("Culture=neutral"));
             assertTrue(hts.contains("PublicKeyToken=b03f5f7f11d50a3a"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -66,8 +64,6 @@ public class RegistryParserTest {
             assertTrue(hts.contains("Members"));
             assertTrue(hts.contains("guilh"));
             assertTrue(hts.contains("ServerDomainUpdates"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -88,8 +84,6 @@ public class RegistryParserTest {
             assertTrue(hts.contains("S-1-5-80-3139157870-2983391045-3678747466-658725712-1809340420t"));
             assertTrue(hts.contains("MINWINPC"));
             assertTrue(hts.contains("WORKGROUP"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -110,8 +104,6 @@ public class RegistryParserTest {
             assertTrue(hts.contains("C:\\Windows\\system32\\svchost.exe"));
             assertTrue(hts.contains("C:\\Windows\\system32\\lsass.exe"));
             assertTrue(hts.contains("C:\\ProgramData\\VMware\\RawdskCompatibility"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

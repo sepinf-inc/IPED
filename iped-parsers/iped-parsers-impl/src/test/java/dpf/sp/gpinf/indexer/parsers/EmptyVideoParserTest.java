@@ -31,8 +31,6 @@ public class EmptyVideoParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_videoMp4.mp4")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

@@ -84,8 +84,6 @@ public class SevenZipParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mockfolder/mocksheets5.xlsx"));
             assertTrue(hts.contains("Mocksheets5/Folder"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -221,8 +219,6 @@ public class SevenZipParserTest extends AbstractPkgTest {
             assertEquals("62032D28BB6587132BA4ABE786636429", tracker.itensmd5.get(18));
             assertEquals("false", tracker.isfolder.get(18));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

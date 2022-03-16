@@ -44,8 +44,6 @@ public class BitTorrentResumeDatParserTest extends TestCase {
             assertTrue(hts.contains("Big Buck Bunny.torrent"));
             assertTrue(hts.contains("56228123"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

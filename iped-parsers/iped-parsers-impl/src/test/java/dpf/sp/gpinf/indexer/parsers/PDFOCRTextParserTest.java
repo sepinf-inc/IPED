@@ -29,8 +29,6 @@ public class PDFOCRTextParserTest extends TestCase {
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_pdfProtected.pdf")) {
             parser.parse(stream, handler, metadata, context);
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -59,8 +57,6 @@ public class PDFOCRTextParserTest extends TestCase {
                     metadata.get(Metadata.TITLE));
             assertEquals("application/pdf", metadata.get(Metadata.CONTENT_TYPE));
             assertTrue(mts.contains("Content-Type=application/pdf"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -85,8 +81,6 @@ public class PDFOCRTextParserTest extends TestCase {
             assertEquals("The Bank of England", metadata.get(TikaCoreProperties.CREATOR));
             assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
             assertEquals("Speeches by Andrew G Haldane", metadata.get(metadata.DESCRIPTION));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -106,8 +100,6 @@ public class PDFOCRTextParserTest extends TestCase {
             assertTrue(hts.contains("This paper considers the financial system as a complex adaptive system."));
             assertTrue(hts.contains("In recent years the pace of change and innovation in financial markets and"));
             assertTrue(hts.contains("• Whose diversity was gradually eroded by institutions’"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -120,8 +112,6 @@ public class PDFOCRTextParserTest extends TestCase {
         ParseContext context = new ParseContext();
         try (InputStream stream = getStream("test-files/test_pdfResumes.pdf")) {
             parser.parse(stream, handler, metadata, context);
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -141,8 +131,6 @@ public class PDFOCRTextParserTest extends TestCase {
             assertTrue(hts.contains("Leadership MIT Undergraduate Giving Campaign Cambridge"));
             assertTrue(hts.contains("Manage a $1,000 budget to put on events such as “study-breaks”"));
             assertTrue(hts.contains("•   Managed 25 science journalists,"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -155,8 +143,6 @@ public class PDFOCRTextParserTest extends TestCase {
         ParseContext context = new ParseContext();
         try (InputStream stream = getStream("test-files/test_pdfImages.pdf")) {
             parser.parse(stream, handler, metadata, context);
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -177,8 +163,6 @@ public class PDFOCRTextParserTest extends TestCase {
             assertEquals("E", metadata.get(TikaCoreProperties.CREATOR));
             assertEquals(metadata.get(TikaCoreProperties.CREATOR), metadata.get(metadata.AUTHOR));
             assertEquals("2002-02-21", metadata.get(metadata.CREATION_DATE).substring(0, 10));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -197,8 +181,6 @@ public class PDFOCRTextParserTest extends TestCase {
             assertTrue(hts.contains("finite polygon size (see Figure 1)."));
             assertTrue(hts.contains("William T. Freeman, Thouis R. Jones, and"));
             assertTrue(hts.contains("To generate our training set, we start from a collec"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

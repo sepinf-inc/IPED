@@ -44,8 +44,6 @@ public class XBaseParserTest {
             assertTrue(hts.contains("SCUBA Company"));
             assertTrue(hts.contains("PO"));
             assertTrue(hts.contains("B"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -62,8 +60,6 @@ public class XBaseParserTest {
 
             String hts = handler.toString();
             assertTrue(hts.contains("Archimède et Lius à Châteauneu"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
