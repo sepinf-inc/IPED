@@ -20,6 +20,8 @@ import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.process.ItemSearcher;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
@@ -41,7 +43,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static Set<MediaType> supportedMimes = MediaType.set(MediaTypes.VMDK, MediaTypes.VMDK_DATA,
             MediaTypes.VMDK_DESCRIPTOR, MediaTypes.VHD, MediaTypes.RAW_IMAGE, MediaTypes.EWF_IMAGE,
-            MediaTypes.E01_IMAGE);
+            MediaTypes.E01_IMAGE, MediaTypes.EWF2_IMAGE, MediaTypes.EX01_IMAGE);
 
     private static Set<File> exportedDisks = Collections.synchronizedSet(new HashSet<>());
 
@@ -78,6 +80,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private static boolean isFirstOrUniqueImagePart(IItem item) {
         return MediaTypes.E01_IMAGE.equals(item.getMediaType())
+                || MediaTypes.EX01_IMAGE.equals(item.getMediaType())
                 || MediaTypes.RAW_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DESCRIPTOR.equals(item.getMediaType());
     }
@@ -111,6 +114,7 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
             }
 
         } else if (MediaTypes.EWF_IMAGE.equals(item.getMediaType())
+                || MediaTypes.EWF2_IMAGE.equals(item.getMediaType())
                 || MediaTypes.VMDK_DATA.equals(item.getMediaType())) {
             // export e01/vmdk parts to process them later
             exportItem(item);
@@ -140,8 +144,8 @@ public class EmbeddedDiskProcessTask extends AbstractTask {
 
     private File exportItem(IItemBase item) throws IOException {
         File imageFile = null;
-        if (item.hasFile()) {
-            imageFile = item.getFile();
+        if (item instanceof IItem && IOUtil.hasFile((IItem) item)) {
+            imageFile = IOUtil.getFile((IItem) item);
         } else {
             File exportDir = new File(new File(this.output, outputFolder), item.getParentId().toString());
             exportDir.mkdirs();

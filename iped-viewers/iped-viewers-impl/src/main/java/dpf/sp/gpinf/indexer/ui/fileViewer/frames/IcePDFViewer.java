@@ -182,7 +182,7 @@ public class IcePDFViewer extends Viewer {
                     viewerPanel.setVisible(false);
 
                     try {
-                        pdfController.openDocument(content.getFile().getAbsolutePath());
+                        pdfController.openDocument(content.getTempFile().getAbsolutePath());
                         if (!content.equals(lastContent))
                             return;
 

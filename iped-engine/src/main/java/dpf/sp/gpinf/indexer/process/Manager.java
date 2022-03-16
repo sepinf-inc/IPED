@@ -77,6 +77,7 @@ import dpf.sp.gpinf.indexer.util.ExeFileFilter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SleuthkitClient;
+import dpf.sp.gpinf.indexer.util.SleuthkitInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
@@ -416,7 +417,7 @@ public class Manager {
 
         // query evidenceUUID and tskID
         String evidenceUUID;
-        Integer tskID;
+        Integer tskID = null;
         try (IPEDSource ipedCase = new IPEDSource(output.getParentFile(), writer)) {
             String query = BasicProps.NAME + ":\"" + evidenceName + "\" AND " + BasicProps.ISROOT + ":true";
             IPEDSearcher searcher = new IPEDSearcher(ipedCase, query);
@@ -427,7 +428,9 @@ public class Manager {
             }
             Item item = (Item) ipedCase.getItemByID(result.getId(0));
             evidenceUUID = item.getDataSource().getUUID();
-            tskID = item.getSleuthId();
+            if (item.getInputStreamFactory() instanceof SleuthkitInputStreamFactory) {
+                tskID = Integer.valueOf(item.getIdInDataSource());
+            }
         }
 
         // remove from items from index

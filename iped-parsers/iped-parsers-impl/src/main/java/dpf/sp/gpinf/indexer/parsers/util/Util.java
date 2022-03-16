@@ -6,8 +6,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +29,7 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
+import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
@@ -278,8 +282,8 @@ public class Util {
     }
 
     public static Optional<String> getSourceFileIfExists(IItemBase item) {
-        if (item.hasFile()) {
-            String path = normalizePath(item.getFile());
+        if (IOUtil.hasFile(item)) {
+            String path = normalizePath(IOUtil.getFile(item));
             if (path != null) {
                 path = ajustPath(path);
                 return Optional.of(path);

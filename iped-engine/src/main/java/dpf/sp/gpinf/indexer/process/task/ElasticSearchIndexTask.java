@@ -51,7 +51,6 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
-import iped3.sleuthkit.ISleuthKitItem;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import macee.core.Configurable;
@@ -481,8 +480,6 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.ID, item.getId()).field("document_content", "document")
                 .field(BasicProps.SUBITEMID, item.getSubitemId()).field(BasicProps.PARENTID, item.getParentId())
                 .field(BasicProps.PARENTIDs, item.getParentIds())
-                .field(IndexItem.SLEUTHID,
-                        item instanceof ISleuthKitItem ? ((ISleuthKitItem) item).getSleuthId() : null)
                 .field(IndexItem.ID_IN_SOURCE, item.getIdInDataSource())
                 .field(IndexItem.SOURCE_PATH, inputStreamSrcPath)
                 .field(IndexItem.SOURCE_DECODER,
@@ -492,7 +489,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                 .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
                 .timeField(BasicProps.CREATED, item.getCreationDate()).timeField(BasicProps.MODIFIED, item.getModDate())
                 .timeField(BasicProps.ACCESSED, item.getAccessDate())
-                .timeField(BasicProps.CHANGED, item.getChangeDate()).field(BasicProps.EXPORT, item.getFileToIndex())
+                .timeField(BasicProps.CHANGED, item.getChangeDate())
                 .field(BasicProps.CATEGORY, item.getCategorySet())
                 .field(BasicProps.CONTENTTYPE, item.getMediaType().toString()).field(BasicProps.HASH, item.getHash())
                 .field(BasicProps.THUMB, item.getThumb()).field(BasicProps.TIMEOUT, item.isTimedOut())

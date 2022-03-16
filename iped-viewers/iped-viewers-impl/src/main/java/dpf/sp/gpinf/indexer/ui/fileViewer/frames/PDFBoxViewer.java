@@ -220,7 +220,7 @@ public class PDFBoxViewer extends Viewer {
                 if (content != currentContent)
                     return;
                 try {
-                    is = content.getStream();
+                    is = content.getSeekableInputStream();
                     document = PDDocument.load(is, MemoryUsageSetting.setupMixed(100000000));
                     // document.setResourceCache(new NoResourceCache());
                     pdfRenderer = new PDFRenderer(document);

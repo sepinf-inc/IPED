@@ -95,12 +95,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public boolean hasFile() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
             public boolean hasChildren() {
                 // TODO Auto-generated method stub
                 return false;
@@ -191,12 +185,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public File getFile() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public String getExt() {
                 // TODO Auto-generated method stub
                 return null;
@@ -246,18 +234,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public void setThumb(byte[] thumb) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void setTempStartOffset(long tempStartOffset) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void setTempFile(File tempFile) {
                 // TODO Auto-generated method stub
 
             }
@@ -407,12 +383,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public void setFile(File file) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
             public void setExtraAttribute(String key, Object value) {
                 // TODO Auto-generated method stub
 
@@ -420,12 +390,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public void setExtension(String ext) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void setExportedFile(String exportedFile) {
                 // TODO Auto-generated method stub
 
             }
@@ -551,7 +515,7 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public SeekableInputStream getStream() throws IOException {
+            public SeekableInputStream getSeekableInputStream() throws IOException {
                 // TODO Auto-generated method stub
                 return null;
             }
@@ -605,12 +569,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public String getFileToIndex() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public long getFileOffset() {
                 // TODO Auto-generated method stub
                 return 0;
@@ -624,12 +582,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public Object getExtraAttribute(String key) {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getExportedFile() {
                 // TODO Auto-generated method stub
                 return null;
             }
@@ -710,7 +662,7 @@ public abstract class AbstractPkgTest extends TestCase {
         itemBase = new IItemBase() {
 
             @Override
-            public SeekableInputStream getStream() throws IOException {
+            public SeekableInputStream getSeekableInputStream() throws IOException {
                 // TODO Auto-generated method stub
                 return null;
             }
@@ -753,12 +705,6 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public boolean isCarved() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean hasFile() {
                 // TODO Auto-generated method stub
                 return false;
             }
@@ -860,12 +806,6 @@ public abstract class AbstractPkgTest extends TestCase {
             }
 
             @Override
-            public File getFile() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public Map<String, Object> getExtraAttributeMap() {
                 // TODO Auto-generated method stub
                 return null;
@@ -915,6 +855,18 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public Date getChangeDate() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public String getIdInDataSource() {
+                // TODO Auto-generated method stub
+                return null;
+            }
+
+            @Override
+            public ISeekableInputStreamFactory getInputStreamFactory() {
                 // TODO Auto-generated method stub
                 return null;
             }

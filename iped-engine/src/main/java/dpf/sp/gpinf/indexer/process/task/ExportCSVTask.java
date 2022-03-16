@@ -39,6 +39,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.util.HashValue;
+import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import macee.core.Configurable;
@@ -95,11 +96,13 @@ public class ExportCSVTask extends AbstractTask {
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
 
-        value = evidence.getFileToIndex();
-        if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
-            value = "=" + LINK_FUNCTION + "(\"" + value + "\"" + SEPARATOR + "\"" + LINK_NAME + "\")";
+        if (IOUtil.hasFile(evidence)) {
+            value = evidence.getIdInDataSource();
         } else {
             value = ""; //$NON-NLS-1$
+        }
+        if (!value.isEmpty() && caseData.containsReport() && evidence.isToAddToCase() && !evidence.isToIgnore()) {
+            value = "=" + LINK_FUNCTION + "(\"" + value + "\"" + SEPARATOR + "\"" + LINK_NAME + "\")";
         }
         list.append("\"" + escape(value) + "\""); //$NON-NLS-1$ //$NON-NLS-2$
         list.append(SEPARATOR);
