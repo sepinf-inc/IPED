@@ -140,7 +140,7 @@ public class WhatsAppParser extends SQLite3DBParser {
     // a global hashmap to prevent redownload files;
     private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
 
-    private static final boolean FALLBACK_DOWNLOAD_FILES = true;
+    private static final boolean FALLBACK_DOWNLOAD_FILES = false;
 
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
@@ -205,7 +205,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
-                parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                if (mergeDbs || FALLBACK_DOWNLOAD_FILES)
+                    parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
+                else
+                    parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(WA_DB.toString())) {
                 parseWhatsAppContacts(stream, handler, metadata, context, new ExtractorAndroidFactory());
             } else if (mimetype.equals(CHAT_STORAGE.toString())) {
