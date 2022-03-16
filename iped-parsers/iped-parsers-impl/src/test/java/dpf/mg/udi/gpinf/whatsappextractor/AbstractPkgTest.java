@@ -5,7 +5,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.channels.FileChannel;
 import java.nio.channels.SeekableByteChannel;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,6 +36,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
+import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
 import iped3.IEvidenceFileType;
 import iped3.IHashValue;
 import iped3.IItem;
@@ -41,21 +48,28 @@ import iped3.search.IItemSearcher;
 import iped3.util.ExtraProperties;
 
 public abstract class AbstractPkgTest extends TestCase {
-    protected ParseContext whatsappContext;
+
     protected EmbeddedWhatsAppParser whatsapptracker;
     protected ItemInfo itemInfo;
     protected IItemSearcher itemSearcher;
-    protected IItemBase itemBase;
     protected IItem iitem;
-    protected InputStream stream;
 
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
+    protected File getFile(String name) throws IOException {
+        try {
+            return new File(AbstractPkgTest.class.getClassLoader().getResource(name).toURI());
+        } catch (URISyntaxException e) {
+            new IOException(e);
+        }
+        return null;
     }
 
-    protected void setUp() throws Exception {
-        super.setUp();
-        stream = getStream("test-files/test_whatsAppMsgStore.db");
+    protected InputStream getStream(String name) throws IOException {
+        return Files.newInputStream(getFile(name).toPath());
+    }
+
+    protected ParseContext getContext(String resource) throws IOException {
+
+        File file = getFile(resource);
         iitem = new IItem() {
 
             @Override
@@ -126,8 +140,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public String getPath() {
-                // TODO Auto-generated method stub
-                return null;
+                return file.getAbsolutePath();
             }
 
             @Override
@@ -138,8 +151,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public String getName() {
-                // TODO Auto-generated method stub
-                return null;
+                return file.getName();
             }
 
             @Override
@@ -162,8 +174,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public Long getLength() {
-                // TODO Auto-generated method stub
-                return null;
+                return file.length();
             }
 
             @Override
@@ -492,8 +503,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public TikaInputStream getTikaStream() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return TikaInputStream.get(file.toPath());
             }
 
             @Override
@@ -504,8 +514,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public File getTempFile() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return file;
             }
 
             @Override
@@ -516,14 +525,12 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public SeekableInputStream getSeekableInputStream() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return new SeekableFileInputStream(file);
             }
 
             @Override
             public SeekableByteChannel getSeekableByteChannel() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return FileChannel.open(file.toPath());
             }
 
             @Override
@@ -606,8 +613,7 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public BufferedInputStream getBufferedStream() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
+                return new BufferedInputStream(Files.newInputStream(file.toPath()));
             }
 
             @Override
@@ -659,229 +665,17 @@ public abstract class AbstractPkgTest extends TestCase {
             }
         };
         itemInfo = new ItemInfo(0, getName(), null, null, getName(), false);
-        itemBase = new IItemBase() {
 
-            @Override
-            public SeekableInputStream getSeekableInputStream() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public SeekableByteChannel getSeekableByteChannel() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public boolean isTimedOut() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isSubItem() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isRoot() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isDir() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isDeleted() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean isCarved() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public boolean hasChildren() {
-                // TODO Auto-generated method stub
-                return false;
-            }
-
-            @Override
-            public File getViewFile() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getTypeExt() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public byte[] getThumb() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public File getTempFile() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Integer getSubitemId() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getPath() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Integer getParentId() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getName() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Date getModDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Metadata getMetadata() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public MediaType getMediaType() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Long getLength() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public byte[] getImageSimilarityFeatures() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public int getId() {
-                // TODO Auto-generated method stub
-                return 0;
-            }
-
-            @Override
-            public String getHash() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Map<String, Object> getExtraAttributeMap() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Object getExtraAttribute(String key) {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getExt() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public IDataSource getDataSource() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Date getCreationDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public HashSet<String> getCategorySet() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public BufferedInputStream getBufferedStream() throws IOException {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Date getAccessDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public Date getChangeDate() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public String getIdInDataSource() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
-            public ISeekableInputStreamFactory getInputStreamFactory() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-        };
         itemSearcher = new IItemSearcher() {
 
             @Override
             public void close() throws IOException {
-                // TODO Auto-generated method stub
+                // ignore
             }
 
             @Override
             public Iterable<IItemBase> searchIterable(String luceneQuery) {
-                // TODO Auto-generated method stub
-                return null;
+                return Collections.emptyList();
             }
 
             @Override
@@ -891,18 +685,18 @@ public abstract class AbstractPkgTest extends TestCase {
 
             @Override
             public String escapeQuery(String string) {
-                // TODO Auto-generated method stub
                 return string;
             }
         };
 
         whatsapptracker = new EmbeddedWhatsAppParser();
-        whatsappContext = new ParseContext();
+        ParseContext whatsappContext = new ParseContext();
         whatsappContext.set(Parser.class, whatsapptracker);
         whatsappContext.set(ItemInfo.class, itemInfo);
         whatsappContext.set(IItemSearcher.class, itemSearcher);
-        whatsappContext.set(IItemBase.class, itemBase);
+        whatsappContext.set(IItemBase.class, iitem);
         whatsappContext.set(IItem.class, iitem);
+        return whatsappContext;
 
     }
 
