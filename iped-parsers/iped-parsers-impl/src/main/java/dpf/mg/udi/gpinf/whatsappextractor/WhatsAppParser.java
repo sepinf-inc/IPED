@@ -393,7 +393,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             ThreadPoolExecutor e = (ThreadPoolExecutor) Executors.newFixedThreadPool(POOL_SIZE);
             for (Chat c : wcontext.getChalist()) {
                 searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getFile(), context, DOWNLOADED_FILES, e);
+                        wcontext.getItem().getTempFile(), context, DOWNLOADED_FILES, e);
             }
             waitExecutor(e);
             if (DOWNLOADED_FILES.get() > 0) {
