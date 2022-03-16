@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -55,8 +56,6 @@ public class VCardParserTest extends TestCase {
 
             assertEquals("guilhermeandreuce@gmail.com", metadata.get(ExtraProperties.USER_EMAIL));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -91,13 +90,11 @@ public class VCardParserTest extends TestCase {
             assertEquals("Sushi Loko Flamingo", usernames[1]);
             assertEquals("Smart Assistência Técnica", usernames[2]);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
     @Test
-    public void testVCardCompleteInfoParser() throws IOException, SAXException, TikaException {
+    public void testVCardCompleteInfoParser() throws IOException, SAXException, TikaException, ParseException {
 
         VCardParser parser = new VCardParser();
         Metadata metadata = new Metadata();
@@ -139,8 +136,6 @@ public class VCardParserTest extends TestCase {
                 SimpleDateFormat df = new SimpleDateFormat("yyyyMMdd");
                 assertEquals(df.parse("19961024"), userBirth);
 
-            } catch (Exception e) {
-                System.out.println(e);
             }
         }
     }
@@ -190,8 +185,6 @@ public class VCardParserTest extends TestCase {
             assertEquals("gosta muito de dançar para-para", usernotes[0].substring(0, 31));
             assertEquals("Magnanimo Test@paraparaparapara el raton para el", usernames[0]);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -208,7 +201,7 @@ public class VCardParserTest extends TestCase {
      * 
      * parser.parse(stream, handler, metadata, context);
      * 
-     * }catch(Exception e) { System.out.println(e); } }
+     * } }
      */
 
 }

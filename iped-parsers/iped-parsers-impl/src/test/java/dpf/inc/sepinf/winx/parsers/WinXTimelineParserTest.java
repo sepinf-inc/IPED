@@ -43,8 +43,6 @@ public class WinXTimelineParserTest extends TestCase {
             assertTrue(hts.contains("C:\\Users\\guilh\\AppData\\Roaming\\Telegram Desktop\\Telegram.exe"));
             assertTrue(hts.contains("System\\cmd.exe"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

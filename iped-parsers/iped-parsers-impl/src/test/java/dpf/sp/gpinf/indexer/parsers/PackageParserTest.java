@@ -41,8 +41,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mocksheets1.xlsx\nPlan1"));
             assertTrue(hts.contains("mocksheets2.xlsx\nPlan1"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -124,8 +122,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals("6212E7FBA5A8FE2FFF5EEA267D4009BE", tracker.itensmd5.get(9));
             assertEquals("false", tracker.isfolder.get(9));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -146,8 +142,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mockfolder\n\nmockfolder/mockdoc5.docx"));
             assertTrue(hts.contains("mockfolder/mocksheets5.xlsx\nPlan1\n"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -228,8 +222,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(9));
             assertEquals("false", tracker.isfolder.get(9));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -250,8 +242,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mockfolder/mockdoc5.docx\nMockdoc5/folder"));
             assertTrue(hts.contains("mockfolder/mocksheets5.xlsx\nPlan1\n"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -338,8 +328,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(10));
             assertEquals("false", tracker.isfolder.get(10));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -364,8 +352,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("static void insereMoeda(char, int[]);"));
             assertTrue(hts.contains("static void trocaAB(int[]);"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -404,8 +390,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals("B402684EEDD7BAA0E6D61CCF51498BE4", tracker.itensmd5.get(2));
             assertEquals("false", tracker.isfolder.get(2));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -428,8 +412,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mocktext1.txt"));
             assertTrue(hts.contains("mocktext2.txt"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -480,8 +462,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(df.parse("09/04/2021 09:22:54"), date);
             assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -503,8 +483,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mocktext1.txt"));
             assertTrue(hts.contains("mocktext2.txt"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -555,8 +533,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(df.parse("09/04/2021 09:22:54"), date);
             assertEquals("C922B74878BA73C51904E75A79B3DF5B", tracker.itensmd5.get(5));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -579,8 +555,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertTrue(hts.contains("mocktext1.txt"));
             assertTrue(hts.contains("mocktext2.txt"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -642,8 +616,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals(df.parse("04/05/2021 14:08:20"), date);
             assertEquals("BA61B70D7C45946AC670D39080C1DD42", tracker.itensmd5.get(7));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -660,8 +632,6 @@ public class PackageParserTest extends AbstractPkgTest {
             String hts = handler.toString();
             assertTrue(hts.contains("Mockdoc1:"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -694,8 +664,6 @@ public class PackageParserTest extends AbstractPkgTest {
             assertEquals("D41D8CD98F00B204E9800998ECF8427E", tracker.itensmd5.get(1));
             assertEquals("true", tracker.isfolder.get(1));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

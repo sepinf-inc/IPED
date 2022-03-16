@@ -41,11 +41,11 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(4, whatsapptracker.messageto.size());
             assertEquals(74, whatsapptracker.messagedate.size());
 
-            assertEquals("WhatsApp Chat - 556183125151", whatsapptracker.title.get(0));
-            assertEquals("WhatsApp Chat - 556183125151_message_0", whatsapptracker.title.get(1));
-            assertEquals("WhatsApp Chat - 556183125151_message_1", whatsapptracker.title.get(2));
-            assertEquals("WhatsApp Chat - 556183125151_message_2", whatsapptracker.title.get(3));
-            assertEquals("WhatsApp Chat - 556183125151_message_3", whatsapptracker.title.get(4));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_2", whatsapptracker.title.get(3));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_3", whatsapptracker.title.get(4));
             assertEquals("WhatsApp Group - Lar_message_1", whatsapptracker.title.get(61));
             assertEquals("WhatsApp Group - Lar_message_2", whatsapptracker.title.get(62));
 
@@ -60,7 +60,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(0));
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(1));
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(2));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messagefrom.get(3));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messagefrom.get(3));
 
             assertEquals("This is a test for the IPED Whatsapp Parser.", whatsapptracker.messagebody.get(0));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(1));
@@ -70,9 +70,9 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("! USER_JOINED_GROUP", whatsapptracker.messagebody.get(42));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(43));
 
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(0));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(1));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(2));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(0));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(1));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(2));
             assertEquals("unknownAccount@", whatsapptracker.messageto.get(3));
 
             assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(0));
