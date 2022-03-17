@@ -38,7 +38,6 @@ public class LinkDownloader {
                 byte[] buffer = new byte[1024 * 8];
                 while (digestInput.read(buffer) >= 0)
                     ;
-                digestInput.close();
                 return getHex(digest.digest());
             } catch (NoSuchAlgorithmException | IOException e) {
                 e.printStackTrace();
@@ -124,14 +123,15 @@ public class LinkDownloader {
 
             df.decryptStream(out);
 
-            String hash = getSHA256(new FileInputStream(dest));
-
-            if (!this.hash.equals(hash)) {
-                throw new Exception("Hash invalido");
-            }
-
         } catch (Exception e) {
             throw new Exception("cipher error");
+        }
+
+        try (InputStream is = new FileInputStream(dest)) {
+            String hash = getSHA256(is);
+            if (!this.hash.equals(hash)) {
+                throw new Exception("Invalid Hash");
+            }
         }
 
     }

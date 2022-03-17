@@ -2,7 +2,9 @@ package dpf.mg.udi.gpinf.whatsappextractor;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectInputStream;
 import java.sql.Connection;
@@ -29,7 +31,7 @@ import com.whatsapp.MediaData;
  *
  * @author PCF HAUCK
  */
-public class LinkExtractor {
+public class LinkExtractor implements Closeable {
     private Connection con;
     private HashSet<String> hashes;
     private ArrayList<LinkDownloader> links;
@@ -174,49 +176,55 @@ public class LinkExtractor {
             }
             base64Hashes.append('"').append(hash).append('"');
         }
-        PreparedStatement stmt = con.prepareStatement(sql_android.replaceAll("\\?", base64Hashes.toString()));
-        // stmt.setCharacterStream(1, new StringReader(base64Hashes.toString()));
+        try (PreparedStatement stmt = con.prepareStatement(sql_android.replaceAll("\\?", base64Hashes.toString()))) {
+            // stmt.setCharacterStream(1, new StringReader(base64Hashes.toString()));
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                String link = rs.getString("url");
+                String hash = rs.getString("hash");
 
-        ResultSet rs = stmt.executeQuery();
-        while (rs.next()) {
-            String link = rs.getString("url");
-            String hash = rs.getString("hash");
+                String decoded = new String(Hex.encodeHex(Base64.getDecoder().decode(hash), false));
+                if (!hashes.contains(decoded)) {
+                    continue;
+                }
+                String tipo = rs.getString("tipo");
+                if (tipo == null) {
+                    continue;
+                }
+                mediaType = tipo;
+                if (tipo.indexOf("/") >= 0) {
+                    mediaType = tipo.substring(0, tipo.indexOf("/"));
+                }
+                mediaType = capitalize(mediaType).trim();
+                mediaType = "WhatsApp " + mediaType + " Keys";
 
-            String decoded = new String(Hex.encodeHex(Base64.getDecoder().decode(hash), false));
-            if (!hashes.contains(decoded)) {
-                continue;
-            }
-            String tipo = rs.getString("tipo");
-            if (tipo == null) {
-                continue;
-            }
-            mediaType = tipo;
-            if (tipo.indexOf("/") >= 0) {
-                mediaType = tipo.substring(0, tipo.indexOf("/"));
-            }
-            mediaType = capitalize(mediaType).trim();
-            mediaType = "WhatsApp " + mediaType + " Keys";
+                tipo = tipo.substring(tipo.indexOf("/") + 1);
 
-            tipo = tipo.substring(tipo.indexOf("/") + 1);
+                byte[] rawData = rs.getBytes("data");
+                byte[] cipherkey = getCipherKey(rawData);
+                byte[] iv = getIV(rawData);
+                if (cipherkey == null || iv == null) {
+                    tot++;
+                }
 
-            byte[] rawData = rs.getBytes("data");
-            byte[] cipherkey = getCipherKey(rawData);
-            byte[] iv = getIV(rawData);
-            if (cipherkey == null || iv == null) {
-                tot++;
-            }
-
-            LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
-            if (ld.getHash() != null && ld.getFileName() != null) {
-                links.add(ld);
+                LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
+                if (ld.getHash() != null && ld.getFileName() != null) {
+                    links.add(ld);
+                }
             }
         }
 
     }
 
-    public void close() throws SQLException {
-        if (con != null && !con.isClosed())
-            this.con.close();
+    @Override
+    public void close() throws IOException {
+        try {
+            if (con != null && !con.isClosed()) {
+                this.con.close();
+            }
+        } catch (SQLException e) {
+            throw new IOException(e);
+        }
     }
 
     public ArrayList<LinkDownloader> getLinks() {

@@ -1348,18 +1348,18 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (isDownloadMediaFilesEnabled()) {
             if (!hashesToSearchFor.isEmpty()) {
 
-                LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()));
-                try {
+                ArrayList<LinkDownloader> links = new ArrayList<>();
+                try (LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()))) {
                     le.extractLinks();
+                    links = le.getLinks();
 
-                    le.close();
                 } catch (Exception e) {
                     // cannot extract link
                     logger.error("could not extract links from the database");
                     return;
                 }
 
-                for (LinkDownloader ld : le.getLinks()) {
+                for (LinkDownloader ld : links) {
                     if (ld == null || ld.getHash() == null || hashesDownloaded.containsKey(ld.getHash())) {
                         continue;
                     }
@@ -1393,24 +1393,26 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                                 DownloadMetadata.set(TikaCoreProperties.TITLE,
                                         "dowloaded_item_" + DOWNLOADED_FILES.incrementAndGet());
-                                FileInputStream out = new FileInputStream(fout);
-                                extractor.parseEmbedded(out, handler, DownloadMetadata, false);
 
-                                EmbeddedItem container = context.get(EmbeddedItem.class);
+                                try (FileInputStream out = new FileInputStream(fout)) {
+                                    extractor.parseEmbedded(out, handler, DownloadMetadata, false);
 
-                                item = (IItem) container.getObj();
-                                item.setExtraAttribute("sha-256", ld.getHash());
-                                item.setExtraAttribute("downloaded", true);
+                                    EmbeddedItem container = context.get(EmbeddedItem.class);
 
-                                List<Message> messageList = hashesToSearchFor.get(ld.getHash());
+                                    item = (IItem) container.getObj();
+                                    item.setExtraAttribute("sha-256", ld.getHash());
+                                    item.setExtraAttribute("downloaded", true);
 
-                                setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
+                                    List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
-                                if (item != null) {
-                                    synchronized (hashesDownloaded) {
-                                        hashesDownloaded.putIfAbsent(ld.getHash(), item);
+                                    setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
+
+                                    if (item != null) {
+                                        synchronized (hashesDownloaded) {
+                                            hashesDownloaded.putIfAbsent(ld.getHash(), item);
+                                        }
                                     }
-                                    out.close();
+
                                 }
 
                             } catch (URLnotFound ex) {
