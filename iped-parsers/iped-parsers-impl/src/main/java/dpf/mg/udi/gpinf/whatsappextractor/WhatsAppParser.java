@@ -141,7 +141,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     // a global hashmap to prevent redownload files;
     private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
-    private static final AtomicInteger downloadedFiles = new AtomicInteger(0);
 
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
@@ -238,7 +237,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context,
+                    null, null);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -385,9 +385,10 @@ public class WhatsAppParser extends SQLite3DBParser {
             IItemSearcher searcher = context.get(IItemSearcher.class);
             ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
             ArrayList<Future<?>> futures = new ArrayList<>();
+            AtomicInteger downloadedFiles = new AtomicInteger(0);
             for (Chat c : wcontext.getChalist()) {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getTempFile(), context, executor));
+                        wcontext.getItem().getTempFile(), context, downloadedFiles, executor));
             }
             waitDownloads(executor, futures);
             if (downloadedFiles.get() > 0) {
@@ -1125,7 +1126,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            ExecutorService executor) {
+            AtomicInteger downloadedFiles, ExecutorService executor) {
 
         if (searcher == null) {
             return Collections.emptyList();
@@ -1152,7 +1153,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ArrayList<Future<?>> futures = new ArrayList<>();
         for (List<Message> listToProcess : listsToProcess) {
             futures.addAll(searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context,
-                    executor));
+                    downloadedFiles, executor));
         }
         return futures;
     }
@@ -1171,7 +1172,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            ExecutorService executor) {
+            AtomicInteger downloadedFiles, ExecutorService executor) {
 
         Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
         Map<Pair<String, Long>, List<Message>> fileNameAndSizeToSearchFor = new HashMap<>();
@@ -1338,7 +1339,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         // if download files from the internet is allowed
         ArrayList<Future<?>> futures = new ArrayList<>();
-        if (isDownloadMediaFilesEnabled() && executor != null) {
+        if (isDownloadMediaFilesEnabled() && executor != null && downloadedFiles != null) {
             if (!hashesToSearchFor.isEmpty()) {
 
                 ArrayList<LinkDownloader> links = new ArrayList<>();
