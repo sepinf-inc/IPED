@@ -309,8 +309,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private void parseWhatsappMessages(InputStream stream, ContentHandler handler, Metadata metadata,
             ParseContext context, ExtractorFactory extFactory) throws IOException, SAXException, TikaException {
 
-        EmbeddedItem itemContainer = context.get(EmbeddedItem.class);
-
         extFactory.setConnectionParams(stream, metadata, context, this);
         EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                 new ParsingEmbeddedDocumentExtractor(context));
