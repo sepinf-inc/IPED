@@ -59,7 +59,7 @@ public class LinkDownloader {
         try {
             connection = (HttpURLConnection) url.openConnection();
             connection.setConnectTimeout(150);
-            connection.setReadTimeout(150);
+            connection.setReadTimeout(500);
             connection.setRequestMethod("HEAD");
             status = connection.getResponseCode();
         } catch (IOException e) {
