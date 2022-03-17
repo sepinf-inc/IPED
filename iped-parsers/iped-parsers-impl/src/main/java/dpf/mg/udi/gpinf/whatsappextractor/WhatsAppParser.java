@@ -521,15 +521,16 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             WAAccount account = getUserAccount(searcher, DB.getPath(), extFactory instanceof ExtractorAndroidFactory);
 
+            File tmpDB = TikaInputStream.get(stream, tmp).getFile();
+
             stream.skip(wcontext.getItem().getLength());
 
             List<Chat> dbChatList = wcontext.getChalist();
             // if merge is not enable create a report for every db
             if (!mergeDbs) {
-                TikaInputStream tis = TikaInputStream.get(stream, tmp);
                 EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                         new ParsingEmbeddedDocumentExtractor(context));
-                createReport(dbChatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
+                createReport(dbChatList, searcher, contacts, handler, extractor, account, tmpDB, context);
 
                 dbsFound.remove(DB.getId());
                 return;
@@ -598,9 +599,8 @@ public class WhatsAppParser extends SQLite3DBParser {
                 logger.info("Creating separate report for {}", DB.getPath()); //$NON-NLS-1$
             }
 
-            TikaInputStream tis = TikaInputStream.get(stream, tmp);
             // create report for main dbs and backups which main db was not found
-            createReport(dbChatList, searcher, contacts, handler, extractor, account, tis.getFile(), context);
+            createReport(dbChatList, searcher, contacts, handler, extractor, account, tmpDB, context);
 
             // and free memory used by main dbs and backups which main db was not found
             dbsFound.remove(DB.getId());
