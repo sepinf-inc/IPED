@@ -1396,9 +1396,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                                         "dowloaded_item_" + DOWNLOADED_FILES.incrementAndGet());
 
                                 try (FileInputStream out = new FileInputStream(fout)) {
-                                    extractor.parseEmbedded(out, handler, DownloadMetadata, false);
 
-                                    EmbeddedItem container = context.get(EmbeddedItem.class);
+                                    EmbeddedItem container;
+                                    synchronized (extractor) {
+                                        extractor.parseEmbedded(out, handler, DownloadMetadata, false);
+                                        container = context.get(EmbeddedItem.class);
+                                    }
 
                                     item = (IItem) container.getObj();
                                     item.setExtraAttribute("sha-256", ld.getHash());
