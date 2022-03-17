@@ -1162,10 +1162,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         if (messageList != null) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
-                m.setMediaQuery(escapeQuery(query, isHashQuery)); // $NON-NLS-1$ //$NON-NLS-2$
-                if (item.getExtraAttribute("downloaded") != null) {
-                    m.setDownloaded(true);
-                }
+                m.setMediaQuery(escapeQuery(query, isHashQuery));
             }
         }
     }
@@ -1381,24 +1378,24 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                                 ld.decript(f, fout);
 
-                                Metadata DownloadMetadata = new Metadata();
+                                Metadata downloadMetadata = new Metadata();
 
-                                DownloadMetadata.set("downloaded", "true");
+                                downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
 
-                                DownloadMetadata.set(TikaCoreProperties.TITLE,
-                                        "dowloaded_item_" + downloadedFiles.incrementAndGet());
+                                downloadMetadata.set(TikaCoreProperties.TITLE,
+                                        "Dowloaded_item_" + downloadedFiles.incrementAndGet());
 
                                 try (FileInputStream out = new FileInputStream(fout)) {
 
                                     EmbeddedItem container;
                                     synchronized (extractor) {
-                                        extractor.parseEmbedded(out, handler, DownloadMetadata, false);
+                                        extractor.parseEmbedded(out, handler, downloadMetadata, false);
                                         container = context.get(EmbeddedItem.class);
                                     }
 
                                     item = (IItem) container.getObj();
+                                    // this may not work, item could have been already indexed
                                     item.setExtraAttribute("sha-256", ld.getHash());
-                                    item.setExtraAttribute("downloaded", true);
 
                                     List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
