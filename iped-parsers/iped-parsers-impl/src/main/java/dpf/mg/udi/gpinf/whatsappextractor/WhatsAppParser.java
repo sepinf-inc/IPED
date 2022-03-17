@@ -1168,11 +1168,11 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void setItemToMessage(IItemBase item, List<Message> messageList, String query) {
+    private void setItemToMessage(IItemBase item, List<Message> messageList, String query, boolean isHashQuery) {
         if (messageList != null) {
             for (Message m : messageList) {
                 m.setMediaItem(item);
-                m.setMediaQuery(escapeQuery(query, true)); // $NON-NLS-1$ //$NON-NLS-2$
+                m.setMediaQuery(escapeQuery(query, isHashQuery)); // $NON-NLS-1$ //$NON-NLS-2$
                 if (item.getExtraAttribute("downloaded") != null) {
                     m.setDownloaded(true);
                 }
@@ -1230,7 +1230,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 String hash = (String) item.getExtraAttribute("sha-256"); //$NON-NLS-1$
                 List<Message> messageList = hashesToSearchFor.remove(hash);
 
-                setItemToMessage(item, messageList, "sha-256:" + hash);
+                setItemToMessage(item, messageList, "sha-256:" + hash, true);
 
             }
             ArrayList<String> hashesToRemove = new ArrayList<>();
@@ -1239,7 +1239,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                     IItem item = hashesDownloaded.get(hash);
                     if (item != null) {
-                        setItemToMessage(item, hashesToSearchFor.get(hash), "sha-256:" + hash);
+                        setItemToMessage(item, hashesToSearchFor.get(hash), "sha-256:" + hash, true);
                     }
 
                     if (hashesDownloaded.containsKey(hash)) {
@@ -1283,7 +1283,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                     List<Message> messageList = fileNameAndSizeToSearchFor.get(key);
                     setItemToMessage(item, messageList,
                             BasicProps.NAME + ":\"" + searcher.escapeQuery(fileName) + "\" AND " //$NON-NLS-1$ //$NON-NLS-2$
-                                    + BasicProps.LENGTH + ":" + fileSize);
+                                    + BasicProps.LENGTH + ":" + fileSize, false);
                 }
             }
         }
@@ -1331,14 +1331,17 @@ public class WhatsAppParser extends SQLite3DBParser {
                             if (fileName.contains("/")) { //$NON-NLS-1$
                                 fileName = fileName.substring(fileName.lastIndexOf('/') + 1); // $NON-NLS-1$
                             }
-                            List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName).stream()
-                                    .filter(m -> {
-                                        long mediaSize = m.getMediaSize();
-                                        long fileSize = item.getLength();
-                                        return (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15 && itemStreamEndsWithZeros(item, mediaSize));
-                                    }).collect(Collectors.toList());
-                            
-                            setItemToMessage(item, messageList, escapeQuery(BasicProps.HASH + ":" + item.getHash(), true));
+                            List<Message> messageList = fallBackFileNamesToSearchFor.get(fileName);
+                            if (messageList != null) {
+                                messageList = messageList.stream().filter(m -> {
+                                    long mediaSize = m.getMediaSize();
+                                    long fileSize = item.getLength();
+                                    return (fileSize >= mediaSize + 1 && fileSize <= mediaSize + 15
+                                            && itemStreamEndsWithZeros(item, mediaSize));
+                                }).collect(Collectors.toList());
+
+                                setItemToMessage(item, messageList, BasicProps.HASH + ":" + item.getHash(), true);
+                            }
                         }
                     }
                 }
@@ -1405,7 +1408,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                                     List<Message> messageList = hashesToSearchFor.get(ld.getHash());
 
-                                    setItemToMessage(item, messageList, "sha-256:" + ld.getHash());
+                                    setItemToMessage(item, messageList, "sha-256:" + ld.getHash(), true);
 
                                     if (item != null) {
                                         synchronized (hashesDownloaded) {
