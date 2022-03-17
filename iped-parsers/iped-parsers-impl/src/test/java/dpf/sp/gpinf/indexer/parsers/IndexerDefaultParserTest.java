@@ -35,8 +35,6 @@ public class IndexerDefaultParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_utf8")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -68,8 +66,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("image:Width=512"));
             assertTrue(mts.contains("image:tiff:BitsPerSample=8 8 8"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -113,8 +109,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("video:Width=256.0"));
             assertTrue(mts.contains("video:framerate=29.97002997002997"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -171,8 +165,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("office:meta:character-count=2724"));
             assertTrue(mts.contains("common:dc:creator=Guilherme Andreúce Sobreira Monteiro"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -202,8 +194,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
             assertTrue(mts.contains("charset=UTF-8"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -248,8 +238,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pkg.RarParser"));
             assertTrue(mts.contains("Content-Type=application/x-rar-compressed; version=4"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -316,8 +304,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.pdf.PDFParser"));
             assertTrue(mts.contains("pdf:PDFVersion=1.7"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -343,8 +329,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("X-Parsed-By=org.apache.tika.parser.csv.TextAndCSVParser"));
             assertTrue(mts.contains("Content-Encoding=EUC-KR"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -367,8 +351,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("compressRatioLZ4=0.5720935240387917"));
             assertTrue(mts.contains("Content-Type=application/octet-stream"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -389,8 +371,6 @@ public class IndexerDefaultParserTest extends TestCase {
             assertTrue(mts.contains("encryptedDocument=true"));
             assertTrue(mts.contains("Content-Type=application/x-tika-ooxml-protected"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

@@ -27,8 +27,6 @@ public class MBoxParserTest extends AbstractPkgTest {
         try (InputStream stream = getStream("test-files/test_mbox.mbox")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -79,8 +77,6 @@ public class MBoxParserTest extends AbstractPkgTest {
             assertEquals("message/rfc822", mboxtracker.contenttype.get(7));
             assertEquals("D14BA8E896A274896CD835092FECB956", mboxtracker.contentmd5.get(7));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

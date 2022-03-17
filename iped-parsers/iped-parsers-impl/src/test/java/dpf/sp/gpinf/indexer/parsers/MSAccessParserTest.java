@@ -32,8 +32,6 @@ public class MSAccessParserTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_mdb.mdb")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -57,8 +55,6 @@ public class MSAccessParserTest extends TestCase {
             assertEquals("application/x-msaccess", metadata.get(metadata.CONTENT_TYPE));
             assertEquals("Campaign_Template", metadata.get(StringUtils.capitalize(metadata.TITLE)));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -111,8 +107,6 @@ public class MSAccessParserTest extends TestCase {
             assertTrue(hts.contains("uniao dos estados do brazil"));
             assertTrue(hts.contains("federação brasileira"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

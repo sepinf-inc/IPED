@@ -39,8 +39,6 @@ public class LNKShortcutParserTest extends TestCase {
             String actualSecundaryName = "Telegram Desktop";
             assertTrue(hts.contains(actualSecundaryName));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -67,8 +65,6 @@ public class LNKShortcutParserTest extends TestCase {
             String actualSecundaryName = "PokerStars";
             assertTrue(hts.contains(actualSecundaryName));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

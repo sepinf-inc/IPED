@@ -49,8 +49,6 @@ public class RegistroParserTest extends TestCase {
             KeyNode k = (KeyNode) c.getCellContent();
             assertEquals(k.getKeyName(), "ROOT");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -75,9 +73,6 @@ public class RegistroParserTest extends TestCase {
             HiveCell c = rf.getRootCell();
             KeyNode k = (KeyNode) c.getCellContent();
             assertEquals(k.getKeyName(), "ROOT");
-
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -108,8 +103,6 @@ public class RegistroParserTest extends TestCase {
             assertEquals("Working directory: " + kf.getValue("WorkingDirectory").getValueDataAsString(),
                     "Working directory: C:\\Windows\\Panther");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -141,8 +134,6 @@ public class RegistroParserTest extends TestCase {
             assertEquals("Disable Anti Spyware: " + kf.getValue("DisableAntiSpyware").getValueDataAsString(),
                     "Disable Anti Spyware: 1");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -179,8 +170,6 @@ public class RegistroParserTest extends TestCase {
                         "Username ID: {EF208C86-65AC-4012-84A1-F1B2647B21FD}");
             }
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

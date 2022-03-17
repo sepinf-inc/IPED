@@ -36,8 +36,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts.contains("issO é OUTR4 stRin8888 codificada em UTF8"));
             assertTrue(hts.contains("Essa stRin8888G esta´ sendÖOO utilizada n0 P4RSER"));
             assertTrue(hts.contains("do 1P3D para R4W STR1N85...!!111"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -57,8 +55,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts
                     .contains("Essa stRin8888G esta\n sendÖOO utilizada n0 P4RSER do 1P3D para R4W STR1N85...!!111"));
             assertTrue(hts.contains("Essa pa5te está em UTF16."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -76,8 +72,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts.contains("ssO é ÜM4 stRin8888 codificada em ISO8859-1."));
             assertTrue(hts.contains("Essa stRinÝGG888 esta\n sendo utilizada n0 P4RsÈR"));
             assertTrue(hts.contains("do 1P3D para R4W STR1N85...!!111"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -95,8 +89,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts.contains("issO é OUTR4 stRin8888 codificada em UTF8."));
             assertTrue(hts.contains("Essa part3 está em UTF8.issO é ÜM4 stRin8888 codificada em ISO8859-1."));
             assertTrue(hts.contains("Essa p4rte está em ISO8859-1"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -113,8 +105,6 @@ public class RawStringParserTest extends TestCase {
             String hts = handler.toString();
             assertTrue(hts.contains("Essa p4rte está em ISO8859-1"));
             assertTrue(hts.contains("Essa pa5te está em UTF16."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -131,8 +121,6 @@ public class RawStringParserTest extends TestCase {
             String hts = handler.toString();
             assertTrue(hts.contains("Essa part3 está em UTF8.i\nssO"));
             assertTrue(hts.contains("Essa pa5te está em UTF16."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -151,8 +139,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts.contains("Essa p4rte está em ISO8859-1issO"));
             assertTrue(hts.contains("Essa part3 está em UTF8."));
             assertTrue(hts.contains("Essa pa5te está em UTF16."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -171,8 +157,6 @@ public class RawStringParserTest extends TestCase {
         parser.getSupportedTypes(context);
         try (InputStream stream = getStream("test-files/test_utf16iso88591utf8")) {
             parser.parse(stream, handler, metadata, context);
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -190,8 +174,6 @@ public class RawStringParserTest extends TestCase {
             assertTrue(hts.contains("Essa p4rte está em ISO8859-1issO"));
             assertTrue(hts.contains("Essa part3 está em UTF8."));
             assertTrue(hts.contains("Essa pa5te está em UTF16."));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

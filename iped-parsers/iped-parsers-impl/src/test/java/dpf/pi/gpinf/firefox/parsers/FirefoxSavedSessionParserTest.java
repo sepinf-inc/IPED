@@ -39,8 +39,6 @@ public class FirefoxSavedSessionParserTest extends TestCase {
             assertTrue(hts.contains(".github.com"));
             assertTrue(hts.contains("America%2FSao_Paulo"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

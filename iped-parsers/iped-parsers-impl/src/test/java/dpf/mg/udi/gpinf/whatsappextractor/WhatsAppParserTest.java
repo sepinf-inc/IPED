@@ -5,6 +5,7 @@ import java.io.InputStream;
 
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
@@ -14,13 +15,11 @@ import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 
 public class WhatsAppParserTest extends AbstractPkgTest {
 
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
-
     @Test
     public void testWhatsAppParserAndroid() throws IOException, SAXException, TikaException {
 
+        String testFile = "test-files/test_whatsAppMsgStore.db";
+        ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
@@ -29,7 +28,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setMergeDbs(false);
         parser.getSupportedTypes(whatsappContext);
-        try (InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")) {
+        try (InputStream stream = getStream(testFile)) {
             parser.parse(stream, handler, metadata, whatsappContext);
             assertEquals(103, whatsapptracker.title.size());
             assertEquals(0, whatsapptracker.username.size());
@@ -42,11 +41,11 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals(4, whatsapptracker.messageto.size());
             assertEquals(74, whatsapptracker.messagedate.size());
 
-            assertEquals("WhatsApp Chat - 556183125151", whatsapptracker.title.get(0));
-            assertEquals("WhatsApp Chat - 556183125151_message_0", whatsapptracker.title.get(1));
-            assertEquals("WhatsApp Chat - 556183125151_message_1", whatsapptracker.title.get(2));
-            assertEquals("WhatsApp Chat - 556183125151_message_2", whatsapptracker.title.get(3));
-            assertEquals("WhatsApp Chat - 556183125151_message_3", whatsapptracker.title.get(4));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151", whatsapptracker.title.get(0));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_0", whatsapptracker.title.get(1));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_1", whatsapptracker.title.get(2));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_2", whatsapptracker.title.get(3));
+            assertEquals("WhatsApp Chat - Nickerida - 556183125151_message_3", whatsapptracker.title.get(4));
             assertEquals("WhatsApp Group - Lar_message_1", whatsapptracker.title.get(61));
             assertEquals("WhatsApp Group - Lar_message_2", whatsapptracker.title.get(62));
 
@@ -61,7 +60,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(0));
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(1));
             assertEquals("unknownAccount@", whatsapptracker.messagefrom.get(2));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messagefrom.get(3));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messagefrom.get(3));
 
             assertEquals("This is a test for the IPED Whatsapp Parser.", whatsapptracker.messagebody.get(0));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(1));
@@ -71,9 +70,9 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("! USER_JOINED_GROUP", whatsapptracker.messagebody.get(42));
             assertEquals("! MESSAGES_NOW_ENCRYPTED", whatsapptracker.messagebody.get(43));
 
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(0));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(1));
-            assertEquals("556183125151@s.whatsapp.net", whatsapptracker.messageto.get(2));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(0));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(1));
+            assertEquals("Nickerida (556183125151@s.whatsapp.net)", whatsapptracker.messageto.get(2));
             assertEquals("unknownAccount@", whatsapptracker.messageto.get(3));
 
             assertEquals("2021-06-14T18:55:54Z", whatsapptracker.messagedate.get(0));
@@ -84,9 +83,6 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("2016-04-29T21:15:08Z", whatsapptracker.messagedate.get(42));
             assertEquals("2021-06-14T18:52:46Z", whatsapptracker.messagedate.get(43));
 
-        } catch (Exception e) {
-            System.out.println(e);
-
         }
 
     }
@@ -94,6 +90,8 @@ public class WhatsAppParserTest extends AbstractPkgTest {
     @Test
     public void testWhatsAppParserMergeDBAndroid() throws IOException, SAXException, TikaException {
 
+        String testFile = "test-files/test_whatsAppMsgStore.db";
+        ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-db");
@@ -101,17 +99,17 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setMergeDbs(true);
         parser.getSupportedTypes(whatsappContext);
-        try (InputStream stream = getStream("test-files/test_whatsAppMsgStore.db")) {
+        try (InputStream stream = getStream(testFile)) {
             // parser.parse(stream, handler, metadata, whatsappContext);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
     @Test
     public void testWhatsAppParserWADBAndroid() throws IOException, SAXException, TikaException {
 
+        String testFile = "test-files/test_whatsApp.db";
+        ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-wadb");
@@ -119,7 +117,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setMergeDbs(false);
         parser.getSupportedTypes(whatsappContext);
-        try (InputStream stream = getStream("test-files/test_whatsApp.db")) {
+        try (InputStream stream = getStream(testFile)) {
             parser.parse(stream, handler, metadata, whatsappContext);
 
             assertEquals(384, whatsapptracker.title.size());
@@ -174,8 +172,6 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("Leve seus sonhos a sério", whatsapptracker.usernotes.get(163));
             assertEquals("Disponível", whatsapptracker.usernotes.get(164));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -183,6 +179,8 @@ public class WhatsAppParserTest extends AbstractPkgTest {
     @Test
     public void testWhatsAppParserUserXMLAndroid() throws IOException, SAXException, TikaException {
 
+        String testFile = "test-files/test_whatsAppPreferences.xml";
+        ParseContext whatsappContext = getContext(testFile);
         WhatsAppParser parser = new WhatsAppParser();
         Metadata metadata = new Metadata();
         metadata.add(IndexerDefaultParser.INDEXER_CONTENT_TYPE, "application/x-whatsapp-user-xml");
@@ -190,7 +188,7 @@ public class WhatsAppParserTest extends AbstractPkgTest {
         parser.setExtractMessages(true);
         parser.setMergeDbs(false);
         parser.getSupportedTypes(whatsappContext);
-        try (InputStream stream = getStream("test-files/test_whatsAppPreferences.xml")) {
+        try (InputStream stream = getStream(testFile)) {
             parser.parse(stream, handler, metadata, whatsappContext);
 
             assertEquals(1, whatsapptracker.title.size());
@@ -209,8 +207,6 @@ public class WhatsAppParserTest extends AbstractPkgTest {
             assertEquals("@s.whatsapp.net", whatsapptracker.useraccount.get(0));
             assertEquals("", whatsapptracker.usernotes.get(0));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

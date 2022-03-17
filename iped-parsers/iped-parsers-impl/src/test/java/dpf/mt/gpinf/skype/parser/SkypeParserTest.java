@@ -5,26 +5,28 @@ import java.io.InputStream;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.BodyContentHandler;
 import org.junit.Test;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
-public class SkypeParserTest extends AbstractPkgTest {
+import dpf.sp.gpinf.indexer.parsers.util.BaseItemSearchContext;
 
-    private static InputStream getStream(String name) {
-        return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
-    }
+public class SkypeParserTest extends BaseItemSearchContext {
 
     @Test
     public void testSkypeParserV12() throws IOException, SAXException, TikaException {
 
+        String file = "test-files/test_skypeS4lStreeguil1.db";
+        ParseContext skypeContext = getContext(file);
         SkypeParser parser = new SkypeParser();
         ContentHandler handler = new BodyContentHandler();
+        Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype-v12").toString());
         parser.getSupportedTypes(skypeContext);
         parser.setExtractMessages(true);
-        try (InputStream stream = getStream("test-files/test_skypeS4lStreeguil1.db")) {
+        try (InputStream stream = getStream(file)) {
             parser.parse(stream, handler, metadata, skypeContext);
             String hts = handler.toString();
             String mts = metadata.toString();
@@ -55,20 +57,21 @@ public class SkypeParserTest extends AbstractPkgTest {
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_segments"));
             assertTrue(mts.contains("database:table_name=conversationsv14_searchTerms_content"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
     @Test
     public void testSkypeParserV8() throws IOException, SAXException, TikaException {
         // Database created using SKYPERIOUS
+        String file = "test-files/test_skypeMain.db";
+        ParseContext skypeContext = getContext(file);
         SkypeParser parser = new SkypeParser();
+        Metadata metadata = new Metadata();
         metadata.add(Metadata.CONTENT_TYPE, MediaType.application("sqlite-skype").toString());
         ContentHandler handler = new BodyContentHandler();
         parser.getSupportedTypes(skypeContext);
         parser.setExtractMessages(true);
-        try (InputStream stream = getStream("test-files/test_skypeMain.db")) {
+        try (InputStream stream = getStream(file)) {
             parser.parse(stream, handler, metadata, skypeContext);
             String hts = handler.toString();
             String mts = metadata.toString();
@@ -96,8 +99,6 @@ public class SkypeParserTest extends AbstractPkgTest {
             assertTrue(mts.contains("database:table_name=Participants"));
             assertTrue(mts.contains("Content-Type=application/sqlite-skype"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }
