@@ -38,10 +38,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
@@ -141,6 +141,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     // a global hashmap to prevent redownload files;
     private static final Map<String, IItem> hashesDownloaded = new HashMap<>();
+    private static final AtomicInteger downloadedFiles = new AtomicInteger(0);
 
     private static final Pattern MSGSTORE_BKP = Pattern.compile("msgstore-\\d{4}-\\d{2}-\\d{2}"); //$NON-NLS-1$
     private static final String MSGSTORE_CRYPTO = "msgstore.db.crypt"; //$NON-NLS-1$
@@ -235,13 +236,9 @@ public class WhatsAppParser extends SQLite3DBParser {
             ParseContext context) throws Exception {
         int chatVirtualId = 0;
         HashMap<String, String> cache = new HashMap<>();
-        AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
-        ExecutorService e = Executors.newFixedThreadPool(POOL_SIZE);
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context,
-                    DOWNLOADED_FILES, e);
-            waitExecutor((ThreadPoolExecutor) e);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -299,9 +296,6 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
             // clear heavy items references (possibly with thumbs loaded)
             c.getMessages().stream().forEach(m -> m.setMediaItem(null));
-        }
-        if (DOWNLOADED_FILES.get() > 0) {
-            logger.info("Downloaded {} files from {}", DOWNLOADED_FILES.get(), dbPath.getName());
         }
 
     }
@@ -368,20 +362,15 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private static final void waitExecutor(ThreadPoolExecutor e) {
-        e.shutdown();
-        long pending = e.getQueue().size();
-        if (pending <= 0 && e.getCompletedTaskCount() >= pending) {
-            return;
-        }
+    private static final void waitDownloads(ExecutorService executor, List<Future<?>> futures) {
         try {
-            e.awaitTermination(1 + pending, TimeUnit.SECONDS);
-        } catch (InterruptedException e1) {
-            // TODO Auto-generated catch block
-            System.out.print("aaa");
-            e1.printStackTrace();
+            for (Future<?> f : futures) {
+                f.get();
+            }
+        } catch (InterruptedException | ExecutionException e) {
+            e.printStackTrace();
         }
-
+        executor.shutdown();
     }
 
     private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -394,15 +383,15 @@ public class WhatsAppParser extends SQLite3DBParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            AtomicInteger DOWNLOADED_FILES = new AtomicInteger(0);
-            ThreadPoolExecutor e = (ThreadPoolExecutor) Executors.newFixedThreadPool(POOL_SIZE);
+            ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
+            ArrayList<Future<?>> futures = new ArrayList<>();
             for (Chat c : wcontext.getChalist()) {
-                searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getTempFile(), context, DOWNLOADED_FILES, e);
+                futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
+                        wcontext.getItem().getTempFile(), context, executor));
             }
-            waitExecutor(e);
-            if (DOWNLOADED_FILES.get() > 0) {
-                logger.info("Downloaded {} files from {}", DOWNLOADED_FILES.get(), wcontext.getItem().getName());
+            waitDownloads(executor, futures);
+            if (downloadedFiles.get() > 0) {
+                logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
             }
         }
 
@@ -1134,12 +1123,12 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private void searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
+    private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger DOWNLOADED_FILES, ExecutorService e) {
+            ExecutorService executor) {
 
         if (searcher == null) {
-            return;
+            return Collections.emptyList();
         }
         List<List<Message>> listsToProcess = new ArrayList<>();
         List<Message> messagesToProcess = new ArrayList<>();
@@ -1160,10 +1149,12 @@ public class WhatsAppParser extends SQLite3DBParser {
             listsToProcess.add(messagesToProcess);
         }
 
+        ArrayList<Future<?>> futures = new ArrayList<>();
         for (List<Message> listToProcess : listsToProcess) {
-            searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context, DOWNLOADED_FILES,
-                    e);
+            futures.addAll(searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context,
+                    executor));
         }
+        return futures;
     }
 
     private void setItemToMessage(IItemBase item, List<Message> messageList, String query, boolean isHashQuery) {
@@ -1178,8 +1169,8 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
     }
 
-    private void searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher, ContentHandler handler,
-            EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context, AtomicInteger DOWNLOADED_FILES,
+    private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
+            ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
             ExecutorService executor) {
 
         Map<String, List<Message>> hashesToSearchFor = new HashMap<>();
@@ -1346,7 +1337,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             }
         }
         // if download files from the internet is allowed
-        if (isDownloadMediaFilesEnabled()) {
+        ArrayList<Future<?>> futures = new ArrayList<>();
+        if (isDownloadMediaFilesEnabled() && executor != null) {
             if (!hashesToSearchFor.isEmpty()) {
 
                 ArrayList<LinkDownloader> links = new ArrayList<>();
@@ -1357,7 +1349,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                 } catch (Exception e) {
                     // cannot extract link
                     logger.error("could not extract links from the database");
-                    return;
+                    return futures;
                 }
 
                 for (LinkDownloader ld : links) {
@@ -1393,7 +1385,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 DownloadMetadata.set("downloaded", "true");
 
                                 DownloadMetadata.set(TikaCoreProperties.TITLE,
-                                        "dowloaded_item_" + DOWNLOADED_FILES.incrementAndGet());
+                                        "dowloaded_item_" + downloadedFiles.incrementAndGet());
 
                                 try (FileInputStream out = new FileInputStream(fout)) {
 
@@ -1430,13 +1422,12 @@ public class WhatsAppParser extends SQLite3DBParser {
                         }
                     };
 
-                    executor.execute(r);
-
+                    futures.add(executor.submit(r));
                 }
 
             }
         }
-
+        return futures;
     }
 
     /**
