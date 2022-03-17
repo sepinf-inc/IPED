@@ -56,7 +56,7 @@ public class DecryptFile {
         try (FileInputStream fin = new FileInputStream(f)) {
             byte[] buff = new byte[8 * 1024];
             int cont = 0, tot = 0;
-            while ((cont = fin.read(buff)) > 0) {
+            while ((cont = fin.read(buff)) >= 0) {
 
                 if (tot + cont >= f.length() - 10) {
                     cont = (int) (f.length() - 10 - tot);

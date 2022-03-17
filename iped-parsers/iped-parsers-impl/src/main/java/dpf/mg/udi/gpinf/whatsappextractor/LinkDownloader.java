@@ -36,7 +36,7 @@ public class LinkDownloader {
                 MessageDigest digest = MessageDigest.getInstance("SHA-256");
                 DigestInputStream digestInput = new DigestInputStream(new BufferedInputStream(input), digest);
                 byte[] buffer = new byte[1024 * 8];
-                while (digestInput.read(buffer) > 0)
+                while (digestInput.read(buffer) >= 0)
                     ;
                 digestInput.close();
                 return getHex(digest.digest());
