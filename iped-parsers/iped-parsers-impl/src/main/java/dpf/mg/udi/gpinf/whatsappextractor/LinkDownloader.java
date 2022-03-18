@@ -21,6 +21,8 @@ public class LinkDownloader {
     private byte[] cipherKey;
     private byte[] iv;
     private String hash;
+    private int connTimeout;
+    private int readTimeout;
 
     public String getUrl() {
         return urlStr;
@@ -58,8 +60,8 @@ public class LinkDownloader {
         HttpURLConnection connection = null;
         try {
             connection = (HttpURLConnection) url.openConnection();
-            connection.setConnectTimeout(150);
-            connection.setReadTimeout(500);
+            connection.setConnectTimeout(connTimeout);
+            connection.setReadTimeout(readTimeout);
             connection.setRequestMethod("HEAD");
             status = connection.getResponseCode();
         } catch (IOException e) {
@@ -69,15 +71,17 @@ public class LinkDownloader {
                 connection.disconnect();
         }
         if (status == 200) {
-            FileUtils.copyURLToFile(url, tmp, 500, 500);
+            FileUtils.copyURLToFile(url, tmp, connTimeout, readTimeout);
         } else {
             throw new URLnotFound();
         }
     }
 
-    public LinkDownloader(String url, String ext, String hash, byte[] cipherKey, byte[] iv) {
-        urlStr = url;
+    public LinkDownloader(String url, String hash, int connTimeout, int readTimeout, byte[] cipherKey, byte[] iv) {
+        this.urlStr = url;
         this.hash = base64Decode(hash);
+        this.connTimeout = connTimeout;
+        this.readTimeout = readTimeout;
         setFileName(hash);
 
         this.cipherKey = cipherKey;
