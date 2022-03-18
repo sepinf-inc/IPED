@@ -147,6 +147,8 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final int POOL_SIZE = 20;
 
+    private static ExecutorService executor;
+
     private static final AtomicInteger backupsMerged = new AtomicInteger();
 
     private static boolean dbsSearchedFor = false;
@@ -252,8 +254,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         HashMap<String, String> cache = new HashMap<>();
         for (Chat c : chatList) {
             getAvatar(searcher, c.getRemote());
-            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context,
-                    null, null);
+            searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor, dbPath, context, null);
             int frag = 0;
             int firstMsg = 0;
             ReportGenerator reportGenerator = new ReportGenerator();
@@ -376,7 +377,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     }
 
-    private static final void waitDownloads(ExecutorService executor, List<Future<?>> futures) {
+    private static final void waitDownloads(List<Future<?>> futures) {
         try {
             for (Future<?> f : futures) {
                 f.get();
@@ -384,7 +385,29 @@ public class WhatsAppParser extends SQLite3DBParser {
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
         }
-        executor.shutdown();
+
+    }
+
+    private ExecutorService getExecutor() {
+        if (executor == null) {
+            synchronized (this.getClass()) {
+                if (executor == null) {
+                    executor = Executors.newFixedThreadPool(POOL_SIZE);
+                }
+            }
+        }
+        return executor;
+    }
+
+    public static final void clearStaticResources() {
+        try {
+            Message.closeStaticResources();
+        } catch (IOException e) {
+            logger.warn("Fail to clear resources from WhatsAppParser", e);
+        }
+        if (executor != null) {
+            executor.shutdown();
+        }
     }
 
     private void parseAndCheckIfIsMainDb(InputStream stream, ContentHandler handler, Metadata metadata,
@@ -397,14 +420,13 @@ public class WhatsAppParser extends SQLite3DBParser {
             EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                     new ParsingEmbeddedDocumentExtractor(context));
             IItemSearcher searcher = context.get(IItemSearcher.class);
-            ExecutorService executor = Executors.newFixedThreadPool(POOL_SIZE);
             ArrayList<Future<?>> futures = new ArrayList<>();
             AtomicInteger downloadedFiles = new AtomicInteger(0);
             for (Chat c : wcontext.getChalist()) {
                 futures.addAll(searchMediaFilesForMessagesInBatches(c.getMessages(), searcher, handler, extractor,
-                        wcontext.getItem().getTempFile(), context, downloadedFiles, executor));
+                        wcontext.getItem().getTempFile(), context, downloadedFiles));
             }
-            waitDownloads(executor, futures);
+            waitDownloads(futures);
             if (downloadedFiles.get() > 0) {
                 logger.info("Downloaded {} files from {}", downloadedFiles.get(), wcontext.getItem().getName());
             }
@@ -618,7 +640,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                 logger.info("Clearing remaining whatsapp decoded data from cache.");
                 dbsFound.values().stream().filter(wacontext -> wacontext.getChalist() != null)
                         .forEach(wacontext -> wacontext.getChalist().clear());
-                Message.closeStaticResources();
             }
         }
 
@@ -1140,7 +1161,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessagesInBatches(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles, ExecutorService executor) {
+            AtomicInteger downloadedFiles) {
 
         if (searcher == null) {
             return Collections.emptyList();
@@ -1167,7 +1188,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         ArrayList<Future<?>> futures = new ArrayList<>();
         for (List<Message> listToProcess : listsToProcess) {
             futures.addAll(searchMediaFilesForMessages(listToProcess, searcher, handler, extractor, dbPath, context,
-                    downloadedFiles, executor));
+                    downloadedFiles));
         }
         return futures;
     }
@@ -1183,7 +1204,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private List<Future<?>> searchMediaFilesForMessages(List<Message> messages, IItemSearcher searcher,
             ContentHandler handler, EmbeddedDocumentExtractor extractor, File dbPath, ParseContext context,
-            AtomicInteger downloadedFiles, ExecutorService executor) {
+            AtomicInteger downloadedFiles) {
         
         // just save heavy item refs if creating report, per chat, not per database
         boolean saveItemRef = downloadedFiles == null;
@@ -1333,7 +1354,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         }
         // if download files from the internet is allowed
         ArrayList<Future<?>> futures = new ArrayList<>();
-        if (isDownloadMediaFilesEnabled() && executor != null && downloadedFiles != null) {
+        if (isDownloadMediaFilesEnabled() && downloadedFiles != null) {
             if (!hashesToSearchFor.isEmpty()) {
 
                 ArrayList<LinkDownloader> links = new ArrayList<>();
@@ -1390,7 +1411,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                         }
                     };
 
-                    futures.add(executor.submit(r));
+                    futures.add(getExecutor().submit(r));
                 }
 
             }
