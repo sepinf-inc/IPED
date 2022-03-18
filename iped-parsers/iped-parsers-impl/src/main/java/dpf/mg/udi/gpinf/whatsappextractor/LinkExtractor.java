@@ -32,15 +32,20 @@ import com.whatsapp.MediaData;
  * @author PCF HAUCK
  */
 public class LinkExtractor implements Closeable {
+
+    private static final Logger logger = Logger.getLogger(LinkExtractor.class.getName());
+
+    private File dbFile;
     private Connection con;
     private HashSet<String> hashes;
     private ArrayList<LinkDownloader> links;
     private int connTimeout;
     private int readTimeout;
 
-    public LinkExtractor(File dbPath, HashSet<String> hashes, int connTimeout, int readTimeout) {
+    public LinkExtractor(File dbFile, HashSet<String> hashes, int connTimeout, int readTimeout) {
+        this.dbFile = dbFile;
         this.hashes = hashes;
-        this.con = createConnection(dbPath.getAbsolutePath());
+        this.con = createConnection(dbFile.getAbsolutePath());
         this.connTimeout = connTimeout;
         this.readTimeout = readTimeout;
         links = new ArrayList<>();
@@ -50,7 +55,8 @@ public class LinkExtractor implements Closeable {
         try {
             return DriverManager.getConnection("jdbc:sqlite:" + dbname);
         } catch (Exception ex) {
-            System.err.println(ex.toString());
+            String msg = "Error getting connection when processing " + dbFile.getAbsolutePath();
+            logger.log(Level.FINE, msg, ex);
         }
 
         return null;
@@ -126,7 +132,8 @@ public class LinkExtractor implements Closeable {
                 return cpk;
             }
         } catch (Exception ex) {
-            Logger.getLogger(LinkExtractor.class.getName()).log(Level.SEVERE, null, ex);
+            String msg = "Error getting cipher key when processing " + dbFile.getAbsolutePath();
+            logger.log(Level.FINE, msg, ex);
         }
         return null;
 
@@ -149,7 +156,8 @@ public class LinkExtractor implements Closeable {
                 return iv;
             }
         } catch (Exception ex) {
-            Logger.getLogger(LinkExtractor.class.getName()).log(Level.SEVERE, null, ex);
+            String msg = "Error getting IV when processing " + dbFile.getAbsolutePath();
+            logger.log(Level.FINE, msg, ex);
         }
         return null;
     }
