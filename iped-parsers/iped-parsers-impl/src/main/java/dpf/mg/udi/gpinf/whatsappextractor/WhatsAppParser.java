@@ -316,7 +316,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             } finally {
                 tmp.dispose();
-                Message.closeStaticResources();
             }
         }
     }

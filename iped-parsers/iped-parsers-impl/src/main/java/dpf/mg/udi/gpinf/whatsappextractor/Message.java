@@ -72,8 +72,10 @@ public class Message {
     }
 
     public static void closeStaticResources() throws IOException {
-        fileChannel.truncate(0);
-        fileChannel.close();
+        if (fileChannel.isOpen()) {
+            fileChannel.truncate(0);
+            fileChannel.close();
+        }
         thumbsfile.delete();
     }
 
