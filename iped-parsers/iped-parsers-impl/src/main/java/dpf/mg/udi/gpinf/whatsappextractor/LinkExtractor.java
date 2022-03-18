@@ -25,6 +25,7 @@ import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.macs.HMac;
 import org.bouncycastle.crypto.params.KeyParameter;
 
+import com.drew.lang.Charsets;
 import com.whatsapp.MediaData;
 
 /**
@@ -113,53 +114,34 @@ public class LinkExtractor implements Closeable {
         }
     }
 
-    public byte[] getCipherKey(byte[] rawData) {
+    private byte[] deriveCipherKey(byte[] mediakey) {
 
+        HKDF hkg = new HKDF();
+
+        byte[] key = hkg.expand(hkg.extract(new byte[32], mediakey), mediaType.getBytes(Charsets.UTF_8), 112);
+
+        return key;
+
+    }
+
+    public byte[] getCipherKey(byte[] rawData, byte[] mediakey) {
+        if (mediakey != null) {
+            return deriveCipherKey(mediakey);
+        }
         try {
             ByteArrayInputStream bis = new ByteArrayInputStream(rawData);
             ObjectInput in = new ObjectInputStream(bis);
             MediaData media = (MediaData) in.readObject();
-
-            if (media.cipherKey != null)
-                return media.cipherKey;
-            else if (media.mediaKey != null) {
-                HKDF hkg = new HKDF();
-
-                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
-
-                byte[] cpk = Arrays.copyOfRange(key, 16, 48);
-
-                return cpk;
+            if (media.mediaKey != null) {
+                return deriveCipherKey(media.mediaKey);
             }
+
         } catch (Exception ex) {
             String msg = "Error getting cipher key when processing " + dbFile.getAbsolutePath();
             logger.log(Level.WARNING, msg, ex);
         }
         return null;
 
-    }
-
-    public byte[] getIV(byte[] rawData) {
-        try {
-            ByteArrayInputStream bis = new ByteArrayInputStream(rawData);
-            ObjectInput in = new ObjectInputStream(bis);
-            MediaData media = (MediaData) in.readObject();
-            if (media.iv != null) {
-                return media.iv;
-            } else if (media.mediaKey != null) {
-                HKDF hkg = new HKDF();
-
-                byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
-
-                byte[] iv = Arrays.copyOfRange(key, 0, 16);
-
-                return iv;
-            }
-        } catch (Exception ex) {
-            String msg = "Error getting IV when processing " + dbFile.getAbsolutePath();
-            logger.log(Level.WARNING, msg, ex);
-        }
-        return null;
     }
 
     private String mediaType = "";
@@ -213,16 +195,19 @@ public class LinkExtractor implements Closeable {
                 tipo = tipo.substring(tipo.indexOf("/") + 1);
 
                 byte[] rawData = rs.getBytes("data");
-                byte[] cipherkey = getCipherKey(rawData);
-                byte[] iv = getIV(rawData);
-                if (cipherkey == null || iv == null) {
+                byte[] key = getCipherKey(rawData, rs.getBytes("mediaKey"));
+                if (key != null) {
+                    byte[] cipherkey = Arrays.copyOfRange(key, 16, 48);
+                    byte[] iv = Arrays.copyOfRange(key, 0, 16);
+                    LinkDownloader ld = new LinkDownloader(link, hash, connTimeout, readTimeout, cipherkey, iv);
+                    if (ld.getHash() != null && ld.getFileName() != null) {
+                        links.add(ld);
+                    }
+                } else {
                     tot++;
                 }
 
-                LinkDownloader ld = new LinkDownloader(link, hash, connTimeout, readTimeout, cipherkey, iv);
-                if (ld.getHash() != null && ld.getFileName() != null) {
-                    links.add(ld);
-                }
+
             }
         }
 
@@ -243,7 +228,7 @@ public class LinkExtractor implements Closeable {
         return links;
     }
 
-    public static final String sql_android = "SELECT media_url as url,media_hash as hash ,media_mime_type as tipo,thumb_image as data,_id from messages "
-            + "where media_url like '%whatsapp%.enc' and media_hash is not null and media_hash in (?) group by url";
+    public static final String sql_android = "SELECT m.media_url as url,m.media_hash as hash ,m.media_mime_type as tipo,m.thumb_image as data, m._id, mm.media_key as mediaKey FROM messages m LEFT JOIN message_media mm on m._id=mm.message_row_id "
+            + "where m.media_url like '%whatsapp%.enc' and m.media_hash is not null and m.media_hash in (?) group by url";
 
 }
