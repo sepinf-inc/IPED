@@ -237,13 +237,12 @@ public class Worker extends Thread {
                             this.wait();
                         }
                     } else {
-                        LOGGER.debug(this.getName() + " Queue size = " + caseData.getItemQueue().size()
-                                + " itemsInThisWorker = " + itensBeingProcessed + " itemsInAllWorkers = "
-                                + manager.numItensBeingProcessed());
-
                         caseData.getItemQueue().addLast(queueEnd);
                         long timeSinceLastItemProcessed = System.currentTimeMillis() - lastItemProcessingTime;
                         if (itensBeingProcessed > 0 && timeSinceLastItemProcessed >= MIN_WAIT_TIME_TO_SEND_QUEUE_END) {
+                            LOGGER.debug(this.getName() + " Queue size = " + caseData.getItemQueue().size()
+                                    + " itemsInThisWorker = " + itensBeingProcessed + " itemsInAllWorkers = "
+                                    + manager.numItensBeingProcessed());
                             process(queueEnd);
                         } else {
                             // no items accumulated in this worker, wait some time to increase
