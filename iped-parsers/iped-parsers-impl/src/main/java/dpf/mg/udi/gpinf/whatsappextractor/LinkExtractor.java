@@ -35,10 +35,14 @@ public class LinkExtractor implements Closeable {
     private Connection con;
     private HashSet<String> hashes;
     private ArrayList<LinkDownloader> links;
+    private int connTimeout;
+    private int readTimeout;
 
-    public LinkExtractor(File dbPath, HashSet<String> hashes) {
+    public LinkExtractor(File dbPath, HashSet<String> hashes, int connTimeout, int readTimeout) {
         this.hashes = hashes;
         this.con = createConnection(dbPath.getAbsolutePath());
+        this.connTimeout = connTimeout;
+        this.readTimeout = readTimeout;
         links = new ArrayList<>();
     }
 
@@ -207,7 +211,7 @@ public class LinkExtractor implements Closeable {
                     tot++;
                 }
 
-                LinkDownloader ld = new LinkDownloader(link, tipo, hash, cipherkey, iv);
+                LinkDownloader ld = new LinkDownloader(link, hash, connTimeout, readTimeout, cipherkey, iv);
                 if (ld.getHash() != null && ld.getFileName() != null) {
                     links.add(ld);
                 }

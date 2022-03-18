@@ -136,8 +136,6 @@ public class WhatsAppParser extends SQLite3DBParser {
 
     private static final int MESSAGE_SEARCH_BATCH_SIZE = 512;
 
-    private static final boolean FALLBACK_FILENAME_APPROX_SIZE = true;
-
     // a global set to prevent redownload files;
     private static final Set<String> hashesDownloaded = Collections.synchronizedSet(new HashSet<>());
 
@@ -150,7 +148,6 @@ public class WhatsAppParser extends SQLite3DBParser {
     private static final int POOL_SIZE = 20;
 
     private static final AtomicInteger backupsMerged = new AtomicInteger();
-    private boolean mergeDbs = false;
 
     private static boolean dbsSearchedFor = false;
     private static int dbsSearchedForAndAdded = 0;
@@ -163,6 +160,10 @@ public class WhatsAppParser extends SQLite3DBParser {
     private SQLite3Parser sqliteParser = new SQLite3Parser();
 
     private boolean extractMessages = true;
+    private boolean linkMediasByNameAndApproxSizeFallback = true;
+    private boolean mergeBackups = false;
+    private int downloadConnectionTimeout = 500;
+    private int downloadReadTimeout = 500;
 
     @Override
     public Set<MediaType> getSupportedTypes(ParseContext arg0) {
@@ -180,8 +181,23 @@ public class WhatsAppParser extends SQLite3DBParser {
     }
 
     @Field
-    public void setMergeDbs(boolean mergeDbs) {
-        this.mergeDbs = mergeDbs;
+    public void setMergeBackups(boolean mergeBackups) {
+        this.mergeBackups = mergeBackups;
+    }
+
+    @Field
+    public void setLinkMediasByNameAndApproxSizeFallback(boolean linkMediasByNameAndApproxSizeFallback) {
+        this.linkMediasByNameAndApproxSizeFallback = linkMediasByNameAndApproxSizeFallback;
+    }
+
+    @Field
+    public void setDownloadConnectionTimeout(int downloadConnectionTimeout) {
+        this.downloadConnectionTimeout = downloadConnectionTimeout;
+    }
+
+    @Field
+    public void setDownloadReadTimeout(int downloadReadTimeout) {
+        this.downloadReadTimeout = downloadReadTimeout;
     }
 
     private boolean isDownloadMediaFilesEnabled() {
@@ -208,7 +224,7 @@ public class WhatsAppParser extends SQLite3DBParser {
             } else if (mimetype.equals(WA_USER_PLIST.toString())) {
                 parseWhatsAppAccount(stream, context, handler, false);
             } else if (mimetype.equals(MSG_STORE.toString())) {
-                if (mergeDbs || isDownloadMediaFilesEnabled())
+                if (mergeBackups || isDownloadMediaFilesEnabled())
                     parseAndCheckIfIsMainDb(stream, handler, metadata, context, new ExtractorAndroidFactory());
                 else
                     parseWhatsappMessages(stream, handler, metadata, context, new ExtractorAndroidFactory());
@@ -513,7 +529,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
             List<Chat> dbChatList = wcontext.getChalist();
             // if merge is not enable create a report for every db
-            if (!mergeDbs) {
+            if (!mergeBackups) {
                 EmbeddedDocumentExtractor extractor = context.get(EmbeddedDocumentExtractor.class,
                         new ParsingEmbeddedDocumentExtractor(context));
                 createReport(dbChatList, searcher, contacts, handler, extractor, account, tmpDB, context);
@@ -1262,7 +1278,7 @@ public class WhatsAppParser extends SQLite3DBParser {
         // see https://github.com/sepinf-inc/IPED/issues/486
         // try to to find by name and by approximate size, then check if it ends with
         // zeros
-        if (FALLBACK_FILENAME_APPROX_SIZE) {
+        if (linkMediasByNameAndApproxSizeFallback) {
             if (!hashesToSearchFor.isEmpty()) {
                 Map<String, List<Message>> fallBackFileNamesToSearchFor = new HashMap<>();
                 for (List<Message> messageList : hashesToSearchFor.values()) {
@@ -1321,7 +1337,8 @@ public class WhatsAppParser extends SQLite3DBParser {
             if (!hashesToSearchFor.isEmpty()) {
 
                 ArrayList<LinkDownloader> links = new ArrayList<>();
-                try (LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()))) {
+                try (LinkExtractor le = new LinkExtractor(dbPath, new HashSet<String>(hashesToSearchFor.keySet()),
+                        downloadConnectionTimeout, downloadReadTimeout)) {
                     le.extractLinks();
                     links = le.getLinks();
 
