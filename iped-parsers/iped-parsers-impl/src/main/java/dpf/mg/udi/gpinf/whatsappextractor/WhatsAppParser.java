@@ -1365,7 +1365,7 @@ public class WhatsAppParser extends SQLite3DBParser {
 
                 } catch (Exception e) {
                     // cannot extract link
-                    logger.error("could not extract links from the database");
+                    logger.warn("Could not extract links from database " + dbPath, e);
                     return futures;
                 }
 
@@ -1389,8 +1389,6 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 Metadata downloadMetadata = new Metadata();
 
                                 downloadMetadata.set(ExtraProperties.DOWNLOADED_DATA, "true");
-                                // TODO make this work properly
-                                // downloadMetadata.set("sha-256", ld.getHash());
                                 downloadMetadata.set(TikaCoreProperties.TITLE,
                                         "Dowloaded_item_" + downloadedFiles.incrementAndGet());
 
@@ -1404,8 +1402,7 @@ public class WhatsAppParser extends SQLite3DBParser {
                                 // do not log this error as it is expected
 
                             } catch (Exception e) {
-                                // TODO: handle exception
-                                e.printStackTrace(System.out);
+                                logger.warn("Error trying to download medias referenced by " + dbPath, e);
                             }
 
                         }
