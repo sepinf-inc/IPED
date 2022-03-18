@@ -808,7 +808,7 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
     public void finish() throws Exception {
         if (totalText != null) {
             LOGGER.info("Total extracted text size: " + totalText.get()); //$NON-NLS-1$
-            dpf.mg.udi.gpinf.whatsappextractor.Message.closeStaticResources();
+            WhatsAppParser.clearStaticResources();
         }
         totalText = null;
     }

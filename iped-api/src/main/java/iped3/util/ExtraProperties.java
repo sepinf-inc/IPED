@@ -130,6 +130,8 @@ public class ExtraProperties {
 
     public static final String DECODED_DATA = "isDecodedData";
 
+    public static final String DOWNLOADED_DATA = "downloadedData";
+
     public static final List<String> EMAIL_BASIC_PROPS = Arrays.asList(MESSAGE_SUBJECT, MESSAGE_DATE.getName(),
             MESSAGE_BODY, Message.MESSAGE_FROM, Message.MESSAGE_TO, Message.MESSAGE_CC, Message.MESSAGE_BCC,
             Message.MESSAGE_RECIPIENT_ADDRESS, MESSAGE_IS_ATTACHMENT, MESSAGE_ATTACHMENT_COUNT.getName());
