@@ -112,7 +112,7 @@ public class LinkExtractor implements Closeable {
 
             if (media.cipherKey != null)
                 return media.cipherKey;
-            else {
+            else if (media.mediaKey != null) {
                 HKDF hkg = new HKDF();
 
                 byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
@@ -135,7 +135,7 @@ public class LinkExtractor implements Closeable {
             MediaData media = (MediaData) in.readObject();
             if (media.iv != null) {
                 return media.iv;
-            } else {
+            } else if (media.mediaKey != null) {
                 HKDF hkg = new HKDF();
 
                 byte[] key = hkg.expand(hkg.extract(new byte[32], media.mediaKey), mediaType.getBytes("UTF-8"), 112);
