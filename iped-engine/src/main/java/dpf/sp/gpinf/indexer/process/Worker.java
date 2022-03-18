@@ -32,7 +32,6 @@ import dpf.sp.gpinf.indexer.localization.Messages;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.TaskInstaller;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
 
@@ -52,6 +51,9 @@ public class Worker extends Thread {
     private static Logger LOGGER = LoggerFactory.getLogger(Worker.class);
 
     private static String workerNamePrefix = "Worker-"; //$NON-NLS-1$
+
+    private static final int MIN_WAIT_TIME_TO_SEND_QUEUE_END = 3000;
+    private static volatile long lastItemProcessingTime = 0;
 
     public IndexWriter writer;
     String baseFilePath;
@@ -221,6 +223,7 @@ public class Worker extends Thread {
                 evidence = caseData.getItemQueue().takeFirst();
 
                 if (!evidence.isQueueEnd()) {
+                    lastItemProcessingTime = System.currentTimeMillis();
                     process(evidence);
 
                 } else {
@@ -239,7 +242,8 @@ public class Worker extends Thread {
                                 + manager.numItensBeingProcessed());
 
                         caseData.getItemQueue().addLast(queueEnd);
-                        if (itensBeingProcessed > 0) {
+                        long timeSinceLastItemProcessed = System.currentTimeMillis() - lastItemProcessingTime;
+                        if (itensBeingProcessed > 0 && timeSinceLastItemProcessed >= MIN_WAIT_TIME_TO_SEND_QUEUE_END) {
                             process(queueEnd);
                         } else {
                             // no items accumulated in this worker, wait some time to increase
