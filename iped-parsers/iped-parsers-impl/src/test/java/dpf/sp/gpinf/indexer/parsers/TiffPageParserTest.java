@@ -36,8 +36,6 @@ public class TiffPageParserTest extends TestCase {
             assertTrue(hts.contains("xmlns=\"http://www.w3.org/1999/xhtml\""));
             assertTrue(hts.contains("<meta name=\"tiff:NumPages\" content=\"1\" />"));
             assertTrue(hts.contains("<meta name=\"Content-Type\" content=\"image/tiff\" />"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

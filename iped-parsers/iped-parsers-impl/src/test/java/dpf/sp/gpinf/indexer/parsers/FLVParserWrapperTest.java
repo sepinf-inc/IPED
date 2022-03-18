@@ -28,8 +28,6 @@ public class FLVParserWrapperTest extends TestCase {
         try (InputStream stream = getStream("test-files/test_videoFlv.flv")) {
             parser.parse(stream, handler, metadata, context);
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -65,8 +63,6 @@ public class FLVParserWrapperTest extends TestCase {
             assertEquals("video:compatible_brands=isomiso2avc1iso6mp41", mts.substring(411, 455));
             assertEquals("video:audiosamplesize=16.0", mts.substring(456, 482));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

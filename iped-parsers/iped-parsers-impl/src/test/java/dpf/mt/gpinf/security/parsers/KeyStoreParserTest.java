@@ -36,8 +36,6 @@ public class KeyStoreParserTest extends TestCase {
             assertEquals("application/x-java-keystore", metadata.get(IndexerDefaultParser.INDEXER_CONTENT_TYPE));
             assertEquals("changeit", metadata.get(KeystoreParser.PASSWORD));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -57,8 +55,6 @@ public class KeyStoreParserTest extends TestCase {
             assertEquals("server certificate", metadata.get(TikaCoreProperties.TITLE));
             assertEquals("application/pkix-cert", metadata.get(Metadata.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

@@ -28,8 +28,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/x-gdrive-account-info");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -43,8 +41,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/x-win10-timeline");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -59,8 +55,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/sqlite-skype");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -75,8 +69,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/sqlite-skype-v12");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -90,8 +82,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/x-gdrive-cloud-graph");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -105,8 +95,6 @@ public class SQLiteContainerDetectorTest extends TestCase {
             MediaType assertion = detector.detect(tis, metadata);
             assertEquals(assertion.toString(), "application/x-chrome-sqlite");
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 }

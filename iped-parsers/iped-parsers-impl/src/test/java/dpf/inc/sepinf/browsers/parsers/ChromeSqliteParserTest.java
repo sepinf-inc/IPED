@@ -58,8 +58,6 @@ public class ChromeSqliteParserTest extends AbstractPkgTest {
             assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(2));
             assertEquals("2021-05-12T17:42:03Z", chrometracker.bookmarkcreated.get(3));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

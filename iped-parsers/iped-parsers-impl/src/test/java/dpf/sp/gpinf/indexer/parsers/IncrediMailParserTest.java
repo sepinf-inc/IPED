@@ -35,8 +35,6 @@ public class IncrediMailParserTest extends AbstractPkgTest {
             assertEquals("[cic-bcc-l] Fwd: [cic-secretaria-l] ESTÁGIO - SELEÇÃO", oletracker.documentfolder.get(371));
             assertEquals("Os 5 blogs do seu futuro", oletracker.documentfolder.get(372));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

@@ -45,8 +45,6 @@ public class SQLite3ParserTest extends TestCase {
 
             assertTrue(mts.contains("database:table_name=username_mapping"));
             assertTrue(mts.contains("database:table_name=global_preferences"));
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -75,8 +73,6 @@ public class SQLite3ParserTest extends TestCase {
             assertTrue(mts.contains("database:table_name=Activity"));
             assertTrue(mts.contains("database:table_name=ActivityOperation"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

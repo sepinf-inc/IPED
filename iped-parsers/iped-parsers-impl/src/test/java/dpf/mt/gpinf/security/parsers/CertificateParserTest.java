@@ -88,8 +88,6 @@ public class CertificateParserTest extends TestCase {
             assertEquals("2021-06-01", metadata.get(CertificateParser.NOTBEFORE).substring(0, 10));
             assertEquals("text/plain", metadata.get(HttpHeaders.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -144,8 +142,6 @@ public class CertificateParserTest extends TestCase {
             assertEquals("2021-06-01", metadata.get(CertificateParser.NOTBEFORE).substring(0, 10));
             assertEquals("text/plain", metadata.get(HttpHeaders.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -200,8 +196,6 @@ public class CertificateParserTest extends TestCase {
             assertEquals("2021-06-01", metadata.get(CertificateParser.NOTBEFORE).substring(0, 10));
             assertEquals("text/plain", metadata.get(HttpHeaders.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

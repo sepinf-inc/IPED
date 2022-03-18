@@ -42,8 +42,6 @@ public class GDriveMainParserTest extends TestCase {
 
             assertEquals("application/x-gdrive-cloud-graph", metadata.get(Metadata.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -70,8 +68,6 @@ public class GDriveMainParserTest extends TestCase {
 
             assertEquals("application/x-gdrive-snapshot", metadata.get(Metadata.CONTENT_TYPE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -100,8 +96,6 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(mts.contains("database:table_name=username_mapping database:table_name=global_preferences"));
             assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -127,8 +121,6 @@ public class GDriveMainParserTest extends TestCase {
             assertTrue(mts.contains("database:table_name=data"));
             assertTrue(mts.contains("Content-Type=application/x-gdrive-account-info"));
 
-        } catch (Exception e) {
-            System.out.println();
         }
     }
 }

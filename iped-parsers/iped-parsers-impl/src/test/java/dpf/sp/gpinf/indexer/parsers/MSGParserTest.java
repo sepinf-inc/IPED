@@ -55,8 +55,6 @@ public class MSGParserTest extends AbstractPkgTest {
             assertEquals(0, embeddedTracker.attachmentsMeta.size());
             assertEquals(0, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -86,8 +84,6 @@ public class MSGParserTest extends AbstractPkgTest {
             }
             assertEquals(1, (int) metadata.getInt(ExtraProperties.MESSAGE_ATTACHMENT_COUNT));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

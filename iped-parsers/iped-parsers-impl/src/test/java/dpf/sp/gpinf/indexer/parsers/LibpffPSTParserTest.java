@@ -38,8 +38,6 @@ public class LibpffPSTParserTest {
             String hts = handler.toString();
             String mts = metadata.toString();
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

@@ -83,8 +83,6 @@ public class EdgeWebCacheParserTest {
                     edgetracker.visitUrl.get(10199));
             assertEquals(1427294892000L, edgetracker.visitDate.get(10199).getTime());
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }

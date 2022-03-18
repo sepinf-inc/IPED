@@ -36,8 +36,6 @@ public class CryptoAPIBlobParserTest extends TestCase {
             assertEquals("", metadata.get(CryptoAPIBlobParser.ALIAS));
             assertEquals("false", metadata.get(CryptoAPIBlobParser.HASPRIVATEKEY));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 

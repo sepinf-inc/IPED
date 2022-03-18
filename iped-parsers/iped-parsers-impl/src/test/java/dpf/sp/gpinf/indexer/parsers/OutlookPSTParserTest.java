@@ -31,8 +31,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             parser.parse(stream, handler, metadata, context);
             assertEquals("thisisatest", metadata.get(TikaCoreProperties.TITLE));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -68,8 +66,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             assertEquals(1, psttracker.usernotes.size());
             assertEquals(32, psttracker.contentmd5.size());
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -90,8 +86,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             assertEquals("this is a test message", psttracker.messagesubject.get(0));
             assertEquals("Hello, this\nis a test message.\n\n\n  ", psttracker.messagebody.get(0));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -120,8 +114,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
                     psttracker.messagebody.get(2));
             assertEquals("2021-03-29", psttracker.messagedate.get(1).substring(0, 10));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
@@ -144,8 +136,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             assertEquals("true", psttracker.isattachment.get(0));
             assertEquals("1", psttracker.numberofattachments.get(3));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
 
     }
@@ -168,8 +158,6 @@ public class OutlookPSTParserTest extends AbstractPkgTest {
             assertEquals("Polícia Federal", psttracker.userorganization.get(0));
             assertEquals("github.com/streeg", psttracker.userurls.get(0));
 
-        } catch (Exception e) {
-            System.out.println(e);
         }
     }
 
