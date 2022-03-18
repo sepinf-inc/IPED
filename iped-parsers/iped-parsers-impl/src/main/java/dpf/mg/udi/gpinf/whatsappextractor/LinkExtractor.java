@@ -56,7 +56,7 @@ public class LinkExtractor implements Closeable {
             return DriverManager.getConnection("jdbc:sqlite:" + dbname);
         } catch (Exception ex) {
             String msg = "Error getting connection when processing " + dbFile.getAbsolutePath();
-            logger.log(Level.FINE, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
         }
 
         return null;
@@ -133,7 +133,7 @@ public class LinkExtractor implements Closeable {
             }
         } catch (Exception ex) {
             String msg = "Error getting cipher key when processing " + dbFile.getAbsolutePath();
-            logger.log(Level.FINE, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
         }
         return null;
 
@@ -157,7 +157,7 @@ public class LinkExtractor implements Closeable {
             }
         } catch (Exception ex) {
             String msg = "Error getting IV when processing " + dbFile.getAbsolutePath();
-            logger.log(Level.FINE, msg, ex);
+            logger.log(Level.WARNING, msg, ex);
         }
         return null;
     }
