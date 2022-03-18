@@ -220,6 +220,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_URLS);
         generalKeys.add(ExtraProperties.USER_NOTES);
         generalKeys.add(ExtraProperties.USER_THUMB);
+        generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
 

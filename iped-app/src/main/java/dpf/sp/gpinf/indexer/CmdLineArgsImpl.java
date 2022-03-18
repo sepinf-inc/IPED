@@ -18,6 +18,7 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
 
+import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
@@ -111,6 +112,9 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     @Parameter(names = "--portable", description = "use relative references to forensic images, so case can be moved to other machines if the images are on the same volume")
     private boolean portable;
 
+    @Parameter(names = "--downloadInternetData", description = "download Internet data to enrich evidence data processing. E.g. media files still available in WhatsApp servers and not found in the evidence")
+    private boolean downloadInternetData;
+
     @Parameter(names = { "--help", "-h", "/?" }, help = true, description = "display this help")
     private boolean help;
 
@@ -120,6 +124,11 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     private List<String> allArgs;
 
     private HashSet<String> evidenceNames = new HashSet<>();
+
+    @Override
+    public boolean isDownloadInternetData() {
+        return downloadInternetData;
+    }
 
     @Override
     public List<File> getDatasources() {
@@ -389,6 +398,10 @@ public class CmdLineArgsImpl implements CmdLineArgs {
                 IndexFiles.getInstance().dataSource.add(dataSource);
             }
             checkDuplicateDataSources();
+        }
+
+        if (downloadInternetData) {
+            System.setProperty(WhatsAppParser.DOWNLOAD_MEDIA_FILES_PROP, "true");
         }
 
         if (this.ocr != null) {

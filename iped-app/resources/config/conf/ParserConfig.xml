@@ -304,7 +304,11 @@
         <parser class="dpf.mg.udi.gpinf.vcardparser.VCardParser"></parser>
         <parser class="dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser">
             <params>
-                <param name="mergeDbs" type="bool">true</param>
+                <param name="extractMessages" type="bool">true</param>
+                <param name="mergeBackups" type="bool">true</param>
+                <param name="linkMediasByNameAndApproxSizeFallback" type="bool">true</param>
+                <param name="downloadConnectionTimeout" type="int">500</param>
+                <param name="downloadReadTimeout" type="int">500</param>
             </params>
         </parser>
         <parser class="dpf.sp.gpinf.indexer.parsers.ufed.UFEDChatParser">

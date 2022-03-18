@@ -156,8 +156,10 @@ public class ReportGenerator {
         return chatBytes.toByteArray();
     }
 
-    private void printMessage(PrintWriter out, Message message, boolean group, WAContactsDirectory contactsDirectory,
+    private synchronized void printMessage(PrintWriter out, Message message, boolean group,
+            WAContactsDirectory contactsDirectory,
             WAAccount account) {
+
         out.println("<div class=\"linha\" id=\"" + message.getId() + "\">"); //$NON-NLS-1$
 
         switch (message.getMessageType()) {
@@ -416,6 +418,9 @@ public class ReportGenerator {
                                     }
                                     out.println("</a><br>"); //$NON-NLS-1$
                                 }
+                                if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
+                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br/>");
+                                }
                                 String transcription = mediaItem.getMetadata().get(ExtraProperties.TRANSCRIPT_ATTR);
                                 if (transcription != null) {
                                     out.print(Messages.getString("ReportGenerator.TranscriptionTitle")); //$NON-NLS-1$
@@ -443,6 +448,9 @@ public class ReportGenerator {
                                         out.println("Attachment:<br><div class=\"attachImg\" title=\"Doc\"></div>"); //$NON-NLS-1$
                                 }
                                 out.println("</a><br>"); //$NON-NLS-1$
+                                if (mediaItem.getMetadata().get(ExtraProperties.DOWNLOADED_DATA) != null) {
+                                    out.println("<b>" + Messages.getString("ReportGenerator.DownloadedFile") + "</b><br/>");
+                                }
                             }
                         } else { // mediaItem is null (media file not found)
                             switch (message.getMessageType()) {
