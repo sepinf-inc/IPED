@@ -27,7 +27,6 @@ import org.apache.tika.mime.MediaType;
 
 import dpf.sp.gpinf.carver.api.CarverConfiguration;
 import dpf.sp.gpinf.indexer.process.IndexItem;
-import dpf.sp.gpinf.indexer.process.Worker.ProcessTime;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.CaseData;
 import gpinf.dev.data.Item;
@@ -134,14 +133,9 @@ public abstract class BaseCarveTask extends AbstractTask {
         }
         parentEvidence.setExtraAttribute(NUM_CARVED_AND_FRAGS, numSubitems.intValue() + 1);
 
-        // Caso o item pai seja um subitem a ser excluído pelo filtro de exportação,
-        // processa no worker atual
-        boolean processNow = parentEvidence.isSubItem() && !parentEvidence.isToAddToCase();
-        ProcessTime time = processNow ? ProcessTime.NOW : ProcessTime.AUTO;
-
         ((CaseData) caseData).calctrackIDAndUpdateID(offsetFile);
 
-        worker.processNewItem(offsetFile, time);
+        worker.processNewItem(offsetFile);
     }
 
     protected boolean isToProcess(IItem evidence) {
