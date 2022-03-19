@@ -16,7 +16,7 @@ import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
-import iped3.ICaseData;
+import gpinf.dev.data.CaseData;
 import iped3.IItem;
 import jep.Jep;
 import jep.JepException;
@@ -46,7 +46,7 @@ public class PythonTask extends AbstractTask {
         this.scriptFile = scriptFile;
     }
 
-    public void setCaseData(ICaseData caseData) {
+    public void setCaseData(CaseData caseData) {
         super.caseData = caseData;
     }
 
