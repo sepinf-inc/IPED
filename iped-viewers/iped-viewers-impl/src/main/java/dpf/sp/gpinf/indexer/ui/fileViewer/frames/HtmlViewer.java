@@ -120,6 +120,7 @@ public class HtmlViewer extends Viewer {
             @Override
             public void run() {
                 scrollToPositionDone = false;
+                webEngine.load(null);
                 webEngine.loadContent(UiUtil.getUIEmptyHtml());
 
                 if (content != null) {
