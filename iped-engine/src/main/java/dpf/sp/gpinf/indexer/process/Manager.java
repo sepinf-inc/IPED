@@ -123,7 +123,7 @@ public class Manager {
     private static String FINISHED_FLAG = "data/processing_finished";
     private static Manager instance;
 
-    private ICaseData caseData;
+    private CaseData caseData;
 
     private List<File> sources;
     private File output, finalIndexDir, indexDir, palavrasChave;
@@ -543,41 +543,38 @@ public class Manager {
             WorkerProvider.getInstance().firePropertyChange("processed", -1, stats.getProcessed()); //$NON-NLS-1$
             WorkerProvider.getInstance().firePropertyChange("progresso", 0, (int) (stats.getVolume() / 1000000)); //$NON-NLS-1$
 
-            someWorkerAlive = false;
+            boolean changeToNextQueue = !producer.isAlive();
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k].exception != null && exception == null) {
                     exception = workers[k].exception;
                 }
-                /**
-                 * TODO sincronizar teste, pois pode ocorrer condição de corrida e o teste não
-                 * detectar um último item sendo processado não é demasiado grave pois será
-                 * detectado o problema no log de estatísticas e o usuario sera informado do
-                 * erro.
-                 */
-                if (workers[k].evidence != null || workers[k].itensBeingProcessed > 0)
-                    someWorkerAlive = true;
+                if (!workers[k].isWaiting()) {
+                    changeToNextQueue = false;
+                }
             }
-            
-            IItem queueEnd = caseData.getItemQueue().peek();
-            boolean justQueueEndLeft = queueEnd != null && queueEnd.isQueueEnd() && caseData.getItemQueue().size() == 1;
+            if (exception != null) {
+                throw exception;
+            }
 
-            if (!justQueueEndLeft || producer.isAlive())
-                someWorkerAlive = true;
-
-            if (!someWorkerAlive) {
+            if (changeToNextQueue) {
                 IItemSearcher searcher = (IItemSearcher) caseData.getCaseObject(IItemSearcher.class.getName());
-                if (searcher != null)
+                if (searcher != null) {
                     searcher.close();
-
+                }
+                IItem queueEnd = caseData.peekItemFromCurrentQueue();
+                if (!queueEnd.isQueueEnd()) {
+                    throw new IPEDException("Tried to get queue end from queue, but failed! Please warn the dev team.");
+                }
                 if (caseData.changeToNextQueue() != null) {
                     LOGGER.info("Changed to processing queue with priority " + caseData.getCurrentQueuePriority()); //$NON-NLS-1$
-
                     caseData.putCaseObject(IItemSearcher.class.getName(),
                             new ItemSearcher(output.getParentFile(), writer));
-                    caseData.getItemQueue().addLast(queueEnd);
-                    someWorkerAlive = true;
-                    for (int k = 0; k < workers.length; k++)
+                    caseData.addLastToCurrentQueue(queueEnd);
+                    for (int k = 0; k < workers.length; k++) {
                         workers[k].processNextQueue();
+                    }
+                } else {
+                    someWorkerAlive = false;
                 }
             }
 
@@ -588,11 +585,6 @@ public class Manager {
                 }
                 start = t;
             }
-
-            if (exception != null) {
-                throw exception;
-            }
-
         }
 
     }
@@ -644,14 +636,6 @@ public class Manager {
         };
         t.start();
         return t;
-    }
-
-    public synchronized int numItensBeingProcessed() {
-        int num = 0;
-        for (int k = 0; k < workers.length; k++) {
-            num += workers[k].itensBeingProcessed;
-        }
-        return num;
     }
 
     private void finalizarIndexacao() throws Exception {

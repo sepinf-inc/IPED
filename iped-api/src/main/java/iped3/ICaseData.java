@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * (INTERFACE DO IPED) Classe que define todos os dados do caso.
@@ -85,13 +84,6 @@ public interface ICaseData extends Serializable {
      * @return retorna o volume de dados descobertos até o momento
      */
     long getDiscoveredVolume();
-
-    /**
-     * Obtém fila de arquivos de evidência do caso.
-     *
-     * @return fila de arquivos.
-     */
-    LinkedBlockingDeque<IItem> getItemQueue();
 
     /**
      * Obtém o objeto raiz da árvore de arquivos do caso.
