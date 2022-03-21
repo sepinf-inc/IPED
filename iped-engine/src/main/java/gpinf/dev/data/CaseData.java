@@ -9,10 +9,10 @@ import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -58,7 +58,7 @@ public class CaseData implements ICaseData {
     /**
      * Filas de processamento dos itens do caso
      */
-    private TreeMap<Integer, LinkedBlockingDeque<IItem>> queues;
+    private TreeMap<Integer, LinkedList<IItem>> queues;
 
     private volatile Integer currentQueuePriority = 0;
 
@@ -66,7 +66,9 @@ public class CaseData implements ICaseData {
      * Mapa genérico de objetos extras do caso. Pode ser utilizado como área de
      * compartilhamento de objetos entre as instâncias das tarefas.
      */
-    private HashMap<String, Object> objectMap = new HashMap<String, Object>();
+    private Map<String, Object> objectMap = Collections.synchronizedMap(new HashMap<>());
+
+    private int totalItemsBeingProcessed = 0;
 
     private int discoveredEvidences = 0;
 
@@ -129,10 +131,10 @@ public class CaseData implements ICaseData {
     }
 
     private void initQueues() {
-        queues = new TreeMap<Integer, LinkedBlockingDeque<IItem>>();
-        queues.put(0, new LinkedBlockingDeque<IItem>());
+        queues = new TreeMap<Integer, LinkedList<IItem>>();
+        queues.put(0, new LinkedList<IItem>());
         for (Integer priority : MimeTypesProcessingOrder.getProcessingPriorities())
-            queues.put(priority, new LinkedBlockingDeque<IItem>());
+            queues.put(priority, new LinkedList<IItem>());
     }
 
     /**
@@ -237,16 +239,60 @@ public class CaseData implements ICaseData {
 
         calctrackIDAndUpdateID(item);
 
-        LinkedBlockingDeque<IItem> queue = queues.get(queuePriority);
-        while (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
-            Thread.sleep(1000);
+        LinkedList<IItem> queue = queues.get(queuePriority);
+        boolean sleep = false;
+        while (true) {
+            if (sleep) {
+                sleep = false;
+                Thread.sleep(1000);
+            }
+            synchronized (this) {
+                if (blockIfFull && queuePriority == 0 && queue.size() >= maxQueueSize) {
+                    sleep = true;
+                    continue;
+                } else {
+                    if (addFirst) {
+                        queue.addFirst(item);
+                    } else {
+                        queue.addLast(item);
+                    }
+                    break;
+                }
+            }
         }
 
-        if (addFirst) {
-            queue.addFirst(item);
-        } else {
-            queue.addLast(item);
-        }
+    }
+
+    public synchronized IItem pollFirstFromCurrentQueue() throws InterruptedException {
+        return getItemQueue().pollFirst();
+    }
+
+    public synchronized void addLastToCurrentQueue(IItem item) throws InterruptedException {
+        getItemQueue().addLast(item);
+    }
+
+    public synchronized IItem peekItemFromCurrentQueue() {
+        return getItemQueue().peek();
+    }
+
+    public synchronized int getCurrentQueueSize() {
+        return getItemQueue().size();
+    }
+
+    public synchronized int getItemsBeingProcessed() {
+        return totalItemsBeingProcessed;
+    }
+
+    public synchronized void incItemsBeingProcessed() {
+        totalItemsBeingProcessed++;
+    }
+
+    public synchronized void decItemsBeingProcessed() {
+        totalItemsBeingProcessed--;
+    }
+
+    public synchronized boolean isNoItemInQueueOrBeingProcessed() {
+        return totalItemsBeingProcessed == 0 && getItemQueue().size() == 0;
     }
 
     /**
@@ -289,7 +335,7 @@ public class CaseData implements ICaseData {
      *
      * @return fila de arquivos.
      */
-    public LinkedBlockingDeque<IItem> getItemQueue() {
+    private LinkedList<IItem> getItemQueue() {
         return queues.get(currentQueuePriority);
     }
 
