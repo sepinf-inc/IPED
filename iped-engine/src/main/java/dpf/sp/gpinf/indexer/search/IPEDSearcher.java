@@ -120,7 +120,7 @@ public class IPEDSearcher implements IIPEDSearcher {
         // System.out.println("searching");
 
         if (!treeQuery)
-            query = getNonTreeQuery();
+            ;// query = getNonTreeQuery();
 
         collector = new NoScoringCollector(ipedCase.getReader().maxDoc());
         try {
