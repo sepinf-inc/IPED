@@ -177,7 +177,7 @@ public class GraphTask extends AbstractTask {
                         File target = new File(output, CSVS_PATH + "/" + file.getName());
                         if (file.getName().startsWith(GraphFileWriter.NODE_CSV_PREFIX)
                                 || file.getName().startsWith(GraphFileWriter.REPLACE_NAME)) {
-                            IOUtil.copiaArquivo(file, target);
+                            IOUtil.copyFile(file, target);
                         }
                     }
                 }

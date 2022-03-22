@@ -33,6 +33,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -46,6 +47,8 @@ import iped3.IItem;
 import iped3.io.IItemBase;
 
 public class IOUtil {
+
+    private static Path tmpDir = null;
 
     private static final Set<String> DANGEROUS_EXTS = new HashSet<>(Arrays.asList("0XE", "73K", "89K", "8CK", "A6P",
             "A7R", "AC", "ACC", "ACR", "ACTC", "ACTION", "ACTM", "AHK", "AIR", "APK", "APP", "APPIMAGE", "APPLESCRIPT",
@@ -68,6 +71,14 @@ public class IOUtil {
     }
 
     private static ExternalOpenEnum externalOpenConfig = ExternalOpenEnum.ASK_IF_EXE;
+    
+    public static boolean isTemporaryFile(File file) {
+        if (tmpDir == null) {
+            tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
+        }
+        Path filePath = Paths.get(file.getAbsolutePath()).getParent();
+        return tmpDir.compareTo(filePath) == 0;
+    }
 
     public static void setExternalOpenConfig(ExternalOpenEnum config) {
         externalOpenConfig = config;
@@ -207,18 +218,20 @@ public class IOUtil {
         }
     }
 
-    public static void lerListaDeArquivos(File file, List<File> lista) {
-
+    public static List<File> getAllFileChildren(File file) {
+        List<File> list = new ArrayList<>();
         String[] subFileName = file.list();
-        if (subFileName != null)
+        if (subFileName != null) {
             for (int i = 0; i < subFileName.length; i++) {
                 File subFile = new File(file, subFileName[i]);
 
                 if (subFile.isDirectory())
-                    lerListaDeArquivos(subFile, lista);
+                    list.addAll(getAllFileChildren(subFile));
                 else
-                    lista.add(subFile);
+                    list.add(subFile);
             }
+        }
+        return list;
     }
 
     public static int countSubFiles(File file) {
@@ -235,7 +248,7 @@ public class IOUtil {
         return result;
     }
 
-    public static void deletarDiretorio(File file) {
+    public static void deleteDirectory(File file) {
         try {
             deleteDirectory(file, true);
         } catch (IOException e) {
@@ -265,11 +278,11 @@ public class IOUtil {
 
     }
 
-    public static void copiaArquivo(File origem, File destino) throws IOException {
-        copiaArquivo(origem, destino, false);
+    public static void copyFile(File origem, File destino) throws IOException {
+        copyFile(origem, destino, false);
     }
 
-    public static void copiaArquivo(File origem, File destino, boolean append) throws IOException {
+    public static void copyFile(File origem, File destino, boolean append) throws IOException {
         InputStream in = new BufferedInputStream(new FileInputStream(origem));
         OutputStream out = new BufferedOutputStream(new FileOutputStream(destino, append));
         if (append)
@@ -286,7 +299,7 @@ public class IOUtil {
                 throw new IOException("Fail to delete " + destino.getPath()); //$NON-NLS-1$
     }
 
-    public static void copiaArquivo(InputStream in, OutputStream out) throws IOException {
+    public static void copyInputToOutputStream(InputStream in, OutputStream out) throws IOException {
         byte[] buf = new byte[1024 * 1024];
         int len;
         while ((len = in.read(buf)) >= 0 && !Thread.currentThread().isInterrupted()) {
@@ -294,7 +307,7 @@ public class IOUtil {
         }
     }
 
-    public static void copiaDiretorio(File origem, File destino, boolean recursive) throws IOException {
+    public static void copyDirectory(File origem, File destino, boolean recursive) throws IOException {
         if (!destino.exists())
             if (!destino.mkdirs())
                 throw new IOException("Fail to create folder " + destino.getAbsolutePath()); //$NON-NLS-1$
@@ -303,16 +316,16 @@ public class IOUtil {
             File subFile = new File(origem, subdir[i]);
             if (subFile.isDirectory()) {
                 if (recursive)
-                    copiaDiretorio(subFile, new File(destino, subdir[i]));
+                    copyDirectory(subFile, new File(destino, subdir[i]));
             } else {
                 File subDestino = new File(destino, subdir[i]);
-                copiaArquivo(subFile, subDestino);
+                copyFile(subFile, subDestino);
             }
         }
     }
 
-    public static void copiaDiretorio(File origem, File destino) throws IOException {
-        copiaDiretorio(origem, destino, true);
+    public static void copyDirectory(File origem, File destino) throws IOException {
+        copyDirectory(origem, destino, true);
     }
 
     public static byte[] loadInputStream(InputStream is) throws IOException {
@@ -323,16 +336,6 @@ public class IOUtil {
             bos.write(buf, 0, len);
 
         return bos.toByteArray();
-    }
-
-    private static Path tmpDir = null;
-
-    public static boolean isTemporaryFile(File file) {
-        if (tmpDir == null) {
-            tmpDir = Paths.get(System.getProperty("java.io.tmpdir"));
-        }
-        Path filePath = Paths.get(file.getAbsolutePath()).getParent();
-        return tmpDir.compareTo(filePath) == 0;
     }
 
     public static byte[] readByteArray(DataInputStream is, int len) throws Exception {

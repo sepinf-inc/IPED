@@ -352,7 +352,7 @@ public class EmailViewer extends HtmlViewer {
                     outStream.write(text.getBytes(charset));
                 }
             } else {
-                IOUtil.copiaArquivo(is, outStream);
+                IOUtil.copyInputToOutputStream(is, outStream);
             }
 
             outStream.close();

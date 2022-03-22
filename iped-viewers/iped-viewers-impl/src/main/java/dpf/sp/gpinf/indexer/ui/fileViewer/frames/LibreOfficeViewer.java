@@ -513,7 +513,7 @@ public class LibreOfficeViewer extends Viewer {
                 }
                 tempFile = File.createTempFile("iped-", ext); //$NON-NLS-1$
                 tempFile.deleteOnExit();
-                IOUtil.copiaArquivo(lastFile, tempFile);
+                IOUtil.copyFile(lastFile, tempFile);
                 lastFile = tempFile;
 
             } catch (IOException e) {

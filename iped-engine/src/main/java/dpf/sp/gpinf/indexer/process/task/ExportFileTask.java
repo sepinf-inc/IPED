@@ -367,7 +367,7 @@ public class ExportFileTask extends AbstractTask {
             }
             destFile.getParentFile().mkdirs();
             try {
-                IOUtil.copiaArquivo(viewFile, destFile);
+                IOUtil.copyFile(viewFile, destFile);
             } catch (IOException e) {
                 e.printStackTrace();
             }

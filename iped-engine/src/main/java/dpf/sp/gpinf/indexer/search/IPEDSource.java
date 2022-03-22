@@ -587,7 +587,7 @@ public class IPEDSource implements Closeable, IIPEDSource {
             tmpCaseFile.deleteOnExit();
             // causes "case is closed" error in some cases
             // sleuthCase.close();
-            IOUtil.copiaArquivo(sleuthFile, tmpCaseFile);
+            IOUtil.copyFile(sleuthFile, tmpCaseFile);
             sleuthCase = SleuthkitCase.openCase(tmpCaseFile.getAbsolutePath());
             tskCaseList.add(sleuthCase);
         }

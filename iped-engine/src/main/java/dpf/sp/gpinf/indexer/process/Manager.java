@@ -677,7 +677,7 @@ public class Manager {
 
             } catch (IOException e) {
                 LOGGER.info("Move failed. Copying Index..."); //$NON-NLS-1$
-                IOUtil.copiaDiretorio(indexDir, finalIndexDir);
+                IOUtil.copyDirectory(indexDir, finalIndexDir);
             }
         }
 
@@ -697,7 +697,7 @@ public class Manager {
 
     public void deleteTempDir() {
         LOGGER.info("Deleting temp folder {}", localConfig.getIndexerTemp()); //$NON-NLS-1$
-        IOUtil.deletarDiretorio(localConfig.getIndexerTemp());
+        IOUtil.deleteDirectory(localConfig.getIndexerTemp());
     }
 
     private void filtrarPalavrasChave() {
@@ -814,44 +814,44 @@ public class Manager {
         }
 
         if (!args.isAppendIndex() && !args.isContinue() && !args.isRestart() && args.getEvidenceToRemove() == null) {
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "lib"), new File(output, "lib"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "jre"), new File(output, "jre"), true); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "tools"), new File(output, "tools")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, iped3.util.Messages.BUNDLES_FOLDER),
                     new File(output, iped3.util.Messages.BUNDLES_FOLDER), true); // $NON-NLS-1$ //$NON-NLS-2$
 
             if (!analysisConfig.isEmbedLibreOffice()) {
                 new File(output, "tools/libreoffice.zip").delete(); //$NON-NLS-1$
             }
 
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
-            IOUtil.copiaDiretorio(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "help"), new File(output, "help")); //$NON-NLS-1$ //$NON-NLS-2$
+            IOUtil.copyDirectory(new File(Configuration.getInstance().appRoot, "htmlreport"), //$NON-NLS-1$
                     new File(output, "htmlreport")); //$NON-NLS-1$
 
             // copy default configs
             File defaultProfile = new File(Configuration.getInstance().appRoot);
-            IOUtil.copiaDiretorio(new File(defaultProfile, "conf"), new File(output, "conf"));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
-            IOUtil.copiaArquivo(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
+            IOUtil.copyDirectory(new File(defaultProfile, "conf"), new File(output, "conf"));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.LOCAL_CONFIG), new File(output, Configuration.LOCAL_CONFIG));
+            IOUtil.copyFile(new File(defaultProfile, Configuration.CONFIG_FILE), new File(output, Configuration.CONFIG_FILE));
 
             // copy non default profile
             File currentProfile = new File(Configuration.getInstance().configPath);
             if (!currentProfile.equals(defaultProfile)) {
-                IOUtil.copiaDiretorio(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
+                IOUtil.copyDirectory(currentProfile, new File(output, Configuration.CASE_PROFILE_DIR), true);
             }
 
             File binDir = new File(Configuration.getInstance().appRoot, "bin"); //$NON-NLS-1$
             if (binDir.exists())
-                IOUtil.copiaDiretorio(binDir, output.getParentFile()); // $NON-NLS-1$
+                IOUtil.copyDirectory(binDir, output.getParentFile()); // $NON-NLS-1$
             else {
                 for (File f : new File(Configuration.getInstance().appRoot).getParentFile()
                         .listFiles(new ExeFileFilter()))
-                    IOUtil.copiaArquivo(f, new File(output.getParentFile(), f.getName()));
+                    IOUtil.copyFile(f, new File(output.getParentFile(), f.getName()));
             }
         }
 
         if (palavrasChave != null) {
-            IOUtil.copiaArquivo(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
+            IOUtil.copyFile(palavrasChave, new File(output, "palavras-chave.txt")); //$NON-NLS-1$
         }
 
         File dataDir = new File(output, "data"); //$NON-NLS-1$

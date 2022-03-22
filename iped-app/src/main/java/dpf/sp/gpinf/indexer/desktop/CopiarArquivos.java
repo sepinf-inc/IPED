@@ -99,7 +99,7 @@ public class CopiarArquivos extends SwingWorker<Boolean, Integer> implements Pro
 
                 LOGGER.info("Exporting file " + e.getPath()); //$NON-NLS-1$
 
-                IOUtil.copiaArquivo(in, out);
+                IOUtil.copyInputToOutputStream(in, out);
 
                 in.close();
                 out.close();
