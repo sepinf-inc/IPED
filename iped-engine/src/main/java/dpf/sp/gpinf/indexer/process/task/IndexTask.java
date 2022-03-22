@@ -31,11 +31,11 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.util.CloseFilterReader;
 import dpf.sp.gpinf.indexer.util.FragmentingReader;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
 import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a

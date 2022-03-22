@@ -26,7 +26,7 @@ import com.microsoft.cognitiveservices.speech.audio.AudioConfig;
 
 import dpf.sp.gpinf.indexer.CmdLineArgs;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 
 public class MicrosoftTranscriptTask extends AbstractTranscriptTask {
 

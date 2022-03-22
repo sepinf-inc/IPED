@@ -32,10 +32,10 @@ import dpf.sp.gpinf.indexer.process.task.ExportFileTask;
 import dpf.sp.gpinf.indexer.process.task.ParsingTask;
 import dpf.sp.gpinf.indexer.util.ConfiguredFSDirectory;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 import iped3.IItem;
+import iped3.exception.IPEDException;
 
 /**
  * Classe que armazena estatísticas diversas, como número de itens processados,

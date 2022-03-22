@@ -28,11 +28,11 @@ import dpf.sp.gpinf.indexer.datasource.UfedXmlReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.SlowCompositeReaderWrapper;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
 import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 import iped3.util.BasicProps;
 
 /**

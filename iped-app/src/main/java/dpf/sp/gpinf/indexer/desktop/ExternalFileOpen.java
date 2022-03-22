@@ -9,7 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 import iped3.IItem;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;

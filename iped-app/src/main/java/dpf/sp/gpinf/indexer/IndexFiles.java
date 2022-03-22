@@ -42,7 +42,7 @@ import dpf.sp.gpinf.indexer.process.ProgressFrame;
 import dpf.sp.gpinf.indexer.ui.UiScale;
 import dpf.sp.gpinf.indexer.util.CustomLoader;
 import dpf.sp.gpinf.indexer.util.DefaultPolicy;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 

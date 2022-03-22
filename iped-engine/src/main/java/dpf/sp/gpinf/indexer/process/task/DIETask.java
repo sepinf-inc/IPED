@@ -26,13 +26,13 @@ import dpf.sp.gpinf.indexer.config.ImageThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
 import dpf.sp.gpinf.indexer.util.ExternalImageConverter;
 import dpf.sp.gpinf.indexer.util.IOUtil;
-import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.ImageMetadataUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
 import iped3.configuration.Configurable;
+import iped3.exception.IPEDException;
 
 /**
  * Explicit Image Detection (DIE) Task .

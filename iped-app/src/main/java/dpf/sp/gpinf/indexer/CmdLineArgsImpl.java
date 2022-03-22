@@ -22,7 +22,7 @@ import dpf.mg.udi.gpinf.whatsappextractor.WhatsAppParser;
 import dpf.sp.gpinf.indexer.config.LocalConfig;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.process.task.SkipCommitedTask;
-import dpf.sp.gpinf.indexer.util.IPEDException;
+import iped3.exception.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.ICaseData;
 
