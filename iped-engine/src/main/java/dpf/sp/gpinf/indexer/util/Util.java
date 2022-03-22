@@ -44,7 +44,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.zip.Deflater;
 
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.lucene.util.IOUtils;
@@ -156,13 +155,6 @@ public class Util {
         if (path.charAt(end) == '>' && path.charAt(end - 1) == '>')
             end--;
         return path.substring(0, end);
-    }
-
-    public static void main(String[] args) {
-        // String str =
-        // "c9b4ba73e4bbe104cb8e4d867666e77fidInDataSourcenullpathunalloc-recover\\Unalloc_1120655_314574032896_317655183360-Frag2>>Unalloc_1120655_314574032896_317655183360-Frag2_4";
-        String str = "eccafd1b4a5e82f884afcaff1bd9d548fragNum1";
-        System.out.println(DigestUtils.md5Hex(str));
     }
 
     private static String generateTrackID(IItem item) {
@@ -408,94 +400,6 @@ public class Util {
             writer.write(keyword + "\r\n"); //$NON-NLS-1$
         }
         writer.close();
-    }
-
-    /*
-     * public static String readFileAsString(String filePath) throws
-     * java.io.IOException{ File file = new File(filePath); InputStreamReader reader
-     * = new InputStreamReader(new FileInputStream(filePath), "windows-1252"); int
-     * length = Integer.valueOf(Long.toString(file.length())); char[] buf = new
-     * char[length]; reader.read(buf); reader.close(); return new String(buf); }
-     */
-
-    /*
-     * public static String descompactarArquivo(File file, int maxSize) throws
-     * Exception { BufferedInputStream stream = new BufferedInputStream( new
-     * FileInputStream(file), 1000000); int size = file.length() > maxSize ? maxSize
-     * : (int) file.length(); byte[] compressedData = new byte[size];
-     * stream.read(compressedData); stream.close();
-     * 
-     * // Decompress the bytes Inflater decompressor = new Inflater();
-     * decompressor.setInput(compressedData); ByteArrayOutputStream bos = new
-     * ByteArrayOutputStream( compressedData.length); byte[] buf = new
-     * byte[1000000]; while (!decompressor.finished()) { int count =
-     * decompressor.inflate(buf); bos.write(buf, 0, count); maxSize -= count; if
-     * (maxSize <= 0) break; } bos.close();
-     * 
-     * // return bos.toString("UTF-8"); return bos.toString("windows-1252"); }
-     */
-
-    /*
-     * public static void compactarArquivo(String contents, String filePath)throws
-     * Exception{ File file = new File(filePath+".compressed"); if(file.exists())
-     * return; StringBuffer strbuf = new StringBuffer(contents); strbuf byte[] input
-     * = contents.getBytes("UTF-8"); Deflater compressor = new Deflater();
-     * compressor.setLevel(Deflater.BEST_COMPRESSION); compressor.setInput(input);
-     * compressor.finish(); ByteArrayOutputStream bos = new
-     * ByteArrayOutputStream(input.length); byte[] buf = new byte[1000000]; while
-     * (!compressor.finished()) { int count = compressor.deflate(buf);
-     * //System.out.println(count); bos.write(buf, 0, count); } bos.close();
-     * FileOutputStream stream = new FileOutputStream(file);
-     * stream.write(bos.toByteArray()); stream.close(); }
-     */
-
-    /*
-     * public static void compactarArquivo(String contents, String exportPath)
-     * throws Exception { String textPath = exportPath.replaceFirst("Export",
-     * "Text") .replaceFirst("files", "Text"); File file = new File(textPath +
-     * ".compressed"); if (file.exists()) file.delete(); FileOutputStream stream =
-     * new FileOutputStream(file);
-     * 
-     * Deflater compressor = new Deflater();
-     * compressor.setLevel(Deflater.BEST_COMPRESSION); int offset = 0, bufLen =
-     * 1000000, len = bufLen; byte[] input, buf = new byte[bufLen]; while
-     * (!compressor.finished()) { if (compressor.needsInput()) { if (offset + len >
-     * contents.length()) len = contents.length() - offset; input =
-     * contents.substring(offset, offset + len).getBytes( "windows-1252");
-     * compressor.setInput(input); offset += len; if (offset == contents.length())
-     * compressor.finish(); } int count = compressor.deflate(buf); stream.write(buf,
-     * 0, count); } stream.close(); }
-     */
-    public static void compactarArquivo(String filePath) throws Exception {
-        File file = new File(filePath + ".compressed"); //$NON-NLS-1$
-        if (file.exists()) {
-            return;
-        }
-        BufferedOutputStream outStream = new BufferedOutputStream(new FileOutputStream(file), 1000000);
-        BufferedInputStream inStream = new BufferedInputStream(
-                new FileInputStream(new File(filePath + ".extracted_text")), 1000000); //$NON-NLS-1$
-        Deflater compressor = new Deflater();
-        compressor.setLevel(Deflater.BEST_COMPRESSION);
-        int bufLen = 1000000;
-        byte[] input = new byte[bufLen], output = new byte[bufLen];
-        while (!compressor.finished()) {
-            if (compressor.needsInput()) {
-                int len = inStream.read(input);
-                if (len != -1) {
-                    compressor.setInput(input, 0, len);
-                } else {
-                    compressor.finish();
-                }
-            }
-            int count = compressor.deflate(output);
-            outStream.write(output, 0, count);
-        }
-        outStream.close();
-        inStream.close();
-    }
-
-    public static void decompress(File input, File output) {
-
     }
 
     /**
