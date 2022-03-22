@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.localization.Messages;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.PluginConfig;
 import ag.ion.bion.officelayer.application.IOfficeApplication;
@@ -157,7 +157,7 @@ public class IndexFiles {
             manager.process();
 
             WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
-            LOGGER.info("{} finished.", Versao.APP_EXT); //$NON-NLS-1$
+            LOGGER.info("{} finished.", Version.APP_EXT); //$NON-NLS-1$
             success = true;
 
         } catch (Throwable e) {
@@ -252,7 +252,7 @@ public class IndexFiles {
 
             LOGGER = LoggerFactory.getLogger(IndexFiles.class);
             if (!fromCustomLoader)
-                LOGGER.info(Versao.APP_NAME);
+                LOGGER.info(Version.APP_NAME);
 
             Configuration.getInstance().loadConfigurables(iped.configPath);
 
@@ -293,7 +293,7 @@ public class IndexFiles {
         if (!success) {
             SystemOut.println("\nERROR!!!"); //$NON-NLS-1$
         } else {
-            SystemOut.println("\n" + Versao.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
+            SystemOut.println("\n" + Version.APP_EXT + " finished."); //$NON-NLS-1$ //$NON-NLS-2$
         }
 
         if (iped.logFile != null) {

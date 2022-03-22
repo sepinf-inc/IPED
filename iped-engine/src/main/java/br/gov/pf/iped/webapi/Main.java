@@ -5,7 +5,7 @@ import org.glassfish.jersey.grizzly2.httpserver.GrizzlyHttpServerFactory;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.json.simple.parser.ParseException;
 
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import io.swagger.jaxrs.config.BeanConfig;
 
 import java.io.IOException;
@@ -33,7 +33,7 @@ public class Main {
         // in gpinf.api package
         String resources = "br.gov.pf.iped.webapi";
         BeanConfig beanConfig = new BeanConfig();
-        beanConfig.setVersion(Versao.APP_VERSION);
+        beanConfig.setVersion(Version.APP_VERSION);
         beanConfig.setSchemes(new String[] { "http" });
         beanConfig.setBasePath("/");
         beanConfig.setResourcePackage(resources);

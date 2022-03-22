@@ -112,7 +112,7 @@ import bibliothek.gui.dock.themes.basic.action.BasicTitleViewItem;
 import br.gov.pf.labld.graph.desktop.AppGraphAnalytics;
 import dpf.sp.gpinf.indexer.Configuration;
 import dpf.sp.gpinf.indexer.LogConfiguration;
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
@@ -407,7 +407,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         }
 
         String tab = "     "; //$NON-NLS-1$
-        this.setTitle(Versao.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
+        this.setTitle(Version.APP_NAME + tab + "[" + Messages.getString("App.Case") + ": " + casesPathFile + "]"); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$ //$NON-NLS-4$
         this.setSize(new Dimension(800, 600));
         this.setExtendedState(Frame.MAXIMIZED_BOTH);
         this.addWindowListener(this);

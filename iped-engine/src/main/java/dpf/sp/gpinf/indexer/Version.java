@@ -19,9 +19,9 @@
 package dpf.sp.gpinf.indexer;
 
 /**
- * Classe que contém as constantes da aplicação.
+ * Application version number.
  */
-public class Versao {
+public class Version {
 
     public static String APP_VERSION = "4.0.0-snapshot"; //$NON-NLS-1$
     public static String APP_NAME_PREFIX = "Indexador e Processador de Evidências Digitais"; //$NON-NLS-1$

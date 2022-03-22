@@ -34,7 +34,7 @@ import javax.swing.KeyStroke;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import dpf.sp.gpinf.indexer.Versao;
+import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
@@ -50,7 +50,7 @@ public class Marcadores implements Serializable, IMarcadores {
 
     private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
 
-    public static String EXT = "." + Versao.APP_EXT.toLowerCase(); //$NON-NLS-1$
+    public static String EXT = "." + Version.APP_EXT.toLowerCase(); //$NON-NLS-1$
     public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
 
     static int labelBits = Byte.SIZE;

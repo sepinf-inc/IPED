@@ -350,8 +350,8 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            String thisVersion = Versao.APP_VERSION.substring(0, Versao.APP_VERSION.lastIndexOf('.'));
-            String fullVersion = line.replace(Versao.APP_NAME_PREFIX, "").trim();
+            String thisVersion = Version.APP_VERSION.substring(0, Version.APP_VERSION.lastIndexOf('.'));
+            String fullVersion = line.replace(Version.APP_NAME_PREFIX, "").trim();
             String version = fullVersion.substring(0, fullVersion.lastIndexOf('.'));
             if (!version.equals(thisVersion)) {
                 throw new IPEDException("Appending to case with old version " + fullVersion + " not supported.");
@@ -369,7 +369,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
     }
 
     private void printUsageAndExit(JCommander jc) {
-        System.out.println(Versao.APP_NAME);
+        System.out.println(Version.APP_NAME);
         jc.usage();
         System.exit(0);
     }
