@@ -209,12 +209,16 @@ public class IPEDReader extends DataSourceReader {
         insertEmailAttachs(result);
 
         // insert items referenced by bookmarked items
+        boolean[] isParentToAdd = null;
         CmdLineArgs args = (CmdLineArgs) caseData.getCaseObject(CmdLineArgs.class.getName());
-        if (!args.isNoLinkedItems())
-            insertLinkedItems(result);
+        if (!args.isNoLinkedItems()) {
+            isParentToAdd = insertLinkedItems(result);
+        } else {
+            isParentToAdd = new boolean[ipedCase.getLastId() + 1];
+        }
 
         // Inclui pais para visualização em árvore
-        insertParentTreeNodes(result);
+        insertParentTreeNodes(result, isParentToAdd);
 
         copyBookmarksToReport();
     }
@@ -247,8 +251,11 @@ public class IPEDReader extends DataSourceReader {
         reportState.saveState();
     }
 
-    private void insertParentTreeNodes(LuceneSearchResult result) throws Exception {
-        boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
+    private void insertParentTreeNodes(LuceneSearchResult result, boolean[] isParentToAdd) throws Exception {
+        insertParentTreeNodes(getParentTreeNodes(result, isParentToAdd));
+    }
+
+    private boolean[] getParentTreeNodes(LuceneSearchResult result, boolean[] isParentToAdd) throws Exception {
         for (int docID : result.getLuceneIds()) {
             String parentIds = ipedCase.getReader().document(docID).get(IndexItem.PARENTIDs);
             if (!parentIds.trim().isEmpty())
@@ -260,6 +267,10 @@ public class IPEDReader extends DataSourceReader {
             String id = ipedCase.getReader().document(docID).get(IndexItem.ID);
             isParentToAdd[Integer.parseInt(id)] = false;
         }
+        return isParentToAdd;
+    }
+
+    private void insertParentTreeNodes(boolean[] isParentToAdd) throws Exception {
         int num = 0;
         BooleanQuery.Builder query = new BooleanQuery.Builder();
         for (int i = 0; i <= ipedCase.getLastId(); i++) {
@@ -270,7 +281,7 @@ public class IPEDReader extends DataSourceReader {
             if (num == 1000 || (num > 0 && i == ipedCase.getLastId())) {
                 IIPEDSearcher searchParents = new IPEDSearcher(ipedCase, query.build());
                 searchParents.setTreeQuery(true);
-                result = searchParents.luceneSearch();
+                LuceneSearchResult result = searchParents.luceneSearch();
                 insertIntoProcessQueue(result, true);
                 query = new BooleanQuery.Builder();
                 num = 0;
@@ -337,7 +348,7 @@ public class IPEDReader extends DataSourceReader {
         }
     }
 
-    private void insertLinkedItems(LuceneSearchResult result) {
+    private boolean[] insertLinkedItems(LuceneSearchResult result) throws Exception {
         long t = System.currentTimeMillis();
         int[] luceneIds = result.getLuceneIds();
         Arrays.sort(luceneIds);
@@ -346,6 +357,7 @@ public class IPEDReader extends DataSourceReader {
         try {
             SearchResult itemsWithLinks = searcher.search();
             int numItems = 0;
+            boolean[] isParentToAdd = new boolean[ipedCase.getLastId() + 1];
             StringBuilder query = new StringBuilder();
             for (int i = 0; i < itemsWithLinks.getLength(); i++) {
                 int luceneId = ipedCase.getLuceneId(itemsWithLinks.getId(i));
@@ -362,23 +374,25 @@ public class IPEDReader extends DataSourceReader {
                     numItems++;
                 }
                 if (numItems >= 500) {
-                    insertLinkedItemsBatch(query);
+                    LuceneSearchResult linkedItems = insertLinkedItemsBatch(query);
+                    isParentToAdd = getParentTreeNodes(linkedItems, isParentToAdd);
                     query = new StringBuilder();
                     numItems = 0;
                 }
             }
             if (numItems > 0) {
-                insertLinkedItemsBatch(query);
+                LuceneSearchResult linkedItems = insertLinkedItemsBatch(query);
+                isParentToAdd = getParentTreeNodes(linkedItems, isParentToAdd);
             }
+            return isParentToAdd;
 
-        } catch (Exception e1) {
-            e1.printStackTrace();
+        } finally {
+            t = System.currentTimeMillis() - t;
+            LOGGER.info("Search for linked items took {} ms", t);
         }
-        t = System.currentTimeMillis() - t;
-        LOGGER.info("Search for linked items took {} ms", t);
     }
 
-    private void insertLinkedItemsBatch(StringBuilder query) throws Exception {
+    private LuceneSearchResult insertLinkedItemsBatch(StringBuilder query) throws Exception {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder.append(IndexItem.LENGTH + ":[3 TO *] AND ("); //$NON-NLS-1$
         queryBuilder.append(query.toString());
@@ -389,6 +403,7 @@ public class IPEDReader extends DataSourceReader {
         if (linkedItems.getLength() > 0) {
             insertIntoProcessQueue(linkedItems, false);
         }
+        return linkedItems;
     }
 
     private int getId(String value) {
