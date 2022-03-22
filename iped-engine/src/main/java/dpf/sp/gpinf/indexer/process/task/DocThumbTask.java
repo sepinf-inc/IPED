@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
-import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
@@ -116,7 +115,7 @@ public class DocThumbTask extends ThumbTask {
             ProcessBuilder pb = new ProcessBuilder(cmd);
             loEnvCreateProcess = pb.start();
             pb.redirectErrorStream();
-            Util.ignoreStream(loEnvCreateProcess.getInputStream());
+            IOUtil.ignoreInputStream(loEnvCreateProcess.getInputStream());
         }
     }
 
@@ -285,7 +284,7 @@ public class DocThumbTask extends ThumbTask {
 
                 ProcessBuilder pb = new ProcessBuilder(cmd);
                 convertProcess = pb.start();
-                Util.ignoreStream(convertProcess.getErrorStream());
+                IOUtil.ignoreInputStream(convertProcess.getErrorStream());
                 Future<?> resultFuture = executor.submit(new ResultRunnable(convertProcess, baos));
                 try {
                     resultFuture.get();
@@ -375,7 +374,7 @@ public class DocThumbTask extends ThumbTask {
             ProcessBuilder pb = new ProcessBuilder(cmd.toArray(new String[0]));
             convertProcess = pb.start();
             pb.redirectErrorStream();
-            Util.ignoreStream(convertProcess.getInputStream());
+            IOUtil.ignoreInputStream(convertProcess.getInputStream());
             try {
                 convertProcess.waitFor();
             } catch (InterruptedException e) {

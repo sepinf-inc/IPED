@@ -390,4 +390,32 @@ public class IOUtil {
         }
         return null;
     }
+
+    public static class ContainerVolatile {
+        public volatile boolean progress = false;
+    }
+
+    public static void ignoreInputStream(final InputStream stream) {
+        ignoreInputStream(stream, null);
+    }
+
+    public static void ignoreInputStream(final InputStream stream, final ContainerVolatile msg) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                byte[] out = new byte[1024];
+                int read = 0;
+                while (read != -1)
+                    try {
+                        read = stream.read(out);
+                        if (msg != null)
+                            msg.progress = true;
+
+                    } catch (Exception e) {
+                    }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
 }
