@@ -27,7 +27,7 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.process.task.PythonTask;
 import dpf.sp.gpinf.indexer.process.task.ScriptTask;
 import dpf.sp.gpinf.indexer.util.IPEDException;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class TaskInstallerConfig implements Configurable<List<String>> {
 

@@ -34,7 +34,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.emule.KnownMetEntry;
 import gpinf.emule.KnownMetParser;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa específica para carving de arquivos known.met do e-Mule.

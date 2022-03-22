@@ -42,7 +42,7 @@ import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Responsável por gerar arquivo CSV com as propriedades dos itens processados.

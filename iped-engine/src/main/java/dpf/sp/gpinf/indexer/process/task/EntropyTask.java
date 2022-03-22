@@ -9,7 +9,7 @@ import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import dpf.sp.gpinf.indexer.parsers.RawStringParser;
 import dpf.sp.gpinf.indexer.util.RandomFilterInputStream;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class EntropyTask extends AbstractTask {
 

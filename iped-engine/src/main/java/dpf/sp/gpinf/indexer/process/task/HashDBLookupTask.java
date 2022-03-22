@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.parsers.util.ChildPornHashLookup.LookupProvider;
 import gpinf.hashdb.HashDB;
 import gpinf.hashdb.HashDBDataSource;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class HashDBLookupTask extends AbstractTask {
 

@@ -35,7 +35,7 @@ import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa de indexação dos itens. Indexa apenas as propriedades, caso a

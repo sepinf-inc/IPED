@@ -11,8 +11,8 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import gpinf.dev.filetypes.GenericFileType;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.ExtraProperties;
-import macee.core.Configurable;
 
 /**
  * Seta o tipo (extensão correta) dos itens com base no seu mediaType

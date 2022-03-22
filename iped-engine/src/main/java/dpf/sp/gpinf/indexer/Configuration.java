@@ -41,8 +41,8 @@ import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import dpf.sp.gpinf.indexer.util.CustomLoader.CustomURLClassLoader;
 import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
+import iped3.configuration.Configurable;
 import iped3.configuration.IConfigurationDirectory;
-import macee.core.Configurable;
 
 /**
  * Classe principal de carregamento e acesso às configurações da aplicação.

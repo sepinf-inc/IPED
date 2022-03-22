@@ -105,6 +105,7 @@ import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.exception.ZipBombException;
 import iped3.io.IItemBase;
 import iped3.io.IStreamSource;
@@ -112,7 +113,6 @@ import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 /**
  * TAREFA DE PARSING DE ALGUNS TIPOS DE ARQUIVOS. ARMAZENA O TEXTO EXTRAÍDO,

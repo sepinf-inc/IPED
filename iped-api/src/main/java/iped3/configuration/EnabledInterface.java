@@ -1,4 +1,4 @@
-package macee.core;
+package iped3.configuration;
 
 public interface EnabledInterface {
 

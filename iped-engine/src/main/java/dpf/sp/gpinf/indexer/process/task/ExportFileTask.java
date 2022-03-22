@@ -90,9 +90,9 @@ import gpinf.dev.data.Category;
 import iped3.ICaseData;
 import iped3.IHashValue;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.exception.ZipBombException;
 import iped3.io.SeekableInputStream;
-import macee.core.Configurable;
 
 /**
  * Responsável por extrair subitens de containers. Também exporta itens ativos

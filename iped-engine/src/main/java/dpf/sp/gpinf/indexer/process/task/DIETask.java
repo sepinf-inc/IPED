@@ -32,7 +32,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import gpinf.die.AbstractDie;
 import gpinf.die.RandomForestPredictor;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Explicit Image Detection (DIE) Task .

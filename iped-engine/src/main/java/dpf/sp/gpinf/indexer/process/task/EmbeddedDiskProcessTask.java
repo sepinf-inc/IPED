@@ -25,11 +25,11 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import gpinf.dev.data.Item;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
 import iped3.util.BasicProps;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 public class EmbeddedDiskProcessTask extends AbstractTask {
 

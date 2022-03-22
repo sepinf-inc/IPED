@@ -29,7 +29,7 @@ import dpf.sp.gpinf.indexer.util.EmptyInputStream;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class NamedEntityTask extends AbstractTask {
 

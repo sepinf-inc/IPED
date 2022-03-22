@@ -13,7 +13,7 @@ import dpf.sp.gpinf.indexer.util.FileInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa para geração de arquivos temporários para os itens antes do

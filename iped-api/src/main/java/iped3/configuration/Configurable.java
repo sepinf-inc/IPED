@@ -1,4 +1,4 @@
-package macee.core;
+package iped3.configuration;
 
 import java.io.IOException;
 import java.io.Serializable;

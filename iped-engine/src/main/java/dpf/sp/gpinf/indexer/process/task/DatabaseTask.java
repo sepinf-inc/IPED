@@ -9,7 +9,7 @@ import java.util.List;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class DatabaseTask extends AbstractTask {
 

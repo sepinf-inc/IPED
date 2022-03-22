@@ -44,7 +44,7 @@ import dpf.sp.gpinf.indexer.config.RegexTaskConfig.RegexEntry;
 import dpf.sp.gpinf.indexer.process.task.AbstractTask;
 import gpinf.dev.data.Item;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class RegexTask extends AbstractTask {
 

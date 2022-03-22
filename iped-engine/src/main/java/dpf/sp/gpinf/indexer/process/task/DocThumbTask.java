@@ -40,7 +40,7 @@ import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import gpinf.util.PDFToThumb;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 public class DocThumbTask extends ThumbTask {
 

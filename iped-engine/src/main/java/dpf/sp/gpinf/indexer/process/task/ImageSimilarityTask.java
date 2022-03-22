@@ -17,7 +17,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.EnableTaskProperty;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Image Similarity task.

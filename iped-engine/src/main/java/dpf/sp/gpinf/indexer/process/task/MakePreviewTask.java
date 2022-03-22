@@ -36,9 +36,9 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ItemInfoFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.io.IItemBase;
 import iped3.search.IItemSearcher;
-import macee.core.Configurable;
 
 public class MakePreviewTask extends AbstractTask {
 

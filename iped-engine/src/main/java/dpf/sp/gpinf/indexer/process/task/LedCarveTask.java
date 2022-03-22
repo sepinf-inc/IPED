@@ -30,8 +30,8 @@ import gpinf.hashdb.HashDBDataSource;
 import gpinf.hashdb.LedHashDB;
 import gpinf.hashdb.LedItem;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 public class LedCarveTask extends BaseCarveTask {
 

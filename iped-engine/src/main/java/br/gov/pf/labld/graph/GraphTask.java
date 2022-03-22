@@ -53,10 +53,10 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.IPEDException;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItem;
+import iped3.configuration.Configurable;
 import iped3.util.BasicProps;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
-import macee.core.Configurable;
 
 public class GraphTask extends AbstractTask {
 

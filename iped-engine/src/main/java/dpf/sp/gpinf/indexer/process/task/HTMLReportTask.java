@@ -79,7 +79,7 @@ import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.ReportInfo;
 import iped3.IItem;
-import macee.core.Configurable;
+import iped3.configuration.Configurable;
 
 /**
  * Tarefa de geração de relatório no formato HTML do itens selecionados, gerado
