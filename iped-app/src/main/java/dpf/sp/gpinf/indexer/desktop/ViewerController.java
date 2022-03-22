@@ -26,6 +26,7 @@ import bibliothek.gui.dock.common.mode.ExtendedMode;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AttachmentSearcherImpl;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.CADViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.EmailViewer;
@@ -39,12 +40,11 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.LibreOfficeViewer.NotSupported32BitPlatformExcepion;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MetadataViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MsgViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.MultiViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ReferencedFileViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TiffViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TikaHtmlViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ViewersRepository;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import iped3.io.IStreamSource;
@@ -56,12 +56,12 @@ import iped3.io.IStreamSource;
  * @author Wladimir
  */
 public class ViewerController {
-    private final List<Viewer> viewers = new ArrayList<Viewer>();
+    private final List<AbstractViewer> viewers = new ArrayList<>();
     private final ATextViewer textViewer;
     private final HtmlLinkViewer linkViewer;
-    private final ViewersRepository viewersRepository;
-    private final Map<Viewer, DefaultSingleCDockable> dockPerViewer = new HashMap<Viewer, DefaultSingleCDockable>();
-    private final Set<Viewer> updatedViewers = new HashSet<Viewer>();
+    private final MultiViewer viewersRepository;
+    private final Map<AbstractViewer, DefaultSingleCDockable> dockPerViewer = new HashMap<>();
+    private final Set<AbstractViewer> updatedViewers = new HashSet<>();
     private LibreOfficeViewer officeViewer;
     private IStreamSource file;
     private IStreamSource viewFile;
@@ -90,7 +90,7 @@ public class ViewerController {
                 return IndexItem.isNumeric(field);
             }
         });
-        viewers.add(viewersRepository = new ViewersRepository());
+        viewers.add(viewersRepository = new MultiViewer());
 
         // These are content-specific viewers (inside a single ViewersRepository)
         viewersRepository.addViewer(new ImageViewer());
@@ -108,7 +108,7 @@ public class ViewerController {
         new Thread() {
             public void run() {
                 try {
-                    for (Viewer viewer : viewers) {
+                    for (AbstractViewer viewer : viewers) {
                         viewer.init();
                     }
 
@@ -147,11 +147,11 @@ public class ViewerController {
         this.isFixed = isFixed;
     }
 
-    public void put(Viewer viewer, DefaultSingleCDockable viewerDock) {
+    public void put(AbstractViewer viewer, DefaultSingleCDockable viewerDock) {
         dockPerViewer.put(viewer, viewerDock);
     }
 
-    public List<Viewer> getViewers() {
+    public List<AbstractViewer> getViewers() {
         return Collections.unmodifiableList(viewers);
     }
 
@@ -159,7 +159,7 @@ public class ViewerController {
         return textViewer;
     }
 
-    public ViewersRepository getMultiViewer() {
+    public MultiViewer getMultiViewer() {
         return viewersRepository;
     }
 
@@ -169,7 +169,7 @@ public class ViewerController {
 
     public void dispose() {
         while (!viewers.isEmpty()) {
-            Viewer viewer = viewers.remove(viewers.size() - 1);
+            AbstractViewer viewer = viewers.remove(viewers.size() - 1);
             viewer.dispose();
         }
     }
@@ -179,12 +179,12 @@ public class ViewerController {
     }
 
     public void validateViewers() {
-        for (Viewer viewer : viewers) {
+        for (AbstractViewer viewer : viewers) {
             validateViewer(viewer);
         }
     }
 
-    public boolean validateViewer(Viewer viewer) {
+    public boolean validateViewer(AbstractViewer viewer) {
         if (viewer.equals(viewersRepository)) {
             if (viewersRepository.getPanel().isShowing()) {
                 if (officeViewer != null && viewersRepository.getCurrentViewer() != null
@@ -227,10 +227,10 @@ public class ViewerController {
         synchronized (updatedViewers) {
             updatedViewers.clear();
         }
-        Viewer requested = null;
+        AbstractViewer requested = null;
         if (file != null && !isFixed) {
             updateViewType();
-            Viewer bestViewer = getBestViewer(viewType);
+            AbstractViewer bestViewer = getBestViewer(viewType);
             if (!bestViewer.getPanel().isShowing()) {
                 DefaultSingleCDockable viewerDock = dockPerViewer.get(bestViewer);
                 if (!viewerDock.getExtendedMode().equals(ExtendedMode.MINIMIZED) && isContainerVisibleTab(viewerDock)) {
@@ -246,7 +246,7 @@ public class ViewerController {
                 }
             }
         }
-        for (Viewer viewer : viewers) {
+        for (AbstractViewer viewer : viewers) {
             if (!viewer.equals(requested)) {
                 updateViewer(viewer, true);
             }
@@ -267,7 +267,7 @@ public class ViewerController {
         return false;
     }
 
-    public void changeToViewer(Viewer viewer) {
+    public void changeToViewer(AbstractViewer viewer) {
         DefaultSingleCDockable viewerDock = dockPerViewer.get(viewer);
         if (viewerDock != null) {
             Component focus = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
@@ -282,7 +282,7 @@ public class ViewerController {
         return highlightTerms != null && !highlightTerms.isEmpty();
     }
 
-    public void updateViewer(Viewer viewer, boolean clean) {
+    public void updateViewer(AbstractViewer viewer, boolean clean) {
         if (viewer.getPanel().isShowing() || (viewer.equals(textViewer) && hasHits())) {
             if (isInitialized())
                 loadInViewer(viewer);
@@ -309,7 +309,7 @@ public class ViewerController {
         }
     }
 
-    private void loadInViewer(Viewer viewer) {
+    private void loadInViewer(AbstractViewer viewer) {
         synchronized (updatedViewers) {
             if (!updatedViewers.add(viewer))
                 return;
@@ -351,9 +351,9 @@ public class ViewerController {
         viewType = contentType;
     }
 
-    private Viewer getBestViewer(String contentType) {
-        Viewer result = null;
-        for (Viewer viewer : viewers) {
+    private AbstractViewer getBestViewer(String contentType) {
+        AbstractViewer result = null;
+        for (AbstractViewer viewer : viewers) {
             if (viewer.isSupportedType(contentType, true)) {
                 if (viewer instanceof MetadataViewer) {
                     if (((MetadataViewer) viewer).isMetadataEntry(contentType)) {

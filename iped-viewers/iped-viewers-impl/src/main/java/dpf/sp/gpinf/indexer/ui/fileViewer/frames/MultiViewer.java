@@ -12,29 +12,28 @@ import javax.swing.SwingUtilities;
 import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import iped3.io.IStreamSource;
 
-//TODO: Perhaps renaming this class to MultiViewer (or CompositeViewer or something more meaningful) would be a good idea 
-public class ViewersRepository extends Viewer {
+public class MultiViewer extends AbstractViewer {
 
     private JPanel cardViewer = new JPanel(new CardLayout());
-    private ArrayList<Viewer> viewerList = new ArrayList<Viewer>();
-    private Viewer currentViewer;
+    private ArrayList<AbstractViewer> viewerList = new ArrayList<AbstractViewer>();
+    private AbstractViewer currentViewer;
 
-    public ViewersRepository() {
+    public MultiViewer() {
         super(new GridLayout());
         this.getPanel().add(cardViewer);
     }
 
     @Override
     public String getName() {
-        return Messages.getString("ViewersRepository.TabName"); //$NON-NLS-1$
+        return Messages.getString("MultiViewer.TabName"); //$NON-NLS-1$
     }
 
-    public void addViewer(final Viewer viewer) {
+    public void addViewer(final AbstractViewer viewer) {
         viewerList.add(viewer);
         cardViewer.add(viewer.getPanel(), viewer.getName());
     }
 
-    public void removeViewer(final Viewer viewer) {
+    public void removeViewer(final AbstractViewer viewer) {
         try {
             SwingUtilities.invokeAndWait(new Runnable() {
                 @Override
@@ -53,9 +52,9 @@ public class ViewersRepository extends Viewer {
         return getSupportedViewer(contentType) != null;
     }
 
-    private Viewer getSupportedViewer(String contentType) {
-        Viewer result = null;
-        for (Viewer viewer : viewerList) {
+    private AbstractViewer getSupportedViewer(String contentType) {
+        AbstractViewer result = null;
+        for (AbstractViewer viewer : viewerList) {
             if (viewer.isSupportedType(contentType, true)) {
                 result = viewer;
             }
@@ -64,21 +63,21 @@ public class ViewersRepository extends Viewer {
     }
 
     private void clear() {
-        for (Viewer viewer : viewerList) {
+        for (AbstractViewer viewer : viewerList) {
             viewer.loadFile(null);
         }
     }
 
     @Override
     public void init() {
-        for (Viewer viewer : viewerList) {
+        for (AbstractViewer viewer : viewerList) {
             viewer.init();
         }
     }
 
     @Override
     public void dispose() {
-        for (Viewer viewer : viewerList) {
+        for (AbstractViewer viewer : viewerList) {
             viewer.dispose();
         }
     }
@@ -108,7 +107,7 @@ public class ViewersRepository extends Viewer {
             currentViewer.loadFile(content, contentType, highlightTerms);
         }
 
-        for (Viewer viewer : viewerList) {
+        for (AbstractViewer viewer : viewerList) {
             if (viewer != currentViewer) {
                 viewer.loadFile(null);
             }
@@ -165,7 +164,7 @@ public class ViewersRepository extends Viewer {
         }
     }
 
-    public Viewer getCurrentViewer() {
+    public AbstractViewer getCurrentViewer() {
         return currentViewer;
     }
 }
