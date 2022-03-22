@@ -37,7 +37,6 @@ import java.util.concurrent.Executors;
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.index.DirectoryReader;
-import org.apache.lucene.index.Fields;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.LeafReader;
@@ -75,8 +74,8 @@ import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
 import iped3.exception.IPEDException;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 import iped3.util.BasicProps;
 
 public class IPEDSource implements Closeable, IIPEDSource {
@@ -110,8 +109,8 @@ public class IPEDSource implements Closeable, IIPEDSource {
     protected ArrayList<String> leafCategories = new ArrayList<String>();
     protected Category categoryTree;
 
-    private IMarcadores marcadores;
-    IMultiMarcadores globalMarcadores;
+    private IBookmarks bookmarks;
+    IMultiBookmarks multiBookmarks;
 
     private int[] ids, docs;
     private long[] textSizes;
@@ -234,9 +233,9 @@ public class IPEDSource implements Closeable, IIPEDSource {
                 Item.getAllExtraAttributes().addAll(extraAttributes);
             }
 
-            marcadores = new Marcadores(this, moduleDir);
-            marcadores.loadState();
-            globalMarcadores = new MultiMarcadores(Collections.singletonList(this));
+            bookmarks = new Bookmarks(this, moduleDir);
+            bookmarks.loadState();
+            multiBookmarks = new MultiBookmarks(Collections.singletonList(this));
 
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
@@ -706,12 +705,12 @@ public class IPEDSource implements Closeable, IIPEDSource {
         return searcher;
     }
 
-    public IMarcadores getMarcadores() {
-        return marcadores;
+    public IBookmarks getBookmarks() {
+        return bookmarks;
     }
 
-    public IMultiMarcadores getMultiMarcadores() {
-        return this.globalMarcadores;
+    public IMultiBookmarks getMultiBookmarks() {
+        return this.multiBookmarks;
     }
 
     public int getTotalItens() {

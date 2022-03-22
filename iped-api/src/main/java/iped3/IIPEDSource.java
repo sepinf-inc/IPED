@@ -19,8 +19,8 @@ import org.sleuthkit.datamodel.SleuthkitCase;
 import org.sleuthkit.datamodel.TskCoreException;
 
 import iped3.exception.IPEDException;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 
 /**
  *
@@ -67,11 +67,11 @@ public interface IIPEDSource extends Closeable {
 
     int getLuceneId(int id);
 
-    IMarcadores getMarcadores();
+    IBookmarks getBookmarks();
 
     File getModuleDir();
 
-    IMultiMarcadores getMultiMarcadores();
+    IMultiBookmarks getMultiBookmarks();
 
     IndexReader getReader();
 

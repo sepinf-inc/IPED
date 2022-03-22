@@ -22,7 +22,7 @@ import iped3.IItemId;
  *
  * @author WERNECK
  */
-public interface IMultiMarcadores extends Serializable {
+public interface IMultiBookmarks extends Serializable {
 
     void addLabel(List<IItemId> ids, String labelName);
 
@@ -48,7 +48,7 @@ public interface IMultiMarcadores extends Serializable {
 
     List<String> getLabelList(IItemId item);
 
-    Collection<IMarcadores> getSingleBookmarks();
+    Collection<IBookmarks> getSingleBookmarks();
 
     int getTotalSelected();
 

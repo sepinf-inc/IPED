@@ -124,24 +124,24 @@ public class MenuListener implements ActionListener {
             App.get().loadPanelLayout();
             
         } else if (e.getSource() == menu.marcarSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(true, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            BookmarksController.get().setMultiSetting(false);
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.desmarcarSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(false, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            BookmarksController.get().setMultiSetting(false);
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().atualizarGUISelection();
 
         }
 
@@ -158,24 +158,24 @@ public class MenuListener implements ActionListener {
                 kl.keyPressed(keyCTRL_R_Pressed);
         }
         if (e.getSource() == menu.lerSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(true, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            BookmarksController.get().setMultiSetting(false);
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.deslerSelecionados) {
-            MarcadoresController.get().setMultiSetting(true);
+            BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
                 App.get().resultsTable.setValueAt(false, row, col);
             }
-            MarcadoresController.get().setMultiSetting(false);
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUISelection();
+            BookmarksController.get().setMultiSetting(false);
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().atualizarGUISelection();
 
         } else if (e.getSource() == menu.exportarSelecionados) {
             setupFileChooser();
@@ -213,7 +213,7 @@ public class MenuListener implements ActionListener {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
             for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
                 IItemId item = App.get().appCase.getItemId(docId);
-                if (App.get().appCase.getMultiMarcadores().isSelected(item)) {
+                if (App.get().appCase.getMultiBookmarks().isSelected(item)) {
                     uniqueSelectedIds.add(docId);
                 }
 
@@ -233,7 +233,7 @@ public class MenuListener implements ActionListener {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getMarcadores().isSelected(id)) {
+                    if (source.getBookmarks().isSelected(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
@@ -250,7 +250,7 @@ public class MenuListener implements ActionListener {
             ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getMarcadores().isSelected(id)) {
+                    if (source.getBookmarks().isSelected(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
@@ -281,15 +281,15 @@ public class MenuListener implements ActionListener {
             exportFileTree(onlyChecked, toZip);
 
         } else if (e.getSource() == menu.limparBuscas) {
-            App.get().appCase.getMultiMarcadores().clearTypedWords();
-            App.get().appCase.getMultiMarcadores().saveState();
-            MarcadoresController.get().atualizarGUIHistory();
+            App.get().appCase.getMultiBookmarks().clearTypedWords();
+            App.get().appCase.getMultiBookmarks().saveState();
+            BookmarksController.get().atualizarGUIHistory();
 
         } else if (e.getSource() == menu.carregarMarcadores) {
-            MarcadoresController.get().askAndLoadState();
+            BookmarksController.get().askAndLoadState();
 
         } else if (e.getSource() == menu.salvarMarcadores) {
-            MarcadoresController.get().askAndSaveState();
+            BookmarksController.get().askAndSaveState();
 
         } else if (e.getSource() == menu.copiarPreview) {
             AbstractViewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
@@ -304,7 +304,7 @@ public class MenuListener implements ActionListener {
 
         } else if (e.getSource() == menu.gerenciarMarcadores) {
 
-            GerenciadorMarcadores.setVisible();
+            BookmarksManager.setVisible();
 
         } else if (e.getSource() == menu.gerenciarColunas) {
 

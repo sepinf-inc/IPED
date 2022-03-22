@@ -22,7 +22,7 @@ import iped3.IIPEDSource;
  *
  * @author WERNECK
  */
-public interface IMarcadores extends Serializable {
+public interface IBookmarks extends Serializable {
 
     void addLabel(List<Integer> ids, int label);
 

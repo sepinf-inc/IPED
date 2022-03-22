@@ -7,14 +7,14 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.SwingUtilities;
 
-import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.LocalizedFormat;
 
-public class MarcadoresController {
+public class BookmarksController {
 
     public static final String HISTORY_DIV = Messages.getString("BookmarksController.HistoryDelimiter"); //$NON-NLS-1$
 
-    private static MarcadoresController instance;
+    private static BookmarksController instance;
 
     private static JFileChooser fileChooser;
     private static SearchStateFilter filtro;
@@ -23,7 +23,7 @@ public class MarcadoresController {
 
     private boolean updatingHistory = false;
 
-    private MarcadoresController() {
+    private BookmarksController() {
         SwingUtilities.invokeLater(new Runnable() {
             public void run() {
                 fileChooser = new JFileChooser();
@@ -37,9 +37,9 @@ public class MarcadoresController {
         return updatingHistory;
     }
 
-    public static MarcadoresController get() {
+    public static BookmarksController get() {
         if (instance == null)
-            instance = new MarcadoresController();
+            instance = new BookmarksController();
         return instance;
     }
 
@@ -54,14 +54,14 @@ public class MarcadoresController {
     public void addToRecentSearches(String texto) {
 
         if (!texto.equals(HISTORY_DIV) && !texto.trim().isEmpty()
-                && !App.get().appCase.getMultiMarcadores().getTypedWords().contains(texto)
+                && !App.get().appCase.getMultiBookmarks().getTypedWords().contains(texto)
                 && !App.get().appCase.getKeywords().contains(texto)) {
 
-            if (App.get().appCase.getMultiMarcadores().getTypedWords().size() == 0)
+            if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
                 App.get().termo.addItem(HISTORY_DIV);
 
             App.get().termo.addItem(texto);
-            App.get().appCase.getMultiMarcadores().addToTypedWords(texto);
+            App.get().appCase.getMultiBookmarks().addToTypedWords(texto);
         }
     }
 
@@ -80,12 +80,12 @@ public class MarcadoresController {
             @Override
             public void run() {
                 App.get().checkBox.setText(
-                        LocalizedFormat.format(App.get().appCase.getMultiMarcadores().getTotalSelected()) + " / " //$NON-NLS-1$
+                        LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalSelected()) + " / " //$NON-NLS-1$
                                 + LocalizedFormat.format(App.get().appCase.getTotalItens()));
-                App.get().checkBox.setSelected(App.get().appCase.getMultiMarcadores().getTotalSelected() > 0);
+                App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalSelected() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();
-                GerenciadorMarcadores.updateCounters();
+                BookmarksManager.updateCounters();
             }
         });
 
@@ -97,9 +97,9 @@ public class MarcadoresController {
         if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try {
-                App.get().appCase.getMultiMarcadores().loadState(file);
+                App.get().appCase.getMultiBookmarks().loadState(file);
                 atualizarGUIandHistory();
-                GerenciadorMarcadores.get().updateList();
+                BookmarksManager.get().updateList();
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.LoadSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
 
@@ -118,10 +118,10 @@ public class MarcadoresController {
         for (String word : App.get().appCase.getKeywords())
             App.get().termo.addItem(word);
 
-        if (App.get().appCase.getMultiMarcadores().getTypedWords().size() != 0)
+        if (App.get().appCase.getMultiBookmarks().getTypedWords().size() != 0)
             App.get().termo.addItem(HISTORY_DIV);
 
-        for (String text : App.get().appCase.getMultiMarcadores().getTypedWords()) {
+        for (String text : App.get().appCase.getMultiBookmarks().getTypedWords()) {
             App.get().termo.addItem(text);
         }
         App.get().termo.setSelectedItem(prevText);
@@ -133,11 +133,11 @@ public class MarcadoresController {
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
-            if (!file.getName().endsWith(Marcadores.EXT))
-                file = new File(file.getPath() + Marcadores.EXT);
+            if (!file.getName().endsWith(Bookmarks.EXT))
+                file = new File(file.getPath() + Bookmarks.EXT);
 
             try {
-                App.get().appCase.getMultiMarcadores().saveState(file);
+                App.get().appCase.getMultiBookmarks().saveState(file);
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.SaveSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.SaveSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
 

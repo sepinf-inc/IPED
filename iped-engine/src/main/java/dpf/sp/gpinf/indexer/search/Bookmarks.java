@@ -38,17 +38,17 @@ import dpf.sp.gpinf.indexer.Version;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
-import iped3.search.IMarcadores;
+import iped3.search.IBookmarks;
 import iped3.search.LuceneSearchResult;
 
-public class Marcadores implements Serializable, IMarcadores {
+public class Bookmarks implements Serializable, IBookmarks {
 
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Marcadores.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(Bookmarks.class);
 
     public static String EXT = "." + Version.APP_EXT.toLowerCase(); //$NON-NLS-1$
     public static String STATEFILENAME = "marcadores" + EXT; //$NON-NLS-1$
@@ -73,12 +73,12 @@ public class Marcadores implements Serializable, IMarcadores {
 
     private transient IIPEDSource ipedCase;
 
-    public Marcadores(IIPEDSource ipedCase, File modulePath) {
+    public Bookmarks(IIPEDSource ipedCase, File modulePath) {
         this(ipedCase.getTotalItens(), ipedCase.getLastId(), modulePath);
         this.ipedCase = ipedCase;
     }
 
-    public Marcadores(int totalItens, int lastId, final File modulePath) {
+    public Bookmarks(int totalItens, int lastId, final File modulePath) {
         this.totalItems = totalItens;
         this.lastId = lastId;
         selected = new boolean[lastId + 1];
@@ -463,7 +463,7 @@ public class Marcadores implements Serializable, IMarcadores {
     }
 
     public synchronized void loadState(File file) throws IOException, ClassNotFoundException {
-        Marcadores state = load(file);
+        Bookmarks state = load(file);
 
         if (state.selected != null /* && state.read != null */) {
             int len = Math.min(state.selected.length, this.selected.length);
@@ -486,9 +486,9 @@ public class Marcadores implements Serializable, IMarcadores {
         this.reportLabels = state.reportLabels;
     }
 
-    public static Marcadores load(File file) throws ClassNotFoundException, IOException {
+    public static Bookmarks load(File file) throws ClassNotFoundException, IOException {
         LOGGER.info("Loading state from file " + file.getAbsolutePath()); //$NON-NLS-1$
-        return (Marcadores) Util.readObject(file.getAbsolutePath());
+        return (Bookmarks) Util.readObject(file.getAbsolutePath());
     }
 
     public synchronized void setSelected(boolean value, int id) {

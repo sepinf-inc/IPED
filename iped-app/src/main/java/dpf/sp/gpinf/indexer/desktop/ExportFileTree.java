@@ -111,7 +111,7 @@ public class ExportFileTree extends CancelableWorker {
 
             if (onlyChecked) {
                 MultiSearchResult ir = MultiSearchResult.get(App.get().appCase, result);
-                ir = (MultiSearchResult) App.get().appCase.getMultiMarcadores().filtrarSelecionados(ir);
+                ir = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filtrarSelecionados(ir);
                 result = MultiSearchResult.get(ir, App.get().appCase);
             }
 

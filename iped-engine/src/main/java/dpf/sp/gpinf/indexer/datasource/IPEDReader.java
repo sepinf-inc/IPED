@@ -63,7 +63,7 @@ import dpf.sp.gpinf.indexer.process.task.QRCodeTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
-import dpf.sp.gpinf.indexer.search.Marcadores;
+import dpf.sp.gpinf.indexer.search.Bookmarks;
 import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.HashValue;
 import dpf.sp.gpinf.indexer.util.MetadataInputStreamFactory;
@@ -76,8 +76,8 @@ import iped3.ICaseData;
 import iped3.IIPEDSource;
 import iped3.datasource.IDataSource;
 import iped3.search.IIPEDSearcher;
-import iped3.search.IMarcadores;
-import iped3.search.IMultiMarcadores;
+import iped3.search.IBookmarks;
+import iped3.search.IMultiBookmarks;
 import iped3.search.LuceneSearchResult;
 import iped3.search.SearchResult;
 import iped3.util.BasicProps;
@@ -98,7 +98,7 @@ public class IPEDReader extends DataSourceReader {
     IPEDSource ipedCase;
     HashSet<Integer> selectedLabels;
     boolean extractCheckedItems = false;
-    IMarcadores state;
+    IBookmarks state;
     File indexDir;
     String basePath;
     private int[] oldToNewIdMap;
@@ -113,7 +113,7 @@ public class IPEDReader extends DataSourceReader {
 
     public boolean isSupported(File report) {
         String name = report.getName().toLowerCase();
-        return name.endsWith(Marcadores.EXT);
+        return name.endsWith(Bookmarks.EXT);
     }
 
     public void read(File file) throws Exception {
@@ -134,17 +134,17 @@ public class IPEDReader extends DataSourceReader {
         QRCodeTask.setEnabled(false);
 
         deviceName = getEvidenceName(file);
-        if (deviceName.endsWith(Marcadores.EXT)) {
+        if (deviceName.endsWith(Bookmarks.EXT)) {
             deviceName = null;
         }
 
         Object obj = Util.readObject(file.getAbsolutePath());
-        if (obj instanceof IMultiMarcadores) {
-            IMultiMarcadores mm = (IMultiMarcadores) obj;
-            for (IMarcadores m : mm.getSingleBookmarks())
+        if (obj instanceof IMultiBookmarks) {
+            IMultiBookmarks mm = (IMultiBookmarks) obj;
+            for (IBookmarks m : mm.getSingleBookmarks())
                 processBookmark(m);
         } else {
-            processBookmark((IMarcadores) obj);
+            processBookmark((IBookmarks) obj);
         }
     }
 
@@ -174,7 +174,7 @@ public class IPEDReader extends DataSourceReader {
         }
     }
 
-    private void processBookmark(IMarcadores state) throws Exception {
+    private void processBookmark(IBookmarks state) throws Exception {
         this.state = state;
         selectedLabels = new HashSet<Integer>();
         indexDir = state.getIndexDir().getCanonicalFile();
@@ -227,13 +227,13 @@ public class IPEDReader extends DataSourceReader {
             return;
         int lastId = ipedCase.getLastId();
         int totalItens = ipedCase.getTotalItens();
-        File stateFile = new File(output, Marcadores.STATEFILENAME);
+        File stateFile = new File(output, Bookmarks.STATEFILENAME);
         if (stateFile.exists()) {
-            IMarcadores reportState = Marcadores.load(stateFile);
+            IBookmarks reportState = Bookmarks.load(stateFile);
             lastId += reportState.getLastId() + 1;
             totalItens += reportState.getTotalItens();
         }
-        IMarcadores reportState = new Marcadores(totalItens, lastId, output);
+        IBookmarks reportState = new Bookmarks(totalItens, lastId, output);
         reportState.loadState();
 
         for (int oldLabelId : selectedLabels) {

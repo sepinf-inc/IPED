@@ -60,7 +60,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
     @Override
     public void valueChanged(ListSelectionEvent evt) {
 
-        GerenciadorMarcadores.updateCounters();
+        BookmarksManager.updateCounters();
 
         if (App.get().resultsTable.getSelectedRowCount() == 0 || evt.getValueIsAdjusting()) {
             return;
@@ -213,10 +213,10 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             evt.consume();
         } else if (evt.getKeyCode() == KeyEvent.VK_B && ((evt.getModifiers() & KeyEvent.CTRL_MASK) != 0)) {
             // Shortcut to BookmarkManager Window
-            GerenciadorMarcadores.setVisible();
+            BookmarksManager.setVisible();
             evt.consume();
         } else 
-            GerenciadorMarcadores.get().keyPressed(evt);
+            BookmarksManager.get().keyPressed(evt);
 
     }
 
@@ -228,12 +228,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             value = false;
         }
 
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -242,12 +242,12 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
 
     public void recursiveItemSelection(boolean value) {
         int col = App.get().resultsTable.convertColumnIndexToView(1);
-        MarcadoresController.get().setMultiSetting(true);
+        BookmarksController.get().setMultiSetting(true);
         App.get().resultsTable.setUpdateSelectionOnSort(false);
         int[] selectedRows = App.get().resultsTable.getSelectedRows();
         for (int i = 0; i < selectedRows.length; i++) {
             if (i == selectedRows.length - 1) {
-                MarcadoresController.get().setMultiSetting(false);
+                BookmarksController.get().setMultiSetting(false);
                 App.get().resultsTable.setUpdateSelectionOnSort(true);
             }
             App.get().resultsTable.setValueAt(value, selectedRows[i], col);
@@ -255,7 +255,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
         }
-        MarcadoresController.get().atualizarGUI();
+        BookmarksController.get().atualizarGUI();
         App.get().subItemTable.repaint();
     }
 
@@ -281,7 +281,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                     logger.debug("Found {} subitems of sourceId {} id {}", result.getLength(), rootID.getSourceId(),
                             rootID.getId());
                     for (IItemId subItem : result.getIterator()) {
-                        App.get().appCase.getMultiMarcadores().setSelected((Boolean) state, subItem);
+                        App.get().appCase.getMultiBookmarks().setSelected((Boolean) state, subItem);
                     }
                 }
             }
@@ -317,7 +317,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
                 .isStringComparator())
             return;
 
-        if (GerenciadorMarcadores.get().hasSingleKeyShortcut())
+        if (BookmarksManager.get().hasSingleKeyShortcut())
             return;
         
         long t = System.currentTimeMillis();

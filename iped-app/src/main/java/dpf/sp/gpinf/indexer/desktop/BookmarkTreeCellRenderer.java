@@ -20,14 +20,14 @@ public class BookmarkTreeCellRenderer extends DefaultTreeCellRenderer {
         if (App.get().appCase != null) {
             String name = (String) value;
             
-            String comment = App.get().appCase.getMultiMarcadores().getLabelComment(name);
+            String comment = App.get().appCase.getMultiBookmarks().getLabelComment(name);
             if (comment != null && !comment.trim().isEmpty())
                 setToolTipText(comment.trim());
             else
                 setToolTipText(null);
 
             if (name != null && !name.equals(BookmarksTreeModel.ROOT) && !name.equals(BookmarksTreeModel.NO_BOOKMARKS)) {
-                int count = App.get().appCase.getMultiMarcadores().getLabelCount(name);
+                int count = App.get().appCase.getMultiBookmarks().getLabelCount(name);
                 if (count > 0) {
                     value = (String) value + " (" + LocalizedFormat.format(count) + ")";
                 }

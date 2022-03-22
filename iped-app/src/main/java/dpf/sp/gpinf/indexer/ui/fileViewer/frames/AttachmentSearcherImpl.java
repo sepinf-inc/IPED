@@ -9,7 +9,7 @@ import org.apache.lucene.util.BytesRef;
 import com.zaxxer.sparsebits.SparseBitSet;
 
 import dpf.sp.gpinf.indexer.desktop.App;
-import dpf.sp.gpinf.indexer.desktop.MarcadoresController;
+import dpf.sp.gpinf.indexer.desktop.BookmarksController;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
 import dpf.sp.gpinf.indexer.search.MultiSearchResult;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AttachmentSearcher;
@@ -62,9 +62,9 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             if (result.getLength() == 0)
                 return;
             for (IItemId item : result.getIterator()) {
-                App.get().appCase.getMultiMarcadores().setSelected(checked, item);
+                App.get().appCase.getMultiBookmarks().setSelected(checked, item);
             }
-            MarcadoresController.get().atualizarGUI();
+            BookmarksController.get().atualizarGUI();
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -113,7 +113,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         selectedHashOrds.clear();
         for (int luceneId = 0; luceneId < App.get().appCase.getReader().maxDoc(); luceneId++) {
             IItemId itemId = App.get().appCase.getItemId(luceneId);
-            if (App.get().appCase.getMultiMarcadores().isSelected(itemId)) {
+            if (App.get().appCase.getMultiBookmarks().isSelected(itemId)) {
                 int ord = DocValuesUtil.getOrd(sdv, luceneId);
                 if (ord > -1) {
                     selectedHashOrds.set(ord);

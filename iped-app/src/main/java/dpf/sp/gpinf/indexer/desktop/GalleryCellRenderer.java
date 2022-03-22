@@ -109,7 +109,7 @@ public class GalleryCellRenderer implements TableCellRenderer {
             return panel;
         }
 
-        check.setSelected(App.get().appCase.getMultiMarcadores().isSelected(cellValue.id));
+        check.setSelected(App.get().appCase.getMultiBookmarks().isSelected(cellValue.id));
         cLabel.setText(cellValue.name);
 
         if (cellValue.icon == null && cellValue.image == null) {

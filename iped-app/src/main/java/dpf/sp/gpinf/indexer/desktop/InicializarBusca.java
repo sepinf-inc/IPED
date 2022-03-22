@@ -92,7 +92,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
             checkIfProcessingFinished(App.get().appCase);
 
             App.get().appCase.checkImagePaths();
-            App.get().appCase.getMultiMarcadores()
+            App.get().appCase.getMultiBookmarks()
                     .addSelectionListener(App.get().getViewerController().getHtmlLinkViewer());
 
             if (!updateItems) {
@@ -173,7 +173,7 @@ public class InicializarBusca extends SwingWorker<Void, Integer> {
     public void done() {
         CategoryTreeModel.install();
         App.get().filterManager.loadFilters();
-        MarcadoresController.get().atualizarGUIandHistory();
+        BookmarksController.get().atualizarGUIandHistory();
 
         App.get().tree.setModel(treeModel);
         App.get().tree.setLargeModel(true);
