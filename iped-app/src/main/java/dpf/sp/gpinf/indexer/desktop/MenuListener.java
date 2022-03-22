@@ -47,7 +47,7 @@ import dpf.sp.gpinf.indexer.search.IPEDSource;
 import dpf.sp.gpinf.indexer.search.ItemId;
 import dpf.sp.gpinf.indexer.search.SimilarDocumentSearch;
 import dpf.sp.gpinf.indexer.ui.UiScale;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.util.SpinnerDialog;
 import iped3.IIPEDSource;
 import iped3.IItem;
@@ -292,7 +292,7 @@ public class MenuListener implements ActionListener {
             MarcadoresController.get().askAndSaveState();
 
         } else if (e.getSource() == menu.copiarPreview) {
-            Viewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
+            AbstractViewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
             viewer.copyScreen();
 
         } else if (e.getSource() == menu.aumentarGaleria) {

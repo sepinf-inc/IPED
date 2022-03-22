@@ -29,7 +29,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ITextParser;
 
-public abstract class ATextViewer extends Viewer implements KeyListener {
+public abstract class ATextViewer extends AbstractViewer implements KeyListener {
 
     public static Font font = new Font(Font.MONOSPACED, Font.PLAIN, 11);
 

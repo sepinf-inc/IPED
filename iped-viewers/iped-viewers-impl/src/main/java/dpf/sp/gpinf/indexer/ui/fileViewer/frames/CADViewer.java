@@ -23,7 +23,7 @@ import dpf.sp.gpinf.indexer.ui.fileViewer.Messages;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import iped3.io.IStreamSource;
 
-public class CADViewer extends Viewer {
+public class CADViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(CADViewer.class);
 

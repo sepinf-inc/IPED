@@ -19,18 +19,18 @@ import iped3.io.IStreamSource;
 import iped3.util.ExtraProperties;
 import iped3.util.MediaTypes;
 
-public class ReferencedFileViewer extends Viewer {
+public class ReferencedFileViewer extends AbstractViewer {
 
     private String labelPrefix;
 
     private JLabel typeNotSupported;
 
-    private ViewersRepository multiViewer;
+    private MultiViewer multiViewer;
     private AttachmentSearcher attachSearcher;
     private IItem lastItem;
     private Tika tika;
 
-    public ReferencedFileViewer(ViewersRepository multiViewer, AttachmentSearcher attachSearcher) {
+    public ReferencedFileViewer(MultiViewer multiViewer, AttachmentSearcher attachSearcher) {
         super();
         this.multiViewer = multiViewer;
         this.attachSearcher = attachSearcher;

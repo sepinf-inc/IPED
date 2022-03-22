@@ -83,7 +83,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ProcessUtil;
 import iped3.io.IStreamSource;
 
-public class LibreOfficeViewer extends Viewer {
+public class LibreOfficeViewer extends AbstractViewer {
 
     private static Logger LOGGER = LoggerFactory.getLogger(LibreOfficeViewer.class);
     /**

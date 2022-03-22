@@ -42,7 +42,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.web.WebEngine;
 
 @SuppressWarnings("restriction")
-public abstract class MetadataViewer extends Viewer {
+public abstract class MetadataViewer extends AbstractViewer {
 
     private DecimalFormat df = LocalizedFormat.getDecimalInstance("#,###.############"); //$NON-NLS-1$
 

@@ -127,8 +127,8 @@ import dpf.sp.gpinf.indexer.ui.PanelsLayout;
 import dpf.sp.gpinf.indexer.ui.controls.CSelButton;
 import dpf.sp.gpinf.indexer.ui.controls.CustomButton;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.ATextViewer;
+import dpf.sp.gpinf.indexer.ui.fileViewer.frames.AbstractViewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.frames.TextViewer;
-import dpf.sp.gpinf.indexer.ui.fileViewer.frames.Viewer;
 import dpf.sp.gpinf.indexer.ui.fileViewer.util.AppSearchParams;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTable;
 import dpf.sp.gpinf.indexer.ui.hitsViewer.HitsTableModel;
@@ -138,10 +138,8 @@ import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.IItem;
 import iped3.IItemId;
-import iped3.desktop.CancelableWorker;
 import iped3.desktop.GUIProvider;
 import iped3.desktop.IColumnsManager;
-import iped3.desktop.ProgressDialog;
 import iped3.desktop.ResultSetViewer;
 import iped3.desktop.ResultSetViewerConfiguration;
 import iped3.search.IIPEDSearcher;
@@ -936,9 +934,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         dockingControl.addDockable(parentDock);
         dockingControl.addDockable(referencesDock);
 
-        List<Viewer> viewers = viewerController.getViewers();
+        List<AbstractViewer> viewers = viewerController.getViewers();
         viewerDocks = new ArrayList<DefaultSingleCDockable>();
-        for (Viewer viewer : viewers) {
+        for (AbstractViewer viewer : viewers) {
             DefaultSingleCDockable viewerDock = createDockable(viewer.getClass().getName(), viewer.getName(),
                     viewer.getPanel());
             viewerDocks.add(viewerDock);
@@ -956,9 +954,9 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                 viewerController.setFixed(isSelected());
             }
         };
-        List<Viewer> viewers = viewerController.getViewers();
+        List<AbstractViewer> viewers = viewerController.getViewers();
         for (int i = 0; i < viewers.size(); i++) {
-            Viewer viewer = viewers.get(i);
+            AbstractViewer viewer = viewers.get(i);
             DefaultSingleCDockable viewerDock = viewerDocks.get(i);
             viewerDock.addCDockableLocationListener(new CDockableLocationListener() {
                 public void changed(CDockableLocationEvent event) {

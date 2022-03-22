@@ -28,9 +28,9 @@ import iped3.util.MediaTypes;
  *
  * @author Luis Filipe Nassif
  */
-public abstract class Viewer {
+public abstract class AbstractViewer {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(Viewer.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AbstractViewer.class);
 
     private static final long serialVersionUID = 1L;
 
@@ -44,20 +44,20 @@ public abstract class Viewer {
 
     protected boolean isToolbarVisible;
 
-    public Viewer() {
+    public AbstractViewer() {
         panel = new JPanel();
     }
 
-    public Viewer(LayoutManager layout) {
+    public AbstractViewer(LayoutManager layout) {
         panel = new JPanel(layout);
     }
 
-    public Viewer(Window owner) {
+    public AbstractViewer(Window owner) {
         this.owner = owner; 
         panel = new JPanel();
     }
 
-    public Viewer(Window owner, LayoutManager layout) {
+    public AbstractViewer(Window owner, LayoutManager layout) {
         this.owner = owner; 
         panel = new JPanel(layout);
     }
@@ -97,7 +97,7 @@ public abstract class Viewer {
     }
 
     /**
-     * Viewer lazy initialization method. Can be used to start heavy objects or
+     * AbstractViewer lazy initialization method. Can be used to start heavy objects or
      * components. Must be called outside EDT to not block the UI.
      */
     abstract public void init();
