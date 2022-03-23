@@ -91,6 +91,10 @@ public class KnownMetCarveTask extends BaseCarveTask {
         return taskEnabled;
     }
 
+    public static void setEnabled(boolean enabled) {
+        taskEnabled = enabled;
+    }
+
     /**
      * Inicializa tarefa, realizando controle de alocação de apenas uma thread
      * principal.

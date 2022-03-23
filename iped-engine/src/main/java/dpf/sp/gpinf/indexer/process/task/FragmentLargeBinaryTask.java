@@ -24,6 +24,8 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
     private static final int FRAG_SIZE = 10 * 1024 * 1024;
     private static final int OVERLAP = 1024;
 
+    private static boolean enabled = true;
+
     private IndexerDefaultParser autoParser;
 
     @Override
@@ -39,7 +41,11 @@ public class FragmentLargeBinaryTask extends BaseCarveTask {
 
     @Override
     public boolean isEnabled() {
-        return !caseData.isIpedReport();
+        return enabled && !caseData.isIpedReport();
+    }
+
+    public static void setEnabled(boolean value) {
+        enabled = value;
     }
 
     @Override
