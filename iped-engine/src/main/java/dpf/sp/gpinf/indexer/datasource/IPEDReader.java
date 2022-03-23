@@ -200,11 +200,13 @@ public class IPEDReader extends DataSourceReader {
             oldToNewIdMap[i] = -1;
 
         IIPEDSearcher pesquisa = new IPEDSearcher(ipedCase, new MatchAllDocsQuery());
-        LuceneSearchResult result = state.filterInReport(pesquisa.luceneSearch(), ipedCase);
-        if (result.getLength() == 0) {
-            result = state.filtrarSelecionados(pesquisa.luceneSearch(), ipedCase);
+        SearchResult searchResult = state.filterInReport(pesquisa.search());
+        if (searchResult.getLength() == 0) {
+            searchResult = state.filterChecked(pesquisa.search());
             extractCheckedItems = true;
         }
+
+        LuceneSearchResult result = SearchResult.get(searchResult, ipedCase);
 
         insertIntoProcessQueue(result, false);
 
@@ -237,15 +239,15 @@ public class IPEDReader extends DataSourceReader {
         reportState.loadState();
 
         for (int oldLabelId : selectedLabels) {
-            String labelName = state.getLabelName(oldLabelId);
-            String labelComment = state.getLabelComment(oldLabelId);
-            int newLabelId = reportState.newLabel(labelName);
-            reportState.setLabelComment(newLabelId, labelComment);
+            String labelName = state.getBookmarkName(oldLabelId);
+            String labelComment = state.getBookmarkComment(oldLabelId);
+            int newLabelId = reportState.newBookmark(labelName);
+            reportState.setBookmarkComment(newLabelId, labelComment);
             ArrayList<Integer> newIds = new ArrayList<Integer>();
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
-                if (state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
+                if (state.hasBookmark(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
-            reportState.addLabel(newIds, newLabelId);
+            reportState.addBookmark(newIds, newLabelId);
         }
         reportState.saveState();
     }
@@ -453,13 +455,13 @@ public class IPEDReader extends DataSourceReader {
 
             if (!treeNode && caseData.isIpedReport()) {
                 if (extractCheckedItems) {
-                    selectedLabels.addAll(state.getLabelIds(prevId));
-                    evidence.setLabels(state.getLabelList(prevId));
+                    selectedLabels.addAll(state.getBookmarkIds(prevId));
+                    evidence.setLabels(state.getBookmarkList(prevId));
                 } else
-                    for (int labelId : state.getLabelIds(prevId)) {
+                    for (int labelId : state.getBookmarkIds(prevId)) {
                         if (state.isInReport(labelId)) {
                             selectedLabels.add(labelId);
-                            evidence.getLabels().add(state.getLabelName(labelId));
+                            evidence.getLabels().add(state.getBookmarkName(labelId));
                         }
                     }
             }

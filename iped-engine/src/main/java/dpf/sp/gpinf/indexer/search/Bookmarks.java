@@ -39,7 +39,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IIPEDSource;
 import iped3.search.IBookmarks;
-import iped3.search.LuceneSearchResult;
+import iped3.search.SearchResult;
 
 public class Bookmarks implements Serializable, IBookmarks {
 
@@ -112,7 +112,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return indexDir;
     }
 
-    public Map<Integer, String> getLabelMap() {
+    public Map<Integer, String> getBookmarkMap() {
         return labelNames;
     }
 
@@ -120,11 +120,11 @@ public class Bookmarks implements Serializable, IBookmarks {
         return typedWords;
     }
 
-    public int getTotalSelected() {
+    public int getTotalChecked() {
         return selectedItens;
     }
 
-    public boolean isSelected(int id) {
+    public boolean isChecked(int id) {
         return selected[id];
     }
 
@@ -135,7 +135,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         }
     }
 
-    public synchronized void selectAll() {
+    public synchronized void checkAll() {
         selectedItens = totalItems;
         int maxLuceneId = ipedCase.getReader().maxDoc() - 1;
         for (int i = 0; i <= maxLuceneId; i++) {
@@ -143,8 +143,8 @@ public class Bookmarks implements Serializable, IBookmarks {
         }
     }
 
-    public List<String> getLabelList(int itemId) {
-        ArrayList<Integer> labelIds = getLabelIds(itemId);
+    public List<String> getBookmarkList(int itemId) {
+        ArrayList<Integer> labelIds = getBookmarkIds(itemId);
         TreeSet<String> result = new TreeSet<>();
         for (Integer labelId : labelIds) {
             result.add(labelNames.get(labelId));
@@ -154,18 +154,18 @@ public class Bookmarks implements Serializable, IBookmarks {
         return list;
     }
 
-    public ArrayList<Integer> getLabelIds(int id) {
+    public ArrayList<Integer> getBookmarkIds(int id) {
         ArrayList<Integer> labelIds = new ArrayList<Integer>();
         if (labelNames.size() > 0)
             for (int i : labelNames.keySet()) {
-                if (hasLabel(id, i))
+                if (hasBookmark(id, i))
                     labelIds.add(i);
             }
 
         return labelIds;
     }
 
-    public synchronized void addLabel(List<Integer> ids, int label) {
+    public synchronized void addBookmark(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
         int labelMask = 1 << labelMod;
@@ -177,7 +177,7 @@ public class Bookmarks implements Serializable, IBookmarks {
 
     }
 
-    public int getLabelCount(int label) {
+    public int getBookmarkCount(int label) {
         if (labels.isEmpty()) {
             return 0;
         }
@@ -193,7 +193,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return ret;
     }
     
-    public final boolean hasLabel(int id) {
+    public final boolean hasBookmark(int id) {
         boolean hasLabel = false;
         for (byte[] b : labels) {
             hasLabel = b[id] != 0;
@@ -203,7 +203,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return hasLabel;
     }
 
-    public final byte[] getLabelBits(int[] labelids) {
+    public final byte[] getBookmarkBits(int[] labelids) {
         byte[] bits = new byte[labels.size()];
         for (int label : labelids)
             bits[label / labelBits] |= 1 << (label % labelBits);
@@ -211,7 +211,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return bits;
     }
 
-    public final boolean hasLabel(int id, byte[] labelbits) {
+    public final boolean hasBookmark(int id, byte[] labelbits) {
         boolean hasLabel = false;
         for (int i = 0; i < labelbits.length; i++) {
             hasLabel = (labels.get(i)[id] & labelbits[i]) != 0;
@@ -221,14 +221,14 @@ public class Bookmarks implements Serializable, IBookmarks {
         return hasLabel;
     }
 
-    public final boolean hasLabel(int id, int label) {
+    public final boolean hasBookmark(int id, int label) {
         int p = 1 << (label % labelBits);
         int bit = labels.get(label / labelBits)[id] & p;
         return bit != 0;
 
     }
 
-    public synchronized void removeLabel(List<Integer> ids, int label) {
+    public synchronized void removeBookmark(List<Integer> ids, int label) {
         int labelOrder = label / labelBits;
         int labelMod = label % labelBits;
         int labelMask = ~(1 << labelMod);
@@ -239,9 +239,9 @@ public class Bookmarks implements Serializable, IBookmarks {
 
     }
 
-    public synchronized int newLabel(String labelName) {
+    public synchronized int newBookmark(String labelName) {
 
-        int labelId = getLabelId(labelName);
+        int labelId = getBookmarkId(labelName);
         if (labelId != -1)
             return labelId;
 
@@ -266,7 +266,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return labelId;
     }
 
-    public synchronized void delLabel(int label) {
+    public synchronized void delBookmark(int label) {
         if (label == -1)
             return;
         labelNames.remove(label);
@@ -283,12 +283,12 @@ public class Bookmarks implements Serializable, IBookmarks {
         }
     }
 
-    public synchronized void changeLabel(int labelId, String newLabel) {
+    public synchronized void renameBookmark(int labelId, String newLabel) {
         if (labelId != -1)
             labelNames.put(labelId, newLabel);
     }
 
-    public int getLabelId(String labelName) {
+    public int getBookmarkId(String labelName) {
         for (int i : labelNames.keySet()) {
             if (labelNames.get(i).equals(labelName))
                 return i;
@@ -296,23 +296,23 @@ public class Bookmarks implements Serializable, IBookmarks {
         return -1;
     }
 
-    public String getLabelName(int labelId) {
+    public String getBookmarkName(int labelId) {
         return labelNames.get(labelId);
     }
 
-    public synchronized void setLabelComment(int labelId, String comment) {
+    public synchronized void setBookmarkComment(int labelId, String comment) {
         labelComments.put(labelId, comment);
     }
 
-    public String getLabelComment(int labelId) {
+    public String getBookmarkComment(int labelId) {
         return labelComments.get(labelId);
     }
 
-    public synchronized void setLabelKeyStroke(int labelId, KeyStroke key) {
+    public synchronized void setBookmarkKeyStroke(int labelId, KeyStroke key) {
         labelKeyStrokes.put(labelId, key);
     }
 
-    public KeyStroke getLabelKeyStroke(int labelId) {
+    public KeyStroke getBookmarkKeyStroke(int labelId) {
         return labelKeyStrokes.get(labelId);
     }
 
@@ -327,82 +327,74 @@ public class Bookmarks implements Serializable, IBookmarks {
         return reportLabels.contains(labelId);
     }
 
-    public LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
-            throws Exception {
-        result = result.clone();
-
+    public SearchResult filterBookmarks(SearchResult result, Set<String> labelNames) {
         int[] labelIds = new int[labelNames.size()];
         int i = 0;
         for (String labelName : labelNames)
-            labelIds[i++] = getLabelId(labelName);
-        byte[] labelBits = getLabelBits(labelIds);
+            labelIds[i++] = getBookmarkId(labelName);
+        byte[] labelBits = getBookmarkBits(labelIds);
 
-        for (i = 0; i < result.getLength(); i++)
-            if (!hasLabel(ipedCase.getId(result.getLuceneIds()[i]), labelBits)) {
-                result.getLuceneIds()[i] = -1;
+        for (i = 0; i < result.getLength(); i++) {
+            if (!hasBookmark(result.getId(i), labelBits)) {
+                result.getIds().set(i, -1);
             }
-
-        result.clearResults();
+        }
+        result.compactResults();
         return result;
     }
 
-    public LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames,
-            IIPEDSource ipedCase) throws Exception {
-        result = result.clone();
-
+    public SearchResult filterBookmarksOrNoBookmarks(SearchResult result, Set<String> labelNames) {
         int[] labelIds = new int[labelNames.size()];
         int i = 0;
         for (String labelName : labelNames)
-            labelIds[i++] = getLabelId(labelName);
-        byte[] labelBits = getLabelBits(labelIds);
+            labelIds[i++] = getBookmarkId(labelName);
+        byte[] labelBits = getBookmarkBits(labelIds);
 
-        for (i = 0; i < result.getLength(); i++)
-            if (hasLabel(ipedCase.getId(result.getLuceneIds()[i]))
-                    && !hasLabel(ipedCase.getId(result.getLuceneIds()[i]), labelBits)) {
-                result.getLuceneIds()[i] = -1;
+        for (i = 0; i < result.getLength(); i++) {
+            if (hasBookmark(result.getId(i)) && !hasBookmark(result.getId(i), labelBits)) {
+                result.getIds().set(i, -1);
             }
-
-        result.clearResults();
+        }
+        result.compactResults();
         return result;
     }
 
-    public LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IIPEDSource ipedCase) {
-        result = result.clone();
-        for (int i = 0; i < result.getLength(); i++)
-            if (hasLabel(ipedCase.getId(result.getLuceneIds()[i]))) {
-                result.getLuceneIds()[i] = -1;
+    public SearchResult filterNoBookmarks(SearchResult result) {
+        for (int i = 0; i < result.getLength(); i++) {
+            if (hasBookmark(result.getId(i))) {
+                result.getIds().set(i, -1);
             }
-
-        result.clearResults();
+        }
+        result.compactResults();
         return result;
     }
 
-    public LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception {
-        result = result.clone();
-        for (int i = 0; i < result.getLength(); i++)
-            if (!selected[ipedCase.getId(result.getLuceneIds()[i])]) {
-                result.getLuceneIds()[i] = -1;
+    public SearchResult filterChecked(SearchResult result) {
+        for (int i = 0; i < result.getLength(); i++) {
+            if (!selected[result.getId(i)]) {
+                result.getIds().set(i, -1);
             }
-
-        result.clearResults();
+        }
+        result.compactResults();
         return result;
     }
 
-    public LuceneSearchResult filterInReport(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception {
+    public SearchResult filterInReport(SearchResult result) {
         result = result.clone();
         for (int i = 0; i < result.getLength(); i++) {
-            int itemId = ipedCase.getId(result.getLuceneIds()[i]);
-            List<Integer> labels = getLabelIds(itemId);
+            int itemId = result.getId(i);
+            List<Integer> labels = getBookmarkIds(itemId);
             boolean inReport = false;
             for (int label : labels)
                 if (isInReport(label)) {
                     inReport = true;
                     break;
                 }
-            if (!inReport)
-                result.getLuceneIds()[i] = -1;
+            if (!inReport) {
+                result.getIds().set(i, -1);
+            }
         }
-        result.clearResults();
+        result.compactResults();
         return result;
     }
 
@@ -491,7 +483,7 @@ public class Bookmarks implements Serializable, IBookmarks {
         return (Bookmarks) Util.readObject(file.getAbsolutePath());
     }
 
-    public synchronized void setSelected(boolean value, int id) {
+    public synchronized void setChecked(boolean value, int id) {
         if (value != selected[id]) {
             if (value)
                 selectedItens++;

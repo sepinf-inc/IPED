@@ -37,6 +37,25 @@ public class SearchResult {
         return ids;
     }
 
+    public void compactResults() {
+        int blanks = 0;
+        for (int i = 0; i < ids.length; i++)
+            if (ids[i] != -1) {
+                ids[i - blanks] = ids[i];
+                scores[i - blanks] = scores[i];
+            } else
+                blanks++;
+
+        int[] _ids = new int[ids.length - blanks];
+        float[] _scores = new float[scores.length - blanks];
+
+        System.arraycopy(ids, 0, _ids, 0, _ids.length);
+        System.arraycopy(scores, 0, _scores, 0, _scores.length);
+
+        ids = _ids;
+        scores = _scores;
+    }
+
     public static SearchResult get(IIPEDSource iSource, LuceneSearchResult luceneResult) {
         SearchResult result = new SearchResult();
         result.scores = luceneResult.scores;
