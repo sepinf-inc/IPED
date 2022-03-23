@@ -229,6 +229,13 @@ public class IPEDReader extends DataSourceReader {
             lastId += reportState.getLastId() + 1;
             totalItens += reportState.getTotalItens();
         }
+        // possible fix
+        // int lastId = -1;
+        // for (int i = 0; i < oldToNewIdMap.length; i++) {
+        // if (oldToNewIdMap[i] > lastId) {
+        // lastId = oldToNewIdMap[i];
+        // }
+        // }
         IMarcadores reportState = new Marcadores(totalItens, lastId, output);
         reportState.loadState();
 
@@ -241,7 +248,21 @@ public class IPEDReader extends DataSourceReader {
             for (int oldId = 0; oldId <= ipedCase.getLastId(); oldId++)
                 if (state.hasLabel(oldId, oldLabelId) && oldToNewIdMap[oldId] != -1)
                     newIds.add(oldToNewIdMap[oldId]);
-            reportState.addLabel(newIds, newLabelId);
+            try {
+                reportState.addLabel(newIds, newLabelId);
+            } catch (ArrayIndexOutOfBoundsException e) {
+                String msg = e.toString();
+                int idx = msg.indexOf(": Index ");
+                int newID = Integer.valueOf(msg.substring(idx + 8, msg.indexOf(" ", idx + 8)));
+                int oldID = -1;
+                for (int i = 0; i < oldToNewIdMap.length; i++) {
+                    if (oldToNewIdMap[i] == newID) {
+                        oldID = i;
+                        break;
+                    }
+                }
+                throw new RuntimeException("newID=" + newID + " oldID=" + oldID);
+            }
         }
         reportState.saveState();
     }
