@@ -442,7 +442,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         if (checked.isSelected()) {
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getBookmarks().isSelected(id)) {
+                    if (source.getBookmarks().isChecked(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }

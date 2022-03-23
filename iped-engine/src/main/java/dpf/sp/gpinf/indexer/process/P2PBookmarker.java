@@ -123,12 +123,12 @@ public class P2PBookmarker {
                 }
 
                 int labelId = ipedSrc.getBookmarks()
-                        .newLabel(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
+                        .newBookmark(Messages.getString("P2PBookmarker.P2PBookmarkPrefix") + bookmarkSufix); //$NON-NLS-1$
                 ArrayList<Integer> ids = new ArrayList<Integer>();
                 for (int j = 0; j < result.getLength(); j++)
                     ids.add(result.getId(j));
 
-                ipedSrc.getBookmarks().addLabel(ids, labelId);
+                ipedSrc.getBookmarks().addBookmark(ids, labelId);
                 ipedSrc.getBookmarks().saveState(true);
             }
         } catch (Exception e1) {

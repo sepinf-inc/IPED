@@ -16,71 +16,59 @@ import java.util.Set;
 
 import javax.swing.KeyStroke;
 
-import iped3.IIPEDSource;
-
 /**
  *
  * @author WERNECK
  */
 public interface IBookmarks extends Serializable {
 
-    void addLabel(List<Integer> ids, int label);
+    void addBookmark(List<Integer> ids, int bookmark);
 
     void addToTypedWords(String texto);
 
-    void changeLabel(int labelId, String newLabel);
+    void renameBookmark(int bookmarkId, String newName);
 
     void clearSelected();
 
-    void delLabel(int label);
-
-    LuceneSearchResult filtrarMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
-            throws Exception;
-
-    LuceneSearchResult filtrarSelecionados(LuceneSearchResult result, IIPEDSource ipedCase) throws Exception;
-
-    LuceneSearchResult filtrarSemEComMarcadores(LuceneSearchResult result, Set<String> labelNames, IIPEDSource ipedCase)
-            throws Exception;
-
-    LuceneSearchResult filtrarSemMarcadores(LuceneSearchResult result, IIPEDSource ipedCase);
+    void delBookmark(int bookmark);
 
     File getIndexDir();
 
-    byte[] getLabelBits(int[] labelids);
+    byte[] getBookmarkBits(int[] bookmarkIds);
 
-    int getLabelId(String labelName);
+    int getBookmarkId(String bookmarkName);
 
-    ArrayList<Integer> getLabelIds(int id);
+    ArrayList<Integer> getBookmarkIds(int id);
 
-    Map<Integer, String> getLabelMap();
+    Map<Integer, String> getBookmarkMap();
 
-    String getLabelName(int labelId);
+    String getBookmarkName(int bookmarkId);
 
-    public List<String> getLabelList(int itemId);
+    public List<String> getBookmarkList(int itemId);
 
     int getLastId();
 
     int getTotalItens();
 
-    int getTotalSelected();
+    int getTotalChecked();
 
     LinkedHashSet<String> getTypedWords();
 
-    boolean hasLabel(int id);
+    boolean hasBookmark(int id);
 
-    boolean hasLabel(int id, byte[] labelbits);
+    boolean hasBookmark(int id, byte[] bookmarkbits);
 
-    boolean hasLabel(int id, int label);
+    boolean hasBookmark(int id, int bookmark);
 
-    boolean isSelected(int id);
+    boolean isChecked(int id);
 
     void loadState();
 
     void loadState(File file) throws IOException, ClassNotFoundException;
 
-    int newLabel(String labelName);
+    int newBookmark(String bookmarkName);
 
-    void removeLabel(List<Integer> ids, int label);
+    void removeBookmark(List<Integer> ids, int bookmark);
 
     void saveState();
 
@@ -90,26 +78,34 @@ public interface IBookmarks extends Serializable {
 
     void saveState(File file, boolean sync) throws IOException;
 
-    void selectAll();
+    void checkAll();
 
-    void setSelected(boolean value, int id);
+    void setChecked(boolean value, int id);
 
     void updateCookie();
 
-    void setLabelComment(int labelId, String comment);
+    void setBookmarkComment(int bookmarkId, String comment);
 
-    String getLabelComment(int labelId);
+    String getBookmarkComment(int bookmarkId);
 
-    void setLabelKeyStroke(int labelId, KeyStroke key);
+    void setBookmarkKeyStroke(int bookmarkId, KeyStroke key);
 
-    KeyStroke getLabelKeyStroke(int labelId);
+    KeyStroke getBookmarkKeyStroke(int bookmarkId);
     
-    int getLabelCount(int labelId);
+    int getBookmarkCount(int bookmarkId);
     
-    void setInReport(int labelId, boolean inReport);
+    void setInReport(int bookmarkId, boolean inReport);
 
-    boolean isInReport(int labelId);
+    boolean isInReport(int bookmarkId);
 
-    LuceneSearchResult filterInReport(LuceneSearchResult luceneSearch, IIPEDSource ipedCase) throws Exception;
+    SearchResult filterBookmarks(SearchResult result, Set<String> bookmarkNames);
+
+    SearchResult filterChecked(SearchResult result);
+
+    SearchResult filterBookmarksOrNoBookmarks(SearchResult result, Set<String> bookmarkNames);
+
+    SearchResult filterNoBookmarks(SearchResult result);
+
+    SearchResult filterInReport(SearchResult result);
 
 }

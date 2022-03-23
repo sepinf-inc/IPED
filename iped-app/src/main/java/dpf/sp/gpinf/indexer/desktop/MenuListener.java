@@ -233,7 +233,7 @@ public class MenuListener implements ActionListener {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getBookmarks().isSelected(id)) {
+                    if (source.getBookmarks().isChecked(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
@@ -250,7 +250,7 @@ public class MenuListener implements ActionListener {
             ArrayList<ItemId> uniqueSelectedIds = new ArrayList<ItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
-                    if (source.getBookmarks().isSelected(id)) {
+                    if (source.getBookmarks().isChecked(id)) {
                         uniqueSelectedIds.add(new ItemId(source.getSourceId(), id));
                     }
                 }
