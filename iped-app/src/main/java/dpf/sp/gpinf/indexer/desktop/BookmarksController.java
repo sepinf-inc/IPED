@@ -80,9 +80,9 @@ public class BookmarksController {
             @Override
             public void run() {
                 App.get().checkBox.setText(
-                        LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalSelected()) + " / " //$NON-NLS-1$
+                        LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + " / " //$NON-NLS-1$
                                 + LocalizedFormat.format(App.get().appCase.getTotalItens()));
-                App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalSelected() > 0);
+                App.get().checkBox.setSelected(App.get().appCase.getMultiBookmarks().getTotalChecked() > 0);
                 App.get().bookmarksListener.updateModelAndSelection();
                 App.get().resultsTable.repaint();
                 BookmarksManager.updateCounters();

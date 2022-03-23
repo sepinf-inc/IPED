@@ -183,7 +183,7 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     filtro = App.get().filtro.getSelectedItem().toString();
 
                 if (filtro.equals(App.FILTRO_SELECTED)) {
-                    result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filtrarSelecionados(result);
+                    result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(result);
                     numFilters++;
                     LOGGER.info("Filtering for selected items."); //$NON-NLS-1$
                 }
@@ -199,14 +199,14 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
                     if (bookmarkSelection.contains(BookmarksTreeModel.NO_BOOKMARKS)) {
                         if (bookmarkSelection.size() == 1)
                             result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
-                                    .filtrarSemMarcadores(result);
+                                    .filterNoBookmarks(result);
                         else {
                             bookmarkSelection.remove(BookmarksTreeModel.NO_BOOKMARKS);
                             result = (MultiSearchResult) App.get().appCase.getMultiBookmarks()
-                                    .filtrarSemEComMarcadores(result, bookmarkSelection);
+                                    .filterBookmarksOrNoBookmarks(result, bookmarkSelection);
                         }
                     } else
-                        result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filtrarMarcadores(result,
+                        result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterBookmarks(result,
                                 bookmarkSelection);
 
                 }

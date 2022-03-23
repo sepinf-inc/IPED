@@ -62,7 +62,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             if (result.getLength() == 0)
                 return;
             for (IItemId item : result.getIterator()) {
-                App.get().appCase.getMultiBookmarks().setSelected(checked, item);
+                App.get().appCase.getMultiBookmarks().setChecked(checked, item);
             }
             BookmarksController.get().atualizarGUI();
 
@@ -113,7 +113,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
         selectedHashOrds.clear();
         for (int luceneId = 0; luceneId < App.get().appCase.getReader().maxDoc(); luceneId++) {
             IItemId itemId = App.get().appCase.getItemId(luceneId);
-            if (App.get().appCase.getMultiBookmarks().isSelected(itemId)) {
+            if (App.get().appCase.getMultiBookmarks().isChecked(itemId)) {
                 int ord = DocValuesUtil.getOrd(sdv, luceneId);
                 if (ord > -1) {
                     selectedHashOrds.set(ord);

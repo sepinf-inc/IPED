@@ -213,7 +213,7 @@ public class MenuListener implements ActionListener {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
             for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
                 IItemId item = App.get().appCase.getItemId(docId);
-                if (App.get().appCase.getMultiBookmarks().isSelected(item)) {
+                if (App.get().appCase.getMultiBookmarks().isChecked(item)) {
                     uniqueSelectedIds.add(docId);
                 }
 

@@ -246,17 +246,17 @@ public class RowComparator implements Comparator<Integer> {
         b = app.appCase.getLuceneId(itemB);
 
         if (col == 1) {
-            if (app.appCase.getMultiBookmarks().isSelected(itemA) == app.appCase.getMultiBookmarks()
-                    .isSelected(itemB))
+            if (app.appCase.getMultiBookmarks().isChecked(itemA) == app.appCase.getMultiBookmarks()
+                    .isChecked(itemB))
                 return 0;
-            else if (app.appCase.getMultiBookmarks().isSelected(itemA) == true)
+            else if (app.appCase.getMultiBookmarks().isChecked(itemA) == true)
                 return -1;
             else
                 return 1;
 
         } else if (bookmarkCol) {
-            return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemA))
-                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(itemB)));
+            return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemA))
+                    .compareTo(Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(itemB)));
 
         } else if (isTimeStamp && itemA instanceof TimeItemId) {
             int ordA = ((TimeItemId) itemA).getTimeStampOrd();

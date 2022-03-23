@@ -176,7 +176,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
     @Override
     public void setValueAt(Object value, int row, int col) {
 
-        app.appCase.getMultiBookmarks().setSelected((Boolean) value, App.get().ipedResult.getItem(row));
+        app.appCase.getMultiBookmarks().setChecked((Boolean) value, App.get().ipedResult.getItem(row));
         App.get().galleryModel.setValueAt(value, row, col);
         App.get().resultsModel.fireTableCellUpdated(row, col);
 
@@ -214,7 +214,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             return LocalizedFormat.format(App.get().resultsTable.convertRowIndexToView(row) + 1);
 
         if (col == 1)
-            return app.appCase.getMultiBookmarks().isSelected(app.ipedResult.getItem(row));
+            return app.appCase.getMultiBookmarks().isChecked(app.ipedResult.getItem(row));
 
         String value = ""; //$NON-NLS-1$
 
@@ -240,7 +240,7 @@ public class ResultTableModel extends AbstractTableModel implements SearchResult
             }
 
             if (field.equals(BOOKMARK_COL)) {
-                return Util.concatStrings(app.appCase.getMultiBookmarks().getLabelList(app.ipedResult.getItem(row)));
+                return Util.concatStrings(app.appCase.getMultiBookmarks().getBookmarkList(app.ipedResult.getItem(row)));
             }
 
             if (item instanceof TimeItemId) {

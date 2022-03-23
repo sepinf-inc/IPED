@@ -34,6 +34,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeSet;
 
 import javax.swing.BorderFactory;
@@ -143,7 +144,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         instance.highlighted.setText(Messages.getString("BookmarksManager.Highlighted") + " (" //$NON-NLS-1$ //$NON-NLS-2$
                 + LocalizedFormat.format(App.get().resultsTable.getSelectedRowCount()) + ")"); //$NON-NLS-1$
         instance.checked.setText(Messages.getString("BookmarksManager.Checked") + " (" //$NON-NLS-1$ //$NON-NLS-2$
-                + LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalSelected()) + ")"); //$NON-NLS-1$
+                + LocalizedFormat.format(App.get().appCase.getMultiBookmarks().getTotalChecked()) + ")"); //$NON-NLS-1$
     }
 
     private BookmarksManager() {
@@ -258,13 +259,13 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
             }
         }
-        TreeSet<String> labels = App.get().appCase.getMultiBookmarks().getLabelMap();
+        Set<String> labels = App.get().appCase.getMultiBookmarks().getBookmarkSet();
         for (String label : labels) {
             BookmarkAndKey bk = new BookmarkAndKey(label);
             if (!bookmarks.contains(bk)) {
                 bookmarks.add(bk);
             }
-            bk.key = App.get().appCase.getMultiBookmarks().getLabelKeyStroke(label);
+            bk.key = App.get().appCase.getMultiBookmarks().getBookmarkKeyStroke(label);
         }
         Iterator<BookmarkAndKey> iterator = bookmarks.iterator();
         while (iterator.hasNext()) {
@@ -368,8 +369,8 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             String texto = newLabel.getText().trim();
             String comment = comments.getText().trim();
             if (!texto.isEmpty() && !listModel.contains(new BookmarkAndKey(texto))) {
-                App.get().appCase.getMultiBookmarks().newLabel(texto);
-                App.get().appCase.getMultiBookmarks().setLabelComment(texto, comment);
+                App.get().appCase.getMultiBookmarks().newBookmark(texto);
+                App.get().appCase.getMultiBookmarks().setBookmarkComment(texto, comment);
                 updateList();
             }
             list.clearSelection();
@@ -384,7 +385,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             int idx = list.getSelectedIndex();
             if (idx != -1) {
                 String labelName = list.getModel().getElementAt(idx).bookmark;
-                App.get().appCase.getMultiBookmarks().setLabelComment(labelName, comments.getText());
+                App.get().appCase.getMultiBookmarks().setBookmarkComment(labelName, comments.getText());
                 App.get().appCase.getMultiBookmarks().saveState();
             }
         }
@@ -406,7 +407,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             if (result == JOptionPane.YES_OPTION) {
                 for (int index : list.getSelectedIndices()) {
                     String label = list.getModel().getElementAt(index).bookmark;
-                    App.get().appCase.getMultiBookmarks().delLabel(label);
+                    App.get().appCase.getMultiBookmarks().delBookmark(label);
                 }
                 updateList();
                 App.get().appCase.getMultiBookmarks().saveState();
@@ -426,7 +427,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                         JOptionPane.showMessageDialog(dialog, Messages.getString("BookmarksManager.AlreadyExists"));
                         return;
                     }
-                    App.get().appCase.getMultiBookmarks().changeLabel(label, newLabel);
+                    App.get().appCase.getMultiBookmarks().renameBookmark(label, newLabel);
                     updateList(label, newLabel);
                     App.get().appCase.getMultiBookmarks().saveState();
                     BookmarksController.get().atualizarGUI();
@@ -468,9 +469,9 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
 
                 for (String label : labels) {
                     if (insert) {
-                        App.get().appCase.getMultiBookmarks().addLabel(uniqueSelectedIds, label);
+                        App.get().appCase.getMultiBookmarks().addBookmark(uniqueSelectedIds, label);
                     } else {
-                        App.get().appCase.getMultiBookmarks().removeLabel(uniqueSelectedIds, label);
+                        App.get().appCase.getMultiBookmarks().removeBookmark(uniqueSelectedIds, label);
                     }
                 }
                 App.get().appCase.getMultiBookmarks().saveState();
@@ -488,7 +489,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             return;
         }
         String labelName = list.getModel().getElementAt(idx).bookmark;
-        String comment = App.get().appCase.getMultiBookmarks().getLabelComment(labelName);
+        String comment = App.get().appCase.getMultiBookmarks().getBookmarkComment(labelName);
         newLabel.setText(labelName);
         comments.setText(comment);
     }
@@ -573,7 +574,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             keystrokeToBookmark.put(stroke, label);
             keystrokeToBookmark.put(getRemoveKey(stroke), label);
 
-            App.get().appCase.getMultiBookmarks().setLabelKeyStroke(label, stroke);
+            App.get().appCase.getMultiBookmarks().setBookmarkKeyStroke(label, stroke);
             App.get().appCase.getMultiBookmarks().saveState();
             e.consume();
             

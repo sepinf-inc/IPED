@@ -86,7 +86,7 @@ public class DuplicatesTableModel extends AbstractTableModel
 
     @Override
     public void setValueAt(Object value, int row, int col) {
-        App.get().appCase.getMultiBookmarks().setSelected((Boolean) value,
+        App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
         BookmarksController.get().atualizarGUI();
     }
@@ -98,7 +98,7 @@ public class DuplicatesTableModel extends AbstractTableModel
 
         } else if (col == 1) {
             return App.get().appCase.getMultiBookmarks()
-                    .isSelected(App.get().appCase.getItemId(results.getLuceneIds()[row]));
+                    .isChecked(App.get().appCase.getItemId(results.getLuceneIds()[row]));
 
         } else {
             try {

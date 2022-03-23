@@ -19,6 +19,7 @@ import javax.swing.KeyStroke;
 /**
  *
  * @author WERNECK
+ * @author Nassif
  */
 public interface IBookmarks extends Serializable {
 
