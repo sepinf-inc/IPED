@@ -18,12 +18,15 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
+import dpf.sp.gpinf.indexer.parsers.util.PDFToImage.NoResourceCache;
+
 public class PDFToThumb {
     public static BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
         BufferedImage img = null;
         PDDocument document = null;
         try {
             document = PDDocument.load(file, MemoryUsageSetting.setupMixed(1 << 24, 1 << 28));
+            document.setResourceCache(new NoResourceCache());
             PDPage page = document.getPage(0);
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             pdfRenderer.setSubsamplingAllowed(true);
