@@ -7,6 +7,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -230,7 +231,8 @@ public class DocThumbTask extends ThumbTask {
             return;
         }
         if (isPdfType(item.getMediaType())) {
-            Future<?> future = executor.submit(new PDFThumbCreator(item, thumbFile));
+            PDFThumbCreator pdfThumbCreator = new PDFThumbCreator(item, thumbFile);
+            Future<?> future = executor.submit(pdfThumbCreator);
             try {
                 int timeout = pdfTimeout + (int) ((item.getLength() * timeoutIncPerMB) >>> 20);
                 future.get(timeout, TimeUnit.SECONDS);
@@ -240,6 +242,8 @@ public class DocThumbTask extends ThumbTask {
                 item.setExtraAttribute(thumbTimeout, "true");
                 logger.warn("Timeout creating thumb: " + item);
                 totalPdfTimeout.incrementAndGet();
+            } finally {
+                pdfThumbCreator.close();
             }
             return;
         }
@@ -285,9 +289,10 @@ public class DocThumbTask extends ThumbTask {
                 || m.startsWith("application/vnd.oasis.opendocument.spreadsheet");
     }
 
-    private class PDFThumbCreator implements Runnable {
+    private class PDFThumbCreator implements Runnable, Closeable {
         private IItem item;
         private File thumbFile;
+        private PDFToThumb pdfToThumb;
 
         public PDFThumbCreator(IItem item, File thumbFile) {
             this.item = item;
@@ -298,8 +303,68 @@ public class DocThumbTask extends ThumbTask {
         public void run() {
             createPDFThumb(item, thumbFile);
         }
-    }
+        
+        @Override
+        public void close() throws IOException {
+            IOUtil.closeQuietly(pdfToThumb);
+        }
 
+        private void createPDFThumb(IItem item, File thumbFile) {
+            long t = System.currentTimeMillis();
+            boolean success = false;
+            ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
+            try {
+                if (externalPdfConversion) {
+                    URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
+                    String jarDir = new File(url.toURI()).getParent();
+                    String classpath = jarDir + "/*";
+                    File file = item.getTempFile();
+                    String[] cmd = { "java", "-cp", classpath, "-Xmx" + maxPdfExternalMemory + "M",
+                            PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(), String.valueOf(thumbSize) };
+
+                    ProcessBuilder pb = new ProcessBuilder(cmd);
+                    convertProcess = pb.start();
+                    Util.ignoreStream(convertProcess.getErrorStream());
+                    Future<?> resultFuture = executor.submit(new ResultRunnable(convertProcess, baos));
+                    try {
+                        resultFuture.get();
+                        convertProcess.waitFor();
+                        success = convertProcess.exitValue() == 0;
+                    } catch (InterruptedException e) {
+                        convertProcess.destroyForcibly();
+                        Thread.currentThread().interrupt();
+                    }
+                } else {
+                    File file = item.getTempFile();
+                    pdfToThumb = new PDFToThumb();
+                    try {
+                        BufferedImage img = pdfToThumb.getPdfThumb(file, thumbSize);
+                        if (img != null) {
+                            ImageIO.write(img, "jpg", baos);
+                            success = true;
+                        }
+                    } finally {
+                        pdfToThumb.close();
+                    }
+                }
+                if (success && baos.size() > 0) {
+                    item.setThumb(baos.toByteArray());
+                }
+                saveThumb(item, thumbFile);
+            } catch (Throwable e) {
+                logger.warn(item.toString(), e);
+            } finally {
+                if (externalPdfConversion) {
+                    finishProcess(convertProcess);
+                    convertProcess = null;
+                }
+                boolean hasThumb = updateHasThumb(item);
+                (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
+            }
+            totalPdfTime.addAndGet(System.currentTimeMillis() - t);
+        }
+    }
+    
     private class LOThumbCreator implements Runnable {
         private IItem item;
         private File thumbFile;
@@ -313,56 +378,6 @@ public class DocThumbTask extends ThumbTask {
         public void run() {
             createLOThumb(item, thumbFile);
         }
-    }
-
-    private void createPDFThumb(IItem item, File thumbFile) {
-        long t = System.currentTimeMillis();
-        boolean success = false;
-        ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
-        try {
-            if (externalPdfConversion) {
-                URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
-                String jarDir = new File(url.toURI()).getParent();
-                String classpath = jarDir + "/*";
-                File file = item.getTempFile();
-                String[] cmd = { "java", "-cp", classpath, "-Xmx" + maxPdfExternalMemory + "M",
-                        PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(), String.valueOf(thumbSize) };
-
-                ProcessBuilder pb = new ProcessBuilder(cmd);
-                convertProcess = pb.start();
-                Util.ignoreStream(convertProcess.getErrorStream());
-                Future<?> resultFuture = executor.submit(new ResultRunnable(convertProcess, baos));
-                try {
-                    resultFuture.get();
-                    convertProcess.waitFor();
-                    success = convertProcess.exitValue() == 0;
-                } catch (InterruptedException e) {
-                    convertProcess.destroyForcibly();
-                    Thread.currentThread().interrupt();
-                }
-            } else {
-                File file = item.getTempFile();
-                BufferedImage img = PDFToThumb.getPdfThumb(file, thumbSize);
-                if (img != null) {
-                    ImageIO.write(img, "jpg", baos);
-                    success = true;
-                }
-            }
-            if (success && baos.size() > 0) {
-                item.setThumb(baos.toByteArray());
-            }
-            saveThumb(item, thumbFile);
-        } catch (Throwable e) {
-            logger.warn(item.toString(), e);
-        } finally {
-            if (externalPdfConversion) {
-                finishProcess(convertProcess);
-                convertProcess = null;
-            }
-            boolean hasThumb = updateHasThumb(item);
-            (hasThumb ? totalPdfProcessed : totalPdfFailed).incrementAndGet();
-        }
-        totalPdfTime.addAndGet(System.currentTimeMillis() - t);
     }
 
     private class ResultRunnable implements Runnable {
