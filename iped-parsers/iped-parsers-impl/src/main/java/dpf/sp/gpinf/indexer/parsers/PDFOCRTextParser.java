@@ -218,7 +218,7 @@ public class PDFOCRTextParser extends PDFParser {
                     if (img != null) {
                         ImageIO.write(img, "jpg", baos);
                     }
-                    metadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(baos.toByteArray()));
+                    metadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(baos.toByteArray()));
                 } catch (Throwable t) {
                     LOGGER.warn("PDF thumb error on '{}' ({} bytes)\t{}", itemInfo.getPath(), file.length(), t.toString()); //$NON-NLS-1$
                     LOGGER.debug("", t);

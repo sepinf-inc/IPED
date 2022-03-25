@@ -411,10 +411,10 @@ public class ParsingTask extends AbstractTask implements EmbeddedDocumentExtract
             }
         }
 
-        String base64Thumb = metadata.get(ExtraProperties.USER_THUMB);
+        String base64Thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         if (base64Thumb != null) {
             evidence.setThumb(Base64.getDecoder().decode(base64Thumb));
-            metadata.remove(ExtraProperties.USER_THUMB);
+            metadata.remove(ExtraProperties.THUMBNAIL_BASE64);
             evidence.setExtraAttribute(ImageThumbTask.HAS_THUMB, Boolean.TRUE.toString());
         }
 
