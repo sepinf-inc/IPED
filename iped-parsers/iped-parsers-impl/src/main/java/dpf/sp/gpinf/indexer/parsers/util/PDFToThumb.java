@@ -1,4 +1,4 @@
-package gpinf.util;
+package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -51,7 +51,9 @@ public class PDFToThumb implements Closeable {
             g.setColor(Color.black);
             g.drawRect(0, 0, w - 1, h - 1);
             g.dispose();
-        } catch (Exception e) {} finally {
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
             try {
                 if (document != null) {
                     document.close();

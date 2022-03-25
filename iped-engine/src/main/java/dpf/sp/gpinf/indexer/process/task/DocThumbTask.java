@@ -34,12 +34,14 @@ import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.DocThumbTaskConfig;
+import dpf.sp.gpinf.indexer.config.ParsingTaskConfig;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
+import dpf.sp.gpinf.indexer.parsers.PDFOCRTextParser;
+import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
 import dpf.sp.gpinf.indexer.parsers.util.Util;
 import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.util.ImageUtil;
 import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
-import gpinf.util.PDFToThumb;
 import iped3.IItem;
 import macee.core.Configurable;
 
@@ -48,6 +50,7 @@ public class DocThumbTask extends ThumbTask {
     private static final String thumbTimeout = ImageThumbTask.THUMB_TIMEOUT;
 
     private static DocThumbTaskConfig docThumbsConfig;
+    private static boolean externalParsingEnabled = false;
 
     private static String loPath;
 
@@ -95,7 +98,15 @@ public class DocThumbTask extends ThumbTask {
 
                     logger.info("PDF Conversion: " + (docThumbsConfig.isPdfEnabled() ? "enabled" : "disabled"));
                     if (docThumbsConfig.isPdfEnabled()) {
-                        logger.info("External PDF Conversion: " + docThumbsConfig.isExternalPdfConversion());
+                        String conversionMode = docThumbsConfig.isExternalPdfConversion() ? "external" : "internal";
+                        ParsingTaskConfig parsingConfig = configurationManager.findObject(ParsingTaskConfig.class);
+                        if (parsingConfig.isEnableExternalParsing()) {
+                            externalParsingEnabled = true;
+                            System.setProperty(PDFOCRTextParser.CREATE_THUMB, Boolean.TRUE.toString());
+                            System.setProperty(PDFOCRTextParser.THUMB_SIZE, Integer.toString(docThumbsConfig.getThumbSize()));
+                            conversionMode = "external parsing";
+                        }
+                        logger.info("PDF Conversion: " + conversionMode);
                     }
                 }
                 logger.info("Task " + (docThumbsConfig.isEnabled() ? "enabled" : "disabled"));
@@ -164,7 +175,7 @@ public class DocThumbTask extends ThumbTask {
     protected void process(IItem item) throws Exception {
         if (!isEnabled() 
                 || !item.isToAddToCase()
-                || ((!docThumbsConfig.isPdfEnabled() || !isPdfType(item.getMediaType())
+                || ((externalParsingEnabled || !docThumbsConfig.isPdfEnabled() || !isPdfType(item.getMediaType())
                         && (!docThumbsConfig.isLoEnabled() || !isLibreOfficeType(item.getMediaType())))
                 || item.getHashValue() == null 
                 || item.getThumb() != null
