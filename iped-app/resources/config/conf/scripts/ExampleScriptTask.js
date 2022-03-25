@@ -45,16 +45,16 @@ function finish(){
     var ids = searcher.search().getIds();
     
     //create new bookmark and get its id
-    var labelId = ipedCase.getMarcadores().newLabel("PDF files");
+    var bookmarkId = ipedCase.getBookmarks().newBookmark("PDF files");
     
     //set bookmark comment
-	ipedCase.getMarcadores().setLabelComment(labelId, "Documents of PDF file format");
+	ipedCase.getBookmarks().setBookmarkComment(bookmarkId, "Documents of PDF file format");
 	
 	//add item ids to created bookmark
-    ipedCase.getMarcadores().addLabel(ids, labelId);
+    ipedCase.getBookmarks().addBookmark(ids, bookmarkId);
     
     //save changes
-	ipedCase.getMarcadores().saveState();
+	ipedCase.getBookmarks().saveState();
 	*/ 
 }
 

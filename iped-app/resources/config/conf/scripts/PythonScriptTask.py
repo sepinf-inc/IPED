@@ -41,16 +41,16 @@ class PythonScriptTask:
         ids = searcher.search().getIds()
         
         #create new bookmark and get its id
-        labelId = ipedCase.getMarcadores().newLabel("DOC files")
+        bookmarkId = ipedCase.getBookmarks().newBookmark("DOC files")
         
         #set bookmark comment
-        ipedCase.getMarcadores().setLabelComment(labelId, "Documents of DOC file format")
+        ipedCase.getBookmarks().setBookmarkComment(bookmarkId, "Documents of DOC file format")
         
         #add item ids to created bookmark
-        ipedCase.getMarcadores().addLabel(ids, labelId)
+        ipedCase.getBookmarks().addBookmark(ids, bookmarkId)
         
         #save changes
-        ipedCase.getMarcadores().saveState()
+        ipedCase.getBookmarks().saveState()
     
     
     # Process an Item object. This method is executed on all case items.
