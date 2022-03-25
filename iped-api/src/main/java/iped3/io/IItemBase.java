@@ -41,7 +41,10 @@ public interface IItemBase extends IStreamSource {
      */
     public String getExt();
 
-    public String getTypeExt();
+    /**
+     * @return the detected file type extension
+     */
+    public String getType();
 
     /**
      *

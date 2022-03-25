@@ -184,11 +184,6 @@ public interface IItem extends IItemBase {
      */
     TikaInputStream getTikaStream() throws IOException;
 
-    /**
-     * @return o tipo de arquivo baseado na análise de assinatura
-     */
-    IEvidenceFileType getType();
-
     boolean hasTmpFile();
 
     /**
@@ -445,9 +440,9 @@ public interface IItem extends IItemBase {
 
     /**
      * @param type
-     *            tipo de arquivo
+     *            the detected file type extension
      */
-    void setType(IEvidenceFileType type);
+    void setType(String type);
 
     /**
      * @param viewFile
