@@ -33,7 +33,7 @@ public abstract class ThumbTask extends AbstractTask {
     }
 
     protected boolean hasThumb(IItem evidence, File thumbFile) throws Exception {
-        if (evidence.getThumb() != null && evidence.getThumb().length > 0) { // zero size thumb means thumb error
+        if (evidence.getThumb() != null) {
             return true;
         }
         if (thumbFile == null) {
