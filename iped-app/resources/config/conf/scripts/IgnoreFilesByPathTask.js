@@ -20,7 +20,7 @@ function finish(){}
  * It can access any method of EvidenceFile class:
  *
  *	Some Getters:
- *	String:  getName(), getExt(), getTypeExt(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
+ *	String:  getName(), getExt(), getType(), getPath(), getHash(), getMediaType().toString(), getCategories() (categories separated by | )
  *	Date:    getModDate(), getCreationDate(), getAccessDate() (podem ser nulos)
  *  Boolean: isDeleted(), isDir(), isRoot(), isCarved(), isSubItem(), isTimedOut(), hasChildren()
  *	Long:    getLength()
