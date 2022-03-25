@@ -353,7 +353,8 @@ public class ParsingTask extends ThumbTask implements EmbeddedDocumentExtractor 
 
         context = getTikaContext();
         try {
-            if (!hasThumb(evidence, null)) {
+            File thumbFile = getThumbFile(evidence);
+            if (!hasThumb(evidence, thumbFile)) {
                 context.set(ComputeThumb.class, new ComputeThumb());
             }
         } catch (Exception e1) {
