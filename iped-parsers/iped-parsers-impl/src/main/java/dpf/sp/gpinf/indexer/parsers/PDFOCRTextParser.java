@@ -52,6 +52,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.CharCountContentHandler;
+import dpf.sp.gpinf.indexer.parsers.util.ComputeThumb;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.parsers.util.PDFToThumb;
 import iped3.util.ExtraProperties;
@@ -141,7 +142,7 @@ public class PDFOCRTextParser extends PDFParser {
 
             File file = null;
             Exception exception = null;
-            boolean createThumb = Boolean.valueOf(System.getProperty(CREATE_THUMB));
+            boolean createThumb = Boolean.valueOf(System.getProperty(CREATE_THUMB)) && context.get(ComputeThumb.class) != null;
             if (ocrParser.isEnabled() || createThumb)
                 file = tis.getFile();
 
