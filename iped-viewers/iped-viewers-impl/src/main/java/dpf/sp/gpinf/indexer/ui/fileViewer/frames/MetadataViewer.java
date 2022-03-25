@@ -269,7 +269,7 @@ public abstract class MetadataViewer extends AbstractViewer {
         fillProp(sb, BasicProps.NAME, item.getName());
         fillProp(sb, BasicProps.LENGTH, item.getLength());
         fillProp(sb, BasicProps.EXT, item.getExt());
-        fillProp(sb, BasicProps.TYPE, item.getTypeExt());
+        fillProp(sb, BasicProps.TYPE, item.getType());
         fillProp(sb, BasicProps.DELETED, item.isDeleted());
         fillProp(sb, BasicProps.CATEGORY, item.getCategorySet());
         fillProp(sb, BasicProps.CREATED, item.getCreationDate());

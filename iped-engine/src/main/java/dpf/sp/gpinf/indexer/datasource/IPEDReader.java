@@ -71,7 +71,6 @@ import dpf.sp.gpinf.indexer.util.SeekableInputStreamFactory;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IIPEDSource;
 import iped3.datasource.IDataSource;
@@ -489,7 +488,7 @@ public class IPEDReader extends DataSourceReader {
 
             value = doc.get(IndexItem.TYPE);
             if (value != null) {
-                evidence.setType(new GenericFileType(value));
+                evidence.setType(value);
             }
 
             for (String category : doc.getValues(IndexItem.CATEGORY)) {

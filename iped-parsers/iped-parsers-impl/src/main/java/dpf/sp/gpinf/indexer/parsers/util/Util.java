@@ -213,7 +213,7 @@ public class Util {
 
     public static String getExportPath(IItemBase item) {
         String hash = item.getHash();
-        String ext = item.getTypeExt(); // $NON-NLS-1$
+        String ext = item.getType(); // $NON-NLS-1$
         return getExportPath(hash, ext);
     }
 

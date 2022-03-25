@@ -91,8 +91,6 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
-import iped3.IEvidenceFileType;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
 import iped3.util.BasicProps;
@@ -322,10 +320,8 @@ public class IndexItem extends BasicProps {
         doc.add(new Field(EXT, value, storedTokenizedNoNormsField));
         doc.add(new SortedDocValuesField(EXT, new BytesRef(normalize(value))));
 
-        IEvidenceFileType fileType = evidence.getType();
-        if (fileType != null) {
-            value = fileType.getLongDescr();
-        } else {
+        value = evidence.getType();
+        if (value == null) {
             value = ""; //$NON-NLS-1$
         }
         doc.add(new Field(TYPE, value, storedTokenizedNoNormsField));
@@ -870,7 +866,7 @@ public class IndexItem extends BasicProps {
 
             value = doc.get(IndexItem.TYPE);
             if (value != null) {
-                evidence.setType(new GenericFileType(value));
+                evidence.setType(value);
             }
 
             for (String category : doc.getValues(IndexItem.CATEGORY)) {

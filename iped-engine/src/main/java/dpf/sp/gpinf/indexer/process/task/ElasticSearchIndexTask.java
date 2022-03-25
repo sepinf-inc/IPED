@@ -486,7 +486,7 @@ public class ElasticSearchIndexTask extends AbstractTask {
                         inputStreamSrcPath != null ? item.getInputStreamFactory().getClass().getName() : null)
                 // TODO boost name?
                 .field(BasicProps.NAME, item.getName()).field(BasicProps.LENGTH, item.getLength())
-                .field(BasicProps.TYPE, item.getType().getLongDescr()).field(BasicProps.PATH, item.getPath())
+                .field(BasicProps.TYPE, item.getType()).field(BasicProps.PATH, item.getPath())
                 .timeField(BasicProps.CREATED, item.getCreationDate()).timeField(BasicProps.MODIFIED, item.getModDate())
                 .timeField(BasicProps.ACCESSED, item.getAccessDate())
                 .timeField(BasicProps.CHANGED, item.getChangeDate())

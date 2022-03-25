@@ -387,7 +387,7 @@ public class ExportFileTask extends AbstractTask {
         String hash = evidence.getHash();
         if (hash != null && !hash.isEmpty() && IOUtil.hasFile(evidence)) {
             File file = IOUtil.getFile(evidence);
-            String ext = evidence.getType().getLongDescr();
+            String ext = evidence.getType();
             if (evidence.getLength() == null || evidence.getLength() == 0) {
                 ext = "";
             }
@@ -481,7 +481,7 @@ public class ExportFileTask extends AbstractTask {
 
         String ext = ""; //$NON-NLS-1$
         if (evidence.getType() != null) {
-            ext = evidence.getType().getLongDescr();
+            ext = evidence.getType();
         }
         if (!ext.isEmpty()) {
             if (!inputStream.markSupported()) {

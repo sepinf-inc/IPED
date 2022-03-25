@@ -30,7 +30,7 @@ public class ExternalFileOpen {
                         return;
                 }
                 try {
-                    if (IOUtil.isToOpenExternally(item.getName(), item.getTypeExt())) {
+                    if (IOUtil.isToOpenExternally(item.getName(), item.getType())) {
                         LOGGER.info("Externally Opening file " + item.getPath()); //$NON-NLS-1$
                         File file = item.getTempFile();
                         file.setReadOnly();

@@ -85,7 +85,6 @@ import dpf.sp.gpinf.indexer.util.UTF8Properties;
 import dpf.sp.gpinf.indexer.util.Util;
 import gpinf.dev.data.DataSource;
 import gpinf.dev.data.Item;
-import gpinf.dev.filetypes.GenericFileType;
 import iped3.ICaseData;
 import iped3.IItem;
 import iped3.exception.IPEDException;
@@ -973,7 +972,7 @@ public class SleuthkitReader extends DataSourceReader {
 
         if (absFile instanceof SlackFile && !isVolumeShadowCopy(absFile)) {
             evidence.setMediaType(MediaType.application("x-fileslack")); //$NON-NLS-1$
-            evidence.setType(new GenericFileType("slack")); //$NON-NLS-1$
+            evidence.setType("slack"); //$NON-NLS-1$
             evidence.setDeleted(true);
         }
 

@@ -181,7 +181,7 @@ public class UFEDChatParser extends AbstractParser {
                 m.setMediaHash(attach.getHash(), false);
             }
             m.setMediaName(attach.getName());
-            m.setMediaTrueExt(attach.getTypeExt());
+            m.setMediaTrueExt(attach.getType());
             m.setMediaUrl(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "URL")); //$NON-NLS-1$
             m.setMediaCaption(attach.getMetadata().get(ExtraProperties.UFED_META_PREFIX + "Title")); //$NON-NLS-1$
             m.setThumbData(attach.getThumb());

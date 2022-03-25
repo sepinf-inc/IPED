@@ -25,15 +25,10 @@ import org.apache.tika.io.TemporaryResources;
 import org.apache.tika.io.TikaInputStream;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
-import org.sleuthkit.datamodel.Content;
-import org.sleuthkit.datamodel.SleuthkitCase;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.analysis.CategoryTokenizer;
-import dpf.sp.gpinf.indexer.config.ConfigurationManager;
-import dpf.sp.gpinf.indexer.config.FileSystemConfig;
-import dpf.sp.gpinf.indexer.datasource.SleuthkitReader;
 import dpf.sp.gpinf.indexer.process.IndexItem;
 import dpf.sp.gpinf.indexer.process.Statistics;
 import dpf.sp.gpinf.indexer.util.EmptyInputStream;
@@ -43,12 +38,9 @@ import dpf.sp.gpinf.indexer.util.LimitedSeekableInputStream;
 import dpf.sp.gpinf.indexer.util.ParentInfo;
 import dpf.sp.gpinf.indexer.util.SeekableByteChannelImpl;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import dpf.sp.gpinf.indexer.util.SleuthkitClient;
-import dpf.sp.gpinf.indexer.util.SleuthkitInputStream;
 import dpf.sp.gpinf.indexer.util.SyncMetadata;
 import dpf.sp.gpinf.indexer.util.TextCache;
 import dpf.sp.gpinf.indexer.util.Util;
-import iped3.IEvidenceFileType;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
@@ -118,9 +110,9 @@ public class Item implements IItem {
     private String path;
 
     /**
-     * Tipo do arquivo.
+     * The detected file type ext.
      */
-    private IEvidenceFileType type;
+    private String type;
 
     private MediaType mediaType;
 
@@ -666,18 +658,9 @@ public class Item implements IItem {
         return tis;
     }
 
-    /**
-     * @return o tipo de arquivo baseado na análise de assinatura
-     */
-    public IEvidenceFileType getType() {
+    @Override
+    public String getType() {
         return type;
-    }
-
-    public String getTypeExt() {
-        if (type == null)
-            return null;
-        else
-            return type.getLongDescr();
     }
 
     /**
@@ -1113,11 +1096,8 @@ public class Item implements IItem {
         this.addToCase = addToCase;
     }
 
-    /**
-     * @param type
-     *            tipo de arquivo
-     */
-    public void setType(IEvidenceFileType type) {
+    @Override
+    public void setType(String type) {
         this.type = type;
     }
 
@@ -1139,7 +1119,7 @@ public class Item implements IItem {
         StringBuilder sb = new StringBuilder();
         sb.append("Item: ").append(getPath()); //$NON-NLS-1$
         if (type != null) {
-            sb.append(" type: ").append(type.getLongDescr()); //$NON-NLS-1$
+            sb.append(" type: ").append(type); //$NON-NLS-1$
         }
         if (length != null) {
             sb.append(" size: ").append(length); //$NON-NLS-1$

@@ -281,7 +281,7 @@ public class Util {
     }
 
     public static String getNameWithTrueExt(IItem item) {
-        String ext = item.getTypeExt();
+        String ext = item.getType();
         String name = item.getName();
         if (ext == null)
             return name;
