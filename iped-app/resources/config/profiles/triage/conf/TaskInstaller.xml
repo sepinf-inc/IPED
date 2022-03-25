@@ -23,6 +23,7 @@
     
     <task class="dpf.sp.gpinf.indexer.process.task.transcript.AudioTranscriptTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.VideoThumbTask"></task> <!--see issue #100-->
+    <task class="dpf.sp.gpinf.indexer.process.task.DocThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ParsingTask"></task>
     
     <task class="dpf.sp.gpinf.indexer.process.task.QRCodeTask"></task>
@@ -33,7 +34,6 @@
     <task class="dpf.sp.gpinf.indexer.process.task.EmbeddedDiskProcessTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.MakePreviewTask"></task>
     
-    <task class="dpf.sp.gpinf.indexer.process.task.DocThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ImageThumbTask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.DIETask"></task>
     <task class="dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask"></task>
