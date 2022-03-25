@@ -33,6 +33,9 @@ public abstract class ThumbTask extends AbstractTask {
     }
 
     protected boolean hasThumb(IItem evidence, File thumbFile) throws Exception {
+        if (evidence.getThumb() != null && evidence.getThumb().length > 0) { // zero size thumb means thumb error
+            return true;
+        }
         if (thumbFile == null) {
             Connection con = ExportFileTask.getSQLiteStorageCon(output, evidence.getHashValue().getBytes());
             try (PreparedStatement ps = con.prepareStatement(SELECT_THUMB)) {
