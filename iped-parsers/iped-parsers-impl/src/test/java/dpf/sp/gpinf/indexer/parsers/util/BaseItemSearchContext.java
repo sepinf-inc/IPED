@@ -37,7 +37,6 @@ import org.xml.sax.SAXException;
 
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import dpf.sp.gpinf.indexer.util.SeekableFileInputStream;
-import iped3.IEvidenceFileType;
 import iped3.IHashValue;
 import iped3.IItem;
 import iped3.datasource.IDataSource;
@@ -115,7 +114,7 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public String getTypeExt() {
+            public String getType() {
                 return this.getExt();
             }
 
@@ -238,9 +237,8 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public void setType(IEvidenceFileType type) {
+            public void setType(String type) {
                 // TODO Auto-generated method stub
-
             }
 
             @Override
@@ -517,12 +515,6 @@ public abstract class BaseItemSearchContext extends TestCase {
             public boolean hasTmpFile() {
                 // TODO Auto-generated method stub
                 return false;
-            }
-
-            @Override
-            public IEvidenceFileType getType() {
-                // TODO Auto-generated method stub
-                return null;
             }
 
             @Override
