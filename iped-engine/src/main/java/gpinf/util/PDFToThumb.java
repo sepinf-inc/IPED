@@ -7,7 +7,9 @@ import java.awt.Shape;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.io.BufferedOutputStream;
+import java.io.Closeable;
 import java.io.File;
+import java.io.IOException;
 import java.io.PrintStream;
 
 import javax.imageio.ImageIO;
@@ -18,12 +20,16 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
-public class PDFToThumb {
-    public static BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
+public class PDFToThumb implements Closeable {
+
+    // using volatile to allow closing from other threads
+    private volatile PDDocument document;
+
+    public BufferedImage getPdfThumb(File file, int targetSize) throws Exception {
         BufferedImage img = null;
-        PDDocument document = null;
         try {
             document = PDDocument.load(file, MemoryUsageSetting.setupMixed(1 << 24, 1 << 28));
+            // document.setResourceCache(new NoResourceCache());
             PDPage page = document.getPage(0);
             PDFRenderer pdfRenderer = new PDFRenderer(document);
             pdfRenderer.setSubsamplingAllowed(true);
@@ -49,6 +55,7 @@ public class PDFToThumb {
             try {
                 if (document != null) {
                     document.close();
+                    document = null;
                 }
             } catch (Exception e) {}
         }
@@ -56,12 +63,12 @@ public class PDFToThumb {
     }
 
     public static void main(String[] args) {
-        try {
+        try (PDFToThumb pdfThumb = new PDFToThumb()) {
             PrintStream systemOut = System.out;
             System.setOut(System.err);
             File file = new File(args[0]);
             int targetSize = Integer.parseInt(args[1]);
-            BufferedImage img = getPdfThumb(file, targetSize);
+            BufferedImage img = pdfThumb.getPdfThumb(file, targetSize);
             if (img != null) {
                 BufferedOutputStream out = new BufferedOutputStream(systemOut);
                 ImageIO.write(img, "jpg", out);
@@ -70,5 +77,16 @@ public class PDFToThumb {
             }
         } catch (Exception e) {}
         System.exit(-1);
+    }
+
+    @Override
+    public void close() throws IOException {
+        try {
+            if (document != null) {
+                document.close();
+                document = null;
+            }
+        } catch (Exception e) {
+        }
     }
 }
