@@ -286,11 +286,12 @@ public class DocThumbTask extends ThumbTask {
                     File file = item.getTempFile();
                     String[] cmd = { "java", "-cp", classpath, "-Xmx" + docThumbsConfig.getMaxPdfExternalMemory() + "M",
                             PDFToThumb.class.getCanonicalName(), file.getAbsolutePath(),
-                            String.valueOf(docThumbsConfig.getThumbSize()) };
+                            String.valueOf(docThumbsConfig.getThumbSize()), item.toString(),
+                            Boolean.toString(logger.isDebugEnabled()) };
 
                     ProcessBuilder pb = new ProcessBuilder(cmd);
                     convertProcess = pb.start();
-                    Util.ignoreStream(convertProcess.getErrorStream());
+                    Util.logInputStream(convertProcess.getErrorStream(), logger);
                     Future<?> resultFuture = executor.submit(new ResultRunnable(convertProcess, baos));
                     try {
                         resultFuture.get();
@@ -318,7 +319,8 @@ public class DocThumbTask extends ThumbTask {
                 }
                 saveThumb(item, thumbFile);
             } catch (Throwable e) {
-                logger.warn(item.toString(), e);
+                logger.warn("Error creating PDF thumb for {} {}", item.toString(), e.toString());
+                logger.debug("", e);
             } finally {
                 if (docThumbsConfig.isExternalPdfConversion()) {
                     finishProcess(convertProcess);

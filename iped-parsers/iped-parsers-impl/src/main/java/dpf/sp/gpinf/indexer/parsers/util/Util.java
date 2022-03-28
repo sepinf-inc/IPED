@@ -24,6 +24,7 @@ import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.ParseContext;
 import org.apache.tika.sax.TextContentHandler;
 import org.apache.tika.sax.ToTextContentHandler;
+import org.slf4j.Logger;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 
@@ -227,6 +228,26 @@ public class Util {
                         if (msg != null)
                             msg.progress = true;
 
+                    } catch (Exception e) {
+                    }
+            }
+        };
+        t.setDaemon(true);
+        t.start();
+    }
+
+    public static void logInputStream(final InputStream stream, final Logger logger) {
+        Thread t = new Thread() {
+            @Override
+            public void run() {
+                byte[] out = new byte[1024];
+                int read = 0;
+                while (read != -1)
+                    try {
+                        read = stream.read(out);
+                        if (read > 0) {
+                            logger.warn(new String(out, 0, read));
+                        }
                     } catch (Exception e) {
                     }
             }
