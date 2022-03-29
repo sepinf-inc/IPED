@@ -279,6 +279,7 @@ public class DocThumbTask extends ThumbTask {
             boolean success = false;
             ByteArrayOutputStream baos = new ByteArrayOutputStream(65536);
             try {
+                Exception exception = null;
                 if (docThumbsConfig.isExternalPdfConversion()) {
                     URL url = this.getClass().getProtectionDomain().getCodeSource().getLocation();
                     String jarDir = new File(url.toURI()).getParent();
@@ -310,6 +311,8 @@ public class DocThumbTask extends ThumbTask {
                             ImageIO.write(img, "jpg", baos);
                             success = true;
                         }
+                    } catch (Exception e) {
+                        exception = e;
                     } finally {
                         pdfToThumb.close();
                     }
@@ -318,6 +321,9 @@ public class DocThumbTask extends ThumbTask {
                     item.setThumb(baos.toByteArray());
                 }
                 saveThumb(item, thumbFile);
+                if (exception != null) {
+                    throw exception;
+                }
             } catch (Throwable e) {
                 logger.warn("Error creating PDF thumb for {} {}", item.toString(), e.toString());
                 logger.debug("", e);
