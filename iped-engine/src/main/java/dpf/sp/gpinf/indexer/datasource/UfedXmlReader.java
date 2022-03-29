@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.sql.Connection;
@@ -19,6 +20,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
@@ -722,6 +724,21 @@ public class UfedXmlReader extends DataSourceReader {
                                 throw new SAXException(e);
                             }
                         else if (item != null && !value.isEmpty()) {
+                            if ("Base64String".equalsIgnoreCase(currentNode.atts.get("format"))) {
+                                String decoded = new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
+                                boolean isString = true;
+                                for (char c : decoded.toCharArray()) {
+                                    if (!(Character.isLetter(c) || c == 0x0A || c == 0x0D || c == 0x09 || c == 0x0B
+                                            || (c >= 0x20 && c <= 0x7E) || (c >= 0xA0 && c <= 0xFF))) {
+                                        isString = false;
+                                    }
+                                }
+                                if (isString) {
+                                    value = decoded;
+                                } else {
+                                    item.getMetadata().add(meta + ":format", "base64");
+                                }
+                            }
                             item.getMetadata().add(meta, value);
                             if (inChat && ignoreSupportedChats && parentNameAttr.equals("Source")
                                     && supportedApps.contains(value)) {
