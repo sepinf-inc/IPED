@@ -212,6 +212,7 @@ public class PDFOCRTextParser extends PDFParser {
             }
             
             if (createThumb) {
+                byte[] thumb = null;
                 try (PDFToThumb pdfToThumb = new PDFToThumb()) {
                     int thumbSize = Integer.valueOf(System.getProperty(THUMB_SIZE));
                     BufferedImage img = pdfToThumb.getPdfThumb(file, thumbSize);
@@ -219,10 +220,13 @@ public class PDFOCRTextParser extends PDFParser {
                     if (img != null) {
                         ImageIO.write(img, "jpg", baos);
                     }
-                    metadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(baos.toByteArray()));
+                    thumb = baos.toByteArray();
                 } catch (Throwable t) {
+                    thumb = new byte[0];
                     LOGGER.warn("PDF thumb error on '{}' ({} bytes)\t{}", itemInfo.getPath(), file.length(), t.toString()); //$NON-NLS-1$
                     LOGGER.debug("", t);
+                } finally {
+                    metadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(thumb));
                 }
             }
 
