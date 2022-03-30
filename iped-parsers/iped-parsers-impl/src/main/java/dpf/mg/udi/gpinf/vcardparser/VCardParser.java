@@ -156,7 +156,7 @@ public class VCardParser extends AbstractParser {
         if (vcard.getPhotos() != null) {
             for (Photo p : vcard.getPhotos()) {
                 if (p.getData() != null) {
-                    metadata.set(ExtraProperties.USER_THUMB, Base64.getEncoder().encodeToString(p.getData()));
+                    metadata.set(ExtraProperties.THUMBNAIL_BASE64, Base64.getEncoder().encodeToString(p.getData()));
                     break;
                 }
             }

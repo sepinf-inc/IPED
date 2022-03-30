@@ -1,4 +1,4 @@
-package gpinf.util;
+package dpf.sp.gpinf.indexer.parsers.util;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
@@ -51,7 +51,7 @@ public class PDFToThumb implements Closeable {
             g.setColor(Color.black);
             g.drawRect(0, 0, w - 1, h - 1);
             g.dispose();
-        } catch (Exception e) {} finally {
+        } finally {
             try {
                 if (document != null) {
                     document.close();
@@ -63,6 +63,8 @@ public class PDFToThumb implements Closeable {
     }
 
     public static void main(String[] args) {
+        String itemInfo = args[2];
+        boolean debug = Boolean.valueOf(args[3]);
         try (PDFToThumb pdfThumb = new PDFToThumb()) {
             PrintStream systemOut = System.out;
             System.setOut(System.err);
@@ -75,7 +77,10 @@ public class PDFToThumb implements Closeable {
                 out.close();
                 System.exit(0);
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.print("Error creating external thumb for " + itemInfo + " " + e.toString());
+            if (debug) e.printStackTrace();
+        }
         System.exit(-1);
     }
 
