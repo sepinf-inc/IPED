@@ -37,6 +37,7 @@ import dpf.sp.gpinf.indexer.config.ConfigurationManager;
 import dpf.sp.gpinf.indexer.config.IndexTaskConfig;
 import dpf.sp.gpinf.indexer.desktop.themes.Theme;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.search.SimilarFacesSearch;
 import iped3.IItem;
 import iped3.util.MediaTypes;
@@ -269,7 +270,7 @@ public class MenuClass extends JPopupMenu {
 
         similarImagesCurrent = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.Current")); //$NON-NLS-1$
         similarImagesCurrent.addActionListener(menuListener);
-        similarImagesCurrent.setEnabled(item != null && item.getImageSimilarityFeatures() != null);
+        similarImagesCurrent.setEnabled(item != null && item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null);
         submenu.add(similarImagesCurrent);
 
         similarImagesExternal = new JMenuItem(Messages.getString("MenuClass.FindSimilarImages.External")); //$NON-NLS-1$

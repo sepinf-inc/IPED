@@ -14,6 +14,7 @@ import org.apache.lucene.index.BinaryDocValues;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.util.BytesRef;
 
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.util.DocValuesUtil;
 import gpinf.similarity.ImageSimilarity;
 import iped3.IItem;
@@ -71,7 +72,7 @@ public class ImageSimilarityScorer {
         this.result = result;
         this.len = result.getLength();
         this.refItem = refItem;
-        this.refSimilarityFeatures = refItem.getImageSimilarityFeatures();
+        this.refSimilarityFeatures = (byte[]) refItem.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
     }
 
     public void score() throws IOException {
@@ -89,7 +90,8 @@ public class ImageSimilarityScorer {
                 public void run() {
                     BinaryDocValues similarityFeaturesValues = null;
                     try {
-                        similarityFeaturesValues = leafReader.getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+                        similarityFeaturesValues = leafReader
+                                .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
                     } catch (IOException e) {
                         e.printStackTrace();
                         return;
@@ -152,7 +154,7 @@ public class ImageSimilarityScorer {
         BinaryDocValues similarityFeaturesValues = null;
         try {
             similarityFeaturesValues = ipedCase.getLeafReader()
-                    .getBinaryDocValues(BasicProps.SIMILARITY_FEATURES);
+                    .getBinaryDocValues(ImageSimilarityTask.SIMILARITY_FEATURES);
         } catch (IOException e) {
             e.printStackTrace();
             return;

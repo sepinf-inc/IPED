@@ -80,6 +80,7 @@ import dpf.sp.gpinf.indexer.util.IOUtil;
 import dpf.sp.gpinf.indexer.parsers.IndexerDefaultParser;
 import dpf.sp.gpinf.indexer.parsers.OCRParser;
 import dpf.sp.gpinf.indexer.parsers.util.MetadataUtil;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.process.task.MinIOTask.MinIOInputInputStreamFactory;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
@@ -439,11 +440,13 @@ public class IndexItem extends BasicProps {
         if (evidence.getThumb() != null)
             doc.add(new StoredField(THUMB, evidence.getThumb()));
 
-        byte[] similarityFeatures = evidence.getImageSimilarityFeatures();
+        byte[] similarityFeatures = (byte[]) evidence.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES);
+        // clear extra property to don't add it again later when iterating over extra props
+        evidence.getExtraAttributeMap().remove(ImageSimilarityTask.SIMILARITY_FEATURES);
         if (similarityFeatures != null) {
-            doc.add(new BinaryDocValuesField(SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
-            doc.add(new StoredField(SIMILARITY_FEATURES, similarityFeatures));
-            doc.add(new IntPoint(SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
+            doc.add(new BinaryDocValuesField(ImageSimilarityTask.SIMILARITY_FEATURES, new BytesRef(similarityFeatures)));
+            doc.add(new StoredField(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures));
+            doc.add(new IntPoint(ImageSimilarityTask.SIMILARITY_FEATURES, similarityFeatures[0], similarityFeatures[1],
                     similarityFeatures[2], similarityFeatures[3]));
         }
 
@@ -962,9 +965,9 @@ public class IndexItem extends BasicProps {
                     }
                 }
 
-                BytesRef bytesRef = doc.getBinaryValue(SIMILARITY_FEATURES);
+                BytesRef bytesRef = doc.getBinaryValue(ImageSimilarityTask.SIMILARITY_FEATURES);
                 if (bytesRef != null) {
-                    evidence.setImageSimilarityFeatures(bytesRef.bytes);
+                    evidence.setExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES, bytesRef.bytes);
                 }
 
                 File viewFile = Util.findFileFromHash(new File(outputBase, "view"), evidence.getHash()); //$NON-NLS-1$

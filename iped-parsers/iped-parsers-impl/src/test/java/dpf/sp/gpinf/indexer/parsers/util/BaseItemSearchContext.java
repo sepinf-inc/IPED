@@ -171,12 +171,6 @@ public abstract class BaseItemSearchContext extends TestCase {
             }
 
             @Override
-            public byte[] getImageSimilarityFeatures() {
-                // TODO Auto-generated method stub
-                return null;
-            }
-
-            @Override
             public int getId() {
                 // TODO Auto-generated method stub
                 return 0;
@@ -375,12 +369,6 @@ public abstract class BaseItemSearchContext extends TestCase {
 
             @Override
             public void setInputStreamFactory(ISeekableInputStreamFactory inputStreamFactory) {
-                // TODO Auto-generated method stub
-
-            }
-
-            @Override
-            public void setImageSimilarityFeatures(byte[] imageSimilarityFeatures) {
                 // TODO Auto-generated method stub
 
             }

@@ -48,7 +48,6 @@ import org.apache.lucene.search.BooleanClause.Occur;
 import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.BooleanQuery.Builder;
 import org.apache.lucene.search.Query;
-import org.apache.lucene.util.Bits;
 import org.apache.lucene.util.BytesRef;
 import org.apache.lucene.util.NumericUtils;
 import org.slf4j.Logger;
@@ -58,6 +57,7 @@ import dpf.sp.gpinf.indexer.localization.CategoryLocalization;
 import dpf.sp.gpinf.indexer.localization.LocalizedProperties;
 import dpf.sp.gpinf.indexer.desktop.TimelineResults.TimeItemId;
 import dpf.sp.gpinf.indexer.process.IndexItem;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.NamedEntityTask;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexTask;
 import dpf.sp.gpinf.indexer.search.ItemId;
@@ -414,7 +414,7 @@ public class MetadataPanel extends JPanel
             Collections.sort(fields, StringUtil.getIgnoreCaseComparator());
             for (String f : fields) {
                 if (f.equals(ResultTableModel.BOOKMARK_COL) || f.equals(ResultTableModel.SCORE_COL)
-                        || f.startsWith(BasicProps.SIMILARITY_FEATURES)
+                        || f.startsWith(ImageSimilarityTask.SIMILARITY_FEATURES)
                         || f.startsWith(SimilarFacesSearch.FACE_FEATURES))
                     continue;
                 if (filterStr.isEmpty() || f.toLowerCase().contains(filterStr))

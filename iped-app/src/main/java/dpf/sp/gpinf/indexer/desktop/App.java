@@ -118,6 +118,7 @@ import dpf.sp.gpinf.indexer.config.LocaleConfig;
 import dpf.sp.gpinf.indexer.desktop.api.XMLResultSetViewerConfiguration;
 import dpf.sp.gpinf.indexer.desktop.themes.ThemeManager;
 import dpf.sp.gpinf.indexer.process.Manager;
+import dpf.sp.gpinf.indexer.process.task.ImageSimilarityTask;
 import dpf.sp.gpinf.indexer.process.task.ImageThumbTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSearcher;
@@ -851,7 +852,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
                                 if (itemId != null) {
                                     IItem item = appCase.getItemByItemId(itemId);
                                     if (item != null) {
-                                        boolean enabled = item.getImageSimilarityFeatures() != null;
+                                        boolean enabled = item.getExtraAttribute(ImageSimilarityTask.SIMILARITY_FEATURES) != null;
                                         butSimSearch.setEnabled(enabled);
                                     }
                                 }
