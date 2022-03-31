@@ -35,7 +35,7 @@ import org.apache.lucene.search.Query;
 
 public class AppListener implements ActionListener, MouseListener, ClearFilterListener {
 
-    private String texto = ""; //$NON-NLS-1$
+    private String searchText = ""; //$NON-NLS-1$
     private boolean clearAllFilters = false;
     private boolean clearSearchBox = false;
 
@@ -80,7 +80,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         try {
             UICaseSearcherFilter task;
             if (query == null)
-                task = new UICaseSearcherFilter(texto);
+                task = new UICaseSearcherFilter(searchText);
             else
                 task = new UICaseSearcherFilter(query);
 
@@ -112,17 +112,17 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         if (evt.getSource() == App.get().queryComboBox && !clearSearchBox && evt.getActionCommand().equals("comboBoxChanged")
                 && !BookmarksController.get().isUpdatingHistory()) {
             if (App.get().queryComboBox.getSelectedItem() != null) {
-                texto = App.get().queryComboBox.getSelectedItem().toString();
-                if (texto.equals(BookmarksController.HISTORY_DIV) || texto.equals(App.SEARCH_TOOL_TIP)) {
-                    texto = ""; //$NON-NLS-1$
+                searchText = App.get().queryComboBox.getSelectedItem().toString();
+                if (searchText.equals(BookmarksController.HISTORY_DIV) || searchText.equals(App.SEARCH_TOOL_TIP)) {
+                    searchText = ""; //$NON-NLS-1$
                     clearSearchBox = true;
                     App.get().queryComboBox.setSelectedItem(""); //$NON-NLS-1$
                 }
-                texto = texto.trim();
-                BookmarksController.get().addToRecentSearches(texto);
+                searchText = searchText.trim();
+                BookmarksController.get().addToRecentSearches(searchText);
             }
 
-            if (!texto.isEmpty())
+            if (!searchText.isEmpty())
                 App.get().queryComboBox.setBorder(BorderFactory.createLineBorder(App.get().alertColor, 2, true));
             else
                 App.get().queryComboBox.setBorder(null);
