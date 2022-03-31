@@ -53,9 +53,9 @@ import iped3.exception.ParseException;
 import iped3.exception.QueryNodeException;
 import iped3.search.LuceneSearchResult;
 
-public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object> {
+public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Object> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(PesquisarIndice.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(UICaseSearcherFilter.class);
 
     private static SoftReference<MultiSearchResult> allItemsCache;
     private static IPEDSource ipedCase;
@@ -67,12 +67,12 @@ public class PesquisarIndice extends CancelableWorker<MultiSearchResult, Object>
     Query query;
     IPEDSearcher searcher;
 
-    public PesquisarIndice(String queryText) {
+    public UICaseSearcherFilter(String queryText) {
         this.queryText = queryText;
         searcher = new IPEDSearcher(App.get().appCase, queryText);
     }
 
-    public PesquisarIndice(Query query) {
+    public UICaseSearcherFilter(Query query) {
         this.query = query;
         searcher = new IPEDSearcher(App.get().appCase, query);
     }

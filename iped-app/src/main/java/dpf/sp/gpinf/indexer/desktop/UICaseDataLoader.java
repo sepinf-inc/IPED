@@ -111,7 +111,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
                 exibirAjuda.execute();
 
                 LOGGER.info("Listing all items"); //$NON-NLS-1$
-                PesquisarIndice pesquisa = new PesquisarIndice(new MatchAllDocsQuery());
+                UICaseSearcherFilter pesquisa = new UICaseSearcherFilter(new MatchAllDocsQuery());
                 pesquisa.execute();
                 LOGGER.info("Listing all items Finished"); //$NON-NLS-1$
             }

@@ -78,11 +78,11 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         App.get().referencesModel.clear();
 
         try {
-            PesquisarIndice task;
+            UICaseSearcherFilter task;
             if (query == null)
-                task = new PesquisarIndice(texto);
+                task = new UICaseSearcherFilter(texto);
             else
-                task = new PesquisarIndice(query);
+                task = new UICaseSearcherFilter(query);
 
             task.applyUIQueryFilters();
             task.execute();
