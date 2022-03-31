@@ -208,7 +208,7 @@ public class Statistics {
         lastId = id;
     }
 
-    public void logarEstatisticas(Manager manager) throws Exception {
+    public void logStatistics(Manager manager) throws Exception {
 
         int processed = getProcessed();
         int extracted = ExportFileTask.getItensExtracted();

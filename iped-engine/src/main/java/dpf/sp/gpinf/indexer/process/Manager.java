@@ -285,7 +285,7 @@ public class Manager {
 
         deleteTempDir();
 
-        stats.logarEstatisticas(this);
+        stats.logStatistics(this);
 
         Files.createFile(getFinishedFileFlag(output).toPath());
 
