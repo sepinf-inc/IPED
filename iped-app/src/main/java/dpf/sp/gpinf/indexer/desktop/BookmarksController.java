@@ -58,9 +58,9 @@ public class BookmarksController {
                 && !App.get().appCase.getKeywords().contains(texto)) {
 
             if (App.get().appCase.getMultiBookmarks().getTypedWords().size() == 0)
-                App.get().termo.addItem(HISTORY_DIV);
+                App.get().queryComboBox.addItem(HISTORY_DIV);
 
-            App.get().termo.addItem(texto);
+            App.get().queryComboBox.addItem(texto);
             App.get().appCase.getMultiBookmarks().addToTypedWords(texto);
         }
     }
@@ -113,18 +113,18 @@ public class BookmarksController {
 
     public void atualizarGUIHistory() {
         updatingHistory = true;
-        Object prevText = App.get().termo.getSelectedItem();
-        App.get().termo.removeAllItems();
+        Object prevText = App.get().queryComboBox.getSelectedItem();
+        App.get().queryComboBox.removeAllItems();
         for (String word : App.get().appCase.getKeywords())
-            App.get().termo.addItem(word);
+            App.get().queryComboBox.addItem(word);
 
         if (App.get().appCase.getMultiBookmarks().getTypedWords().size() != 0)
-            App.get().termo.addItem(HISTORY_DIV);
+            App.get().queryComboBox.addItem(HISTORY_DIV);
 
         for (String text : App.get().appCase.getMultiBookmarks().getTypedWords()) {
-            App.get().termo.addItem(text);
+            App.get().queryComboBox.addItem(text);
         }
-        App.get().termo.setSelectedItem(prevText);
+        App.get().queryComboBox.setSelectedItem(prevText);
         updatingHistory = false;
     }
 

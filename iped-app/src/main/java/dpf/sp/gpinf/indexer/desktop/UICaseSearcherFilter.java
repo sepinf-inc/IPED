@@ -106,8 +106,8 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                 numFilters++;
         }
 
-        if (App.get().filtro.getSelectedIndex() > 1) {
-            String filter = App.get().filtro.getSelectedItem().toString();
+        if (App.get().filterComboBox.getSelectedIndex() > 1) {
+            String filter = App.get().filterComboBox.getSelectedItem().toString();
             filter = App.get().filterManager.getFilterExpression(filter);
             BooleanQuery.Builder boolQuery = new BooleanQuery.Builder();
             boolQuery.add(new QueryBuilder(App.get().appCase).getQuery(filter), Occur.MUST);
@@ -179,8 +179,8 @@ public class UICaseSearcherFilter extends CancelableWorker<MultiSearchResult, Ob
                 }
 
                 String filtro = ""; //$NON-NLS-1$
-                if (App.get().filtro.getSelectedItem() != null)
-                    filtro = App.get().filtro.getSelectedItem().toString();
+                if (App.get().filterComboBox.getSelectedItem() != null)
+                    filtro = App.get().filterComboBox.getSelectedItem().toString();
 
                 if (filtro.equals(App.FILTRO_SELECTED)) {
                     result = (MultiSearchResult) App.get().appCase.getMultiBookmarks().filterChecked(result);

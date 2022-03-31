@@ -170,8 +170,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     FilterManager filterManager;
     public JDialog dialogBar;
     JProgressBar progressBar;
-    JComboBox<String> termo, filtro;
-    JButton pesquisar, opcoes, atualizar, ajuda, exportToZip;
+    JComboBox<String> queryComboBox, filterComboBox;
+    JButton searchButton, optionsButton, updateCaseData, helpButton, exportToZip;
     JCheckBox checkBox, recursiveTreeList, filterDuplicates;
     JTable resultsTable;
     GalleryTable gallery;
@@ -207,7 +207,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     JScrollPane viewerScroll, resultsScroll, galleryScroll;
     JPanel topPanel;
     ClearFilterButton clearAllFilters;
-    boolean disposicaoVertical = false;
+    boolean verticalLayout = false;
 
     public ResultTableModel resultsModel;
     List resultSortKeys;
@@ -430,26 +430,26 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             e.printStackTrace();
         }
 
-        termo = new JComboBox<String>();
-        termo.setMinimumSize(new Dimension());
-        termo.setToolTipText(SEARCH_TOOL_TIP);
-        termo.setEditable(true);
-        termo.setSelectedItem(SEARCH_TOOL_TIP);
-        termo.setMaximumRowCount(30);
+        queryComboBox = new JComboBox<String>();
+        queryComboBox.setMinimumSize(new Dimension());
+        queryComboBox.setToolTipText(SEARCH_TOOL_TIP);
+        queryComboBox.setEditable(true);
+        queryComboBox.setSelectedItem(SEARCH_TOOL_TIP);
+        queryComboBox.setMaximumRowCount(30);
 
-        pesquisar = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
-        opcoes = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
-        atualizar = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
-        ajuda = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
+        searchButton = new JButton(Messages.getString("App.Search")); //$NON-NLS-1$
+        optionsButton = new JButton(Messages.getString("App.Options")); //$NON-NLS-1$
+        updateCaseData = new JButton(Messages.getString("App.Update")); //$NON-NLS-1$
+        helpButton = new JButton(Messages.getString("App.Help")); //$NON-NLS-1$
         exportToZip = new JButton(Messages.getString("App.ExportZip")); //$NON-NLS-1$
         checkBox = new JCheckBox("0"); //$NON-NLS-1$
 
-        filtro = new JComboBox<String>();
-        filtro.setMaximumSize(new Dimension(100, 50));
-        filtro.setMaximumRowCount(30);
-        filtro.addItem(App.FILTRO_TODOS);
-        filtro.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
-        filterManager = new FilterManager(filtro);
+        filterComboBox = new JComboBox<String>();
+        filterComboBox.setMaximumSize(new Dimension(100, 50));
+        filterComboBox.setMaximumRowCount(30);
+        filterComboBox.addItem(App.FILTRO_TODOS);
+        filterComboBox.setToolTipText(Messages.getString("App.FilterTip")); //$NON-NLS-1$
+        filterManager = new FilterManager(filterComboBox);
 
         filterDuplicates = new JCheckBox(Messages.getString("App.FilterDuplicates"));
         filterDuplicates.setToolTipText(Messages.getString("App.FilterDuplicatesTip"));
@@ -467,17 +467,17 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         similarFacesFilterPanel = new SimilarFacesFilterPanel();
         similarFacesFilterPanel.setVisible(false);
 
-        topPanel.add(filtro);
+        topPanel.add(filterComboBox);
         topPanel.add(filterDuplicates);
         topPanel.add(clearAllFilters);
         topPanel.add(similarImageFilterPanel);
         topPanel.add(similarFacesFilterPanel);
         topPanel.add(new JLabel(tab + Messages.getString("App.SearchLabel"))); //$NON-NLS-1$
-        topPanel.add(termo);
-        topPanel.add(opcoes);
+        topPanel.add(queryComboBox);
+        topPanel.add(optionsButton);
         if (processingManager != null)
-            topPanel.add(atualizar);
-        topPanel.add(ajuda);
+            topPanel.add(updateCaseData);
+        topPanel.add(helpButton);
         topPanel.add(exportToZip);
         exportToZip.setVisible(false);
         topPanel.add(checkBox);
@@ -701,7 +701,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         timelineButton.addActionListener(timelineListener);
 
         if (triageGui) {
-            disposicaoVertical = true;
+            verticalLayout = true;
             exportToZip.setVisible(true);
         }
 
@@ -731,14 +731,14 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
 
         appletListener = new AppListener();
         recursiveTreeList.addActionListener(treeListener);
-        termo.addActionListener(appletListener);
-        filtro.addActionListener(appletListener);
+        queryComboBox.addActionListener(appletListener);
+        filterComboBox.addActionListener(appletListener);
         filterDuplicates.addActionListener(appletListener);
-        pesquisar.addActionListener(appletListener);
-        opcoes.addActionListener(appletListener);
+        searchButton.addActionListener(appletListener);
+        optionsButton.addActionListener(appletListener);
         exportToZip.addActionListener(appletListener);
-        atualizar.addActionListener(appletListener);
-        ajuda.addActionListener(appletListener);
+        updateCaseData.addActionListener(appletListener);
+        helpButton.addActionListener(appletListener);
         checkBox.addActionListener(appletListener);
         resultsTable.getSelectionModel().addListSelectionListener(new ResultTableListener());
         resultsTable.addMouseListener(new ResultTableListener());
@@ -765,15 +765,15 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
         referencesTable.getSelectionModel().addListSelectionListener(referencesModel);
 
         hitsTable.addMouseListener(appletListener);
-        // filtro.addMouseListener(appletListener);
-        // filtro.getComponent(0).addMouseListener(appletListener);
+        // filterComboBox.addMouseListener(appletListener);
+        // filterComboBox.getComponent(0).addMouseListener(appletListener);
         updateUI(false);
     }
     
     public void updateUI(boolean refresh) {
-        termo.getEditor().getEditorComponent().addMouseListener(appletListener);
-        termo.getComponent(0).addMouseListener(appletListener);
-        new AutoCompleteColumns((JTextComponent) termo.getEditor().getEditorComponent());
+        queryComboBox.getEditor().getEditorComponent().addMouseListener(appletListener);
+        queryComboBox.getComponent(0).addMouseListener(appletListener);
+        new AutoCompleteColumns((JTextComponent) queryComboBox.getEditor().getEditorComponent());
         
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground == null)
@@ -1196,7 +1196,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     }
     
     public void adjustLayout(boolean isReset) {
-        if (!disposicaoVertical) {
+        if (!verticalLayout) {
             if (isReset)
                 removeAllDockables();
             createAllDockables();
@@ -1357,8 +1357,8 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
             setGalleryColCount(GalleryModel.defaultColCount);
     }
 
-    public void alterarDisposicao() {
-        disposicaoVertical = !disposicaoVertical;
+    public void toggleHorizontalVerticalLayout() {
+        verticalLayout = !verticalLayout;
         adjustLayout(true);
     }
 

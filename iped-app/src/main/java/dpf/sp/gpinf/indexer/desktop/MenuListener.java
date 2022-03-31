@@ -112,7 +112,7 @@ public class MenuListener implements ActionListener {
             App.get().timelineListener.toggleTimelineTableView();
 
         } else if (e.getSource() == menu.disposicao) {
-            App.get().alterarDisposicao();
+            App.get().toggleHorizontalVerticalLayout();
 
         } else if (e.getSource() == menu.layoutPadrao) {
             App.get().adjustLayout(true);
