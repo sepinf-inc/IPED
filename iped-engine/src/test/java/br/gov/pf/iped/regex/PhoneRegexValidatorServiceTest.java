@@ -4,9 +4,9 @@ import static org.junit.Assert.assertEquals;
 
 import org.junit.Test;
 
-public class TelefoneRegexValidatorServiceTest {
+public class PhoneRegexValidatorServiceTest {
 
-    private TelefoneRegexValidatorService service = new TelefoneRegexValidatorService();
+    private PhoneRegexValidatorService service = new PhoneRegexValidatorService();
 
     @Test
     public void testFormatWhatsapp1() {

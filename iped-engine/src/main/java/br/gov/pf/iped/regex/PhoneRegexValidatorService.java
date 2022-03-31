@@ -14,7 +14,7 @@ import com.google.i18n.phonenumbers.Phonenumber.PhoneNumber;
 import dpf.sp.gpinf.indexer.process.task.regex.BasicAbstractRegexValidatorService;
 import dpf.sp.gpinf.indexer.process.task.regex.RegexValidatorService;
 
-public class TelefoneRegexValidatorService extends BasicAbstractRegexValidatorService {
+public class PhoneRegexValidatorService extends BasicAbstractRegexValidatorService {
 
     private static final String[] REGEX_NAME = { "PHONE", "TELEFONE" };
     private Pattern NOT_ALLOWED_CHARS = Pattern.compile("[^0-9\\-\\+]");
