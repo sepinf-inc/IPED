@@ -111,10 +111,10 @@ public class MenuListener implements ActionListener {
         if (e.getSource() == menu.toggleTimelineView) {
             App.get().timelineListener.toggleTimelineTableView();
 
-        } else if (e.getSource() == menu.disposicao) {
+        } else if (e.getSource() == menu.changeLayout) {
             App.get().toggleHorizontalVerticalLayout();
 
-        } else if (e.getSource() == menu.layoutPadrao) {
+        } else if (e.getSource() == menu.defaultLayout) {
             App.get().adjustLayout(true);
 
         } else if (e.getSource() == menu.savePanelsLayout) {
@@ -123,7 +123,7 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.loadPanelsLayout) {
             App.get().loadPanelLayout();
             
-        } else if (e.getSource() == menu.marcarSelecionados) {
+        } else if (e.getSource() == menu.checkHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
@@ -133,7 +133,7 @@ public class MenuListener implements ActionListener {
             App.get().appCase.getMultiBookmarks().saveState();
             BookmarksController.get().atualizarGUISelection();
 
-        } else if (e.getSource() == menu.desmarcarSelecionados) {
+        } else if (e.getSource() == menu.uncheckHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(1);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
@@ -145,19 +145,19 @@ public class MenuListener implements ActionListener {
 
         }
 
-        if (e.getSource() == menu.marcarRecursivamenteSelecionados) {
+        if (e.getSource() == menu.deepCheckHighlighted) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.CTRL_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
 
-        } else if (e.getSource() == menu.desmarcarRecursivamenteSelecionados) {
+        } else if (e.getSource() == menu.deepUncheckHighlighted) {
             KeyEvent keyCTRL_R_Pressed = new KeyEvent((Component) e.getSource(), KeyEvent.KEY_PRESSED,
                     System.currentTimeMillis(), KeyEvent.ALT_MASK, KeyEvent.VK_R, KeyEvent.CHAR_UNDEFINED);
             for (KeyListener kl : App.get().resultsTable.getListeners(KeyListener.class))
                 kl.keyPressed(keyCTRL_R_Pressed);
         }
-        if (e.getSource() == menu.lerSelecionados) {
+        if (e.getSource() == menu.readHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
@@ -167,7 +167,7 @@ public class MenuListener implements ActionListener {
             App.get().appCase.getMultiBookmarks().saveState();
             BookmarksController.get().atualizarGUISelection();
 
-        } else if (e.getSource() == menu.deslerSelecionados) {
+        } else if (e.getSource() == menu.unreadHighlighted) {
             BookmarksController.get().setMultiSetting(true);
             int col = App.get().resultsTable.convertColumnIndexToView(2);
             for (Integer row : App.get().resultsTable.getSelectedRows()) {
@@ -177,7 +177,7 @@ public class MenuListener implements ActionListener {
             App.get().appCase.getMultiBookmarks().saveState();
             BookmarksController.get().atualizarGUISelection();
 
-        } else if (e.getSource() == menu.exportarSelecionados) {
+        } else if (e.getSource() == menu.exportHighlighted) {
             setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
@@ -191,7 +191,7 @@ public class MenuListener implements ActionListener {
                 (new CopyFiles(dir, selectedIds)).execute();
             }
 
-        } else if (e.getSource() == menu.copiarSelecionados) {
+        } else if (e.getSource() == menu.copyHighlighted) {
             ArrayList<Integer> selectedIds = new ArrayList<Integer>();
             for (int row : App.get().resultsTable.getSelectedRows()) {
                 IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
@@ -209,7 +209,7 @@ public class MenuListener implements ActionListener {
                 (new CopyProperties(file, selectedIds)).execute();
             }
 
-        } else if (e.getSource() == menu.copiarMarcados) {
+        } else if (e.getSource() == menu.copyChecked) {
             ArrayList<Integer> uniqueSelectedIds = new ArrayList<Integer>();
             for (int docId = 0; docId < App.get().appCase.getReader().maxDoc(); docId++) {
                 IItemId item = App.get().appCase.getItemId(docId);
@@ -229,7 +229,7 @@ public class MenuListener implements ActionListener {
                 (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
 
-        } else if (e.getSource() == menu.exportarMarcados) {
+        } else if (e.getSource() == menu.exportChecked) {
             ArrayList<IItemId> uniqueSelectedIds = new ArrayList<IItemId>();
             for (IPEDSource source : App.get().appCase.getAtomicSources()) {
                 for (int id = 0; id <= source.getLastId(); id++) {
@@ -264,7 +264,7 @@ public class MenuListener implements ActionListener {
                 (new ExportFilesToZip(file, uniqueSelectedIds)).execute();
             }
 
-        } else if (e.getSource() == menu.importarPalavras) {
+        } else if (e.getSource() == menu.importKeywords) {
             setupFileChooser();
             fileChooser.setFileFilter(defaultFilter);
             fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
@@ -280,33 +280,33 @@ public class MenuListener implements ActionListener {
             boolean toZip = e.getSource() == menu.exportCheckedTreeToZip;
             exportFileTree(onlyChecked, toZip);
 
-        } else if (e.getSource() == menu.limparBuscas) {
+        } else if (e.getSource() == menu.clearSearchHistory) {
             App.get().appCase.getMultiBookmarks().clearTypedWords();
             App.get().appCase.getMultiBookmarks().saveState();
             BookmarksController.get().updateUIHistory();
 
-        } else if (e.getSource() == menu.carregarMarcadores) {
+        } else if (e.getSource() == menu.loadBookmarks) {
             BookmarksController.get().askAndLoadState();
 
-        } else if (e.getSource() == menu.salvarMarcadores) {
+        } else if (e.getSource() == menu.saveBookmarks) {
             BookmarksController.get().askAndSaveState();
 
-        } else if (e.getSource() == menu.copiarPreview) {
+        } else if (e.getSource() == menu.previewScreenshot) {
             AbstractViewer viewer = App.get().getViewerController().getMultiViewer().getCurrentViewer();
             viewer.copyScreen();
 
-        } else if (e.getSource() == menu.aumentarGaleria) {
+        } else if (e.getSource() == menu.changeGalleryColCount) {
 
             SpinnerDialog dialog = new SpinnerDialog(App.get(), Messages.getString("MenuListener.Gallery"),
                     Messages.getString("MenuListener.Cols"), App.get().galleryModel.getColumnCount(), 1, 40);
             dialog.addChangeListener(new SpinnerListener());
             dialog.setVisible(true);
 
-        } else if (e.getSource() == menu.gerenciarMarcadores) {
+        } else if (e.getSource() == menu.manageBookmarks) {
 
             BookmarksManager.setVisible();
 
-        } else if (e.getSource() == menu.gerenciarColunas) {
+        } else if (e.getSource() == menu.manageColumns) {
 
             ColumnsManager.getInstance().setVisible();
 
@@ -318,7 +318,7 @@ public class MenuListener implements ActionListener {
             dialog.setVisible(true);
             ColumnsManager.getInstance().setPinnedColumns(dialog.getSelectedValue());
 
-        } else if (e.getSource() == menu.gerenciarFiltros) {
+        } else if (e.getSource() == menu.manageFilters) {
 
             App.get().filterManager.setVisible(true);
 
