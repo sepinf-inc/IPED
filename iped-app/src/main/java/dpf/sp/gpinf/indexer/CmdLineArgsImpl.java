@@ -339,7 +339,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
         if (this.isAppendIndex()) {
             String classpath = outputDir.getAbsolutePath() + "/iped/lib/iped-search-app.jar"; //$NON-NLS-1$
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList("java", "-cp", classpath, IndexFiles.class.getCanonicalName(), "-h"));
+            cmd.addAll(Arrays.asList("java", "-cp", classpath, Main.class.getCanonicalName(), "-h"));
 
             ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
@@ -383,7 +383,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
      */
     private void handleSpecificArgs() {
 
-        IndexFiles.getInstance().dataSource = new ArrayList<File>();
+        Main.getInstance().dataSource = new ArrayList<File>();
 
         if ((datasources == null || datasources.isEmpty()) && evidenceToRemove == null) {
             throw new ParameterException("parameter '-d' or '-r' required."); //$NON-NLS-1$
@@ -395,7 +395,7 @@ public class CmdLineArgsImpl implements CmdLineArgs {
 
         if (this.datasources != null) {
             for (File dataSource : this.datasources) {
-                IndexFiles.getInstance().dataSource.add(dataSource);
+                Main.getInstance().dataSource.add(dataSource);
             }
             checkDuplicateDataSources();
         }
@@ -411,21 +411,21 @@ public class CmdLineArgsImpl implements CmdLineArgs {
             System.setProperty(OCRParser.SUBSET_TO_OCR, list);
         }
         if (this.palavrasChave != null) {
-            IndexFiles.getInstance().palavrasChave = this.palavrasChave;
+            Main.getInstance().palavrasChave = this.palavrasChave;
         }
         if (this.logFile != null) {
-            IndexFiles.getInstance().logFile = this.logFile;
+            Main.getInstance().logFile = this.logFile;
         }
 
         if (outputDir != null) {
-            IndexFiles.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
+            Main.getInstance().output = new File(outputDir, "iped"); //$NON-NLS-1$
         } else {
-            IndexFiles.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
+            Main.getInstance().output = new File(datasources.get(0).getParentFile(), "iped"); //$NON-NLS-1$
         }
 
         File file = outputDir;
         while (file != null) {
-            for (File source : IndexFiles.getInstance().dataSource) {
+            for (File source : Main.getInstance().dataSource) {
                 if (file.getAbsoluteFile().equals(source.getAbsoluteFile())) {
                     throw new ParameterException("Output folder can not be equal or subdir of input!"); //$NON-NLS-1$
                 }

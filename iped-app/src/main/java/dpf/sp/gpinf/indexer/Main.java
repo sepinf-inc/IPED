@@ -47,12 +47,9 @@ import dpf.sp.gpinf.indexer.util.LibreOfficeFinder;
 import dpf.sp.gpinf.indexer.util.UNOLibFinder;
 
 /**
- * Ponto de entrada do programa ao processar evidências. Nome IndexFiles mantém
- * compatibilidade com o AsAP. TODO Manter apenas métodos utilizados pelo AsAP e
- * separar demais funções em outra classe de entrada com nome mais intuitivo
- * para execuções via linha de comando.
+ * Processing program entry point.
  */
-public class IndexFiles {
+public class Main {
 
     private static Logger LOGGER = null;
 
@@ -73,19 +70,19 @@ public class IndexFiles {
     /**
      * Última instância criada deta classe.
      */
-    private static IndexFiles lastInstance;
+    private static Main lastInstance;
 
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList) {
+    public Main(List<File> reports, File output, String configPath, File logFile, File keywordList) {
         this(reports, output, configPath, logFile, keywordList, null, null);
     }
 
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList,
+    public Main(List<File> reports, File output, String configPath, File logFile, File keywordList,
             List<String> bookmarksToOCR) {
         this(reports, output, configPath, logFile, keywordList, null, bookmarksToOCR);
     }
@@ -93,7 +90,7 @@ public class IndexFiles {
     /**
      * Construtor utilizado pelo AsAP
      */
-    public IndexFiles(List<File> reports, File output, String configPath, File logFile, File keywordList,
+    public Main(List<File> reports, File output, String configPath, File logFile, File keywordList,
             Boolean ignore, List<String> bookmarksToOCR) {
         lastInstance = this;
         this.dataSource = reports;
@@ -111,7 +108,7 @@ public class IndexFiles {
     /**
      * Contrutor utilizado pela execução via linha de comando
      */
-    public IndexFiles(String[] args) {
+    public Main(String[] args) {
         lastInstance = this;
         cmdLineParams = new CmdLineArgsImpl();
         cmdLineParams.takeArgs(args);
@@ -120,7 +117,7 @@ public class IndexFiles {
     /**
      * Obtém a última instância criada
      */
-    public static IndexFiles getInstance() {
+    public static Main getInstance() {
         return lastInstance;
     }
 
@@ -128,7 +125,7 @@ public class IndexFiles {
      * Define o caminho onde será encontrado o arquivo de configuração principal.
      */
     private void setConfigPath() throws Exception {
-        URL url = IndexFiles.class.getProtectionDomain().getCodeSource().getLocation();
+        URL url = Main.class.getProtectionDomain().getCodeSource().getLocation();
 
         if ("true".equals(System.getProperty("Debugging"))) {
             rootPath = System.getProperty("user.dir");
@@ -156,7 +153,7 @@ public class IndexFiles {
             cmdLineParams.saveIntoCaseData(manager.getCaseData());
             manager.process();
 
-            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("IndexFiles.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
+            WorkerProvider.getInstance().firePropertyChange("mensagem", "", Messages.getString("Main.Finished")); //$NON-NLS-1$ //$NON-NLS-2$ //$NON-NLS-3$
             LOGGER.info("{} finished.", Version.APP_EXT); //$NON-NLS-1$
             success = true;
 
@@ -241,7 +238,7 @@ public class IndexFiles {
             args = CustomLoader.clearCustomLoaderArgs(args);
         }
 
-        IndexFiles iped = new IndexFiles(args);
+        Main iped = new Main(args);
         PrintStream SystemOut = System.out;
         boolean success = false;
 
@@ -250,7 +247,7 @@ public class IndexFiles {
             iped.logConfiguration = new LogConfiguration(iped, logPath);
             iped.logConfiguration.configureLogParameters(iped.cmdLineParams.isNologfile(), fromCustomLoader);
 
-            LOGGER = LoggerFactory.getLogger(IndexFiles.class);
+            LOGGER = LoggerFactory.getLogger(Main.class);
             if (!fromCustomLoader)
                 LOGGER.info(Version.APP_NAME);
 
@@ -277,7 +274,7 @@ public class IndexFiles {
                         UNOLibFinder.addUNOJars(loFinder.getLOPath(), jars);
                 }
 
-                String[] customArgs = CustomLoader.getCustomLoaderArgs(IndexFiles.class.getName(), args,
+                String[] customArgs = CustomLoader.getCustomLoaderArgs(Main.class.getName(), args,
                         iped.logFile);
                 CustomLoader.run(customArgs, jars);
                 return;
@@ -304,7 +301,7 @@ public class IndexFiles {
             System.exit((success) ? 0 : 1);
 
         // PARA ASAP:
-        // IndexFiles iped = new IndexFiles(List<File> reports, File
+        // Main iped = new Main(List<File> reports, File
         // output, String configPath, File logFile, File keywordList);
         // keywordList e logFile podem ser null. Nesse caso, o último é criado
         // na pasta log dentro de configPath

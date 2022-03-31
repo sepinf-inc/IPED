@@ -39,7 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import dpf.sp.gpinf.indexer.CmdLineArgsImpl;
-import dpf.sp.gpinf.indexer.IndexFiles;
+import dpf.sp.gpinf.indexer.Main;
 
 public class ReportDialog implements ActionListener, TableModelListener {
 
@@ -270,7 +270,7 @@ public class ReportDialog implements ActionListener, TableModelListener {
                         .getAbsolutePath();
             }
             List<String> cmd = new ArrayList<>();
-            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, IndexFiles.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
+            cmd.addAll(Arrays.asList(javaBin, "-cp", classpath, Main.class.getCanonicalName(), //$NON-NLS-1$ //$NON-NLS-2$
                     "-d", input.getAbsolutePath(), //$NON-NLS-1$
                     "-o", output)); //$NON-NLS-1$
 
