@@ -203,7 +203,7 @@ public class AppMain {
                 App.get().getSearchParams().codePath = libDir.getAbsolutePath();
                 App.get().init(logConfiguration, isMultiCase, casesPathFile, processingManager);
 
-                InicializarBusca init = new InicializarBusca(processingManager);
+                UICaseDataLoader init = new UICaseDataLoader(processingManager);
                 init.execute();
             }
 

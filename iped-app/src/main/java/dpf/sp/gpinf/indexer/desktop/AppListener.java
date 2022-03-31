@@ -169,7 +169,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
         }
 
         if (evt.getSource() == App.get().atualizar) {
-            InicializarBusca init = new InicializarBusca(App.get().getProcessingManager(), true);
+            UICaseDataLoader init = new UICaseDataLoader(App.get().getProcessingManager(), true);
             init.execute();
         }
 

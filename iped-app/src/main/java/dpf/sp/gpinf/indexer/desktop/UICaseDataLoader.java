@@ -38,20 +38,20 @@ import dpf.sp.gpinf.indexer.process.task.SignatureTask;
 import dpf.sp.gpinf.indexer.search.IPEDMultiSource;
 import dpf.sp.gpinf.indexer.search.IPEDSource;
 
-public class InicializarBusca extends SwingWorker<Void, Integer> {
+public class UICaseDataLoader extends SwingWorker<Void, Integer> {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(InicializarBusca.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(UICaseDataLoader.class);
 
     private boolean updateItems;
 
     private TreeViewModel treeModel;
     private Manager manager;
 
-    public InicializarBusca(Manager manager) {
+    public UICaseDataLoader(Manager manager) {
         this(manager, false);
     }
 
-    public InicializarBusca(Manager manager, boolean updateItems) {
+    public UICaseDataLoader(Manager manager, boolean updateItems) {
         this.manager = manager;
         this.updateItems = updateItems;
     }
