@@ -41,7 +41,7 @@ public class ExternalFileOpen {
                     e.printStackTrace();
 
                 } catch (IPEDException e) {
-                    CopyFiles.salvarArquivo(luceneId);
+                    CopyFiles.saveFile(luceneId);
                 }
             }
         }.start();

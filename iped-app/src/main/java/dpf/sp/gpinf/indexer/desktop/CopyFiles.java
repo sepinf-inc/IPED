@@ -137,7 +137,7 @@ public class CopyFiles extends SwingWorker<Boolean, Integer> implements Property
 
     }
 
-    public static void salvarArquivo(int docId) {
+    public static void saveFile(int docId) {
         try {
             ArrayList<IItemId> uniqueDoc = new ArrayList<IItemId>();
             uniqueDoc.add(App.get().appCase.getItemId(docId));
