@@ -188,7 +188,7 @@ public class MenuListener implements ActionListener {
                     IItemId item = App.get().ipedResult.getItem(App.get().resultsTable.convertRowIndexToModel(row));
                     selectedIds.add(item);
                 }
-                (new CopiarArquivos(dir, selectedIds)).execute();
+                (new CopyFiles(dir, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copiarSelecionados) {
@@ -243,7 +243,7 @@ public class MenuListener implements ActionListener {
             fileChooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
             if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
                 File dir = fileChooser.getSelectedFile();
-                (new CopiarArquivos(dir, uniqueSelectedIds)).execute();
+                (new CopyFiles(dir, uniqueSelectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.exportCheckedToZip) {
