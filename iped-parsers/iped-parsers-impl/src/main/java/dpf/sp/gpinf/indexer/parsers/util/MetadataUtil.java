@@ -219,7 +219,7 @@ public class MetadataUtil {
         generalKeys.add(ExtraProperties.USER_ORGANIZATION);
         generalKeys.add(ExtraProperties.USER_URLS);
         generalKeys.add(ExtraProperties.USER_NOTES);
-        generalKeys.add(ExtraProperties.USER_THUMB);
+        generalKeys.add(ExtraProperties.THUMBNAIL_BASE64);
         generalKeys.add(ExtraProperties.DOWNLOADED_DATA);
         generalKeys.add(OCRParser.OCR_CHAR_COUNT);
         generalKeys.add(RawStringParser.COMPRESS_RATIO);
@@ -359,6 +359,7 @@ public class MetadataUtil {
     public static final void normalizeMetadata(Metadata metadata) {
         // remove possible null key (#329)
         metadata.remove(null);
+        String thumb = metadata.get(ExtraProperties.THUMBNAIL_BASE64);
         removeIgnorable(metadata);
         normalizeMSGMetadata(metadata);
         removeDuplicateKeys(metadata);
@@ -374,6 +375,10 @@ public class MetadataUtil {
         removeDuplicateValues(metadata);
         renameKeys(metadata);
         removeExtraValsFromSingleValueKeys(metadata);
+        // add again removed empty/corrupted thumbnails
+        if (thumb != null && thumb.isEmpty()) {
+            metadata.set(ExtraProperties.THUMBNAIL_BASE64, "");
+        }
     }
 
     private static void removeDuplicateKeys(Metadata metadata) {

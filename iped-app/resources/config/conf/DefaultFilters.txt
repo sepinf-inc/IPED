@@ -18,4 +18,4 @@ Geo-referenced Files = common\\:geo\\:locations:*
 Container Subitems = subitem:true
 Containers not Expanded = category:("Mailboxes" "Compressed Archives" "ISO disks" "Other disks" "Virtual disks") -hasSubitem:true -fileFragment:true -isRoot:true
 Explicit Images & Videos = nudityScore:[500 TO *]
-Images & Videos with Thumbs = hasThumb:true
+Files with Thumbnails = hasThumb:true
