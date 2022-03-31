@@ -258,20 +258,20 @@ public class Manager {
             producer = new ItemProducer(this, caseData, false, sources, output);
             producer.start();
 
-            monitorarIndexacao();
+            monitorProcessing();
 
-            finalizarIndexacao();
+            finishProcessing();
 
         } catch (Exception e) {
             e.printStackTrace();
-            interromperIndexacao();
+            interruptProcessing();
             throw e;
 
         } finally {
             closeItemProducers();
         }
 
-        filtrarPalavrasChave();
+        filterKeywords();
 
         removeEmptyTreeNodes();
 
@@ -316,7 +316,7 @@ public class Manager {
         }
     }
 
-    private void interromperIndexacao() throws Exception {
+    private void interruptProcessing() throws Exception {
         if (workers != null) {
             for (int k = 0; k < workers.length; k++) {
                 if (workers[k] != null) {
@@ -518,7 +518,7 @@ public class Manager {
         WorkerProvider.getInstance().firePropertyChange("workers", 0, workers); //$NON-NLS-1$
     }
 
-    private void monitorarIndexacao() throws Exception {
+    private void monitorProcessing() throws Exception {
 
         boolean someWorkerAlive = true;
         long start = System.currentTimeMillis();
@@ -638,7 +638,7 @@ public class Manager {
         return t;
     }
 
-    private void finalizarIndexacao() throws Exception {
+    private void finishProcessing() throws Exception {
 
         if (commitThread != null && commitThread.isAlive()) {
             commitThread.join();
@@ -700,7 +700,7 @@ public class Manager {
         IOUtil.deleteDirectory(localConfig.getIndexerTemp());
     }
 
-    private void filtrarPalavrasChave() {
+    private void filterKeywords() {
 
         try {
             LOGGER.info("Filtering keywords..."); //$NON-NLS-1$
