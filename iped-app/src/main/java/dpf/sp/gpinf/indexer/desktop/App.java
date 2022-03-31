@@ -773,7 +773,7 @@ public class App extends JFrame implements WindowListener, IMultiSearchResultPro
     public void updateUI(boolean refresh) {
         termo.getEditor().getEditorComponent().addMouseListener(appletListener);
         termo.getComponent(0).addMouseListener(appletListener);
-        new AutoCompletarColunas((JTextComponent) termo.getEditor().getEditorComponent());
+        new AutoCompleteColumns((JTextComponent) termo.getEditor().getEditorComponent());
         
         Color foreground = UIManager.getColor("Viewer.foreground"); //$NON-NLS-1$
         if (foreground == null)
