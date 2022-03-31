@@ -86,8 +86,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     JButton rename = new JButton(Messages.getString("BookmarksManager.Rename")); //$NON-NLS-1$
     JTextField newLabel = new JTextField();
     JTextArea comments = new JTextArea();
-    JLabel texto = new JLabel(Messages.getString("BookmarksManager.Bookmarks")); //$NON-NLS-1$
-    JButton novo = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
+    JButton newButton = new JButton(Messages.getString("BookmarksManager.New")); //$NON-NLS-1$
     JButton updateComment = new JButton(Messages.getString("BookmarksManager.Update")); //$NON-NLS-1$
     JButton delete = new JButton(Messages.getString("BookmarksManager.Delete")); //$NON-NLS-1$
     DefaultListModel<BookmarkAndKey> listModel = new DefaultListModel<>();
@@ -166,7 +165,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         newLabel.setToolTipText(Messages.getString("BookmarksManager.NewLabel.Tip")); //$NON-NLS-1$
         comments.setToolTipText(Messages.getString("BookmarksManager.CommentsTooltip")); //$NON-NLS-1$
         updateComment.setToolTipText(Messages.getString("BookmarksManager.UpdateTooltip")); //$NON-NLS-1$
-        novo.setToolTipText(Messages.getString("BookmarksManager.New.Tip")); //$NON-NLS-1$
+        newButton.setToolTipText(Messages.getString("BookmarksManager.New.Tip")); //$NON-NLS-1$
         add.setToolTipText(Messages.getString("BookmarksManager.Add.Tip")); //$NON-NLS-1$
         remove.setToolTipText(Messages.getString("BookmarksManager.Remove.Tip")); //$NON-NLS-1$
         delete.setToolTipText(Messages.getString("BookmarksManager.Delete.Tip")); //$NON-NLS-1$
@@ -184,7 +183,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         JPanel left1 = new JPanel();
         left1.setLayout(new BoxLayout(left1, BoxLayout.PAGE_AXIS));
         JPanel left0 = new JPanel(new GridLayout(0, 1, 0, 0));
-        left0.add(novo);
+        left0.add(newButton);
         left0.add(updateComment);
         left1.add(left0);
         left1.add(Box.createVerticalStrut(65));
@@ -228,7 +227,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
         updateComment.addActionListener(this);
         remove.addActionListener(this);
         rename.addActionListener(this);
-        novo.addActionListener(this);
+        newButton.addActionListener(this);
         delete.addActionListener(this);
 
         list.addListSelectionListener(this);
@@ -365,7 +364,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
     @Override
     public void actionPerformed(final ActionEvent evt) {
 
-        if (evt.getSource() == novo) {
+        if (evt.getSource() == newButton) {
             String texto = newLabel.getText().trim();
             String comment = comments.getText().trim();
             if (!texto.isEmpty() && !listModel.contains(new BookmarkAndKey(texto))) {
@@ -390,7 +389,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             }
         }
 
-        if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == novo) {
+        if (evt.getSource() == add || evt.getSource() == remove || evt.getSource() == newButton) {
 
             ArrayList<IItemId> uniqueSelectedIds = getUniqueSelectedIds();
 
@@ -398,7 +397,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
             for (int index : list.getSelectedIndices())
                 labels.add(list.getModel().getElementAt(index).bookmark);
 
-            boolean insert = evt.getSource() == add || evt.getSource() == novo;
+            boolean insert = evt.getSource() == add || evt.getSource() == newButton;
             bookmark(uniqueSelectedIds, labels, insert);
 
         } else if (evt.getSource() == delete) {
