@@ -206,7 +206,7 @@ public class MenuListener implements ActionListener {
                 if (!file.getName().endsWith(CSV)) {
                     file = new File(file.getAbsolutePath() + CSV);
                 }
-                (new CopiarPropriedades(file, selectedIds)).execute();
+                (new CopyProperties(file, selectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.copiarMarcados) {
@@ -226,7 +226,7 @@ public class MenuListener implements ActionListener {
                 if (!file.getName().endsWith(CSV)) {
                     file = new File(file.getAbsolutePath() + CSV);
                 }
-                (new CopiarPropriedades(file, uniqueSelectedIds)).execute();
+                (new CopyProperties(file, uniqueSelectedIds)).execute();
             }
 
         } else if (e.getSource() == menu.exportarMarcados) {

@@ -38,14 +38,14 @@ import dpf.sp.gpinf.indexer.util.DateUtil;
 import dpf.sp.gpinf.indexer.util.Util;
 import iped3.IItemId;
 
-public class CopiarPropriedades extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
+public class CopyProperties extends SwingWorker<Boolean, Integer> implements PropertyChangeListener {
 
     ArrayList<Integer> uniqueIds;
     ProgressMonitor progressMonitor;
     File file;
     int total;
 
-    public CopiarPropriedades(File file, ArrayList<Integer> uniqueIds) {
+    public CopyProperties(File file, ArrayList<Integer> uniqueIds) {
         this.file = file;
         this.uniqueIds = uniqueIds;
         this.total = uniqueIds.size();
