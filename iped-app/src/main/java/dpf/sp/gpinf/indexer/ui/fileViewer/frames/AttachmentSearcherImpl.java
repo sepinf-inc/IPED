@@ -64,7 +64,7 @@ public class AttachmentSearcherImpl implements AttachmentSearcher {
             for (IItemId item : result.getIterator()) {
                 App.get().appCase.getMultiBookmarks().setChecked(checked, item);
             }
-            BookmarksController.get().atualizarGUI();
+            BookmarksController.get().updateUI();
 
         } catch (Exception e) {
             e.printStackTrace();

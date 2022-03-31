@@ -283,7 +283,7 @@ public class MenuListener implements ActionListener {
         } else if (e.getSource() == menu.limparBuscas) {
             App.get().appCase.getMultiBookmarks().clearTypedWords();
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUIHistory();
+            BookmarksController.get().updateUIHistory();
 
         } else if (e.getSource() == menu.carregarMarcadores) {
             BookmarksController.get().askAndLoadState();

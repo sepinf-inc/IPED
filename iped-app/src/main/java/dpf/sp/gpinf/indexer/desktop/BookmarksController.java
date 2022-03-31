@@ -17,7 +17,7 @@ public class BookmarksController {
     private static BookmarksController instance;
 
     private static JFileChooser fileChooser;
-    private static SearchStateFilter filtro;
+    private static SearchStateFilter filter;
 
     private boolean multiSetting = false;
 
@@ -28,7 +28,7 @@ public class BookmarksController {
             public void run() {
                 fileChooser = new JFileChooser();
                 fileChooser.setCurrentDirectory(App.get().appCase.getCaseDir());
-                filtro = new SearchStateFilter();
+                filter = new SearchStateFilter();
             }
         });
     }
@@ -65,17 +65,17 @@ public class BookmarksController {
         }
     }
 
-    public void atualizarGUIandHistory() {
-        atualizarGUIHistory();
-        atualizarGUI();
+    public void updateUIandHistory() {
+        updateUIHistory();
+        updateUI();
     }
 
     public void atualizarGUISelection() {
         // MapaModelUpdateListener.updatingSelection = true;
-        atualizarGUI();
+        updateUI();
     }
 
-    public void atualizarGUI() {
+    public void updateUI() {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -92,13 +92,13 @@ public class BookmarksController {
     }
 
     public void askAndLoadState() {
-        fileChooser.setFileFilter(filtro);
+        fileChooser.setFileFilter(filter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showOpenDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
             try {
                 App.get().appCase.getMultiBookmarks().loadState(file);
-                atualizarGUIandHistory();
+                updateUIandHistory();
                 BookmarksManager.get().updateList();
                 JOptionPane.showMessageDialog(App.get(), Messages.getString("BookmarksController.LoadSuccess"), //$NON-NLS-1$
                         Messages.getString("BookmarksController.LoadSuccess.Title"), JOptionPane.INFORMATION_MESSAGE); //$NON-NLS-1$
@@ -111,7 +111,7 @@ public class BookmarksController {
         }
     }
 
-    public void atualizarGUIHistory() {
+    public void updateUIHistory() {
         updatingHistory = true;
         Object prevText = App.get().queryComboBox.getSelectedItem();
         App.get().queryComboBox.removeAllItems();
@@ -129,7 +129,7 @@ public class BookmarksController {
     }
 
     public void askAndSaveState() {
-        fileChooser.setFileFilter(filtro);
+        fileChooser.setFileFilter(filter);
         fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
         if (fileChooser.showSaveDialog(App.get()) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();

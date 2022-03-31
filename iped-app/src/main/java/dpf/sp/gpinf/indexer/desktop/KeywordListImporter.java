@@ -73,7 +73,7 @@ public class KeywordListImporter extends CancelableWorker {
 
         App.get().appCase.getMultiBookmarks().saveState();
 
-        BookmarksController.get().atualizarGUIHistory();
+        BookmarksController.get().updateUIHistory();
 
         if (errors.size() > 0) {
             StringBuilder errorTerms = new StringBuilder();

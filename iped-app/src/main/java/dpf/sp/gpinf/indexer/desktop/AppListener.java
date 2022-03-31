@@ -165,7 +165,7 @@ public class AppListener implements ActionListener, MouseListener, ClearFilterLi
 
             App.get().gallery.getDefaultEditor(GalleryCellRenderer.class).stopCellEditing();
             App.get().appCase.getMultiBookmarks().saveState();
-            BookmarksController.get().atualizarGUI();
+            BookmarksController.get().updateUI();
         }
 
         if (evt.getSource() == App.get().updateCaseData) {

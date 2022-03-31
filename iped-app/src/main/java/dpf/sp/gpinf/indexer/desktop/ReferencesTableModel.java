@@ -100,7 +100,7 @@ public class ReferencesTableModel extends AbstractTableModel
     public void setValueAt(Object value, int row, int col) {
         App.get().appCase.getMultiBookmarks().setChecked((Boolean) value,
                 App.get().appCase.getItemId(results.getLuceneIds()[row]));
-        BookmarksController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
     }
 
     @Override

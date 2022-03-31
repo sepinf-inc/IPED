@@ -173,7 +173,7 @@ public class UICaseDataLoader extends SwingWorker<Void, Integer> {
     public void done() {
         CategoryTreeModel.install();
         App.get().filterManager.loadFilters();
-        BookmarksController.get().atualizarGUIandHistory();
+        BookmarksController.get().updateUIandHistory();
 
         App.get().tree.setModel(treeModel);
         App.get().tree.setLargeModel(true);

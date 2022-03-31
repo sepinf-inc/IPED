@@ -255,7 +255,7 @@ public class ResultTableListener implements ListSelectionListener, MouseListener
             int modelIndex = App.get().resultsTable.convertRowIndexToModel(selectedRows[i]);
             selectAllSubitems(value, App.get().ipedResult.getItem(modelIndex));
         }
-        BookmarksController.get().atualizarGUI();
+        BookmarksController.get().updateUI();
         App.get().subItemTable.repaint();
     }
 

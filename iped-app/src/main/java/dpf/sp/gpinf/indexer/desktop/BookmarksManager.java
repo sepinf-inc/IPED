@@ -411,7 +411,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                 }
                 updateList();
                 App.get().appCase.getMultiBookmarks().saveState();
-                BookmarksController.get().atualizarGUI();
+                BookmarksController.get().updateUI();
 
             }
 
@@ -430,7 +430,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     App.get().appCase.getMultiBookmarks().renameBookmark(label, newLabel);
                     updateList(label, newLabel);
                     App.get().appCase.getMultiBookmarks().saveState();
-                    BookmarksController.get().atualizarGUI();
+                    BookmarksController.get().updateUI();
                 }
             }
         }
@@ -475,7 +475,7 @@ public class BookmarksManager implements ActionListener, ListSelectionListener, 
                     }
                 }
                 App.get().appCase.getMultiBookmarks().saveState();
-                BookmarksController.get().atualizarGUI();
+                BookmarksController.get().updateUI();
             }
         }.start();
     }
