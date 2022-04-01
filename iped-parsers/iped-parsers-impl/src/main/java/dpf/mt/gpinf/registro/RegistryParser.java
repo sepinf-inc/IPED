@@ -26,7 +26,7 @@ import dpf.sp.gpinf.indexer.parsers.util.EmbeddedItem;
 import dpf.sp.gpinf.indexer.parsers.util.EmbeddedParent;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 
-public class RegistroParser extends AbstractParser {
+public class RegistryParser extends AbstractParser {
 
     public static final MediaType REGISTRY_MIME = MediaType.application("x-windows-registry");
 

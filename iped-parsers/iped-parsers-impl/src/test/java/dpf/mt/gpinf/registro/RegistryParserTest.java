@@ -21,7 +21,7 @@ import dpf.mt.gpinf.registro.model.RegistryFile;
 import dpf.sp.gpinf.indexer.parsers.util.ItemInfo;
 import junit.framework.TestCase;
 
-public class RegistroParserTest extends TestCase {
+public class RegistryParserTest extends TestCase {
 
     private static InputStream getStream(String name) {
         return Thread.currentThread().getContextClassLoader().getResourceAsStream(name);
@@ -30,7 +30,7 @@ public class RegistroParserTest extends TestCase {
     @Test
     public void testRegistroParserSecurity() throws IOException, SAXException, TikaException, URISyntaxException {
 
-        RegistroParser parser = new RegistroParser();
+        RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SECURITY");
         ContentHandler handler = new ToTextContentHandler();
@@ -55,7 +55,7 @@ public class RegistroParserTest extends TestCase {
     @Test
     public void testRegistroParserSAM() throws IOException, SAXException, TikaException, URISyntaxException {
 
-        RegistroParser parser = new RegistroParser();
+        RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SAM");
         ContentHandler handler = new ToTextContentHandler();
@@ -78,7 +78,7 @@ public class RegistroParserTest extends TestCase {
 
     @Test
     public void testRegistroParserSYSTEM() throws IOException, SAXException, TikaException, URISyntaxException {
-        RegistroParser parser = new RegistroParser();
+        RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SYSTEM");
         ContentHandler handler = new ToTextContentHandler();
@@ -109,7 +109,7 @@ public class RegistroParserTest extends TestCase {
     @Test
     public void testRegistroParserSOFTWARE() throws IOException, SAXException, TikaException, URISyntaxException {
 
-        RegistroParser parser = new RegistroParser();
+        RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "SOFTWARE");
         ContentHandler handler = new ToTextContentHandler();
@@ -140,7 +140,7 @@ public class RegistroParserTest extends TestCase {
     @Test
     public void testRegistroParserNTUSER() throws IOException, SAXException, TikaException, URISyntaxException {
 
-        RegistroParser parser = new RegistroParser();
+        RegistryParser parser = new RegistryParser();
         Metadata metadata = new Metadata();
         metadata.set(TikaMetadataKeys.RESOURCE_NAME_KEY, "NTUSER.DAT");
         ContentHandler handler = new ToTextContentHandler();

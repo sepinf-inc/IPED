@@ -36,7 +36,7 @@ public class RegistryKeyParserManager {
         try {
             String configPath = System.getProperty(IConfigurationDirectory.IPED_CONF_PATH);
 
-            File dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistroParser");
+            File dir = new File(configPath + "/conf/ParsersCustomConfigs/dpf.mt.gpinf.registro.RegistryParser");
             File[] files = dir.listFiles(new FilenameFilter() {
                 @Override
                 public boolean accept(File dir, String name) {
